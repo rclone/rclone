@@ -25,18 +25,22 @@ import (
 )
 
 const (
-	rcloneClientID              = "0000000044165769"
-	rcloneEncryptedClientSecret = "ugVWLNhKkVT1-cbTRO-6z1MlzwdW6aMwpKgNaFG-qXjEn_WfDnG9TVyRA5yuoliU"
-	minSleep                    = 10 * time.Millisecond
-	maxSleep                    = 2 * time.Second
-	decayConstant               = 2                               // bigger for slower decay, exponential
-	rootURL                     = "https://api.onedrive.com/v1.0" // root URL for requests
+	rclonePersonalClientID              = "0000000044165769"
+	rclonePersonalEncryptedClientSecret = "ugVWLNhKkVT1-cbTRO-6z1MlzwdW6aMwpKgNaFG-qXjEn_WfDnG9TVyRA5yuoliU"
+	rcloneBusinessClientID              = "52857fec-4bc2-483f-9f1b-5fe28e97532c"
+	rcloneBusinessEncryptedClientSecret = "6t4pC8l6L66SFYVIi8PgECDyjXy_ABo1nsTaE-Lr9LpzC6yT4vNOwHsakwwdEui0O6B0kX8_xbBLj91J"
+	minSleep                            = 10 * time.Millisecond
+	maxSleep                            = 2 * time.Second
+	decayConstant                       = 2                                     // bigger for slower decay, exponential
+	rootURLPersonal                     = "https://api.onedrive.com/v1.0/drive" // root URL for requests
+	discoveryServiceURL                 = "https://api.office.com/discovery/"
+	configResourceURL                   = "resource_url"
 )
 
 // Globals
 var (
-	// Description of how to auth for this app
-	oauthConfig = &oauth2.Config{
+	// Description of how to auth for this app for a personal account
+	oauthPersonalConfig = &oauth2.Config{
 		Scopes: []string{
 			"wl.signin",          // Allow single sign-on capabilities
 			"wl.offline_access",  // Allow receiving a refresh token
@@ -46,10 +50,23 @@ var (
 			AuthURL:  "https://login.live.com/oauth20_authorize.srf",
 			TokenURL: "https://login.live.com/oauth20_token.srf",
 		},
-		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientID:     rclonePersonalClientID,
+		ClientSecret: fs.MustReveal(rclonePersonalEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
+
+	// Description of how to auth for this app for a business account
+	oauthBusinessConfig = &oauth2.Config{
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://login.microsoftonline.com/common/oauth2/authorize",
+			TokenURL: "https://login.microsoftonline.com/common/oauth2/token",
+		},
+		ClientID:     rcloneBusinessClientID,
+		ClientSecret: fs.MustReveal(rcloneBusinessEncryptedClientSecret),
+		RedirectURL:  oauthutil.RedirectLocalhostURL,
+	}
+	oauthBusinessResource = oauth2.SetAuthURLParam("resource", discoveryServiceURL)
+
 	chunkSize    = fs.SizeSuffix(10 * 1024 * 1024)
 	uploadCutoff = fs.SizeSuffix(10 * 1024 * 1024)
 )
@@ -61,9 +78,132 @@ func init() {
 		Description: "Microsoft OneDrive",
 		NewFs:       NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config("onedrive", name, oauthConfig)
-			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+			// choose account type
+			fmt.Printf("Choose OneDrive account type?\n")
+			fmt.Printf(" * Say b for a OneDrive business account\n")
+			fmt.Printf(" * Say p for a personal OneDrive account\n")
+			isPersonal := fs.Command([]string{"bBusiness", "pPersonal"}) == 'p'
+
+			if isPersonal {
+				// for personal accounts we don't safe a field about the account
+				err := oauthutil.Config("onedrive", name, oauthPersonalConfig)
+				if err != nil {
+					log.Fatalf("Failed to configure token: %v", err)
+				}
+			} else {
+				err := oauthutil.Config("onedrive", name, oauthBusinessConfig, oauthBusinessResource)
+				if err != nil {
+					log.Fatalf("Failed to configure token: %v", err)
+					return
+				}
+
+				// Are we running headless?
+				if fs.ConfigFileGet(name, fs.ConfigAutomatic) != "" {
+					// Yes, okay we are done
+					return
+				}
+
+				type serviceResource struct {
+					ServiceAPIVersion  string `json:"serviceApiVersion"`
+					ServiceEndpointURI string `json:"serviceEndpointUri"`
+					ServiceResourceID  string `json:"serviceResourceId"`
+				}
+				type serviceResponse struct {
+					Services []serviceResource `json:"value"`
+				}
+
+				oAuthClient, _, err := oauthutil.NewClient(name, oauthBusinessConfig)
+				if err != nil {
+					log.Fatalf("Failed to configure OneDrive: %v", err)
+					return
+				}
+				srv := rest.NewClient(oAuthClient)
+
+				opts := rest.Opts{
+					Method:  "GET",
+					RootURL: discoveryServiceURL,
+					Path:    "/v2.0/me/services",
+				}
+				services := serviceResponse{}
+				resp, err := srv.CallJSON(&opts, nil, &services)
+				if err != nil {
+					fs.Errorf(nil, "Failed to query available services: %v", err)
+					return
+				}
+				if resp.StatusCode != 200 {
+					fs.Errorf(nil, "Failed to query available services: Got HTTP error code %d", resp.StatusCode)
+					return
+				}
+
+				foundService := ""
+				for _, service := range services.Services {
+					if service.ServiceAPIVersion == "v2.0" {
+						foundService = service.ServiceResourceID
+						fs.ConfigFileSet(name, configResourceURL, foundService)
+						oauthBusinessResource = oauth2.SetAuthURLParam("resource", foundService)
+
+						fs.Logf(nil, "Found API %s endpoint %s", service.ServiceAPIVersion, service.ServiceEndpointURI)
+						break
+					}
+					// we only support 2.0 API
+					fs.Infof(nil, "Skipping API %s endpoint %s", service.ServiceAPIVersion, service.ServiceEndpointURI)
+				}
+
+				if foundService == "" {
+					fs.Errorf(nil, "No Service found")
+					return
+				}
+
+				// get the token from the inital config
+				// we need to update the token with a resource
+				// specific token we will query now
+				token, err := oauthutil.GetToken(name)
+				if err != nil {
+					fs.Errorf(nil, "Error while getting token: %s", err)
+					return
+				}
+
+				// values for the token query
+				values := url.Values{}
+				values.Set("refresh_token", token.RefreshToken)
+				values.Set("grant_type", "refresh_token")
+				values.Set("resource", foundService)
+				values.Set("client_id", oauthBusinessConfig.ClientID)
+				values.Set("client_secret", oauthBusinessConfig.ClientSecret)
+				opts = rest.Opts{
+					Method:      "POST",
+					RootURL:     oauthBusinessConfig.Endpoint.TokenURL,
+					ContentType: "application/x-www-form-urlencoded",
+					Body:        strings.NewReader(values.Encode()),
+				}
+
+				// tokenJSON is the struct representing the HTTP response from OAuth2
+				// providers returning a token in JSON form.
+				// we are only interested in the new tokens, all other fields we don't care
+				type tokenJSON struct {
+					AccessToken  string `json:"access_token"`
+					RefreshToken string `json:"refresh_token"`
+				}
+				jsonToken := tokenJSON{}
+				resp, err = srv.CallJSON(&opts, nil, &jsonToken)
+				if err != nil {
+					fs.Errorf(nil, "Failed to get resource token: %v", err)
+					return
+				}
+				if resp.StatusCode != 200 {
+					fs.Errorf(nil, "Failed to get resource token: Got HTTP error code %d", resp.StatusCode)
+					return
+				}
+
+				// update the tokens
+				token.AccessToken = jsonToken.AccessToken
+				token.RefreshToken = jsonToken.RefreshToken
+
+				// finally save them in the config
+				err = oauthutil.PutToken(name, token, true)
+				if err != nil {
+					fs.Errorf(nil, "Error while setting token: %s", err)
+				}
 			}
 		},
 		Options: []fs.Option{{
@@ -74,6 +214,7 @@ func init() {
 			Help: "Microsoft App Client Secret - leave blank normally.",
 		}},
 	})
+
 	fs.VarP(&chunkSize, "onedrive-chunk-size", "", "Above this size files will be chunked - must be multiple of 320k.")
 	fs.VarP(&uploadCutoff, "onedrive-upload-cutoff", "", "Cutoff for switching to chunked upload - must be <= 100MB")
 }
@@ -87,6 +228,7 @@ type Fs struct {
 	dirCache     *dircache.DirCache // Map of directory path to directory id
 	pacer        *pacer.Pacer       // pacer for API calls
 	tokenRenewer *oauthutil.Renew   // renew the token on expiry
+	isBusiness   bool               // true if this is an OneDrive Business account
 }
 
 // Object describes a one drive object
@@ -168,7 +310,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Response, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/drive/root:/" + pathEscape(replaceReservedChars(path)),
+		Path:   "/root:/" + pathEscape(replaceReservedChars(path)),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(&opts, nil, &info)
@@ -193,6 +335,23 @@ func errorHandler(resp *http.Response) error {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
+	// get the resource URL from the config file0
+	resourceURL := fs.ConfigFileGet(name, configResourceURL, "")
+	// if we have a resource URL it's a business account otherwise a personal one
+	var rootURL string
+	var oauthConfig *oauth2.Config
+	if resourceURL == "" {
+		// personal account setup
+		oauthConfig = oauthPersonalConfig
+		rootURL = rootURLPersonal
+	} else {
+		// business account setup
+		oauthConfig = oauthBusinessConfig
+		rootURL = resourceURL + "_api/v2.0/drives/me"
+
+		// update the URL in the AuthOptions
+		oauthBusinessResource = oauth2.SetAuthURLParam("resource", resourceURL)
+	}
 	root = parsePath(root)
 	oAuthClient, ts, err := oauthutil.NewClient(name, oauthConfig)
 	if err != nil {
@@ -200,16 +359,22 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:  name,
-		root:  root,
-		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
-		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		name:       name,
+		root:       root,
+		srv:        rest.NewClient(oAuthClient).SetRoot(rootURL),
+		pacer:      pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
+		isBusiness: resourceURL != "",
 	}
+
+	// OneDrive for business doesn't support mime types properly
+	// so we disable it until resolved
+	// https://github.com/OneDrive/onedrive-api-docs/issues/643
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
-		ReadMimeType:            true,
+		ReadMimeType:            !f.isBusiness,
 		CanHaveEmptyDirectories: true,
 	}).Fill(f)
+
 	f.srv.SetErrorHandler(errorHandler)
 
 	// Renew the token in the background
@@ -323,7 +488,7 @@ func (f *Fs) CreateDir(pathID, leaf string) (newID string, err error) {
 	var info *api.Item
 	opts := rest.Opts{
 		Method: "POST",
-		Path:   "/drive/items/" + pathID + "/children",
+		Path:   "/items/" + pathID + "/children",
 	}
 	mkdir := api.CreateItemRequest{
 		Name:             replaceReservedChars(leaf),
@@ -357,7 +522,7 @@ func (f *Fs) listAll(dirID string, directoriesOnly bool, filesOnly bool, fn list
 	// https://dev.onedrive.com/odata/optional-query-parameters.htm
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/drive/items/" + dirID + "/children?top=1000",
+		Path:   "/items/" + dirID + "/children?top=1000",
 	}
 OUTER:
 	for {
@@ -504,7 +669,7 @@ func (f *Fs) Mkdir(dir string) error {
 func (f *Fs) deleteObject(id string) error {
 	opts := rest.Opts{
 		Method:     "DELETE",
-		Path:       "/drive/items/" + id,
+		Path:       "/items/" + id,
 		NoResponse: true,
 	}
 	return f.pacer.Call(func() (bool, error) {
@@ -644,7 +809,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	// Copy the object
 	opts := rest.Opts{
 		Method:       "POST",
-		Path:         "/drive/items/" + srcObj.id + "/action.copy",
+		Path:         "/items/" + srcObj.id + "/action.copy",
 		ExtraHeaders: map[string]string{"Prefer": "respond-async"},
 		NoResponse:   true,
 	}
@@ -712,7 +877,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	// Move the object
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/drive/items/" + srcObj.id,
+		Path:   "/items/" + srcObj.id,
 	}
 	move := api.MoveItemRequest{
 		Name: replaceReservedChars(leaf),
@@ -863,7 +1028,7 @@ func (o *Object) ModTime() time.Time {
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/drive/root:/" + pathEscape(o.srvPath()),
+		Path:   "/root:/" + pathEscape(o.srvPath()),
 	}
 	update := api.SetFileSystemInfo{
 		FileSystemInfo: api.FileSystemInfoFacet{
@@ -901,7 +1066,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
-		Path:    "/drive/items/" + o.id + "/content",
+		Path:    "/items/" + o.id + "/content",
 		Options: options,
 	}
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -918,7 +1083,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err error) {
 	opts := rest.Opts{
 		Method: "POST",
-		Path:   "/drive/root:/" + pathEscape(o.srvPath()) + ":/upload.createSession",
+		Path:   "/root:/" + pathEscape(o.srvPath()) + ":/upload.createSession",
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1023,9 +1188,10 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		// This is for less than 100 MB of content
 		var resp *http.Response
 		opts := rest.Opts{
-			Method: "PUT",
-			Path:   "/drive/root:/" + pathEscape(o.srvPath()) + ":/content",
-			Body:   in,
+			Method:        "PUT",
+			Path:          "/root:/" + pathEscape(o.srvPath()) + ":/content",
+			ContentLength: &size,
+			Body:          in,
 		}
 		// for go1.8 (see release notes) we must nil the Body if we want a
 		// "Content-Length: 0" header which onedrive requires for all files.
