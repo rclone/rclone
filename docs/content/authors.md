@@ -100,3 +100,4 @@ Contributors
   * Daniel Jagszent <daniel@jagszent.de>
   * Josiah White <thegenius2009@gmail.com>
   * ishuah91 <ishuah91@gmail.com>
+  * Jan Varho <jan@varho.org>
