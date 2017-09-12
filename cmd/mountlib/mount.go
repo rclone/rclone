@@ -143,13 +143,6 @@ Assuming only one rclone instance is running, you can reset the cache
 like this:
 
     kill -SIGHUP $(pidof rclone)
-
-### Bugs ###
-
-  * All the remotes should work for read, but some may not for write
-    * those which need to know the size in advance won't - eg B2
-    * maybe should pass in size as -1 to mean work it out
-    * Or put in an an upload cache to cache the files on disk first
 `,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
