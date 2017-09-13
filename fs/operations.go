@@ -1584,10 +1584,11 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
 func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (err error) {
+
 	Stats.Transferring(dstFileName)
 	defer func() {
 		Stats.DoneTransferring(dstFileName, err == nil)
-		if err = in0.Close(); err != nil {
+		if otherErr := in0.Close(); otherErr != nil {
 			Debugf(fdst, "Rcat: failed to close source: %v", err)
 		}
 	}()
