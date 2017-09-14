@@ -1032,7 +1032,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	size := src.Size()
 	modTime := src.ModTime()
-	remote := src.Remote()
+	remote := o.Remote()
 
 	// Create the directory for the object if it doesn't exist
 	leaf, directoryID, err := o.fs.dirCache.FindRootAndPath(remote, true)
