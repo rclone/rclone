@@ -167,8 +167,18 @@ func IsNoRetryError(err error) bool {
 	return false
 }
 
+// closedConnErrorStrings is a list of phrases which when we find it
+// in an an error, we know it is a networking error which should be
+// retried.
+//
+// This is incredibly ugly - if only errors.Cause worked for all
+// errors and all errors were exported from the stdlib.
+var closedConnErrorStrings = []string{
+	"use of closed network connection", // not exported :-(
+}
+
 // isClosedConnError reports whether err is an error from use of a closed
-// network connection.
+// network connection or prematurely closed connection
 //
 // Code adapted from net/http
 func isClosedConnError(err error) bool {
@@ -176,11 +186,12 @@ func isClosedConnError(err error) bool {
 		return false
 	}
 
-	// Note that this error isn't exported so we have to do a
-	// string comparison :-(
-	str := err.Error()
-	if strings.Contains(str, "use of closed network connection") {
-		return true
+	errString := err.Error()
+
+	for _, phrase := range closedConnErrorStrings {
+		if strings.Contains(errString, phrase) {
+			return true
+		}
 	}
 
 	return isClosedConnErrorPlatform(err)
