@@ -360,7 +360,7 @@ type addEntryFn func(fs.DirEntry) error
 
 // list the objects into the function supplied
 func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
-	return f.listContainerRoot(f.container, f.root, dir, recurse, func(remote string, object *swift.Object, isDirectory bool) (err error) {
+	err := f.listContainerRoot(f.container, f.root, dir, recurse, func(remote string, object *swift.Object, isDirectory bool) (err error) {
 		if isDirectory {
 			remote = strings.TrimRight(remote, "/")
 			d := fs.NewDir(remote, time.Time{}).SetSize(object.Bytes)
@@ -377,6 +377,10 @@ func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
 		}
 		return err
 	})
+	if err == swift.ContainerNotFound {
+		err = fs.ErrorDirNotFound
+	}
+	return err
 }
 
 // listDir lists a single directory
@@ -390,9 +394,6 @@ func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 		return nil
 	})
 	if err != nil {
-		if err == swift.ContainerNotFound {
-			err = fs.ErrorDirNotFound
-		}
 		return nil, err
 	}
 	return entries, nil
