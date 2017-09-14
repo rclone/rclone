@@ -2,6 +2,7 @@
 package swift
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -473,6 +474,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return fs, fs.Update(in, src, options...)
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // Mkdir creates the container if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	f.containerOKMu.Lock()
@@ -779,7 +785,7 @@ func urlEncode(str string) string {
 
 // updateChunks updates the existing object using chunks to a separate
 // container.  It returns a string which prefixes current segments.
-func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, contentType string) (string, error) {
+func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, contentType string) (string, error) {
 	// Create the segmentsContainer if it doesn't exist
 	err := o.fs.c.ContainerCreate(o.fs.segmentsContainer, nil)
 	if err != nil {
@@ -790,9 +796,22 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, c
 	i := 0
 	uniquePrefix := fmt.Sprintf("%s/%d", swift.TimeToFloatString(time.Now()), size)
 	segmentsPath := fmt.Sprintf("%s%s/%s", o.fs.root, o.remote, uniquePrefix)
-	for left > 0 {
-		n := min(left, int64(chunkSize))
-		headers["Content-Length"] = strconv.FormatInt(n, 10) // set Content-Length as we know it
+	in := bufio.NewReader(in0)
+	for {
+		// can we read at least one byte?
+		if _, err := in.Peek(1); err != nil {
+			if left > 0 {
+				return "", err // read less than expected
+			}
+			fs.Debugf(o, "Uploading segments into %q seems done (%v)", o.fs.segmentsContainer, err)
+			break
+		}
+		n := int64(chunkSize)
+		if size != -1 {
+			n = min(left, n)
+			headers["Content-Length"] = strconv.FormatInt(n, 10) // set Content-Length as we know it
+			left -= n
+		}
 		segmentReader := io.LimitReader(in, n)
 		segmentPath := fmt.Sprintf("%s/%08d", segmentsPath, i)
 		fs.Debugf(o, "Uploading segment file %q into %q", segmentPath, o.fs.segmentsContainer)
@@ -800,7 +819,6 @@ func (o *Object) updateChunks(in io.Reader, headers swift.Headers, size int64, c
 		if err != nil {
 			return "", err
 		}
-		left -= n
 		i++
 	}
 	// Upload the manifest
@@ -838,7 +856,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	contentType := fs.MimeType(src)
 	headers := m.ObjectHeaders()
 	uniquePrefix := ""
-	if size > int64(chunkSize) {
+	if size > int64(chunkSize) || size == -1 {
 		uniquePrefix, err = o.updateChunks(in, headers, size, contentType)
 		if err != nil {
 			return err
@@ -892,10 +910,11 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = &Fs{}
-	_ fs.Purger    = &Fs{}
-	_ fs.Copier    = &Fs{}
-	_ fs.ListRer   = &Fs{}
-	_ fs.Object    = &Object{}
-	_ fs.MimeTyper = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Purger      = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.Copier      = &Fs{}
+	_ fs.ListRer     = &Fs{}
+	_ fs.Object      = &Object{}
+	_ fs.MimeTyper   = &Object{}
 )
