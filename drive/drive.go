@@ -45,7 +45,7 @@ const (
 var (
 	// Flags
 	driveAuthOwnerOnly = fs.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
-	driveUseTrash      = fs.BoolP("drive-use-trash", "", false, "Send files to the trash instead of deleting permanently.")
+	driveUseTrash      = fs.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
 	driveSkipGdocs     = fs.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
 	driveSharedWithMe  = fs.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
 	driveTrashedOnly   = fs.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")

@@ -169,9 +169,10 @@ was
 
 ### Deleting files ###
 
-By default rclone will delete files permanently when requested.  If
-sending them to the trash is required instead then use the
-`--drive-use-trash` flag.
+By default rclone will send all files to the trash when deleting
+files.  If deleting them permanently is required then use the
+`--drive-use-trash=false` flag, or set the equivalent environment
+variable.
 
 ### Emptying trash ###
 
@@ -271,8 +272,9 @@ File size cutoff for switching to chunked upload.  Default is 8 MB.
 
 #### --drive-use-trash ####
 
-Send files to the trash instead of deleting permanently. Defaults to
-off, namely deleting files permanently.
+Controls whether files are sent to the trash or deleted
+permanently. Defaults to true, namely sending files to the trash.  Use
+`--drive-use-trash=false` to delete files permanently instead.
 
 ### Limitations ###
 
