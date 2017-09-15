@@ -735,17 +735,23 @@ func TestRcat(t *testing.T) {
 	checkSumBefore := fs.Config.CheckSum
 	defer func() { fs.Config.CheckSum = checkSumBefore }()
 
-	check := func() {
+	check := func(withChecksum bool) {
+		fs.Config.CheckSum = withChecksum
+		prefix := "no_checksum_"
+		if withChecksum {
+			prefix = "with_checksum_"
+		}
+
 		r := NewRun(t)
 		defer r.Finalise()
 
 		fstest.CheckListing(t, r.fremote, []fstest.Item{})
 
 		data1 := "this is some really nice test data"
-		path1 := "small_file_from_pipe"
+		path1 := prefix + "small_file_from_pipe"
 
 		data2 := string(make([]byte, fs.Config.StreamingUploadCutoff+1))
-		path2 := "big_file_from_pipe"
+		path2 := prefix + "big_file_from_pipe"
 
 		in := ioutil.NopCloser(strings.NewReader(data1))
 		err := fs.Rcat(r.fremote, path1, in, t1)
@@ -760,11 +766,8 @@ func TestRcat(t *testing.T) {
 		fstest.CheckItems(t, r.fremote, file1, file2)
 	}
 
-	fs.Config.CheckSum = true
-	check()
-
-	fs.Config.CheckSum = false
-	check()
+	check(true)
+	check(false)
 }
 
 func TestRmdirs(t *testing.T) {
