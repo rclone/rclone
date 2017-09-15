@@ -17,7 +17,7 @@ const (
 func init() {
 	// append some lower level errors since the standardized ones
 	// don't seem to happen
-	closedConnErrors = append(closedConnErrors,
+	retriableErrors = append(retriableErrors,
 		syscall.WSAECONNRESET,
 		WSAECONNABORTED,
 		WSAHOST_NOT_FOUND,
