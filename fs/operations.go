@@ -1561,8 +1561,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 }
 
 // Rcat reads data from the Reader until EOF and uploads it to a file on remote
-func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (err error) {
-
+func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (dst Object, err error) {
 	Stats.Transferring(dstFileName)
 	defer func() {
 		Stats.DoneTransferring(dstFileName, err == nil)
@@ -1574,7 +1573,7 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 	hashOption := &HashesOption{Hashes: fdst.Hashes()}
 	hash, err := NewMultiHasherTypes(fdst.Hashes())
 	if err != nil {
-		return err
+		return nil, err
 	}
 	readCounter := NewCountingReader(in0)
 	trackingIn := io.TeeReader(readCounter, hash)
@@ -1599,13 +1598,13 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
 		if Config.DryRun {
 			Logf("stdin", "Not uploading as --dry-run")
-			return nil
+			return nil, nil
 		}
 		dst, err := fdst.Put(in, objInfo, hashOption)
 		if err != nil {
-			return err
+			return dst, err
 		}
-		return compare(dst)
+		return dst, compare(dst)
 	}
 	in := ioutil.NopCloser(io.MultiReader(bytes.NewReader(buf), trackingIn))
 
@@ -1615,7 +1614,7 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		Debugf(fdst, "Target remote doesn't support streaming uploads, creating temporary local FS to spool file")
 		tmpLocalFs, err := temporaryLocalFs()
 		if err != nil {
-			return errors.Wrap(err, "Failed to create temporary local FS to spool file")
+			return nil, errors.Wrap(err, "Failed to create temporary local FS to spool file")
 		}
 		defer func() {
 			err := Purge(tmpLocalFs)
@@ -1632,21 +1631,20 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (er
 		Logf("stdin", "Not uploading as --dry-run")
 		// prevents "broken pipe" errors
 		_, err = io.Copy(ioutil.Discard, in)
-		return err
+		return nil, err
 	}
 
 	objInfo := NewStaticObjectInfo(dstFileName, modTime, -1, false, nil, nil)
-	tmpObj, err := fStreamTo.Features().PutStream(in, objInfo, hashOption)
-	if err != nil {
-		return err
+	if dst, err = fStreamTo.Features().PutStream(in, objInfo, hashOption); err != nil {
+		return dst, err
 	}
-	if err = compare(tmpObj); err != nil {
-		return err
+	if err = compare(dst); err != nil {
+		return dst, err
 	}
 	if !canStream {
-		return Copy(fdst, nil, dstFileName, tmpObj)
+		return dst, Copy(fdst, nil, dstFileName, dst)
 	}
-	return nil
+	return dst, nil
 }
 
 // Rmdirs removes any empty directories (or directories only
