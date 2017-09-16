@@ -5,6 +5,7 @@ package b2
 // checking SHA1s?
 
 import (
+	"bufio"
 	"bytes"
 	"crypto/sha1"
 	"fmt"
@@ -705,6 +706,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return fs, fs.Update(in, src, options...)
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	f.bucketOKMu.Lock()
@@ -1237,8 +1243,33 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 	size := src.Size()
 
-	// If a large file upload in chunks - see upload.go
-	if size >= int64(uploadCutoff) {
+	if size == -1 {
+		// Check if the file is large enough for a chunked upload (needs to be at least two chunks)
+		buf := o.fs.getUploadBlock()
+		n, err := io.ReadFull(in, buf)
+		if err == nil {
+			bufReader := bufio.NewReader(in)
+			in = bufReader
+			_, err = bufReader.Peek(1)
+		}
+
+		if err == nil {
+			fs.Debugf(o, "File is big enough for chunked streaming")
+			up, err := o.fs.newLargeUpload(o, in, src)
+			if err != nil {
+				o.fs.putUploadBlock(buf)
+				return err
+			}
+			return up.Stream(buf)
+		} else if err == io.EOF || err == io.ErrUnexpectedEOF {
+			fs.Debugf(o, "File has %d bytes, which makes only one chunk. Using direct upload.", n)
+			defer o.fs.putUploadBlock(buf)
+			size = int64(n)
+			in = bytes.NewReader(buf[:n])
+		} else {
+			return err
+		}
+	} else if size > int64(uploadCutoff) {
 		up, err := o.fs.newLargeUpload(o, in, src)
 		if err != nil {
 			return err
@@ -1373,10 +1404,11 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs         = &Fs{}
-	_ fs.Purger     = &Fs{}
-	_ fs.CleanUpper = &Fs{}
-	_ fs.ListRer    = &Fs{}
-	_ fs.Object     = &Object{}
-	_ fs.MimeTyper  = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Purger      = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.CleanUpper  = &Fs{}
+	_ fs.ListRer     = &Fs{}
+	_ fs.Object      = &Object{}
+	_ fs.MimeTyper   = &Object{}
 )
