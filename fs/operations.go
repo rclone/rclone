@@ -122,7 +122,7 @@ func Equal(src ObjectInfo, dst Object) bool {
 func equal(src ObjectInfo, dst Object, sizeOnly, checkSum bool) bool {
 	if !Config.IgnoreSize {
 		if src.Size() != dst.Size() {
-			Debugf(src, "Sizes differ")
+			Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
 			return false
 		}
 	}
