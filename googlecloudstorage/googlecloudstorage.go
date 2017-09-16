@@ -33,7 +33,7 @@ import (
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/googleapi"
-	"google.golang.org/api/storage/v1"
+	storage "google.golang.org/api/storage/v1"
 )
 
 const (
@@ -566,6 +566,11 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 	return o, o.Update(in, src, options...)
 }
 
+// PutStream uploads to the remote path with the modTime given of indeterminate size
+func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.Put(in, src, options...)
+}
+
 // Mkdir creates the bucket if it doesn't exist
 func (f *Fs) Mkdir(dir string) error {
 	f.bucketOKMu.Lock()
@@ -823,16 +828,17 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	if err != nil {
 		return err
 	}
-	size := src.Size()
 	modTime := src.ModTime()
 
 	object := storage.Object{
 		Bucket:      o.fs.bucket,
 		Name:        o.fs.root + o.remote,
 		ContentType: fs.MimeType(src),
-		Size:        uint64(size),
 		Updated:     modTime.Format(timeFormatOut), // Doesn't get set
 		Metadata:    metadataFromModTime(modTime),
+	}
+	if src.Size() != -1 {
+		object.Size = uint64(src.Size())
 	}
 	newObject, err := o.fs.svc.Objects.Insert(o.fs.bucket, &object).Media(in, googleapi.ContentType("")).Name(object.Name).PredefinedAcl(o.fs.objectACL).Do()
 	if err != nil {
@@ -855,9 +861,10 @@ func (o *Object) MimeType() string {
 
 // Check the interfaces are satisfied
 var (
-	_ fs.Fs        = &Fs{}
-	_ fs.Copier    = &Fs{}
-	_ fs.ListRer   = &Fs{}
-	_ fs.Object    = &Object{}
-	_ fs.MimeTyper = &Object{}
+	_ fs.Fs          = &Fs{}
+	_ fs.Copier      = &Fs{}
+	_ fs.PutStreamer = &Fs{}
+	_ fs.ListRer     = &Fs{}
+	_ fs.Object      = &Object{}
+	_ fs.MimeTyper   = &Object{}
 )
