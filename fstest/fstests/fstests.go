@@ -217,7 +217,7 @@ func winPath(s string) string {
 func dirsToNames(dirs []fs.Directory) []string {
 	names := []string{}
 	for _, dir := range dirs {
-		names = append(names, winPath(dir.Remote()))
+		names = append(names, winPath(fstest.Normalize(dir.Remote())))
 	}
 	sort.Strings(names)
 	return names
@@ -227,7 +227,7 @@ func dirsToNames(dirs []fs.Directory) []string {
 func objsToNames(objs []fs.Object) []string {
 	names := []string{}
 	for _, obj := range objs {
-		names = append(names, winPath(obj.Remote()))
+		names = append(names, winPath(fstest.Normalize(obj.Remote())))
 	}
 	sort.Strings(names)
 	return names

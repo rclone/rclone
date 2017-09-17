@@ -15,6 +15,7 @@ import (
 	"path"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strings"
 	"testing"
@@ -23,6 +24,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"golang.org/x/text/unicode/norm"
 )
 
 // Globals
@@ -124,6 +126,16 @@ func (i *Item) Check(t *testing.T, obj fs.Object, precision time.Duration) {
 	i.CheckModTime(t, obj, obj.ModTime(), precision)
 }
 
+// Normalize runs a utf8 normalization on the string if running on OS
+// X.  This is because OS X denormalizes file names it writes to the
+// local file system.
+func Normalize(name string) string {
+	if runtime.GOOS == "darwin" {
+		name = norm.NFC.String(name)
+	}
+	return name
+}
+
 // Items represents all items for checking
 type Items struct {
 	byName    map[string]*Item
@@ -140,18 +152,19 @@ func NewItems(items []Item) *Items {
 	}
 	// Fill up byName
 	for i := range items {
-		is.byName[items[i].Path] = &items[i]
-		is.byNameAlt[items[i].WinPath] = &items[i]
+		is.byName[Normalize(items[i].Path)] = &items[i]
+		is.byNameAlt[Normalize(items[i].WinPath)] = &items[i]
 	}
 	return is
 }
 
 // Find checks off an item
 func (is *Items) Find(t *testing.T, obj fs.Object, precision time.Duration) {
-	i, ok := is.byName[obj.Remote()]
+	remote := Normalize(obj.Remote())
+	i, ok := is.byName[remote]
 	if !ok {
-		i, ok = is.byNameAlt[obj.Remote()]
-		assert.True(t, ok, fmt.Sprintf("Unexpected file %q", obj.Remote()))
+		i, ok = is.byNameAlt[remote]
+		assert.True(t, ok, fmt.Sprintf("Unexpected file %q", remote))
 	}
 	if i != nil {
 		delete(is.byName, i.Path)
@@ -177,8 +190,8 @@ func makeListingFromItems(items []Item) (string, string) {
 	nameLengths1 := make([]string, len(items))
 	nameLengths2 := make([]string, len(items))
 	for i, item := range items {
-		remote1 := item.Path
-		remote2 := item.Path
+		remote1 := Normalize(item.Path)
+		remote2 := remote1
 		if item.WinPath != "" {
 			remote2 = item.WinPath
 		}
@@ -194,7 +207,7 @@ func makeListingFromItems(items []Item) (string, string) {
 func makeListingFromObjects(objs []fs.Object) string {
 	nameLengths := make([]string, len(objs))
 	for i, obj := range objs {
-		nameLengths[i] = fmt.Sprintf("%s (%d)", obj.Remote(), obj.Size())
+		nameLengths[i] = fmt.Sprintf("%s (%d)", Normalize(obj.Remote()), obj.Size())
 	}
 	sort.Strings(nameLengths)
 	return strings.Join(nameLengths, ", ")
@@ -281,13 +294,17 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	}
 	// Check the directories
 	if expectedDirs != nil {
+		expectedDirsCopy := make([]string, len(expectedDirs))
+		for i, dir := range expectedDirs {
+			expectedDirsCopy[i] = Normalize(dir)
+		}
 		actualDirs := []string{}
 		for _, dir := range dirs {
-			actualDirs = append(actualDirs, dir.Remote())
+			actualDirs = append(actualDirs, Normalize(dir.Remote()))
 		}
 		sort.Strings(actualDirs)
-		sort.Strings(expectedDirs)
-		assert.Equal(t, expectedDirs, actualDirs, "directories")
+		sort.Strings(expectedDirsCopy)
+		assert.Equal(t, expectedDirsCopy, actualDirs, "directories")
 	}
 }
 

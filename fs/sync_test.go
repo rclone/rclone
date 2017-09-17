@@ -3,6 +3,7 @@
 package fs_test
 
 import (
+	"runtime"
 	"testing"
 	"time"
 
@@ -965,6 +966,10 @@ func TestSyncBackupDirWithSuffix(t *testing.T) { testSyncBackupDir(t, ".bak") }
 
 // Check we can sync two files with differing UTF-8 representations
 func TestSyncUTFNorm(t *testing.T) {
+	if runtime.GOOS == "darwin" {
+		t.Skip("Can't test UTF normalization on OS X")
+	}
+
 	r := NewRun(t)
 	defer r.Finalise()
 
