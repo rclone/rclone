@@ -436,6 +436,8 @@ func LoadConfig() {
 		configData, _ = goconfig.LoadFromReader(&bytes.Buffer{})
 	} else if err != nil {
 		log.Fatalf("Failed to load config file %q: %v", ConfigPath, err)
+	} else {
+		Debugf(nil, "Using config file from %q", ConfigPath)
 	}
 
 	// Load filters
@@ -1094,6 +1096,29 @@ func CopyRemote(name string) {
 	fmt.Printf("Enter name for copy of %q remote.\n", name)
 	copyRemote(name)
 	SaveConfig()
+}
+
+// ShowConfigLocation prints the location of the config file in use
+func ShowConfigLocation() {
+	if _, err := os.Stat(ConfigPath); os.IsNotExist(err) {
+		fmt.Println("Configuration file doesn't exist, but rclone will use this path:")
+	} else {
+		fmt.Println("Configuration file is stored at:")
+	}
+	fmt.Printf("%s\n", ConfigPath)
+}
+
+// ShowConfigLocation prints the (unencrypted) config options
+func ShowConfig() {
+	var buf bytes.Buffer
+	if err := goconfig.SaveConfigData(configData, &buf); err != nil {
+		log.Fatalf("Failed to serialize config: %v", err)
+	}
+	str := buf.String()
+	if str == "" {
+		str = "; empty config\n"
+	}
+	fmt.Printf("%s", str)
 }
 
 // EditConfig edits the config file interactively
