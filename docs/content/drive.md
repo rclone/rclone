@@ -198,10 +198,6 @@ is buffered in memory one per transfer.
 
 Reducing this will reduce memory usage but decrease performance.
 
-#### --drive-auth-owner-only ####
-
-Only consider files owned by the authenticated user.
-
 #### --drive-formats ####
 
 Google documents can only be exported from Google drive.  When rclone
