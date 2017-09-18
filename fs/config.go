@@ -1108,7 +1108,7 @@ func ShowConfigLocation() {
 	fmt.Printf("%s\n", ConfigPath)
 }
 
-// ShowConfigLocation prints the (unencrypted) config options
+// ShowConfig prints the (unencrypted) config options
 func ShowConfig() {
 	var buf bytes.Buffer
 	if err := goconfig.SaveConfigData(configData, &buf); err != nil {
