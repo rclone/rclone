@@ -19,8 +19,5 @@ func (c *Client) Delete(remotePath string, permanently bool) error {
 		fullURL += urlPath
 	}
 
-	if err := c.PerformDelete(fullURL); err != nil {
-		return err
-	}
-	return nil
+	return c.PerformDelete(fullURL)
 }

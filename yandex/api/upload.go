@@ -23,11 +23,7 @@ func (c *Client) Upload(data io.Reader, remotePath string, overwrite bool, conte
 		return err
 	}
 
-	if err := c.PerformUpload(ur.HRef, data, contentType); err != nil {
-		return err
-	}
-
-	return nil
+	return c.PerformUpload(ur.HRef, data, contentType)
 }
 
 // UploadRequest will make an upload request and return a URL to upload data to.
