@@ -11,5 +11,8 @@
     "blackfriday": {
         "smartDashes": false,
         "plainIDAnchors": true
-    }
+    },
+    "disableKinds": [
+        "taxonomy", "taxonomyTerm"
+    ]
 }

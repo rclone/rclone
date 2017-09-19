@@ -1,0 +1,5 @@
+# Dummy translation file to make errors go away
+# See: https://discourse.gohugo.io/t/monolingual-site/6300
+
+[wordCount]
+other = "{{ .WordCount }} words"
