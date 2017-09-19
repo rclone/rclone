@@ -30,6 +30,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft Azure Blob Storage | MD5         | Yes     | No               | No              | R/W       |
 | Microsoft OneDrive           | SHA1        | Yes     | Yes              | No              | R         |
 | Openstack Swift              | MD5         | Yes     | No               | No              | R/W       |
+| pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
 | SFTP                         | MD5, SHA1 ‡ | Yes     | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
@@ -130,6 +131,7 @@ operations more efficient.
 | Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           |
 | Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#575](https://github.com/ncw/rclone/issues/575) | No | No |
 | Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          |
+| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           |
 | QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          |
 | Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes   | Yes          |

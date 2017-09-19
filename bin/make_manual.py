@@ -36,6 +36,7 @@ docs = [
     "onedrive.md",
     "qingstor.md",
     "swift.md",
+    "pcloud.md",
     "sftp.md",
     "yandex.md",
 

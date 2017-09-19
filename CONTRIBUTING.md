@@ -241,10 +241,11 @@ Research
 Getting going
 
   * Create `remote/remote.go` (copy this from a similar remote)
-    * onedrive is a good one to start from if you have a directory based remote
+    * box is a good one to start from if you have a directory based remote
     * b2 is a good one to start from if you have a bucket based remote
   * Add your remote to the imports in `fs/all/all.go`
   * HTTP based remotes are easiest to maintain if they use rclone's rest module, but if there is a really good go SDK then use that instead.
+  * Try to implement as many optional methods as possible as it makes the remote more usable.
 
 Unit tests
 

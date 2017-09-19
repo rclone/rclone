@@ -164,5 +164,6 @@ func main() {
 	generateTestProgram(t, fns, "Box")
 	generateTestProgram(t, fns, "QingStor", buildConstraint("!plan9"))
 	generateTestProgram(t, fns, "AzureBlob", buildConstraint("go1.7"))
+	generateTestProgram(t, fns, "Pcloud")
 	log.Printf("Done")
 }

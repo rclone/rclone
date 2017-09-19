@@ -54,6 +54,7 @@ from various cloud storage systems and using file transfer services, such as:
   * Microsoft Azure Blob Storage
   * Microsoft OneDrive
   * Openstack Swift / Rackspace cloud files / Memset Memstore
+  * pCloud
   * QingStor
   * SFTP
   * Yandex Disk

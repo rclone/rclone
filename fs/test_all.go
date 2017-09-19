@@ -113,6 +113,11 @@ var (
 			SubDir:   true,
 			FastList: true,
 		},
+		{
+			Name:     "TestPcloud:",
+			SubDir:   false,
+			FastList: false,
+		},
 	}
 	binary = "fs.test"
 	// Flags
