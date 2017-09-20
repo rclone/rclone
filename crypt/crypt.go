@@ -403,6 +403,11 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// DecryptFileName returns a decrypted file name
+func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
+	return f.cipher.DecryptFileName(encryptedFileName)
+}
+
 // ComputeHash takes the nonce from o, and encrypts the contents of
 // src with it, and calcuates the hash given by HashType on the fly
 //
