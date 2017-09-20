@@ -97,6 +97,8 @@ type Opts struct {
 	MultipartContentName  string     // and Body and pass in request
 	MultipartFileName     string     // for multipart upload
 	Parameters            url.Values // any parameters for the final URL
+	TransferEncoding      []string   // transfer encoding, set to "identity" to disable chunked encoding
+	Close                 bool       // set to close the connection after this transaction
 }
 
 // Copy creates a copy of the options
@@ -175,6 +177,12 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	}
 	if opts.ContentRange != "" {
 		headers["Content-Range"] = opts.ContentRange
+	}
+	if len(opts.TransferEncoding) != 0 {
+		req.TransferEncoding = opts.TransferEncoding
+	}
+	if opts.Close {
+		req.Close = true
 	}
 	// Set any extra headers
 	if opts.ExtraHeaders != nil {
