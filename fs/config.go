@@ -997,12 +997,12 @@ func SetFsNewRemote(name string, provider string, jsonstr string) {
     	var options []Option
     	json.Unmarshal(bytes, &options)
 
-	ConfigData.SetValue(name, "type", provider)
+	configData.SetValue(name, "type", provider)
     	// Loop over structs and display them.
     	for op := range options {
-                ConfigData.SetValue(name, options[op].Name, options[op].Value)
+                configData.SetValue(name, options[op].Name, options[op].Value)
     	}
-	ConfigData.SetValue(name, ConfigAutomatic, "yes")
+	configData.SetValue(name, ConfigAutomatic, "yes")
         RemoteConfig(name)
 	ShowRemote(name)
         SaveConfig()
