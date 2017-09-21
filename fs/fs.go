@@ -75,6 +75,7 @@ type Option struct {
 	Optional   bool
 	IsPassword bool
 	Examples   OptionExamples
+	Value      String
 }
 
 // OptionExamples is a slice of examples
