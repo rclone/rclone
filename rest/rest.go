@@ -93,9 +93,10 @@ type Opts struct {
 	Password              string // password for Basic Auth
 	Options               []fs.OpenOption
 	IgnoreStatus          bool       // if set then we don't check error status or parse error body
-	MultipartMetadataName string     // set the following 3 vars
-	MultipartContentName  string     // and Body and pass in request
-	MultipartFileName     string     // for multipart upload
+	MultipartParams       url.Values // if set do multipart form upload with attached file
+	MultipartMetadataName string     // ..this is used for the name of the metadata form part if set
+	MultipartContentName  string     // ..name of the parameter which is the attached file
+	MultipartFileName     string     // ..name of the file for the attached file
 	Parameters            url.Values // any parameters for the final URL
 	TransferEncoding      []string   // transfer encoding, set to "identity" to disable chunked encoding
 	Close                 bool       // set to close the connection after this transaction
@@ -219,59 +220,100 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	return resp, nil
 }
 
+// MultipartUpload creates an io.Reader which produces an encoded a
+// multipart form upload from the params passed in and the  passed in
+//
+// in - the body of the file
+// params - the form parameters
+// fileName - is the name of the attached file
+// contentName - the name of the parameter for the file
+//
+// NB This doesn't allow setting the content type of the attachment
+func MultipartUpload(in io.Reader, params url.Values, contentName, fileName string) (io.ReadCloser, string, error) {
+	bodyReader, bodyWriter := io.Pipe()
+	writer := multipart.NewWriter(bodyWriter)
+	contentType := writer.FormDataContentType()
+
+	// Pump the data in the background
+	go func() {
+		var err error
+
+		for key, vals := range params {
+			for _, val := range vals {
+				err = writer.WriteField(key, val)
+				if err != nil {
+					_ = bodyWriter.CloseWithError(errors.Wrap(err, "create metadata part"))
+					return
+				}
+			}
+		}
+
+		part, err := writer.CreateFormFile(contentName, fileName)
+		if err != nil {
+			_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to create form file"))
+			return
+		}
+
+		_, err = io.Copy(part, in)
+		if err != nil {
+			_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to copy data"))
+			return
+		}
+
+		err = writer.Close()
+		if err != nil {
+			_ = bodyWriter.CloseWithError(errors.Wrap(err, "failed to close form"))
+			return
+		}
+
+		_ = bodyWriter.Close()
+	}()
+
+	return bodyReader, contentType, nil
+}
+
 // CallJSON runs Call and decodes the body as a JSON object into response (if not nil)
 //
 // If request is not nil then it will be JSON encoded as the body of the request
+//
+// If (opts.MultipartParams or opts.MultipartContentName) and
+// opts.Body are set then CallJSON will do a multipart upload with a
+// file attached.  opts.MultipartContentName is the name of the
+// parameter and opts.MultipartFileName is the name of the file.  If
+// MultpartContentName is set, and request != nil is supplied, then
+// the request will be marshalled into JSON and added to the form with
+// parameter name MultipartMetadataName.
 //
 // It will return resp if at all possible, even if err is set
 func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{}) (resp *http.Response, err error) {
 	var requestBody []byte
 	// Marshal the request if given
 	if request != nil {
-		opts = opts.Copy()
 		requestBody, err = json.Marshal(request)
-		opts.ContentType = "application/json"
 		if err != nil {
 			return nil, err
 		}
-		// Set the body up as a JSON object if required
+		// Set the body up as a JSON object if no body passed in
 		if opts.Body == nil {
+			opts = opts.Copy()
+			opts.ContentType = "application/json"
 			opts.Body = bytes.NewBuffer(requestBody)
 		}
 	}
-	errChan := make(chan error, 1)
-	isMultipart := opts.MultipartMetadataName != "" && opts.Body != nil && request != nil
+	isMultipart := (opts.MultipartParams != nil || opts.MultipartMetadataName != "") && opts.Body != nil
 	if isMultipart {
-		bodyReader, bodyWriter := io.Pipe()
-		writer := multipart.NewWriter(bodyWriter)
-		opts.ContentType = writer.FormDataContentType()
-		in := opts.Body
-		opts.Body = bodyReader
-		go func() {
-			defer func() { _ = bodyWriter.Close() }()
-			var err error
-
-			// Create the first part
-			err = writer.WriteField(opts.MultipartMetadataName, string(requestBody))
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			// Add the file part
-			part, err := writer.CreateFormFile(opts.MultipartContentName, opts.MultipartFileName)
-			if err != nil {
-				errChan <- err
-				return
-			}
-
-			// Copy it in
-			if _, err := io.Copy(part, in); err != nil {
-				errChan <- err
-				return
-			}
-			errChan <- writer.Close()
-		}()
+		params := opts.MultipartParams
+		if params == nil {
+			params = url.Values{}
+		}
+		if opts.MultipartMetadataName != "" {
+			params.Add(opts.MultipartMetadataName, string(requestBody))
+		}
+		opts = opts.Copy()
+		opts.Body, opts.ContentType, err = MultipartUpload(opts.Body, params, opts.MultipartContentName, opts.MultipartFileName)
+		if err != nil {
+			return nil, err
+		}
 	}
 	resp, err = api.Call(opts)
 	if err != nil {
@@ -279,12 +321,6 @@ func (api *Client) CallJSON(opts *Opts, request interface{}, response interface{
 	}
 	if response == nil || opts.NoResponse {
 		return resp, nil
-	}
-	if isMultipart {
-		err = <-errChan
-		if err != nil {
-			return resp, err
-		}
 	}
 	err = DecodeJSON(resp, response)
 	return resp, err
