@@ -23,9 +23,9 @@ package files
 import "encoding/json"
 
 type listFolderResult struct {
-	Entries []metadataUnion `json:"entries"`
-	Cursor  string          `json:"cursor"`
-	HasMore bool            `json:"has_more"`
+	Entries []json.RawMessage `json:"entries"`
+	Cursor  string            `json:"cursor"`
+	HasMore bool              `json:"has_more"`
 }
 
 // UnmarshalJSON deserializes into a ListFolderResult instance
@@ -38,21 +38,18 @@ func (r *ListFolderResult) UnmarshalJSON(b []byte) error {
 	r.HasMore = l.HasMore
 	r.Entries = make([]IsMetadata, len(l.Entries))
 	for i, e := range l.Entries {
-		switch e.Tag {
-		case "file":
-			r.Entries[i] = e.File
-		case "folder":
-			r.Entries[i] = e.Folder
-		case "deleted":
-			r.Entries[i] = e.Deleted
+		metadata, err := IsMetadataFromJSON(e)
+		if err != nil {
+			return err
 		}
+		r.Entries[i] = metadata
 	}
 	return nil
 }
 
 type searchMatch struct {
 	MatchType *SearchMatchType `json:"match_type"`
-	Metadata  metadataUnion    `json:"metadata"`
+	Metadata  json.RawMessage  `json:"metadata"`
 }
 
 // UnmarshalJSON deserializes into a SearchMatch instance
@@ -62,38 +59,51 @@ func (s *SearchMatch) UnmarshalJSON(b []byte) error {
 		return err
 	}
 	s.MatchType = m.MatchType
-	e := m.Metadata
-	switch e.Tag {
-	case "file":
-		s.Metadata = e.File
-	case "folder":
-		s.Metadata = e.Folder
-	case "deleted":
-		s.Metadata = e.Deleted
+	metadata, err := IsMetadataFromJSON(m.Metadata)
+	if err != nil {
+		return err
 	}
+	s.Metadata = metadata
 	return nil
 }
 
 type deleteResult struct {
 	FileOpsResult
-	Metadata metadataUnion `json:"metadata"`
+	Metadata json.RawMessage `json:"metadata"`
 }
 
-// UnmarshalJSON deserializes into a SearchMatch instance
+// UnmarshalJSON deserializes into a DeleteResult instance
 func (s *DeleteResult) UnmarshalJSON(b []byte) error {
 	var m deleteResult
 	if err := json.Unmarshal(b, &m); err != nil {
 		return err
 	}
 	s.FileOpsResult = m.FileOpsResult
-	e := m.Metadata
-	switch e.Tag {
-	case "file":
-		s.Metadata = e.File
-	case "folder":
-		s.Metadata = e.Folder
-	case "deleted":
-		s.Metadata = e.Deleted
+	metadata, err := IsMetadataFromJSON(m.Metadata)
+	if err != nil {
+		return err
 	}
+	s.Metadata = metadata
+	return nil
+}
+
+type relocationResult struct {
+	FileOpsResult
+	// Metadata : Metadata of the relocated object.
+	Metadata json.RawMessage `json:"metadata"`
+}
+
+// UnmarshalJSON deserializes into a RelocationResult instance
+func (s *RelocationResult) UnmarshalJSON(b []byte) error {
+	var m relocationResult
+	if err := json.Unmarshal(b, &m); err != nil {
+		return err
+	}
+	s.FileOpsResult = m.FileOpsResult
+	metadata, err := IsMetadataFromJSON(m.Metadata)
+	if err != nil {
+		return err
+	}
+	s.Metadata = metadata
 	return nil
 }

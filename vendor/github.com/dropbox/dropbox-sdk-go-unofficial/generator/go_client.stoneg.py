@@ -1,7 +1,7 @@
 import os
 
-from stone.generator import CodeGenerator
-from stone.data_type import (
+from stone.backend import CodeBackend
+from stone.ir import (
     is_void_type,
     is_struct_type
 )
@@ -14,7 +14,7 @@ from go_helpers import (
 )
 
 
-class GoClientGenerator(CodeGenerator):
+class GoClientBackend(CodeBackend):
     def generate(self, api):
         for namespace in api.namespaces.values():
             if len(namespace.routes) > 0:
@@ -120,7 +120,7 @@ class GoClientGenerator(CodeGenerator):
 
         headers = {}
         if not is_void_type(route.arg_data_type):
-            if host == 'content':
+            if host == 'content' or style in ['upload', 'download']:
                 headers["Dropbox-API-Arg"] = "string(b)"
             else:
                 headers["Content-Type"] = '"application/json"'

@@ -247,6 +247,19 @@ func NewFoldersContainingPaperDoc() *FoldersContainingPaperDoc {
 	return s
 }
 
+// ImportFormat : The import format of the incoming data.
+type ImportFormat struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for ImportFormat
+const (
+	ImportFormatHtml      = "html"
+	ImportFormatMarkdown  = "markdown"
+	ImportFormatPlainText = "plain_text"
+	ImportFormatOther     = "other"
+)
+
 // InviteeInfoWithPermissionLevel : has no documentation (yet)
 type InviteeInfoWithPermissionLevel struct {
 	// Invitee : Email address invited to the Paper doc.
@@ -582,6 +595,55 @@ const (
 	PaperApiCursorErrorOther             = "other"
 )
 
+// PaperDocCreateArgs : has no documentation (yet)
+type PaperDocCreateArgs struct {
+	// ParentFolderId : The Paper folder ID where the Paper document should be
+	// created. The API user has to have write access to this folder or error is
+	// thrown.
+	ParentFolderId string `json:"parent_folder_id,omitempty"`
+	// ImportFormat : The format of provided data.
+	ImportFormat *ImportFormat `json:"import_format"`
+}
+
+// NewPaperDocCreateArgs returns a new PaperDocCreateArgs instance
+func NewPaperDocCreateArgs(ImportFormat *ImportFormat) *PaperDocCreateArgs {
+	s := new(PaperDocCreateArgs)
+	s.ImportFormat = ImportFormat
+	return s
+}
+
+// PaperDocCreateError : has no documentation (yet)
+type PaperDocCreateError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for PaperDocCreateError
+const (
+	PaperDocCreateErrorContentMalformed  = "content_malformed"
+	PaperDocCreateErrorFolderNotFound    = "folder_not_found"
+	PaperDocCreateErrorDocLengthExceeded = "doc_length_exceeded"
+	PaperDocCreateErrorImageSizeExceeded = "image_size_exceeded"
+)
+
+// PaperDocCreateUpdateResult : has no documentation (yet)
+type PaperDocCreateUpdateResult struct {
+	// DocId : Doc ID of the newly created doc.
+	DocId string `json:"doc_id"`
+	// Revision : The Paper doc revision. Simply an ever increasing number.
+	Revision int64 `json:"revision"`
+	// Title : The Paper doc title.
+	Title string `json:"title"`
+}
+
+// NewPaperDocCreateUpdateResult returns a new PaperDocCreateUpdateResult instance
+func NewPaperDocCreateUpdateResult(DocId string, Revision int64, Title string) *PaperDocCreateUpdateResult {
+	s := new(PaperDocCreateUpdateResult)
+	s.DocId = DocId
+	s.Revision = Revision
+	s.Title = Title
+	return s
+}
+
 // PaperDocExport : has no documentation (yet)
 type PaperDocExport struct {
 	RefPaperDoc
@@ -646,6 +708,57 @@ func NewPaperDocSharingPolicy(DocId string, SharingPolicy *SharingPolicy) *Paper
 	s.SharingPolicy = SharingPolicy
 	return s
 }
+
+// PaperDocUpdateArgs : has no documentation (yet)
+type PaperDocUpdateArgs struct {
+	RefPaperDoc
+	// DocUpdatePolicy : The policy used for the current update call.
+	DocUpdatePolicy *PaperDocUpdatePolicy `json:"doc_update_policy"`
+	// Revision : The latest doc revision. This value must match the head
+	// revision or an error code will be returned. This is to prevent colliding
+	// writes.
+	Revision int64 `json:"revision"`
+	// ImportFormat : The format of provided data.
+	ImportFormat *ImportFormat `json:"import_format"`
+}
+
+// NewPaperDocUpdateArgs returns a new PaperDocUpdateArgs instance
+func NewPaperDocUpdateArgs(DocId string, DocUpdatePolicy *PaperDocUpdatePolicy, Revision int64, ImportFormat *ImportFormat) *PaperDocUpdateArgs {
+	s := new(PaperDocUpdateArgs)
+	s.DocId = DocId
+	s.DocUpdatePolicy = DocUpdatePolicy
+	s.Revision = Revision
+	s.ImportFormat = ImportFormat
+	return s
+}
+
+// PaperDocUpdateError : has no documentation (yet)
+type PaperDocUpdateError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for PaperDocUpdateError
+const (
+	PaperDocUpdateErrorContentMalformed  = "content_malformed"
+	PaperDocUpdateErrorRevisionMismatch  = "revision_mismatch"
+	PaperDocUpdateErrorDocLengthExceeded = "doc_length_exceeded"
+	PaperDocUpdateErrorImageSizeExceeded = "image_size_exceeded"
+	PaperDocUpdateErrorDocArchived       = "doc_archived"
+	PaperDocUpdateErrorDocDeleted        = "doc_deleted"
+)
+
+// PaperDocUpdatePolicy : has no documentation (yet)
+type PaperDocUpdatePolicy struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for PaperDocUpdatePolicy
+const (
+	PaperDocUpdatePolicyAppend       = "append"
+	PaperDocUpdatePolicyPrepend      = "prepend"
+	PaperDocUpdatePolicyOverwriteAll = "overwrite_all"
+	PaperDocUpdatePolicyOther        = "other"
+)
 
 // RemovePaperDocUser : has no documentation (yet)
 type RemovePaperDocUser struct {

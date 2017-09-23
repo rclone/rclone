@@ -27,64 +27,7 @@ import (
 	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/properties"
-)
-
-// PropertiesError : has no documentation (yet)
-type PropertiesError struct {
-	dropbox.Tagged
-	// Path : has no documentation (yet)
-	Path *LookupError `json:"path,omitempty"`
-}
-
-// Valid tag values for PropertiesError
-const (
-	PropertiesErrorPath = "path"
-)
-
-// UnmarshalJSON deserializes into a PropertiesError instance
-func (u *PropertiesError) UnmarshalJSON(body []byte) error {
-	type wrap struct {
-		dropbox.Tagged
-		// Path : has no documentation (yet)
-		Path json.RawMessage `json:"path,omitempty"`
-	}
-	var w wrap
-	var err error
-	if err = json.Unmarshal(body, &w); err != nil {
-		return err
-	}
-	u.Tag = w.Tag
-	switch u.Tag {
-	case "path":
-		err = json.Unmarshal(w.Path, &u.Path)
-
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// InvalidPropertyGroupError : has no documentation (yet)
-type InvalidPropertyGroupError struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for InvalidPropertyGroupError
-const (
-	InvalidPropertyGroupErrorPropertyFieldTooLarge = "property_field_too_large"
-	InvalidPropertyGroupErrorDoesNotFitTemplate    = "does_not_fit_template"
-)
-
-// AddPropertiesError : has no documentation (yet)
-type AddPropertiesError struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for AddPropertiesError
-const (
-	AddPropertiesErrorPropertyGroupAlreadyExists = "property_group_already_exists"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/file_properties"
 )
 
 // GetMetadataArg : has no documentation (yet)
@@ -171,7 +114,7 @@ func (u *GetMetadataError) UnmarshalJSON(body []byte) error {
 type AlphaGetMetadataError struct {
 	dropbox.Tagged
 	// PropertiesError : has no documentation (yet)
-	PropertiesError *LookUpPropertiesError `json:"properties_error,omitempty"`
+	PropertiesError *file_properties.LookUpPropertiesError `json:"properties_error,omitempty"`
 }
 
 // Valid tag values for AlphaGetMetadataError
@@ -239,7 +182,7 @@ func NewCommitInfo(Path string) *CommitInfo {
 type CommitInfoWithProperties struct {
 	CommitInfo
 	// PropertyGroups : List of custom properties to add to file.
-	PropertyGroups []*properties.PropertyGroup `json:"property_groups,omitempty"`
+	PropertyGroups []*file_properties.PropertyGroup `json:"property_groups,omitempty"`
 }
 
 // NewCommitInfoWithProperties returns a new CommitInfoWithProperties instance
@@ -606,7 +549,7 @@ type Metadata struct {
 	// only the casing of paths won't be returned by `listFolderContinue`. This
 	// field will be null if the file or folder is not mounted.
 	PathDisplay string `json:"path_display,omitempty"`
-	// ParentSharedFolderId : Deprecated. Please use
+	// ParentSharedFolderId : Please use
 	// `FileSharingInfo.parent_shared_folder_id` or
 	// `FolderSharingInfo.parent_shared_folder_id` instead.
 	ParentSharedFolderId string `json:"parent_shared_folder_id,omitempty"`
@@ -737,7 +680,7 @@ func NewDimensions(Height uint64, Width uint64) *Dimensions {
 type DownloadArg struct {
 	// Path : The path of the file to download.
 	Path string `json:"path"`
-	// Rev : Deprecated. Please specify revision in `path` instead.
+	// Rev : Please specify revision in `path` instead.
 	Rev string `json:"rev,omitempty"`
 	// ExtraHeaders can be used to pass Range, If-None-Match headers
 	ExtraHeaders map[string]string `json:"-"`
@@ -812,7 +755,7 @@ type FileMetadata struct {
 	SharingInfo *FileSharingInfo `json:"sharing_info,omitempty"`
 	// PropertyGroups : Additional information if the file has custom properties
 	// with the property template specified.
-	PropertyGroups []*properties.PropertyGroup `json:"property_groups,omitempty"`
+	PropertyGroups []*file_properties.PropertyGroup `json:"property_groups,omitempty"`
 	// HasExplicitSharedMembers : This flag will only be present if
 	// include_has_explicit_shared_members  is true in `listFolder` or
 	// `getMetadata`. If this  flag is present, it will be true if this file has
@@ -876,14 +819,14 @@ type FolderMetadata struct {
 	Metadata
 	// Id : A unique identifier for the folder.
 	Id string `json:"id"`
-	// SharedFolderId : Deprecated. Please use `sharing_info` instead.
+	// SharedFolderId : Please use `sharing_info` instead.
 	SharedFolderId string `json:"shared_folder_id,omitempty"`
 	// SharingInfo : Set if the folder is contained in a shared folder or is a
 	// shared folder mount point.
 	SharingInfo *FolderSharingInfo `json:"sharing_info,omitempty"`
 	// PropertyGroups : Additional information if the file has custom properties
 	// with the property template specified.
-	PropertyGroups []*properties.PropertyGroup `json:"property_groups,omitempty"`
+	PropertyGroups []*file_properties.PropertyGroup `json:"property_groups,omitempty"`
 }
 
 // NewFolderMetadata returns a new FolderMetadata instance
@@ -1059,6 +1002,107 @@ func NewGetTemporaryLinkResult(Metadata *FileMetadata, Link string) *GetTemporar
 	return s
 }
 
+// GetThumbnailBatchArg : Arguments for `getThumbnailBatch`.
+type GetThumbnailBatchArg struct {
+	// Entries : List of files to get thumbnails.
+	Entries []*ThumbnailArg `json:"entries"`
+}
+
+// NewGetThumbnailBatchArg returns a new GetThumbnailBatchArg instance
+func NewGetThumbnailBatchArg(Entries []*ThumbnailArg) *GetThumbnailBatchArg {
+	s := new(GetThumbnailBatchArg)
+	s.Entries = Entries
+	return s
+}
+
+// GetThumbnailBatchError : has no documentation (yet)
+type GetThumbnailBatchError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for GetThumbnailBatchError
+const (
+	GetThumbnailBatchErrorTooManyFiles = "too_many_files"
+	GetThumbnailBatchErrorOther        = "other"
+)
+
+// GetThumbnailBatchResult : has no documentation (yet)
+type GetThumbnailBatchResult struct {
+	// Entries : List of files and their thumbnails.
+	Entries []*GetThumbnailBatchResultEntry `json:"entries"`
+}
+
+// NewGetThumbnailBatchResult returns a new GetThumbnailBatchResult instance
+func NewGetThumbnailBatchResult(Entries []*GetThumbnailBatchResultEntry) *GetThumbnailBatchResult {
+	s := new(GetThumbnailBatchResult)
+	s.Entries = Entries
+	return s
+}
+
+// GetThumbnailBatchResultData : has no documentation (yet)
+type GetThumbnailBatchResultData struct {
+	// Metadata : has no documentation (yet)
+	Metadata *FileMetadata `json:"metadata"`
+	// Thumbnail : has no documentation (yet)
+	Thumbnail string `json:"thumbnail"`
+}
+
+// NewGetThumbnailBatchResultData returns a new GetThumbnailBatchResultData instance
+func NewGetThumbnailBatchResultData(Metadata *FileMetadata, Thumbnail string) *GetThumbnailBatchResultData {
+	s := new(GetThumbnailBatchResultData)
+	s.Metadata = Metadata
+	s.Thumbnail = Thumbnail
+	return s
+}
+
+// GetThumbnailBatchResultEntry : has no documentation (yet)
+type GetThumbnailBatchResultEntry struct {
+	dropbox.Tagged
+	// Success : has no documentation (yet)
+	Success *GetThumbnailBatchResultData `json:"success,omitempty"`
+	// Failure : The result for this file if it was an error.
+	Failure *ThumbnailError `json:"failure,omitempty"`
+}
+
+// Valid tag values for GetThumbnailBatchResultEntry
+const (
+	GetThumbnailBatchResultEntrySuccess = "success"
+	GetThumbnailBatchResultEntryFailure = "failure"
+	GetThumbnailBatchResultEntryOther   = "other"
+)
+
+// UnmarshalJSON deserializes into a GetThumbnailBatchResultEntry instance
+func (u *GetThumbnailBatchResultEntry) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// Success : has no documentation (yet)
+		Success json.RawMessage `json:"success,omitempty"`
+		// Failure : The result for this file if it was an error.
+		Failure json.RawMessage `json:"failure,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "success":
+		err = json.Unmarshal(body, &u.Success)
+
+		if err != nil {
+			return err
+		}
+	case "failure":
+		err = json.Unmarshal(w.Failure, &u.Failure)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // GpsCoordinates : GPS coordinates for a photo or video.
 type GpsCoordinates struct {
 	// Latitude : Latitude of the GPS coordinates.
@@ -1093,6 +1137,13 @@ type ListFolderArg struct {
 	// flag for each file indicating whether or not  that file has any explicit
 	// members.
 	IncludeHasExplicitSharedMembers bool `json:"include_has_explicit_shared_members"`
+	// IncludeMountedFolders : If true, the results will include entries under
+	// mounted folders which includes app folder, shared folder and team folder.
+	IncludeMountedFolders bool `json:"include_mounted_folders"`
+	// Limit : The maximum number of results to return per request. Note: This
+	// is an approximate number and there can be slightly more entries returned
+	// in some cases.
+	Limit uint32 `json:"limit,omitempty"`
 }
 
 // NewListFolderArg returns a new ListFolderArg instance
@@ -1103,6 +1154,7 @@ func NewListFolderArg(Path string) *ListFolderArg {
 	s.IncludeMediaInfo = false
 	s.IncludeDeleted = false
 	s.IncludeHasExplicitSharedMembers = false
+	s.IncludeMountedFolders = true
 	return s
 }
 
@@ -1351,16 +1403,6 @@ func NewListRevisionsResult(IsDeleted bool, Entries []*FileMetadata) *ListRevisi
 	return s
 }
 
-// LookUpPropertiesError : has no documentation (yet)
-type LookUpPropertiesError struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for LookUpPropertiesError
-const (
-	LookUpPropertiesErrorPropertyGroupNotFound = "property_group_not_found"
-)
-
 // LookupError : has no documentation (yet)
 type LookupError struct {
 	dropbox.Tagged
@@ -1541,7 +1583,7 @@ func NewPhotoMetadata() *PhotoMetadata {
 type PreviewArg struct {
 	// Path : The path of the file to preview.
 	Path string `json:"path"`
-	// Rev : Deprecated. Please specify revision in `path` instead.
+	// Rev : Please specify revision in `path` instead.
 	Rev string `json:"rev,omitempty"`
 }
 
@@ -1589,42 +1631,6 @@ func (u *PreviewError) UnmarshalJSON(body []byte) error {
 		}
 	}
 	return nil
-}
-
-// PropertyGroupUpdate : has no documentation (yet)
-type PropertyGroupUpdate struct {
-	// TemplateId : A unique identifier for a property template.
-	TemplateId string `json:"template_id"`
-	// AddOrUpdateFields : List of property fields to update if the field
-	// already exists. If the field doesn't exist, add the field to the property
-	// group.
-	AddOrUpdateFields []*properties.PropertyField `json:"add_or_update_fields,omitempty"`
-	// RemoveFields : List of property field names to remove from property group
-	// if the field exists.
-	RemoveFields []string `json:"remove_fields,omitempty"`
-}
-
-// NewPropertyGroupUpdate returns a new PropertyGroupUpdate instance
-func NewPropertyGroupUpdate(TemplateId string) *PropertyGroupUpdate {
-	s := new(PropertyGroupUpdate)
-	s.TemplateId = TemplateId
-	return s
-}
-
-// PropertyGroupWithPath : has no documentation (yet)
-type PropertyGroupWithPath struct {
-	// Path : A unique identifier for the file.
-	Path string `json:"path"`
-	// PropertyGroups : Filled custom property templates associated with a file.
-	PropertyGroups []*properties.PropertyGroup `json:"property_groups"`
-}
-
-// NewPropertyGroupWithPath returns a new PropertyGroupWithPath instance
-func NewPropertyGroupWithPath(Path string, PropertyGroups []*properties.PropertyGroup) *PropertyGroupWithPath {
-	s := new(PropertyGroupWithPath)
-	s.Path = Path
-	s.PropertyGroups = PropertyGroups
-	return s
 }
 
 // RelocationPath : has no documentation (yet)
@@ -1898,59 +1904,6 @@ func NewRelocationResult(Metadata IsMetadata) *RelocationResult {
 	s := new(RelocationResult)
 	s.Metadata = Metadata
 	return s
-}
-
-// RemovePropertiesArg : has no documentation (yet)
-type RemovePropertiesArg struct {
-	// Path : A unique identifier for the file.
-	Path string `json:"path"`
-	// PropertyTemplateIds : A list of identifiers for a property template
-	// created by route properties/template/add.
-	PropertyTemplateIds []string `json:"property_template_ids"`
-}
-
-// NewRemovePropertiesArg returns a new RemovePropertiesArg instance
-func NewRemovePropertiesArg(Path string, PropertyTemplateIds []string) *RemovePropertiesArg {
-	s := new(RemovePropertiesArg)
-	s.Path = Path
-	s.PropertyTemplateIds = PropertyTemplateIds
-	return s
-}
-
-// RemovePropertiesError : has no documentation (yet)
-type RemovePropertiesError struct {
-	dropbox.Tagged
-	// PropertyGroupLookup : has no documentation (yet)
-	PropertyGroupLookup *LookUpPropertiesError `json:"property_group_lookup,omitempty"`
-}
-
-// Valid tag values for RemovePropertiesError
-const (
-	RemovePropertiesErrorPropertyGroupLookup = "property_group_lookup"
-)
-
-// UnmarshalJSON deserializes into a RemovePropertiesError instance
-func (u *RemovePropertiesError) UnmarshalJSON(body []byte) error {
-	type wrap struct {
-		dropbox.Tagged
-		// PropertyGroupLookup : has no documentation (yet)
-		PropertyGroupLookup json.RawMessage `json:"property_group_lookup,omitempty"`
-	}
-	var w wrap
-	var err error
-	if err = json.Unmarshal(body, &w); err != nil {
-		return err
-	}
-	u.Tag = w.Tag
-	switch u.Tag {
-	case "property_group_lookup":
-		err = json.Unmarshal(w.PropertyGroupLookup, &u.PropertyGroupLookup)
-
-		if err != nil {
-			return err
-		}
-	}
-	return nil
 }
 
 // RestoreArg : has no documentation (yet)
@@ -2442,59 +2395,6 @@ const (
 	ThumbnailSizeW1024h768 = "w1024h768"
 )
 
-// UpdatePropertiesError : has no documentation (yet)
-type UpdatePropertiesError struct {
-	dropbox.Tagged
-	// PropertyGroupLookup : has no documentation (yet)
-	PropertyGroupLookup *LookUpPropertiesError `json:"property_group_lookup,omitempty"`
-}
-
-// Valid tag values for UpdatePropertiesError
-const (
-	UpdatePropertiesErrorPropertyGroupLookup = "property_group_lookup"
-)
-
-// UnmarshalJSON deserializes into a UpdatePropertiesError instance
-func (u *UpdatePropertiesError) UnmarshalJSON(body []byte) error {
-	type wrap struct {
-		dropbox.Tagged
-		// PropertyGroupLookup : has no documentation (yet)
-		PropertyGroupLookup json.RawMessage `json:"property_group_lookup,omitempty"`
-	}
-	var w wrap
-	var err error
-	if err = json.Unmarshal(body, &w); err != nil {
-		return err
-	}
-	u.Tag = w.Tag
-	switch u.Tag {
-	case "property_group_lookup":
-		err = json.Unmarshal(w.PropertyGroupLookup, &u.PropertyGroupLookup)
-
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// UpdatePropertyGroupArg : has no documentation (yet)
-type UpdatePropertyGroupArg struct {
-	// Path : A unique identifier for the file.
-	Path string `json:"path"`
-	// UpdatePropertyGroups : Filled custom property templates associated with a
-	// file.
-	UpdatePropertyGroups []*PropertyGroupUpdate `json:"update_property_groups"`
-}
-
-// NewUpdatePropertyGroupArg returns a new UpdatePropertyGroupArg instance
-func NewUpdatePropertyGroupArg(Path string, UpdatePropertyGroups []*PropertyGroupUpdate) *UpdatePropertyGroupArg {
-	s := new(UpdatePropertyGroupArg)
-	s.Path = Path
-	s.UpdatePropertyGroups = UpdatePropertyGroups
-	return s
-}
-
 // UploadError : has no documentation (yet)
 type UploadError struct {
 	dropbox.Tagged
@@ -2536,7 +2436,7 @@ func (u *UploadError) UnmarshalJSON(body []byte) error {
 type UploadErrorWithProperties struct {
 	dropbox.Tagged
 	// PropertiesError : has no documentation (yet)
-	PropertiesError *InvalidPropertyGroupError `json:"properties_error,omitempty"`
+	PropertiesError *file_properties.InvalidPropertyGroupError `json:"properties_error,omitempty"`
 }
 
 // Valid tag values for UploadErrorWithProperties

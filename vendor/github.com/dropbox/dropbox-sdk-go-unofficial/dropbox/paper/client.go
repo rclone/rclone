@@ -35,6 +35,8 @@ type Client interface {
 	// DocsArchive : Marks the given Paper doc as archived. Note: This action
 	// can be performed or undone by anyone with edit permissions to the doc.
 	DocsArchive(arg *RefPaperDoc) (err error)
+	// DocsCreate : Creates a new Paper doc with the provided content.
+	DocsCreate(arg *PaperDocCreateArgs, content io.Reader) (res *PaperDocCreateUpdateResult, err error)
 	// DocsDownload : Exports and downloads Paper doc either as HTML or
 	// markdown.
 	DocsDownload(arg *PaperDocExport) (res *PaperDocExportResult, content io.ReadCloser, err error)
@@ -74,6 +76,8 @@ type Client interface {
 	// 'public_sharing_policy' cannot be set to the value 'disabled' because
 	// this setting can be changed only via the team admin console.
 	DocsSharingPolicySet(arg *PaperDocSharingPolicy) (err error)
+	// DocsUpdate : Updates an existing Paper doc with the provided content.
+	DocsUpdate(arg *PaperDocUpdateArgs, content io.Reader) (res *PaperDocCreateUpdateResult, err error)
 	// DocsUsersAdd : Allows an owner or editor to add users to a Paper doc or
 	// change their permissions using their email address or Dropbox account ID.
 	// Note: The Doc owner's permissions cannot be changed.
@@ -162,6 +166,79 @@ func (dbx *apiImpl) DocsArchive(arg *RefPaperDoc) (err error) {
 	return
 }
 
+//DocsCreateAPIError is an error-wrapper for the docs/create route
+type DocsCreateAPIError struct {
+	dropbox.APIError
+	EndpointError *PaperDocCreateError `json:"error"`
+}
+
+func (dbx *apiImpl) DocsCreate(arg *PaperDocCreateArgs, content io.Reader) (res *PaperDocCreateUpdateResult, err error) {
+	cli := dbx.Client
+
+	dbx.Config.TryLog("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type":    "application/octet-stream",
+		"Dropbox-API-Arg": string(b),
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "upload", true, "paper", "docs/create", headers, content)
+	if err != nil {
+		return
+	}
+	dbx.Config.TryLog("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError DocsCreateAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
 //DocsDownloadAPIError is an error-wrapper for the docs/download route
 type DocsDownloadAPIError struct {
 	dropbox.APIError
@@ -178,7 +255,7 @@ func (dbx *apiImpl) DocsDownload(arg *PaperDocExport) (res *PaperDocExportResult
 	}
 
 	headers := map[string]string{
-		"Content-Type": "application/json",
+		"Dropbox-API-Arg": string(b),
 	}
 	if dbx.Config.AsMemberID != "" {
 		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
@@ -775,6 +852,79 @@ func (dbx *apiImpl) DocsSharingPolicySet(arg *PaperDocSharingPolicy) (err error)
 	}
 	if resp.StatusCode == http.StatusConflict {
 		var apiError DocsSharingPolicySetAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//DocsUpdateAPIError is an error-wrapper for the docs/update route
+type DocsUpdateAPIError struct {
+	dropbox.APIError
+	EndpointError *PaperDocUpdateError `json:"error"`
+}
+
+func (dbx *apiImpl) DocsUpdate(arg *PaperDocUpdateArgs, content io.Reader) (res *PaperDocCreateUpdateResult, err error) {
+	cli := dbx.Client
+
+	dbx.Config.TryLog("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type":    "application/octet-stream",
+		"Dropbox-API-Arg": string(b),
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "upload", true, "paper", "docs/update", headers, content)
+	if err != nil {
+		return
+	}
+	dbx.Config.TryLog("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError DocsUpdateAPIError
 		err = json.Unmarshal(body, &apiError)
 		if err != nil {
 			return

@@ -1,8 +1,8 @@
 import os
 import shutil
 
-from stone.generator import CodeGenerator
-from stone.data_type import (
+from stone.backend import CodeBackend
+from stone.ir import (
     is_boolean_type,
     is_nullable_type,
     is_primitive_type,
@@ -19,7 +19,7 @@ from go_helpers import (
 )
 
 
-class GoTypesGenerator(CodeGenerator):
+class GoTypesBackend(CodeBackend):
     def generate(self, api):
         rsrc_folder = os.path.join(os.path.dirname(__file__), 'go_rsrc')
         shutil.copy(os.path.join(rsrc_folder, 'sdk.go'),

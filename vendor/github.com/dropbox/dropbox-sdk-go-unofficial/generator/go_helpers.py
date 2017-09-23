@@ -1,5 +1,5 @@
-from stone.api import (ApiNamespace, ApiRoute)
-from stone.data_type import (
+from stone.ir import (ApiNamespace, ApiRoute)
+from stone.ir import (
     Boolean,
     Float32,
     Float64,
@@ -15,7 +15,7 @@ from stone.data_type import (
     is_struct_type,
     Void,
 )
-from stone.target import helpers
+from stone.backends import helpers
 
 HEADER = """\
 // Copyright (c) Dropbox, Inc.

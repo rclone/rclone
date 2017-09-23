@@ -1,9 +1,10 @@
 language: go
 
 go:
-  - 1.6.4
-  - 1.7.6
-  - 1.8.3
+  - 1.6.x
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
 
 install:
   - go get -u golang.org/x/oauth2

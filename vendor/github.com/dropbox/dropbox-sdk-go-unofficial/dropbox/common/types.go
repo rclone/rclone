@@ -45,11 +45,11 @@ type PathRoot struct {
 	dropbox.Tagged
 	// Team : Paths are relative to the given team directory. (This results in
 	// `PathRootError.invalid` if the user is not a member of the team
-	// associated with that path root id.)
+	// associated with that path root id.).
 	Team string `json:"team,omitempty"`
 	// NamespaceId : Paths are relative to given namespace id (This results in
 	// `PathRootError.no_permission` if you don't have access to this
-	// namespace.)
+	// namespace.).
 	NamespaceId string `json:"namespace_id,omitempty"`
 }
 

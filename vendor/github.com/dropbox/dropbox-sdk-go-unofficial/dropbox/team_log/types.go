@@ -27,6 +27,7 @@ import (
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies"
 )
 
 // AccessMethodLogInfo : Indicates the method in which the action was performed.
@@ -847,10 +848,10 @@ func NewDeviceApprovalsChangeMobilePolicyDetails() *DeviceApprovalsChangeMobileP
 type DeviceApprovalsChangeOverageActionDetails struct {
 	// NewValue : New over the limits policy. Might be missing due to historical
 	// data gap.
-	NewValue *DeviceApprovalsRolloutPolicy `json:"new_value,omitempty"`
+	NewValue *team_policies.RolloutMethod `json:"new_value,omitempty"`
 	// PreviousValue : Previous over the limit policy. Might be missing due to
 	// historical data gap.
-	PreviousValue *DeviceApprovalsRolloutPolicy `json:"previous_value,omitempty"`
+	PreviousValue *team_policies.RolloutMethod `json:"previous_value,omitempty"`
 }
 
 // NewDeviceApprovalsChangeOverageActionDetails returns a new DeviceApprovalsChangeOverageActionDetails instance
@@ -886,19 +887,6 @@ const (
 	DeviceApprovalsPolicyUnlimited = "unlimited"
 	DeviceApprovalsPolicyLimited   = "limited"
 	DeviceApprovalsPolicyOther     = "other"
-)
-
-// DeviceApprovalsRolloutPolicy : has no documentation (yet)
-type DeviceApprovalsRolloutPolicy struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for DeviceApprovalsRolloutPolicy
-const (
-	DeviceApprovalsRolloutPolicyRemoveOldest = "remove_oldest"
-	DeviceApprovalsRolloutPolicyRemoveAll    = "remove_all"
-	DeviceApprovalsRolloutPolicyAddException = "add_exception"
-	DeviceApprovalsRolloutPolicyOther        = "other"
 )
 
 // DeviceChangeIpDesktopDetails : IP address associated with active desktop
@@ -1268,14 +1256,14 @@ func NewEmmAddExceptionDetails() *EmmAddExceptionDetails {
 // for team members.
 type EmmChangePolicyDetails struct {
 	// NewValue : New enterprise mobility management policy.
-	NewValue *EmmPolicy `json:"new_value"`
+	NewValue *team_policies.EmmState `json:"new_value"`
 	// PreviousValue : Previous enterprise mobility management policy. Might be
 	// missing due to historical data gap.
-	PreviousValue *EmmPolicy `json:"previous_value,omitempty"`
+	PreviousValue *team_policies.EmmState `json:"previous_value,omitempty"`
 }
 
 // NewEmmChangePolicyDetails returns a new EmmChangePolicyDetails instance
-func NewEmmChangePolicyDetails(NewValue *EmmPolicy) *EmmChangePolicyDetails {
+func NewEmmChangePolicyDetails(NewValue *team_policies.EmmState) *EmmChangePolicyDetails {
 	s := new(EmmChangePolicyDetails)
 	s.NewValue = NewValue
 	return s
@@ -1310,19 +1298,6 @@ func NewEmmLoginSuccessDetails() *EmmLoginSuccessDetails {
 	s := new(EmmLoginSuccessDetails)
 	return s
 }
-
-// EmmPolicy : Enterprise mobility management policy
-type EmmPolicy struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for EmmPolicy
-const (
-	EmmPolicyDisabled = "disabled"
-	EmmPolicyOptional = "optional"
-	EmmPolicyRequired = "required"
-	EmmPolicyOther    = "other"
-)
 
 // EmmRefreshAuthTokenDetails : Refreshed the auth token used for setting up
 // enterprise mobility management.
@@ -1413,6 +1388,8 @@ type EventDetails struct {
 	// MemberTransferAccountContentsDetails : Transferred contents of a removed
 	// team member account to another member.
 	MemberTransferAccountContentsDetails *MemberTransferAccountContentsDetails `json:"member_transfer_account_contents_details,omitempty"`
+	// PaperAdminExportStartDetails : Exported all Paper documents in the team.
+	PaperAdminExportStartDetails *PaperAdminExportStartDetails `json:"paper_admin_export_start_details,omitempty"`
 	// PaperEnabledUsersGroupAdditionDetails : Users added to Paper enabled
 	// users list.
 	PaperEnabledUsersGroupAdditionDetails *PaperEnabledUsersGroupAdditionDetails `json:"paper_enabled_users_group_addition_details,omitempty"`
@@ -1443,6 +1420,21 @@ type EventDetails struct {
 	AppUnlinkTeamDetails *AppUnlinkTeamDetails `json:"app_unlink_team_details,omitempty"`
 	// AppUnlinkUserDetails : Unlinked an app for team member.
 	AppUnlinkUserDetails *AppUnlinkUserDetails `json:"app_unlink_user_details,omitempty"`
+	// FileAddCommentDetails : Added a file comment.
+	FileAddCommentDetails *FileAddCommentDetails `json:"file_add_comment_details,omitempty"`
+	// FileChangeCommentSubscriptionDetails : Subscribed to or unsubscribed from
+	// comment notifications for file.
+	FileChangeCommentSubscriptionDetails *FileChangeCommentSubscriptionDetails `json:"file_change_comment_subscription_details,omitempty"`
+	// FileDeleteCommentDetails : Deleted a file comment.
+	FileDeleteCommentDetails *FileDeleteCommentDetails `json:"file_delete_comment_details,omitempty"`
+	// FileLikeCommentDetails : Liked a file comment.
+	FileLikeCommentDetails *FileLikeCommentDetails `json:"file_like_comment_details,omitempty"`
+	// FileResolveCommentDetails : Resolved a file comment.
+	FileResolveCommentDetails *FileResolveCommentDetails `json:"file_resolve_comment_details,omitempty"`
+	// FileUnlikeCommentDetails : Unliked a file comment.
+	FileUnlikeCommentDetails *FileUnlikeCommentDetails `json:"file_unlike_comment_details,omitempty"`
+	// FileUnresolveCommentDetails : Unresolved a file comment.
+	FileUnresolveCommentDetails *FileUnresolveCommentDetails `json:"file_unresolve_comment_details,omitempty"`
 	// DeviceChangeIpDesktopDetails : IP address associated with active desktop
 	// session changed.
 	DeviceChangeIpDesktopDetails *DeviceChangeIpDesktopDetails `json:"device_change_ip_desktop_details,omitempty"`
@@ -1574,10 +1566,6 @@ type EventDetails struct {
 	GroupCreateDetails *GroupCreateDetails `json:"group_create_details,omitempty"`
 	// GroupDeleteDetails : Deleted a group.
 	GroupDeleteDetails *GroupDeleteDetails `json:"group_delete_details,omitempty"`
-	// GroupDescriptionUpdatedDetails : Updated a group.
-	GroupDescriptionUpdatedDetails *GroupDescriptionUpdatedDetails `json:"group_description_updated_details,omitempty"`
-	// GroupJoinPolicyUpdatedDetails : Updated a group join policy.
-	GroupJoinPolicyUpdatedDetails *GroupJoinPolicyUpdatedDetails `json:"group_join_policy_updated_details,omitempty"`
 	// GroupMovedDetails : Moved a group.
 	GroupMovedDetails *GroupMovedDetails `json:"group_moved_details,omitempty"`
 	// GroupRemoveExternalIdDetails : Removed the external ID for group.
@@ -1626,9 +1614,6 @@ type EventDetails struct {
 	PaperContentAddToFolderDetails *PaperContentAddToFolderDetails `json:"paper_content_add_to_folder_details,omitempty"`
 	// PaperContentArchiveDetails : Archived Paper doc or folder.
 	PaperContentArchiveDetails *PaperContentArchiveDetails `json:"paper_content_archive_details,omitempty"`
-	// PaperContentChangeSubscriptionDetails : Followed or unfollowed a Paper
-	// doc or folder.
-	PaperContentChangeSubscriptionDetails *PaperContentChangeSubscriptionDetails `json:"paper_content_change_subscription_details,omitempty"`
 	// PaperContentCreateDetails : Created a Paper doc or folder.
 	PaperContentCreateDetails *PaperContentCreateDetails `json:"paper_content_create_details,omitempty"`
 	// PaperContentPermanentlyDeleteDetails : Permanently deleted a Paper doc or
@@ -1652,6 +1637,8 @@ type EventDetails struct {
 	// PaperDocChangeSharingPolicyDetails : Changed the sharing policy for Paper
 	// doc.
 	PaperDocChangeSharingPolicyDetails *PaperDocChangeSharingPolicyDetails `json:"paper_doc_change_sharing_policy_details,omitempty"`
+	// PaperDocChangeSubscriptionDetails : Followed or unfollowed a Paper doc.
+	PaperDocChangeSubscriptionDetails *PaperDocChangeSubscriptionDetails `json:"paper_doc_change_subscription_details,omitempty"`
 	// PaperDocDeletedDetails : Paper doc archived.
 	PaperDocDeletedDetails *PaperDocDeletedDetails `json:"paper_doc_deleted_details,omitempty"`
 	// PaperDocDeleteCommentDetails : Deleted a Paper doc comment.
@@ -1677,10 +1664,17 @@ type EventDetails struct {
 	PaperDocSlackShareDetails *PaperDocSlackShareDetails `json:"paper_doc_slack_share_details,omitempty"`
 	// PaperDocTeamInviteDetails : Paper doc shared with team member.
 	PaperDocTeamInviteDetails *PaperDocTeamInviteDetails `json:"paper_doc_team_invite_details,omitempty"`
+	// PaperDocTrashedDetails : Paper doc trashed.
+	PaperDocTrashedDetails *PaperDocTrashedDetails `json:"paper_doc_trashed_details,omitempty"`
 	// PaperDocUnresolveCommentDetails : Unresolved a Paper doc comment.
 	PaperDocUnresolveCommentDetails *PaperDocUnresolveCommentDetails `json:"paper_doc_unresolve_comment_details,omitempty"`
+	// PaperDocUntrashedDetails : Paper doc untrashed.
+	PaperDocUntrashedDetails *PaperDocUntrashedDetails `json:"paper_doc_untrashed_details,omitempty"`
 	// PaperDocViewDetails : Viewed Paper doc.
 	PaperDocViewDetails *PaperDocViewDetails `json:"paper_doc_view_details,omitempty"`
+	// PaperFolderChangeSubscriptionDetails : Followed or unfollowed a Paper
+	// folder.
+	PaperFolderChangeSubscriptionDetails *PaperFolderChangeSubscriptionDetails `json:"paper_folder_change_subscription_details,omitempty"`
 	// PaperFolderDeletedDetails : Paper folder archived.
 	PaperFolderDeletedDetails *PaperFolderDeletedDetails `json:"paper_folder_deleted_details,omitempty"`
 	// PaperFolderFollowedDetails : Followed a Paper folder.
@@ -1704,12 +1698,6 @@ type EventDetails struct {
 	TeamActivityCreateReportDetails *TeamActivityCreateReportDetails `json:"team_activity_create_report_details,omitempty"`
 	// CollectionShareDetails : Shared an album.
 	CollectionShareDetails *CollectionShareDetails `json:"collection_share_details,omitempty"`
-	// FileAddCommentDetails : Added a file comment.
-	FileAddCommentDetails *FileAddCommentDetails `json:"file_add_comment_details,omitempty"`
-	// FileLikeCommentDetails : Liked a file comment.
-	FileLikeCommentDetails *FileLikeCommentDetails `json:"file_like_comment_details,omitempty"`
-	// FileUnlikeCommentDetails : Unliked a file comment.
-	FileUnlikeCommentDetails *FileUnlikeCommentDetails `json:"file_unlike_comment_details,omitempty"`
 	// NoteAclInviteOnlyDetails : Changed a Paper document to be invite-only.
 	NoteAclInviteOnlyDetails *NoteAclInviteOnlyDetails `json:"note_acl_invite_only_details,omitempty"`
 	// NoteAclLinkDetails : Changed a Paper document to be link accessible.
@@ -1868,10 +1856,10 @@ type EventDetails struct {
 	// ShmodelVisibilityTeamOnlyDetails : Made a file/folder visible only to
 	// team members with the link.
 	ShmodelVisibilityTeamOnlyDetails *ShmodelVisibilityTeamOnlyDetails `json:"shmodel_visibility_team_only_details,omitempty"`
-	// RemoveLogoutUrlDetails : Removed single sign-on logout URL.
-	RemoveLogoutUrlDetails *RemoveLogoutUrlDetails `json:"remove_logout_url_details,omitempty"`
-	// RemoveSsoUrlDetails : Changed the sign-out URL for SSO.
-	RemoveSsoUrlDetails *RemoveSsoUrlDetails `json:"remove_sso_url_details,omitempty"`
+	// SsoAddLoginUrlDetails : Added sign-in URL for SSO.
+	SsoAddLoginUrlDetails *SsoAddLoginUrlDetails `json:"sso_add_login_url_details,omitempty"`
+	// SsoAddLogoutUrlDetails : Added sign-out URL for SSO.
+	SsoAddLogoutUrlDetails *SsoAddLogoutUrlDetails `json:"sso_add_logout_url_details,omitempty"`
 	// SsoChangeCertDetails : Changed the X.509 certificate for SSO.
 	SsoChangeCertDetails *SsoChangeCertDetails `json:"sso_change_cert_details,omitempty"`
 	// SsoChangeLoginUrlDetails : Changed the sign-in URL for SSO.
@@ -1881,6 +1869,10 @@ type EventDetails struct {
 	// SsoChangeSamlIdentityModeDetails : Changed the SAML identity mode for
 	// SSO.
 	SsoChangeSamlIdentityModeDetails *SsoChangeSamlIdentityModeDetails `json:"sso_change_saml_identity_mode_details,omitempty"`
+	// SsoRemoveLoginUrlDetails : Removed the sign-in URL for SSO.
+	SsoRemoveLoginUrlDetails *SsoRemoveLoginUrlDetails `json:"sso_remove_login_url_details,omitempty"`
+	// SsoRemoveLogoutUrlDetails : Removed single sign-on logout URL.
+	SsoRemoveLogoutUrlDetails *SsoRemoveLogoutUrlDetails `json:"sso_remove_logout_url_details,omitempty"`
 	// TeamFolderChangeStatusDetails : Changed the archival status of a team
 	// folder.
 	TeamFolderChangeStatusDetails *TeamFolderChangeStatusDetails `json:"team_folder_change_status_details,omitempty"`
@@ -2060,6 +2052,7 @@ const (
 	EventDetailsMemberPermanentlyDeleteAccountContentsDetails   = "member_permanently_delete_account_contents_details"
 	EventDetailsMemberSpaceLimitsChangeStatusDetails            = "member_space_limits_change_status_details"
 	EventDetailsMemberTransferAccountContentsDetails            = "member_transfer_account_contents_details"
+	EventDetailsPaperAdminExportStartDetails                    = "paper_admin_export_start_details"
 	EventDetailsPaperEnabledUsersGroupAdditionDetails           = "paper_enabled_users_group_addition_details"
 	EventDetailsPaperEnabledUsersGroupRemovalDetails            = "paper_enabled_users_group_removal_details"
 	EventDetailsPaperExternalViewAllowDetails                   = "paper_external_view_allow_details"
@@ -2072,6 +2065,13 @@ const (
 	EventDetailsAppLinkUserDetails                              = "app_link_user_details"
 	EventDetailsAppUnlinkTeamDetails                            = "app_unlink_team_details"
 	EventDetailsAppUnlinkUserDetails                            = "app_unlink_user_details"
+	EventDetailsFileAddCommentDetails                           = "file_add_comment_details"
+	EventDetailsFileChangeCommentSubscriptionDetails            = "file_change_comment_subscription_details"
+	EventDetailsFileDeleteCommentDetails                        = "file_delete_comment_details"
+	EventDetailsFileLikeCommentDetails                          = "file_like_comment_details"
+	EventDetailsFileResolveCommentDetails                       = "file_resolve_comment_details"
+	EventDetailsFileUnlikeCommentDetails                        = "file_unlike_comment_details"
+	EventDetailsFileUnresolveCommentDetails                     = "file_unresolve_comment_details"
 	EventDetailsDeviceChangeIpDesktopDetails                    = "device_change_ip_desktop_details"
 	EventDetailsDeviceChangeIpMobileDetails                     = "device_change_ip_mobile_details"
 	EventDetailsDeviceChangeIpWebDetails                        = "device_change_ip_web_details"
@@ -2127,8 +2127,6 @@ const (
 	EventDetailsGroupChangeMemberRoleDetails                    = "group_change_member_role_details"
 	EventDetailsGroupCreateDetails                              = "group_create_details"
 	EventDetailsGroupDeleteDetails                              = "group_delete_details"
-	EventDetailsGroupDescriptionUpdatedDetails                  = "group_description_updated_details"
-	EventDetailsGroupJoinPolicyUpdatedDetails                   = "group_join_policy_updated_details"
 	EventDetailsGroupMovedDetails                               = "group_moved_details"
 	EventDetailsGroupRemoveExternalIdDetails                    = "group_remove_external_id_details"
 	EventDetailsGroupRemoveMemberDetails                        = "group_remove_member_details"
@@ -2151,7 +2149,6 @@ const (
 	EventDetailsPaperContentAddMemberDetails                    = "paper_content_add_member_details"
 	EventDetailsPaperContentAddToFolderDetails                  = "paper_content_add_to_folder_details"
 	EventDetailsPaperContentArchiveDetails                      = "paper_content_archive_details"
-	EventDetailsPaperContentChangeSubscriptionDetails           = "paper_content_change_subscription_details"
 	EventDetailsPaperContentCreateDetails                       = "paper_content_create_details"
 	EventDetailsPaperContentPermanentlyDeleteDetails            = "paper_content_permanently_delete_details"
 	EventDetailsPaperContentRemoveFromFolderDetails             = "paper_content_remove_from_folder_details"
@@ -2161,6 +2158,7 @@ const (
 	EventDetailsPaperDocAddCommentDetails                       = "paper_doc_add_comment_details"
 	EventDetailsPaperDocChangeMemberRoleDetails                 = "paper_doc_change_member_role_details"
 	EventDetailsPaperDocChangeSharingPolicyDetails              = "paper_doc_change_sharing_policy_details"
+	EventDetailsPaperDocChangeSubscriptionDetails               = "paper_doc_change_subscription_details"
 	EventDetailsPaperDocDeletedDetails                          = "paper_doc_deleted_details"
 	EventDetailsPaperDocDeleteCommentDetails                    = "paper_doc_delete_comment_details"
 	EventDetailsPaperDocDownloadDetails                         = "paper_doc_download_details"
@@ -2173,8 +2171,11 @@ const (
 	EventDetailsPaperDocRevertDetails                           = "paper_doc_revert_details"
 	EventDetailsPaperDocSlackShareDetails                       = "paper_doc_slack_share_details"
 	EventDetailsPaperDocTeamInviteDetails                       = "paper_doc_team_invite_details"
+	EventDetailsPaperDocTrashedDetails                          = "paper_doc_trashed_details"
 	EventDetailsPaperDocUnresolveCommentDetails                 = "paper_doc_unresolve_comment_details"
+	EventDetailsPaperDocUntrashedDetails                        = "paper_doc_untrashed_details"
 	EventDetailsPaperDocViewDetails                             = "paper_doc_view_details"
+	EventDetailsPaperFolderChangeSubscriptionDetails            = "paper_folder_change_subscription_details"
 	EventDetailsPaperFolderDeletedDetails                       = "paper_folder_deleted_details"
 	EventDetailsPaperFolderFollowedDetails                      = "paper_folder_followed_details"
 	EventDetailsPaperFolderTeamInviteDetails                    = "paper_folder_team_invite_details"
@@ -2186,9 +2187,6 @@ const (
 	EventDetailsSmartSyncCreateAdminPrivilegeReportDetails      = "smart_sync_create_admin_privilege_report_details"
 	EventDetailsTeamActivityCreateReportDetails                 = "team_activity_create_report_details"
 	EventDetailsCollectionShareDetails                          = "collection_share_details"
-	EventDetailsFileAddCommentDetails                           = "file_add_comment_details"
-	EventDetailsFileLikeCommentDetails                          = "file_like_comment_details"
-	EventDetailsFileUnlikeCommentDetails                        = "file_unlike_comment_details"
 	EventDetailsNoteAclInviteOnlyDetails                        = "note_acl_invite_only_details"
 	EventDetailsNoteAclLinkDetails                              = "note_acl_link_details"
 	EventDetailsNoteAclTeamLinkDetails                          = "note_acl_team_link_details"
@@ -2251,12 +2249,14 @@ const (
 	EventDetailsShmodelVisibilityPasswordDetails                = "shmodel_visibility_password_details"
 	EventDetailsShmodelVisibilityPublicDetails                  = "shmodel_visibility_public_details"
 	EventDetailsShmodelVisibilityTeamOnlyDetails                = "shmodel_visibility_team_only_details"
-	EventDetailsRemoveLogoutUrlDetails                          = "remove_logout_url_details"
-	EventDetailsRemoveSsoUrlDetails                             = "remove_sso_url_details"
+	EventDetailsSsoAddLoginUrlDetails                           = "sso_add_login_url_details"
+	EventDetailsSsoAddLogoutUrlDetails                          = "sso_add_logout_url_details"
 	EventDetailsSsoChangeCertDetails                            = "sso_change_cert_details"
 	EventDetailsSsoChangeLoginUrlDetails                        = "sso_change_login_url_details"
 	EventDetailsSsoChangeLogoutUrlDetails                       = "sso_change_logout_url_details"
 	EventDetailsSsoChangeSamlIdentityModeDetails                = "sso_change_saml_identity_mode_details"
+	EventDetailsSsoRemoveLoginUrlDetails                        = "sso_remove_login_url_details"
+	EventDetailsSsoRemoveLogoutUrlDetails                       = "sso_remove_logout_url_details"
 	EventDetailsTeamFolderChangeStatusDetails                   = "team_folder_change_status_details"
 	EventDetailsTeamFolderCreateDetails                         = "team_folder_create_details"
 	EventDetailsTeamFolderDowngradeDetails                      = "team_folder_downgrade_details"
@@ -2335,6 +2335,9 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// MemberTransferAccountContentsDetails : Transferred contents of a
 		// removed team member account to another member.
 		MemberTransferAccountContentsDetails json.RawMessage `json:"member_transfer_account_contents_details,omitempty"`
+		// PaperAdminExportStartDetails : Exported all Paper documents in the
+		// team.
+		PaperAdminExportStartDetails json.RawMessage `json:"paper_admin_export_start_details,omitempty"`
 		// PaperEnabledUsersGroupAdditionDetails : Users added to Paper enabled
 		// users list.
 		PaperEnabledUsersGroupAdditionDetails json.RawMessage `json:"paper_enabled_users_group_addition_details,omitempty"`
@@ -2365,6 +2368,21 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		AppUnlinkTeamDetails json.RawMessage `json:"app_unlink_team_details,omitempty"`
 		// AppUnlinkUserDetails : Unlinked an app for team member.
 		AppUnlinkUserDetails json.RawMessage `json:"app_unlink_user_details,omitempty"`
+		// FileAddCommentDetails : Added a file comment.
+		FileAddCommentDetails json.RawMessage `json:"file_add_comment_details,omitempty"`
+		// FileChangeCommentSubscriptionDetails : Subscribed to or unsubscribed
+		// from comment notifications for file.
+		FileChangeCommentSubscriptionDetails json.RawMessage `json:"file_change_comment_subscription_details,omitempty"`
+		// FileDeleteCommentDetails : Deleted a file comment.
+		FileDeleteCommentDetails json.RawMessage `json:"file_delete_comment_details,omitempty"`
+		// FileLikeCommentDetails : Liked a file comment.
+		FileLikeCommentDetails json.RawMessage `json:"file_like_comment_details,omitempty"`
+		// FileResolveCommentDetails : Resolved a file comment.
+		FileResolveCommentDetails json.RawMessage `json:"file_resolve_comment_details,omitempty"`
+		// FileUnlikeCommentDetails : Unliked a file comment.
+		FileUnlikeCommentDetails json.RawMessage `json:"file_unlike_comment_details,omitempty"`
+		// FileUnresolveCommentDetails : Unresolved a file comment.
+		FileUnresolveCommentDetails json.RawMessage `json:"file_unresolve_comment_details,omitempty"`
 		// DeviceChangeIpDesktopDetails : IP address associated with active
 		// desktop session changed.
 		DeviceChangeIpDesktopDetails json.RawMessage `json:"device_change_ip_desktop_details,omitempty"`
@@ -2498,10 +2516,6 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		GroupCreateDetails json.RawMessage `json:"group_create_details,omitempty"`
 		// GroupDeleteDetails : Deleted a group.
 		GroupDeleteDetails json.RawMessage `json:"group_delete_details,omitempty"`
-		// GroupDescriptionUpdatedDetails : Updated a group.
-		GroupDescriptionUpdatedDetails json.RawMessage `json:"group_description_updated_details,omitempty"`
-		// GroupJoinPolicyUpdatedDetails : Updated a group join policy.
-		GroupJoinPolicyUpdatedDetails json.RawMessage `json:"group_join_policy_updated_details,omitempty"`
 		// GroupMovedDetails : Moved a group.
 		GroupMovedDetails json.RawMessage `json:"group_moved_details,omitempty"`
 		// GroupRemoveExternalIdDetails : Removed the external ID for group.
@@ -2552,9 +2566,6 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		PaperContentAddToFolderDetails json.RawMessage `json:"paper_content_add_to_folder_details,omitempty"`
 		// PaperContentArchiveDetails : Archived Paper doc or folder.
 		PaperContentArchiveDetails json.RawMessage `json:"paper_content_archive_details,omitempty"`
-		// PaperContentChangeSubscriptionDetails : Followed or unfollowed a
-		// Paper doc or folder.
-		PaperContentChangeSubscriptionDetails json.RawMessage `json:"paper_content_change_subscription_details,omitempty"`
 		// PaperContentCreateDetails : Created a Paper doc or folder.
 		PaperContentCreateDetails json.RawMessage `json:"paper_content_create_details,omitempty"`
 		// PaperContentPermanentlyDeleteDetails : Permanently deleted a Paper
@@ -2579,6 +2590,9 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// PaperDocChangeSharingPolicyDetails : Changed the sharing policy for
 		// Paper doc.
 		PaperDocChangeSharingPolicyDetails json.RawMessage `json:"paper_doc_change_sharing_policy_details,omitempty"`
+		// PaperDocChangeSubscriptionDetails : Followed or unfollowed a Paper
+		// doc.
+		PaperDocChangeSubscriptionDetails json.RawMessage `json:"paper_doc_change_subscription_details,omitempty"`
 		// PaperDocDeletedDetails : Paper doc archived.
 		PaperDocDeletedDetails json.RawMessage `json:"paper_doc_deleted_details,omitempty"`
 		// PaperDocDeleteCommentDetails : Deleted a Paper doc comment.
@@ -2605,10 +2619,17 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		PaperDocSlackShareDetails json.RawMessage `json:"paper_doc_slack_share_details,omitempty"`
 		// PaperDocTeamInviteDetails : Paper doc shared with team member.
 		PaperDocTeamInviteDetails json.RawMessage `json:"paper_doc_team_invite_details,omitempty"`
+		// PaperDocTrashedDetails : Paper doc trashed.
+		PaperDocTrashedDetails json.RawMessage `json:"paper_doc_trashed_details,omitempty"`
 		// PaperDocUnresolveCommentDetails : Unresolved a Paper doc comment.
 		PaperDocUnresolveCommentDetails json.RawMessage `json:"paper_doc_unresolve_comment_details,omitempty"`
+		// PaperDocUntrashedDetails : Paper doc untrashed.
+		PaperDocUntrashedDetails json.RawMessage `json:"paper_doc_untrashed_details,omitempty"`
 		// PaperDocViewDetails : Viewed Paper doc.
 		PaperDocViewDetails json.RawMessage `json:"paper_doc_view_details,omitempty"`
+		// PaperFolderChangeSubscriptionDetails : Followed or unfollowed a Paper
+		// folder.
+		PaperFolderChangeSubscriptionDetails json.RawMessage `json:"paper_folder_change_subscription_details,omitempty"`
 		// PaperFolderDeletedDetails : Paper folder archived.
 		PaperFolderDeletedDetails json.RawMessage `json:"paper_folder_deleted_details,omitempty"`
 		// PaperFolderFollowedDetails : Followed a Paper folder.
@@ -2632,12 +2653,6 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		TeamActivityCreateReportDetails json.RawMessage `json:"team_activity_create_report_details,omitempty"`
 		// CollectionShareDetails : Shared an album.
 		CollectionShareDetails json.RawMessage `json:"collection_share_details,omitempty"`
-		// FileAddCommentDetails : Added a file comment.
-		FileAddCommentDetails json.RawMessage `json:"file_add_comment_details,omitempty"`
-		// FileLikeCommentDetails : Liked a file comment.
-		FileLikeCommentDetails json.RawMessage `json:"file_like_comment_details,omitempty"`
-		// FileUnlikeCommentDetails : Unliked a file comment.
-		FileUnlikeCommentDetails json.RawMessage `json:"file_unlike_comment_details,omitempty"`
 		// NoteAclInviteOnlyDetails : Changed a Paper document to be
 		// invite-only.
 		NoteAclInviteOnlyDetails json.RawMessage `json:"note_acl_invite_only_details,omitempty"`
@@ -2798,10 +2813,10 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// ShmodelVisibilityTeamOnlyDetails : Made a file/folder visible only to
 		// team members with the link.
 		ShmodelVisibilityTeamOnlyDetails json.RawMessage `json:"shmodel_visibility_team_only_details,omitempty"`
-		// RemoveLogoutUrlDetails : Removed single sign-on logout URL.
-		RemoveLogoutUrlDetails json.RawMessage `json:"remove_logout_url_details,omitempty"`
-		// RemoveSsoUrlDetails : Changed the sign-out URL for SSO.
-		RemoveSsoUrlDetails json.RawMessage `json:"remove_sso_url_details,omitempty"`
+		// SsoAddLoginUrlDetails : Added sign-in URL for SSO.
+		SsoAddLoginUrlDetails json.RawMessage `json:"sso_add_login_url_details,omitempty"`
+		// SsoAddLogoutUrlDetails : Added sign-out URL for SSO.
+		SsoAddLogoutUrlDetails json.RawMessage `json:"sso_add_logout_url_details,omitempty"`
 		// SsoChangeCertDetails : Changed the X.509 certificate for SSO.
 		SsoChangeCertDetails json.RawMessage `json:"sso_change_cert_details,omitempty"`
 		// SsoChangeLoginUrlDetails : Changed the sign-in URL for SSO.
@@ -2811,6 +2826,10 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// SsoChangeSamlIdentityModeDetails : Changed the SAML identity mode for
 		// SSO.
 		SsoChangeSamlIdentityModeDetails json.RawMessage `json:"sso_change_saml_identity_mode_details,omitempty"`
+		// SsoRemoveLoginUrlDetails : Removed the sign-in URL for SSO.
+		SsoRemoveLoginUrlDetails json.RawMessage `json:"sso_remove_login_url_details,omitempty"`
+		// SsoRemoveLogoutUrlDetails : Removed single sign-on logout URL.
+		SsoRemoveLogoutUrlDetails json.RawMessage `json:"sso_remove_logout_url_details,omitempty"`
 		// TeamFolderChangeStatusDetails : Changed the archival status of a team
 		// folder.
 		TeamFolderChangeStatusDetails json.RawMessage `json:"team_folder_change_status_details,omitempty"`
@@ -3023,6 +3042,12 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
+	case "paper_admin_export_start_details":
+		err = json.Unmarshal(body, &u.PaperAdminExportStartDetails)
+
+		if err != nil {
+			return err
+		}
 	case "paper_enabled_users_group_addition_details":
 		err = json.Unmarshal(body, &u.PaperEnabledUsersGroupAdditionDetails)
 
@@ -3091,6 +3116,48 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		}
 	case "app_unlink_user_details":
 		err = json.Unmarshal(body, &u.AppUnlinkUserDetails)
+
+		if err != nil {
+			return err
+		}
+	case "file_add_comment_details":
+		err = json.Unmarshal(body, &u.FileAddCommentDetails)
+
+		if err != nil {
+			return err
+		}
+	case "file_change_comment_subscription_details":
+		err = json.Unmarshal(body, &u.FileChangeCommentSubscriptionDetails)
+
+		if err != nil {
+			return err
+		}
+	case "file_delete_comment_details":
+		err = json.Unmarshal(body, &u.FileDeleteCommentDetails)
+
+		if err != nil {
+			return err
+		}
+	case "file_like_comment_details":
+		err = json.Unmarshal(body, &u.FileLikeCommentDetails)
+
+		if err != nil {
+			return err
+		}
+	case "file_resolve_comment_details":
+		err = json.Unmarshal(body, &u.FileResolveCommentDetails)
+
+		if err != nil {
+			return err
+		}
+	case "file_unlike_comment_details":
+		err = json.Unmarshal(body, &u.FileUnlikeCommentDetails)
+
+		if err != nil {
+			return err
+		}
+	case "file_unresolve_comment_details":
+		err = json.Unmarshal(body, &u.FileUnresolveCommentDetails)
 
 		if err != nil {
 			return err
@@ -3425,18 +3492,6 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
-	case "group_description_updated_details":
-		err = json.Unmarshal(body, &u.GroupDescriptionUpdatedDetails)
-
-		if err != nil {
-			return err
-		}
-	case "group_join_policy_updated_details":
-		err = json.Unmarshal(body, &u.GroupJoinPolicyUpdatedDetails)
-
-		if err != nil {
-			return err
-		}
 	case "group_moved_details":
 		err = json.Unmarshal(body, &u.GroupMovedDetails)
 
@@ -3569,12 +3624,6 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
-	case "paper_content_change_subscription_details":
-		err = json.Unmarshal(body, &u.PaperContentChangeSubscriptionDetails)
-
-		if err != nil {
-			return err
-		}
 	case "paper_content_create_details":
 		err = json.Unmarshal(body, &u.PaperContentCreateDetails)
 
@@ -3625,6 +3674,12 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		}
 	case "paper_doc_change_sharing_policy_details":
 		err = json.Unmarshal(body, &u.PaperDocChangeSharingPolicyDetails)
+
+		if err != nil {
+			return err
+		}
+	case "paper_doc_change_subscription_details":
+		err = json.Unmarshal(body, &u.PaperDocChangeSubscriptionDetails)
 
 		if err != nil {
 			return err
@@ -3701,14 +3756,32 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
+	case "paper_doc_trashed_details":
+		err = json.Unmarshal(body, &u.PaperDocTrashedDetails)
+
+		if err != nil {
+			return err
+		}
 	case "paper_doc_unresolve_comment_details":
 		err = json.Unmarshal(body, &u.PaperDocUnresolveCommentDetails)
 
 		if err != nil {
 			return err
 		}
+	case "paper_doc_untrashed_details":
+		err = json.Unmarshal(body, &u.PaperDocUntrashedDetails)
+
+		if err != nil {
+			return err
+		}
 	case "paper_doc_view_details":
 		err = json.Unmarshal(body, &u.PaperDocViewDetails)
+
+		if err != nil {
+			return err
+		}
+	case "paper_folder_change_subscription_details":
+		err = json.Unmarshal(body, &u.PaperFolderChangeSubscriptionDetails)
 
 		if err != nil {
 			return err
@@ -3775,24 +3848,6 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		}
 	case "collection_share_details":
 		err = json.Unmarshal(body, &u.CollectionShareDetails)
-
-		if err != nil {
-			return err
-		}
-	case "file_add_comment_details":
-		err = json.Unmarshal(body, &u.FileAddCommentDetails)
-
-		if err != nil {
-			return err
-		}
-	case "file_like_comment_details":
-		err = json.Unmarshal(body, &u.FileLikeCommentDetails)
-
-		if err != nil {
-			return err
-		}
-	case "file_unlike_comment_details":
-		err = json.Unmarshal(body, &u.FileUnlikeCommentDetails)
 
 		if err != nil {
 			return err
@@ -4169,14 +4224,14 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
-	case "remove_logout_url_details":
-		err = json.Unmarshal(body, &u.RemoveLogoutUrlDetails)
+	case "sso_add_login_url_details":
+		err = json.Unmarshal(body, &u.SsoAddLoginUrlDetails)
 
 		if err != nil {
 			return err
 		}
-	case "remove_sso_url_details":
-		err = json.Unmarshal(body, &u.RemoveSsoUrlDetails)
+	case "sso_add_logout_url_details":
+		err = json.Unmarshal(body, &u.SsoAddLogoutUrlDetails)
 
 		if err != nil {
 			return err
@@ -4201,6 +4256,18 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		}
 	case "sso_change_saml_identity_mode_details":
 		err = json.Unmarshal(body, &u.SsoChangeSamlIdentityModeDetails)
+
+		if err != nil {
+			return err
+		}
+	case "sso_remove_login_url_details":
+		err = json.Unmarshal(body, &u.SsoRemoveLoginUrlDetails)
+
+		if err != nil {
+			return err
+		}
+	case "sso_remove_logout_url_details":
+		err = json.Unmarshal(body, &u.SsoRemoveLogoutUrlDetails)
 
 		if err != nil {
 			return err
@@ -4568,6 +4635,7 @@ const (
 	EventTypeMemberPermanentlyDeleteAccountContents   = "member_permanently_delete_account_contents"
 	EventTypeMemberSpaceLimitsChangeStatus            = "member_space_limits_change_status"
 	EventTypeMemberTransferAccountContents            = "member_transfer_account_contents"
+	EventTypePaperAdminExportStart                    = "paper_admin_export_start"
 	EventTypePaperEnabledUsersGroupAddition           = "paper_enabled_users_group_addition"
 	EventTypePaperEnabledUsersGroupRemoval            = "paper_enabled_users_group_removal"
 	EventTypePaperExternalViewAllow                   = "paper_external_view_allow"
@@ -4580,6 +4648,13 @@ const (
 	EventTypeAppLinkUser                              = "app_link_user"
 	EventTypeAppUnlinkTeam                            = "app_unlink_team"
 	EventTypeAppUnlinkUser                            = "app_unlink_user"
+	EventTypeFileAddComment                           = "file_add_comment"
+	EventTypeFileChangeCommentSubscription            = "file_change_comment_subscription"
+	EventTypeFileDeleteComment                        = "file_delete_comment"
+	EventTypeFileLikeComment                          = "file_like_comment"
+	EventTypeFileResolveComment                       = "file_resolve_comment"
+	EventTypeFileUnlikeComment                        = "file_unlike_comment"
+	EventTypeFileUnresolveComment                     = "file_unresolve_comment"
 	EventTypeDeviceChangeIpDesktop                    = "device_change_ip_desktop"
 	EventTypeDeviceChangeIpMobile                     = "device_change_ip_mobile"
 	EventTypeDeviceChangeIpWeb                        = "device_change_ip_web"
@@ -4635,8 +4710,6 @@ const (
 	EventTypeGroupChangeMemberRole                    = "group_change_member_role"
 	EventTypeGroupCreate                              = "group_create"
 	EventTypeGroupDelete                              = "group_delete"
-	EventTypeGroupDescriptionUpdated                  = "group_description_updated"
-	EventTypeGroupJoinPolicyUpdated                   = "group_join_policy_updated"
 	EventTypeGroupMoved                               = "group_moved"
 	EventTypeGroupRemoveExternalId                    = "group_remove_external_id"
 	EventTypeGroupRemoveMember                        = "group_remove_member"
@@ -4659,7 +4732,6 @@ const (
 	EventTypePaperContentAddMember                    = "paper_content_add_member"
 	EventTypePaperContentAddToFolder                  = "paper_content_add_to_folder"
 	EventTypePaperContentArchive                      = "paper_content_archive"
-	EventTypePaperContentChangeSubscription           = "paper_content_change_subscription"
 	EventTypePaperContentCreate                       = "paper_content_create"
 	EventTypePaperContentPermanentlyDelete            = "paper_content_permanently_delete"
 	EventTypePaperContentRemoveFromFolder             = "paper_content_remove_from_folder"
@@ -4669,6 +4741,7 @@ const (
 	EventTypePaperDocAddComment                       = "paper_doc_add_comment"
 	EventTypePaperDocChangeMemberRole                 = "paper_doc_change_member_role"
 	EventTypePaperDocChangeSharingPolicy              = "paper_doc_change_sharing_policy"
+	EventTypePaperDocChangeSubscription               = "paper_doc_change_subscription"
 	EventTypePaperDocDeleted                          = "paper_doc_deleted"
 	EventTypePaperDocDeleteComment                    = "paper_doc_delete_comment"
 	EventTypePaperDocDownload                         = "paper_doc_download"
@@ -4681,8 +4754,11 @@ const (
 	EventTypePaperDocRevert                           = "paper_doc_revert"
 	EventTypePaperDocSlackShare                       = "paper_doc_slack_share"
 	EventTypePaperDocTeamInvite                       = "paper_doc_team_invite"
+	EventTypePaperDocTrashed                          = "paper_doc_trashed"
 	EventTypePaperDocUnresolveComment                 = "paper_doc_unresolve_comment"
+	EventTypePaperDocUntrashed                        = "paper_doc_untrashed"
 	EventTypePaperDocView                             = "paper_doc_view"
+	EventTypePaperFolderChangeSubscription            = "paper_folder_change_subscription"
 	EventTypePaperFolderDeleted                       = "paper_folder_deleted"
 	EventTypePaperFolderFollowed                      = "paper_folder_followed"
 	EventTypePaperFolderTeamInvite                    = "paper_folder_team_invite"
@@ -4694,9 +4770,6 @@ const (
 	EventTypeSmartSyncCreateAdminPrivilegeReport      = "smart_sync_create_admin_privilege_report"
 	EventTypeTeamActivityCreateReport                 = "team_activity_create_report"
 	EventTypeCollectionShare                          = "collection_share"
-	EventTypeFileAddComment                           = "file_add_comment"
-	EventTypeFileLikeComment                          = "file_like_comment"
-	EventTypeFileUnlikeComment                        = "file_unlike_comment"
 	EventTypeNoteAclInviteOnly                        = "note_acl_invite_only"
 	EventTypeNoteAclLink                              = "note_acl_link"
 	EventTypeNoteAclTeamLink                          = "note_acl_team_link"
@@ -4759,12 +4832,14 @@ const (
 	EventTypeShmodelVisibilityPassword                = "shmodel_visibility_password"
 	EventTypeShmodelVisibilityPublic                  = "shmodel_visibility_public"
 	EventTypeShmodelVisibilityTeamOnly                = "shmodel_visibility_team_only"
-	EventTypeRemoveLogoutUrl                          = "remove_logout_url"
-	EventTypeRemoveSsoUrl                             = "remove_sso_url"
+	EventTypeSsoAddLoginUrl                           = "sso_add_login_url"
+	EventTypeSsoAddLogoutUrl                          = "sso_add_logout_url"
 	EventTypeSsoChangeCert                            = "sso_change_cert"
 	EventTypeSsoChangeLoginUrl                        = "sso_change_login_url"
 	EventTypeSsoChangeLogoutUrl                       = "sso_change_logout_url"
 	EventTypeSsoChangeSamlIdentityMode                = "sso_change_saml_identity_mode"
+	EventTypeSsoRemoveLoginUrl                        = "sso_remove_login_url"
+	EventTypeSsoRemoveLogoutUrl                       = "sso_remove_logout_url"
 	EventTypeTeamFolderChangeStatus                   = "team_folder_change_status"
 	EventTypeTeamFolderCreate                         = "team_folder_create"
 	EventTypeTeamFolderDowngrade                      = "team_folder_downgrade"
@@ -4849,9 +4924,10 @@ type ExtendedVersionHistoryPolicy struct {
 
 // Valid tag values for ExtendedVersionHistoryPolicy
 const (
-	ExtendedVersionHistoryPolicyLimited   = "limited"
-	ExtendedVersionHistoryPolicyUnlimited = "unlimited"
-	ExtendedVersionHistoryPolicyOther     = "other"
+	ExtendedVersionHistoryPolicyExplicitlyLimited   = "explicitly_limited"
+	ExtendedVersionHistoryPolicyExplicitlyUnlimited = "explicitly_unlimited"
+	ExtendedVersionHistoryPolicyImplicitlyLimited   = "implicitly_limited"
+	ExtendedVersionHistoryPolicyOther               = "other"
 )
 
 // FailureDetailsLogInfo : Provides details about a failure
@@ -4872,16 +4948,16 @@ func NewFailureDetailsLogInfo() *FailureDetailsLogInfo {
 
 // FileAddCommentDetails : Added a file comment.
 type FileAddCommentDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileAddCommentDetails returns a new FileAddCommentDetails instance
-func NewFileAddCommentDetails(TargetIndex int64) *FileAddCommentDetails {
+func NewFileAddCommentDetails(TargetAssetIndex uint64) *FileAddCommentDetails {
 	s := new(FileAddCommentDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -4894,6 +4970,38 @@ func NewFileAddDetails() *FileAddDetails {
 	s := new(FileAddDetails)
 	return s
 }
+
+// FileChangeCommentSubscriptionDetails : Subscribed to or unsubscribed from
+// comment notifications for file.
+type FileChangeCommentSubscriptionDetails struct {
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
+	// NewValue : New file comment subscription.
+	NewValue *FileCommentNotificationPolicy `json:"new_value"`
+	// PreviousValue : Previous file comment subscription. Might be missing due
+	// to historical data gap.
+	PreviousValue *FileCommentNotificationPolicy `json:"previous_value,omitempty"`
+}
+
+// NewFileChangeCommentSubscriptionDetails returns a new FileChangeCommentSubscriptionDetails instance
+func NewFileChangeCommentSubscriptionDetails(TargetAssetIndex uint64, NewValue *FileCommentNotificationPolicy) *FileChangeCommentSubscriptionDetails {
+	s := new(FileChangeCommentSubscriptionDetails)
+	s.TargetAssetIndex = TargetAssetIndex
+	s.NewValue = NewValue
+	return s
+}
+
+// FileCommentNotificationPolicy : Enable or disable file comments notifications
+type FileCommentNotificationPolicy struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for FileCommentNotificationPolicy
+const (
+	FileCommentNotificationPolicyDisabled = "disabled"
+	FileCommentNotificationPolicyEnabled  = "enabled"
+	FileCommentNotificationPolicyOther    = "other"
+)
 
 // FileCommentsChangePolicyDetails : Enabled or disabled commenting on team
 // files.
@@ -4934,6 +5042,21 @@ type FileCopyDetails struct {
 func NewFileCopyDetails(RelocateActionDetails []*RelocateAssetReferencesLogInfo) *FileCopyDetails {
 	s := new(FileCopyDetails)
 	s.RelocateActionDetails = RelocateActionDetails
+	return s
+}
+
+// FileDeleteCommentDetails : Deleted a file comment.
+type FileDeleteCommentDetails struct {
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
+	// CommentText : Comment text. Might be missing due to historical data gap.
+	CommentText string `json:"comment_text,omitempty"`
+}
+
+// NewFileDeleteCommentDetails returns a new FileDeleteCommentDetails instance
+func NewFileDeleteCommentDetails(TargetAssetIndex uint64) *FileDeleteCommentDetails {
+	s := new(FileDeleteCommentDetails)
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -4979,16 +5102,16 @@ func NewFileGetCopyReferenceDetails() *FileGetCopyReferenceDetails {
 
 // FileLikeCommentDetails : Liked a file comment.
 type FileLikeCommentDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileLikeCommentDetails returns a new FileLikeCommentDetails instance
-func NewFileLikeCommentDetails(TargetIndex int64) *FileLikeCommentDetails {
+func NewFileLikeCommentDetails(TargetAssetIndex uint64) *FileLikeCommentDetails {
 	s := new(FileLikeCommentDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -5070,80 +5193,74 @@ func NewFileRenameDetails(RelocateActionDetails []*RelocateAssetReferencesLogInf
 // FileRequestAddDeadlineDetails : Added a deadline to a file request.
 type FileRequestAddDeadlineDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 }
 
 // NewFileRequestAddDeadlineDetails returns a new FileRequestAddDeadlineDetails instance
-func NewFileRequestAddDeadlineDetails(RequestTitle string) *FileRequestAddDeadlineDetails {
+func NewFileRequestAddDeadlineDetails() *FileRequestAddDeadlineDetails {
 	s := new(FileRequestAddDeadlineDetails)
-	s.RequestTitle = RequestTitle
 	return s
 }
 
 // FileRequestChangeFolderDetails : Changed the file request folder.
 type FileRequestChangeFolderDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 }
 
 // NewFileRequestChangeFolderDetails returns a new FileRequestChangeFolderDetails instance
-func NewFileRequestChangeFolderDetails(RequestTitle string) *FileRequestChangeFolderDetails {
+func NewFileRequestChangeFolderDetails() *FileRequestChangeFolderDetails {
 	s := new(FileRequestChangeFolderDetails)
-	s.RequestTitle = RequestTitle
 	return s
 }
 
 // FileRequestChangeTitleDetails : Change the file request title.
 type FileRequestChangeTitleDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 }
 
 // NewFileRequestChangeTitleDetails returns a new FileRequestChangeTitleDetails instance
-func NewFileRequestChangeTitleDetails(RequestTitle string) *FileRequestChangeTitleDetails {
+func NewFileRequestChangeTitleDetails() *FileRequestChangeTitleDetails {
 	s := new(FileRequestChangeTitleDetails)
-	s.RequestTitle = RequestTitle
 	return s
 }
 
 // FileRequestCloseDetails : Closed a file request.
 type FileRequestCloseDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 }
 
 // NewFileRequestCloseDetails returns a new FileRequestCloseDetails instance
-func NewFileRequestCloseDetails(RequestTitle string) *FileRequestCloseDetails {
+func NewFileRequestCloseDetails() *FileRequestCloseDetails {
 	s := new(FileRequestCloseDetails)
-	s.RequestTitle = RequestTitle
 	return s
 }
 
 // FileRequestCreateDetails : Created a file request.
 type FileRequestCreateDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 }
 
 // NewFileRequestCreateDetails returns a new FileRequestCreateDetails instance
-func NewFileRequestCreateDetails(RequestTitle string) *FileRequestCreateDetails {
+func NewFileRequestCreateDetails() *FileRequestCreateDetails {
 	s := new(FileRequestCreateDetails)
-	s.RequestTitle = RequestTitle
 	return s
 }
 
 // FileRequestReceiveFileDetails : Received files for a file request.
 type FileRequestReceiveFileDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 	// SubmittedFileNames : Submitted file names.
 	SubmittedFileNames []string `json:"submitted_file_names"`
 }
 
 // NewFileRequestReceiveFileDetails returns a new FileRequestReceiveFileDetails instance
-func NewFileRequestReceiveFileDetails(RequestTitle string, SubmittedFileNames []string) *FileRequestReceiveFileDetails {
+func NewFileRequestReceiveFileDetails(SubmittedFileNames []string) *FileRequestReceiveFileDetails {
 	s := new(FileRequestReceiveFileDetails)
-	s.RequestTitle = RequestTitle
 	s.SubmittedFileNames = SubmittedFileNames
 	return s
 }
@@ -5151,26 +5268,24 @@ func NewFileRequestReceiveFileDetails(RequestTitle string, SubmittedFileNames []
 // FileRequestRemoveDeadlineDetails : Removed the file request deadline.
 type FileRequestRemoveDeadlineDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 }
 
 // NewFileRequestRemoveDeadlineDetails returns a new FileRequestRemoveDeadlineDetails instance
-func NewFileRequestRemoveDeadlineDetails(RequestTitle string) *FileRequestRemoveDeadlineDetails {
+func NewFileRequestRemoveDeadlineDetails() *FileRequestRemoveDeadlineDetails {
 	s := new(FileRequestRemoveDeadlineDetails)
-	s.RequestTitle = RequestTitle
 	return s
 }
 
 // FileRequestSendDetails : Sent file request to users via email.
 type FileRequestSendDetails struct {
 	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title"`
+	RequestTitle string `json:"request_title,omitempty"`
 }
 
 // NewFileRequestSendDetails returns a new FileRequestSendDetails instance
-func NewFileRequestSendDetails(RequestTitle string) *FileRequestSendDetails {
+func NewFileRequestSendDetails() *FileRequestSendDetails {
 	s := new(FileRequestSendDetails)
-	s.RequestTitle = RequestTitle
 	return s
 }
 
@@ -5223,6 +5338,21 @@ const (
 	FileRequestsPolicyOther    = "other"
 )
 
+// FileResolveCommentDetails : Resolved a file comment.
+type FileResolveCommentDetails struct {
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
+	// CommentText : Comment text. Might be missing due to historical data gap.
+	CommentText string `json:"comment_text,omitempty"`
+}
+
+// NewFileResolveCommentDetails returns a new FileResolveCommentDetails instance
+func NewFileResolveCommentDetails(TargetAssetIndex uint64) *FileResolveCommentDetails {
+	s := new(FileResolveCommentDetails)
+	s.TargetAssetIndex = TargetAssetIndex
+	return s
+}
+
 // FileRestoreDetails : Restored deleted files and/or folders.
 type FileRestoreDetails struct {
 }
@@ -5268,16 +5398,31 @@ func NewFileSaveCopyReferenceDetails(RelocateActionDetails []*RelocateAssetRefer
 
 // FileUnlikeCommentDetails : Unliked a file comment.
 type FileUnlikeCommentDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileUnlikeCommentDetails returns a new FileUnlikeCommentDetails instance
-func NewFileUnlikeCommentDetails(TargetIndex int64) *FileUnlikeCommentDetails {
+func NewFileUnlikeCommentDetails(TargetAssetIndex uint64) *FileUnlikeCommentDetails {
 	s := new(FileUnlikeCommentDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
+	return s
+}
+
+// FileUnresolveCommentDetails : Unresolved a file comment.
+type FileUnresolveCommentDetails struct {
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
+	// CommentText : Comment text. Might be missing due to historical data gap.
+	CommentText string `json:"comment_text,omitempty"`
+}
+
+// NewFileUnresolveCommentDetails returns a new FileUnresolveCommentDetails instance
+func NewFileUnresolveCommentDetails(TargetAssetIndex uint64) *FileUnresolveCommentDetails {
+	s := new(FileUnresolveCommentDetails)
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -5465,14 +5610,14 @@ func NewGroupChangeExternalIdDetails(NewValue string, PreviousValue string) *Gro
 // GroupChangeManagementTypeDetails : Changed group management type.
 type GroupChangeManagementTypeDetails struct {
 	// NewValue : New group management type.
-	NewValue *GroupManagementType `json:"new_value"`
+	NewValue *team_common.GroupManagementType `json:"new_value"`
 	// PreviousValue : Previous group management type. Might be missing due to
 	// historical data gap.
-	PreviousValue *GroupManagementType `json:"previous_value,omitempty"`
+	PreviousValue *team_common.GroupManagementType `json:"previous_value,omitempty"`
 }
 
 // NewGroupChangeManagementTypeDetails returns a new GroupChangeManagementTypeDetails instance
-func NewGroupChangeManagementTypeDetails(NewValue *GroupManagementType) *GroupChangeManagementTypeDetails {
+func NewGroupChangeManagementTypeDetails(NewValue *team_common.GroupManagementType) *GroupChangeManagementTypeDetails {
 	s := new(GroupChangeManagementTypeDetails)
 	s.NewValue = NewValue
 	return s
@@ -5521,16 +5666,6 @@ func NewGroupDeleteDetails() *GroupDeleteDetails {
 	return s
 }
 
-// GroupDescriptionUpdatedDetails : Updated a group.
-type GroupDescriptionUpdatedDetails struct {
-}
-
-// NewGroupDescriptionUpdatedDetails returns a new GroupDescriptionUpdatedDetails instance
-func NewGroupDescriptionUpdatedDetails() *GroupDescriptionUpdatedDetails {
-	s := new(GroupDescriptionUpdatedDetails)
-	return s
-}
-
 // GroupJoinPolicy : has no documentation (yet)
 type GroupJoinPolicy struct {
 	dropbox.Tagged
@@ -5542,22 +5677,6 @@ const (
 	GroupJoinPolicyRequestToJoin = "request_to_join"
 	GroupJoinPolicyOther         = "other"
 )
-
-// GroupJoinPolicyUpdatedDetails : Updated a group join policy.
-type GroupJoinPolicyUpdatedDetails struct {
-	// IsAdminManaged : Is admin managed group. Might be missing due to
-	// historical data gap.
-	IsAdminManaged bool `json:"is_admin_managed,omitempty"`
-	// JoinPolicy : Group join policy.
-	JoinPolicy *GroupJoinPolicy `json:"join_policy"`
-}
-
-// NewGroupJoinPolicyUpdatedDetails returns a new GroupJoinPolicyUpdatedDetails instance
-func NewGroupJoinPolicyUpdatedDetails(JoinPolicy *GroupJoinPolicy) *GroupJoinPolicyUpdatedDetails {
-	s := new(GroupJoinPolicyUpdatedDetails)
-	s.JoinPolicy = JoinPolicy
-	return s
-}
 
 // GroupLogInfo : Group's logged information.
 type GroupLogInfo struct {
@@ -5577,18 +5696,6 @@ func NewGroupLogInfo(DisplayName string) *GroupLogInfo {
 	s.DisplayName = DisplayName
 	return s
 }
-
-// GroupManagementType : has no documentation (yet)
-type GroupManagementType struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for GroupManagementType
-const (
-	GroupManagementTypeAdminManagementGroup  = "admin_management_group"
-	GroupManagementTypeMemberManagementGroup = "member_management_group"
-	GroupManagementTypeOther                 = "other"
-)
 
 // GroupMovedDetails : Moved a group.
 type GroupMovedDetails struct {
@@ -5627,12 +5734,15 @@ func NewGroupRemoveMemberDetails() *GroupRemoveMemberDetails {
 type GroupRenameDetails struct {
 	// PreviousValue : Previous display name.
 	PreviousValue string `json:"previous_value"`
+	// NewValue : New display name.
+	NewValue string `json:"new_value"`
 }
 
 // NewGroupRenameDetails returns a new GroupRenameDetails instance
-func NewGroupRenameDetails(PreviousValue string) *GroupRenameDetails {
+func NewGroupRenameDetails(PreviousValue string, NewValue string) *GroupRenameDetails {
 	s := new(GroupRenameDetails)
 	s.PreviousValue = PreviousValue
+	s.NewValue = NewValue
 	return s
 }
 
@@ -5659,8 +5769,8 @@ type GroupUserManagementPolicy struct {
 
 // Valid tag values for GroupUserManagementPolicy
 const (
+	GroupUserManagementPolicyAdminsOnly = "admins_only"
 	GroupUserManagementPolicyAllUsers   = "all_users"
-	GroupUserManagementPolicyOnlyAdmins = "only_admins"
 	GroupUserManagementPolicyOther      = "other"
 )
 
@@ -5789,15 +5899,15 @@ func NewMemberChangeMembershipTypeDetails(PrevValue *TeamMembershipType, NewValu
 type MemberChangeNameDetails struct {
 	// NewValue : New user's name.
 	NewValue *UserNameLogInfo `json:"new_value"`
-	// PreviousValue : Previous user's name.
-	PreviousValue *UserNameLogInfo `json:"previous_value"`
+	// PreviousValue : Previous user's name. Might be missing due to historical
+	// data gap.
+	PreviousValue *UserNameLogInfo `json:"previous_value,omitempty"`
 }
 
 // NewMemberChangeNameDetails returns a new MemberChangeNameDetails instance
-func NewMemberChangeNameDetails(NewValue *UserNameLogInfo, PreviousValue *UserNameLogInfo) *MemberChangeNameDetails {
+func NewMemberChangeNameDetails(NewValue *UserNameLogInfo) *MemberChangeNameDetails {
 	s := new(MemberChangeNameDetails)
 	s.NewValue = NewValue
-	s.PreviousValue = PreviousValue
 	return s
 }
 
@@ -5855,9 +5965,9 @@ type MemberRequestsPolicy struct {
 
 // Valid tag values for MemberRequestsPolicy
 const (
+	MemberRequestsPolicyAutoAccept      = "auto_accept"
 	MemberRequestsPolicyDisabled        = "disabled"
 	MemberRequestsPolicyRequireApproval = "require_approval"
-	MemberRequestsPolicyAutoApproval    = "auto_approval"
 	MemberRequestsPolicyOther           = "other"
 )
 
@@ -5974,17 +6084,19 @@ const (
 // MemberTransferAccountContentsDetails : Transferred contents of a removed team
 // member account to another member.
 type MemberTransferAccountContentsDetails struct {
-	// SrcIndex : Source asset index.
-	SrcIndex int64 `json:"src_index"`
-	// DestIndex : Destination asset index.
-	DestIndex int64 `json:"dest_index"`
+	// SrcParticipantIndex : Source participant position in the Participants
+	// list.
+	SrcParticipantIndex uint64 `json:"src_participant_index"`
+	// DestParticipantIndex : Destination participant position in the
+	// Participants list.
+	DestParticipantIndex uint64 `json:"dest_participant_index"`
 }
 
 // NewMemberTransferAccountContentsDetails returns a new MemberTransferAccountContentsDetails instance
-func NewMemberTransferAccountContentsDetails(SrcIndex int64, DestIndex int64) *MemberTransferAccountContentsDetails {
+func NewMemberTransferAccountContentsDetails(SrcParticipantIndex uint64, DestParticipantIndex uint64) *MemberTransferAccountContentsDetails {
 	s := new(MemberTransferAccountContentsDetails)
-	s.SrcIndex = SrcIndex
-	s.DestIndex = DestIndex
+	s.SrcParticipantIndex = SrcParticipantIndex
+	s.DestParticipantIndex = DestParticipantIndex
 	return s
 }
 
@@ -6273,18 +6385,28 @@ const (
 	PaperAccessTypeOther     = "other"
 )
 
+// PaperAdminExportStartDetails : Exported all Paper documents in the team.
+type PaperAdminExportStartDetails struct {
+}
+
+// NewPaperAdminExportStartDetails returns a new PaperAdminExportStartDetails instance
+func NewPaperAdminExportStartDetails() *PaperAdminExportStartDetails {
+	s := new(PaperAdminExportStartDetails)
+	return s
+}
+
 // PaperChangeDeploymentPolicyDetails : Changed whether Dropbox Paper, when
 // enabled, is deployed to all teams or to specific members of the team.
 type PaperChangeDeploymentPolicyDetails struct {
 	// NewValue : New Dropbox Paper deployment policy.
-	NewValue *PaperDeploymentPolicy `json:"new_value"`
+	NewValue *team_policies.PaperDeploymentPolicy `json:"new_value"`
 	// PreviousValue : Previous Dropbox Paper deployment policy. Might be
 	// missing due to historical data gap.
-	PreviousValue *PaperDeploymentPolicy `json:"previous_value,omitempty"`
+	PreviousValue *team_policies.PaperDeploymentPolicy `json:"previous_value,omitempty"`
 }
 
 // NewPaperChangeDeploymentPolicyDetails returns a new PaperChangeDeploymentPolicyDetails instance
-func NewPaperChangeDeploymentPolicyDetails(NewValue *PaperDeploymentPolicy) *PaperChangeDeploymentPolicyDetails {
+func NewPaperChangeDeploymentPolicyDetails(NewValue *team_policies.PaperDeploymentPolicy) *PaperChangeDeploymentPolicyDetails {
 	s := new(PaperChangeDeploymentPolicyDetails)
 	s.NewValue = NewValue
 	return s
@@ -6311,14 +6433,14 @@ func NewPaperChangeMemberPolicyDetails(NewValue *PaperMemberPolicy) *PaperChange
 // PaperChangePolicyDetails : Enabled or disabled Dropbox Paper for the team.
 type PaperChangePolicyDetails struct {
 	// NewValue : New Dropbox Paper policy.
-	NewValue *PaperPolicy `json:"new_value"`
+	NewValue *team_policies.PaperEnabledPolicy `json:"new_value"`
 	// PreviousValue : Previous Dropbox Paper policy. Might be missing due to
 	// historical data gap.
-	PreviousValue *PaperPolicy `json:"previous_value,omitempty"`
+	PreviousValue *team_policies.PaperEnabledPolicy `json:"previous_value,omitempty"`
 }
 
 // NewPaperChangePolicyDetails returns a new PaperChangePolicyDetails instance
-func NewPaperChangePolicyDetails(NewValue *PaperPolicy) *PaperChangePolicyDetails {
+func NewPaperChangePolicyDetails(NewValue *team_policies.PaperEnabledPolicy) *PaperChangePolicyDetails {
 	s := new(PaperChangePolicyDetails)
 	s.NewValue = NewValue
 	return s
@@ -6342,18 +6464,18 @@ func NewPaperContentAddMemberDetails(EventUuid string) *PaperContentAddMemberDet
 type PaperContentAddToFolderDetails struct {
 	// EventUuid : Event unique identifier.
 	EventUuid string `json:"event_uuid"`
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
-	// ParentIndex : Parent asset index.
-	ParentIndex int64 `json:"parent_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
+	// ParentAssetIndex : Parent asset position in the Assets list.
+	ParentAssetIndex uint64 `json:"parent_asset_index"`
 }
 
 // NewPaperContentAddToFolderDetails returns a new PaperContentAddToFolderDetails instance
-func NewPaperContentAddToFolderDetails(EventUuid string, TargetIndex int64, ParentIndex int64) *PaperContentAddToFolderDetails {
+func NewPaperContentAddToFolderDetails(EventUuid string, TargetAssetIndex uint64, ParentAssetIndex uint64) *PaperContentAddToFolderDetails {
 	s := new(PaperContentAddToFolderDetails)
 	s.EventUuid = EventUuid
-	s.TargetIndex = TargetIndex
-	s.ParentIndex = ParentIndex
+	s.TargetAssetIndex = TargetAssetIndex
+	s.ParentAssetIndex = ParentAssetIndex
 	return s
 }
 
@@ -6367,26 +6489,6 @@ type PaperContentArchiveDetails struct {
 func NewPaperContentArchiveDetails(EventUuid string) *PaperContentArchiveDetails {
 	s := new(PaperContentArchiveDetails)
 	s.EventUuid = EventUuid
-	return s
-}
-
-// PaperContentChangeSubscriptionDetails : Followed or unfollowed a Paper doc or
-// folder.
-type PaperContentChangeSubscriptionDetails struct {
-	// EventUuid : Event unique identifier.
-	EventUuid string `json:"event_uuid"`
-	// NewSubscriptionLevel : New subscription level.
-	NewSubscriptionLevel *PaperTaggedValue `json:"new_subscription_level"`
-	// PreviousSubscriptionLevel : Previous subscription level. Might be missing
-	// due to historical data gap.
-	PreviousSubscriptionLevel *PaperTaggedValue `json:"previous_subscription_level,omitempty"`
-}
-
-// NewPaperContentChangeSubscriptionDetails returns a new PaperContentChangeSubscriptionDetails instance
-func NewPaperContentChangeSubscriptionDetails(EventUuid string, NewSubscriptionLevel *PaperTaggedValue) *PaperContentChangeSubscriptionDetails {
-	s := new(PaperContentChangeSubscriptionDetails)
-	s.EventUuid = EventUuid
-	s.NewSubscriptionLevel = NewSubscriptionLevel
 	return s
 }
 
@@ -6471,18 +6573,6 @@ func NewPaperContentRestoreDetails(EventUuid string) *PaperContentRestoreDetails
 	return s
 }
 
-// PaperDeploymentPolicy : has no documentation (yet)
-type PaperDeploymentPolicy struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for PaperDeploymentPolicy
-const (
-	PaperDeploymentPolicyPartial = "partial"
-	PaperDeploymentPolicyFull    = "full"
-	PaperDeploymentPolicyOther   = "other"
-)
-
 // PaperDocAddCommentDetails : Added a Paper doc comment.
 type PaperDocAddCommentDetails struct {
 	// EventUuid : Event unique identifier.
@@ -6532,6 +6622,25 @@ type PaperDocChangeSharingPolicyDetails struct {
 func NewPaperDocChangeSharingPolicyDetails(EventUuid string) *PaperDocChangeSharingPolicyDetails {
 	s := new(PaperDocChangeSharingPolicyDetails)
 	s.EventUuid = EventUuid
+	return s
+}
+
+// PaperDocChangeSubscriptionDetails : Followed or unfollowed a Paper doc.
+type PaperDocChangeSubscriptionDetails struct {
+	// EventUuid : Event unique identifier.
+	EventUuid string `json:"event_uuid"`
+	// NewSubscriptionLevel : New doc subscription level.
+	NewSubscriptionLevel string `json:"new_subscription_level"`
+	// PreviousSubscriptionLevel : Previous doc subscription level. Might be
+	// missing due to historical data gap.
+	PreviousSubscriptionLevel string `json:"previous_subscription_level,omitempty"`
+}
+
+// NewPaperDocChangeSubscriptionDetails returns a new PaperDocChangeSubscriptionDetails instance
+func NewPaperDocChangeSubscriptionDetails(EventUuid string, NewSubscriptionLevel string) *PaperDocChangeSubscriptionDetails {
+	s := new(PaperDocChangeSubscriptionDetails)
+	s.EventUuid = EventUuid
+	s.NewSubscriptionLevel = NewSubscriptionLevel
 	return s
 }
 
@@ -6701,6 +6810,19 @@ func NewPaperDocTeamInviteDetails(EventUuid string) *PaperDocTeamInviteDetails {
 	return s
 }
 
+// PaperDocTrashedDetails : Paper doc trashed.
+type PaperDocTrashedDetails struct {
+	// EventUuid : Event unique identifier.
+	EventUuid string `json:"event_uuid"`
+}
+
+// NewPaperDocTrashedDetails returns a new PaperDocTrashedDetails instance
+func NewPaperDocTrashedDetails(EventUuid string) *PaperDocTrashedDetails {
+	s := new(PaperDocTrashedDetails)
+	s.EventUuid = EventUuid
+	return s
+}
+
 // PaperDocUnresolveCommentDetails : Unresolved a Paper doc comment.
 type PaperDocUnresolveCommentDetails struct {
 	// EventUuid : Event unique identifier.
@@ -6712,6 +6834,19 @@ type PaperDocUnresolveCommentDetails struct {
 // NewPaperDocUnresolveCommentDetails returns a new PaperDocUnresolveCommentDetails instance
 func NewPaperDocUnresolveCommentDetails(EventUuid string) *PaperDocUnresolveCommentDetails {
 	s := new(PaperDocUnresolveCommentDetails)
+	s.EventUuid = EventUuid
+	return s
+}
+
+// PaperDocUntrashedDetails : Paper doc untrashed.
+type PaperDocUntrashedDetails struct {
+	// EventUuid : Event unique identifier.
+	EventUuid string `json:"event_uuid"`
+}
+
+// NewPaperDocUntrashedDetails returns a new PaperDocUntrashedDetails instance
+func NewPaperDocUntrashedDetails(EventUuid string) *PaperDocUntrashedDetails {
+	s := new(PaperDocUntrashedDetails)
 	s.EventUuid = EventUuid
 	return s
 }
@@ -6813,6 +6948,25 @@ func NewPaperExternalViewForbidDetails() *PaperExternalViewForbidDetails {
 	return s
 }
 
+// PaperFolderChangeSubscriptionDetails : Followed or unfollowed a Paper folder.
+type PaperFolderChangeSubscriptionDetails struct {
+	// EventUuid : Event unique identifier.
+	EventUuid string `json:"event_uuid"`
+	// NewSubscriptionLevel : New folder subscription level.
+	NewSubscriptionLevel string `json:"new_subscription_level"`
+	// PreviousSubscriptionLevel : Previous folder subscription level. Might be
+	// missing due to historical data gap.
+	PreviousSubscriptionLevel string `json:"previous_subscription_level,omitempty"`
+}
+
+// NewPaperFolderChangeSubscriptionDetails returns a new PaperFolderChangeSubscriptionDetails instance
+func NewPaperFolderChangeSubscriptionDetails(EventUuid string, NewSubscriptionLevel string) *PaperFolderChangeSubscriptionDetails {
+	s := new(PaperFolderChangeSubscriptionDetails)
+	s.EventUuid = EventUuid
+	s.NewSubscriptionLevel = NewSubscriptionLevel
+	return s
+}
+
 // PaperFolderDeletedDetails : Paper folder archived.
 type PaperFolderDeletedDetails struct {
 	// EventUuid : Event unique identifier.
@@ -6876,36 +7030,11 @@ type PaperMemberPolicy struct {
 
 // Valid tag values for PaperMemberPolicy
 const (
-	PaperMemberPolicyTeamOnly        = "team_only"
-	PaperMemberPolicyDefaultTeamOnly = "default_team_only"
-	PaperMemberPolicyDefaultAnyone   = "default_anyone"
-	PaperMemberPolicyOther           = "other"
+	PaperMemberPolicyAnyoneWithLink          = "anyone_with_link"
+	PaperMemberPolicyOnlyTeam                = "only_team"
+	PaperMemberPolicyTeamAndExplicitlyShared = "team_and_explicitly_shared"
+	PaperMemberPolicyOther                   = "other"
 )
-
-// PaperPolicy : Policy for enabling or disabling Dropbox Paper for the team.
-type PaperPolicy struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for PaperPolicy
-const (
-	PaperPolicyDisabled = "disabled"
-	PaperPolicyEnabled  = "enabled"
-	PaperPolicyOther    = "other"
-)
-
-// PaperTaggedValue : Paper tagged value.
-type PaperTaggedValue struct {
-	// Tag : Tag.
-	Tag string `json:"tag"`
-}
-
-// NewPaperTaggedValue returns a new PaperTaggedValue instance
-func NewPaperTaggedValue(Tag string) *PaperTaggedValue {
-	s := new(PaperTaggedValue)
-	s.Tag = Tag
-	return s
-}
 
 // ParticipantLogInfo : A user or group
 type ParticipantLogInfo struct {
@@ -7057,46 +7186,17 @@ const (
 // RelocateAssetReferencesLogInfo : Provides the indices of the source asset and
 // the destination asset for a relocate action.
 type RelocateAssetReferencesLogInfo struct {
-	// SrcIndex : Source asset index.
-	SrcIndex int64 `json:"src_index"`
-	// DestIndex : Destination asset index.
-	DestIndex int64 `json:"dest_index"`
+	// SrcAssetIndex : Source asset position in the Assets list.
+	SrcAssetIndex uint64 `json:"src_asset_index"`
+	// DestAssetIndex : Destination asset position in the Assets list.
+	DestAssetIndex uint64 `json:"dest_asset_index"`
 }
 
 // NewRelocateAssetReferencesLogInfo returns a new RelocateAssetReferencesLogInfo instance
-func NewRelocateAssetReferencesLogInfo(SrcIndex int64, DestIndex int64) *RelocateAssetReferencesLogInfo {
+func NewRelocateAssetReferencesLogInfo(SrcAssetIndex uint64, DestAssetIndex uint64) *RelocateAssetReferencesLogInfo {
 	s := new(RelocateAssetReferencesLogInfo)
-	s.SrcIndex = SrcIndex
-	s.DestIndex = DestIndex
-	return s
-}
-
-// RemoveLogoutUrlDetails : Removed single sign-on logout URL.
-type RemoveLogoutUrlDetails struct {
-	// PreviousValue : Previous single sign-on logout URL.
-	PreviousValue string `json:"previous_value"`
-	// NewValue : New single sign-on logout URL. Might be missing due to
-	// historical data gap.
-	NewValue string `json:"new_value,omitempty"`
-}
-
-// NewRemoveLogoutUrlDetails returns a new RemoveLogoutUrlDetails instance
-func NewRemoveLogoutUrlDetails(PreviousValue string) *RemoveLogoutUrlDetails {
-	s := new(RemoveLogoutUrlDetails)
-	s.PreviousValue = PreviousValue
-	return s
-}
-
-// RemoveSsoUrlDetails : Changed the sign-out URL for SSO.
-type RemoveSsoUrlDetails struct {
-	// PreviousValue : Previous single sign-on logout URL.
-	PreviousValue string `json:"previous_value"`
-}
-
-// NewRemoveSsoUrlDetails returns a new RemoveSsoUrlDetails instance
-func NewRemoveSsoUrlDetails(PreviousValue string) *RemoveSsoUrlDetails {
-	s := new(RemoveSsoUrlDetails)
-	s.PreviousValue = PreviousValue
+	s.SrcAssetIndex = SrcAssetIndex
+	s.DestAssetIndex = DestAssetIndex
 	return s
 }
 
@@ -7138,8 +7238,8 @@ func NewResellerSupportSessionStartDetails() *ResellerSupportSessionStartDetails
 
 // SfAddGroupDetails : Added the team to a shared folder.
 type SfAddGroupDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// SharingPermission : Sharing permission. Might be missing due to
@@ -7150,9 +7250,9 @@ type SfAddGroupDetails struct {
 }
 
 // NewSfAddGroupDetails returns a new SfAddGroupDetails instance
-func NewSfAddGroupDetails(TargetIndex int64, OriginalFolderName string, TeamName string) *SfAddGroupDetails {
+func NewSfAddGroupDetails(TargetAssetIndex uint64, OriginalFolderName string, TeamName string) *SfAddGroupDetails {
 	s := new(SfAddGroupDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	s.TeamName = TeamName
 	return s
@@ -7161,8 +7261,8 @@ func NewSfAddGroupDetails(TargetIndex int64, OriginalFolderName string, TeamName
 // SfAllowNonMembersToViewSharedLinksDetails : Allowed non collaborators to view
 // links to files in a shared folder.
 type SfAllowNonMembersToViewSharedLinksDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7171,9 +7271,9 @@ type SfAllowNonMembersToViewSharedLinksDetails struct {
 }
 
 // NewSfAllowNonMembersToViewSharedLinksDetails returns a new SfAllowNonMembersToViewSharedLinksDetails instance
-func NewSfAllowNonMembersToViewSharedLinksDetails(TargetIndex int64, OriginalFolderName string) *SfAllowNonMembersToViewSharedLinksDetails {
+func NewSfAllowNonMembersToViewSharedLinksDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfAllowNonMembersToViewSharedLinksDetails {
 	s := new(SfAllowNonMembersToViewSharedLinksDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7191,21 +7291,21 @@ func NewSfExternalInviteWarnDetails() *SfExternalInviteWarnDetails {
 
 // SfInviteGroupDetails : Invited a group to a shared folder.
 type SfInviteGroupDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 }
 
 // NewSfInviteGroupDetails returns a new SfInviteGroupDetails instance
-func NewSfInviteGroupDetails(TargetIndex int64) *SfInviteGroupDetails {
+func NewSfInviteGroupDetails(TargetAssetIndex uint64) *SfInviteGroupDetails {
 	s := new(SfInviteGroupDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SfNestDetails : Changed parent of shared folder.
 type SfNestDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// PrevParentNsId : Previous parent namespace ID. Might be missing due to
@@ -7217,9 +7317,9 @@ type SfNestDetails struct {
 }
 
 // NewSfNestDetails returns a new SfNestDetails instance
-func NewSfNestDetails(TargetIndex int64, OriginalFolderName string) *SfNestDetails {
+func NewSfNestDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfNestDetails {
 	s := new(SfNestDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7227,32 +7327,32 @@ func NewSfNestDetails(TargetIndex int64, OriginalFolderName string) *SfNestDetai
 // SfTeamDeclineDetails : Declined a team member's invitation to a shared
 // folder.
 type SfTeamDeclineDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSfTeamDeclineDetails returns a new SfTeamDeclineDetails instance
-func NewSfTeamDeclineDetails(TargetIndex int64, OriginalFolderName string) *SfTeamDeclineDetails {
+func NewSfTeamDeclineDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfTeamDeclineDetails {
 	s := new(SfTeamDeclineDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
 
 // SfTeamGrantAccessDetails : Granted access to a shared folder.
 type SfTeamGrantAccessDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSfTeamGrantAccessDetails returns a new SfTeamGrantAccessDetails instance
-func NewSfTeamGrantAccessDetails(TargetIndex int64, OriginalFolderName string) *SfTeamGrantAccessDetails {
+func NewSfTeamGrantAccessDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfTeamGrantAccessDetails {
 	s := new(SfTeamGrantAccessDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7260,8 +7360,8 @@ func NewSfTeamGrantAccessDetails(TargetIndex int64, OriginalFolderName string) *
 // SfTeamInviteChangeRoleDetails : Changed a team member's role in a shared
 // folder.
 type SfTeamInviteChangeRoleDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// NewSharingPermission : New sharing permission. Might be missing due to
@@ -7273,17 +7373,17 @@ type SfTeamInviteChangeRoleDetails struct {
 }
 
 // NewSfTeamInviteChangeRoleDetails returns a new SfTeamInviteChangeRoleDetails instance
-func NewSfTeamInviteChangeRoleDetails(TargetIndex int64, OriginalFolderName string) *SfTeamInviteChangeRoleDetails {
+func NewSfTeamInviteChangeRoleDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfTeamInviteChangeRoleDetails {
 	s := new(SfTeamInviteChangeRoleDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
 
 // SfTeamInviteDetails : Invited team members to a shared folder.
 type SfTeamInviteDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// SharingPermission : Sharing permission. Might be missing due to
@@ -7292,25 +7392,25 @@ type SfTeamInviteDetails struct {
 }
 
 // NewSfTeamInviteDetails returns a new SfTeamInviteDetails instance
-func NewSfTeamInviteDetails(TargetIndex int64, OriginalFolderName string) *SfTeamInviteDetails {
+func NewSfTeamInviteDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfTeamInviteDetails {
 	s := new(SfTeamInviteDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
 
 // SfTeamJoinDetails : Joined a team member's shared folder.
 type SfTeamJoinDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSfTeamJoinDetails returns a new SfTeamJoinDetails instance
-func NewSfTeamJoinDetails(TargetIndex int64, OriginalFolderName string) *SfTeamJoinDetails {
+func NewSfTeamJoinDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfTeamJoinDetails {
 	s := new(SfTeamJoinDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7318,8 +7418,8 @@ func NewSfTeamJoinDetails(TargetIndex int64, OriginalFolderName string) *SfTeamJ
 // SfTeamJoinFromOobLinkDetails : Joined a team member's shared folder from a
 // link.
 type SfTeamJoinFromOobLinkDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// TokenKey : Shared link token key.
@@ -7330,25 +7430,25 @@ type SfTeamJoinFromOobLinkDetails struct {
 }
 
 // NewSfTeamJoinFromOobLinkDetails returns a new SfTeamJoinFromOobLinkDetails instance
-func NewSfTeamJoinFromOobLinkDetails(TargetIndex int64, OriginalFolderName string) *SfTeamJoinFromOobLinkDetails {
+func NewSfTeamJoinFromOobLinkDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfTeamJoinFromOobLinkDetails {
 	s := new(SfTeamJoinFromOobLinkDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
 
 // SfTeamUninviteDetails : Unshared a folder with a team member.
 type SfTeamUninviteDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSfTeamUninviteDetails returns a new SfTeamUninviteDetails instance
-func NewSfTeamUninviteDetails(TargetIndex int64, OriginalFolderName string) *SfTeamUninviteDetails {
+func NewSfTeamUninviteDetails(TargetAssetIndex uint64, OriginalFolderName string) *SfTeamUninviteDetails {
 	s := new(SfTeamUninviteDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7356,8 +7456,8 @@ func NewSfTeamUninviteDetails(TargetIndex int64, OriginalFolderName string) *SfT
 // SharedContentAddInviteesDetails : Sent an email invitation to the membership
 // of a shared file or folder.
 type SharedContentAddInviteesDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharingPermission : Sharing permission. Might be missing due to
@@ -7366,17 +7466,17 @@ type SharedContentAddInviteesDetails struct {
 }
 
 // NewSharedContentAddInviteesDetails returns a new SharedContentAddInviteesDetails instance
-func NewSharedContentAddInviteesDetails(TargetIndex int64) *SharedContentAddInviteesDetails {
+func NewSharedContentAddInviteesDetails(TargetAssetIndex uint64) *SharedContentAddInviteesDetails {
 	s := new(SharedContentAddInviteesDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentAddLinkExpiryDetails : Added an expiry to the link for the
 // shared file or folder.
 type SharedContentAddLinkExpiryDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7390,9 +7490,9 @@ type SharedContentAddLinkExpiryDetails struct {
 }
 
 // NewSharedContentAddLinkExpiryDetails returns a new SharedContentAddLinkExpiryDetails instance
-func NewSharedContentAddLinkExpiryDetails(TargetIndex int64, ExpirationStartDate string, ExpirationDays int64) *SharedContentAddLinkExpiryDetails {
+func NewSharedContentAddLinkExpiryDetails(TargetAssetIndex uint64, ExpirationStartDate string, ExpirationDays int64) *SharedContentAddLinkExpiryDetails {
 	s := new(SharedContentAddLinkExpiryDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.ExpirationStartDate = ExpirationStartDate
 	s.ExpirationDays = ExpirationDays
 	return s
@@ -7401,8 +7501,8 @@ func NewSharedContentAddLinkExpiryDetails(TargetIndex int64, ExpirationStartDate
 // SharedContentAddLinkPasswordDetails : Added a password to the link for the
 // shared file or folder.
 type SharedContentAddLinkPasswordDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7411,17 +7511,17 @@ type SharedContentAddLinkPasswordDetails struct {
 }
 
 // NewSharedContentAddLinkPasswordDetails returns a new SharedContentAddLinkPasswordDetails instance
-func NewSharedContentAddLinkPasswordDetails(TargetIndex int64) *SharedContentAddLinkPasswordDetails {
+func NewSharedContentAddLinkPasswordDetails(TargetAssetIndex uint64) *SharedContentAddLinkPasswordDetails {
 	s := new(SharedContentAddLinkPasswordDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentAddMemberDetails : Added users and/or groups to the membership
 // of a shared file or folder.
 type SharedContentAddMemberDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharingPermission : Sharing permission. Might be missing due to
@@ -7433,17 +7533,17 @@ type SharedContentAddMemberDetails struct {
 }
 
 // NewSharedContentAddMemberDetails returns a new SharedContentAddMemberDetails instance
-func NewSharedContentAddMemberDetails(TargetIndex int64) *SharedContentAddMemberDetails {
+func NewSharedContentAddMemberDetails(TargetAssetIndex uint64) *SharedContentAddMemberDetails {
 	s := new(SharedContentAddMemberDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentChangeDownloadsPolicyDetails : Changed whether members can
 // download the shared file or folder.
 type SharedContentChangeDownloadsPolicyDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7457,9 +7557,9 @@ type SharedContentChangeDownloadsPolicyDetails struct {
 }
 
 // NewSharedContentChangeDownloadsPolicyDetails returns a new SharedContentChangeDownloadsPolicyDetails instance
-func NewSharedContentChangeDownloadsPolicyDetails(TargetIndex int64, NewValue *SharedContentDownloadsPolicy) *SharedContentChangeDownloadsPolicyDetails {
+func NewSharedContentChangeDownloadsPolicyDetails(TargetAssetIndex uint64, NewValue *SharedContentDownloadsPolicy) *SharedContentChangeDownloadsPolicyDetails {
 	s := new(SharedContentChangeDownloadsPolicyDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.NewValue = NewValue
 	return s
 }
@@ -7467,8 +7567,8 @@ func NewSharedContentChangeDownloadsPolicyDetails(TargetIndex int64, NewValue *S
 // SharedContentChangeInviteeRoleDetails : Changed the access type of an invitee
 // to a shared file or folder before the invitation was claimed.
 type SharedContentChangeInviteeRoleDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// NewSharingPermission : New sharing permission. Might be missing due to
@@ -7480,9 +7580,9 @@ type SharedContentChangeInviteeRoleDetails struct {
 }
 
 // NewSharedContentChangeInviteeRoleDetails returns a new SharedContentChangeInviteeRoleDetails instance
-func NewSharedContentChangeInviteeRoleDetails(TargetIndex int64, OriginalFolderName string) *SharedContentChangeInviteeRoleDetails {
+func NewSharedContentChangeInviteeRoleDetails(TargetAssetIndex uint64, OriginalFolderName string) *SharedContentChangeInviteeRoleDetails {
 	s := new(SharedContentChangeInviteeRoleDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7490,8 +7590,8 @@ func NewSharedContentChangeInviteeRoleDetails(TargetIndex int64, OriginalFolderN
 // SharedContentChangeLinkAudienceDetails : Changed the audience of the link for
 // a shared file or folder.
 type SharedContentChangeLinkAudienceDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7505,9 +7605,9 @@ type SharedContentChangeLinkAudienceDetails struct {
 }
 
 // NewSharedContentChangeLinkAudienceDetails returns a new SharedContentChangeLinkAudienceDetails instance
-func NewSharedContentChangeLinkAudienceDetails(TargetIndex int64, NewValue *LinkAudience) *SharedContentChangeLinkAudienceDetails {
+func NewSharedContentChangeLinkAudienceDetails(TargetAssetIndex uint64, NewValue *LinkAudience) *SharedContentChangeLinkAudienceDetails {
 	s := new(SharedContentChangeLinkAudienceDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.NewValue = NewValue
 	return s
 }
@@ -7515,8 +7615,8 @@ func NewSharedContentChangeLinkAudienceDetails(TargetIndex int64, NewValue *Link
 // SharedContentChangeLinkExpiryDetails : Changed the expiry of the link for the
 // shared file or folder.
 type SharedContentChangeLinkExpiryDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7530,9 +7630,9 @@ type SharedContentChangeLinkExpiryDetails struct {
 }
 
 // NewSharedContentChangeLinkExpiryDetails returns a new SharedContentChangeLinkExpiryDetails instance
-func NewSharedContentChangeLinkExpiryDetails(TargetIndex int64, ExpirationStartDate string, ExpirationDays int64) *SharedContentChangeLinkExpiryDetails {
+func NewSharedContentChangeLinkExpiryDetails(TargetAssetIndex uint64, ExpirationStartDate string, ExpirationDays int64) *SharedContentChangeLinkExpiryDetails {
 	s := new(SharedContentChangeLinkExpiryDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.ExpirationStartDate = ExpirationStartDate
 	s.ExpirationDays = ExpirationDays
 	return s
@@ -7541,8 +7641,8 @@ func NewSharedContentChangeLinkExpiryDetails(TargetIndex int64, ExpirationStartD
 // SharedContentChangeLinkPasswordDetails : Changed the password on the link for
 // the shared file or folder.
 type SharedContentChangeLinkPasswordDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7551,17 +7651,17 @@ type SharedContentChangeLinkPasswordDetails struct {
 }
 
 // NewSharedContentChangeLinkPasswordDetails returns a new SharedContentChangeLinkPasswordDetails instance
-func NewSharedContentChangeLinkPasswordDetails(TargetIndex int64) *SharedContentChangeLinkPasswordDetails {
+func NewSharedContentChangeLinkPasswordDetails(TargetAssetIndex uint64) *SharedContentChangeLinkPasswordDetails {
 	s := new(SharedContentChangeLinkPasswordDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentChangeMemberRoleDetails : Changed the access type of a shared
 // file or folder member.
 type SharedContentChangeMemberRoleDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// NewSharingPermission : New sharing permission. Might be missing due to
@@ -7576,17 +7676,17 @@ type SharedContentChangeMemberRoleDetails struct {
 }
 
 // NewSharedContentChangeMemberRoleDetails returns a new SharedContentChangeMemberRoleDetails instance
-func NewSharedContentChangeMemberRoleDetails(TargetIndex int64) *SharedContentChangeMemberRoleDetails {
+func NewSharedContentChangeMemberRoleDetails(TargetAssetIndex uint64) *SharedContentChangeMemberRoleDetails {
 	s := new(SharedContentChangeMemberRoleDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentChangeViewerInfoPolicyDetails : Changed whether members can see
 // who viewed the shared file or folder.
 type SharedContentChangeViewerInfoPolicyDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7600,9 +7700,9 @@ type SharedContentChangeViewerInfoPolicyDetails struct {
 }
 
 // NewSharedContentChangeViewerInfoPolicyDetails returns a new SharedContentChangeViewerInfoPolicyDetails instance
-func NewSharedContentChangeViewerInfoPolicyDetails(TargetIndex int64, NewValue *SharedContentViewerInfoPolicy) *SharedContentChangeViewerInfoPolicyDetails {
+func NewSharedContentChangeViewerInfoPolicyDetails(TargetAssetIndex uint64, NewValue *SharedContentViewerInfoPolicy) *SharedContentChangeViewerInfoPolicyDetails {
 	s := new(SharedContentChangeViewerInfoPolicyDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.NewValue = NewValue
 	return s
 }
@@ -7610,8 +7710,8 @@ func NewSharedContentChangeViewerInfoPolicyDetails(TargetIndex int64, NewValue *
 // SharedContentClaimInvitationDetails : Claimed membership to a team member's
 // shared folder.
 type SharedContentClaimInvitationDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedContentLink : Shared content link.
@@ -7619,9 +7719,9 @@ type SharedContentClaimInvitationDetails struct {
 }
 
 // NewSharedContentClaimInvitationDetails returns a new SharedContentClaimInvitationDetails instance
-func NewSharedContentClaimInvitationDetails(TargetIndex int64) *SharedContentClaimInvitationDetails {
+func NewSharedContentClaimInvitationDetails(TargetAssetIndex uint64) *SharedContentClaimInvitationDetails {
 	s := new(SharedContentClaimInvitationDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -7632,18 +7732,18 @@ type SharedContentCopyDetails struct {
 	// SharingPermission : Sharing permission. Might be missing due to
 	// historical data gap.
 	SharingPermission string `json:"sharing_permission,omitempty"`
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// RelocateActionDetails : Specifies the source and destination indices in
 	// the assets list.
 	RelocateActionDetails *RelocateAssetReferencesLogInfo `json:"relocate_action_details"`
 }
 
 // NewSharedContentCopyDetails returns a new SharedContentCopyDetails instance
-func NewSharedContentCopyDetails(SharedContentLink string, TargetIndex int64, RelocateActionDetails *RelocateAssetReferencesLogInfo) *SharedContentCopyDetails {
+func NewSharedContentCopyDetails(SharedContentLink string, TargetAssetIndex uint64, RelocateActionDetails *RelocateAssetReferencesLogInfo) *SharedContentCopyDetails {
 	s := new(SharedContentCopyDetails)
 	s.SharedContentLink = SharedContentLink
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.RelocateActionDetails = RelocateActionDetails
 	return s
 }
@@ -7655,15 +7755,15 @@ type SharedContentDownloadDetails struct {
 	// SharingPermission : Sharing permission. Might be missing due to
 	// historical data gap.
 	SharingPermission string `json:"sharing_permission,omitempty"`
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 }
 
 // NewSharedContentDownloadDetails returns a new SharedContentDownloadDetails instance
-func NewSharedContentDownloadDetails(SharedContentLink string, TargetIndex int64) *SharedContentDownloadDetails {
+func NewSharedContentDownloadDetails(SharedContentLink string, TargetAssetIndex uint64) *SharedContentDownloadDetails {
 	s := new(SharedContentDownloadDetails)
 	s.SharedContentLink = SharedContentLink
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -7682,16 +7782,16 @@ const (
 // SharedContentRelinquishMembershipDetails : Left the membership of a shared
 // file or folder.
 type SharedContentRelinquishMembershipDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSharedContentRelinquishMembershipDetails returns a new SharedContentRelinquishMembershipDetails instance
-func NewSharedContentRelinquishMembershipDetails(TargetIndex int64, OriginalFolderName string) *SharedContentRelinquishMembershipDetails {
+func NewSharedContentRelinquishMembershipDetails(TargetAssetIndex uint64, OriginalFolderName string) *SharedContentRelinquishMembershipDetails {
 	s := new(SharedContentRelinquishMembershipDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7699,16 +7799,16 @@ func NewSharedContentRelinquishMembershipDetails(TargetIndex int64, OriginalFold
 // SharedContentRemoveInviteeDetails : Removed an invitee from the membership of
 // a shared file or folder before it was claimed.
 type SharedContentRemoveInviteeDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSharedContentRemoveInviteeDetails returns a new SharedContentRemoveInviteeDetails instance
-func NewSharedContentRemoveInviteeDetails(TargetIndex int64, OriginalFolderName string) *SharedContentRemoveInviteeDetails {
+func NewSharedContentRemoveInviteeDetails(TargetAssetIndex uint64, OriginalFolderName string) *SharedContentRemoveInviteeDetails {
 	s := new(SharedContentRemoveInviteeDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -7716,8 +7816,8 @@ func NewSharedContentRemoveInviteeDetails(TargetIndex int64, OriginalFolderName 
 // SharedContentRemoveLinkExpiryDetails : Removed the expiry of the link for the
 // shared file or folder.
 type SharedContentRemoveLinkExpiryDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7726,17 +7826,17 @@ type SharedContentRemoveLinkExpiryDetails struct {
 }
 
 // NewSharedContentRemoveLinkExpiryDetails returns a new SharedContentRemoveLinkExpiryDetails instance
-func NewSharedContentRemoveLinkExpiryDetails(TargetIndex int64) *SharedContentRemoveLinkExpiryDetails {
+func NewSharedContentRemoveLinkExpiryDetails(TargetAssetIndex uint64) *SharedContentRemoveLinkExpiryDetails {
 	s := new(SharedContentRemoveLinkExpiryDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentRemoveLinkPasswordDetails : Removed the password on the link for
 // the shared file or folder.
 type SharedContentRemoveLinkPasswordDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7745,17 +7845,17 @@ type SharedContentRemoveLinkPasswordDetails struct {
 }
 
 // NewSharedContentRemoveLinkPasswordDetails returns a new SharedContentRemoveLinkPasswordDetails instance
-func NewSharedContentRemoveLinkPasswordDetails(TargetIndex int64) *SharedContentRemoveLinkPasswordDetails {
+func NewSharedContentRemoveLinkPasswordDetails(TargetAssetIndex uint64) *SharedContentRemoveLinkPasswordDetails {
 	s := new(SharedContentRemoveLinkPasswordDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentRemoveMemberDetails : Removed a user or a group from the
 // membership of a shared file or folder.
 type SharedContentRemoveMemberDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharingPermission : Sharing permission. Might be missing due to
@@ -7767,17 +7867,17 @@ type SharedContentRemoveMemberDetails struct {
 }
 
 // NewSharedContentRemoveMemberDetails returns a new SharedContentRemoveMemberDetails instance
-func NewSharedContentRemoveMemberDetails(TargetIndex int64) *SharedContentRemoveMemberDetails {
+func NewSharedContentRemoveMemberDetails(TargetAssetIndex uint64) *SharedContentRemoveMemberDetails {
 	s := new(SharedContentRemoveMemberDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentRequestAccessDetails : Requested to be on the membership of a
 // shared file or folder.
 type SharedContentRequestAccessDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 	// SharedContentLink : Shared content link.
@@ -7785,25 +7885,25 @@ type SharedContentRequestAccessDetails struct {
 }
 
 // NewSharedContentRequestAccessDetails returns a new SharedContentRequestAccessDetails instance
-func NewSharedContentRequestAccessDetails(TargetIndex int64) *SharedContentRequestAccessDetails {
+func NewSharedContentRequestAccessDetails(TargetAssetIndex uint64) *SharedContentRequestAccessDetails {
 	s := new(SharedContentRequestAccessDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // SharedContentUnshareDetails : Unshared a shared file or folder by clearing
 // its membership and turning off its link.
 type SharedContentUnshareDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name,omitempty"`
 }
 
 // NewSharedContentUnshareDetails returns a new SharedContentUnshareDetails instance
-func NewSharedContentUnshareDetails(TargetIndex int64) *SharedContentUnshareDetails {
+func NewSharedContentUnshareDetails(TargetAssetIndex uint64) *SharedContentUnshareDetails {
 	s := new(SharedContentUnshareDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -7814,15 +7914,15 @@ type SharedContentViewDetails struct {
 	// SharingPermission : Sharing permission. Might be missing due to
 	// historical data gap.
 	SharingPermission string `json:"sharing_permission,omitempty"`
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 }
 
 // NewSharedContentViewDetails returns a new SharedContentViewDetails instance
-func NewSharedContentViewDetails(SharedContentLink string, TargetIndex int64) *SharedContentViewDetails {
+func NewSharedContentViewDetails(SharedContentLink string, TargetAssetIndex uint64) *SharedContentViewDetails {
 	s := new(SharedContentViewDetails)
 	s.SharedContentLink = SharedContentLink
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -7841,8 +7941,8 @@ const (
 // SharedFolderChangeConfidentialityDetails : Set or unset the confidential flag
 // on a shared folder.
 type SharedFolderChangeConfidentialityDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// NewValue : New confidentiality value.
@@ -7853,9 +7953,9 @@ type SharedFolderChangeConfidentialityDetails struct {
 }
 
 // NewSharedFolderChangeConfidentialityDetails returns a new SharedFolderChangeConfidentialityDetails instance
-func NewSharedFolderChangeConfidentialityDetails(TargetIndex int64, OriginalFolderName string, NewValue *Confidentiality) *SharedFolderChangeConfidentialityDetails {
+func NewSharedFolderChangeConfidentialityDetails(TargetAssetIndex uint64, OriginalFolderName string, NewValue *Confidentiality) *SharedFolderChangeConfidentialityDetails {
 	s := new(SharedFolderChangeConfidentialityDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	s.NewValue = NewValue
 	return s
@@ -7864,8 +7964,8 @@ func NewSharedFolderChangeConfidentialityDetails(TargetIndex int64, OriginalFold
 // SharedFolderChangeLinkPolicyDetails : Changed who can access the shared
 // folder via a link.
 type SharedFolderChangeLinkPolicyDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7879,9 +7979,9 @@ type SharedFolderChangeLinkPolicyDetails struct {
 }
 
 // NewSharedFolderChangeLinkPolicyDetails returns a new SharedFolderChangeLinkPolicyDetails instance
-func NewSharedFolderChangeLinkPolicyDetails(TargetIndex int64, OriginalFolderName string, NewValue *SharedFolderLinkPolicy) *SharedFolderChangeLinkPolicyDetails {
+func NewSharedFolderChangeLinkPolicyDetails(TargetAssetIndex uint64, OriginalFolderName string, NewValue *SharedFolderLinkPolicy) *SharedFolderChangeLinkPolicyDetails {
 	s := new(SharedFolderChangeLinkPolicyDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	s.NewValue = NewValue
 	return s
@@ -7890,8 +7990,8 @@ func NewSharedFolderChangeLinkPolicyDetails(TargetIndex int64, OriginalFolderNam
 // SharedFolderChangeMemberManagementPolicyDetails : Changed who can manage the
 // membership of a shared folder.
 type SharedFolderChangeMemberManagementPolicyDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7905,9 +8005,9 @@ type SharedFolderChangeMemberManagementPolicyDetails struct {
 }
 
 // NewSharedFolderChangeMemberManagementPolicyDetails returns a new SharedFolderChangeMemberManagementPolicyDetails instance
-func NewSharedFolderChangeMemberManagementPolicyDetails(TargetIndex int64, OriginalFolderName string, NewValue *SharedFolderMembershipManagementPolicy) *SharedFolderChangeMemberManagementPolicyDetails {
+func NewSharedFolderChangeMemberManagementPolicyDetails(TargetAssetIndex uint64, OriginalFolderName string, NewValue *SharedFolderMembershipManagementPolicy) *SharedFolderChangeMemberManagementPolicyDetails {
 	s := new(SharedFolderChangeMemberManagementPolicyDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	s.NewValue = NewValue
 	return s
@@ -7916,8 +8016,8 @@ func NewSharedFolderChangeMemberManagementPolicyDetails(TargetIndex int64, Origi
 // SharedFolderChangeMemberPolicyDetails : Changed who can become a member of
 // the shared folder.
 type SharedFolderChangeMemberPolicyDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 	// SharedFolderType : Shared folder type. Might be missing due to historical
@@ -7931,9 +8031,9 @@ type SharedFolderChangeMemberPolicyDetails struct {
 }
 
 // NewSharedFolderChangeMemberPolicyDetails returns a new SharedFolderChangeMemberPolicyDetails instance
-func NewSharedFolderChangeMemberPolicyDetails(TargetIndex int64, OriginalFolderName string, NewValue *SharedFolderMemberPolicy) *SharedFolderChangeMemberPolicyDetails {
+func NewSharedFolderChangeMemberPolicyDetails(TargetAssetIndex uint64, OriginalFolderName string, NewValue *SharedFolderMemberPolicy) *SharedFolderChangeMemberPolicyDetails {
 	s := new(SharedFolderChangeMemberPolicyDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	s.NewValue = NewValue
 	return s
@@ -7941,17 +8041,17 @@ func NewSharedFolderChangeMemberPolicyDetails(TargetIndex int64, OriginalFolderN
 
 // SharedFolderCreateDetails : Created a shared folder.
 type SharedFolderCreateDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// ParentNsId : Parent namespace ID. Might be missing due to historical data
 	// gap.
 	ParentNsId string `json:"parent_ns_id,omitempty"`
 }
 
 // NewSharedFolderCreateDetails returns a new SharedFolderCreateDetails instance
-func NewSharedFolderCreateDetails(TargetIndex int64) *SharedFolderCreateDetails {
+func NewSharedFolderCreateDetails(TargetAssetIndex uint64) *SharedFolderCreateDetails {
 	s := new(SharedFolderCreateDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -7995,16 +8095,16 @@ const (
 
 // SharedFolderMountDetails : Added a shared folder to own Dropbox.
 type SharedFolderMountDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSharedFolderMountDetails returns a new SharedFolderMountDetails instance
-func NewSharedFolderMountDetails(TargetIndex int64, OriginalFolderName string) *SharedFolderMountDetails {
+func NewSharedFolderMountDetails(TargetAssetIndex uint64, OriginalFolderName string) *SharedFolderMountDetails {
 	s := new(SharedFolderMountDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -8012,32 +8112,32 @@ func NewSharedFolderMountDetails(TargetIndex int64, OriginalFolderName string) *
 // SharedFolderTransferOwnershipDetails : Transferred the ownership of a shared
 // folder to another member.
 type SharedFolderTransferOwnershipDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSharedFolderTransferOwnershipDetails returns a new SharedFolderTransferOwnershipDetails instance
-func NewSharedFolderTransferOwnershipDetails(TargetIndex int64, OriginalFolderName string) *SharedFolderTransferOwnershipDetails {
+func NewSharedFolderTransferOwnershipDetails(TargetAssetIndex uint64, OriginalFolderName string) *SharedFolderTransferOwnershipDetails {
 	s := new(SharedFolderTransferOwnershipDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
 
 // SharedFolderUnmountDetails : Deleted a shared folder from Dropbox.
 type SharedFolderUnmountDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// OriginalFolderName : Original shared folder name.
 	OriginalFolderName string `json:"original_folder_name"`
 }
 
 // NewSharedFolderUnmountDetails returns a new SharedFolderUnmountDetails instance
-func NewSharedFolderUnmountDetails(TargetIndex int64, OriginalFolderName string) *SharedFolderUnmountDetails {
+func NewSharedFolderUnmountDetails(TargetAssetIndex uint64, OriginalFolderName string) *SharedFolderUnmountDetails {
 	s := new(SharedFolderUnmountDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	s.OriginalFolderName = OriginalFolderName
 	return s
 }
@@ -8112,9 +8212,9 @@ type SharingFolderJoinPolicy struct {
 
 // Valid tag values for SharingFolderJoinPolicy
 const (
-	SharingFolderJoinPolicyTeamOnly = "team_only"
-	SharingFolderJoinPolicyAnyone   = "anyone"
-	SharingFolderJoinPolicyOther    = "other"
+	SharingFolderJoinPolicyFromAnyone   = "from_anyone"
+	SharingFolderJoinPolicyFromTeamOnly = "from_team_only"
+	SharingFolderJoinPolicyOther        = "other"
 )
 
 // SharingLinkPolicy : Policy for controlling if team members can share links
@@ -8125,10 +8225,10 @@ type SharingLinkPolicy struct {
 
 // Valid tag values for SharingLinkPolicy
 const (
-	SharingLinkPolicyTeamOnly        = "team_only"
-	SharingLinkPolicyDefaultTeamOnly = "default_team_only"
-	SharingLinkPolicyDefaultAnyone   = "default_anyone"
-	SharingLinkPolicyOther           = "other"
+	SharingLinkPolicyDefaultPrivate = "default_private"
+	SharingLinkPolicyDefaultPublic  = "default_public"
+	SharingLinkPolicyOnlyPrivate    = "only_private"
+	SharingLinkPolicyOther          = "other"
 )
 
 // SharingMemberPolicy : External sharing policy
@@ -8138,9 +8238,9 @@ type SharingMemberPolicy struct {
 
 // Valid tag values for SharingMemberPolicy
 const (
-	SharingMemberPolicyTeamOnly = "team_only"
-	SharingMemberPolicyAnyone   = "anyone"
-	SharingMemberPolicyOther    = "other"
+	SharingMemberPolicyAllow  = "allow"
+	SharingMemberPolicyForbid = "forbid"
+	SharingMemberPolicyOther  = "other"
 )
 
 // ShmodelAppCreateDetails : Created a link to a file using an app.
@@ -8399,8 +8499,8 @@ type SmartSyncOptOutPolicy struct {
 
 // Valid tag values for SmartSyncOptOutPolicy
 const (
-	SmartSyncOptOutPolicyOptedOut = "opted_out"
 	SmartSyncOptOutPolicyDefault  = "default"
+	SmartSyncOptOutPolicyOptedOut = "opted_out"
 	SmartSyncOptOutPolicyOther    = "other"
 )
 
@@ -8443,6 +8543,32 @@ const (
 	SpaceLimitsStatusOther       = "other"
 )
 
+// SsoAddLoginUrlDetails : Added sign-in URL for SSO.
+type SsoAddLoginUrlDetails struct {
+	// NewValue : New single sign-on login URL.
+	NewValue string `json:"new_value"`
+}
+
+// NewSsoAddLoginUrlDetails returns a new SsoAddLoginUrlDetails instance
+func NewSsoAddLoginUrlDetails(NewValue string) *SsoAddLoginUrlDetails {
+	s := new(SsoAddLoginUrlDetails)
+	s.NewValue = NewValue
+	return s
+}
+
+// SsoAddLogoutUrlDetails : Added sign-out URL for SSO.
+type SsoAddLogoutUrlDetails struct {
+	// NewValue : New single sign-on logout URL. Might be missing due to
+	// historical data gap.
+	NewValue string `json:"new_value,omitempty"`
+}
+
+// NewSsoAddLogoutUrlDetails returns a new SsoAddLogoutUrlDetails instance
+func NewSsoAddLogoutUrlDetails() *SsoAddLogoutUrlDetails {
+	s := new(SsoAddLogoutUrlDetails)
+	return s
+}
+
 // SsoChangeCertDetails : Changed the X.509 certificate for SSO.
 type SsoChangeCertDetails struct {
 	// CertificateDetails : SSO certificate details.
@@ -8474,31 +8600,31 @@ func NewSsoChangeLoginUrlDetails(PreviousValue string, NewValue string) *SsoChan
 
 // SsoChangeLogoutUrlDetails : Changed the sign-out URL for SSO.
 type SsoChangeLogoutUrlDetails struct {
-	// PreviousValue : Previous single sign-on logout URL.
-	PreviousValue string `json:"previous_value"`
+	// PreviousValue : Previous single sign-on logout URL. Might be missing due
+	// to historical data gap.
+	PreviousValue string `json:"previous_value,omitempty"`
 	// NewValue : New single sign-on logout URL. Might be missing due to
 	// historical data gap.
 	NewValue string `json:"new_value,omitempty"`
 }
 
 // NewSsoChangeLogoutUrlDetails returns a new SsoChangeLogoutUrlDetails instance
-func NewSsoChangeLogoutUrlDetails(PreviousValue string) *SsoChangeLogoutUrlDetails {
+func NewSsoChangeLogoutUrlDetails() *SsoChangeLogoutUrlDetails {
 	s := new(SsoChangeLogoutUrlDetails)
-	s.PreviousValue = PreviousValue
 	return s
 }
 
 // SsoChangePolicyDetails : Change the single sign-on policy for the team.
 type SsoChangePolicyDetails struct {
 	// NewValue : New single sign-on policy.
-	NewValue *SsoPolicy `json:"new_value"`
+	NewValue *team_policies.SsoPolicy `json:"new_value"`
 	// PreviousValue : Previous single sign-on policy. Might be missing due to
 	// historical data gap.
-	PreviousValue *SsoPolicy `json:"previous_value,omitempty"`
+	PreviousValue *team_policies.SsoPolicy `json:"previous_value,omitempty"`
 }
 
 // NewSsoChangePolicyDetails returns a new SsoChangePolicyDetails instance
-func NewSsoChangePolicyDetails(NewValue *SsoPolicy) *SsoChangePolicyDetails {
+func NewSsoChangePolicyDetails(NewValue *team_policies.SsoPolicy) *SsoChangePolicyDetails {
 	s := new(SsoChangePolicyDetails)
 	s.NewValue = NewValue
 	return s
@@ -8533,18 +8659,31 @@ func NewSsoLoginFailDetails(ErrorDetails *FailureDetailsLogInfo) *SsoLoginFailDe
 	return s
 }
 
-// SsoPolicy : SSO policy
-type SsoPolicy struct {
-	dropbox.Tagged
+// SsoRemoveLoginUrlDetails : Removed the sign-in URL for SSO.
+type SsoRemoveLoginUrlDetails struct {
+	// PreviousValue : Previous single sign-on login URL.
+	PreviousValue string `json:"previous_value"`
 }
 
-// Valid tag values for SsoPolicy
-const (
-	SsoPolicyDisabled = "disabled"
-	SsoPolicyOptional = "optional"
-	SsoPolicyRequired = "required"
-	SsoPolicyOther    = "other"
-)
+// NewSsoRemoveLoginUrlDetails returns a new SsoRemoveLoginUrlDetails instance
+func NewSsoRemoveLoginUrlDetails(PreviousValue string) *SsoRemoveLoginUrlDetails {
+	s := new(SsoRemoveLoginUrlDetails)
+	s.PreviousValue = PreviousValue
+	return s
+}
+
+// SsoRemoveLogoutUrlDetails : Removed single sign-on logout URL.
+type SsoRemoveLogoutUrlDetails struct {
+	// PreviousValue : Previous single sign-on logout URL.
+	PreviousValue string `json:"previous_value"`
+}
+
+// NewSsoRemoveLogoutUrlDetails returns a new SsoRemoveLogoutUrlDetails instance
+func NewSsoRemoveLogoutUrlDetails(PreviousValue string) *SsoRemoveLogoutUrlDetails {
+	s := new(SsoRemoveLogoutUrlDetails)
+	s.PreviousValue = PreviousValue
+	return s
+}
 
 // TeamActivityCreateReportDetails : Created a team activity report.
 type TeamActivityCreateReportDetails struct {
@@ -8575,6 +8714,12 @@ type TeamEvent struct {
 	// was performed programmatically via the API the origin represents the API
 	// client.
 	Origin *OriginLogInfo `json:"origin,omitempty"`
+	// InvolveNonTeamMember : True if the action involved a non team member
+	// either as the actor or as one of the affected users.
+	InvolveNonTeamMember bool `json:"involve_non_team_member"`
+	// Context : The user or team on whose behalf the actor performed the
+	// action.
+	Context *ContextLogInfo `json:"context"`
 	// Participants : Zero or more users and/or groups that are affected by the
 	// action. Note that this list doesn't include any actors or users in
 	// context.
@@ -8583,12 +8728,6 @@ type TeamEvent struct {
 	// these include Dropbox files and folders but in the future we might add
 	// other asset types such as Paper documents, folders, projects, etc.
 	Assets []*AssetLogInfo `json:"assets,omitempty"`
-	// InvolveNonTeamMember : True if the action involved a non team member
-	// either as the actor or as one of the affected users.
-	InvolveNonTeamMember bool `json:"involve_non_team_member"`
-	// Context : The user or team on whose behalf the actor performed the
-	// action.
-	Context *ContextLogInfo `json:"context"`
 	// EventType : The particular type of action taken.
 	EventType *EventType `json:"event_type"`
 	// Details : The variable event schema applicable to this type of action,
@@ -8638,14 +8777,14 @@ func NewTeamFolderCreateDetails() *TeamFolderCreateDetails {
 // TeamFolderDowngradeDetails : Downgraded a team folder to a regular shared
 // folder.
 type TeamFolderDowngradeDetails struct {
-	// TargetIndex : Target asset index.
-	TargetIndex int64 `json:"target_index"`
+	// TargetAssetIndex : Target asset position in the Assets list.
+	TargetAssetIndex uint64 `json:"target_asset_index"`
 }
 
 // NewTeamFolderDowngradeDetails returns a new TeamFolderDowngradeDetails instance
-func NewTeamFolderDowngradeDetails(TargetIndex int64) *TeamFolderDowngradeDetails {
+func NewTeamFolderDowngradeDetails(TargetAssetIndex uint64) *TeamFolderDowngradeDetails {
 	s := new(TeamFolderDowngradeDetails)
-	s.TargetIndex = TargetIndex
+	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -8905,10 +9044,9 @@ type TfaPolicy struct {
 
 // Valid tag values for TfaPolicy
 const (
-	TfaPolicyDisabled = "disabled"
-	TfaPolicyOptional = "optional"
-	TfaPolicyRequired = "required"
-	TfaPolicyOther    = "other"
+	TfaPolicyAllowDisable = "allow_disable"
+	TfaPolicyStickyEnable = "sticky_enable"
+	TfaPolicyOther        = "other"
 )
 
 // TfaRemoveBackupPhoneDetails : Removed the backup phone for two-step
@@ -9046,34 +9184,34 @@ func NewWebSessionLogInfo() *WebSessionLogInfo {
 // WebSessionsChangeFixedLengthPolicyDetails : Changed how long team members can
 // stay signed in to Dropbox on the web.
 type WebSessionsChangeFixedLengthPolicyDetails struct {
-	// NewValue : New session length policy.
-	NewValue *WebSessionsFixedLengthPolicy `json:"new_value"`
-	// PreviousValue : Previous session length policy.
-	PreviousValue *WebSessionsFixedLengthPolicy `json:"previous_value"`
+	// NewValue : New session length policy. Might be missing due to historical
+	// data gap.
+	NewValue *WebSessionsFixedLengthPolicy `json:"new_value,omitempty"`
+	// PreviousValue : Previous session length policy. Might be missing due to
+	// historical data gap.
+	PreviousValue *WebSessionsFixedLengthPolicy `json:"previous_value,omitempty"`
 }
 
 // NewWebSessionsChangeFixedLengthPolicyDetails returns a new WebSessionsChangeFixedLengthPolicyDetails instance
-func NewWebSessionsChangeFixedLengthPolicyDetails(NewValue *WebSessionsFixedLengthPolicy, PreviousValue *WebSessionsFixedLengthPolicy) *WebSessionsChangeFixedLengthPolicyDetails {
+func NewWebSessionsChangeFixedLengthPolicyDetails() *WebSessionsChangeFixedLengthPolicyDetails {
 	s := new(WebSessionsChangeFixedLengthPolicyDetails)
-	s.NewValue = NewValue
-	s.PreviousValue = PreviousValue
 	return s
 }
 
 // WebSessionsChangeIdleLengthPolicyDetails : Changed how long team members can
 // be idle while signed in to Dropbox on the web.
 type WebSessionsChangeIdleLengthPolicyDetails struct {
-	// NewValue : New idle length policy.
-	NewValue *WebSessionsIdleLengthPolicy `json:"new_value"`
-	// PreviousValue : Previous idle length policy.
-	PreviousValue *WebSessionsIdleLengthPolicy `json:"previous_value"`
+	// NewValue : New idle length policy. Might be missing due to historical
+	// data gap.
+	NewValue *WebSessionsIdleLengthPolicy `json:"new_value,omitempty"`
+	// PreviousValue : Previous idle length policy. Might be missing due to
+	// historical data gap.
+	PreviousValue *WebSessionsIdleLengthPolicy `json:"previous_value,omitempty"`
 }
 
 // NewWebSessionsChangeIdleLengthPolicyDetails returns a new WebSessionsChangeIdleLengthPolicyDetails instance
-func NewWebSessionsChangeIdleLengthPolicyDetails(NewValue *WebSessionsIdleLengthPolicy, PreviousValue *WebSessionsIdleLengthPolicy) *WebSessionsChangeIdleLengthPolicyDetails {
+func NewWebSessionsChangeIdleLengthPolicyDetails() *WebSessionsChangeIdleLengthPolicyDetails {
 	s := new(WebSessionsChangeIdleLengthPolicyDetails)
-	s.NewValue = NewValue
-	s.PreviousValue = PreviousValue
 	return s
 }
 

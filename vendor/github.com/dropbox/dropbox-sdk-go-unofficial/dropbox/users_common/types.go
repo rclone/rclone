@@ -19,7 +19,7 @@
 // THE SOFTWARE.
 
 // Package users_common : This namespace contains common data types used within
-// the users namespace
+// the users namespace.
 package users_common
 
 import "github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"

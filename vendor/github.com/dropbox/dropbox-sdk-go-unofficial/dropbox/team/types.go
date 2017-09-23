@@ -26,7 +26,6 @@ import (
 	"time"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/properties"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_common"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
@@ -34,16 +33,16 @@ import (
 
 // DeviceSession : has no documentation (yet)
 type DeviceSession struct {
-	// SessionId : The session id
+	// SessionId : The session id.
 	SessionId string `json:"session_id"`
-	// IpAddress : The IP address of the last activity from this session
+	// IpAddress : The IP address of the last activity from this session.
 	IpAddress string `json:"ip_address,omitempty"`
 	// Country : The country from which the last activity from this session was
-	// made
+	// made.
 	Country string `json:"country,omitempty"`
-	// Created : The time this session was created
+	// Created : The time this session was created.
 	Created time.Time `json:"created,omitempty"`
-	// Updated : The time of the last activity from this session
+	// Updated : The time of the last activity from this session.
 	Updated time.Time `json:"updated,omitempty"`
 }
 
@@ -54,16 +53,16 @@ func NewDeviceSession(SessionId string) *DeviceSession {
 	return s
 }
 
-// ActiveWebSession : Information on active web sessions
+// ActiveWebSession : Information on active web sessions.
 type ActiveWebSession struct {
 	DeviceSession
-	// UserAgent : Information on the hosting device
+	// UserAgent : Information on the hosting device.
 	UserAgent string `json:"user_agent"`
-	// Os : Information on the hosting operating system
+	// Os : Information on the hosting operating system.
 	Os string `json:"os"`
-	// Browser : Information on the browser used for this web session
+	// Browser : Information on the browser used for this web session.
 	Browser string `json:"browser"`
-	// Expires : The time this session expires
+	// Expires : The time this session expires.
 	Expires time.Time `json:"expires,omitempty"`
 }
 
@@ -74,34 +73,6 @@ func NewActiveWebSession(SessionId string, UserAgent string, Os string, Browser 
 	s.UserAgent = UserAgent
 	s.Os = Os
 	s.Browser = Browser
-	return s
-}
-
-// AddPropertyTemplateArg : Arguments for adding property templates.
-type AddPropertyTemplateArg struct {
-	properties.PropertyGroupTemplate
-}
-
-// NewAddPropertyTemplateArg returns a new AddPropertyTemplateArg instance
-func NewAddPropertyTemplateArg(Name string, Description string, Fields []*properties.PropertyFieldTemplate) *AddPropertyTemplateArg {
-	s := new(AddPropertyTemplateArg)
-	s.Name = Name
-	s.Description = Description
-	s.Fields = Fields
-	return s
-}
-
-// AddPropertyTemplateResult : has no documentation (yet)
-type AddPropertyTemplateResult struct {
-	// TemplateId : An identifier for property template added by
-	// `propertiesTemplateAdd`.
-	TemplateId string `json:"template_id"`
-}
-
-// NewAddPropertyTemplateResult returns a new AddPropertyTemplateResult instance
-func NewAddPropertyTemplateResult(TemplateId string) *AddPropertyTemplateResult {
-	s := new(AddPropertyTemplateResult)
-	s.TemplateId = TemplateId
 	return s
 }
 
@@ -118,19 +89,19 @@ const (
 	AdminTierMemberOnly          = "member_only"
 )
 
-// ApiApp : Information on linked third party applications
+// ApiApp : Information on linked third party applications.
 type ApiApp struct {
-	// AppId : The application unique id
+	// AppId : The application unique id.
 	AppId string `json:"app_id"`
-	// AppName : The application name
+	// AppName : The application name.
 	AppName string `json:"app_name"`
-	// Publisher : The application publisher name
+	// Publisher : The application publisher name.
 	Publisher string `json:"publisher,omitempty"`
-	// PublisherUrl : The publisher's URL
+	// PublisherUrl : The publisher's URL.
 	PublisherUrl string `json:"publisher_url,omitempty"`
-	// Linked : The time this application was linked
+	// Linked : The time this application was linked.
 	Linked time.Time `json:"linked,omitempty"`
-	// IsAppFolder : Whether the linked application uses a dedicated folder
+	// IsAppFolder : Whether the linked application uses a dedicated folder.
 	IsAppFolder bool `json:"is_app_folder"`
 }
 
@@ -216,11 +187,83 @@ func (u *BaseTeamFolderError) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// CustomQuotaError : Error returned by setting member custom quota.
+type CustomQuotaError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for CustomQuotaError
+const (
+	CustomQuotaErrorTooManyUsers = "too_many_users"
+	CustomQuotaErrorOther        = "other"
+)
+
+// CustomQuotaResult : User custom quota.
+type CustomQuotaResult struct {
+	dropbox.Tagged
+	// Success : User's custom quota.
+	Success *UserCustomQuotaResult `json:"success,omitempty"`
+	// InvalidUser : Invalid user (not in team).
+	InvalidUser *UserSelectorArg `json:"invalid_user,omitempty"`
+}
+
+// Valid tag values for CustomQuotaResult
+const (
+	CustomQuotaResultSuccess     = "success"
+	CustomQuotaResultInvalidUser = "invalid_user"
+	CustomQuotaResultOther       = "other"
+)
+
+// UnmarshalJSON deserializes into a CustomQuotaResult instance
+func (u *CustomQuotaResult) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// Success : User's custom quota.
+		Success json.RawMessage `json:"success,omitempty"`
+		// InvalidUser : Invalid user (not in team).
+		InvalidUser json.RawMessage `json:"invalid_user,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "success":
+		err = json.Unmarshal(body, &u.Success)
+
+		if err != nil {
+			return err
+		}
+	case "invalid_user":
+		err = json.Unmarshal(w.InvalidUser, &u.InvalidUser)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// CustomQuotaUsersArg : has no documentation (yet)
+type CustomQuotaUsersArg struct {
+	// Users : List of users.
+	Users []*UserSelectorArg `json:"users"`
+}
+
+// NewCustomQuotaUsersArg returns a new CustomQuotaUsersArg instance
+func NewCustomQuotaUsersArg(Users []*UserSelectorArg) *CustomQuotaUsersArg {
+	s := new(CustomQuotaUsersArg)
+	s.Users = Users
+	return s
+}
+
 // DateRange : Input arguments that can be provided for most reports.
 type DateRange struct {
-	// StartDate : Optional starting date (inclusive)
+	// StartDate : Optional starting date (inclusive).
 	StartDate time.Time `json:"start_date,omitempty"`
-	// EndDate : Optional ending date (exclusive)
+	// EndDate : Optional ending date (exclusive).
 	EndDate time.Time `json:"end_date,omitempty"`
 }
 
@@ -242,19 +285,19 @@ const (
 )
 
 // DesktopClientSession : Information about linked Dropbox desktop client
-// sessions
+// sessions.
 type DesktopClientSession struct {
 	DeviceSession
-	// HostName : Name of the hosting desktop
+	// HostName : Name of the hosting desktop.
 	HostName string `json:"host_name"`
-	// ClientType : The Dropbox desktop client type
+	// ClientType : The Dropbox desktop client type.
 	ClientType *DesktopPlatform `json:"client_type"`
-	// ClientVersion : The Dropbox client version
+	// ClientVersion : The Dropbox client version.
 	ClientVersion string `json:"client_version"`
-	// Platform : Information on the hosting platform
+	// Platform : Information on the hosting platform.
 	Platform string `json:"platform"`
 	// IsDeleteOnUnlinkSupported : Whether it's possible to delete all of the
-	// account files upon unlinking
+	// account files upon unlinking.
 	IsDeleteOnUnlinkSupported bool `json:"is_delete_on_unlink_supported"`
 }
 
@@ -285,9 +328,9 @@ const (
 
 // DeviceSessionArg : has no documentation (yet)
 type DeviceSessionArg struct {
-	// SessionId : The session id
+	// SessionId : The session id.
 	SessionId string `json:"session_id"`
-	// TeamMemberId : The unique id of the member owning the device
+	// TeamMemberId : The unique id of the member owning the device.
 	TeamMemberId string `json:"team_member_id"`
 }
 
@@ -1330,7 +1373,7 @@ func (u *HasTeamSharedDropboxValue) UnmarshalJSON(body []byte) error {
 
 // ListMemberAppsArg : has no documentation (yet)
 type ListMemberAppsArg struct {
-	// TeamMemberId : The team member id
+	// TeamMemberId : The team member id.
 	TeamMemberId string `json:"team_member_id"`
 }
 
@@ -1355,7 +1398,7 @@ const (
 // ListMemberAppsResult : has no documentation (yet)
 type ListMemberAppsResult struct {
 	// LinkedApiApps : List of third party applications linked by this team
-	// member
+	// member.
 	LinkedApiApps []*ApiApp `json:"linked_api_apps"`
 }
 
@@ -1368,15 +1411,15 @@ func NewListMemberAppsResult(LinkedApiApps []*ApiApp) *ListMemberAppsResult {
 
 // ListMemberDevicesArg : has no documentation (yet)
 type ListMemberDevicesArg struct {
-	// TeamMemberId : The team's member id
+	// TeamMemberId : The team's member id.
 	TeamMemberId string `json:"team_member_id"`
-	// IncludeWebSessions : Whether to list web sessions of the team's member
+	// IncludeWebSessions : Whether to list web sessions of the team's member.
 	IncludeWebSessions bool `json:"include_web_sessions"`
 	// IncludeDesktopClients : Whether to list linked desktop devices of the
-	// team's member
+	// team's member.
 	IncludeDesktopClients bool `json:"include_desktop_clients"`
 	// IncludeMobileClients : Whether to list linked mobile devices of the
-	// team's member
+	// team's member.
 	IncludeMobileClients bool `json:"include_mobile_clients"`
 }
 
@@ -1403,11 +1446,11 @@ const (
 
 // ListMemberDevicesResult : has no documentation (yet)
 type ListMemberDevicesResult struct {
-	// ActiveWebSessions : List of web sessions made by this team member
+	// ActiveWebSessions : List of web sessions made by this team member.
 	ActiveWebSessions []*ActiveWebSession `json:"active_web_sessions,omitempty"`
-	// DesktopClientSessions : List of desktop clients used by this team member
+	// DesktopClientSessions : List of desktop clients used by this team member.
 	DesktopClientSessions []*DesktopClientSession `json:"desktop_client_sessions,omitempty"`
-	// MobileClientSessions : List of mobile client used by this team member
+	// MobileClientSessions : List of mobile client used by this team member.
 	MobileClientSessions []*MobileClientSession `json:"mobile_client_sessions,omitempty"`
 }
 
@@ -1422,7 +1465,7 @@ type ListMembersAppsArg struct {
 	// Cursor : At the first call to the `linkedAppsListMembersLinkedApps` the
 	// cursor shouldn't be passed. Then, if the result of the call includes a
 	// cursor, the following requests should include the received cursors in
-	// order to receive the next sub list of the team applications
+	// order to receive the next sub list of the team applications.
 	Cursor string `json:"cursor,omitempty"`
 }
 
@@ -1432,7 +1475,7 @@ func NewListMembersAppsArg() *ListMembersAppsArg {
 	return s
 }
 
-// ListMembersAppsError : Error returned by `linkedAppsListMembersLinkedApps`
+// ListMembersAppsError : Error returned by `linkedAppsListMembersLinkedApps`.
 type ListMembersAppsError struct {
 	dropbox.Tagged
 }
@@ -1446,7 +1489,7 @@ const (
 // ListMembersAppsResult : Information returned by
 // `linkedAppsListMembersLinkedApps`.
 type ListMembersAppsResult struct {
-	// Apps : The linked applications of each member of the team
+	// Apps : The linked applications of each member of the team.
 	Apps []*MemberLinkedApps `json:"apps"`
 	// HasMore : If true, then there are more apps available. Pass the cursor to
 	// `linkedAppsListMembersLinkedApps` to retrieve the rest.
@@ -1469,14 +1512,15 @@ type ListMembersDevicesArg struct {
 	// Cursor : At the first call to the `devicesListMembersDevices` the cursor
 	// shouldn't be passed. Then, if the result of the call includes a cursor,
 	// the following requests should include the received cursors in order to
-	// receive the next sub list of team devices
+	// receive the next sub list of team devices.
 	Cursor string `json:"cursor,omitempty"`
-	// IncludeWebSessions : Whether to list web sessions of the team members
+	// IncludeWebSessions : Whether to list web sessions of the team members.
 	IncludeWebSessions bool `json:"include_web_sessions"`
 	// IncludeDesktopClients : Whether to list desktop clients of the team
-	// members
+	// members.
 	IncludeDesktopClients bool `json:"include_desktop_clients"`
-	// IncludeMobileClients : Whether to list mobile clients of the team members
+	// IncludeMobileClients : Whether to list mobile clients of the team
+	// members.
 	IncludeMobileClients bool `json:"include_mobile_clients"`
 }
 
@@ -1502,7 +1546,7 @@ const (
 
 // ListMembersDevicesResult : has no documentation (yet)
 type ListMembersDevicesResult struct {
-	// Devices : The devices of each member of the team
+	// Devices : The devices of each member of the team.
 	Devices []*MemberDevices `json:"devices"`
 	// HasMore : If true, then there are more devices available. Pass the cursor
 	// to `devicesListMembersDevices` to retrieve the rest.
@@ -1525,7 +1569,7 @@ type ListTeamAppsArg struct {
 	// Cursor : At the first call to the `linkedAppsListTeamLinkedApps` the
 	// cursor shouldn't be passed. Then, if the result of the call includes a
 	// cursor, the following requests should include the received cursors in
-	// order to receive the next sub list of the team applications
+	// order to receive the next sub list of the team applications.
 	Cursor string `json:"cursor,omitempty"`
 }
 
@@ -1535,7 +1579,7 @@ func NewListTeamAppsArg() *ListTeamAppsArg {
 	return s
 }
 
-// ListTeamAppsError : Error returned by `linkedAppsListTeamLinkedApps`
+// ListTeamAppsError : Error returned by `linkedAppsListTeamLinkedApps`.
 type ListTeamAppsError struct {
 	dropbox.Tagged
 }
@@ -1548,7 +1592,7 @@ const (
 
 // ListTeamAppsResult : Information returned by `linkedAppsListTeamLinkedApps`.
 type ListTeamAppsResult struct {
-	// Apps : The linked applications of each member of the team
+	// Apps : The linked applications of each member of the team.
 	Apps []*MemberLinkedApps `json:"apps"`
 	// HasMore : If true, then there are more apps available. Pass the cursor to
 	// `linkedAppsListTeamLinkedApps` to retrieve the rest.
@@ -1571,14 +1615,15 @@ type ListTeamDevicesArg struct {
 	// Cursor : At the first call to the `devicesListTeamDevices` the cursor
 	// shouldn't be passed. Then, if the result of the call includes a cursor,
 	// the following requests should include the received cursors in order to
-	// receive the next sub list of team devices
+	// receive the next sub list of team devices.
 	Cursor string `json:"cursor,omitempty"`
-	// IncludeWebSessions : Whether to list web sessions of the team members
+	// IncludeWebSessions : Whether to list web sessions of the team members.
 	IncludeWebSessions bool `json:"include_web_sessions"`
 	// IncludeDesktopClients : Whether to list desktop clients of the team
-	// members
+	// members.
 	IncludeDesktopClients bool `json:"include_desktop_clients"`
-	// IncludeMobileClients : Whether to list mobile clients of the team members
+	// IncludeMobileClients : Whether to list mobile clients of the team
+	// members.
 	IncludeMobileClients bool `json:"include_mobile_clients"`
 }
 
@@ -1604,7 +1649,7 @@ const (
 
 // ListTeamDevicesResult : has no documentation (yet)
 type ListTeamDevicesResult struct {
-	// Devices : The devices of each member of the team
+	// Devices : The devices of each member of the team.
 	Devices []*MemberDevices `json:"devices"`
 	// HasMore : If true, then there are more devices available. Pass the cursor
 	// to `devicesListTeamDevices` to retrieve the rest.
@@ -1811,13 +1856,13 @@ func (u *MemberAddResult) UnmarshalJSON(body []byte) error {
 
 // MemberDevices : Information on devices of a team's member.
 type MemberDevices struct {
-	// TeamMemberId : The member unique Id
+	// TeamMemberId : The member unique Id.
 	TeamMemberId string `json:"team_member_id"`
-	// WebSessions : List of web sessions made by this team member
+	// WebSessions : List of web sessions made by this team member.
 	WebSessions []*ActiveWebSession `json:"web_sessions,omitempty"`
-	// DesktopClients : List of desktop clients by this team member
+	// DesktopClients : List of desktop clients by this team member.
 	DesktopClients []*DesktopClientSession `json:"desktop_clients,omitempty"`
-	// MobileClients : List of mobile clients by this team member
+	// MobileClients : List of mobile clients by this team member.
 	MobileClients []*MobileClientSession `json:"mobile_clients,omitempty"`
 }
 
@@ -1830,10 +1875,10 @@ func NewMemberDevices(TeamMemberId string) *MemberDevices {
 
 // MemberLinkedApps : Information on linked applications of a team member.
 type MemberLinkedApps struct {
-	// TeamMemberId : The member unique Id
+	// TeamMemberId : The member unique Id.
 	TeamMemberId string `json:"team_member_id"`
 	// LinkedApiApps : List of third party applications linked by this team
-	// member
+	// member.
 	LinkedApiApps []*ApiApp `json:"linked_api_apps"`
 }
 
@@ -2409,18 +2454,19 @@ const (
 	MobileClientPlatformOther        = "other"
 )
 
-// MobileClientSession : Information about linked Dropbox mobile client sessions
+// MobileClientSession : Information about linked Dropbox mobile client
+// sessions.
 type MobileClientSession struct {
 	DeviceSession
-	// DeviceName : The device name
+	// DeviceName : The device name.
 	DeviceName string `json:"device_name"`
-	// ClientType : The mobile application type
+	// ClientType : The mobile application type.
 	ClientType *MobileClientPlatform `json:"client_type"`
-	// ClientVersion : The dropbox client version
+	// ClientVersion : The dropbox client version.
 	ClientVersion string `json:"client_version,omitempty"`
-	// OsVersion : The hosting OS version
+	// OsVersion : The hosting OS version.
 	OsVersion string `json:"os_version,omitempty"`
-	// LastCarrier : last carrier used by the device
+	// LastCarrier : last carrier used by the device.
 	LastCarrier string `json:"last_carrier,omitempty"`
 }
 
@@ -2469,6 +2515,54 @@ const (
 	NamespaceTypeOther            = "other"
 )
 
+// RemoveCustomQuotaResult : User result for setting member custom quota.
+type RemoveCustomQuotaResult struct {
+	dropbox.Tagged
+	// Success : Successfully removed user.
+	Success *UserSelectorArg `json:"success,omitempty"`
+	// InvalidUser : Invalid user (not in team).
+	InvalidUser *UserSelectorArg `json:"invalid_user,omitempty"`
+}
+
+// Valid tag values for RemoveCustomQuotaResult
+const (
+	RemoveCustomQuotaResultSuccess     = "success"
+	RemoveCustomQuotaResultInvalidUser = "invalid_user"
+	RemoveCustomQuotaResultOther       = "other"
+)
+
+// UnmarshalJSON deserializes into a RemoveCustomQuotaResult instance
+func (u *RemoveCustomQuotaResult) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// Success : Successfully removed user.
+		Success json.RawMessage `json:"success,omitempty"`
+		// InvalidUser : Invalid user (not in team).
+		InvalidUser json.RawMessage `json:"invalid_user,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "success":
+		err = json.Unmarshal(w.Success, &u.Success)
+
+		if err != nil {
+			return err
+		}
+	case "invalid_user":
+		err = json.Unmarshal(w.InvalidUser, &u.InvalidUser)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // RemovedStatus : has no documentation (yet)
 type RemovedStatus struct {
 	// IsRecoverable : True if the removed team member is recoverable.
@@ -2487,7 +2581,7 @@ type RevokeDesktopClientArg struct {
 	DeviceSessionArg
 	// DeleteOnUnlink : Whether to delete all files of the account (this is
 	// possible only if supported by the desktop client and  will be made the
-	// next time the client access the account)
+	// next time the client access the account).
 	DeleteOnUnlink bool `json:"delete_on_unlink"`
 }
 
@@ -2503,11 +2597,11 @@ func NewRevokeDesktopClientArg(SessionId string, TeamMemberId string) *RevokeDes
 // RevokeDeviceSessionArg : has no documentation (yet)
 type RevokeDeviceSessionArg struct {
 	dropbox.Tagged
-	// WebSession : End an active session
+	// WebSession : End an active session.
 	WebSession *DeviceSessionArg `json:"web_session,omitempty"`
-	// DesktopClient : Unlink a linked desktop device
+	// DesktopClient : Unlink a linked desktop device.
 	DesktopClient *RevokeDesktopClientArg `json:"desktop_client,omitempty"`
-	// MobileClient : Unlink a linked mobile device
+	// MobileClient : Unlink a linked mobile device.
 	MobileClient *DeviceSessionArg `json:"mobile_client,omitempty"`
 }
 
@@ -2522,11 +2616,11 @@ const (
 func (u *RevokeDeviceSessionArg) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
-		// WebSession : End an active session
+		// WebSession : End an active session.
 		WebSession json.RawMessage `json:"web_session,omitempty"`
-		// DesktopClient : Unlink a linked desktop device
+		// DesktopClient : Unlink a linked desktop device.
 		DesktopClient json.RawMessage `json:"desktop_client,omitempty"`
-		// MobileClient : Unlink a linked mobile device
+		// MobileClient : Unlink a linked mobile device.
 		MobileClient json.RawMessage `json:"mobile_client,omitempty"`
 	}
 	var w wrap
@@ -2608,9 +2702,9 @@ const (
 
 // RevokeDeviceSessionStatus : has no documentation (yet)
 type RevokeDeviceSessionStatus struct {
-	// Success : Result of the revoking request
+	// Success : Result of the revoking request.
 	Success bool `json:"success"`
-	// ErrorType : The error cause in case of a failure
+	// ErrorType : The error cause in case of a failure.
 	ErrorType *RevokeDeviceSessionError `json:"error_type,omitempty"`
 }
 
@@ -2623,12 +2717,12 @@ func NewRevokeDeviceSessionStatus(Success bool) *RevokeDeviceSessionStatus {
 
 // RevokeLinkedApiAppArg : has no documentation (yet)
 type RevokeLinkedApiAppArg struct {
-	// AppId : The application's unique id
+	// AppId : The application's unique id.
 	AppId string `json:"app_id"`
-	// TeamMemberId : The unique id of the member owning the device
+	// TeamMemberId : The unique id of the member owning the device.
 	TeamMemberId string `json:"team_member_id"`
 	// KeepAppFolder : Whether to keep the application dedicated folder (in case
-	// the application uses  one)
+	// the application uses  one).
 	KeepAppFolder bool `json:"keep_app_folder"`
 }
 
@@ -2692,9 +2786,9 @@ const (
 
 // RevokeLinkedAppStatus : has no documentation (yet)
 type RevokeLinkedAppStatus struct {
-	// Success : Result of the revoking request
+	// Success : Result of the revoking request.
 	Success bool `json:"success"`
-	// ErrorType : The error cause in case of a failure
+	// ErrorType : The error cause in case of a failure.
 	ErrorType *RevokeLinkedAppError `json:"error_type,omitempty"`
 }
 
@@ -2702,6 +2796,19 @@ type RevokeLinkedAppStatus struct {
 func NewRevokeLinkedAppStatus(Success bool) *RevokeLinkedAppStatus {
 	s := new(RevokeLinkedAppStatus)
 	s.Success = Success
+	return s
+}
+
+// SetCustomQuotaArg : has no documentation (yet)
+type SetCustomQuotaArg struct {
+	// UsersAndQuotas : List of users and their custom quotas.
+	UsersAndQuotas []*UserCustomQuotaArg `json:"users_and_quotas"`
+}
+
+// NewSetCustomQuotaArg returns a new SetCustomQuotaArg instance
+func NewSetCustomQuotaArg(UsersAndQuotas []*UserCustomQuotaArg) *SetCustomQuotaArg {
+	s := new(SetCustomQuotaArg)
+	s.UsersAndQuotas = UsersAndQuotas
 	return s
 }
 
@@ -3238,8 +3345,7 @@ const (
 
 // TeamNamespacesListArg : has no documentation (yet)
 type TeamNamespacesListArg struct {
-	// Limit : The approximate maximum number of results to return per request.
-	// This limit may be exceeded.
+	// Limit : Specifying a value here has no effect.
 	Limit uint32 `json:"limit"`
 }
 
@@ -3322,43 +3428,6 @@ func NewTokenGetAuthenticatedAdminResult(AdminProfile *TeamMemberProfile) *Token
 	return s
 }
 
-// UpdatePropertyTemplateArg : has no documentation (yet)
-type UpdatePropertyTemplateArg struct {
-	// TemplateId : An identifier for property template added by
-	// `propertiesTemplateAdd`.
-	TemplateId string `json:"template_id"`
-	// Name : A display name for the property template. Property template names
-	// can be up to 256 bytes.
-	Name string `json:"name,omitempty"`
-	// Description : Description for new property template. Property template
-	// descriptions can be up to 1024 bytes.
-	Description string `json:"description,omitempty"`
-	// AddFields : This is a list of custom properties to add to the property
-	// template. There can be up to 64 properties in a single property template.
-	AddFields []*properties.PropertyFieldTemplate `json:"add_fields,omitempty"`
-}
-
-// NewUpdatePropertyTemplateArg returns a new UpdatePropertyTemplateArg instance
-func NewUpdatePropertyTemplateArg(TemplateId string) *UpdatePropertyTemplateArg {
-	s := new(UpdatePropertyTemplateArg)
-	s.TemplateId = TemplateId
-	return s
-}
-
-// UpdatePropertyTemplateResult : has no documentation (yet)
-type UpdatePropertyTemplateResult struct {
-	// TemplateId : An identifier for property template added by
-	// `propertiesTemplateAdd`.
-	TemplateId string `json:"template_id"`
-}
-
-// NewUpdatePropertyTemplateResult returns a new UpdatePropertyTemplateResult instance
-func NewUpdatePropertyTemplateResult(TemplateId string) *UpdatePropertyTemplateResult {
-	s := new(UpdatePropertyTemplateResult)
-	s.TemplateId = TemplateId
-	return s
-}
-
 // UploadApiRateLimitValue : The value for `Feature.upload_api_rate_limit`.
 type UploadApiRateLimitValue struct {
 	dropbox.Tagged
@@ -3393,6 +3462,39 @@ func (u *UploadApiRateLimitValue) UnmarshalJSON(body []byte) error {
 		}
 	}
 	return nil
+}
+
+// UserCustomQuotaArg : User and their required custom quota in GB (1 TB = 1024
+// GB).
+type UserCustomQuotaArg struct {
+	// User : has no documentation (yet)
+	User *UserSelectorArg `json:"user"`
+	// QuotaGb : has no documentation (yet)
+	QuotaGb uint32 `json:"quota_gb"`
+}
+
+// NewUserCustomQuotaArg returns a new UserCustomQuotaArg instance
+func NewUserCustomQuotaArg(User *UserSelectorArg, QuotaGb uint32) *UserCustomQuotaArg {
+	s := new(UserCustomQuotaArg)
+	s.User = User
+	s.QuotaGb = QuotaGb
+	return s
+}
+
+// UserCustomQuotaResult : User and their custom quota in GB (1 TB = 1024 GB).
+// No quota returns if the user has no custom quota set.
+type UserCustomQuotaResult struct {
+	// User : has no documentation (yet)
+	User *UserSelectorArg `json:"user"`
+	// QuotaGb : has no documentation (yet)
+	QuotaGb uint32 `json:"quota_gb,omitempty"`
+}
+
+// NewUserCustomQuotaResult returns a new UserCustomQuotaResult instance
+func NewUserCustomQuotaResult(User *UserSelectorArg) *UserCustomQuotaResult {
+	s := new(UserCustomQuotaResult)
+	s.User = User
+	return s
 }
 
 // UserSelectorArg : Argument for selecting a single user, either by

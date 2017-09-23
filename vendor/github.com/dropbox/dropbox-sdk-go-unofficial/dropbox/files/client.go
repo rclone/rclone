@@ -30,7 +30,7 @@ import (
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/async"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/properties"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/file_properties"
 )
 
 // Client interface describes all routes in this namespace
@@ -118,6 +118,12 @@ type Client interface {
 	// tif, gif and bmp. Photos that are larger than 20MB in size won't be
 	// converted to a thumbnail.
 	GetThumbnail(arg *ThumbnailArg) (res *FileMetadata, content io.ReadCloser, err error)
+	// GetThumbnailBatch : Get thumbnails for a list of images. We allow up to
+	// 25 thumbnails in a single batch. This method currently supports files
+	// with the following file extensions: jpg, jpeg, png, tiff, tif, gif and
+	// bmp. Photos that are larger than 20MB in size won't be converted to a
+	// thumbnail.
+	GetThumbnailBatch(arg *GetThumbnailBatchArg) (res *GetThumbnailBatchResult, err error)
 	// ListFolder : Starts returning the contents of a folder. If the result's
 	// `ListFolderResult.has_more` field is true, call `listFolderContinue` with
 	// the returned `ListFolderResult.cursor` to retrieve more entries. If
@@ -180,27 +186,24 @@ type Client interface {
 	// (see https://www.dropbox.com/en/help/40). Note: This endpoint is only
 	// available for Dropbox Business apps.
 	PermanentlyDelete(arg *DeleteArg) (err error)
-	// PropertiesAdd : Add custom properties to a file using a filled property
-	// template. See properties/template/add to create new property templates.
-	PropertiesAdd(arg *PropertyGroupWithPath) (err error)
-	// PropertiesOverwrite : Overwrite custom properties from a specified
-	// template associated with a file.
-	PropertiesOverwrite(arg *PropertyGroupWithPath) (err error)
-	// PropertiesRemove : Remove all custom properties from a specified template
-	// associated with a file. To remove specific property key value pairs, see
-	// `propertiesUpdate`. To update a property template, see
-	// properties/template/update. Property templates can't be removed once
-	// created.
-	PropertiesRemove(arg *RemovePropertiesArg) (err error)
-	// PropertiesTemplateGet : Get the schema for a specified template.
-	PropertiesTemplateGet(arg *properties.GetPropertyTemplateArg) (res *properties.GetPropertyTemplateResult, err error)
-	// PropertiesTemplateList : Get the property template identifiers for a
-	// user. To get the schema of each template use `propertiesTemplateGet`.
-	PropertiesTemplateList() (res *properties.ListPropertyTemplateIds, err error)
-	// PropertiesUpdate : Add, update or remove custom properties from a
-	// specified template associated with a file. Fields that already exist and
-	// not described in the request will not be modified.
-	PropertiesUpdate(arg *UpdatePropertyGroupArg) (err error)
+	// PropertiesAdd : has no documentation (yet)
+	// Deprecated:
+	PropertiesAdd(arg *file_properties.AddPropertiesArg) (err error)
+	// PropertiesOverwrite : has no documentation (yet)
+	// Deprecated:
+	PropertiesOverwrite(arg *file_properties.OverwritePropertyGroupArg) (err error)
+	// PropertiesRemove : has no documentation (yet)
+	// Deprecated:
+	PropertiesRemove(arg *file_properties.RemovePropertiesArg) (err error)
+	// PropertiesTemplateGet : has no documentation (yet)
+	// Deprecated:
+	PropertiesTemplateGet(arg *file_properties.GetTemplateArg) (res *file_properties.GetTemplateResult, err error)
+	// PropertiesTemplateList : has no documentation (yet)
+	// Deprecated:
+	PropertiesTemplateList() (res *file_properties.ListTemplateResult, err error)
+	// PropertiesUpdate : has no documentation (yet)
+	// Deprecated:
+	PropertiesUpdate(arg *file_properties.UpdatePropertiesArg) (err error)
 	// Restore : Restore a file to a specific revision.
 	Restore(arg *RestoreArg) (res *FileMetadata, err error)
 	// SaveUrl : Save a specified URL into a file in user's Dropbox. If the
@@ -1675,6 +1678,78 @@ func (dbx *apiImpl) GetThumbnail(arg *ThumbnailArg) (res *FileMetadata, content 
 	return
 }
 
+//GetThumbnailBatchAPIError is an error-wrapper for the get_thumbnail_batch route
+type GetThumbnailBatchAPIError struct {
+	dropbox.APIError
+	EndpointError *GetThumbnailBatchError `json:"error"`
+}
+
+func (dbx *apiImpl) GetThumbnailBatch(arg *GetThumbnailBatchArg) (res *GetThumbnailBatchResult, err error) {
+	cli := dbx.Client
+
+	dbx.Config.TryLog("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Dropbox-API-Arg": string(b),
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("content", "rpc", true, "files", "get_thumbnail_batch", headers, nil)
+	if err != nil {
+		return
+	}
+	dbx.Config.TryLog("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError GetThumbnailBatchAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
 //ListFolderAPIError is an error-wrapper for the list_folder route
 type ListFolderAPIError struct {
 	dropbox.APIError
@@ -2404,10 +2479,12 @@ func (dbx *apiImpl) PermanentlyDelete(arg *DeleteArg) (err error) {
 //PropertiesAddAPIError is an error-wrapper for the properties/add route
 type PropertiesAddAPIError struct {
 	dropbox.APIError
-	EndpointError *AddPropertiesError `json:"error"`
+	EndpointError *file_properties.AddPropertiesError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesAdd(arg *PropertyGroupWithPath) (err error) {
+func (dbx *apiImpl) PropertiesAdd(arg *file_properties.AddPropertiesArg) (err error) {
+	log.Printf("WARNING: API `PropertiesAdd` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)
@@ -2471,10 +2548,12 @@ func (dbx *apiImpl) PropertiesAdd(arg *PropertyGroupWithPath) (err error) {
 //PropertiesOverwriteAPIError is an error-wrapper for the properties/overwrite route
 type PropertiesOverwriteAPIError struct {
 	dropbox.APIError
-	EndpointError *InvalidPropertyGroupError `json:"error"`
+	EndpointError *file_properties.InvalidPropertyGroupError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesOverwrite(arg *PropertyGroupWithPath) (err error) {
+func (dbx *apiImpl) PropertiesOverwrite(arg *file_properties.OverwritePropertyGroupArg) (err error) {
+	log.Printf("WARNING: API `PropertiesOverwrite` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)
@@ -2538,10 +2617,12 @@ func (dbx *apiImpl) PropertiesOverwrite(arg *PropertyGroupWithPath) (err error) 
 //PropertiesRemoveAPIError is an error-wrapper for the properties/remove route
 type PropertiesRemoveAPIError struct {
 	dropbox.APIError
-	EndpointError *RemovePropertiesError `json:"error"`
+	EndpointError *file_properties.RemovePropertiesError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesRemove(arg *RemovePropertiesArg) (err error) {
+func (dbx *apiImpl) PropertiesRemove(arg *file_properties.RemovePropertiesArg) (err error) {
+	log.Printf("WARNING: API `PropertiesRemove` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)
@@ -2605,10 +2686,12 @@ func (dbx *apiImpl) PropertiesRemove(arg *RemovePropertiesArg) (err error) {
 //PropertiesTemplateGetAPIError is an error-wrapper for the properties/template/get route
 type PropertiesTemplateGetAPIError struct {
 	dropbox.APIError
-	EndpointError *properties.PropertyTemplateError `json:"error"`
+	EndpointError *file_properties.TemplateError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesTemplateGet(arg *properties.GetPropertyTemplateArg) (res *properties.GetPropertyTemplateResult, err error) {
+func (dbx *apiImpl) PropertiesTemplateGet(arg *file_properties.GetTemplateArg) (res *file_properties.GetTemplateResult, err error) {
+	log.Printf("WARNING: API `PropertiesTemplateGet` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)
@@ -2677,10 +2760,12 @@ func (dbx *apiImpl) PropertiesTemplateGet(arg *properties.GetPropertyTemplateArg
 //PropertiesTemplateListAPIError is an error-wrapper for the properties/template/list route
 type PropertiesTemplateListAPIError struct {
 	dropbox.APIError
-	EndpointError *properties.PropertyTemplateError `json:"error"`
+	EndpointError *file_properties.TemplateError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesTemplateList() (res *properties.ListPropertyTemplateIds, err error) {
+func (dbx *apiImpl) PropertiesTemplateList() (res *file_properties.ListTemplateResult, err error) {
+	log.Printf("WARNING: API `PropertiesTemplateList` is deprecated")
+
 	cli := dbx.Client
 
 	headers := map[string]string{}
@@ -2741,10 +2826,12 @@ func (dbx *apiImpl) PropertiesTemplateList() (res *properties.ListPropertyTempla
 //PropertiesUpdateAPIError is an error-wrapper for the properties/update route
 type PropertiesUpdateAPIError struct {
 	dropbox.APIError
-	EndpointError *UpdatePropertiesError `json:"error"`
+	EndpointError *file_properties.UpdatePropertiesError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesUpdate(arg *UpdatePropertyGroupArg) (err error) {
+func (dbx *apiImpl) PropertiesUpdate(arg *file_properties.UpdatePropertiesArg) (err error) {
+	log.Printf("WARNING: API `PropertiesUpdate` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)

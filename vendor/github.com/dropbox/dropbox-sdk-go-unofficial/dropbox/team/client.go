@@ -29,7 +29,7 @@ import (
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/async"
-	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/properties"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/file_properties"
 )
 
 // Client interface describes all routes in this namespace
@@ -41,10 +41,10 @@ type Client interface {
 	// DevicesListTeamDevices : List all device sessions of a team.
 	// Deprecated: Use `DevicesListMembersDevices` instead
 	DevicesListTeamDevices(arg *ListTeamDevicesArg) (res *ListTeamDevicesResult, err error)
-	// DevicesRevokeDeviceSession : Revoke a device session of a team's member
+	// DevicesRevokeDeviceSession : Revoke a device session of a team's member.
 	DevicesRevokeDeviceSession(arg *RevokeDeviceSessionArg) (err error)
 	// DevicesRevokeDeviceSessionBatch : Revoke a list of device sessions of
-	// team members
+	// team members.
 	DevicesRevokeDeviceSessionBatch(arg *RevokeDeviceSessionBatchArg) (res *RevokeDeviceSessionBatchResult, err error)
 	// FeaturesGetValues : Get the values for one or more featues. This route
 	// allows you to check your account's capability for what feature you can
@@ -113,11 +113,22 @@ type Client interface {
 	// Deprecated: Use `LinkedAppsListMembersLinkedApps` instead
 	LinkedAppsListTeamLinkedApps(arg *ListTeamAppsArg) (res *ListTeamAppsResult, err error)
 	// LinkedAppsRevokeLinkedApp : Revoke a linked application of the team
-	// member
+	// member.
 	LinkedAppsRevokeLinkedApp(arg *RevokeLinkedApiAppArg) (err error)
 	// LinkedAppsRevokeLinkedAppBatch : Revoke a list of linked applications of
-	// the team members
+	// the team members.
 	LinkedAppsRevokeLinkedAppBatch(arg *RevokeLinkedApiAppBatchArg) (res *RevokeLinkedAppBatchResult, err error)
+	// MemberSpaceLimitsGetCustomQuota : Get users custom quota. Returns none as
+	// the custom quota if none was set. A maximum of 1000 members can be
+	// specified in a single call.
+	MemberSpaceLimitsGetCustomQuota(arg *CustomQuotaUsersArg) (res []*CustomQuotaResult, err error)
+	// MemberSpaceLimitsRemoveCustomQuota : Remove users custom quota. A maximum
+	// of 1000 members can be specified in a single call.
+	MemberSpaceLimitsRemoveCustomQuota(arg *CustomQuotaUsersArg) (res []*RemoveCustomQuotaResult, err error)
+	// MemberSpaceLimitsSetCustomQuota : Set users custom quota. Custom quota
+	// has to be at least 25GB. A maximum of 1000 members can be specified in a
+	// single call.
+	MemberSpaceLimitsSetCustomQuota(arg *SetCustomQuotaArg) (res []*CustomQuotaResult, err error)
 	// MembersAdd : Adds members to a team. Permission : Team member management
 	// A maximum of 20 members can be specified in a single call. If no Dropbox
 	// account exists with the email address specified, a new Dropbox account
@@ -132,18 +143,18 @@ type Client interface {
 	MembersAdd(arg *MembersAddArg) (res *MembersAddLaunch, err error)
 	// MembersAddJobStatusGet : Once an async_job_id is returned from
 	// `membersAdd` , use this to poll the status of the asynchronous request.
-	// Permission : Team member management
+	// Permission : Team member management.
 	MembersAddJobStatusGet(arg *async.PollArg) (res *MembersAddJobStatus, err error)
 	// MembersGetInfo : Returns information about multiple team members.
 	// Permission : Team information This endpoint will return
 	// `MembersGetInfoItem.id_not_found`, for IDs (or emails) that cannot be
 	// matched to a valid team member.
 	MembersGetInfo(arg *MembersGetInfoArgs) (res []*MembersGetInfoItem, err error)
-	// MembersList : Lists members of a team. Permission : Team information
+	// MembersList : Lists members of a team. Permission : Team information.
 	MembersList(arg *MembersListArg) (res *MembersListResult, err error)
 	// MembersListContinue : Once a cursor has been retrieved from
 	// `membersList`, use this to paginate through all team members. Permission
-	// : Team information
+	// : Team information.
 	MembersListContinue(arg *MembersListContinueArg) (res *MembersListResult, err error)
 	// MembersRecover : Recover a deleted member. Permission : Team member
 	// management Exactly one of team_member_id, email, or external_id must be
@@ -155,13 +166,16 @@ type Client interface {
 	// `membersRecover` for a 7 day period or until the account has been
 	// permanently deleted or transferred to another account (whichever comes
 	// first). Calling `membersAdd` while a user is still recoverable on your
-	// team will return with `MemberAddResult.user_already_on_team`. This
-	// endpoint may initiate an asynchronous job. To obtain the final result of
-	// the job, the client should periodically poll `membersRemoveJobStatusGet`.
+	// team will return with `MemberAddResult.user_already_on_team`. Accounts
+	// can have their files transferred via the admin console for a limited
+	// time, based on the version history length associated with the team (120
+	// days for most teams). This endpoint may initiate an asynchronous job. To
+	// obtain the final result of the job, the client should periodically poll
+	// `membersRemoveJobStatusGet`.
 	MembersRemove(arg *MembersRemoveArg) (res *async.LaunchEmptyResult, err error)
 	// MembersRemoveJobStatusGet : Once an async_job_id is returned from
 	// `membersRemove` , use this to poll the status of the asynchronous
-	// request. Permission : Team member management
+	// request. Permission : Team member management.
 	MembersRemoveJobStatusGet(arg *async.PollArg) (res *async.PollEmptyResult, err error)
 	// MembersSendWelcomeEmail : Sends welcome email to pending team member.
 	// Permission : Team member management Exactly one of team_member_id, email,
@@ -169,10 +183,10 @@ type Client interface {
 	// team member is not pending.
 	MembersSendWelcomeEmail(arg *UserSelectorArg) (err error)
 	// MembersSetAdminPermissions : Updates a team member's permissions.
-	// Permission : Team member management
+	// Permission : Team member management.
 	MembersSetAdminPermissions(arg *MembersSetPermissionsArg) (res *MembersSetPermissionsResult, err error)
 	// MembersSetProfile : Updates a team member's profile. Permission : Team
-	// member management
+	// member management.
 	MembersSetProfile(arg *MembersSetProfileArg) (res *TeamMemberInfo, err error)
 	// MembersSuspend : Suspend a member from a team. Permission : Team member
 	// management Exactly one of team_member_id, email, or external_id must be
@@ -193,18 +207,18 @@ type Client interface {
 	// `namespacesList`, use this to paginate through all team-accessible
 	// namespaces. Duplicates may occur in the list.
 	NamespacesListContinue(arg *TeamNamespacesListContinueArg) (res *TeamNamespacesListResult, err error)
-	// PropertiesTemplateAdd : Add a property template. See route
-	// files/properties/add to add properties to a file.
-	PropertiesTemplateAdd(arg *AddPropertyTemplateArg) (res *AddPropertyTemplateResult, err error)
-	// PropertiesTemplateGet : Get the schema for a specified template.
-	PropertiesTemplateGet(arg *properties.GetPropertyTemplateArg) (res *properties.GetPropertyTemplateResult, err error)
-	// PropertiesTemplateList : Get the property template identifiers for a
-	// team. To get the schema of each template use `propertiesTemplateGet`.
-	PropertiesTemplateList() (res *properties.ListPropertyTemplateIds, err error)
-	// PropertiesTemplateUpdate : Update a property template. This route can
-	// update the template name, the template description and add optional
-	// properties to templates.
-	PropertiesTemplateUpdate(arg *UpdatePropertyTemplateArg) (res *UpdatePropertyTemplateResult, err error)
+	// PropertiesTemplateAdd : has no documentation (yet)
+	// Deprecated:
+	PropertiesTemplateAdd(arg *file_properties.AddTemplateArg) (res *file_properties.AddTemplateResult, err error)
+	// PropertiesTemplateGet : has no documentation (yet)
+	// Deprecated:
+	PropertiesTemplateGet(arg *file_properties.GetTemplateArg) (res *file_properties.GetTemplateResult, err error)
+	// PropertiesTemplateList : has no documentation (yet)
+	// Deprecated:
+	PropertiesTemplateList() (res *file_properties.ListTemplateResult, err error)
+	// PropertiesTemplateUpdate : has no documentation (yet)
+	// Deprecated:
+	PropertiesTemplateUpdate(arg *file_properties.UpdateTemplateArg) (res *file_properties.UpdateTemplateResult, err error)
 	// ReportsGetActivity : Retrieves reporting data about a team's user
 	// activity.
 	ReportsGetActivity(arg *DateRange) (res *GetActivityReport, err error)
@@ -1897,6 +1911,213 @@ func (dbx *apiImpl) LinkedAppsRevokeLinkedAppBatch(arg *RevokeLinkedApiAppBatchA
 	return
 }
 
+//MemberSpaceLimitsGetCustomQuotaAPIError is an error-wrapper for the member_space_limits/get_custom_quota route
+type MemberSpaceLimitsGetCustomQuotaAPIError struct {
+	dropbox.APIError
+	EndpointError *CustomQuotaError `json:"error"`
+}
+
+func (dbx *apiImpl) MemberSpaceLimitsGetCustomQuota(arg *CustomQuotaUsersArg) (res []*CustomQuotaResult, err error) {
+	cli := dbx.Client
+
+	dbx.Config.TryLog("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "team", "member_space_limits/get_custom_quota", headers, bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	dbx.Config.TryLog("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError MemberSpaceLimitsGetCustomQuotaAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//MemberSpaceLimitsRemoveCustomQuotaAPIError is an error-wrapper for the member_space_limits/remove_custom_quota route
+type MemberSpaceLimitsRemoveCustomQuotaAPIError struct {
+	dropbox.APIError
+	EndpointError *CustomQuotaError `json:"error"`
+}
+
+func (dbx *apiImpl) MemberSpaceLimitsRemoveCustomQuota(arg *CustomQuotaUsersArg) (res []*RemoveCustomQuotaResult, err error) {
+	cli := dbx.Client
+
+	dbx.Config.TryLog("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "team", "member_space_limits/remove_custom_quota", headers, bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	dbx.Config.TryLog("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError MemberSpaceLimitsRemoveCustomQuotaAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//MemberSpaceLimitsSetCustomQuotaAPIError is an error-wrapper for the member_space_limits/set_custom_quota route
+type MemberSpaceLimitsSetCustomQuotaAPIError struct {
+	dropbox.APIError
+	EndpointError *CustomQuotaError `json:"error"`
+}
+
+func (dbx *apiImpl) MemberSpaceLimitsSetCustomQuota(arg *SetCustomQuotaArg) (res []*CustomQuotaResult, err error) {
+	cli := dbx.Client
+
+	dbx.Config.TryLog("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Content-Type": "application/json",
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("api", "rpc", true, "team", "member_space_limits/set_custom_quota", headers, bytes.NewReader(b))
+	if err != nil {
+		return
+	}
+	dbx.Config.TryLog("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("resp: %v", resp)
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.TryLog("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		var apiError MemberSpaceLimitsSetCustomQuotaAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
 //MembersAddAPIError is an error-wrapper for the members/add route
 type MembersAddAPIError struct {
 	dropbox.APIError
@@ -2915,10 +3136,12 @@ func (dbx *apiImpl) NamespacesListContinue(arg *TeamNamespacesListContinueArg) (
 //PropertiesTemplateAddAPIError is an error-wrapper for the properties/template/add route
 type PropertiesTemplateAddAPIError struct {
 	dropbox.APIError
-	EndpointError *properties.ModifyPropertyTemplateError `json:"error"`
+	EndpointError *file_properties.ModifyTemplateError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesTemplateAdd(arg *AddPropertyTemplateArg) (res *AddPropertyTemplateResult, err error) {
+func (dbx *apiImpl) PropertiesTemplateAdd(arg *file_properties.AddTemplateArg) (res *file_properties.AddTemplateResult, err error) {
+	log.Printf("WARNING: API `PropertiesTemplateAdd` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)
@@ -2984,10 +3207,12 @@ func (dbx *apiImpl) PropertiesTemplateAdd(arg *AddPropertyTemplateArg) (res *Add
 //PropertiesTemplateGetAPIError is an error-wrapper for the properties/template/get route
 type PropertiesTemplateGetAPIError struct {
 	dropbox.APIError
-	EndpointError *properties.PropertyTemplateError `json:"error"`
+	EndpointError *file_properties.TemplateError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesTemplateGet(arg *properties.GetPropertyTemplateArg) (res *properties.GetPropertyTemplateResult, err error) {
+func (dbx *apiImpl) PropertiesTemplateGet(arg *file_properties.GetTemplateArg) (res *file_properties.GetTemplateResult, err error) {
+	log.Printf("WARNING: API `PropertiesTemplateGet` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)
@@ -3053,10 +3278,12 @@ func (dbx *apiImpl) PropertiesTemplateGet(arg *properties.GetPropertyTemplateArg
 //PropertiesTemplateListAPIError is an error-wrapper for the properties/template/list route
 type PropertiesTemplateListAPIError struct {
 	dropbox.APIError
-	EndpointError *properties.PropertyTemplateError `json:"error"`
+	EndpointError *file_properties.TemplateError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesTemplateList() (res *properties.ListPropertyTemplateIds, err error) {
+func (dbx *apiImpl) PropertiesTemplateList() (res *file_properties.ListTemplateResult, err error) {
+	log.Printf("WARNING: API `PropertiesTemplateList` is deprecated")
+
 	cli := dbx.Client
 
 	headers := map[string]string{}
@@ -3114,10 +3341,12 @@ func (dbx *apiImpl) PropertiesTemplateList() (res *properties.ListPropertyTempla
 //PropertiesTemplateUpdateAPIError is an error-wrapper for the properties/template/update route
 type PropertiesTemplateUpdateAPIError struct {
 	dropbox.APIError
-	EndpointError *properties.ModifyPropertyTemplateError `json:"error"`
+	EndpointError *file_properties.ModifyTemplateError `json:"error"`
 }
 
-func (dbx *apiImpl) PropertiesTemplateUpdate(arg *UpdatePropertyTemplateArg) (res *UpdatePropertyTemplateResult, err error) {
+func (dbx *apiImpl) PropertiesTemplateUpdate(arg *file_properties.UpdateTemplateArg) (res *file_properties.UpdateTemplateResult, err error) {
+	log.Printf("WARNING: API `PropertiesTemplateUpdate` is deprecated")
+
 	cli := dbx.Client
 
 	dbx.Config.TryLog("arg: %v", arg)
