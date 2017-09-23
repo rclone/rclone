@@ -41,6 +41,7 @@ func main() {
 		BucketExternalMirrorFeatureContext(s)
 		ObjectFeatureContext(s)
 		ObjectMultipartFeatureContext(s)
+		ImageFeatureContext(s)
 	}
 	options := godog.Options{
 		Format: "pretty",

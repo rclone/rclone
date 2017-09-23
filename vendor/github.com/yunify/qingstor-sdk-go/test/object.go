@@ -396,6 +396,11 @@ func getObjectWithQuerySignature(objectKey string) error {
 				errChan <- err
 				return
 			}
+			err = r.Build()
+			if err != nil {
+				errChan <- err
+				return
+			}
 			err = r.SignQuery(10)
 			if err != nil {
 				errChan <- err

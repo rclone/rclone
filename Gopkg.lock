@@ -212,10 +212,10 @@
   revision = "2df9a531813370438a4d79bfc33e21f58063ed87"
 
 [[projects]]
+  branch = "master"
   name = "github.com/spf13/pflag"
   packages = ["."]
-  revision = "e57e3eeb33f795204c1ca35f56c44f83227c6e66"
-  version = "v1.0.0"
+  revision = "7aff26db30c1be810f9de5038ec5ef96ac41fd7c"
 
 [[projects]]
   branch = "master"
@@ -279,7 +279,7 @@
 
 [[projects]]
   name = "google.golang.org/appengine"
-  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","urlfetch"]
+  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","log","urlfetch"]
   revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
   version = "v1.0.0"
 
@@ -292,6 +292,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "e660aa956f1e580bda1ce240cdb673bcbc00bb8f2ef2e77e85d3d941528836f1"
+  inputs-digest = "119fcfb60b243cc6c75c9ebd02ddc913a1492a128cb7bdecb7ef180a0fc5be44"
   solver-name = "gps-cdcl"
   solver-version = 1

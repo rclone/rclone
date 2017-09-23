@@ -46,6 +46,27 @@ func TestQingStorSignerWriteSignature(t *testing.T) {
 	assert.Equal(t, signature, httpRequest.Header.Get("Authorization"))
 }
 
+func TestQingStorSignerWriteSignatureWithXQSDate(t *testing.T) {
+	url := "https://qingstor.com/?acl&upload_id=fde133b5f6d932cd9c79bac3c7318da1&part_number=0&other=abc"
+	httpRequest, err := http.NewRequest("GET", url, nil)
+	httpRequest.Header.Set("Date", convert.TimeToString(time.Time{}, convert.RFC822))
+	httpRequest.Header.Set("X-QS-Date", convert.TimeToString(time.Time{}, convert.RFC822))
+	httpRequest.Header.Set("X-QS-Test-2", "Test 2")
+	httpRequest.Header.Set("X-QS-Test-1", "Test 1")
+	assert.Nil(t, err)
+
+	s := QingStorSigner{
+		AccessKeyID:     "ENV_ACCESS_KEY_ID",
+		SecretAccessKey: "ENV_SECRET_ACCESS_KEY",
+	}
+
+	err = s.WriteSignature(httpRequest)
+	assert.Nil(t, err)
+
+	signature := "QS ENV_ACCESS_KEY_ID:qkY+tOMdqfDAVv+ZBtlWeEBxlbyIKaQmj5lQlylENzo="
+	assert.Equal(t, signature, httpRequest.Header.Get("Authorization"))
+}
+
 func TestQingStorSignerWriteSignatureChinese(t *testing.T) {
 	url := "https://zone.qingstor.com/bucket-name/中文"
 	httpRequest, err := http.NewRequest("GET", url, nil)
@@ -81,5 +102,26 @@ func TestQingStorSignerWriteQuerySignature(t *testing.T) {
 	assert.Nil(t, err)
 
 	targetURL := "https://qingstor.com/?acl&upload_id=fde133b5f6d932cd9c79bac3c7318da1&part_number=0&access_key_id=ENV_ACCESS_KEY_ID&expires=3600&signature=GRL3p3NOgHR9CQygASvyo344vdnO1hFke6ZvQ5mDVHM="
+	assert.Equal(t, httpRequest.URL.String(), targetURL)
+}
+
+func TestQingStorSignerWriteQuerySignatureWithXQSDate(t *testing.T) {
+	url := "https://qingstor.com/?acl&upload_id=fde133b5f6d932cd9c79bac3c7318da1&part_number=0"
+	httpRequest, err := http.NewRequest("GET", url, nil)
+	httpRequest.Header.Set("Date", convert.TimeToString(time.Time{}, convert.RFC822))
+	httpRequest.Header.Set("X-QS-Date", convert.TimeToString(time.Time{}, convert.RFC822))
+	httpRequest.Header.Set("X-QS-Test-2", "Test 2")
+	httpRequest.Header.Set("X-QS-Test-1", "Test 1")
+	assert.Nil(t, err)
+
+	s := QingStorSigner{
+		AccessKeyID:     "ENV_ACCESS_KEY_ID",
+		SecretAccessKey: "ENV_SECRET_ACCESS_KEY",
+	}
+
+	err = s.WriteQuerySignature(httpRequest, 3600)
+	assert.Nil(t, err)
+
+	targetURL := "https://qingstor.com/?acl&upload_id=fde133b5f6d932cd9c79bac3c7318da1&part_number=0&access_key_id=ENV_ACCESS_KEY_ID&expires=3600&signature=plFxMFP1EzKVtdF%2BbApT8rhW9AUAIWfmZcOGH3m27t0="
 	assert.Equal(t, httpRequest.URL.String(), targetURL)
 }

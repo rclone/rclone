@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"net/http"
 	"reflect"
+	"strconv"
 	"time"
 
 	"github.com/pengsrc/go-shared/convert"
@@ -64,6 +65,27 @@ func New(o *data.Operation, i data.Input, x interface{}) (*Request, error) {
 // Send sends API request.
 // It returns error if error occurred.
 func (r *Request) Send() error {
+	err := r.Build()
+	if err != nil {
+		return err
+	}
+
+	err = r.Sign()
+	if err != nil {
+		return err
+	}
+
+	err = r.Do()
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// Build checks and builds the API request.
+// It returns error if error occurred.
+func (r *Request) Build() error {
 	err := r.check()
 	if err != nil {
 		return err
@@ -74,12 +96,13 @@ func (r *Request) Send() error {
 		return err
 	}
 
-	err = r.sign()
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
-	err = r.send()
+// Do sends and unpacks the API request.
+// It returns error if error occurred.
+func (r *Request) Do() error {
+	err := r.send()
 	if err != nil {
 		return err
 	}
@@ -95,17 +118,7 @@ func (r *Request) Send() error {
 // Sign sign the API request by setting the authorization header.
 // It returns error if error occurred.
 func (r *Request) Sign() error {
-	err := r.check()
-	if err != nil {
-		return err
-	}
-
-	err = r.build()
-	if err != nil {
-		return err
-	}
-
-	err = r.sign()
+	err := r.sign()
 	if err != nil {
 		return err
 	}
@@ -116,21 +129,30 @@ func (r *Request) Sign() error {
 // SignQuery sign the API request by appending query string.
 // It returns error if error occurred.
 func (r *Request) SignQuery(timeoutSeconds int) error {
-	err := r.check()
+	err := r.signQuery(int(time.Now().Unix()) + timeoutSeconds)
 	if err != nil {
 		return err
 	}
 
-	err = r.build()
-	if err != nil {
-		return err
-	}
+	return nil
+}
 
-	err = r.signQuery(int(time.Now().Unix()) + timeoutSeconds)
-	if err != nil {
-		return err
-	}
+// ApplySignature applies the Authorization header.
+// It returns error if error occurred.
+func (r *Request) ApplySignature(authorization string) error {
+	r.HTTPRequest.Header.Set("Authorization", authorization)
+	return nil
+}
 
+// ApplyQuerySignature applies the query signature.
+// It returns error if error occurred.
+func (r *Request) ApplyQuerySignature(accessKeyID string, expires int, signature string) error {
+	queryValue := r.HTTPRequest.URL.Query()
+	queryValue.Set("access_key_id", accessKeyID)
+	queryValue.Set("expires", strconv.Itoa(expires))
+	queryValue.Set("signature", signature)
+
+	r.HTTPRequest.URL.RawQuery = queryValue.Encode()
 	return nil
 }
 

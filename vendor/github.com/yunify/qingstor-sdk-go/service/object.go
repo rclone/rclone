@@ -467,6 +467,105 @@ type HeadObjectOutput struct {
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
 }
 
+// ImageProcess does Image process with the action on the object
+// Documentation URL: https://docs.qingcloud.com/qingstor/data_process/image_process/index.html
+func (s *Bucket) ImageProcess(objectKey string, input *ImageProcessInput) (*ImageProcessOutput, error) {
+	r, x, err := s.ImageProcessRequest(objectKey, input)
+
+	if err != nil {
+		return x, err
+	}
+
+	err = r.Send()
+	if err != nil {
+		return nil, err
+	}
+
+	requestID := r.HTTPResponse.Header.Get(http.CanonicalHeaderKey("X-QS-Request-ID"))
+	x.RequestID = &requestID
+
+	return x, err
+}
+
+// ImageProcessRequest creates request and output object of ImageProcess.
+func (s *Bucket) ImageProcessRequest(objectKey string, input *ImageProcessInput) (*request.Request, *ImageProcessOutput, error) {
+
+	if input == nil {
+		input = &ImageProcessInput{}
+	}
+
+	properties := *s.Properties
+
+	properties.ObjectKey = &objectKey
+
+	o := &data.Operation{
+		Config:        s.Config,
+		Properties:    &properties,
+		APIName:       "Image Process",
+		RequestMethod: "GET",
+		RequestURI:    "/<bucket-name>/<object-key>?image",
+		StatusCodes: []int{
+			200, // OK
+			304, // Not modified
+		},
+	}
+
+	x := &ImageProcessOutput{}
+	r, err := request.New(o, input, x)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return r, x, nil
+}
+
+// ImageProcessInput presents input for ImageProcess.
+type ImageProcessInput struct {
+	// Image process action
+	Action *string `json:"action" name:"action" location:"params"` // Required
+	// Specified the Cache-Control response header
+	ResponseCacheControl *string `json:"response-cache-control,omitempty" name:"response-cache-control" location:"params"`
+	// Specified the Content-Disposition response header
+	ResponseContentDisposition *string `json:"response-content-disposition,omitempty" name:"response-content-disposition" location:"params"`
+	// Specified the Content-Encoding response header
+	ResponseContentEncoding *string `json:"response-content-encoding,omitempty" name:"response-content-encoding" location:"params"`
+	// Specified the Content-Language response header
+	ResponseContentLanguage *string `json:"response-content-language,omitempty" name:"response-content-language" location:"params"`
+	// Specified the Content-Type response header
+	ResponseContentType *string `json:"response-content-type,omitempty" name:"response-content-type" location:"params"`
+	// Specified the Expires response header
+	ResponseExpires *string `json:"response-expires,omitempty" name:"response-expires" location:"params"`
+
+	// Check whether the object has been modified
+	IfModifiedSince *time.Time `json:"If-Modified-Since,omitempty" name:"If-Modified-Since" format:"RFC 822" location:"headers"`
+}
+
+// Validate validates the input for ImageProcess.
+func (v *ImageProcessInput) Validate() error {
+
+	if v.Action == nil {
+		return errors.ParameterRequiredError{
+			ParameterName: "Action",
+			ParentName:    "ImageProcessInput",
+		}
+	}
+
+	return nil
+}
+
+// ImageProcessOutput presents output for ImageProcess.
+type ImageProcessOutput struct {
+	StatusCode *int `location:"statusCode"`
+
+	RequestID *string `location:"requestID"`
+
+	// The response body
+	Body io.ReadCloser `location:"body"`
+
+	// Object content length
+	ContentLength *int64 `json:"Content-Length,omitempty" name:"Content-Length" location:"headers"`
+}
+
 // InitiateMultipartUpload does Initial multipart upload on the object.
 // Documentation URL: https://docs.qingcloud.com/qingstor/api/object/initiate_multipart_upload.html
 func (s *Bucket) InitiateMultipartUpload(objectKey string, input *InitiateMultipartUploadInput) (*InitiateMultipartUploadOutput, error) {
@@ -909,6 +1008,24 @@ type UploadMultipartInput struct {
 	ContentLength *int64 `json:"Content-Length,omitempty" name:"Content-Length" location:"headers"`
 	// Object multipart content MD5sum
 	ContentMD5 *string `json:"Content-MD5,omitempty" name:"Content-MD5" location:"headers"`
+	// Specify range of the source object
+	XQSCopyRange *string `json:"X-QS-Copy-Range,omitempty" name:"X-QS-Copy-Range" location:"headers"`
+	// Copy source, format (/<bucket-name>/<object-key>)
+	XQSCopySource *string `json:"X-QS-Copy-Source,omitempty" name:"X-QS-Copy-Source" location:"headers"`
+	// Encryption algorithm of the object
+	XQSCopySourceEncryptionCustomerAlgorithm *string `json:"X-QS-Copy-Source-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Copy-Source-Encryption-Customer-Algorithm" location:"headers"`
+	// Encryption key of the object
+	XQSCopySourceEncryptionCustomerKey *string `json:"X-QS-Copy-Source-Encryption-Customer-Key,omitempty" name:"X-QS-Copy-Source-Encryption-Customer-Key" location:"headers"`
+	// MD5sum of encryption key
+	XQSCopySourceEncryptionCustomerKeyMD5 *string `json:"X-QS-Copy-Source-Encryption-Customer-Key-MD5,omitempty" name:"X-QS-Copy-Source-Encryption-Customer-Key-MD5" location:"headers"`
+	// Check whether the Etag of copy source matches the specified value
+	XQSCopySourceIfMatch *string `json:"X-QS-Copy-Source-If-Match,omitempty" name:"X-QS-Copy-Source-If-Match" location:"headers"`
+	// Check whether the copy source has been modified since the specified date
+	XQSCopySourceIfModifiedSince *time.Time `json:"X-QS-Copy-Source-If-Modified-Since,omitempty" name:"X-QS-Copy-Source-If-Modified-Since" format:"RFC 822" location:"headers"`
+	// Check whether the Etag of copy source does not matches the specified value
+	XQSCopySourceIfNoneMatch *string `json:"X-QS-Copy-Source-If-None-Match,omitempty" name:"X-QS-Copy-Source-If-None-Match" location:"headers"`
+	// Check whether the copy source has not been unmodified since the specified date
+	XQSCopySourceIfUnmodifiedSince *time.Time `json:"X-QS-Copy-Source-If-Unmodified-Since,omitempty" name:"X-QS-Copy-Source-If-Unmodified-Since" format:"RFC 822" location:"headers"`
 	// Encryption algorithm of the object
 	XQSEncryptionCustomerAlgorithm *string `json:"X-QS-Encryption-Customer-Algorithm,omitempty" name:"X-QS-Encryption-Customer-Algorithm" location:"headers"`
 	// Encryption key of the object

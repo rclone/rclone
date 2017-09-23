@@ -744,12 +744,14 @@ func (s *Bucket) ListMultipartUploadsRequest(input *ListMultipartUploadsInput) (
 type ListMultipartUploadsInput struct {
 	// Put all keys that share a common prefix into a list
 	Delimiter *string `json:"delimiter,omitempty" name:"delimiter" location:"params"`
+	// Limit results returned from the first key after key_marker sorted by alphabetical order
+	KeyMarker *string `json:"key_marker,omitempty" name:"key_marker" location:"params"`
 	// Results count limit
 	Limit *int `json:"limit,omitempty" name:"limit" location:"params"`
-	// Limit results to keys that start at this marker
-	Marker *string `json:"marker,omitempty" name:"marker" location:"params"`
 	// Limits results to keys that begin with the prefix
 	Prefix *string `json:"prefix,omitempty" name:"prefix" location:"params"`
+	// Limit results returned from the first uploading segment after upload_id_marker sorted by the time of upload_id
+	UploadIDMarker *string `json:"upload_id_marker,omitempty" name:"upload_id_marker" location:"params"`
 }
 
 // Validate validates the input for ListMultipartUploads.
@@ -774,8 +776,10 @@ type ListMultipartUploadsOutput struct {
 	Marker *string `json:"marker,omitempty" name:"marker" location:"elements"`
 	// Bucket name
 	Name *string `json:"name,omitempty" name:"name" location:"elements"`
-	// The last key in keys list
-	NextMarker *string `json:"next_marker,omitempty" name:"next_marker" location:"elements"`
+	// The last key in uploads list
+	NextKeyMarker *string `json:"next_key_marker,omitempty" name:"next_key_marker" location:"elements"`
+	// The last upload_id in uploads list
+	NextUploadIDMarker *string `json:"next_upload_id_marker,omitempty" name:"next_upload_id_marker" location:"elements"`
 	// Prefix that specified in request parameters
 	Prefix *string `json:"prefix,omitempty" name:"prefix" location:"elements"`
 	// Multipart uploads
