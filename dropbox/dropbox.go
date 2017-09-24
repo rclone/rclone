@@ -527,9 +527,9 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	arg.FromPath = srcObj.remotePath()
 	arg.ToPath = dstObj.remotePath()
 	var err error
-	var entry files.IsMetadata
+	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
-		entry, err = f.srv.Copy(&arg)
+		result, err = f.srv.CopyV2(&arg)
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -537,7 +537,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Set the metadata
-	fileInfo, ok := entry.(*files.FileMetadata)
+	fileInfo, ok := result.Metadata.(*files.FileMetadata)
 	if !ok {
 		return nil, fs.ErrorNotAFile
 	}
@@ -590,9 +590,9 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	arg.FromPath = srcObj.remotePath()
 	arg.ToPath = dstObj.remotePath()
 	var err error
-	var entry files.IsMetadata
+	var result *files.RelocationResult
 	err = f.pacer.Call(func() (bool, error) {
-		entry, err = f.srv.Move(&arg)
+		result, err = f.srv.MoveV2(&arg)
 		return shouldRetry(err)
 	})
 	if err != nil {
@@ -600,7 +600,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// Set the metadata
-	fileInfo, ok := entry.(*files.FileMetadata)
+	fileInfo, ok := result.Metadata.(*files.FileMetadata)
 	if !ok {
 		return nil, fs.ErrorNotAFile
 	}
@@ -644,7 +644,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	arg.FromPath = srcPath
 	arg.ToPath = dstPath
 	err = f.pacer.Call(func() (bool, error) {
-		_, err = f.srv.Move(&arg)
+		_, err = f.srv.MoveV2(&arg)
 		return shouldRetry(err)
 	})
 	if err != nil {
