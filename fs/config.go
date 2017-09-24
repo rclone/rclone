@@ -1015,7 +1015,7 @@ func GetFsOptionsProvider(provider string) {
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	os.Stdout.Write(b)
+	fmt.Fprintf(os.Stdout, "%s", b)
 }
 
 // GetFsProviders print all providers
@@ -1037,7 +1037,7 @@ func GetFsProviders() {
 		if err != nil {
 			fmt.Println("error:", err)
 		}
-		os.Stdout.Write(b)
+		fmt.Fprintf(os.Stdout, "%s", b)
 	}
 }
 
