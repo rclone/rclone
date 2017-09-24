@@ -103,3 +103,4 @@ Contributors
   * Jan Varho <jan@varho.org>
   * Girish Ramakrishnan <girish@cloudron.io>
   * LingMan <LingMan@users.noreply.github.com>
+  * Jacob McNamee <jacobmcnamee@gmail.com>
