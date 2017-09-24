@@ -995,8 +995,10 @@ func SetFsNewRemote(name string, provider string, jsonstr string) {
 
 	// Unmarshal string into structs.
     	var options []Option
-    	json.Unmarshal(bytes, &options)
-
+        err := json.Unmarshal(bytes, &options)
+        if err != nil {
+                fmt.Println("error:", err)
+        }
 	configData.SetValue(name, "type", provider)
     	// Loop over structs and display them.
     	for op := range options {
