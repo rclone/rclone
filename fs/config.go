@@ -993,38 +993,36 @@ func ChooseOption(o *Option) string {
 }
 
 // SetFsNewRemote print all options of provider
-func SetFsNewRemote(name string, provider string, jsonstr string) {
+func JsonConfig(name string, provider string, jsonstr string) {
 	bytes := []byte(jsonstr)
 
 	// Unmarshal string into structs.
-    	var options []Option
-        err := json.Unmarshal(bytes, &options)
-        if err != nil {
-                fmt.Println("error:", err)
-        }
+	var options []Option
+	json.Unmarshal(bytes, &options)
+
 	configData.SetValue(name, "type", provider)
-    	// Loop over structs and display them.
-    	for op := range options {
-                configData.SetValue(name, options[op].Name, options[op].Value)
-    	}
+	// Loop over structs and display them.
+	for op := range options {
+		configData.SetValue(name, options[op].Name, options[op].Value)
+	}
 	configData.SetValue(name, ConfigAutomatic, "yes")
-        RemoteConfig(name)
+	RemoteConfig(name)
 	ShowRemote(name)
-        SaveConfig()
+	SaveConfig()
 }
 
 // GetFsOptionsProvider print all options of provider
-func GetFsOptionsProvider(provider string) {
+func ListOptions(provider string) {
 	fs := MustFind(provider)
 	b, err := json.Marshal(fs.Options)
 	if err != nil {
 		fmt.Println("error:", err)
 	}
-	fmt.Fprintf(os.Stdout, "%s", b)
+	os.Stdout.Write(b)
 }
 
 // GetFsProviders print all providers
-func GetFsProviders() {
+func ListProviders() {
 	o := &Option{
 		Name: "Storage",
 		Help: "Type of storage to configure.",
@@ -1042,7 +1040,7 @@ func GetFsProviders() {
 		if err != nil {
 			fmt.Println("error:", err)
 		}
-		fmt.Fprintf(os.Stdout, "%s", b)
+		os.Stdout.Write(b)
 	}
 }
 
