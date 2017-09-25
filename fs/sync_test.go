@@ -996,3 +996,36 @@ func TestSyncUTFNorm(t *testing.T) {
 	file1.Path = file2.Path
 	fstest.CheckItems(t, r.fremote, file1)
 }
+
+// Test --immutable
+func TestSyncImmutable(t *testing.T) {
+	r := NewRun(t)
+	defer r.Finalise()
+
+	fs.Config.Immutable = true
+	defer func() { fs.Config.Immutable = false }()
+
+	// Create file on source
+	file1 := r.WriteFile("existing", "potato", t1)
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote)
+
+	// Should succeed
+	fs.Stats.ResetCounters()
+	err := fs.Sync(r.fremote, r.flocal)
+	require.NoError(t, err)
+	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.fremote, file1)
+
+	// Modify file data and timestamp on source
+	file2 := r.WriteFile("existing", "tomato", t2)
+	fstest.CheckItems(t, r.flocal, file2)
+	fstest.CheckItems(t, r.fremote, file1)
+
+	// Should fail with ErrorImmutableModified and not modify local or remote files
+	fs.Stats.ResetCounters()
+	err = fs.Sync(r.fremote, r.flocal)
+	assert.EqualError(t, err, fs.ErrorImmutableModified.Error())
+	fstest.CheckItems(t, r.flocal, file2)
+	fstest.CheckItems(t, r.fremote, file1)
+}

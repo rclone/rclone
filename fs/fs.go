@@ -50,6 +50,7 @@ var (
 	ErrorNotDeletingDirs             = errors.New("not deleting directories as there were IO errors")
 	ErrorCantMoveOverlapping         = errors.New("can't move files on overlapping remotes")
 	ErrorDirectoryNotEmpty           = errors.New("directory not empty")
+	ErrorImmutableModified           = errors.New("immutable file modified")
 )
 
 // RegInfo provides information about a filesystem

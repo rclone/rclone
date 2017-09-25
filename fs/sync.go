@@ -264,20 +264,26 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 			// Check to see if can store this
 			if src.Storable() {
 				if NeedTransfer(pair.dst, pair.src) {
-					// If destination already exists, then we must move it into --backup-dir if required
-					if pair.dst != nil && s.backupDir != nil {
-						remoteWithSuffix := pair.dst.Remote() + s.suffix
-						overwritten, _ := s.backupDir.NewObject(remoteWithSuffix)
-						err := Move(s.backupDir, overwritten, remoteWithSuffix, pair.dst)
-						if err != nil {
-							s.processError(err)
+					// If files are treated as immutable, fail if destination exists and does not match
+					if Config.Immutable && pair.dst != nil {
+						Errorf(pair.dst, "Source and destination exist but do not match: immutable file modified")
+						s.processError(ErrorImmutableModified)
+					} else {
+						// If destination already exists, then we must move it into --backup-dir if required
+						if pair.dst != nil && s.backupDir != nil {
+							remoteWithSuffix := pair.dst.Remote() + s.suffix
+							overwritten, _ := s.backupDir.NewObject(remoteWithSuffix)
+							err := Move(s.backupDir, overwritten, remoteWithSuffix, pair.dst)
+							if err != nil {
+								s.processError(err)
+							} else {
+								// If successful zero out the dst as it is no longer there and copy the file
+								pair.dst = nil
+								out <- pair
+							}
 						} else {
-							// If successful zero out the dst as it is no longer there and copy the file
-							pair.dst = nil
 							out <- pair
 						}
-					} else {
-						out <- pair
 					}
 				} else {
 					// If moving need to delete the files we don't need to copy
