@@ -992,7 +992,7 @@ func ChooseOption(o *Option) string {
 	return ReadLine()
 }
 
-// SetFsNewRemote print all options of provider
+// JsonConfig Created a new remote type X with parameters Y
 func JsonConfig(name string, provider string, jsonstr string) {
 	bytes := []byte(jsonstr)
 
@@ -1011,7 +1011,7 @@ func JsonConfig(name string, provider string, jsonstr string) {
 	SaveConfig()
 }
 
-// GetFsOptionsProvider print all options of provider
+// ListOptions Lists all the options needed to connect to a protocol
 func ListOptions(provider string) {
 	fs := MustFind(provider)
 	b, err := json.Marshal(fs.Options)
@@ -1021,7 +1021,7 @@ func ListOptions(provider string) {
 	os.Stdout.Write(b)
 }
 
-// GetFsProviders print all providers
+// ListProviders print all providersList, in json format, the protocols supported by sync
 func ListProviders() {
 	o := &Option{
 		Name: "Storage",
