@@ -31,7 +31,7 @@ Here is an overview of the major features of each cloud storage system.
 | Microsoft OneDrive           | SHA1        | Yes     | Yes              | No              | R         |
 | Openstack Swift              | MD5         | Yes     | No               | No              | R/W       |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
-| SFTP                         | MD5, SHA1 * | Yes     | Depends          | No              | -         |
+| SFTP                         | MD5, SHA1 ‡ | Yes     | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
 | The local filesystem         | All         | Yes     | Depends          | No              | -         |
 
@@ -49,7 +49,7 @@ systems they must support a common hash type.
 hash](https://www.dropbox.com/developers/reference/content-hash).
 This is an SHA256 sum of all the 4MB block SHA256s.
 
-* SFTP supports checksums if the same login has shell access and `md5sum`
+‡ SFTP supports checksums if the same login has shell access and `md5sum`
 or `sha1sum` as well as `echo` are in the remote's PATH.
 
 ### ModTime ###
