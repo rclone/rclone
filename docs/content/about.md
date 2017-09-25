@@ -2,7 +2,7 @@
 title: "Rclone"
 description: "rclone syncs files to and from Google Drive, S3, Swift, Cloudfiles, Dropbox, Google Cloud Storage and Amazon Drive."
 type: page
-date: "2015-09-06"
+date: "2017-09-25"
 groups: ["about"]
 ---
 
@@ -11,25 +11,33 @@ Rclone
 
 [![Logo](/img/rclone-120x120.png)](https://rclone.org/)
 
-Rclone is a command line program to sync files and directories to and from
+Rclone is a command line program to sync files and directories to and from:
 
-  * Amazon Drive
-  * Amazon S3
-  * Backblaze B2
-  * Box
-  * Dropbox
-  * FTP
-  * Google Cloud Storage
-  * Google Drive
-  * HTTP
-  * Hubic
-  * Microsoft Azure Blob Storage
-  * Microsoft OneDrive
-  * Openstack Swift / Rackspace cloud files / Memset Memstore
-  * QingStor
-  * SFTP
-  * Yandex Disk
-  * The local filesystem
+* {{< provider name="Amazon Drive" home="https://www.amazon.com/clouddrive" config="/amazonclouddrive/" >}}
+* {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
+* {{< provider name="Backblaze B2" home="https://www.backblaze.com/b2/cloud-storage.html" config="/b2/" >}}
+* {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
+* {{< provider name="Ceph" home="http://ceph.com/" config="/s3/#ceph" >}}
+* {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/" >}}
+* {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
+* {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}
+* {{< provider name="Google Cloud Storage" home="https://cloud.google.com/storage/" config="/googlecloudstorage/" >}}
+* {{< provider name="Google Drive" home="https://www.google.com/drive/" config="/drive/" >}}
+* {{< provider name="HTTP" home="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" config="/http/" >}}
+* {{< provider name="Hubic" home="https://hubic.com/" config="/hubic/" >}}
+* {{< provider name="Memset Memstore" home="https://www.memset.com/cloud/storage/" config="/swift/" >}}
+* {{< provider name="Microsoft Azure Blob Storage" home="https://azure.microsoft.com/en-us/services/storage/blobs/" config="/azureblob/" >}}
+* {{< provider name="Microsoft OneDrive" home="https://onedrive.live.com/" config="/onedrive/" >}}
+* {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
+* {{< provider name="OVH" home="https://www.ovh.co.uk/public-cloud/storage/object-storage/" config="/swift/" >}}
+* {{< provider name="Openstack Swift" home="https://docs.openstack.org/swift/latest/" config="/swift/" >}}
+* {{< provider name="Oracle Cloud Storage" home="https://cloud.oracle.com/storage-opc" config="/swift/" >}}
+* {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
+* {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
+* {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SFTP" config="/sftp/" >}}
+* {{< provider name="Wasabi" home="https://wasabi.com/" config="/s3/#wasabi" >}}
+* {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
+* {{< provider name="The local filesystem" home="/local/" config="/local/" >}}
 
 Features
 

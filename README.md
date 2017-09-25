@@ -16,7 +16,7 @@
 Rclone is a command line program to sync files and directories to and from
 
   * Amazon Drive
-  * Amazon S3
+  * Amazon S3 / Dreamhost / Ceph / Minio / Wasabi
   * Backblaze B2
   * Box
   * Dropbox
@@ -27,7 +27,7 @@ Rclone is a command line program to sync files and directories to and from
   * Hubic
   * Microsoft Azure Blob Storage
   * Microsoft OneDrive
-  * Openstack Swift / Rackspace cloud files / Memset Memstore
+  * Openstack Swift / Rackspace cloud files / Memset Memstore / OVH / Oracle Cloud Storage
   * QingStor
   * SFTP
   * Yandex Disk

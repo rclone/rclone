@@ -90,6 +90,9 @@ def read_doc(doc):
     contents = re.sub(r'<i class="fa.*?</i>\s*', "", contents)
     # Make [...](/links/) absolute
     contents = re.sub(r'\((\/.*?\/)\)', r"(https://rclone.org\1)", contents)
+    # Interpret provider shortcode
+    # {{< provider name="Amazon S3" home="https://aws.amazon.com/s3/" config="/s3/" >}}
+    contents = re.sub(r'\{\{<\s+provider.*?name="(.*?)".*?>\}\}', r"\1", contents)
     return contents
 
 def check_docs(docpath):
