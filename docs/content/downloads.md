@@ -5,40 +5,40 @@ type: page
 date: "2017-07-22"
 ---
 
-Rclone Download v1.37
+Rclone Download {{< version >}}
 =====================
 
   * Windows
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-v1.37-windows-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-windows-amd64.zip)
+    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-windows-386.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-windows-amd64.zip)
   * OSX
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-v1.37-osx-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-osx-amd64.zip)
+    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-osx-386.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-osx-amd64.zip)
   * Linux
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-v1.37-linux-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-linux-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-v1.37-linux-arm.zip)
-    * [ARM - 64 Bit](https://downloads.rclone.org/rclone-v1.37-linux-arm64.zip)
-    * [MIPS - Big Endian](https://downloads.rclone.org/rclone-v1.37-linux-mips.zip)
-    * [MIPS - Little Endian](https://downloads.rclone.org/rclone-v1.37-linux-mipsle.zip)
+    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-386.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-amd64.zip)
+    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-arm.zip)
+    * [ARM - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-arm64.zip)
+    * [MIPS - Big Endian](https://downloads.rclone.org/rclone-{{< version >}}-linux-mips.zip)
+    * [MIPS - Little Endian](https://downloads.rclone.org/rclone-{{< version >}}-linux-mipsle.zip)
   * FreeBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-v1.37-freebsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-freebsd-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-v1.37-freebsd-arm.zip)
+    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-freebsd-386.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-freebsd-amd64.zip)
+    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-freebsd-arm.zip)
   * NetBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-v1.37-netbsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-netbsd-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-v1.37-netbsd-arm.zip)
+    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-netbsd-386.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-netbsd-amd64.zip)
+    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-netbsd-arm.zip)
   * OpenBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-v1.37-openbsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-openbsd-amd64.zip)
+    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-openbsd-386.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-openbsd-amd64.zip)
   * Plan 9
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-v1.37-plan9-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-plan9-amd64.zip)
+    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-plan9-386.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-plan9-amd64.zip)
   * Solaris
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-v1.37-solaris-amd64.zip)
+    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-solaris-amd64.zip)
 
-You can also find a [mirror of the downloads on github](https://github.com/ncw/rclone/releases/tag/v1.37).
+You can also find a [mirror of the downloads on github](https://github.com/ncw/rclone/releases/tag/{{< version >}}).
 
 Beta releases
 =============
