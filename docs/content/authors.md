@@ -99,9 +99,8 @@ Contributors
   * bpicode <bjoern.pirnay@googlemail.com>
   * Daniel Jagszent <daniel@jagszent.de>
   * Josiah White <thegenius2009@gmail.com>
-  * ishuah91 <ishuah91@gmail.com>
+  * Ishuah Kariuki <kariuki@ishuah.com> <ishuah91@gmail.com>
   * Jan Varho <jan@varho.org>
   * Girish Ramakrishnan <girish@cloudron.io>
   * LingMan <LingMan@users.noreply.github.com>
   * Jacob McNamee <jacobmcnamee@gmail.com>
-  * ishuah <kariuki@ishuah.com>
