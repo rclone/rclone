@@ -27,8 +27,8 @@ Additional functions:
   * ` + "`rclone config file`" + ` – show path of configuration file in use
   * ` + "`rclone config show`" + ` – print (decrypted) config file
   * ` + "`rclone config listproviders`" + ` – List, in json format, the protocols supported by sync
-  * ` + "`rclone config optionsprovider type`" + ` – Lists all the options needed to connect to a protocol
-  * ` + "`rclone config jsonconfig`" + ` – Created a new remote type X with parameters Y
+  * ` + "`rclone config listoptions type`" + ` – Lists all the options needed to connect to a protocol
+  * ` + "`rclone config jsonconfig`name type jsonoptions" + ` – Created a new remote type X with parameters Y
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 4, command, args)
