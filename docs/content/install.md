@@ -55,7 +55,10 @@ Unzip the download and cd to the extracted folder.
 
 Move rclone to your $PATH. You will be prompted for your password.
 
+    sudo mkdir -p /usr/local/bin
     sudo mv rclone /usr/local/bin/
+
+(the `mkdir` command is safe to run, even if the directory already exists).
 
 Remove the leftover files.
 
