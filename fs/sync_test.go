@@ -1018,7 +1018,7 @@ func TestSyncImmutable(t *testing.T) {
 	fstest.CheckItems(t, r.fremote, file1)
 
 	// Modify file data and timestamp on source
-	file2 := r.WriteFile("existing", "tomato", t2)
+	file2 := r.WriteFile("existing", "tomatoes", t2)
 	fstest.CheckItems(t, r.flocal, file2)
 	fstest.CheckItems(t, r.fremote, file1)
 
