@@ -240,26 +240,33 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	return f.newObject(o), nil
 }
 
-// Put in to the remote path with the modTime given of the given size
-//
-// May create the object even if it returns an error - if so
-// will return the object and the error, otherwise will return
-// nil and the error
-func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+type putFn func(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error)
+
+// put implements Put or PutStream
+func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put putFn) (fs.Object, error) {
 	wrappedIn, err := f.cipher.EncryptData(in)
 	if err != nil {
 		return nil, err
 	}
-	o, err := f.Fs.Put(wrappedIn, f.newObjectInfo(src), options...)
+	o, err := put(wrappedIn, f.newObjectInfo(src), options...)
 	if err != nil {
 		return nil, err
 	}
 	return f.newObject(o), nil
 }
 
+// Put in to the remote path with the modTime given of the given size
+//
+// May create the object even if it returns an error - if so
+// will return the object and the error, otherwise will return
+// nil and the error
+func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
+	return f.put(in, src, options, f.Fs.Put)
+}
+
 // PutStream uploads to the remote path with the modTime given of indeterminate size
 func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	return f.Put(in, src, options...)
+	return f.put(in, src, options, f.Fs.Features().PutStream)
 }
 
 // Hashes returns the supported hash sets.
@@ -596,7 +603,11 @@ func (o *ObjectInfo) Remote() string {
 
 // Size returns the size of the file
 func (o *ObjectInfo) Size() int64 {
-	return o.f.cipher.EncryptedSize(o.ObjectInfo.Size())
+	size := o.ObjectInfo.Size()
+	if size < 0 {
+		return size
+	}
+	return o.f.cipher.EncryptedSize(size)
 }
 
 // Hash returns the selected checksum of the file
