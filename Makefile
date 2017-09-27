@@ -32,8 +32,9 @@ version:
 
 # Full suite of integration tests
 test:	rclone
-	go test $(BUILDTAGS) $(GO_FILES)
-	cd fs && go run $(BUILDTAGS) test_all.go
+	-go test $(BUILDTAGS) $(GO_FILES) 2>&1 | tee test.log
+	-cd fs && go run $(BUILDTAGS) test_all.go 2>&1 | tee test_all.log
+	@echo "Written logs in test.log and fs/test_all.log"
 
 # Quick test
 quicktest:
