@@ -1,12 +1,12 @@
 ---
-date: 2017-09-30T14:20:12+01:00
+date: 2017-09-30T14:21:35+01:00
 title: "rclone"
 slug: rclone
 url: /commands/rclone/
 ---
 ## rclone
 
-Sync files and directories to and from local and remote object stores - v1.38-001-gda4e1b84
+Sync files and directories to and from local and remote object stores - v1.38
 
 ### Synopsis
 
@@ -153,7 +153,7 @@ rclone [flags]
       --track-renames                     When synchronizing, track file renames and do a server side move if possible
       --transfers int                     Number of file transfers to run in parallel. (default 4)
   -u, --update                            Skip files that are newer on the destination.
-      --user-agent string                 Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.38-001-gda4e1b84")
+      --user-agent string                 Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.38")
   -v, --verbose count[=-1]                Print lots more stuff (repeat for more)
   -V, --version                           Print the version number
 ```
