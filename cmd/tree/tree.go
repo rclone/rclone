@@ -124,9 +124,6 @@ func Tree(fsrc fs.Fs, outFile io.Writer, opts *tree.Options) error {
 	inf := tree.New("/")
 	var nd, nf int
 	if d, f := inf.Visit(opts); f != 0 {
-		if d > 0 {
-			d--
-		}
 		nd, nf = nd+d, nf+f
 	}
 	inf.Print(opts)
