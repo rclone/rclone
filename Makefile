@@ -94,7 +94,7 @@ clean:
 	go clean ./...
 	find . -name \*~ | xargs -r rm -f
 	rm -rf build docs/public
-	rm -f rclone rclonetest/rclonetest
+	rm -f rclone fs/fs.test fs/test_all.log test.log
 
 website:
 	cd docs && hugo
