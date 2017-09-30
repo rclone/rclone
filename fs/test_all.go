@@ -358,9 +358,14 @@ func main() {
 	// start the tests
 	results := make(chan *test, 8)
 	awaiting := 0
+	bools := []bool{false, true}
+	if *clean {
+		// Don't run -subdir and -fast-list if -clean
+		bools = bools[:1]
+	}
 	for _, remote := range remotes {
-		for _, subdir := range []bool{false, true} {
-			for _, fastlist := range []bool{false, true} {
+		for _, subdir := range bools {
+			for _, fastlist := range bools {
 				if (!subdir || subdir && remote.SubDir) && (!fastlist || fastlist && remote.FastList) {
 					go newTest(remote.Name, subdir, fastlist).run(results)
 					awaiting++
