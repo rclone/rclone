@@ -1,5 +1,5 @@
 ---
-date: 2017-07-22T18:15:25+01:00
+date: 2017-09-30T14:20:12+01:00
 title: "rclone gendocs"
 slug: rclone_gendocs
 url: /commands/rclone_gendocs/
@@ -32,11 +32,16 @@ rclone gendocs output_directory [flags]
       --acd-templink-threshold int        Files >= this size will be downloaded via their tempLink. (default 9G)
       --acd-upload-wait-per-gb duration   Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s)
       --ask-password                      Allow prompt for password for encrypted configuration. (default true)
+      --azureblob-chunk-size int          Upload chunk size. Must fit in memory. (default 4M)
+      --azureblob-upload-cutoff int       Cutoff for switching to chunked upload (default 256M)
       --b2-chunk-size int                 Upload chunk size. Must fit in memory. (default 96M)
+      --b2-hard-delete                    Permanently delete files on remote removal, otherwise hide files.
       --b2-test-mode string               A flag string for X-Bz-Test-Mode header.
       --b2-upload-cutoff int              Cutoff for switching to chunked upload (default 190.735M)
       --b2-versions                       Include old versions in directory listings.
       --backup-dir string                 Make backups into hierarchy based in DIR.
+      --bind string                       Local address to bind to for outgoing connections, IPv4, IPv6 or name.
+      --box-upload-cutoff int             Cutoff for switching to multipart upload (default 50M)
       --buffer-size int                   Buffer size when copying files. (default 16M)
       --bwlimit BwTimetable               Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.
       --checkers int                      Number of checkers to run in parallel. (default 8)
@@ -50,6 +55,7 @@ rclone gendocs output_directory [flags]
       --delete-before                     When synchronizing, delete files on destination before transfering
       --delete-during                     When synchronizing, delete files during transfer (default)
       --delete-excluded                   Delete files on dest excluded from sync
+      --disable string                    Disable a comma separated list of features.  Use help to see a list.
       --drive-auth-owner-only             Only consider files owned by the authenticated user.
       --drive-chunk-size int              Upload chunk size. Must a power of 2 >= 256k. (default 8M)
       --drive-formats string              Comma separated list of preferred formats for downloading Google docs. (default "docx,xlsx,pptx,svg")
@@ -58,7 +64,7 @@ rclone gendocs output_directory [flags]
       --drive-skip-gdocs                  Skip google documents in all listings.
       --drive-trashed-only                Only show files that are in the trash
       --drive-upload-cutoff int           Cutoff for switching to chunked upload (default 8M)
-      --drive-use-trash                   Send files to the trash instead of deleting permanently.
+      --drive-use-trash                   Send files to the trash instead of deleting permanently. (default true)
       --dropbox-chunk-size int            Upload chunk size. Max 150M. (default 128M)
   -n, --dry-run                           Do a trial run with no permanent changes
       --dump-auth                         Dump HTTP headers with auth info
@@ -77,6 +83,7 @@ rclone gendocs output_directory [flags]
       --ignore-existing                   Skip all files that exist on destination
       --ignore-size                       Ignore size when skipping use mod-time or checksum.
   -I, --ignore-times                      Don't skip files that match size and time - transfer all files
+      --immutable                         Do not modify files. Fail if existing files have been modified.
       --include stringArray               Include files matching pattern
       --include-from stringArray          Read include patterns from file
       --local-no-unicode-normalization    Don't apply unicode normalization to paths and filenames
@@ -103,9 +110,11 @@ rclone gendocs output_directory [flags]
       --s3-acl string                     Canned ACL used when creating buckets and/or storing objects in S3
       --s3-storage-class string           Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)
       --size-only                         Skip based on size only, not mod-time or checksum
+      --skip-links                        Don't warn about skipped symlinks.
       --stats duration                    Interval between printing stats, e.g 500ms, 60s, 5m. (0 to disable) (default 1m0s)
       --stats-log-level string            Log level to show --stats output DEBUG|INFO|NOTICE|ERROR (default "INFO")
       --stats-unit string                 Show data rate in stats as either 'bits' or 'bytes'/s (default "bytes")
+      --streaming-upload-cutoff int       Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends. (default 100k)
       --suffix string                     Suffix for use with --backup-dir.
       --swift-chunk-size int              Above this size files will be chunked into a _segments container. (default 5G)
       --syslog                            Use Syslog for logging
@@ -116,10 +125,11 @@ rclone gendocs output_directory [flags]
       --track-renames                     When synchronizing, track file renames and do a server side move if possible
       --transfers int                     Number of file transfers to run in parallel. (default 4)
   -u, --update                            Skip files that are newer on the destination.
+      --user-agent string                 Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.38-001-gda4e1b84")
   -v, --verbose count[=-1]                Print lots more stuff (repeat for more)
 ```
 
 ### SEE ALSO
-* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.37
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.38-001-gda4e1b84
 
-###### Auto generated by spf13/cobra on 22-Jul-2017
+###### Auto generated by spf13/cobra on 30-Sep-2017

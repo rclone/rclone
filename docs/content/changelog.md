@@ -1,12 +1,78 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2017-07-22"
+date: "2017-09-30"
 ---
 
 Changelog
 ---------
 
+  * v1.38 - 2017-09-30
+    * New backends
+      * Azure Blob Storage (thanks Andrei Dragomir)
+      * Box
+      * Onedrive for Business (thanks Oliver Heyme)
+      * QingStor from QingCloud (thanks wuyu)
+    * New commands
+      * `rcat` - read from standard input and stream upload
+      * `tree` - shows a nicely formatted recursive listing
+      * `cryptdecode` - decode crypted file names (thanks ishuah)
+      * `config show` - print the config file
+      * `config file` - print the config file location
+    * New Features
+      * Empty directories are deleted on `sync`
+      * `dedupe` - implement merging of duplicate directories
+      * `check` and `cryptcheck` made more consistent and use less memory
+      * `cleanup` for remaining remotes (thanks ishuah)
+      * `--immutable` for ensuring that files don't change (thanks Jacob McNamee)
+      * `--user-agent` option (thanks Alex McGrath Kraak)
+      * `--disable` flag to disable optional features
+      * `--bind` flag for choosing the local addr on outgoing connections
+      * Support for zsh auto-completion (thanks bpicode)
+      * Stop normalizing file names but do a normalized compare in `sync`
+    * Compile
+      * Update to using go1.9 as the default go version
+      * Remove snapd build due to maintenance problems
+    * Bug Fixes
+      * Improve retriable error detection which makes multipart uploads better
+      * Make `check` obey `--ignore-size`
+      * Fix bwlimit toggle in conjunction with schedules (thanks cbruegg)
+      * `config` ensures newly written config is on the same mount
+    * Local
+      * Revert to copy when moving file across file system boundaries
+      * `--skip-links` to suppress symlink warnings (thanks Zhiming Wang)
+    * Mount
+      * Re-use `rcat` internals to support uploads from all remotes
+    * Dropbox
+      * Fix "entry doesn't belong in directory" error
+      * Stop using deprecated API methods
+    * Swift
+      * Fix server side copy to empty container with `--fast-list`
+    * Google Drive
+      * Change the default for `--drive-use-trash` to `true`
+    * S3
+      * Set session token when using STS (thanks Girish Ramakrishnan)
+      * Glacier docs and error messages (thanks Jan Varho)
+      * Read 1000 (not 1024) items in dir listings to fix Wasabi
+    * Backblaze B2
+      * Fix SHA1 mismatch when downloading files with no SHA1
+      * Calculate missing hashes on the fly instead of spooling
+      * `--b2-hard-delete` to permanently delete (not hide) files (thanks John Papandriopoulos)
+    * Hubic
+      * Fix creating containers - no longer have to use the `default` container
+    * Swift
+      * Optionally configure from a standard set of OpenStack environment vars
+      * Add `endpoint_type` config
+    * Google Cloud Storage
+      * Fix bucket creation to work with limited permission users
+    * SFTP
+      * Implement connection pooling for multiple ssh connections
+      * Limit new connections per second
+      * Add support for MD5 and SHA1 hashes where available (thanks Christian Brüggemann)
+    * HTTP
+      * Fix URL encoding issues
+      * Fix directories with `:` in
+      * Fix panic with URL encoded content
   * v1.37 - 2017-07-22
     * New backends
       * FTP - thanks to Antonio Messina

@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Jul 22, 2017
+Sep 30, 2017
 
 
 
@@ -10,21 +10,32 @@ RCLONE
 [Logo]
 
 Rclone is a command line program to sync files and directories to and
-from
+from:
 
--   Google Drive
--   Amazon S3
--   Openstack Swift / Rackspace cloud files / Memset Memstore
--   Dropbox
--   Google Cloud Storage
 -   Amazon Drive
--   Microsoft OneDrive
--   Hubic
+-   Amazon S3
 -   Backblaze B2
--   Yandex Disk
--   SFTP
+-   Box
+-   Ceph
+-   Dreamhost
+-   Dropbox
 -   FTP
+-   Google Cloud Storage
+-   Google Drive
 -   HTTP
+-   Hubic
+-   Memset Memstore
+-   Microsoft Azure Blob Storage
+-   Microsoft OneDrive
+-   Minio
+-   OVH
+-   Openstack Swift
+-   Oracle Cloud Storage
+-   QingStor
+-   Rackspace Cloud Files
+-   SFTP
+-   Wasabi
+-   Yandex Disk
 -   The local filesystem
 
 Features
@@ -104,7 +115,11 @@ Unzip the download and cd to the extracted folder.
 
 Move rclone to your $PATH. You will be prompted for your password.
 
+    sudo mkdir -p /usr/local/bin
     sudo mv rclone /usr/local/bin/
+
+(the mkdir command is safe to run, even if the directory already
+exists).
 
 Remove the leftover files.
 
@@ -143,62 +158,6 @@ Instructions
               - rclone
 
 
-Installation with snap
-
-Quickstart
-
--   install Snapd on your distro using the instructions below
--   sudo snap install rclone --classic
--   Run rclone config to setup. See rclone config docs for more details.
-
-See below for how to install snapd if it isn't already installed
-
-Arch
-
-    sudo pacman -S snapd
-
-enable the snapd systemd service:
-
-    sudo systemctl enable --now snapd.socket
-
-Debian / Ubuntu
-
-    sudo apt install snapd
-
-Fedora
-
-    sudo dnf copr enable zyga/snapcore
-    sudo dnf install snapd
-
-enable the snapd systemd service:
-
-    sudo systemctl enable --now snapd.service
-
-SELinux support is in beta, so currently:
-
-    sudo setenforce 0
-
-to persist, edit /etc/selinux/config to set SELINUX=permissive and
-reboot.
-
-Gentoo
-
-Install the gentoo-snappy overlay.
-
-OpenEmbedded/Yocto
-
-Install the snap meta layer.
-
-openSUSE
-
-    sudo zypper addrepo https://download.opensuse.org/repositories/system:/snappy/openSUSE_Leap_42.2/ snappy
-    sudo zypper install snapd
-
-OpenWrt
-
-Enable the snap-openwrt feed.
-
-
 Configure
 
 First, you'll need to configure rclone. As the object storage systems
@@ -213,21 +172,24 @@ option:
 
 See the following for detailed instructions for
 
--   Google Drive
--   Amazon S3
--   Swift / Rackspace Cloudfiles / Memset Memstore
--   Dropbox
--   Google Cloud Storage
--   Local filesystem
 -   Amazon Drive
+-   Amazon S3
 -   Backblaze B2
--   Hubic
--   Microsoft OneDrive
--   Yandex Disk
--   SFTP
--   FTP
--   HTTP
+-   Box
 -   Crypt - to encrypt other remotes
+-   Dropbox
+-   FTP
+-   Google Cloud Storage
+-   Google Drive
+-   HTTP
+-   Hubic
+-   Microsoft Azure Blob Storage
+-   Microsoft OneDrive
+-   Openstack Swift / Rackspace Cloudfiles / Memset Memstore
+-   QingStor
+-   SFTP
+-   Yandex Disk
+-   The local filesystem
 
 
 Usage
@@ -260,9 +222,21 @@ Enter an interactive configuration session.
 
 Synopsis
 
-Enter an interactive configuration session.
+rclone config enters an interactive configuration sessions where you can
+setup new remotes and manage existing ones. You may also set or remove a
+password to protect your configuration.
 
-    rclone config
+Additional functions:
+
+-   rclone config edit – same as above
+-   rclone config file – show path of configuration file in use
+-   rclone config show – print (decrypted) config file
+
+    rclone config [function] [flags]
+
+Options
+
+      -h, --help   help for config
 
 
 rclone copy
@@ -309,7 +283,11 @@ source or destination.
 See the --no-traverse option for controlling whether rclone lists the
 destination directory or not.
 
-    rclone copy source:path dest:path
+    rclone copy source:path dest:path [flags]
+
+Options
+
+      -h, --help   help for copy
 
 
 rclone sync
@@ -337,7 +315,11 @@ extended explanation in the copy command above if unsure.
 If dest:path doesn't exist, it is created and the source:path contents
 go there.
 
-    rclone sync source:path dest:path
+    rclone sync source:path dest:path [flags]
+
+Options
+
+      -h, --help   help for sync
 
 
 rclone move
@@ -362,7 +344,11 @@ then delete the original (if no errors on copy) in source:path.
 IMPORTANT: Since this can cause data loss, test first with the --dry-run
 flag.
 
-    rclone move source:path dest:path
+    rclone move source:path dest:path [flags]
+
+Options
+
+      -h, --help   help for move
 
 
 rclone delete
@@ -388,7 +374,11 @@ Then delete
 That reads "delete everything with a minimum size of 100 MB", hence
 delete all files bigger than 100MBytes.
 
-    rclone delete remote:path
+    rclone delete remote:path [flags]
+
+Options
+
+      -h, --help   help for delete
 
 
 rclone purge
@@ -401,7 +391,11 @@ Remove the path and all of its contents. Note that this does not obey
 include/exclude filters - everything will be removed. Use delete if you
 want to selectively delete files.
 
-    rclone purge remote:path
+    rclone purge remote:path [flags]
+
+Options
+
+      -h, --help   help for purge
 
 
 rclone mkdir
@@ -412,7 +406,11 @@ Synopsis
 
 Make the path if it doesn't already exist.
 
-    rclone mkdir remote:path
+    rclone mkdir remote:path [flags]
+
+Options
+
+      -h, --help   help for mkdir
 
 
 rclone rmdir
@@ -424,7 +422,11 @@ Synopsis
 Remove the path. Note that you can't remove a path with objects in it,
 use purge for that.
 
-    rclone rmdir remote:path
+    rclone rmdir remote:path [flags]
+
+Options
+
+      -h, --help   help for rmdir
 
 
 rclone check
@@ -450,6 +452,7 @@ the data.
 Options
 
           --download   Check by downloading rather than with hash.
+      -h, --help       help for check
 
 
 rclone ls
@@ -460,7 +463,11 @@ Synopsis
 
 List all the objects in the path with size and path.
 
-    rclone ls remote:path
+    rclone ls remote:path [flags]
+
+Options
+
+      -h, --help   help for ls
 
 
 rclone lsd
@@ -471,7 +478,11 @@ Synopsis
 
 List all directories/containers/buckets in the path.
 
-    rclone lsd remote:path
+    rclone lsd remote:path [flags]
+
+Options
+
+      -h, --help   help for lsd
 
 
 rclone lsl
@@ -482,7 +493,11 @@ Synopsis
 
 List all the objects path with modification time, size and path.
 
-    rclone lsl remote:path
+    rclone lsl remote:path [flags]
+
+Options
+
+      -h, --help   help for lsl
 
 
 rclone md5sum
@@ -494,7 +509,11 @@ Synopsis
 Produces an md5sum file for all the objects in the path. This is in the
 same format as the standard md5sum tool produces.
 
-    rclone md5sum remote:path
+    rclone md5sum remote:path [flags]
+
+Options
+
+      -h, --help   help for md5sum
 
 
 rclone sha1sum
@@ -506,7 +525,11 @@ Synopsis
 Produces an sha1sum file for all the objects in the path. This is in the
 same format as the standard sha1sum tool produces.
 
-    rclone sha1sum remote:path
+    rclone sha1sum remote:path [flags]
+
+Options
+
+      -h, --help   help for sha1sum
 
 
 rclone size
@@ -517,7 +540,11 @@ Synopsis
 
 Prints the total size and number of objects in remote:path.
 
-    rclone size remote:path
+    rclone size remote:path [flags]
+
+Options
+
+      -h, --help   help for size
 
 
 rclone version
@@ -528,7 +555,11 @@ Synopsis
 
 Show the version number.
 
-    rclone version
+    rclone version [flags]
+
+Options
+
+      -h, --help   help for version
 
 
 rclone cleanup
@@ -540,7 +571,11 @@ Synopsis
 Clean up the remote if possible. Empty the trash or delete old file
 versions. Not supported by all remotes.
 
-    rclone cleanup remote:path
+    rclone cleanup remote:path [flags]
+
+Options
+
+      -h, --help   help for cleanup
 
 
 rclone dedupe
@@ -549,9 +584,13 @@ Interactively find duplicate files delete/rename them.
 
 Synopsis
 
-By default dedup interactively finds duplicate files and offers to
+By default dedupe interactively finds duplicate files and offers to
 delete all but one or rename them to be different. Only useful with
 Google Drive which can have duplicate file names.
+
+In the first pass it will merge directories with the same name. It will
+do this iteratively until all the identical directories have been
+merged.
 
 The dedupe command will delete all but one of any identical (same
 md5sum) files it finds without confirmation. This means that for most
@@ -636,6 +675,7 @@ Or
 Options
 
           --dedupe-mode string   Dedupe mode interactive|skip|first|newest|oldest|rename. (default "interactive")
+      -h, --help                 help for dedupe
 
 
 rclone authorize
@@ -647,7 +687,11 @@ Synopsis
 Remote authorization. Used to authorize a remote or headless rclone from
 a machine with a browser - use as instructed by rclone config.
 
-    rclone authorize
+    rclone authorize [flags]
+
+Options
+
+      -h, --help   help for authorize
 
 
 rclone cat
@@ -682,6 +726,7 @@ Options
           --count int    Only print N characters. (default -1)
           --discard      Discard the output instead of printing.
           --head int     Only print the first N characters.
+      -h, --help         help for cat
           --offset int   Start printing at offset N (or from end if -ve).
           --tail int     Only print the last N characters.
 
@@ -717,7 +762,11 @@ This will:
 This doesn't transfer unchanged files, testing by size and modification
 time or MD5SUM. It doesn't delete files from the destination.
 
-    rclone copyto source:path dest:path
+    rclone copyto source:path dest:path [flags]
+
+Options
+
+      -h, --help   help for copyto
 
 
 rclone cryptcheck
@@ -749,7 +798,31 @@ files in remote:path.
 
 After it has run it will log the status of the encryptedremote:.
 
-    rclone cryptcheck remote:path cryptedremote:path
+    rclone cryptcheck remote:path cryptedremote:path [flags]
+
+Options
+
+      -h, --help   help for cryptcheck
+
+
+rclone cryptdecode
+
+Cryptdecode returns unencrypted file names.
+
+Synopsis
+
+rclone cryptdecode returns unencrypted file names when provided with a
+list of encrypted file names. List limit is 10 items.
+
+use it like this
+
+    rclone cryptdecode encryptedremote: encryptedfilename1 encryptedfilename2
+
+    rclone cryptdecode encryptedremote: encryptedfilename [flags]
+
+Options
+
+      -h, --help   help for cryptdecode
 
 
 rclone dbhashsum
@@ -762,10 +835,28 @@ Produces a Dropbox hash file for all the objects in the path. The hashes
 are calculated according to Dropbox content hash rules. The output is in
 the same format as md5sum and sha1sum.
 
-    rclone dbhashsum remote:path
+    rclone dbhashsum remote:path [flags]
+
+Options
+
+      -h, --help   help for dbhashsum
 
 
 rclone genautocomplete
+
+Output completion script for a given shell.
+
+Synopsis
+
+Generates a shell completion script for rclone. Run with --help to list
+the supported shells.
+
+Options
+
+      -h, --help   help for genautocomplete
+
+
+rclone genautocomplete bash
 
 Output bash completion script for rclone.
 
@@ -776,7 +867,7 @@ Generates a bash shell autocompletion script for rclone.
 This writes to /etc/bash_completion.d/rclone by default so will probably
 need to be run with sudo or as root, eg
 
-    sudo rclone genautocomplete
+    sudo rclone genautocomplete bash
 
 Logout and login again to use the autocompletion scripts, or source them
 directly
@@ -785,7 +876,38 @@ directly
 
 If you supply a command line argument the script will be written there.
 
-    rclone genautocomplete [output_file]
+    rclone genautocomplete bash [output_file] [flags]
+
+Options
+
+      -h, --help   help for bash
+
+
+rclone genautocomplete zsh
+
+Output zsh completion script for rclone.
+
+Synopsis
+
+Generates a zsh autocompletion script for rclone.
+
+This writes to /usr/share/zsh/vendor-completions/_rclone by default so
+will probably need to be run with sudo or as root, eg
+
+    sudo rclone genautocomplete zsh
+
+Logout and login again to use the autocompletion scripts, or source them
+directly
+
+    autoload -U compinit && compinit
+
+If you supply a command line argument the script will be written there.
+
+    rclone genautocomplete zsh [output_file] [flags]
+
+Options
+
+      -h, --help   help for zsh
 
 
 rclone gendocs
@@ -819,6 +941,7 @@ When uses with the -l flag it lists the types too.
 
 Options
 
+      -h, --help   help for listremotes
       -l, --long   Show the type as well as names.
 
 
@@ -853,6 +976,7 @@ can be processed line by line as each item is written one to a line.
 Options
 
           --hash         Include hashes in the output (may take longer).
+      -h, --help         help for lsjson
           --no-modtime   Don't read the modification time (can speed things up).
       -R, --recursive    Recurse into the listing.
 
@@ -890,6 +1014,30 @@ manually with
     fusermount -u /path/to/local/mount
     # OS X
     umount /path/to/local/mount
+
+Installing on Windows
+
+To run rclone mount on Windows, you will need to download and install
+WinFsp.
+
+WinFsp is an open source Windows File System Proxy which makes it easy
+to write user space file systems for Windows. It provides a FUSE
+emulation layer which rclone uses combination with cgofuse. Both of
+these packages are by Bill Zissimopoulos who was very helpful during the
+implementation of rclone mount for Windows.
+
+Windows caveats
+
+Note that drives created as Administrator are not visible by other
+accounts (including the account that was elevated as Administrator). So
+if you start a Windows drive from an Administrative Command Prompt and
+then try to access the same drive from Explorer (which does not run as
+Administrator), you will not be able to see the new drive.
+
+The easiest way around this is to start the drive from a normal command
+prompt. It is also possible to start a drive from the SYSTEM account
+(using the WinFsp.Launcher infrastructure) which creates drives
+accessible for everyone on the system.
 
 Limitations
 
@@ -934,13 +1082,6 @@ rclone instance is running, you can reset the cache like this:
 
     kill -SIGHUP $(pidof rclone)
 
-Bugs
-
--   All the remotes should work for read, but some may not for write
-    -   those which need to know the size in advance won't - eg B2
-    -   maybe should pass in size as -1 to mean work it out
-    -   Or put in an an upload cache to cache the files on disk first
-
     rclone mount remote:path /path/to/mountpoint [flags]
 
 Options
@@ -953,6 +1094,7 @@ Options
           --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
           --fuse-flag stringArray     Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.
           --gid uint32                Override the gid field set by the filesystem. (default 502)
+      -h, --help                      help for mount
           --max-read-ahead int        The number of bytes that can be prefetched for sequential reads. (default 128k)
           --no-checksum               Don't compare checksums on up/download.
           --no-modtime                Don't read/write the modification time (can speed things up).
@@ -999,7 +1141,11 @@ time or MD5SUM. src will be deleted on successful transfer.
 IMPORTANT: Since this can cause data loss, test first with the --dry-run
 flag.
 
-    rclone moveto source:path dest:path
+    rclone moveto source:path dest:path [flags]
+
+Options
+
+      -h, --help   help for moveto
 
 
 rclone ncdu
@@ -1032,7 +1178,11 @@ This an homage to the ncdu tool but for rclone remotes. It is missing
 lots of features at the moment, most importantly deleting files, but is
 useful as it stands.
 
-    rclone ncdu remote:path
+    rclone ncdu remote:path [flags]
+
+Options
+
+      -h, --help   help for ncdu
 
 
 rclone obscure
@@ -1043,7 +1193,46 @@ Synopsis
 
 Obscure password for use in the rclone.conf
 
-    rclone obscure password
+    rclone obscure password [flags]
+
+Options
+
+      -h, --help   help for obscure
+
+
+rclone rcat
+
+Copies standard input to file on remote.
+
+Synopsis
+
+rclone rcat reads from standard input (stdin) and copies it to a single
+remote file.
+
+    echo "hello world" | rclone rcat remote:path/to/file
+    ffmpeg - | rclone rcat --checksum remote:path/to/file
+
+If the remote file already exists, it will be overwritten.
+
+rcat will try to upload small files in a single request, which is
+usually more efficient than the streaming/chunked upload endpoints,
+which use multiple requests. Exact behaviour depends on the remote. What
+is considered a small file may be set through --streaming-upload-cutoff.
+Uploading only starts after the cutoff is reached or if the file ends
+before that. The data must fit into RAM. The cutoff needs to be small
+enough to adhere the limits of your remote, please see there. Generally
+speaking, setting this cutoff too high will decrease your performance.
+
+Note that the upload can also not be retried because the data is not
+kept around until the upload succeeds. If you need to transfer a lot of
+data, you're better off caching locally and then rclone move it to the
+destination.
+
+    rclone rcat remote:path [flags]
+
+Options
+
+      -h, --help   help for rcat
 
 
 rclone rmdirs
@@ -1059,7 +1248,67 @@ it has nothing in.
 This is useful for tidying up remotes that rclone has left a lot of
 empty directories in.
 
-    rclone rmdirs remote:path
+    rclone rmdirs remote:path [flags]
+
+Options
+
+      -h, --help   help for rmdirs
+
+
+rclone tree
+
+List the contents of the remote in a tree like fashion.
+
+Synopsis
+
+rclone tree lists the contents of a remote in a similar way to the unix
+tree command.
+
+For example
+
+    $ rclone tree remote:path
+    /
+    ├── file1
+    ├── file2
+    ├── file3
+    └── subdir
+        ├── file4
+        └── file5
+
+    1 directories, 5 files
+
+You can use any of the filtering options with the tree command (eg
+--include and --exclude). You can also use --fast-list.
+
+The tree command has many options for controlling the listing which are
+compatible with the tree command. Note that not all of them have short
+options as they conflict with rclone's short options.
+
+    rclone tree remote:path [flags]
+
+Options
+
+      -a, --all             All files are listed (list . files too).
+      -C, --color           Turn colorization on always.
+      -d, --dirs-only       List directories only.
+          --dirsfirst       List directories before files (-U disables).
+          --full-path       Print the full path prefix for each file.
+      -h, --help            help for tree
+          --human           Print the size in a more human readable way.
+          --level int       Descend only level directories deep.
+      -D, --modtime         Print the date of last modification.
+      -i, --noindent        Don't print indentation lines.
+          --noreport        Turn off file/directory count at end of tree listing.
+      -o, --output string   Output to file instead of stdout.
+      -p, --protections     Print the protections for each file.
+      -Q, --quote           Quote filenames with double quotes.
+      -s, --size            Print the size in bytes of each file.
+          --sort string     Select sort: name,version,size,mtime,ctime.
+          --sort-ctime      Sort files by last status change time.
+      -t, --sort-modtime    Sort files by last modification time.
+      -r, --sort-reverse    Reverse the order of the sort.
+      -U, --unsorted        Leave files unsorted.
+          --version         Sort files alphanumerically by version.
 
 
 Copying single files
@@ -1214,6 +1463,13 @@ If running rclone from a script you might want to use today's date as
 the directory name passed to --backup-dir to store the old files, or you
 might want to pass --suffix with today's date.
 
+--bind string
+
+Local address to bind to for outgoing connections. This can be an IPv4
+address (1.2.3.4), an IPv6 address (1234::789A) or host name. If the
+host name doesn't resolve or resoves to more than one IP address it will
+give an error.
+
 --bwlimit=BANDWIDTH_SPEC
 
 This option controls the bandwidth limit. Limits can be specified in two
@@ -1323,6 +1579,26 @@ Mode to run dedupe command in. One of interactive, skip, first, newest,
 oldest, rename. The default is interactive. See the dedupe command for
 more information as to what these options mean.
 
+--disable FEATURE,FEATURE,...
+
+This disables a comma separated list of optional features. For example
+to disable server side move and server side copy use:
+
+    --disable move,copy
+
+The features can be put in in any case.
+
+To see a list of which features can be disabled use:
+
+    --disable help
+
+See the overview features and optional features to get an idea of which
+feature does what.
+
+This flag can be useful for debugging and in exceptional circumstances
+(eg Google Drive limiting the total volume of Server Side Copies to
+100GB/day).
+
 -n, --dry-run
 
 Do a trial run with no permanent changes. Use this to see what rclone
@@ -1369,6 +1645,26 @@ regardless of the state of files on the destination.
 Normally rclone would skip any files that have the same modification
 time and are the same size (or have the same checksum if using
 --checksum).
+
+--immutable
+
+Treat source and destination files as immutable and disallow
+modification.
+
+With this option set, files will be created and deleted as requested,
+but existing files will never be updated. If an existing file does not
+match between the source and destination, rclone will give the error
+Source and destination exist but do not match: immutable file modified.
+
+Note that only commands which transfer files (e.g. sync, copy, move) are
+affected by this behavior, and only modification is disallowed. Files
+may still be deleted explicitly (e.g. delete, purge) or implicitly (e.g.
+sync, move). Use copy --immutable if it is desired to avoid deletion as
+well as modification.
+
+This can be useful as an additional layer of protection for immutable or
+append-only data sets (notably backup archives), where modification
+implies corruption and should not be propagated.
 
 --log-file=FILE
 
@@ -1795,6 +2091,9 @@ be very verbose. Useful for debugging only.
 
 Dump HTTP headers and bodies - may contain sensitive info. Can be very
 verbose. Useful for debugging only.
+
+Note that the bodies are buffered in memory so don't use this for
+enormous files.
 
 --dump-filters
 
@@ -2319,11 +2618,13 @@ processed in.
 
 Prepare a file like this filter-file.txt
 
-    # a sample exclude rule file
+    # a sample filter rule file
     - secret*.jpg
     + *.jpg
     + *.png
     + file2.avi
+    - /dir/Trash/**
+    + /dir/**
     # exclude everything else
     - *
 
@@ -2331,8 +2632,10 @@ Then use as --filter-from filter-file.txt. The rules are processed in
 the order that they are defined.
 
 This example will include all jpg and png files, exclude any files
-matching secret*.jpg and include file2.avi. Everything else will be
-excluded from the sync.
+matching secret*.jpg and include file2.avi. It will also include
+everything in the directory dir at the root of the sync, except
+dir/Trash which it will exclude. Everything else will be excluded from
+the sync.
 
 --files-from - Read list of source-file names
 
@@ -2485,35 +2788,41 @@ Features
 
 Here is an overview of the major features of each cloud storage system.
 
-  Name                      Hash     ModTime   Case Insensitive   Duplicate Files   MIME Type
-  ---------------------- ---------- --------- ------------------ ----------------- -----------
-  Google Drive              MD5        Yes            No                Yes            R/W
-  Amazon S3                 MD5        Yes            No                No             R/W
-  Openstack Swift           MD5        Yes            No                No             R/W
-  Dropbox                 DBHASH †     Yes           Yes                No              -
-  Google Cloud Storage      MD5        Yes            No                No             R/W
-  Amazon Drive              MD5        No            Yes                No              R
-  Microsoft OneDrive        SHA1       Yes           Yes                No              R
-  Hubic                     MD5        Yes            No                No             R/W
-  Backblaze B2              SHA1       Yes            No                No             R/W
-  Yandex Disk               MD5        Yes            No                No             R/W
-  SFTP                       -         Yes         Depends              No              -
-  FTP                        -         No            Yes                No              -
-  HTTP                       -         No            Yes                No              R
-  The local filesystem      All        Yes         Depends              No              -
+  Name                               Hash       ModTime   Case Insensitive   Duplicate Files   MIME Type
+  ------------------------------ ------------- --------- ------------------ ----------------- -----------
+  Amazon Drive                        MD5         No            Yes                No              R
+  Amazon S3                           MD5         Yes            No                No             R/W
+  Backblaze B2                       SHA1         Yes            No                No             R/W
+  Box                                SHA1         Yes           Yes                No              -
+  Dropbox                          DBHASH †       Yes           Yes                No              -
+  FTP                                  -          No             No                No              -
+  Google Cloud Storage                MD5         Yes            No                No             R/W
+  Google Drive                        MD5         Yes            No                Yes            R/W
+  HTTP                                 -          No             No                No              R
+  Hubic                               MD5         Yes            No                No             R/W
+  Microsoft Azure Blob Storage        MD5         Yes            No                No             R/W
+  Microsoft OneDrive                 SHA1         Yes           Yes                No              R
+  Openstack Swift                     MD5         Yes            No                No             R/W
+  QingStor                            MD5         No             No                No             R/W
+  SFTP                            MD5, SHA1 ‡     Yes         Depends              No              -
+  Yandex Disk                         MD5         Yes            No                No             R/W
+  The local filesystem                All         Yes         Depends              No              -
 
 Hash
 
-The cloud storage system supports various hash types of the objects.
-The hashes are used when transferring data as an integrity check and can
-be specifically used with the --checksum flag in syncs and in the check
+The cloud storage system supports various hash types of the objects. The
+hashes are used when transferring data as an integrity check and can be
+specifically used with the --checksum flag in syncs and in the check
 command.
 
-To use the checksum checks between filesystems they must support a
-common hash type.
+To use the verify checksums when transferring between cloud storage
+systems they must support a common hash type.
 
 † Note that Dropbox supports its own custom hash. This is an SHA256 sum
 of all the 4MB block SHA256s.
+
+‡ SFTP supports checksums if the same login has shell access and md5sum
+or sha1sum as well as echo are in the remote's PATH.
 
 ModTime
 
@@ -2578,22 +2887,25 @@ All the remotes support a basic set of features, but there are some
 optional features supported by some remotes used to make some operations
 more efficient.
 
-  Name                    Purge   Copy   Move   DirMove   CleanUp   ListR
-  ---------------------- ------- ------ ------ --------- --------- -------
-  Google Drive             Yes    Yes    Yes      Yes     No #575    No
-  Amazon S3                No     Yes     No      No        No       Yes
-  Openstack Swift         Yes †   Yes     No      No        No       Yes
-  Dropbox                  Yes    Yes    Yes      Yes     No #575    No
-  Google Cloud Storage     Yes    Yes     No      No        No       Yes
-  Amazon Drive             Yes     No    Yes      Yes     No #575    No
-  Microsoft OneDrive       Yes    Yes    Yes    No #197   No #575    No
-  Hubic                   Yes †   Yes     No      No        No       Yes
-  Backblaze B2             No      No     No      No        Yes      Yes
-  Yandex Disk              Yes     No     No      No      No #575    Yes
-  SFTP                     No      No    Yes      Yes       No       No
-  FTP                      No      No    Yes      Yes       No       No
-  HTTP                     No      No     No      No        No       No
-  The local filesystem     Yes     No    Yes      Yes       No       No
+  Name                            Purge   Copy   Move   DirMove   CleanUp   ListR   StreamUpload
+  ------------------------------ ------- ------ ------ --------- --------- ------- --------------
+  Amazon Drive                     Yes     No    Yes      Yes     No #575    No          No
+  Amazon S3                        No     Yes     No      No        No       Yes        Yes
+  Backblaze B2                     No      No     No      No        Yes      Yes        Yes
+  Box                              Yes    Yes    Yes      Yes     No #575    No         Yes
+  Dropbox                          Yes    Yes    Yes      Yes     No #575    No         Yes
+  FTP                              No      No    Yes      Yes       No       No         Yes
+  Google Cloud Storage             Yes    Yes     No      No        No       Yes        Yes
+  Google Drive                     Yes    Yes    Yes      Yes       Yes      No         Yes
+  HTTP                             No      No     No      No        No       No          No
+  Hubic                           Yes †   Yes     No      No        No       Yes        Yes
+  Microsoft Azure Blob Storage     Yes    Yes     No      No        No       Yes         No
+  Microsoft OneDrive               Yes    Yes    Yes    No #197   No #575    No          No
+  Openstack Swift                 Yes †   Yes     No      No        No       Yes        Yes
+  QingStor                         No     Yes     No      No        No       Yes         No
+  SFTP                             No      No    Yes      Yes       No       No         Yes
+  Yandex Disk                      Yes     No     No      No        Yes      Yes        Yes
+  The local filesystem             Yes     No    Yes      Yes       No       No         Yes
 
 Purge
 
@@ -2642,16 +2954,38 @@ The remote supports a recursive list to list all the contents beneath a
 directory quickly. This enables the --fast-list flag to work. See the
 rclone docs for more details.
 
+StreamUpload
 
-Google Drive
+Some remotes allow files to be uploaded without knowing the file size in
+advance. This allows certain operations to work without spooling the
+file to local disk first, e.g. rclone rcat.
 
-Paths are specified as drive:path
 
-Drive paths may be as deep as required, eg drive:directory/subdirectory.
+Amazon Drive
 
-The initial setup for drive involves getting a token from Google drive
+Paths are specified as remote:path
+
+Paths may be as deep as required, eg remote:directory/subdirectory.
+
+The initial setup for Amazon Drive involves getting a token from Amazon
 which you need to do in your browser. rclone config walks you through
 it.
+
+The configuration process for Amazon Drive may involve using an oauth
+proxy. This is used to keep the Amazon credentials out of the source
+code. The proxy runs in Google's very secure App Engine environment and
+doesn't store any credentials which pass through it.
+
+NB rclone doesn't not currently have its own Amazon Drive credentials
+(see the forum for why) so you will either need to have your own
+client_id and client_secret with Amazon Drive, or use a a third party
+ouath proxy in which case you will need to enter client_id,
+client_secret, auth_url and token_url.
+
+Note also if you are not using Amazon's auth_url and token_url, (ie you
+filled in something for those) then if setting up on a remote machine
+you can only use the copying the config method of configuration -
+rclone authorize will not work.
 
 Here is an example of how to make a remote called remote. First run:
 
@@ -2697,15 +3031,20 @@ This will guide you through an interactive setup process:
        \ "sftp"
     14 / Yandex Disk
        \ "yandex"
-    Storage> 8
-    Google Application Client Id - leave blank normally.
-    client_id> 
-    Google Application Client Secret - leave blank normally.
-    client_secret> 
+    Storage> 1
+    Amazon Application Client Id - required.
+    client_id> your client ID goes here
+    Amazon Application Client Secret - required.
+    client_secret> your client secret goes here
+    Auth server URL - leave blank to use Amazon's.
+    auth_url> Optional auth URL
+    Token server url - leave blank to use Amazon's.
+    token_url> Optional token URL
     Remote config
+    Make sure your Redirect URL is set to "http://127.0.0.1:53682/" in your custom config.
     Use auto config?
      * Say Y if not sure
-     * Say N if you are working on a remote or headless machine or Y didn't work
+     * Say N if you are working on a remote or headless machine
     y) Yes
     n) No
     y/n> y
@@ -2713,340 +3052,122 @@ This will guide you through an interactive setup process:
     Log in and authorize rclone for access
     Waiting for code...
     Got code
-    Configure this as a team drive?
-    y) Yes
-    n) No
-    y/n> n
     --------------------
     [remote]
-    client_id = 
-    client_secret = 
-    token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+    client_id = your client ID goes here
+    client_secret = your client secret goes here
+    auth_url = Optional auth URL
+    token_url = Optional token URL
+    token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","refresh_token":"xxxxxxxxxxxxxxxxxx","expiry":"2015-09-06T16:07:39.658438471+01:00"}
     --------------------
     y) Yes this is OK
     e) Edit this remote
     d) Delete this remote
     y/e/d> y
 
+See the remote setup docs for how to set it up on a machine with no
+Internet browser available.
+
 Note that rclone runs a webserver on your local machine to collect the
-token as returned from Google if you use auto config mode. This only
-runs from the moment it opens your browser to the moment you get back
-the verification code. This is on http://127.0.0.1:53682/ and this it
-may require you to unblock it temporarily if you are running a host
-firewall, or use manual mode.
+token as returned from Amazon. This only runs from the moment it opens
+your browser to the moment you get back the verification code. This is
+on http://127.0.0.1:53682/ and this it may require you to unblock it
+temporarily if you are running a host firewall.
 
-You can then use it like this,
+Once configured you can then use rclone like this,
 
-List directories in top level of your drive
+List directories in top level of your Amazon Drive
 
     rclone lsd remote:
 
-List all the files in your drive
+List all the files in your Amazon Drive
 
     rclone ls remote:
 
-To copy a local directory to a drive directory called backup
+To copy a local directory to an Amazon Drive directory called backup
 
     rclone copy /home/source remote:backup
 
-Team drives
+Modified time and MD5SUMs
 
-If you want to configure the remote to point to a Google Team Drive then
-answer y to the question Configure this as a team drive?.
+Amazon Drive doesn't allow modification times to be changed via the API
+so these won't be accurate or used for syncing.
 
-This will fetch the list of Team Drives from google and allow you to
-configure which one you want to use. You can also type in a team drive
-ID if you prefer.
-
-For example:
-
-    Configure this as a team drive?
-    y) Yes
-    n) No
-    y/n> y
-    Fetching team drive list...
-    Choose a number from below, or type in your own value
-     1 / Rclone Test
-       \ "xxxxxxxxxxxxxxxxxxxx"
-     2 / Rclone Test 2
-       \ "yyyyyyyyyyyyyyyyyyyy"
-     3 / Rclone Test 3
-       \ "zzzzzzzzzzzzzzzzzzzz"
-    Enter a Team Drive ID> 1
-    --------------------
-    [remote]
-    client_id = 
-    client_secret = 
-    token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
-    team_drive = xxxxxxxxxxxxxxxxxxxx
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-Modified time
-
-Google drive stores modification times accurate to 1 ms.
-
-Revisions
-
-Google drive stores revisions of files. When you upload a change to an
-existing file to google drive using rclone it will create a new revision
-of that file.
-
-Revisions follow the standard google policy which at time of writing was
-
--   They are deleted after 30 days or 100 revisions (whatever
-    comes first).
--   They do not count towards a user storage quota.
+It does store MD5SUMs so for a more accurate sync, you can use the
+--checksum flag.
 
 Deleting files
 
-By default rclone will delete files permanently when requested. If
-sending them to the trash is required instead then use the
---drive-use-trash flag.
+Any files you delete with rclone will end up in the trash. Amazon don't
+provide an API to permanently delete files, nor to empty the trash, so
+you will have to do that with one of Amazon's apps or via the Amazon
+Drive website. As of November 17, 2016, files are automatically deleted
+by Amazon from the trash after 30 days.
+
+Using with non .com Amazon accounts
+
+Let's say you usually use amazon.co.uk. When you authenticate with
+rclone it will take you to an amazon.com page to log in. Your
+amazon.co.uk email and password should work here just fine.
 
 Specific options
 
 Here are the command line options specific to this cloud storage system.
 
---drive-auth-owner-only
+--acd-templink-threshold=SIZE
 
-Only consider files owned by the authenticated user.
+Files this size or more will be downloaded via their tempLink. This is
+to work around a problem with Amazon Drive which blocks downloads of
+files bigger than about 10GB. The default for this is 9GB which
+shouldn't need to be changed.
 
---drive-chunk-size=SIZE
+To download files above this threshold, rclone requests a tempLink which
+downloads the file through a temporary URL directly from the underlying
+S3 storage.
 
-Upload chunk size. Must a power of 2 >= 256k. Default value is 8 MB.
+--acd-upload-wait-per-gb=TIME
 
-Making this larger will improve performance, but note that each chunk is
-buffered in memory one per transfer.
+Sometimes Amazon Drive gives an error when a file has been fully
+uploaded but the file appears anyway after a little while. This happens
+sometimes for files over 1GB in size and nearly every time for files
+bigger than 10GB. This parameter controls the time rclone waits for the
+file to appear.
 
-Reducing this will reduce memory usage but decrease performance.
+The default value for this parameter is 3 minutes per GB, so by default
+it will wait 3 minutes for every GB uploaded to see if the file appears.
 
---drive-auth-owner-only
+You can disable this feature by setting it to 0. This may cause conflict
+errors as rclone retries the failed upload but the file will most likely
+appear correctly eventually.
 
-Only consider files owned by the authenticated user.
+These values were determined empirically by observing lots of uploads of
+big files for a range of file sizes.
 
---drive-formats
-
-Google documents can only be exported from Google drive. When rclone
-downloads a Google doc it chooses a format to download depending upon
-this setting.
-
-By default the formats are docx,xlsx,pptx,svg which are a sensible
-default for an editable document.
-
-When choosing a format, rclone runs down the list provided in order and
-chooses the first file format the doc can be exported as from the list.
-If the file can't be exported to a format on the formats list, then
-rclone will choose a format from the default list.
-
-If you prefer an archive copy then you might use --drive-formats pdf, or
-if you prefer openoffice/libreoffice formats you might use
---drive-formats ods,odt,odp.
-
-Note that rclone adds the extension to the google doc, so if it is
-calles My Spreadsheet on google docs, it will be exported as
-My Spreadsheet.xlsx or My Spreadsheet.pdf etc.
-
-Here are the possible extensions with their corresponding mime types.
-
-  -------------------------------------
-  Extension  Mime Type    Description
-  ---------- ------------ -------------
-  csv        text/csv     Standard CSV
-                          format for
-                          Spreadsheets
-
-  doc        application/ Micosoft
-             msword       Office
-                          Document
-
-  docx       application/ Microsoft
-             vnd.openxmlf Office
-             ormats-offic Document
-             edocument.wo 
-             rdprocessing 
-             ml.document  
-
-  epub       application/ E-book format
-             epub+zip     
-
-  html       text/html    An HTML
-                          Document
-
-  jpg        image/jpeg   A JPEG Image
-                          File
-
-  odp        application/ Openoffice
-             vnd.oasis.op Presentation
-             endocument.p 
-             resentation  
-
-  ods        application/ Openoffice
-             vnd.oasis.op Spreadsheet
-             endocument.s 
-             preadsheet   
-
-  ods        application/ Openoffice
-             x-vnd.oasis. Spreadsheet
-             opendocument 
-             .spreadsheet 
-
-  odt        application/ Openoffice
-             vnd.oasis.op Document
-             endocument.t 
-             ext          
-
-  pdf        application/ Adobe PDF
-             pdf          Format
-
-  png        image/png    PNG Image
-                          Format
-
-  pptx       application/ Microsoft
-             vnd.openxmlf Office
-             ormats-offic Powerpoint
-             edocument.pr 
-             esentationml 
-             .presentatio 
-             n            
-
-  rtf        application/ Rich Text
-             rtf          Format
-
-  svg        image/svg+xm Scalable
-             l            Vector
-                          Graphics
-                          Format
-
-  tsv        text/tab-sep Standard TSV
-             arated-value format for
-             s            spreadsheets
-
-  txt        text/plain   Plain Text
-
-  xls        application/ Microsoft
-             vnd.ms-excel Office
-                          Spreadsheet
-
-  xlsx       application/ Microsoft
-             vnd.openxmlf Office
-             ormats-offic Spreadsheet
-             edocument.sp 
-             readsheetml. 
-             sheet        
-
-  zip        application/ A ZIP file of
-             zip          HTML, Images
-                          CSS
-  -------------------------------------
-
---drive-list-chunk int
-
-Size of listing chunk 100-1000. 0 to disable. (default 1000)
-
---drive-shared-with-me
-
-Only show files that are shared with me
-
---drive-skip-gdocs
-
-Skip google documents in all listings. If given, gdocs practically
-become invisible to rclone.
-
---drive-trashed-only
-
-Only show files that are in the trash. This will show trashed files in
-their original directory structure.
-
---drive-upload-cutoff=SIZE
-
-File size cutoff for switching to chunked upload. Default is 8 MB.
-
---drive-use-trash
-
-Send files to the trash instead of deleting permanently. Defaults to
-off, namely deleting files permanently.
+Upload with the -v flag to see more info about what rclone is doing in
+this situation.
 
 Limitations
 
-Drive has quite a lot of rate limiting. This causes rclone to be limited
-to transferring about 2 files per second only. Individual files may be
-transferred much faster at 100s of MBytes/s but lots of small files can
-take a long time.
+Note that Amazon Drive is case insensitive so you can't have a file
+called "Hello.doc" and one called "hello.doc".
 
-Duplicated files
+Amazon Drive has rate limiting so you may notice errors in the sync (429
+errors). rclone will automatically retry the sync up to 3 times by
+default (see --retries flag) which should hopefully work around this
+problem.
 
-Sometimes, for no reason I've been able to track down, drive will
-duplicate a file that rclone uploads. Drive unlike all the other remotes
-can have duplicated files.
+Amazon Drive has an internal limit of file sizes that can be uploaded to
+the service. This limit is not officially published, but all files
+larger than this will fail.
 
-Duplicated files cause problems with the syncing and you will see
-messages in the log about duplicates.
+At the time of writing (Jan 2016) is in the area of 50GB per file. This
+means that larger files are likely to fail.
 
-Use rclone dedupe to fix duplicated files.
-
-Note that this isn't just a problem with rclone, even Google Photos on
-Android duplicates files on drive sometimes.
-
-Rclone appears to be re-copying files it shouldn't
-
-There are two possible reasons for rclone to recopy files which haven't
-changed to Google Drive.
-
-The first is the duplicated file issue above - run rclone dedupe and
-check your logs for duplicate object or directory messages.
-
-The second is that sometimes Google reports different sizes for the
-Google Docs exports which will cause rclone to re-download Google Docs
-for no apparent reason. --ignore-size is a not very satisfactory
-work-around for this if it is causing you a lot of problems.
-
-Google docs downloads sometimes fail with "Failed to copy: read X bytes expecting Y"
-
-This is the same problem as above. Google reports the google doc is one
-size, but rclone downloads a different size. Work-around with the
---ignore-size flag or wait for rclone to retry the download which it
-will.
-
-Making your own client_id
-
-When you use rclone with Google drive in its default configuration you
-are using rclone's client_id. This is shared between all the rclone
-users. There is a global rate limit on the number of queries per second
-that each client_id can do set by Google. rclone already has a high
-quota and I will continue to make sure it is high enough by contacting
-Google.
-
-However you might find you get better performance making your own
-client_id if you are a heavy user. Or you may not depending on exactly
-how Google have been raising rclone's rate limit.
-
-Here is how to create your own Google Drive client ID for rclone:
-
-1.  Log into the Google API Console with your Google account. It doesn't
-    matter what Google account you use. (It need not be the same account
-    as the Google Drive you want to access)
-
-2.  Select a project or create a new project.
-
-3.  Under Overview, Google APIs, Google Apps APIs, click "Drive API",
-    then "Enable".
-
-4.  Click "Credentials" in the left-side panel (not "Go to credentials",
-    which opens the wizard), then "Create credentials", then "OAuth
-    client ID". It will prompt you to set the OAuth consent screen
-    product name, if you haven't set one already.
-
-5.  Choose an application type of "other", and click "Create". (the
-    default name is fine)
-
-6.  It will show you a client ID and client secret. Use these values in
-    rclone config to add a new remote or edit an existing remote.
-
-(Thanks to @balazer on github for these instructions.)
+Unfortunately there is no way for rclone to see that this failure is
+because of file size, so it will retry the operation, as any other
+failure. To avoid this problem, use --max-size 50000M option to limit
+the maximum size of uploaded files. Note that --max-size does not split
+files into segments, it only ignores files over this size.
 
 
 Amazon S3
@@ -3283,12 +3404,14 @@ order of precedence:
 
 -   Directly in the rclone configuration file (as configured by
     rclone config)
--   set access_key_id and secret_access_key
+-   set access_key_id and secret_access_key. session_token can be
+    optionally set when using AWS STS.
 -   Runtime configuration:
 -   set env_auth to true in the config file
 -   Exporting the following environment variables before running rclone
     -   Access Key ID: AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY
     -   Secret Access Key: AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY
+    -   Session Token: AWS_SESSION_TOKEN
 -   Running rclone on an EC2 instance with an IAM role
 
 If none of these option actually end up providing rclone with AWS
@@ -3339,6 +3462,17 @@ Notes on above:
 
 For reference, here's an Ansible script that will generate one or more
 buckets that will work with rclone sync.
+
+Glacier
+
+You can transition objects to glacier storage using a lifecycle policy.
+The bucket can still be synced or copied into normally, but if rclone
+tries to access the data you will see an error like below.
+
+    2017/09/11 19:07:43 Failed to sync: failed to open source object: Object in GLACIER, restore first: path/to/file
+
+In this case you need to restore the object(s) in question before using
+rclone.
 
 Specific options
 
@@ -3498,1027 +3632,113 @@ So once set up, for example to copy files into a bucket
 
     rclone copy /path/to/files minio:bucket
 
+Wasabi
 
-Swift
+Wasabi is a cloud-based object storage service for a broad range of
+applications and use cases. Wasabi is designed for individuals and
+organizations that require a high-performance, reliable, and secure data
+storage infrastructure at minimal cost.
 
-Swift refers to Openstack Object Storage. Commercial implementations of
-that being:
-
--   Rackspace Cloud Files
--   Memset Memstore
-
-Paths are specified as remote:container (or remote: for the lsd
-command.) You may put subdirectories in too, eg
-remote:container/path/to/dir.
-
-Here is an example of making a swift configuration. First run
-
-    rclone config
-
-This will guide you through an interactive setup process.
+Wasabi provides an S3 interface which can be configured for use with
+rclone like this.
 
     No remotes found - make a new one
     n) New remote
     s) Set configuration password
     n/s> n
-    name> remote
+    name> wasabi
     Type of storage to configure.
     Choose a number from below, or type in your own value
      1 / Amazon Drive
        \ "amazon cloud drive"
      2 / Amazon S3 (also Dreamhost, Ceph, Minio)
        \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     7 / Google Drive
-       \ "drive"
-     8 / Hubic
-       \ "hubic"
-     9 / Local Disk
-       \ "local"
-    10 / Microsoft OneDrive
-       \ "onedrive"
-    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    12 / SSH/SFTP Connection
-       \ "sftp"
-    13 / Yandex Disk
-       \ "yandex"
-    Storage> 11
-    User name to log in.
-    user> user_name
-    API key or password.
-    key> password_or_api_key
-    Authentication URL for server.
+    [snip]
+    Storage> s3
+    Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
     Choose a number from below, or type in your own value
-     1 / Rackspace US
-       \ "https://auth.api.rackspacecloud.com/v1.0"
-     2 / Rackspace UK
-       \ "https://lon.auth.api.rackspacecloud.com/v1.0"
-     3 / Rackspace v2
-       \ "https://identity.api.rackspacecloud.com/v2.0"
-     4 / Memset Memstore UK
-       \ "https://auth.storage.memset.com/v1.0"
-     5 / Memset Memstore UK v2
-       \ "https://auth.storage.memset.com/v2.0"
-     6 / OVH
-       \ "https://auth.cloud.ovh.net/v2.0"
-    auth> 1
-    User domain - optional (v3 auth)
-    domain> Default
-    Tenant name - optional for v1 auth, required otherwise
-    tenant> tenant_name
-    Tenant domain - optional (v3 auth)
-    tenant_domain>
-    Region name - optional
-    region>
-    Storage URL - optional
-    storage_url>
-    AuthVersion - optional - set to (1,2,3) if your auth URL has no version
-    auth_version>
-    Remote config
-    --------------------
-    [remote]
-    user = user_name
-    key = password_or_api_key
-    auth = https://auth.api.rackspacecloud.com/v1.0
-    domain = Default
-    tenant =
-    tenant_domain =
-    region =
-    storage_url =
-    auth_version =
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-This remote is called remote and can now be used like this
-
-See all containers
-
-    rclone lsd remote:
-
-Make a new container
-
-    rclone mkdir remote:container
-
-List the contents of a container
-
-    rclone ls remote:container
-
-Sync /home/local/directory to the remote container, deleting any excess
-files in the container.
-
-    rclone sync /home/local/directory remote:container
-
-Configuration from an Openstack credentials file
-
-An Opentstack credentials file typically looks something something like
-this (without the comments)
-
-    export OS_AUTH_URL=https://a.provider.net/v2.0
-    export OS_TENANT_ID=ffffffffffffffffffffffffffffffff
-    export OS_TENANT_NAME="1234567890123456"
-    export OS_USERNAME="123abc567xy"
-    echo "Please enter your OpenStack Password: "
-    read -sr OS_PASSWORD_INPUT
-    export OS_PASSWORD=$OS_PASSWORD_INPUT
-    export OS_REGION_NAME="SBG1"
-    if [ -z "$OS_REGION_NAME" ]; then unset OS_REGION_NAME; fi
-
-The config file needs to look something like this where $OS_USERNAME
-represents the value of the OS_USERNAME variable - 123abc567xy in the
-example above.
-
-    [remote]
-    type = swift
-    user = $OS_USERNAME
-    key = $OS_PASSWORD
-    auth = $OS_AUTH_URL
-    tenant = $OS_TENANT_NAME
-
-Note that you may (or may not) need to set region too - try without
-first.
-
---fast-list
-
-This remote supports --fast-list which allows you to use fewer
-transactions in exchange for more memory. See the rclone docs for more
-details.
-
-Specific options
-
-Here are the command line options specific to this cloud storage system.
-
---swift-chunk-size=SIZE
-
-Above this size files will be chunked into a _segments container. The
-default for this is 5GB which is its maximum value.
-
-Modified time
-
-The modified time is stored as metadata on the object as
-X-Object-Meta-Mtime as floating point since the epoch accurate to 1 ns.
-
-This is a defacto standard (used in the official python-swiftclient
-amongst others) for storing the modification time for an object.
-
-Limitations
-
-The Swift API doesn't return a correct MD5SUM for segmented files
-(Dynamic or Static Large Objects) so rclone won't check or use the
-MD5SUM for these.
-
-Troubleshooting
-
-Rclone gives Failed to create file system for "remote:": Bad Request
-
-Due to an oddity of the underlying swift library, it gives a "Bad
-Request" error rather than a more sensible error when the authentication
-fails for Swift.
-
-So this most likely means your username / password is wrong. You can
-investigate further with the --dump-bodies flag.
-
-This may also be caused by specifying the region when you shouldn't have
-(eg OVH).
-
-Rclone gives Failed to create file system: Response didn't have storage storage url and auth token
-
-This is most likely caused by forgetting to specify your tenant when
-setting up a swift remote.
-
-
-Dropbox
-
-Paths are specified as remote:path
-
-Dropbox paths may be as deep as required, eg
-remote:directory/subdirectory.
-
-The initial setup for dropbox involves getting a token from Dropbox
-which you need to do in your browser. rclone config walks you through
-it.
-
-Here is an example of how to make a remote called remote. First run:
-
-     rclone config
-
-This will guide you through an interactive setup process:
-
-    n) New remote
-    d) Delete remote
-    q) Quit config
-    e/n/d/q> n
-    name> remote
-    Type of storage to configure.
+     1 / Enter AWS credentials in the next step
+       \ "false"
+     2 / Get AWS credentials from the environment (env vars or IAM)
+       \ "true"
+    env_auth> 1
+    AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+    access_key_id> YOURACCESSKEY
+    AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+    secret_access_key> YOURSECRETACCESSKEY
+    Region to connect to.
     Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     7 / Google Drive
-       \ "drive"
-     8 / Hubic
-       \ "hubic"
-     9 / Local Disk
-       \ "local"
-    10 / Microsoft OneDrive
-       \ "onedrive"
-    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    12 / SSH/SFTP Connection
-       \ "sftp"
-    13 / Yandex Disk
-       \ "yandex"
-    Storage> 4
-    Dropbox App Key - leave blank normally.
-    app_key>
-    Dropbox App Secret - leave blank normally.
-    app_secret>
-    Remote config
-    Please visit:
-    https://www.dropbox.com/1/oauth2/authorize?client_id=XXXXXXXXXXXXXXX&response_type=code
-    Enter the code: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_XXXXXXXXXX
-    --------------------
-    [remote]
-    app_key =
-    app_secret =
-    token = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX_XXXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-You can then use it like this,
-
-List directories in top level of your dropbox
-
-    rclone lsd remote:
-
-List all the files in your dropbox
-
-    rclone ls remote:
-
-To copy a local directory to a dropbox directory called backup
-
-    rclone copy /home/source remote:backup
-
-Modified time and Hashes
-
-Dropbox supports modified times, but the only way to set a modification
-time is to re-upload the file.
-
-This means that if you uploaded your data with an older version of
-rclone which didn't support the v2 API and modified times, rclone will
-decide to upload all your old data to fix the modification times. If you
-don't want this to happen use --size-only or --checksum flag to stop it.
-
-Dropbox supports its own hash type which is checked for all transfers.
-
-Specific options
-
-Here are the command line options specific to this cloud storage system.
-
---dropbox-chunk-size=SIZE
-
-Upload chunk size. Max 150M. The default is 128MB. Note that this isn't
-buffered into memory.
-
-Limitations
-
-Note that Dropbox is case insensitive so you can't have a file called
-"Hello.doc" and one called "hello.doc".
-
-There are some file names such as thumbs.db which Dropbox can't store.
-There is a full list of them in the "Ignored Files" section of this
-document. Rclone will issue an error message
-File name disallowed - not uploading if it attempt to upload one of
-those file names, but the sync won't fail.
-
-If you have more than 10,000 files in a directory then
-rclone purge dropbox:dir will return the error
-Failed to purge: There are too many files involved in this operation. As
-a work-around do an rclone delete dropbox:dir followed by an
-rclone rmdir dropbox:dir.
-
-
-Google Cloud Storage
-
-Paths are specified as remote:bucket (or remote: for the lsd command.)
-You may put subdirectories in too, eg remote:bucket/path/to/dir.
-
-The initial setup for google cloud storage involves getting a token from
-Google Cloud Storage which you need to do in your browser. rclone config
-walks you through it.
-
-Here is an example of how to make a remote called remote. First run:
-
-     rclone config
-
-This will guide you through an interactive setup process:
-
-    n) New remote
-    d) Delete remote
-    q) Quit config
-    e/n/d/q> n
-    name> remote
-    Type of storage to configure.
+       / The default endpoint - a good choice if you are unsure.
+     1 | US Region, Northern Virginia or Pacific Northwest.
+       | Leave location constraint empty.
+       \ "us-east-1"
+    [snip]
+    region> us-east-1
+    Endpoint for S3 API.
+    Leave blank if using AWS to use the default endpoint for the region.
+    Specify if using an S3 clone such as Ceph.
+    endpoint> s3.wasabisys.com
+    Location constraint - must be set to match the Region. Used when creating buckets only.
     Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     7 / Google Drive
-       \ "drive"
-     8 / Hubic
-       \ "hubic"
-     9 / Local Disk
-       \ "local"
-    10 / Microsoft OneDrive
-       \ "onedrive"
-    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    12 / SSH/SFTP Connection
-       \ "sftp"
-    13 / Yandex Disk
-       \ "yandex"
-    Storage> 6
-    Google Application Client Id - leave blank normally.
-    client_id>
-    Google Application Client Secret - leave blank normally.
-    client_secret>
-    Project number optional - needed only for list/create/delete buckets - see your developer console.
-    project_number> 12345678
-    Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
-    service_account_file>
-    Access Control List for new objects.
-    Choose a number from below, or type in your own value
-     1 / Object owner gets OWNER access, and all Authenticated Users get READER access.
-       \ "authenticatedRead"
-     2 / Object owner gets OWNER access, and project team owners get OWNER access.
-       \ "bucketOwnerFullControl"
-     3 / Object owner gets OWNER access, and project team owners get READER access.
-       \ "bucketOwnerRead"
-     4 / Object owner gets OWNER access [default if left blank].
-       \ "private"
-     5 / Object owner gets OWNER access, and project team members get access according to their roles.
-       \ "projectPrivate"
-     6 / Object owner gets OWNER access, and all Users get READER access.
-       \ "publicRead"
-    object_acl> 4
-    Access Control List for new buckets.
-    Choose a number from below, or type in your own value
-     1 / Project team owners get OWNER access, and all Authenticated Users get READER access.
-       \ "authenticatedRead"
-     2 / Project team owners get OWNER access [default if left blank].
-       \ "private"
-     3 / Project team members get access according to their roles.
-       \ "projectPrivate"
-     4 / Project team owners get OWNER access, and all Users get READER access.
-       \ "publicRead"
-     5 / Project team owners get OWNER access, and all Users get WRITER access.
-       \ "publicReadWrite"
-    bucket_acl> 2
-    Location for the newly created buckets.
-    Choose a number from below, or type in your own value
-     1 / Empty for default location (US).
+     1 / Empty for US Region, Northern Virginia or Pacific Northwest.
        \ ""
-     2 / Multi-regional location for Asia.
-       \ "asia"
-     3 / Multi-regional location for Europe.
-       \ "eu"
-     4 / Multi-regional location for United States.
-       \ "us"
-     5 / Taiwan.
-       \ "asia-east1"
-     6 / Tokyo.
-       \ "asia-northeast1"
-     7 / Singapore.
-       \ "asia-southeast1"
-     8 / Sydney.
-       \ "australia-southeast1"
-     9 / Belgium.
-       \ "europe-west1"
-    10 / London.
-       \ "europe-west2"
-    11 / Iowa.
-       \ "us-central1"
-    12 / South Carolina.
-       \ "us-east1"
-    13 / Northern Virginia.
-       \ "us-east4"
-    14 / Oregon.
-       \ "us-west1"
-    location> 12
-    The storage class to use when storing objects in Google Cloud Storage.
+    [snip]
+    location_constraint> 
+    Canned ACL used when creating buckets and/or storing objects in S3.
+    For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+    Choose a number from below, or type in your own value
+     1 / Owner gets FULL_CONTROL. No one else has access rights (default).
+       \ "private"
+    [snip]
+    acl> 
+    The server-side encryption algorithm used when storing this object in S3.
+    Choose a number from below, or type in your own value
+     1 / None
+       \ ""
+     2 / AES256
+       \ "AES256"
+    server_side_encryption> 
+    The storage class to use when storing objects in S3.
     Choose a number from below, or type in your own value
      1 / Default
        \ ""
-     2 / Multi-regional storage class
-       \ "MULTI_REGIONAL"
-     3 / Regional storage class
-       \ "REGIONAL"
-     4 / Nearline storage class
-       \ "NEARLINE"
-     5 / Coldline storage class
-       \ "COLDLINE"
-     6 / Durable reduced availability storage class
-       \ "DURABLE_REDUCED_AVAILABILITY"
-    storage_class> 5
+     2 / Standard storage class
+       \ "STANDARD"
+     3 / Reduced redundancy storage class
+       \ "REDUCED_REDUNDANCY"
+     4 / Standard Infrequent Access storage class
+       \ "STANDARD_IA"
+    storage_class> 
     Remote config
-    Use auto config?
-     * Say Y if not sure
-     * Say N if you are working on a remote or headless machine or Y didn't work
-    y) Yes
-    n) No
-    y/n> y
-    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
-    Log in and authorize rclone for access
-    Waiting for code...
-    Got code
     --------------------
-    [remote]
-    type = google cloud storage
-    client_id =
-    client_secret =
-    token = {"AccessToken":"xxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"x/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxx","Expiry":"2014-07-17T20:49:14.929208288+01:00","Extra":null}
-    project_number = 12345678
-    object_acl = private
-    bucket_acl = private
+    [wasabi]
+    env_auth = false
+    access_key_id = YOURACCESSKEY
+    secret_access_key = YOURSECRETACCESSKEY
+    region = us-east-1
+    endpoint = s3.wasabisys.com
+    location_constraint = 
+    acl = 
+    server_side_encryption = 
+    storage_class = 
     --------------------
     y) Yes this is OK
     e) Edit this remote
     d) Delete this remote
     y/e/d> y
 
-Note that rclone runs a webserver on your local machine to collect the
-token as returned from Google if you use auto config mode. This only
-runs from the moment it opens your browser to the moment you get back
-the verification code. This is on http://127.0.0.1:53682/ and this it
-may require you to unblock it temporarily if you are running a host
-firewall, or use manual mode.
-
-This remote is called remote and can now be used like this
-
-See all the buckets in your project
-
-    rclone lsd remote:
-
-Make a new bucket
-
-    rclone mkdir remote:bucket
-
-List the contents of a bucket
-
-    rclone ls remote:bucket
-
-Sync /home/local/directory to the remote bucket, deleting any excess
-files in the bucket.
-
-    rclone sync /home/local/directory remote:bucket
-
-Service Account support
-
-You can set up rclone with Google Cloud Storage in an unattended mode,
-i.e. not tied to a specific end-user Google account. This is useful when
-you want to synchronise files onto machines that don't have actively
-logged-in users, for example build machines.
-
-To get credentials for Google Cloud Platform IAM Service Accounts,
-please head to the Service Account section of the Google Developer
-Console. Service Accounts behave just like normal User permissions in
-Google Cloud Storage ACLs, so you can limit their access (e.g. make them
-read only). After creating an account, a JSON file containing the
-Service Account's credentials will be downloaded onto your machines.
-These credentials are what rclone will use for authentication.
-
-To use a Service Account instead of OAuth2 token flow, enter the path to
-your Service Account credentials at the service_account_file prompt and
-rclone won't use the browser based authentication flow.
-
---fast-list
-
-This remote supports --fast-list which allows you to use fewer
-transactions in exchange for more memory. See the rclone docs for more
-details.
-
-Modified time
-
-Google google cloud storage stores md5sums natively and rclone stores
-modification times as metadata on the object, under the "mtime" key in
-RFC3339 format accurate to 1ns.
-
-
-Amazon Drive
-
-Paths are specified as remote:path
-
-Paths may be as deep as required, eg remote:directory/subdirectory.
-
-The initial setup for Amazon Drive involves getting a token from Amazon
-which you need to do in your browser. rclone config walks you through
-it.
-
-The configuration process for Amazon Drive may involve using an oauth
-proxy. This is used to keep the Amazon credentials out of the source
-code. The proxy runs in Google's very secure App Engine environment and
-doesn't store any credentials which pass through it.
-
-NB rclone doesn't not currently have its own Amazon Drive credentials
-(see the forum for why) so you will either need to have your own
-client_id and client_secret with Amazon Drive, or use a a third party
-ouath proxy in which case you will need to enter client_id,
-client_secret, auth_url and token_url.
-
-Note also if you are not using Amazon's auth_url and token_url, (ie you
-filled in something for those) then if setting up on a remote machine
-you can only use the copying the config method of configuration -
-rclone authorize will not work.
-
-Here is an example of how to make a remote called remote. First run:
-
-     rclone config
-
-This will guide you through an interactive setup process:
-
-    No remotes found - make a new one
-    n) New remote
-    r) Rename remote
-    c) Copy remote
-    s) Set configuration password
-    q) Quit config
-    n/r/c/s/q> n
-    name> remote
-    Type of storage to configure.
-    Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / FTP Connection
-       \ "ftp"
-     7 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     8 / Google Drive
-       \ "drive"
-     9 / Hubic
-       \ "hubic"
-    10 / Local Disk
-       \ "local"
-    11 / Microsoft OneDrive
-       \ "onedrive"
-    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    13 / SSH/SFTP Connection
-       \ "sftp"
-    14 / Yandex Disk
-       \ "yandex"
-    Storage> 1
-    Amazon Application Client Id - required.
-    client_id> your client ID goes here
-    Amazon Application Client Secret - required.
-    client_secret> your client secret goes here
-    Auth server URL - leave blank to use Amazon's.
-    auth_url> Optional auth URL
-    Token server url - leave blank to use Amazon's.
-    token_url> Optional token URL
-    Remote config
-    Make sure your Redirect URL is set to "http://127.0.0.1:53682/" in your custom config.
-    Use auto config?
-     * Say Y if not sure
-     * Say N if you are working on a remote or headless machine
-    y) Yes
-    n) No
-    y/n> y
-    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
-    Log in and authorize rclone for access
-    Waiting for code...
-    Got code
-    --------------------
-    [remote]
-    client_id = your client ID goes here
-    client_secret = your client secret goes here
-    auth_url = Optional auth URL
-    token_url = Optional token URL
-    token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","refresh_token":"xxxxxxxxxxxxxxxxxx","expiry":"2015-09-06T16:07:39.658438471+01:00"}
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-See the remote setup docs for how to set it up on a machine with no
-Internet browser available.
-
-Note that rclone runs a webserver on your local machine to collect the
-token as returned from Amazon. This only runs from the moment it opens
-your browser to the moment you get back the verification code. This is
-on http://127.0.0.1:53682/ and this it may require you to unblock it
-temporarily if you are running a host firewall.
-
-Once configured you can then use rclone like this,
-
-List directories in top level of your Amazon Drive
-
-    rclone lsd remote:
-
-List all the files in your Amazon Drive
-
-    rclone ls remote:
-
-To copy a local directory to an Amazon Drive directory called backup
-
-    rclone copy /home/source remote:backup
-
-Modified time and MD5SUMs
-
-Amazon Drive doesn't allow modification times to be changed via the API
-so these won't be accurate or used for syncing.
-
-It does store MD5SUMs so for a more accurate sync, you can use the
---checksum flag.
-
-Deleting files
-
-Any files you delete with rclone will end up in the trash. Amazon don't
-provide an API to permanently delete files, nor to empty the trash, so
-you will have to do that with one of Amazon's apps or via the Amazon
-Drive website. As of November 17, 2016, files are automatically deleted
-by Amazon from the trash after 30 days.
-
-Using with non .com Amazon accounts
-
-Let's say you usually use amazon.co.uk. When you authenticate with
-rclone it will take you to an amazon.com page to log in. Your
-amazon.co.uk email and password should work here just fine.
-
-Specific options
-
-Here are the command line options specific to this cloud storage system.
-
---acd-templink-threshold=SIZE
-
-Files this size or more will be downloaded via their tempLink. This is
-to work around a problem with Amazon Drive which blocks downloads of
-files bigger than about 10GB. The default for this is 9GB which
-shouldn't need to be changed.
-
-To download files above this threshold, rclone requests a tempLink which
-downloads the file through a temporary URL directly from the underlying
-S3 storage.
-
---acd-upload-wait-per-gb=TIME
-
-Sometimes Amazon Drive gives an error when a file has been fully
-uploaded but the file appears anyway after a little while. This happens
-sometimes for files over 1GB in size and nearly every time for files
-bigger than 10GB. This parameter controls the time rclone waits for the
-file to appear.
-
-The default value for this parameter is 3 minutes per GB, so by default
-it will wait 3 minutes for every GB uploaded to see if the file appears.
-
-You can disable this feature by setting it to 0. This may cause conflict
-errors as rclone retries the failed upload but the file will most likely
-appear correctly eventually.
-
-These values were determined empirically by observing lots of uploads of
-big files for a range of file sizes.
-
-Upload with the -v flag to see more info about what rclone is doing in
-this situation.
-
-Limitations
-
-Note that Amazon Drive is case insensitive so you can't have a file
-called "Hello.doc" and one called "hello.doc".
-
-Amazon Drive has rate limiting so you may notice errors in the sync (429
-errors). rclone will automatically retry the sync up to 3 times by
-default (see --retries flag) which should hopefully work around this
-problem.
-
-Amazon Drive has an internal limit of file sizes that can be uploaded to
-the service. This limit is not officially published, but all files
-larger than this will fail.
-
-At the time of writing (Jan 2016) is in the area of 50GB per file. This
-means that larger files are likely to fail.
-
-Unfortunately there is no way for rclone to see that this failure is
-because of file size, so it will retry the operation, as any other
-failure. To avoid this problem, use --max-size 50000M option to limit
-the maximum size of uploaded files. Note that --max-size does not split
-files into segments, it only ignores files over this size.
-
-
-Microsoft OneDrive
-
-Paths are specified as remote:path
-
-Paths may be as deep as required, eg remote:directory/subdirectory.
-
-The initial setup for OneDrive involves getting a token from Microsoft
-which you need to do in your browser. rclone config walks you through
-it.
-
-Here is an example of how to make a remote called remote. First run:
-
-     rclone config
-
-This will guide you through an interactive setup process:
-
-    No remotes found - make a new one
-    n) New remote
-    s) Set configuration password
-    n/s> n
-    name> remote
-    Type of storage to configure.
-    Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     7 / Google Drive
-       \ "drive"
-     8 / Hubic
-       \ "hubic"
-     9 / Local Disk
-       \ "local"
-    10 / Microsoft OneDrive
-       \ "onedrive"
-    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    12 / SSH/SFTP Connection
-       \ "sftp"
-    13 / Yandex Disk
-       \ "yandex"
-    Storage> 10
-    Microsoft App Client Id - leave blank normally.
-    client_id>
-    Microsoft App Client Secret - leave blank normally.
-    client_secret>
-    Remote config
-    Use auto config?
-     * Say Y if not sure
-     * Say N if you are working on a remote or headless machine
-    y) Yes
-    n) No
-    y/n> y
-    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
-    Log in and authorize rclone for access
-    Waiting for code...
-    Got code
-    --------------------
-    [remote]
-    client_id =
-    client_secret =
-    token = {"access_token":"XXXXXX"}
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-See the remote setup docs for how to set it up on a machine with no
-Internet browser available.
-
-Note that rclone runs a webserver on your local machine to collect the
-token as returned from Microsoft. This only runs from the moment it
-opens your browser to the moment you get back the verification code.
-This is on http://127.0.0.1:53682/ and this it may require you to
-unblock it temporarily if you are running a host firewall.
-
-Once configured you can then use rclone like this,
-
-List directories in top level of your OneDrive
-
-    rclone lsd remote:
-
-List all the files in your OneDrive
-
-    rclone ls remote:
-
-To copy a local directory to an OneDrive directory called backup
-
-    rclone copy /home/source remote:backup
-
-Modified time and hashes
-
-OneDrive allows modification times to be set on objects accurate to 1
-second. These will be used to detect whether objects need syncing or
-not.
-
-One drive supports SHA1 type hashes, so you can use --checksum flag.
-
-Deleting files
-
-Any files you delete with rclone will end up in the trash. Microsoft
-doesn't provide an API to permanently delete files, nor to empty the
-trash, so you will have to do that with one of Microsoft's apps or via
-the OneDrive website.
-
-Specific options
-
-Here are the command line options specific to this cloud storage system.
-
---onedrive-chunk-size=SIZE
-
-Above this size files will be chunked - must be multiple of 320k. The
-default is 10MB. Note that the chunks will be buffered into memory.
-
---onedrive-upload-cutoff=SIZE
-
-Cutoff for switching to chunked upload - must be <= 100MB. The default
-is 10MB.
-
-Limitations
-
-Note that OneDrive is case insensitive so you can't have a file called
-"Hello.doc" and one called "hello.doc".
-
-Rclone only supports your default OneDrive, and doesn't work with One
-Drive for business. Both these issues may be fixed at some point
-depending on user demand!
-
-There are quite a few characters that can't be in OneDrive file names.
-These can't occur on Windows platforms, but on non-Windows platforms
-they are common. Rclone will map these names to and from an identical
-looking unicode equivalent. For example if a file has a ? in it will be
-mapped to ？ instead.
-
-The largest allowed file size is 10GiB (10,737,418,240 bytes).
-
-
-Hubic
-
-Paths are specified as remote:path
-
-Paths are specified as remote:container (or remote: for the lsd
-command.) You may put subdirectories in too, eg
-remote:container/path/to/dir.
-
-The initial setup for Hubic involves getting a token from Hubic which
-you need to do in your browser. rclone config walks you through it.
-
-Here is an example of how to make a remote called remote. First run:
-
-     rclone config
-
-This will guide you through an interactive setup process:
-
-    n) New remote
-    s) Set configuration password
-    n/s> n
-    name> remote
-    Type of storage to configure.
-    Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     7 / Google Drive
-       \ "drive"
-     8 / Hubic
-       \ "hubic"
-     9 / Local Disk
-       \ "local"
-    10 / Microsoft OneDrive
-       \ "onedrive"
-    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    12 / SSH/SFTP Connection
-       \ "sftp"
-    13 / Yandex Disk
-       \ "yandex"
-    Storage> 8
-    Hubic Client Id - leave blank normally.
-    client_id>
-    Hubic Client Secret - leave blank normally.
-    client_secret>
-    Remote config
-    Use auto config?
-     * Say Y if not sure
-     * Say N if you are working on a remote or headless machine
-    y) Yes
-    n) No
-    y/n> y
-    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
-    Log in and authorize rclone for access
-    Waiting for code...
-    Got code
-    --------------------
-    [remote]
-    client_id =
-    client_secret =
-    token = {"access_token":"XXXXXX"}
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-See the remote setup docs for how to set it up on a machine with no
-Internet browser available.
-
-Note that rclone runs a webserver on your local machine to collect the
-token as returned from Hubic. This only runs from the moment it opens
-your browser to the moment you get back the verification code. This is
-on http://127.0.0.1:53682/ and this it may require you to unblock it
-temporarily if you are running a host firewall.
-
-Once configured you can then use rclone like this,
-
-List containers in the top level of your Hubic
-
-    rclone lsd remote:
-
-List all the files in your Hubic
-
-    rclone ls remote:
-
-To copy a local directory to an Hubic directory called backup
-
-    rclone copy /home/source remote:backup
-
-If you want the directory to be visible in the official _Hubic browser_,
-you need to copy your files to the default directory
-
-    rclone copy /home/source remote:default/backup
-
---fast-list
-
-This remote supports --fast-list which allows you to use fewer
-transactions in exchange for more memory. See the rclone docs for more
-details.
-
-Modified time
-
-The modified time is stored as metadata on the object as
-X-Object-Meta-Mtime as floating point since the epoch accurate to 1 ns.
-
-This is a defacto standard (used in the official python-swiftclient
-amongst others) for storing the modification time for an object.
-
-Note that Hubic wraps the Swift backend, so most of the properties of
-are the same.
-
-Limitations
-
-This uses the normal OpenStack Swift mechanism to refresh the Swift API
-credentials and ignores the expires field returned by the Hubic API.
-
-The Swift API doesn't return a correct MD5SUM for segmented files
-(Dynamic or Static Large Objects) so rclone won't check or use the
-MD5SUM for these.
+This will leave the config file looking like this.
+
+    [wasabi]
+    env_auth = false
+    access_key_id = YOURACCESSKEY
+    secret_access_key = YOURSECRETACCESSKEY
+    region = us-east-1
+    endpoint = s3.wasabisys.com
+    location_constraint = 
+    acl = 
+    server_side_encryption = 
+    storage_class = 
 
 
 Backblaze B2
@@ -4650,10 +3870,13 @@ in use at any moment, so this sets the upper limit on the memory used.
 Versions
 
 When rclone uploads a new version of a file it creates a new version of
-it. Likewise when you delete a file, the old version will still be
-available.
+it. Likewise when you delete a file, the old version will be marked
+hidden and still be available. Conversely, you may opt in to a "hard
+delete" of files with the --b2-hard-delete flag which would permanently
+remove the file instead of hiding it.
 
-Old versions of files are visible using the --b2-versions flag.
+Old versions of files, where available, are visible using the
+--b2-versions flag.
 
 If you wish to remove all the old versions then you can use the
 rclone cleanup remote:bucket command which will delete all the old
@@ -4798,406 +4021,14 @@ Note that when using --b2-versions no file write operations are
 permitted, so you can't upload files or delete them.
 
 
-Yandex Disk
+Box
 
-Yandex Disk is a cloud storage solution created by Yandex.
+Paths are specified as remote:path
 
-Yandex paths may be as deep as required, eg
-remote:directory/subdirectory.
+Paths may be as deep as required, eg remote:directory/subdirectory.
 
-Here is an example of making a yandex configuration. First run
-
-    rclone config
-
-This will guide you through an interactive setup process:
-
-    No remotes found - make a new one
-    n) New remote
-    s) Set configuration password
-    n/s> n
-    name> remote
-    Type of storage to configure.
-    Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     7 / Google Drive
-       \ "drive"
-     8 / Hubic
-       \ "hubic"
-     9 / Local Disk
-       \ "local"
-    10 / Microsoft OneDrive
-       \ "onedrive"
-    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    12 / SSH/SFTP Connection
-       \ "sftp"
-    13 / Yandex Disk
-       \ "yandex"
-    Storage> 13
-    Yandex Client Id - leave blank normally.
-    client_id>
-    Yandex Client Secret - leave blank normally.
-    client_secret>
-    Remote config
-    Use auto config?
-     * Say Y if not sure
-     * Say N if you are working on a remote or headless machine
-    y) Yes
-    n) No
-    y/n> y
-    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
-    Log in and authorize rclone for access
-    Waiting for code...
-    Got code
-    --------------------
-    [remote]
-    client_id =
-    client_secret =
-    token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","expiry":"2016-12-29T12:27:11.362788025Z"}
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-See the remote setup docs for how to set it up on a machine with no
-Internet browser available.
-
-Note that rclone runs a webserver on your local machine to collect the
-token as returned from Yandex Disk. This only runs from the moment it
-opens your browser to the moment you get back the verification code.
-This is on http://127.0.0.1:53682/ and this it may require you to
-unblock it temporarily if you are running a host firewall.
-
-Once configured you can then use rclone like this,
-
-See top level directories
-
-    rclone lsd remote:
-
-Make a new directory
-
-    rclone mkdir remote:directory
-
-List the contents of a directory
-
-    rclone ls remote:directory
-
-Sync /home/local/directory to the remote path, deleting any excess files
-in the path.
-
-    rclone sync /home/local/directory remote:directory
-
---fast-list
-
-This remote supports --fast-list which allows you to use fewer
-transactions in exchange for more memory. See the rclone docs for more
-details.
-
-Modified time
-
-Modified times are supported and are stored accurate to 1 ns in custom
-metadata called rclone_modified in RFC3339 with nanoseconds format.
-
-MD5 checksums
-
-MD5 checksums are natively supported by Yandex Disk.
-
-
-SFTP
-
-SFTP is the Secure (or SSH) File Transfer Protocol.
-
-It runs over SSH v2 and is standard with most modern SSH installations.
-
-Paths are specified as remote:path. If the path does not begin with a /
-it is relative to the home directory of the user. An empty path remote:
-refers to the users home directory.
-
-Here is an example of making a SFTP configuration. First run
-
-    rclone config
-
-This will guide you through an interactive setup process.
-
-    No remotes found - make a new one
-    n) New remote
-    s) Set configuration password
-    q) Quit config
-    n/s/q> n
-    name> remote
-    Type of storage to configure.
-    Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / FTP Connection
-       \ "ftp"
-     7 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     8 / Google Drive
-       \ "drive"
-     9 / Hubic
-       \ "hubic"
-    10 / Local Disk
-       \ "local"
-    11 / Microsoft OneDrive
-       \ "onedrive"
-    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    13 / SSH/SFTP Connection
-       \ "sftp"
-    14 / Yandex Disk
-       \ "yandex"
-    15 / http Connection
-       \ "http"
-    Storage> sftp
-    SSH host to connect to
-    Choose a number from below, or type in your own value
-     1 / Connect to example.com
-       \ "example.com"
-    host> example.com
-    SSH username, leave blank for current username, ncw
-    user> sftpuser
-    SSH port, leave blank to use default (22)
-    port> 
-    SSH password, leave blank to use ssh-agent.
-    y) Yes type in my own password
-    g) Generate random password
-    n) No leave this optional password blank
-    y/g/n> n
-    Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.
-    key_file> 
-    Remote config
-    --------------------
-    [remote]
-    host = example.com
-    user = sftpuser
-    port = 
-    pass = 
-    key_file = 
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-This remote is called remote and can now be used like this
-
-See all directories in the home directory
-
-    rclone lsd remote:
-
-Make a new directory
-
-    rclone mkdir remote:path/to/directory
-
-List the contents of a directory
-
-    rclone ls remote:path/to/directory
-
-Sync /home/local/directory to the remote directory, deleting any excess
-files in the directory.
-
-    rclone sync /home/local/directory remote:directory
-
-SSH Authentication
-
-The SFTP remote supports 3 authentication methods
-
--   Password
--   Key file
--   ssh-agent
-
-Key files should be unencrypted PEM-encoded private key files. For
-instance /home/$USER/.ssh/id_rsa.
-
-If you don't specify pass or key_file then it will attempt to contact an
-ssh-agent.
-
-ssh-agent on macOS
-
-Note that there seem to be various problems with using an ssh-agent on
-macOS due to recent changes in the OS. The most effective work-around
-seems to be to start an ssh-agent in each session, eg
-
-    eval `ssh-agent -s` && ssh-add -A
-
-And then at the end of the session
-
-    eval `ssh-agent -k`
-
-These commands can be used in scripts of course.
-
-Modified time
-
-Modified times are stored on the server to 1 second precision.
-
-Modified times are used in syncing and are fully supported.
-
-Limitations
-
-SFTP does not support any checksums.
-
-The only ssh agent supported under Windows is Putty's pagent.
-
-SFTP isn't supported under plan9 until this issue is fixed.
-
-Note that since SFTP isn't HTTP based the following flags don't work
-with it: --dump-headers, --dump-bodies, --dump-auth
-
-Note that --timeout isn't supported (but --contimeout is).
-
-
-FTP
-
-FTP is the File Transfer Protocol. FTP support is provided using the
-github.com/jlaffaye/ftp package.
-
-Here is an example of making an FTP configuration. First run
-
-    rclone config
-
-This will guide you through an interactive setup process. An FTP remote
-only needs a host together with and a username and a password. With
-anonymous FTP server, you will need to use anonymous as username and
-your email address as the password.
-
-    No remotes found - make a new one
-    n) New remote
-    r) Rename remote
-    c) Copy remote
-    s) Set configuration password
-    q) Quit config
-    n/r/c/s/q> n
-    name> remote
-    Type of storage to configure.
-    Choose a number from below, or type in your own value
-     1 / Amazon Drive
-       \ "amazon cloud drive"
-     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-       \ "s3"
-     3 / Backblaze B2
-       \ "b2"
-     4 / Dropbox
-       \ "dropbox"
-     5 / Encrypt/Decrypt a remote
-       \ "crypt"
-     6 / FTP Connection 
-       \ "ftp"
-     7 / Google Cloud Storage (this is not Google Drive)
-       \ "google cloud storage"
-     8 / Google Drive
-       \ "drive"
-     9 / Hubic
-       \ "hubic"
-    10 / Local Disk
-       \ "local"
-    11 / Microsoft OneDrive
-       \ "onedrive"
-    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-       \ "swift"
-    13 / SSH/SFTP Connection
-       \ "sftp"
-    14 / Yandex Disk
-       \ "yandex"
-    Storage> ftp
-    FTP host to connect to
-    Choose a number from below, or type in your own value
-     1 / Connect to ftp.example.com
-       \ "ftp.example.com"
-    host> ftp.example.com
-    FTP username, leave blank for current username, ncw
-    user>
-    FTP port, leave blank to use default (21)
-    port>
-    FTP password
-    y) Yes type in my own password
-    g) Generate random password
-    y/g> y
-    Enter the password:
-    password:
-    Confirm the password:
-    password:
-    Remote config
-    --------------------
-    [remote]
-    host = ftp.example.com
-    user = 
-    port =
-    pass = *** ENCRYPTED ***
-    --------------------
-    y) Yes this is OK
-    e) Edit this remote
-    d) Delete this remote
-    y/e/d> y
-
-This remote is called remote and can now be used like this
-
-See all directories in the home directory
-
-    rclone lsd remote:
-
-Make a new directory
-
-    rclone mkdir remote:path/to/directory
-
-List the contents of a directory
-
-    rclone ls remote:path/to/directory
-
-Sync /home/local/directory to the remote directory, deleting any excess
-files in the directory.
-
-    rclone sync /home/local/directory remote:directory
-
-Modified time
-
-FTP does not support modified times. Any times you see on the server
-will be time of upload.
-
-Checksums
-
-FTP does not support any checksums.
-
-Limitations
-
-Note that since FTP isn't HTTP based the following flags don't work with
-it: --dump-headers, --dump-bodies, --dump-auth
-
-Note that --timeout isn't supported (but --contimeout is).
-
-FTP could support server side move but doesn't yet.
-
-
-HTTP
-
-The HTTP remote is a read only remote for reading files of a webserver.
-The webserver should provide file listings which rclone will read and
-turn into a remote. This has been tested with common webservers such as
-Apache/Nginx/Caddy and will likely work with file listings from most web
-servers. (If it doesn't then please file an issue, or send a pull
-request!)
-
-Paths are specified as remote: or remote:path/to/dir.
+The initial setup for Box involves getting a token from Box which you
+need to do in your browser. rclone config walks you through it.
 
 Here is an example of how to make a remote called remote. First run:
 
@@ -5219,50 +4050,111 @@ This will guide you through an interactive setup process:
        \ "s3"
      3 / Backblaze B2
        \ "b2"
-     4 / Dropbox
+     4 / Box
+       \ "box"
+     5 / Dropbox
        \ "dropbox"
-     5 / Encrypt/Decrypt a remote
+     6 / Encrypt/Decrypt a remote
        \ "crypt"
-     6 / FTP Connection
+     7 / FTP Connection
        \ "ftp"
-     7 / Google Cloud Storage (this is not Google Drive)
+     8 / Google Cloud Storage (this is not Google Drive)
        \ "google cloud storage"
-     8 / Google Drive
+     9 / Google Drive
        \ "drive"
-     9 / Hubic
+    10 / Hubic
        \ "hubic"
-    10 / Local Disk
+    11 / Local Disk
        \ "local"
-    11 / Microsoft OneDrive
+    12 / Microsoft OneDrive
        \ "onedrive"
-    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+    13 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
        \ "swift"
-    13 / SSH/SFTP Connection
+    14 / SSH/SFTP Connection
        \ "sftp"
-    14 / Yandex Disk
+    15 / Yandex Disk
        \ "yandex"
-    15 / http Connection
+    16 / http Connection
        \ "http"
-    Storage> http
-    URL of http host to connect to
-    Choose a number from below, or type in your own value
-     1 / Connect to example.com
-       \ "https://example.com"
-    url> https://beta.rclone.org
+    Storage> box
+    Box App Client Id - leave blank normally.
+    client_id> 
+    Box App Client Secret - leave blank normally.
+    client_secret> 
     Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
     --------------------
     [remote]
-    url = https://beta.rclone.org
+    client_id = 
+    client_secret = 
+    token = {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"XXX"}
     --------------------
     y) Yes this is OK
     e) Edit this remote
     d) Delete this remote
     y/e/d> y
+
+See the remote setup docs for how to set it up on a machine with no
+Internet browser available.
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Box. This only runs from the moment it opens your
+browser to the moment you get back the verification code. This is on
+http://127.0.0.1:53682/ and this it may require you to unblock it
+temporarily if you are running a host firewall.
+
+Once configured you can then use rclone like this,
+
+List directories in top level of your Box
+
+    rclone lsd remote:
+
+List all the files in your Box
+
+    rclone ls remote:
+
+To copy a local directory to an Box directory called backup
+
+    rclone copy /home/source remote:backup
+
+Invalid refresh token
+
+According to the box docs:
+
+  Each refresh_token is valid for one use in 60 days.
+
+This means that if you
+
+-   Don't use the box remote for 60 days
+-   Copy the config file with a box refresh token in and use it in two
+    places
+-   Get an error on a token refresh
+
+then rclone will return an error which includes the text
+Invalid refresh token.
+
+To fix this you will need to use oauth2 again to update the refresh
+token. You can use the methods in the remote setup docs, bearing in mind
+that if you use the copy the config file method, you should not use that
+remote on the computer you did the authentication on.
+
+Here is how to do it.
+
+    $ rclone config
     Current remotes:
 
     Name                 Type
     ====                 ====
-    remote               http
+    remote               box
 
     e) Edit existing remote
     n) New remote
@@ -5271,47 +4163,88 @@ This will guide you through an interactive setup process:
     c) Copy remote
     s) Set configuration password
     q) Quit config
-    e/n/d/r/c/s/q> q
+    e/n/d/r/c/s/q> e
+    Choose a number from below, or type in an existing value
+     1 > remote
+    remote> remote
+    --------------------
+    [remote]
+    type = box
+    token = {"access_token":"XXX","token_type":"bearer","refresh_token":"XXX","expiry":"2017-07-08T23:40:08.059167677+01:00"}
+    --------------------
+    Edit remote
+    Value "client_id" = ""
+    Edit? (y/n)>
+    y) Yes
+    n) No
+    y/n> n
+    Value "client_secret" = ""
+    Edit? (y/n)>
+    y) Yes
+    n) No
+    y/n> n
+    Remote config
+    Already have a token - refresh?
+    y) Yes
+    n) No
+    y/n> y
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
+    --------------------
+    [remote]
+    type = box
+    token = {"access_token":"YYY","token_type":"bearer","refresh_token":"YYY","expiry":"2017-07-23T12:22:29.259137901+01:00"}
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
 
-This remote is called remote and can now be used like this
+Modified time and hashes
 
-See all the top level directories
+Box allows modification times to be set on objects accurate to 1 second.
+These will be used to detect whether objects need syncing or not.
 
-    rclone lsd remote:
+One drive supports SHA1 type hashes, so you can use the --checksum flag.
 
-List the contents of a directory
+Transfers
 
-    rclone ls remote:directory
+For files above 50MB rclone will use a chunked transfer. Rclone will
+upload up to --transfers chunks at the same time (shared among all the
+multipart uploads). Chunks are buffered in memory and are normally 8MB
+so increasing --transfers will increase memory use.
 
-Sync the remote directory to /home/local/directory, deleting any excess
-files.
+Deleting files
 
-    rclone sync remote:directory /home/local/directory
+Depending on the enterprise settings for your user, the item will either
+be actually deleted from Box or moved to the trash.
 
-Read only
+Specific options
 
-This remote is read only - you can't upload files to an HTTP server.
+Here are the command line options specific to this cloud storage system.
 
-Modified time
+--box-upload-cutoff=SIZE
 
-Most HTTP servers store time accurate to 1 second.
+Cutoff for switching to chunked upload - must be >= 50MB. The default is
+50MB.
 
-Checksum
+Limitations
 
-No checksums are stored.
+Note that Box is case insensitive so you can't have a file called
+"Hello.doc" and one called "hello.doc".
 
-Usage without a config file
+Box file names can't have the \ character in. rclone maps this to and
+from an identical looking unicode equivalent ＼.
 
-Note that since only two environment variable need to be set, it is easy
-to use without a config file like this.
-
-    RCLONE_CONFIG_ZZ_TYPE=http RCLONE_CONFIG_ZZ_URL=https://beta.rclone.org rclone lsd zz:
-
-Or if you prefer
-
-    export RCLONE_CONFIG_ZZ_TYPE=http
-    export RCLONE_CONFIG_ZZ_URL=https://beta.rclone.org
-    rclone lsd zz:
+Box only supports filenames up to 255 characters in length.
 
 
 Crypt
@@ -5709,6 +4642,2128 @@ encrypted data. For full protection agains this you should always use a
 salt.
 
 
+Dropbox
+
+Paths are specified as remote:path
+
+Dropbox paths may be as deep as required, eg
+remote:directory/subdirectory.
+
+The initial setup for dropbox involves getting a token from Dropbox
+which you need to do in your browser. rclone config walks you through
+it.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    n) New remote
+    d) Delete remote
+    q) Quit config
+    e/n/d/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     7 / Google Drive
+       \ "drive"
+     8 / Hubic
+       \ "hubic"
+     9 / Local Disk
+       \ "local"
+    10 / Microsoft OneDrive
+       \ "onedrive"
+    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    12 / SSH/SFTP Connection
+       \ "sftp"
+    13 / Yandex Disk
+       \ "yandex"
+    Storage> 4
+    Dropbox App Key - leave blank normally.
+    app_key>
+    Dropbox App Secret - leave blank normally.
+    app_secret>
+    Remote config
+    Please visit:
+    https://www.dropbox.com/1/oauth2/authorize?client_id=XXXXXXXXXXXXXXX&response_type=code
+    Enter the code: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX_XXXXXXXXXX
+    --------------------
+    [remote]
+    app_key =
+    app_secret =
+    token = XXXXXXXXXXXXXXXXXXXXXXXXXXXXX_XXXX_XXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+You can then use it like this,
+
+List directories in top level of your dropbox
+
+    rclone lsd remote:
+
+List all the files in your dropbox
+
+    rclone ls remote:
+
+To copy a local directory to a dropbox directory called backup
+
+    rclone copy /home/source remote:backup
+
+Modified time and Hashes
+
+Dropbox supports modified times, but the only way to set a modification
+time is to re-upload the file.
+
+This means that if you uploaded your data with an older version of
+rclone which didn't support the v2 API and modified times, rclone will
+decide to upload all your old data to fix the modification times. If you
+don't want this to happen use --size-only or --checksum flag to stop it.
+
+Dropbox supports its own hash type which is checked for all transfers.
+
+Specific options
+
+Here are the command line options specific to this cloud storage system.
+
+--dropbox-chunk-size=SIZE
+
+Upload chunk size. Max 150M. The default is 128MB. Note that this isn't
+buffered into memory.
+
+Limitations
+
+Note that Dropbox is case insensitive so you can't have a file called
+"Hello.doc" and one called "hello.doc".
+
+There are some file names such as thumbs.db which Dropbox can't store.
+There is a full list of them in the "Ignored Files" section of this
+document. Rclone will issue an error message
+File name disallowed - not uploading if it attempt to upload one of
+those file names, but the sync won't fail.
+
+If you have more than 10,000 files in a directory then
+rclone purge dropbox:dir will return the error
+Failed to purge: There are too many files involved in this operation. As
+a work-around do an rclone delete dropbox:dir followed by an
+rclone rmdir dropbox:dir.
+
+
+FTP
+
+FTP is the File Transfer Protocol. FTP support is provided using the
+github.com/jlaffaye/ftp package.
+
+Here is an example of making an FTP configuration. First run
+
+    rclone config
+
+This will guide you through an interactive setup process. An FTP remote
+only needs a host together with and a username and a password. With
+anonymous FTP server, you will need to use anonymous as username and
+your email address as the password.
+
+    No remotes found - make a new one
+    n) New remote
+    r) Rename remote
+    c) Copy remote
+    s) Set configuration password
+    q) Quit config
+    n/r/c/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / FTP Connection 
+       \ "ftp"
+     7 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     8 / Google Drive
+       \ "drive"
+     9 / Hubic
+       \ "hubic"
+    10 / Local Disk
+       \ "local"
+    11 / Microsoft OneDrive
+       \ "onedrive"
+    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    13 / SSH/SFTP Connection
+       \ "sftp"
+    14 / Yandex Disk
+       \ "yandex"
+    Storage> ftp
+    FTP host to connect to
+    Choose a number from below, or type in your own value
+     1 / Connect to ftp.example.com
+       \ "ftp.example.com"
+    host> ftp.example.com
+    FTP username, leave blank for current username, ncw
+    user>
+    FTP port, leave blank to use default (21)
+    port>
+    FTP password
+    y) Yes type in my own password
+    g) Generate random password
+    y/g> y
+    Enter the password:
+    password:
+    Confirm the password:
+    password:
+    Remote config
+    --------------------
+    [remote]
+    host = ftp.example.com
+    user = 
+    port =
+    pass = *** ENCRYPTED ***
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+This remote is called remote and can now be used like this
+
+See all directories in the home directory
+
+    rclone lsd remote:
+
+Make a new directory
+
+    rclone mkdir remote:path/to/directory
+
+List the contents of a directory
+
+    rclone ls remote:path/to/directory
+
+Sync /home/local/directory to the remote directory, deleting any excess
+files in the directory.
+
+    rclone sync /home/local/directory remote:directory
+
+Modified time
+
+FTP does not support modified times. Any times you see on the server
+will be time of upload.
+
+Checksums
+
+FTP does not support any checksums.
+
+Limitations
+
+Note that since FTP isn't HTTP based the following flags don't work with
+it: --dump-headers, --dump-bodies, --dump-auth
+
+Note that --timeout isn't supported (but --contimeout is).
+
+Note that --bind isn't supported.
+
+FTP could support server side move but doesn't yet.
+
+
+Google Cloud Storage
+
+Paths are specified as remote:bucket (or remote: for the lsd command.)
+You may put subdirectories in too, eg remote:bucket/path/to/dir.
+
+The initial setup for google cloud storage involves getting a token from
+Google Cloud Storage which you need to do in your browser. rclone config
+walks you through it.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    n) New remote
+    d) Delete remote
+    q) Quit config
+    e/n/d/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     7 / Google Drive
+       \ "drive"
+     8 / Hubic
+       \ "hubic"
+     9 / Local Disk
+       \ "local"
+    10 / Microsoft OneDrive
+       \ "onedrive"
+    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    12 / SSH/SFTP Connection
+       \ "sftp"
+    13 / Yandex Disk
+       \ "yandex"
+    Storage> 6
+    Google Application Client Id - leave blank normally.
+    client_id>
+    Google Application Client Secret - leave blank normally.
+    client_secret>
+    Project number optional - needed only for list/create/delete buckets - see your developer console.
+    project_number> 12345678
+    Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
+    service_account_file>
+    Access Control List for new objects.
+    Choose a number from below, or type in your own value
+     1 / Object owner gets OWNER access, and all Authenticated Users get READER access.
+       \ "authenticatedRead"
+     2 / Object owner gets OWNER access, and project team owners get OWNER access.
+       \ "bucketOwnerFullControl"
+     3 / Object owner gets OWNER access, and project team owners get READER access.
+       \ "bucketOwnerRead"
+     4 / Object owner gets OWNER access [default if left blank].
+       \ "private"
+     5 / Object owner gets OWNER access, and project team members get access according to their roles.
+       \ "projectPrivate"
+     6 / Object owner gets OWNER access, and all Users get READER access.
+       \ "publicRead"
+    object_acl> 4
+    Access Control List for new buckets.
+    Choose a number from below, or type in your own value
+     1 / Project team owners get OWNER access, and all Authenticated Users get READER access.
+       \ "authenticatedRead"
+     2 / Project team owners get OWNER access [default if left blank].
+       \ "private"
+     3 / Project team members get access according to their roles.
+       \ "projectPrivate"
+     4 / Project team owners get OWNER access, and all Users get READER access.
+       \ "publicRead"
+     5 / Project team owners get OWNER access, and all Users get WRITER access.
+       \ "publicReadWrite"
+    bucket_acl> 2
+    Location for the newly created buckets.
+    Choose a number from below, or type in your own value
+     1 / Empty for default location (US).
+       \ ""
+     2 / Multi-regional location for Asia.
+       \ "asia"
+     3 / Multi-regional location for Europe.
+       \ "eu"
+     4 / Multi-regional location for United States.
+       \ "us"
+     5 / Taiwan.
+       \ "asia-east1"
+     6 / Tokyo.
+       \ "asia-northeast1"
+     7 / Singapore.
+       \ "asia-southeast1"
+     8 / Sydney.
+       \ "australia-southeast1"
+     9 / Belgium.
+       \ "europe-west1"
+    10 / London.
+       \ "europe-west2"
+    11 / Iowa.
+       \ "us-central1"
+    12 / South Carolina.
+       \ "us-east1"
+    13 / Northern Virginia.
+       \ "us-east4"
+    14 / Oregon.
+       \ "us-west1"
+    location> 12
+    The storage class to use when storing objects in Google Cloud Storage.
+    Choose a number from below, or type in your own value
+     1 / Default
+       \ ""
+     2 / Multi-regional storage class
+       \ "MULTI_REGIONAL"
+     3 / Regional storage class
+       \ "REGIONAL"
+     4 / Nearline storage class
+       \ "NEARLINE"
+     5 / Coldline storage class
+       \ "COLDLINE"
+     6 / Durable reduced availability storage class
+       \ "DURABLE_REDUCED_AVAILABILITY"
+    storage_class> 5
+    Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine or Y didn't work
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
+    --------------------
+    [remote]
+    type = google cloud storage
+    client_id =
+    client_secret =
+    token = {"AccessToken":"xxxx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"x/xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx_xxxxxxxxx","Expiry":"2014-07-17T20:49:14.929208288+01:00","Extra":null}
+    project_number = 12345678
+    object_acl = private
+    bucket_acl = private
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Google if you use auto config mode. This only
+runs from the moment it opens your browser to the moment you get back
+the verification code. This is on http://127.0.0.1:53682/ and this it
+may require you to unblock it temporarily if you are running a host
+firewall, or use manual mode.
+
+This remote is called remote and can now be used like this
+
+See all the buckets in your project
+
+    rclone lsd remote:
+
+Make a new bucket
+
+    rclone mkdir remote:bucket
+
+List the contents of a bucket
+
+    rclone ls remote:bucket
+
+Sync /home/local/directory to the remote bucket, deleting any excess
+files in the bucket.
+
+    rclone sync /home/local/directory remote:bucket
+
+Service Account support
+
+You can set up rclone with Google Cloud Storage in an unattended mode,
+i.e. not tied to a specific end-user Google account. This is useful when
+you want to synchronise files onto machines that don't have actively
+logged-in users, for example build machines.
+
+To get credentials for Google Cloud Platform IAM Service Accounts,
+please head to the Service Account section of the Google Developer
+Console. Service Accounts behave just like normal User permissions in
+Google Cloud Storage ACLs, so you can limit their access (e.g. make them
+read only). After creating an account, a JSON file containing the
+Service Account's credentials will be downloaded onto your machines.
+These credentials are what rclone will use for authentication.
+
+To use a Service Account instead of OAuth2 token flow, enter the path to
+your Service Account credentials at the service_account_file prompt and
+rclone won't use the browser based authentication flow.
+
+--fast-list
+
+This remote supports --fast-list which allows you to use fewer
+transactions in exchange for more memory. See the rclone docs for more
+details.
+
+Modified time
+
+Google google cloud storage stores md5sums natively and rclone stores
+modification times as metadata on the object, under the "mtime" key in
+RFC3339 format accurate to 1ns.
+
+
+Google Drive
+
+Paths are specified as drive:path
+
+Drive paths may be as deep as required, eg drive:directory/subdirectory.
+
+The initial setup for drive involves getting a token from Google drive
+which you need to do in your browser. rclone config walks you through
+it.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    r) Rename remote
+    c) Copy remote
+    s) Set configuration password
+    q) Quit config
+    n/r/c/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / FTP Connection
+       \ "ftp"
+     7 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     8 / Google Drive
+       \ "drive"
+     9 / Hubic
+       \ "hubic"
+    10 / Local Disk
+       \ "local"
+    11 / Microsoft OneDrive
+       \ "onedrive"
+    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    13 / SSH/SFTP Connection
+       \ "sftp"
+    14 / Yandex Disk
+       \ "yandex"
+    Storage> 8
+    Google Application Client Id - leave blank normally.
+    client_id>
+    Google Application Client Secret - leave blank normally.
+    client_secret>
+    Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine or Y didn't work
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
+    Configure this as a team drive?
+    y) Yes
+    n) No
+    y/n> n
+    --------------------
+    [remote]
+    client_id =
+    client_secret =
+    token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Google if you use auto config mode. This only
+runs from the moment it opens your browser to the moment you get back
+the verification code. This is on http://127.0.0.1:53682/ and this it
+may require you to unblock it temporarily if you are running a host
+firewall, or use manual mode.
+
+You can then use it like this,
+
+List directories in top level of your drive
+
+    rclone lsd remote:
+
+List all the files in your drive
+
+    rclone ls remote:
+
+To copy a local directory to a drive directory called backup
+
+    rclone copy /home/source remote:backup
+
+Team drives
+
+If you want to configure the remote to point to a Google Team Drive then
+answer y to the question Configure this as a team drive?.
+
+This will fetch the list of Team Drives from google and allow you to
+configure which one you want to use. You can also type in a team drive
+ID if you prefer.
+
+For example:
+
+    Configure this as a team drive?
+    y) Yes
+    n) No
+    y/n> y
+    Fetching team drive list...
+    Choose a number from below, or type in your own value
+     1 / Rclone Test
+       \ "xxxxxxxxxxxxxxxxxxxx"
+     2 / Rclone Test 2
+       \ "yyyyyyyyyyyyyyyyyyyy"
+     3 / Rclone Test 3
+       \ "zzzzzzzzzzzzzzzzzzzz"
+    Enter a Team Drive ID> 1
+    --------------------
+    [remote]
+    client_id =
+    client_secret =
+    token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+    team_drive = xxxxxxxxxxxxxxxxxxxx
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+Modified time
+
+Google drive stores modification times accurate to 1 ms.
+
+Revisions
+
+Google drive stores revisions of files. When you upload a change to an
+existing file to google drive using rclone it will create a new revision
+of that file.
+
+Revisions follow the standard google policy which at time of writing was
+
+-   They are deleted after 30 days or 100 revisions (whatever
+    comes first).
+-   They do not count towards a user storage quota.
+
+Deleting files
+
+By default rclone will send all files to the trash when deleting files.
+If deleting them permanently is required then use the
+--drive-use-trash=false flag, or set the equivalent environment
+variable.
+
+Emptying trash
+
+If you wish to empty your trash you can use the rclone cleanup remote:
+command which will permanently delete all your trashed files. This
+command does not take any path arguments.
+
+Specific options
+
+Here are the command line options specific to this cloud storage system.
+
+--drive-auth-owner-only
+
+Only consider files owned by the authenticated user.
+
+--drive-chunk-size=SIZE
+
+Upload chunk size. Must a power of 2 >= 256k. Default value is 8 MB.
+
+Making this larger will improve performance, but note that each chunk is
+buffered in memory one per transfer.
+
+Reducing this will reduce memory usage but decrease performance.
+
+--drive-formats
+
+Google documents can only be exported from Google drive. When rclone
+downloads a Google doc it chooses a format to download depending upon
+this setting.
+
+By default the formats are docx,xlsx,pptx,svg which are a sensible
+default for an editable document.
+
+When choosing a format, rclone runs down the list provided in order and
+chooses the first file format the doc can be exported as from the list.
+If the file can't be exported to a format on the formats list, then
+rclone will choose a format from the default list.
+
+If you prefer an archive copy then you might use --drive-formats pdf, or
+if you prefer openoffice/libreoffice formats you might use
+--drive-formats ods,odt,odp.
+
+Note that rclone adds the extension to the google doc, so if it is
+calles My Spreadsheet on google docs, it will be exported as
+My Spreadsheet.xlsx or My Spreadsheet.pdf etc.
+
+Here are the possible extensions with their corresponding mime types.
+
+  -------------------------------------
+  Extension  Mime Type    Description
+  ---------- ------------ -------------
+  csv        text/csv     Standard CSV
+                          format for
+                          Spreadsheets
+
+  doc        application/ Micosoft
+             msword       Office
+                          Document
+
+  docx       application/ Microsoft
+             vnd.openxmlf Office
+             ormats-offic Document
+             edocument.wo 
+             rdprocessing 
+             ml.document  
+
+  epub       application/ E-book format
+             epub+zip     
+
+  html       text/html    An HTML
+                          Document
+
+  jpg        image/jpeg   A JPEG Image
+                          File
+
+  odp        application/ Openoffice
+             vnd.oasis.op Presentation
+             endocument.p 
+             resentation  
+
+  ods        application/ Openoffice
+             vnd.oasis.op Spreadsheet
+             endocument.s 
+             preadsheet   
+
+  ods        application/ Openoffice
+             x-vnd.oasis. Spreadsheet
+             opendocument 
+             .spreadsheet 
+
+  odt        application/ Openoffice
+             vnd.oasis.op Document
+             endocument.t 
+             ext          
+
+  pdf        application/ Adobe PDF
+             pdf          Format
+
+  png        image/png    PNG Image
+                          Format
+
+  pptx       application/ Microsoft
+             vnd.openxmlf Office
+             ormats-offic Powerpoint
+             edocument.pr 
+             esentationml 
+             .presentatio 
+             n            
+
+  rtf        application/ Rich Text
+             rtf          Format
+
+  svg        image/svg+xm Scalable
+             l            Vector
+                          Graphics
+                          Format
+
+  tsv        text/tab-sep Standard TSV
+             arated-value format for
+             s            spreadsheets
+
+  txt        text/plain   Plain Text
+
+  xls        application/ Microsoft
+             vnd.ms-excel Office
+                          Spreadsheet
+
+  xlsx       application/ Microsoft
+             vnd.openxmlf Office
+             ormats-offic Spreadsheet
+             edocument.sp 
+             readsheetml. 
+             sheet        
+
+  zip        application/ A ZIP file of
+             zip          HTML, Images
+                          CSS
+  -------------------------------------
+
+--drive-list-chunk int
+
+Size of listing chunk 100-1000. 0 to disable. (default 1000)
+
+--drive-shared-with-me
+
+Only show files that are shared with me
+
+--drive-skip-gdocs
+
+Skip google documents in all listings. If given, gdocs practically
+become invisible to rclone.
+
+--drive-trashed-only
+
+Only show files that are in the trash. This will show trashed files in
+their original directory structure.
+
+--drive-upload-cutoff=SIZE
+
+File size cutoff for switching to chunked upload. Default is 8 MB.
+
+--drive-use-trash
+
+Controls whether files are sent to the trash or deleted permanently.
+Defaults to true, namely sending files to the trash. Use
+--drive-use-trash=false to delete files permanently instead.
+
+Limitations
+
+Drive has quite a lot of rate limiting. This causes rclone to be limited
+to transferring about 2 files per second only. Individual files may be
+transferred much faster at 100s of MBytes/s but lots of small files can
+take a long time.
+
+Server side copies are also subject to a separate rate limit. If you see
+User rate limit exceeded errors, wait at least 24 hours and retry. You
+can disable server side copies with --disable copy to download and
+upload the files if you prefer.
+
+Duplicated files
+
+Sometimes, for no reason I've been able to track down, drive will
+duplicate a file that rclone uploads. Drive unlike all the other remotes
+can have duplicated files.
+
+Duplicated files cause problems with the syncing and you will see
+messages in the log about duplicates.
+
+Use rclone dedupe to fix duplicated files.
+
+Note that this isn't just a problem with rclone, even Google Photos on
+Android duplicates files on drive sometimes.
+
+Rclone appears to be re-copying files it shouldn't
+
+There are two possible reasons for rclone to recopy files which haven't
+changed to Google Drive.
+
+The first is the duplicated file issue above - run rclone dedupe and
+check your logs for duplicate object or directory messages.
+
+The second is that sometimes Google reports different sizes for the
+Google Docs exports which will cause rclone to re-download Google Docs
+for no apparent reason. --ignore-size is a not very satisfactory
+work-around for this if it is causing you a lot of problems.
+
+Google docs downloads sometimes fail with "Failed to copy: read X bytes expecting Y"
+
+This is the same problem as above. Google reports the google doc is one
+size, but rclone downloads a different size. Work-around with the
+--ignore-size flag or wait for rclone to retry the download which it
+will.
+
+Making your own client_id
+
+When you use rclone with Google drive in its default configuration you
+are using rclone's client_id. This is shared between all the rclone
+users. There is a global rate limit on the number of queries per second
+that each client_id can do set by Google. rclone already has a high
+quota and I will continue to make sure it is high enough by contacting
+Google.
+
+However you might find you get better performance making your own
+client_id if you are a heavy user. Or you may not depending on exactly
+how Google have been raising rclone's rate limit.
+
+Here is how to create your own Google Drive client ID for rclone:
+
+1.  Log into the Google API Console with your Google account. It doesn't
+    matter what Google account you use. (It need not be the same account
+    as the Google Drive you want to access)
+
+2.  Select a project or create a new project.
+
+3.  Under Overview, Google APIs, Google Apps APIs, click "Drive API",
+    then "Enable".
+
+4.  Click "Credentials" in the left-side panel (not "Go to credentials",
+    which opens the wizard), then "Create credentials", then "OAuth
+    client ID". It will prompt you to set the OAuth consent screen
+    product name, if you haven't set one already.
+
+5.  Choose an application type of "other", and click "Create". (the
+    default name is fine)
+
+6.  It will show you a client ID and client secret. Use these values in
+    rclone config to add a new remote or edit an existing remote.
+
+(Thanks to @balazer on github for these instructions.)
+
+
+HTTP
+
+The HTTP remote is a read only remote for reading files of a webserver.
+The webserver should provide file listings which rclone will read and
+turn into a remote. This has been tested with common webservers such as
+Apache/Nginx/Caddy and will likely work with file listings from most web
+servers. (If it doesn't then please file an issue, or send a pull
+request!)
+
+Paths are specified as remote: or remote:path/to/dir.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    q) Quit config
+    n/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / FTP Connection
+       \ "ftp"
+     7 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     8 / Google Drive
+       \ "drive"
+     9 / Hubic
+       \ "hubic"
+    10 / Local Disk
+       \ "local"
+    11 / Microsoft OneDrive
+       \ "onedrive"
+    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    13 / SSH/SFTP Connection
+       \ "sftp"
+    14 / Yandex Disk
+       \ "yandex"
+    15 / http Connection
+       \ "http"
+    Storage> http
+    URL of http host to connect to
+    Choose a number from below, or type in your own value
+     1 / Connect to example.com
+       \ "https://example.com"
+    url> https://beta.rclone.org
+    Remote config
+    --------------------
+    [remote]
+    url = https://beta.rclone.org
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+    Current remotes:
+
+    Name                 Type
+    ====                 ====
+    remote               http
+
+    e) Edit existing remote
+    n) New remote
+    d) Delete remote
+    r) Rename remote
+    c) Copy remote
+    s) Set configuration password
+    q) Quit config
+    e/n/d/r/c/s/q> q
+
+This remote is called remote and can now be used like this
+
+See all the top level directories
+
+    rclone lsd remote:
+
+List the contents of a directory
+
+    rclone ls remote:directory
+
+Sync the remote directory to /home/local/directory, deleting any excess
+files.
+
+    rclone sync remote:directory /home/local/directory
+
+Read only
+
+This remote is read only - you can't upload files to an HTTP server.
+
+Modified time
+
+Most HTTP servers store time accurate to 1 second.
+
+Checksum
+
+No checksums are stored.
+
+Usage without a config file
+
+Note that since only two environment variable need to be set, it is easy
+to use without a config file like this.
+
+    RCLONE_CONFIG_ZZ_TYPE=http RCLONE_CONFIG_ZZ_URL=https://beta.rclone.org rclone lsd zz:
+
+Or if you prefer
+
+    export RCLONE_CONFIG_ZZ_TYPE=http
+    export RCLONE_CONFIG_ZZ_URL=https://beta.rclone.org
+    rclone lsd zz:
+
+
+Hubic
+
+Paths are specified as remote:path
+
+Paths are specified as remote:container (or remote: for the lsd
+command.) You may put subdirectories in too, eg
+remote:container/path/to/dir.
+
+The initial setup for Hubic involves getting a token from Hubic which
+you need to do in your browser. rclone config walks you through it.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    n) New remote
+    s) Set configuration password
+    n/s> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     7 / Google Drive
+       \ "drive"
+     8 / Hubic
+       \ "hubic"
+     9 / Local Disk
+       \ "local"
+    10 / Microsoft OneDrive
+       \ "onedrive"
+    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    12 / SSH/SFTP Connection
+       \ "sftp"
+    13 / Yandex Disk
+       \ "yandex"
+    Storage> 8
+    Hubic Client Id - leave blank normally.
+    client_id>
+    Hubic Client Secret - leave blank normally.
+    client_secret>
+    Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
+    --------------------
+    [remote]
+    client_id =
+    client_secret =
+    token = {"access_token":"XXXXXX"}
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+See the remote setup docs for how to set it up on a machine with no
+Internet browser available.
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Hubic. This only runs from the moment it opens
+your browser to the moment you get back the verification code. This is
+on http://127.0.0.1:53682/ and this it may require you to unblock it
+temporarily if you are running a host firewall.
+
+Once configured you can then use rclone like this,
+
+List containers in the top level of your Hubic
+
+    rclone lsd remote:
+
+List all the files in your Hubic
+
+    rclone ls remote:
+
+To copy a local directory to an Hubic directory called backup
+
+    rclone copy /home/source remote:backup
+
+If you want the directory to be visible in the official _Hubic browser_,
+you need to copy your files to the default directory
+
+    rclone copy /home/source remote:default/backup
+
+--fast-list
+
+This remote supports --fast-list which allows you to use fewer
+transactions in exchange for more memory. See the rclone docs for more
+details.
+
+Modified time
+
+The modified time is stored as metadata on the object as
+X-Object-Meta-Mtime as floating point since the epoch accurate to 1 ns.
+
+This is a defacto standard (used in the official python-swiftclient
+amongst others) for storing the modification time for an object.
+
+Note that Hubic wraps the Swift backend, so most of the properties of
+are the same.
+
+Limitations
+
+This uses the normal OpenStack Swift mechanism to refresh the Swift API
+credentials and ignores the expires field returned by the Hubic API.
+
+The Swift API doesn't return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won't check or use the
+MD5SUM for these.
+
+
+Microsoft Azure Blob Storage
+
+Paths are specified as remote:container (or remote: for the lsd
+command.) You may put subdirectories in too, eg
+remote:container/path/to/dir.
+
+Here is an example of making a Microsoft Azure Blob Storage
+configuration. For a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    q) Quit config
+    n/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Box
+       \ "box"
+     5 / Dropbox
+       \ "dropbox"
+     6 / Encrypt/Decrypt a remote
+       \ "crypt"
+     7 / FTP Connection
+       \ "ftp"
+     8 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     9 / Google Drive
+       \ "drive"
+    10 / Hubic
+       \ "hubic"
+    11 / Local Disk
+       \ "local"
+    12 / Microsoft Azure Blob Storage
+       \ "azureblob"
+    13 / Microsoft OneDrive
+       \ "onedrive"
+    14 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    15 / SSH/SFTP Connection
+       \ "sftp"
+    16 / Yandex Disk
+       \ "yandex"
+    17 / http Connection
+       \ "http"
+    Storage> azureblob
+    Storage Account Name
+    account> account_name
+    Storage Account Key
+    key> base64encodedkey==
+    Endpoint for the service - leave blank normally.
+    endpoint> 
+    Remote config
+    --------------------
+    [remote]
+    account = account_name
+    key = base64encodedkey==
+    endpoint = 
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+See all containers
+
+    rclone lsd remote:
+
+Make a new container
+
+    rclone mkdir remote:container
+
+List the contents of a container
+
+    rclone ls remote:container
+
+Sync /home/local/directory to the remote container, deleting any excess
+files in the container.
+
+    rclone sync /home/local/directory remote:container
+
+--fast-list
+
+This remote supports --fast-list which allows you to use fewer
+transactions in exchange for more memory. See the rclone docs for more
+details.
+
+Modified time
+
+The modified time is stored as metadata on the object with the mtime
+key. It is stored using RFC3339 Format time with nanosecond precision.
+The metadata is supplied during directory listings so there is no
+overhead to using it.
+
+Hashes
+
+MD5 hashes are stored with blobs. However blobs that were uploaded in
+chunks only have an MD5 if the source remote was capable of MD5 hashes,
+eg the local disk.
+
+Multipart uploads
+
+Rclone supports multipart uploads with Azure Blob storage. Files bigger
+than 256MB will be uploaded using chunked upload by default.
+
+The files will be uploaded in parallel in 4MB chunks (by default). Note
+that these chunks are buffered in memory and there may be up to
+--transfers of them being uploaded at once.
+
+Files can't be split into more than 50,000 chunks so by default, so the
+largest file that can be uploaded with 4MB chunk size is 195GB. Above
+this rclone will double the chunk size until it creates less than 50,000
+chunks. By default this will mean a maximum file size of 3.2TB can be
+uploaded. This can be raised to 5TB using --azureblob-chunk-size 100M.
+
+Note that rclone doesn't commit the block list until the end of the
+upload which means that there is a limit of 9.5TB of multipart uploads
+in progress as Azure won't allow more than that amount of uncommitted
+blocks.
+
+Specific options
+
+Here are the command line options specific to this cloud storage system.
+
+--azureblob-upload-cutoff=SIZE
+
+Cutoff for switching to chunked upload - must be <= 256MB. The default
+is 256MB.
+
+--azureblob-chunk-size=SIZE
+
+Upload chunk size. Default 4MB. Note that this is stored in memory and
+there may be up to --transfers chunks stored at once in memory. This can
+be at most 100MB.
+
+Limitations
+
+MD5 sums are only uploaded with chunked files if the source has an MD5
+sum. This will always be the case for a local to azure copy.
+
+
+Microsoft OneDrive
+
+Paths are specified as remote:path
+
+Paths may be as deep as required, eg remote:directory/subdirectory.
+
+The initial setup for OneDrive involves getting a token from Microsoft
+which you need to do in your browser. rclone config walks you through
+it.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    n/s> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     7 / Google Drive
+       \ "drive"
+     8 / Hubic
+       \ "hubic"
+     9 / Local Disk
+       \ "local"
+    10 / Microsoft OneDrive
+       \ "onedrive"
+    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    12 / SSH/SFTP Connection
+       \ "sftp"
+    13 / Yandex Disk
+       \ "yandex"
+    Storage> 10
+    Microsoft App Client Id - leave blank normally.
+    client_id>
+    Microsoft App Client Secret - leave blank normally.
+    client_secret>
+    Remote config
+    Choose OneDrive account type?
+     * Say b for a OneDrive business account
+     * Say p for a personal OneDrive account
+    b) Business
+    p) Personal
+    b/p> p
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
+    --------------------
+    [remote]
+    client_id =
+    client_secret =
+    token = {"access_token":"XXXXXX"}
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+See the remote setup docs for how to set it up on a machine with no
+Internet browser available.
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Microsoft. This only runs from the moment it
+opens your browser to the moment you get back the verification code.
+This is on http://127.0.0.1:53682/ and this it may require you to
+unblock it temporarily if you are running a host firewall.
+
+Once configured you can then use rclone like this,
+
+List directories in top level of your OneDrive
+
+    rclone lsd remote:
+
+List all the files in your OneDrive
+
+    rclone ls remote:
+
+To copy a local directory to an OneDrive directory called backup
+
+    rclone copy /home/source remote:backup
+
+OneDrive for Business
+
+There is additional support for OneDrive for Business. Select "b" when
+ask
+
+    Choose OneDrive account type?
+     * Say b for a OneDrive business account
+     * Say p for a personal OneDrive account
+    b) Business
+    p) Personal
+    b/p> 
+
+After that rclone requires an authentication of your account. The
+application will first authenticate your account, then query the
+OneDrive resource URL and do a second (silent) authentication for this
+resource URL.
+
+Modified time and hashes
+
+OneDrive allows modification times to be set on objects accurate to 1
+second. These will be used to detect whether objects need syncing or
+not.
+
+One drive supports SHA1 type hashes, so you can use --checksum flag.
+
+Deleting files
+
+Any files you delete with rclone will end up in the trash. Microsoft
+doesn't provide an API to permanently delete files, nor to empty the
+trash, so you will have to do that with one of Microsoft's apps or via
+the OneDrive website.
+
+Specific options
+
+Here are the command line options specific to this cloud storage system.
+
+--onedrive-chunk-size=SIZE
+
+Above this size files will be chunked - must be multiple of 320k. The
+default is 10MB. Note that the chunks will be buffered into memory.
+
+--onedrive-upload-cutoff=SIZE
+
+Cutoff for switching to chunked upload - must be <= 100MB. The default
+is 10MB.
+
+Limitations
+
+Note that OneDrive is case insensitive so you can't have a file called
+"Hello.doc" and one called "hello.doc".
+
+There are quite a few characters that can't be in OneDrive file names.
+These can't occur on Windows platforms, but on non-Windows platforms
+they are common. Rclone will map these names to and from an identical
+looking unicode equivalent. For example if a file has a ? in it will be
+mapped to ？ instead.
+
+The largest allowed file size is 10GiB (10,737,418,240 bytes).
+
+
+QingStor
+
+Paths are specified as remote:bucket (or remote: for the lsd command.)
+You may put subdirectories in too, eg remote:bucket/path/to/dir.
+
+Here is an example of making an QingStor configuration. First run
+
+    rclone config
+
+This will guide you through an interactive setup process.
+
+    No remotes found - make a new one
+    n) New remote
+    r) Rename remote
+    c) Copy remote
+    s) Set configuration password
+    q) Quit config
+    n/r/c/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / FTP Connection
+       \ "ftp"
+     7 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     8 / Google Drive
+       \ "drive"
+     9 / Hubic
+       \ "hubic"
+    10 / Local Disk
+       \ "local"
+    11 / Microsoft OneDrive
+       \ "onedrive"
+    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    13 / QingStor Object Storage
+       \ "qingstor"
+    14 / SSH/SFTP Connection
+       \ "sftp"
+    15 / Yandex Disk
+       \ "yandex"
+    Storage> 13
+    Get QingStor credentials from runtime. Only applies if access_key_id and secret_access_key is blank.
+    Choose a number from below, or type in your own value
+     1 / Enter QingStor credentials in the next step
+       \ "false"
+     2 / Get QingStor credentials from the environment (env vars or IAM)
+       \ "true"
+    env_auth> 1
+    QingStor Access Key ID - leave blank for anonymous access or runtime credentials.
+    access_key_id> access_key
+    QingStor Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+    secret_access_key> secret_key
+    Enter a endpoint URL to connection QingStor API.
+    Leave blank will use the default value "https://qingstor.com:443"
+    endpoint>
+    Zone connect to. Default is "pek3a".
+    Choose a number from below, or type in your own value
+       / The Beijing (China) Three Zone
+     1 | Needs location constraint pek3a.
+       \ "pek3a"
+       / The Shanghai (China) First Zone
+     2 | Needs location constraint sh1a.
+       \ "sh1a"
+    zone> 1
+    Number of connnection retry.
+    Leave blank will use the default value "3".
+    connection_retries>
+    Remote config
+    --------------------
+    [remote]
+    env_auth = false
+    access_key_id = access_key
+    secret_access_key = secret_key
+    endpoint =
+    zone = pek3a
+    connection_retries =
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+This remote is called remote and can now be used like this
+
+See all buckets
+
+    rclone lsd remote:
+
+Make a new bucket
+
+    rclone mkdir remote:bucket
+
+List the contents of a bucket
+
+    rclone ls remote:bucket
+
+Sync /home/local/directory to the remote bucket, deleting any excess
+files in the bucket.
+
+    rclone sync /home/local/directory remote:bucket
+
+--fast-list
+
+This remote supports --fast-list which allows you to use fewer
+transactions in exchange for more memory. See the rclone docs for more
+details.
+
+Multipart uploads
+
+rclone supports multipart uploads with QingStor which means that it can
+upload files bigger than 5GB. Note that files uploaded with multipart
+upload don't have an MD5SUM.
+
+Buckets and Zone
+
+With QingStor you can list buckets (rclone lsd) using any zone, but you
+can only access the content of a bucket from the zone it was created in.
+If you attempt to access a bucket from the wrong zone, you will get an
+error, incorrect zone, the bucket is not in 'XXX' zone.
+
+Authentication
+
+There are two ways to supply rclone with a set of QingStor credentials.
+In order of precedence:
+
+-   Directly in the rclone configuration file (as configured by
+    rclone config)
+-   set access_key_id and secret_access_key
+-   Runtime configuration:
+-   set env_auth to true in the config file
+-   Exporting the following environment variables before running rclone
+    -   Access Key ID: QS_ACCESS_KEY_ID or QS_ACCESS_KEY
+    -   Secret Access Key: QS_SECRET_ACCESS_KEY or QS_SECRET_KEY
+
+
+Swift
+
+Swift refers to Openstack Object Storage. Commercial implementations of
+that being:
+
+-   Rackspace Cloud Files
+-   Memset Memstore
+-   OVH Object Storage
+-   Oracle Cloud Storage
+
+Paths are specified as remote:container (or remote: for the lsd
+command.) You may put subdirectories in too, eg
+remote:container/path/to/dir.
+
+Here is an example of making a swift configuration. First run
+
+    rclone config
+
+This will guide you through an interactive setup process.
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    q) Quit config
+    n/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Box
+       \ "box"
+     5 / Dropbox
+       \ "dropbox"
+     6 / Encrypt/Decrypt a remote
+       \ "crypt"
+     7 / FTP Connection
+       \ "ftp"
+     8 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     9 / Google Drive
+       \ "drive"
+    10 / Hubic
+       \ "hubic"
+    11 / Local Disk
+       \ "local"
+    12 / Microsoft Azure Blob Storage
+       \ "azureblob"
+    13 / Microsoft OneDrive
+       \ "onedrive"
+    14 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    15 / QingClound Object Storage
+       \ "qingstor"
+    16 / SSH/SFTP Connection
+       \ "sftp"
+    17 / Yandex Disk
+       \ "yandex"
+    18 / http Connection
+       \ "http"
+    Storage> swift
+    Get swift credentials from environment variables in standard OpenStack form.
+    Choose a number from below, or type in your own value
+     1 / Enter swift credentials in the next step
+       \ "false"
+     2 / Get swift credentials from environment vars. Leave other fields blank if using this.
+       \ "true"
+    env_auth> 1
+    User name to log in.
+    user> user_name
+    API key or password.
+    key> password_or_api_key
+    Authentication URL for server.
+    Choose a number from below, or type in your own value
+     1 / Rackspace US
+       \ "https://auth.api.rackspacecloud.com/v1.0"
+     2 / Rackspace UK
+       \ "https://lon.auth.api.rackspacecloud.com/v1.0"
+     3 / Rackspace v2
+       \ "https://identity.api.rackspacecloud.com/v2.0"
+     4 / Memset Memstore UK
+       \ "https://auth.storage.memset.com/v1.0"
+     5 / Memset Memstore UK v2
+       \ "https://auth.storage.memset.com/v2.0"
+     6 / OVH
+       \ "https://auth.cloud.ovh.net/v2.0"
+    auth> 1
+    User domain - optional (v3 auth)
+    domain> Default
+    Tenant name - optional for v1 auth, required otherwise
+    tenant> tenant_name
+    Tenant domain - optional (v3 auth)
+    tenant_domain>
+    Region name - optional
+    region>
+    Storage URL - optional
+    storage_url>
+    AuthVersion - optional - set to (1,2,3) if your auth URL has no version
+    auth_version>
+    Endpoint type to choose from the service catalogue
+    Choose a number from below, or type in your own value
+     1 / Public (default, choose this if not sure)
+       \ "public"
+     2 / Internal (use internal service net)
+       \ "internal"
+     3 / Admin
+       \ "admin"
+    endpoint_type>
+    Remote config
+    --------------------
+    [remote]
+    env_auth = false
+    user = user_name
+    key = password_or_api_key
+    auth = https://auth.api.rackspacecloud.com/v1.0
+    domain = Default
+    tenant =
+    tenant_domain =
+    region =
+    storage_url =
+    auth_version =
+    endpoint_type =
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+This remote is called remote and can now be used like this
+
+See all containers
+
+    rclone lsd remote:
+
+Make a new container
+
+    rclone mkdir remote:container
+
+List the contents of a container
+
+    rclone ls remote:container
+
+Sync /home/local/directory to the remote container, deleting any excess
+files in the container.
+
+    rclone sync /home/local/directory remote:container
+
+Configuration from an Openstack credentials file
+
+An Opentstack credentials file typically looks something something like
+this (without the comments)
+
+    export OS_AUTH_URL=https://a.provider.net/v2.0
+    export OS_TENANT_ID=ffffffffffffffffffffffffffffffff
+    export OS_TENANT_NAME="1234567890123456"
+    export OS_USERNAME="123abc567xy"
+    echo "Please enter your OpenStack Password: "
+    read -sr OS_PASSWORD_INPUT
+    export OS_PASSWORD=$OS_PASSWORD_INPUT
+    export OS_REGION_NAME="SBG1"
+    if [ -z "$OS_REGION_NAME" ]; then unset OS_REGION_NAME; fi
+
+The config file needs to look something like this where $OS_USERNAME
+represents the value of the OS_USERNAME variable - 123abc567xy in the
+example above.
+
+    [remote]
+    type = swift
+    user = $OS_USERNAME
+    key = $OS_PASSWORD
+    auth = $OS_AUTH_URL
+    tenant = $OS_TENANT_NAME
+
+Note that you may (or may not) need to set region too - try without
+first.
+
+Configuration from the environment
+
+If you prefer you can configure rclone to use swift using a standard set
+of OpenStack environment variables.
+
+When you run through the config, make sure you choose true for env_auth
+and leave everything else blank.
+
+rclone will then set any empty config parameters from the enviroment
+using standard OpenStack environment variables. There is a list of the
+variables in the docs for the swift library.
+
+Using rclone without a config file
+
+You can use rclone with swift without a config file, if desired, like
+this:
+
+    source openstack-credentials-file
+    export RCLONE_CONFIG_MYREMOTE_TYPE=swift
+    export RCLONE_CONFIG_MYREMOTE_ENV_AUTH=true
+    rclone lsd myremote:
+
+--fast-list
+
+This remote supports --fast-list which allows you to use fewer
+transactions in exchange for more memory. See the rclone docs for more
+details.
+
+Specific options
+
+Here are the command line options specific to this cloud storage system.
+
+--swift-chunk-size=SIZE
+
+Above this size files will be chunked into a _segments container. The
+default for this is 5GB which is its maximum value.
+
+Modified time
+
+The modified time is stored as metadata on the object as
+X-Object-Meta-Mtime as floating point since the epoch accurate to 1 ns.
+
+This is a defacto standard (used in the official python-swiftclient
+amongst others) for storing the modification time for an object.
+
+Limitations
+
+The Swift API doesn't return a correct MD5SUM for segmented files
+(Dynamic or Static Large Objects) so rclone won't check or use the
+MD5SUM for these.
+
+Troubleshooting
+
+Rclone gives Failed to create file system for "remote:": Bad Request
+
+Due to an oddity of the underlying swift library, it gives a "Bad
+Request" error rather than a more sensible error when the authentication
+fails for Swift.
+
+So this most likely means your username / password is wrong. You can
+investigate further with the --dump-bodies flag.
+
+This may also be caused by specifying the region when you shouldn't have
+(eg OVH).
+
+Rclone gives Failed to create file system: Response didn't have storage storage url and auth token
+
+This is most likely caused by forgetting to specify your tenant when
+setting up a swift remote.
+
+
+SFTP
+
+SFTP is the Secure (or SSH) File Transfer Protocol.
+
+It runs over SSH v2 and is standard with most modern SSH installations.
+
+Paths are specified as remote:path. If the path does not begin with a /
+it is relative to the home directory of the user. An empty path remote:
+refers to the users home directory.
+
+Here is an example of making a SFTP configuration. First run
+
+    rclone config
+
+This will guide you through an interactive setup process.
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    q) Quit config
+    n/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / FTP Connection
+       \ "ftp"
+     7 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     8 / Google Drive
+       \ "drive"
+     9 / Hubic
+       \ "hubic"
+    10 / Local Disk
+       \ "local"
+    11 / Microsoft OneDrive
+       \ "onedrive"
+    12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    13 / SSH/SFTP Connection
+       \ "sftp"
+    14 / Yandex Disk
+       \ "yandex"
+    15 / http Connection
+       \ "http"
+    Storage> sftp
+    SSH host to connect to
+    Choose a number from below, or type in your own value
+     1 / Connect to example.com
+       \ "example.com"
+    host> example.com
+    SSH username, leave blank for current username, ncw
+    user> sftpuser
+    SSH port, leave blank to use default (22)
+    port> 
+    SSH password, leave blank to use ssh-agent.
+    y) Yes type in my own password
+    g) Generate random password
+    n) No leave this optional password blank
+    y/g/n> n
+    Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.
+    key_file> 
+    Remote config
+    --------------------
+    [remote]
+    host = example.com
+    user = sftpuser
+    port = 
+    pass = 
+    key_file = 
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+This remote is called remote and can now be used like this
+
+See all directories in the home directory
+
+    rclone lsd remote:
+
+Make a new directory
+
+    rclone mkdir remote:path/to/directory
+
+List the contents of a directory
+
+    rclone ls remote:path/to/directory
+
+Sync /home/local/directory to the remote directory, deleting any excess
+files in the directory.
+
+    rclone sync /home/local/directory remote:directory
+
+SSH Authentication
+
+The SFTP remote supports 3 authentication methods
+
+-   Password
+-   Key file
+-   ssh-agent
+
+Key files should be unencrypted PEM-encoded private key files. For
+instance /home/$USER/.ssh/id_rsa.
+
+If you don't specify pass or key_file then it will attempt to contact an
+ssh-agent.
+
+ssh-agent on macOS
+
+Note that there seem to be various problems with using an ssh-agent on
+macOS due to recent changes in the OS. The most effective work-around
+seems to be to start an ssh-agent in each session, eg
+
+    eval `ssh-agent -s` && ssh-add -A
+
+And then at the end of the session
+
+    eval `ssh-agent -k`
+
+These commands can be used in scripts of course.
+
+Modified time
+
+Modified times are stored on the server to 1 second precision.
+
+Modified times are used in syncing and are fully supported.
+
+Limitations
+
+SFTP supports checksums if the same login has shell access and md5sum or
+sha1sum as well as echo are in the remote's PATH.
+
+The only ssh agent supported under Windows is Putty's pagent.
+
+SFTP isn't supported under plan9 until this issue is fixed.
+
+Note that since SFTP isn't HTTP based the following flags don't work
+with it: --dump-headers, --dump-bodies, --dump-auth
+
+Note that --timeout isn't supported (but --contimeout is).
+
+
+Yandex Disk
+
+Yandex Disk is a cloud storage solution created by Yandex.
+
+Yandex paths may be as deep as required, eg
+remote:directory/subdirectory.
+
+Here is an example of making a yandex configuration. First run
+
+    rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    n/s> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Dropbox
+       \ "dropbox"
+     5 / Encrypt/Decrypt a remote
+       \ "crypt"
+     6 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     7 / Google Drive
+       \ "drive"
+     8 / Hubic
+       \ "hubic"
+     9 / Local Disk
+       \ "local"
+    10 / Microsoft OneDrive
+       \ "onedrive"
+    11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    12 / SSH/SFTP Connection
+       \ "sftp"
+    13 / Yandex Disk
+       \ "yandex"
+    Storage> 13
+    Yandex Client Id - leave blank normally.
+    client_id>
+    Yandex Client Secret - leave blank normally.
+    client_secret>
+    Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
+    --------------------
+    [remote]
+    client_id =
+    client_secret =
+    token = {"access_token":"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","token_type":"bearer","expiry":"2016-12-29T12:27:11.362788025Z"}
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+See the remote setup docs for how to set it up on a machine with no
+Internet browser available.
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from Yandex Disk. This only runs from the moment it
+opens your browser to the moment you get back the verification code.
+This is on http://127.0.0.1:53682/ and this it may require you to
+unblock it temporarily if you are running a host firewall.
+
+Once configured you can then use rclone like this,
+
+See top level directories
+
+    rclone lsd remote:
+
+Make a new directory
+
+    rclone mkdir remote:directory
+
+List the contents of a directory
+
+    rclone ls remote:directory
+
+Sync /home/local/directory to the remote path, deleting any excess files
+in the path.
+
+    rclone sync /home/local/directory remote:directory
+
+--fast-list
+
+This remote supports --fast-list which allows you to use fewer
+transactions in exchange for more memory. See the rclone docs for more
+details.
+
+Modified time
+
+Modified times are supported and are stored accurate to 1 ns in custom
+metadata called rclone_modified in RFC3339 with nanoseconds format.
+
+MD5 checksums
+
+MD5 checksums are natively supported by Yandex Disk.
+
+Emptying Trash
+
+If you wish to empty your trash you can use the rclone cleanup remote:
+command which will permanently delete all your trashed files. This
+command does not take any path arguments.
+
+
 Local Filesystem
 
 Local paths are specified as normal filesystem paths, eg
@@ -5814,18 +6869,11 @@ and
             6 b/two
             6 b/one
 
---no-local-unicode-normalization
+--local-no-unicode-normalization
 
-By default rclone normalizes (NFC) the unicode representation of
-filenames and directories. This flag disables that normalization and
-uses the same representation as the local filesystem.
-
-This can be useful if you need to retain the local unicode
-representation and you are using a cloud provider which supports
-unnormalized names (e.g. S3 or ACD).
-
-This should also work with any provider if you are using crypt and have
-file name encryption (the default) or obfuscation turned on.
+This flag is deprecated now. Rclone no longer normalizes unicode file
+names, but it compares them with unicode normalization in the sync
+routine instead.
 
 --one-file-system, -x
 
@@ -5861,9 +6909,87 @@ mount to the same device as being on the same filesystem.
 NB This flag is only available on Unix based systems. On systems where
 it isn't supported (eg Windows) it will not appear as an valid flag.
 
+--skip-links
+
+This flag disables warning messages on skipped symlinks or junction
+points, as you explicitly acknowledge that they should be skipped.
+
 
 Changelog
 
+-   v1.38 - 2017-09-30
+    -   New backends
+    -   Azure Blob Storage (thanks Andrei Dragomir)
+    -   Box
+    -   Onedrive for Business (thanks Oliver Heyme)
+    -   QingStor from QingCloud (thanks wuyu)
+    -   New commands
+    -   rcat - read from standard input and stream upload
+    -   tree - shows a nicely formatted recursive listing
+    -   cryptdecode - decode crypted file names (thanks ishuah)
+    -   config show - print the config file
+    -   config file - print the config file location
+    -   New Features
+    -   Empty directories are deleted on sync
+    -   dedupe - implement merging of duplicate directories
+    -   check and cryptcheck made more consistent and use less memory
+    -   cleanup for remaining remotes (thanks ishuah)
+    -   --immutable for ensuring that files don't change (thanks
+        Jacob McNamee)
+    -   --user-agent option (thanks Alex McGrath Kraak)
+    -   --disable flag to disable optional features
+    -   --bind flag for choosing the local addr on outgoing connections
+    -   Support for zsh auto-completion (thanks bpicode)
+    -   Stop normalizing file names but do a normalized compare in sync
+    -   Compile
+    -   Update to using go1.9 as the default go version
+    -   Remove snapd build due to maintenance problems
+    -   Bug Fixes
+    -   Improve retriable error detection which makes multipart uploads
+        better
+    -   Make check obey --ignore-size
+    -   Fix bwlimit toggle in conjunction with schedules
+        (thanks cbruegg)
+    -   config ensures newly written config is on the same mount
+    -   Local
+    -   Revert to copy when moving file across file system boundaries
+    -   --skip-links to suppress symlink warnings (thanks Zhiming Wang)
+    -   Mount
+    -   Re-use rcat internals to support uploads from all remotes
+    -   Dropbox
+    -   Fix "entry doesn't belong in directory" error
+    -   Stop using deprecated API methods
+    -   Swift
+    -   Fix server side copy to empty container with --fast-list
+    -   Google Drive
+    -   Change the default for --drive-use-trash to true
+    -   S3
+    -   Set session token when using STS (thanks Girish Ramakrishnan)
+    -   Glacier docs and error messages (thanks Jan Varho)
+    -   Read 1000 (not 1024) items in dir listings to fix Wasabi
+    -   Backblaze B2
+    -   Fix SHA1 mismatch when downloading files with no SHA1
+    -   Calculate missing hashes on the fly instead of spooling
+    -   --b2-hard-delete to permanently delete (not hide) files (thanks
+        John Papandriopoulos)
+    -   Hubic
+    -   Fix creating containers - no longer have to use the default
+        container
+    -   Swift
+    -   Optionally configure from a standard set of OpenStack
+        environment vars
+    -   Add endpoint_type config
+    -   Google Cloud Storage
+    -   Fix bucket creation to work with limited permission users
+    -   SFTP
+    -   Implement connection pooling for multiple ssh connections
+    -   Limit new connections per second
+    -   Add support for MD5 and SHA1 hashes where available (thanks
+        Christian Brüggemann)
+    -   HTTP
+    -   Fix URL encoding issues
+    -   Fix directories with : in
+    -   Fix panic with URL encoded content
 -   v1.37 - 2017-07-22
     -   New backends
     -   FTP - thanks to Antonio Messina
@@ -5879,7 +7005,7 @@ Changelog
         -   This allows remotes to list recursively if they can
         -   This uses less transactions (important if you pay for them)
         -   This may or may not be quicker
-        -   This will user more memory as it has to hold the listing in
+        -   This will use more memory as it has to hold the listing in
             memory
         -   --old-sync-method deprecated - the remaining uses are
             covered by --fast-list
@@ -6837,6 +7963,19 @@ is to install the Word viewer and the Microsoft Office Compatibility
 Pack for Word, Excel, and PowerPoint 2007 and later versions' file
 formats
 
+tcp lookup some.domain.com no such host
+
+This happens when rclone cannot resolve a domain. Please check that your
+DNS setup is generally working, e.g.
+
+    # both should print a long list of possible IP addresses
+    dig www.googleapis.com          # resolve using your default DNS
+    dig www.googleapis.com @8.8.8.8 # resolve with Google's DNS server
+
+If you are using systemd-resolved (default on Arch Linux), ensure it is
+at version 233 or higher. Previous releases contain a bug which causes
+not all domains to be resolved properly.
+
 
 License
 
@@ -6947,6 +8086,22 @@ Contributors
 -   sainaen sainaen@gmail.com
 -   gdm85 gdm85@users.noreply.github.com
 -   Yaroslav Halchenko debian@onerussian.com
+-   John Papandriopoulos jpap@users.noreply.github.com
+-   Zhiming Wang zmwangx@gmail.com
+-   Andy Pilate cubox@cubox.me
+-   Oliver Heyme olihey@googlemail.com
+-   wuyu wuyu@yunify.com
+-   Andrei Dragomir adragomi@adobe.com
+-   Christian Brüggemann mail@cbruegg.com
+-   Alex McGrath Kraak amkdude@gmail.com
+-   bpicode bjoern.pirnay@googlemail.com
+-   Daniel Jagszent daniel@jagszent.de
+-   Josiah White thegenius2009@gmail.com
+-   Ishuah Kariuki kariuki@ishuah.com ishuah91@gmail.com
+-   Jan Varho jan@varho.org
+-   Girish Ramakrishnan girish@cloudron.io
+-   LingMan LingMan@users.noreply.github.com
+-   Jacob McNamee jacobmcnamee@gmail.com
 
 
 

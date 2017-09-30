@@ -1,59 +1,51 @@
 ---
 date: 2017-09-30T14:20:12+01:00
-title: "rclone"
-slug: rclone
-url: /commands/rclone/
+title: "rclone rcat"
+slug: rclone_rcat
+url: /commands/rclone_rcat/
 ---
-## rclone
+## rclone rcat
 
-Sync files and directories to and from local and remote object stores - v1.38-001-gda4e1b84
+Copies standard input to file on remote.
 
 ### Synopsis
 
 
 
-Rclone is a command line program to sync files and directories to and
-from various cloud storage systems and using file transfer services, such as:
+rclone rcat reads from standard input (stdin) and copies it to a
+single remote file.
 
-  * Amazon Drive
-  * Amazon S3
-  * Backblaze B2
-  * Box
-  * Dropbox
-  * FTP
-  * Google Cloud Storage
-  * Google Drive
-  * HTTP
-  * Hubic
-  * Microsoft Azure Blob Storage
-  * Microsoft OneDrive
-  * Openstack Swift / Rackspace cloud files / Memset Memstore
-  * QingStor
-  * SFTP
-  * Yandex Disk
-  * The local filesystem
+    echo "hello world" | rclone rcat remote:path/to/file
+    ffmpeg - | rclone rcat --checksum remote:path/to/file
 
-Features
+If the remote file already exists, it will be overwritten.
 
-  * MD5/SHA1 hashes checked at all times for file integrity
-  * Timestamps preserved on files
-  * Partial syncs supported on a whole file basis
-  * Copy mode to just copy new/changed files
-  * Sync (one way) mode to make a directory identical
-  * Check mode to check for file hash equality
-  * Can sync to and from network, eg two different cloud accounts
+rcat will try to upload small files in a single request, which is
+usually more efficient than the streaming/chunked upload endpoints,
+which use multiple requests. Exact behaviour depends on the remote.
+What is considered a small file may be set through
+`--streaming-upload-cutoff`. Uploading only starts after
+the cutoff is reached or if the file ends before that. The data
+must fit into RAM. The cutoff needs to be small enough to adhere
+the limits of your remote, please see there. Generally speaking,
+setting this cutoff too high will decrease your performance.
 
-See the home page for installation, usage, documentation, changelog
-and configuration walkthroughs.
-
-  * https://rclone.org/
-
+Note that the upload can also not be retried because the data is
+not kept around until the upload succeeds. If you need to transfer
+a lot of data, you're better off caching locally and then
+`rclone move` it to the destination.
 
 ```
-rclone [flags]
+rclone rcat remote:path [flags]
 ```
 
 ### Options
+
+```
+  -h, --help   help for rcat
+```
+
+### Options inherited from parent commands
 
 ```
       --acd-templink-threshold int        Files >= this size will be downloaded via their tempLink. (default 9G)
@@ -106,7 +98,6 @@ rclone [flags]
       --filter-from stringArray           Read filtering patterns from a file
       --gcs-location string               Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).
       --gcs-storage-class string          Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).
-  -h, --help                              help for rclone
       --ignore-checksum                   Skip post copy check of checksums.
       --ignore-existing                   Skip all files that exist on destination
       --ignore-size                       Ignore size when skipping use mod-time or checksum.
@@ -155,44 +146,9 @@ rclone [flags]
   -u, --update                            Skip files that are newer on the destination.
       --user-agent string                 Set the user-agent to a specified string. The default is rclone/ version (default "rclone/v1.38-001-gda4e1b84")
   -v, --verbose count[=-1]                Print lots more stuff (repeat for more)
-  -V, --version                           Print the version number
 ```
 
 ### SEE ALSO
-* [rclone authorize](/commands/rclone_authorize/)	 - Remote authorization.
-* [rclone cat](/commands/rclone_cat/)	 - Concatenates any files and sends them to stdout.
-* [rclone check](/commands/rclone_check/)	 - Checks the files in the source and destination match.
-* [rclone cleanup](/commands/rclone_cleanup/)	 - Clean up the remote if possible
-* [rclone config](/commands/rclone_config/)	 - Enter an interactive configuration session.
-* [rclone copy](/commands/rclone_copy/)	 - Copy files from source to dest, skipping already copied
-* [rclone copyto](/commands/rclone_copyto/)	 - Copy files from source to dest, skipping already copied
-* [rclone cryptcheck](/commands/rclone_cryptcheck/)	 - Cryptcheck checks the integrity of a crypted remote.
-* [rclone cryptdecode](/commands/rclone_cryptdecode/)	 - Cryptdecode returns unencrypted file names.
-* [rclone dbhashsum](/commands/rclone_dbhashsum/)	 - Produces a Dropbbox hash file for all the objects in the path.
-* [rclone dedupe](/commands/rclone_dedupe/)	 - Interactively find duplicate files delete/rename them.
-* [rclone delete](/commands/rclone_delete/)	 - Remove the contents of path.
-* [rclone genautocomplete](/commands/rclone_genautocomplete/)	 - Output completion script for a given shell.
-* [rclone gendocs](/commands/rclone_gendocs/)	 - Output markdown docs for rclone to the directory supplied.
-* [rclone listremotes](/commands/rclone_listremotes/)	 - List all the remotes in the config file.
-* [rclone ls](/commands/rclone_ls/)	 - List all the objects in the path with size and path.
-* [rclone lsd](/commands/rclone_lsd/)	 - List all directories/containers/buckets in the path.
-* [rclone lsjson](/commands/rclone_lsjson/)	 - List directories and objects in the path in JSON format.
-* [rclone lsl](/commands/rclone_lsl/)	 - List all the objects path with modification time, size and path.
-* [rclone md5sum](/commands/rclone_md5sum/)	 - Produces an md5sum file for all the objects in the path.
-* [rclone mkdir](/commands/rclone_mkdir/)	 - Make the path if it doesn't already exist.
-* [rclone mount](/commands/rclone_mount/)	 - Mount the remote as a mountpoint. **EXPERIMENTAL**
-* [rclone move](/commands/rclone_move/)	 - Move files from source to dest.
-* [rclone moveto](/commands/rclone_moveto/)	 - Move file or directory from source to dest.
-* [rclone ncdu](/commands/rclone_ncdu/)	 - Explore a remote with a text based user interface.
-* [rclone obscure](/commands/rclone_obscure/)	 - Obscure password for use in the rclone.conf
-* [rclone purge](/commands/rclone_purge/)	 - Remove the path and all of its contents.
-* [rclone rcat](/commands/rclone_rcat/)	 - Copies standard input to file on remote.
-* [rclone rmdir](/commands/rclone_rmdir/)	 - Remove the path if empty.
-* [rclone rmdirs](/commands/rclone_rmdirs/)	 - Remove empty directories under the path.
-* [rclone sha1sum](/commands/rclone_sha1sum/)	 - Produces an sha1sum file for all the objects in the path.
-* [rclone size](/commands/rclone_size/)	 - Prints the total size and number of objects in remote:path.
-* [rclone sync](/commands/rclone_sync/)	 - Make source and dest identical, modifying destination only.
-* [rclone tree](/commands/rclone_tree/)	 - List the contents of the remote in a tree like fashion.
-* [rclone version](/commands/rclone_version/)	 - Show the version number.
+* [rclone](/commands/rclone/)	 - Sync files and directories to and from local and remote object stores - v1.38-001-gda4e1b84
 
 ###### Auto generated by spf13/cobra on 30-Sep-2017
