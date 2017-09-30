@@ -113,7 +113,7 @@
 //   ...
 //   childSpan.Finish(trace.WithResponse(resp))
 //
-// When a span created by SpanFromRequest or SpamFromHeader is finished, the
+// When a span created by SpanFromRequest or SpanFromHeader is finished, the
 // finished spans in the corresponding trace -- the span itself and its
 // descendants -- are uploaded to the Stackdriver Trace server using the
 // *Client that created the span.  Finish returns immediately, and uploading
@@ -164,7 +164,7 @@ import (
 	"google.golang.org/api/gensupport"
 	"google.golang.org/api/option"
 	"google.golang.org/api/support/bundler"
-	"google.golang.org/api/transport"
+	htransport "google.golang.org/api/transport/http"
 )
 
 const (
@@ -254,7 +254,8 @@ func nextTraceID() string {
 	return fmt.Sprintf("%016x%016x", id1, id2)
 }
 
-// Client is a client for uploading traces to the Google Stackdriver Trace server.
+// Client is a client for uploading traces to the Google Stackdriver Trace service.
+// A nil Client will no-op for all of its methods.
 type Client struct {
 	service   *api.Service
 	projectID string
@@ -269,7 +270,7 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 		option.WithUserAgent(userAgent),
 	}
 	o = append(o, opts...)
-	hc, basePath, err := transport.NewHTTPClient(ctx, o...)
+	hc, basePath, err := htransport.NewClient(ctx, o...)
 	if err != nil {
 		return nil, fmt.Errorf("creating HTTP client for Google Stackdriver Trace API: %v", err)
 	}
@@ -310,13 +311,13 @@ func (c *Client) SetSamplingPolicy(p SamplingPolicy) {
 	}
 }
 
-// SpanFromHeader returns a new trace span, based on a provided request header
-// value. See https://cloud.google.com/trace/docs/faq.
-//
-// It returns nil iff the client is nil.
+// SpanFromHeader returns a new trace span based on a provided request header
+// value or nil iff the client is nil.
 //
 // The trace information and identifiers will be read from the header value.
 // Otherwise, a new trace ID is made and the parent span ID is zero.
+// For the exact format of the header value, see
+// https://cloud.google.com/trace/docs/support#how_do_i_force_a_request_to_be_traced
 //
 // The name of the new span is provided as an argument.
 //
@@ -352,9 +353,8 @@ func (c *Client) SpanFromHeader(name string, header string) *Span {
 	return span
 }
 
-// SpanFromRequest returns a new trace span for an HTTP request.
-//
-// It returns nil iff the client is nil.
+// SpanFromRequest returns a new trace span for an HTTP request or nil
+// iff the client is nil.
 //
 // If the incoming HTTP request contains a trace context header, the trace ID,
 // parent span ID, and tracing options will be read from that header.
@@ -390,7 +390,8 @@ func (c *Client) SpanFromRequest(r *http.Request) *Span {
 	return span
 }
 
-// NewSpan returns a new trace span with the given name.
+// NewSpan returns a new trace span with the given name or nil iff the
+// client is nil.
 //
 // A new trace and span ID is generated to trace the span.
 // Returned span need to be finished by calling Finish or FinishWait.

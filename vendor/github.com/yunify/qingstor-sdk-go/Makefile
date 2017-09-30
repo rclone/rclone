@@ -19,7 +19,6 @@ help:
 	@echo "  test              to run test"
 	@echo "  test-coverage     to run test with coverage"
 	@echo "  test-race         to run test with race"
-	@echo "  test-runtime      to run test in Go 1.8/1.7/1.6/1.5 in docker"
 	@echo "  integration-test  to run integration test"
 	@echo "  release           to build and release current version"
 	@echo "  release-source    to pack the source code"
@@ -55,18 +54,14 @@ generate:
 	@if [[ ! -f "$$(which snips)" ]]; then \
 		echo "ERROR: Command \"snips\" not found."; \
 	fi
-	snips \
-		--service=qingstor --service-api-version=latest \
-		--spec="./specs" --template="./template" --output="./service"
+	snips -f="./specs/qingstor/2016-01-06/swagger/api_v2.0.json" -t="./template" -o="./service"
 	gofmt -w .
 	@echo "ok"
 
 .PHONY: build
 build:
 	@echo "build the SDK"
-	GOOS=linux GOARCH=amd64 go build ${PKGS_TO_RELEASE}
-	GOOS=darwin GOARCH=amd64 go build ${PKGS_TO_RELEASE}
-	GOOS=windows GOARCH=amd64 go build ${PKGS_TO_RELEASE}
+	go build ${PKGS_TO_RELEASE}
 	@echo "ok"
 
 .PHONY: test
@@ -92,90 +87,6 @@ test-coverage:
 test-race:
 	@echo "run test with race"
 	go test -v -race -cpu=1,2,4 ${PKGS_TO_RELEASE}
-	@echo "ok"
-
-.PHONY: test-runtime
-test-runtime: test-runtime-go-1.8 test-runtime-go-1.7 test-runtime-go-1.6 test-runtime-go-1.5
-
-export define DOCKERFILE_GO_1_8
-FROM golang:1.8
-
-ADD . /go/src/github.com/yunify/qingstor-sdk-go
-WORKDIR /go/src/github.com/yunify/qingstor-sdk-go
-
-CMD ["make", "build", "test", "test-coverage"]
-endef
-
-.PHONY: test-runtime-go-1.8
-test-runtime-go-1.8:
-	@echo "run test in go 1.8"
-	echo "$${DOCKERFILE_GO_1_8}" > "dockerfile_go_1.8"
-	docker build -f "./dockerfile_go_1.8" -t "${PREFIX}:go-1.8" .
-	rm -f "./dockerfile_go_1.8"
-	docker run --name "${PREFIX}-go-1.8-unit" -t "${PREFIX}:go-1.8"
-	docker rm "${PREFIX}-go-1.8-unit"
-	docker rmi "${PREFIX}:go-1.8"
-	@echo "ok"
-
-export define DOCKERFILE_GO_1_7
-FROM golang:1.7
-
-ADD . /go/src/github.com/yunify/qingstor-sdk-go
-WORKDIR /go/src/github.com/yunify/qingstor-sdk-go
-
-CMD ["make", "build", "test", "test-coverage"]
-endef
-
-.PHONY: test-runtime-go-1.7
-test-runtime-go-1.7:
-	@echo "run test in go 1.7"
-	echo "$${DOCKERFILE_GO_1_7}" > "dockerfile_go_1.7"
-	docker build -f "./dockerfile_go_1.7" -t "${PREFIX}:go-1.7" .
-	rm -f "./dockerfile_go_1.7"
-	docker run --name "${PREFIX}-go-1.7-unit" -t "${PREFIX}:go-1.7"
-	docker rm "${PREFIX}-go-1.7-unit"
-	docker rmi "${PREFIX}:go-1.7"
-	@echo "ok"
-
-export define DOCKERFILE_GO_1_6
-FROM golang:1.6
-
-ADD . /go/src/github.com/yunify/qingstor-sdk-go
-WORKDIR /go/src/github.com/yunify/qingstor-sdk-go
-
-CMD ["make", "build", "test", "test-coverage"]
-endef
-
-.PHONY: test-runtime-go-1.6
-test-runtime-go-1.6:
-	@echo "run test in go 1.6"
-	echo "$${DOCKERFILE_GO_1_6}" > "dockerfile_go_1.6"
-	docker build -f "./dockerfile_go_1.6" -t "${PREFIX}:go-1.6" .
-	rm -f "./dockerfile_go_1.6"
-	docker run --name "${PREFIX}-go-1.6-unit" -t "${PREFIX}:go-1.6"
-	docker rm "${PREFIX}-go-1.6-unit"
-	docker rmi "${PREFIX}:go-1.6"
-	@echo "ok"
-
-export define DOCKERFILE_GO_1_5
-FROM golang:1.5
-ENV GO15VENDOREXPERIMENT="1"
-
-ADD . /go/src/github.com/yunify/qingstor-sdk-go
-WORKDIR /go/src/github.com/yunify/qingstor-sdk-go
-
-CMD ["make", "build", "test", "test-coverage"]
-endef
-
-.PHONY: test-runtime-go-1.5
-test-runtime-go-1.5:
-	@echo "run test in go 1.5"
-	echo "$${DOCKERFILE_GO_1_5}" > "dockerfile_go_1.5"
-	docker build -f "dockerfile_go_1.5" -t "${PREFIX}:go-1.5" .
-	rm -f "dockerfile_go_1.5"
-	docker run --name "${PREFIX}-go-1.5-unit" -t "${PREFIX}:go-1.5"
-	docker rm "${PREFIX}-go-1.5-unit"
-	docker rmi "${PREFIX}:go-1.5"
 	@echo "ok"
 
 .PHONY: integration-test

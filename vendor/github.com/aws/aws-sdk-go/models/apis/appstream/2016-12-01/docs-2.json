@@ -1,29 +1,52 @@
 {
   "version": "2.0",
-  "service": "<fullname>Amazon AppStream 2.0</fullname> <p>API documentation for Amazon AppStream 2.0.</p>",
+  "service": "<fullname>Amazon AppStream 2.0</fullname> <p>You can use Amazon AppStream 2.0 to stream desktop applications to any device running a web browser, without rewriting them.</p>",
   "operations": {
-    "AssociateFleet": "<p>Associate a fleet to a stack.</p>",
-    "CreateFleet": "<p>Creates a new fleet.</p>",
-    "CreateStack": "<p>Create a new stack.</p>",
-    "CreateStreamingURL": "<p>Creates a URL to start an AppStream 2.0 streaming session for a user. By default, the URL is valid only for 1 minute from the time that it is generated.</p>",
-    "DeleteFleet": "<p>Deletes a fleet.</p>",
-    "DeleteStack": "<p>Deletes the stack. After this operation completes, the environment can no longer be activated, and any reservations made for the stack are released.</p>",
-    "DescribeFleets": "<p>If fleet names are provided, this operation describes the specified fleets; otherwise, all the fleets in the account are described.</p>",
-    "DescribeImages": "<p>Describes the images. If a list of names is not provided, all images in your account are returned. This operation does not return a paginated result.</p>",
-    "DescribeSessions": "<p>Describes the streaming sessions for a stack and a fleet. If a user ID is provided, this operation returns streaming sessions for only that user. Pass this value for the <code>nextToken</code> parameter in a subsequent call to this operation to retrieve the next set of items. If an authentication type is not provided, the operation defaults to users authenticated using a streaming URL.</p>",
-    "DescribeStacks": "<p>If stack names are not provided, this operation describes the specified stacks; otherwise, all stacks in the account are described. Pass the <code>nextToken</code> value in a subsequent call to this operation to retrieve the next set of items.</p>",
-    "DisassociateFleet": "<p>Disassociates a fleet from a stack.</p>",
-    "ExpireSession": "<p>This operation immediately stops a streaming session.</p>",
-    "ListAssociatedFleets": "<p>Lists all fleets associated with the stack.</p>",
-    "ListAssociatedStacks": "<p>Lists all stacks to which the specified fleet is associated.</p>",
-    "StartFleet": "<p>Starts a fleet.</p>",
-    "StopFleet": "<p>Stops a fleet.</p>",
-    "UpdateFleet": "<p>Updates an existing fleet. All the attributes except the fleet name can be updated in the <b>STOPPED</b> state. When a fleet is in the <b>RUNNING</b> state, only <code>DisplayName</code> and <code>ComputeCapacity</code> can be updated. A fleet cannot be updated in a status of <b>STARTING</b> or <b>STOPPING</b>.</p>",
-    "UpdateStack": "<p>Updates the specified fields in the stack with the specified name.</p>"
+    "AssociateFleet": "<p>Associates the specified fleet with the specified stack.</p>",
+    "CreateDirectoryConfig": "<p>Creates a directory configuration.</p>",
+    "CreateFleet": "<p>Creates a fleet.</p>",
+    "CreateImageBuilder": null,
+    "CreateImageBuilderStreamingURL": null,
+    "CreateStack": "<p>Creates a stack.</p>",
+    "CreateStreamingURL": "<p>Creates a URL to start a streaming session for the specified user.</p> <p>By default, the URL is valid only for one minute from the time that it is generated.</p>",
+    "DeleteDirectoryConfig": "<p>Deletes the specified directory configuration.</p>",
+    "DeleteFleet": "<p>Deletes the specified fleet.</p>",
+    "DeleteImage": null,
+    "DeleteImageBuilder": null,
+    "DeleteStack": "<p>Deletes the specified stack. After this operation completes, the environment can no longer be activated and any reservations made for the stack are released.</p>",
+    "DescribeDirectoryConfigs": "<p>Describes the specified directory configurations.</p>",
+    "DescribeFleets": "<p>Describes the specified fleets or all fleets in the account.</p>",
+    "DescribeImageBuilders": null,
+    "DescribeImages": "<p>Describes the specified images or all images in the account.</p>",
+    "DescribeSessions": "<p>Describes the streaming sessions for the specified stack and fleet. If a user ID is provided, only the streaming sessions for only that user are returned. If an authentication type is not provided, the default is to authenticate users using a streaming URL.</p>",
+    "DescribeStacks": "<p>Describes the specified stacks or all stacks in the account.</p>",
+    "DisassociateFleet": "<p>Disassociates the specified fleet from the specified stack.</p>",
+    "ExpireSession": "<p>Stops the specified streaming session.</p>",
+    "ListAssociatedFleets": "<p>Lists the fleets associated with the specified stack.</p>",
+    "ListAssociatedStacks": "<p>Lists the stacks associated with the specified fleet.</p>",
+    "StartFleet": "<p>Starts the specified fleet.</p>",
+    "StartImageBuilder": null,
+    "StopFleet": "<p>Stops the specified fleet.</p>",
+    "StopImageBuilder": null,
+    "UpdateDirectoryConfig": "<p>Updates the specified directory configuration.</p>",
+    "UpdateFleet": "<p>Updates the specified fleet.</p> <p>If the fleet is in the <code>STOPPED</code> state, you can update any attribute except the fleet name. If the fleet is in the <code>RUNNING</code> state, you can update the <code>DisplayName</code> and <code>ComputeCapacity</code> attributes. If the fleet is in the <code>STARTING</code> or <code>STOPPING</code> state, you can't update it.</p>",
+    "UpdateStack": "<p>Updates the specified stack.</p>"
   },
   "shapes": {
+    "AccountName": {
+      "base": null,
+      "refs": {
+        "ServiceAccountCredentials$AccountName": "<p>The user name of the account. This account must have the following privileges: create computer objects, join computers to the domain, and change/reset the password on descendant computer objects for the organizational units specified.</p>"
+      }
+    },
+    "AccountPassword": {
+      "base": null,
+      "refs": {
+        "ServiceAccountCredentials$AccountPassword": "<p>The password for the account.</p>"
+      }
+    },
     "Application": {
-      "base": "<p>An entry for a single application in the application catalog.</p>",
+      "base": "<p>Describes an application in the application catalog.</p>",
       "refs": {
         "Applications$member": null
       }
@@ -31,15 +54,17 @@
     "Applications": {
       "base": null,
       "refs": {
-        "Image$Applications": "<p>The applications associated with an image.</p>"
+        "Image$Applications": "<p>The applications associated with the image.</p>"
       }
     },
     "Arn": {
       "base": null,
       "refs": {
         "Fleet$Arn": "<p>The ARN for the fleet.</p>",
-        "Image$Arn": "<p>The ARN for the image.</p>",
-        "Image$BaseImageArn": "<p>The source image ARN from which this image was created.</p>",
+        "Image$Arn": "<p>The ARN of the image.</p>",
+        "Image$BaseImageArn": "<p>The ARN of the image from which this image was created.</p>",
+        "ImageBuilder$Arn": null,
+        "ImageBuilder$ImageArn": null,
         "Stack$Arn": "<p>The ARN of the stack.</p>"
       }
     },
@@ -56,38 +81,40 @@
     "AuthenticationType": {
       "base": null,
       "refs": {
-        "DescribeSessionsRequest$AuthenticationType": "<p>The authentication method of the user. It can be <code>API</code> for a user authenticated using a streaming URL, or <code>SAML</code> for a SAML federated user. If an authentication type is not provided, the operation defaults to users authenticated using a streaming URL.</p>",
-        "Session$AuthenticationType": "<p>The authentication method of the user for whom the session was created. It can be <code>API</code> for a user authenticated using a streaming URL or <code>SAML</code> for a SAML federated user.</p>"
+        "DescribeSessionsRequest$AuthenticationType": "<p>The authentication method. Specify <code>API</code> for a user authenticated using a streaming URL or <code>SAML</code> for a SAML federated user. The default is to authenticate users using a streaming URL.</p>",
+        "Session$AuthenticationType": "<p>The authentication method. The user is authenticated using a streaming URL (<code>API</code>) or SAML federation (<code>SAML</code>).</p>"
       }
     },
     "Boolean": {
       "base": null,
       "refs": {
-        "Application$Enabled": "<p>An application can be disabled after image creation if there is a problem.</p>",
-        "Image$ImageBuilderSupported": "<p>Whether an image builder can be launched from this image.</p>",
-        "UpdateFleetRequest$DeleteVpcConfig": "<p>Delete the VPC association for the specified fleet.</p>",
-        "UpdateStackRequest$DeleteStorageConnectors": "<p>Remove all the storage connectors currently enabled for the stack.</p>"
+        "Application$Enabled": "<p>If there is a problem, the application can be disabled after image creation.</p>",
+        "Image$ImageBuilderSupported": "<p>Indicates whether an image builder can be launched from this image.</p>",
+        "UpdateFleetRequest$DeleteVpcConfig": "<p>Deletes the VPC association for the specified fleet.</p>",
+        "UpdateStackRequest$DeleteStorageConnectors": "<p>Deletes the storage connectors currently enabled for the stack.</p>"
       }
     },
     "BooleanObject": {
       "base": null,
       "refs": {
-        "CreateFleetRequest$EnableDefaultInternetAccess": "<p>Enables or disables default Internet access for the fleet.</p>",
-        "Fleet$EnableDefaultInternetAccess": "<p>Whether default Internet access is enabled for the fleet. </p>",
-        "UpdateFleetRequest$EnableDefaultInternetAccess": "<p>Enables or disables default Internet access for the fleet.</p>"
+        "CreateFleetRequest$EnableDefaultInternetAccess": "<p>Enables or disables default internet access for the fleet.</p>",
+        "CreateImageBuilderRequest$EnableDefaultInternetAccess": null,
+        "Fleet$EnableDefaultInternetAccess": "<p>Indicates whether default internet access is enabled for the fleet.</p>",
+        "ImageBuilder$EnableDefaultInternetAccess": null,
+        "UpdateFleetRequest$EnableDefaultInternetAccess": "<p>Enables or disables default internet access for the fleet.</p>"
       }
     },
     "ComputeCapacity": {
-      "base": "<p>The capacity configuration for the fleet.</p>",
+      "base": "<p>Describes the capacity for a fleet.</p>",
       "refs": {
-        "CreateFleetRequest$ComputeCapacity": "<p>The parameters for the capacity allocated to the fleet.</p>",
-        "UpdateFleetRequest$ComputeCapacity": "<p>The parameters for the capacity allocated to the fleet. </p>"
+        "CreateFleetRequest$ComputeCapacity": "<p>The desired capacity for the fleet.</p>",
+        "UpdateFleetRequest$ComputeCapacity": "<p>The desired capacity for the fleet.</p>"
       }
     },
     "ComputeCapacityStatus": {
-      "base": "<p>The capacity information for the fleet.</p>",
+      "base": "<p>Describes the capacity status for a fleet.</p>",
       "refs": {
-        "Fleet$ComputeCapacityStatus": "<p>The capacity information for the fleet.</p>"
+        "Fleet$ComputeCapacityStatus": "<p>The capacity status for the fleet.</p>"
       }
     },
     "ConcurrentModificationException": {
@@ -95,12 +122,42 @@
       "refs": {
       }
     },
+    "CreateDirectoryConfigRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateDirectoryConfigResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "CreateFleetRequest": {
-      "base": "<p>Contains the parameters for the new fleet to create.</p>",
+      "base": null,
       "refs": {
       }
     },
     "CreateFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateImageBuilderRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateImageBuilderResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateImageBuilderStreamingURLRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateImageBuilderStreamingURLResult": {
       "base": null,
       "refs": {
       }
@@ -125,12 +182,42 @@
       "refs": {
       }
     },
+    "DeleteDirectoryConfigRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteDirectoryConfigResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DeleteFleetRequest": {
       "base": null,
       "refs": {
       }
     },
     "DeleteFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteImageBuilderRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteImageBuilderResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteImageRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteImageResult": {
       "base": null,
       "refs": {
       }
@@ -145,12 +232,32 @@
       "refs": {
       }
     },
+    "DescribeDirectoryConfigsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeDirectoryConfigsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DescribeFleetsRequest": {
       "base": null,
       "refs": {
       }
     },
     "DescribeFleetsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeImageBuildersRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeImageBuildersResult": {
       "base": null,
       "refs": {
       }
@@ -188,10 +295,42 @@
     "Description": {
       "base": null,
       "refs": {
-        "CreateFleetRequest$Description": "<p>The description of the fleet.</p>",
-        "CreateStackRequest$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>",
-        "UpdateFleetRequest$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>",
-        "UpdateStackRequest$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>"
+        "CreateFleetRequest$Description": "<p>The description displayed to end users.</p>",
+        "CreateImageBuilderRequest$Description": null,
+        "CreateStackRequest$Description": "<p>The description displayed to end users.</p>",
+        "UpdateFleetRequest$Description": "<p>The description displayed to end users.</p>",
+        "UpdateStackRequest$Description": "<p>The description displayed to end users.</p>"
+      }
+    },
+    "DirectoryConfig": {
+      "base": "<p>Configuration information for the directory used to join domains.</p>",
+      "refs": {
+        "CreateDirectoryConfigResult$DirectoryConfig": "<p>Information about the directory configuration.</p>",
+        "DirectoryConfigList$member": null,
+        "UpdateDirectoryConfigResult$DirectoryConfig": "<p>Information about the directory configuration.</p>"
+      }
+    },
+    "DirectoryConfigList": {
+      "base": null,
+      "refs": {
+        "DescribeDirectoryConfigsResult$DirectoryConfigs": "<p>Information about the directory configurations.</p>"
+      }
+    },
+    "DirectoryName": {
+      "base": null,
+      "refs": {
+        "CreateDirectoryConfigRequest$DirectoryName": "<p>The fully qualified name of the directory (for example, corp.example.com).</p>",
+        "DeleteDirectoryConfigRequest$DirectoryName": "<p>The name of the directory configuration.</p>",
+        "DirectoryConfig$DirectoryName": "<p>The fully qualified name of the directory (for example, corp.example.com).</p>",
+        "DirectoryNameList$member": null,
+        "DomainJoinInfo$DirectoryName": "<p>The fully qualified name of the directory (for example, corp.example.com).</p>",
+        "UpdateDirectoryConfigRequest$DirectoryName": "<p>The name of the directory configuration.</p>"
+      }
+    },
+    "DirectoryNameList": {
+      "base": null,
+      "refs": {
+        "DescribeDirectoryConfigsRequest$DirectoryNames": "<p>The directory names.</p>"
       }
     },
     "DisassociateFleetRequest": {
@@ -207,10 +346,21 @@
     "DisplayName": {
       "base": null,
       "refs": {
-        "CreateFleetRequest$DisplayName": "<p>The display name of the fleet.</p>",
-        "CreateStackRequest$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>",
-        "UpdateFleetRequest$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>",
-        "UpdateStackRequest$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>"
+        "CreateFleetRequest$DisplayName": "<p>The fleet name displayed to end users.</p>",
+        "CreateImageBuilderRequest$DisplayName": null,
+        "CreateStackRequest$DisplayName": "<p>The stack name displayed to end users.</p>",
+        "UpdateFleetRequest$DisplayName": "<p>The fleet name displayed to end users.</p>",
+        "UpdateStackRequest$DisplayName": "<p>The stack name displayed to end users.</p>"
+      }
+    },
+    "DomainJoinInfo": {
+      "base": "<p>Contains the information needed for streaming instances to join a domain.</p>",
+      "refs": {
+        "CreateFleetRequest$DomainJoinInfo": "<p>The information needed for streaming instances to join a domain.</p>",
+        "CreateImageBuilderRequest$DomainJoinInfo": null,
+        "Fleet$DomainJoinInfo": "<p>The information needed for streaming instances to join a domain.</p>",
+        "ImageBuilder$DomainJoinInfo": null,
+        "UpdateFleetRequest$DomainJoinInfo": "<p>The information needed for streaming instances to join a domain.</p>"
       }
     },
     "ErrorMessage": {
@@ -241,25 +391,25 @@
     "Fleet": {
       "base": "<p>Contains the parameters for a fleet.</p>",
       "refs": {
-        "CreateFleetResult$Fleet": "<p>The details for the created fleet.</p>",
+        "CreateFleetResult$Fleet": "<p>Information about the fleet.</p>",
         "FleetList$member": null,
-        "UpdateFleetResult$Fleet": "<p>A list of fleet details.</p>"
+        "UpdateFleetResult$Fleet": "<p>Information about the fleet.</p>"
       }
     },
     "FleetAttribute": {
-      "base": "<p>Fleet attribute.</p>",
+      "base": "<p>The fleet attribute.</p>",
       "refs": {
         "FleetAttributes$member": null
       }
     },
     "FleetAttributes": {
-      "base": "<p>A list of fleet attributes.</p>",
+      "base": "<p>The fleet attributes.</p>",
       "refs": {
-        "UpdateFleetRequest$AttributesToDelete": "<p>Fleet attributes to be deleted.</p>"
+        "UpdateFleetRequest$AttributesToDelete": "<p>The fleet attributes to delete.</p>"
       }
     },
     "FleetError": {
-      "base": "<p>The details of the fleet error.</p>",
+      "base": "<p>Describes a fleet error.</p>",
       "refs": {
         "FleetErrors$member": null
       }
@@ -267,19 +417,20 @@
     "FleetErrorCode": {
       "base": null,
       "refs": {
-        "FleetError$ErrorCode": "<p>The error code for the fleet error.</p>"
+        "FleetError$ErrorCode": "<p>The error code.</p>",
+        "ResourceError$ErrorCode": null
       }
     },
     "FleetErrors": {
       "base": null,
       "refs": {
-        "Fleet$FleetErrors": "<p>The list of fleet errors is appended to this list.</p>"
+        "Fleet$FleetErrors": "<p>The fleet errors.</p>"
       }
     },
     "FleetList": {
-      "base": "<p>A list of fleets.</p>",
+      "base": "<p>The fleets.</p>",
       "refs": {
-        "DescribeFleetsResult$Fleets": "<p>The list of fleet details.</p>"
+        "DescribeFleetsResult$Fleets": "<p>Information about the fleets.</p>"
       }
     },
     "FleetState": {
@@ -288,26 +439,68 @@
         "Fleet$State": "<p>The current state for the fleet.</p>"
       }
     },
-    "Image": {
-      "base": "<p>New streaming instances are booted from images. The image stores the application catalog and is connected to fleets.</p>",
+    "FleetType": {
+      "base": null,
       "refs": {
+        "CreateFleetRequest$FleetType": null,
+        "Fleet$FleetType": null
+      }
+    },
+    "Image": {
+      "base": "<p>Describes an image.</p>",
+      "refs": {
+        "DeleteImageResult$Image": null,
         "ImageList$member": null
+      }
+    },
+    "ImageBuilder": {
+      "base": null,
+      "refs": {
+        "CreateImageBuilderResult$ImageBuilder": null,
+        "DeleteImageBuilderResult$ImageBuilder": null,
+        "ImageBuilderList$member": null,
+        "StartImageBuilderResult$ImageBuilder": null,
+        "StopImageBuilderResult$ImageBuilder": null
+      }
+    },
+    "ImageBuilderList": {
+      "base": null,
+      "refs": {
+        "DescribeImageBuildersResult$ImageBuilders": null
+      }
+    },
+    "ImageBuilderState": {
+      "base": null,
+      "refs": {
+        "ImageBuilder$State": null
+      }
+    },
+    "ImageBuilderStateChangeReason": {
+      "base": null,
+      "refs": {
+        "ImageBuilder$StateChangeReason": null
+      }
+    },
+    "ImageBuilderStateChangeReasonCode": {
+      "base": null,
+      "refs": {
+        "ImageBuilderStateChangeReason$Code": null
       }
     },
     "ImageList": {
       "base": null,
       "refs": {
-        "DescribeImagesResult$Images": "<p>The list of images.</p>"
+        "DescribeImagesResult$Images": "<p>Information about the images.</p>"
       }
     },
     "ImageState": {
       "base": null,
       "refs": {
-        "Image$State": "<p>The image starts in the <b>PENDING</b> state, and then moves to <b>AVAILABLE</b> if image creation succeeds and <b>FAILED</b> if image creation has failed.</p>"
+        "Image$State": "<p>The image starts in the <code>PENDING</code> state. If image creation succeeds, the state is <code>AVAILABLE</code>. If image creation fails, the state is <code>FAILED</code>.</p>"
       }
     },
     "ImageStateChangeReason": {
-      "base": "<p>The reason why the last state change occurred.</p>",
+      "base": "<p>Describes the reason why the last state change occurred.</p>",
       "refs": {
         "Image$StateChangeReason": "<p>The reason why the last state change occurred.</p>"
       }
@@ -315,7 +508,7 @@
     "ImageStateChangeReasonCode": {
       "base": null,
       "refs": {
-        "ImageStateChangeReason$Code": "<p>The state change reason code of the image.</p>"
+        "ImageStateChangeReason$Code": "<p>The state change reason code.</p>"
       }
     },
     "IncompatibleImageException": {
@@ -329,15 +522,17 @@
         "ComputeCapacity$DesiredInstances": "<p>The desired number of streaming instances.</p>",
         "ComputeCapacityStatus$Desired": "<p>The desired number of streaming instances.</p>",
         "ComputeCapacityStatus$Running": "<p>The total number of simultaneous streaming instances that are running.</p>",
-        "ComputeCapacityStatus$InUse": "<p>The number of instances that are being used for streaming.</p>",
+        "ComputeCapacityStatus$InUse": "<p>The number of instances in use for streaming.</p>",
         "ComputeCapacityStatus$Available": "<p>The number of currently available instances that can be used to stream sessions.</p>",
-        "CreateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time for which a streaming session can run. The input can be any numeric value in seconds between 600 and 57600.</p>",
-        "CreateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to their previous session. The input can be any numeric value in seconds between 60 and 57600. </p>",
-        "DescribeSessionsRequest$Limit": "<p>The size of each page of results. The default value is 20 and the maximum supported value is 50.</p>",
-        "Fleet$MaxUserDurationInSeconds": "<p>The maximum time for which a streaming session can run. The value can be any numeric value in seconds between 600 and 57600.</p>",
-        "Fleet$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to their previous session. The input can be any numeric value in seconds between 60 and 57600.</p>",
-        "UpdateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time for which a streaming session can run. The input can be any numeric value in seconds between 600 and 57600.</p>",
-        "UpdateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended. If a user who got disconnected reconnects within this timeout interval, the user is connected back to their previous session. The input can be any numeric value in seconds between 60 and 57600.</p>"
+        "CreateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time that a streaming session can run, in seconds. Specify a value between 600 and 57600.</p>",
+        "CreateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended, in seconds. If a user who was disconnected reconnects within this time interval, the user is connected to their previous session. Specify a value between 60 and 57600.</p>",
+        "DescribeDirectoryConfigsRequest$MaxResults": "<p>The maximum size of each page of results.</p>",
+        "DescribeImageBuildersRequest$MaxResults": null,
+        "DescribeSessionsRequest$Limit": "<p>The size of each page of results. The default value is 20 and the maximum value is 50.</p>",
+        "Fleet$MaxUserDurationInSeconds": "<p>The maximum time that a streaming session can run, in seconds. Specify a value between 600 and 57600.</p>",
+        "Fleet$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended, in seconds. If a user who was disconnected reconnects within this time interval, the user is connected to their previous session. Specify a value between 60 and 57600.</p>",
+        "UpdateFleetRequest$MaxUserDurationInSeconds": "<p>The maximum time that a streaming session can run, in seconds. Specify a value between 600 and 57600.</p>",
+        "UpdateFleetRequest$DisconnectTimeoutInSeconds": "<p>The time after disconnection when a session is considered to have ended, in seconds. If a user who was disconnected reconnects within this time interval, the user is connected to their previous session. Specify a value between 60 and 57600.</p>"
       }
     },
     "InvalidParameterCombinationException": {
@@ -361,7 +556,7 @@
       }
     },
     "ListAssociatedFleetsResult": {
-      "base": "<p>The response from a successful operation.</p>",
+      "base": null,
       "refs": {
       }
     },
@@ -371,14 +566,15 @@
       }
     },
     "ListAssociatedStacksResult": {
-      "base": "<p>The response from a successful operation.</p>",
+      "base": null,
       "refs": {
       }
     },
     "Long": {
       "base": null,
       "refs": {
-        "CreateStreamingURLRequest$Validity": "<p>The duration up to which the URL returned by this action is valid. The input can be any numeric value in seconds between 1 and 604800 seconds.</p>"
+        "CreateImageBuilderStreamingURLRequest$Validity": null,
+        "CreateStreamingURLRequest$Validity": "<p>The time that the streaming URL will be valid, in seconds. Specify a value between 1 and 604800 seconds.</p>"
       }
     },
     "Metadata": {
@@ -390,7 +586,10 @@
     "Name": {
       "base": null,
       "refs": {
-        "CreateFleetRequest$Name": "<p>A unique identifier for the fleet.</p>"
+        "CreateFleetRequest$Name": "<p>A unique name for the fleet.</p>",
+        "CreateImageBuilderRequest$Name": null,
+        "DeleteImageBuilderRequest$Name": null,
+        "DeleteImageRequest$Name": null
       }
     },
     "OperationNotPermittedException": {
@@ -398,10 +597,26 @@
       "refs": {
       }
     },
+    "OrganizationalUnitDistinguishedName": {
+      "base": null,
+      "refs": {
+        "DomainJoinInfo$OrganizationalUnitDistinguishedName": "<p>The distinguished name of the organizational unit for computer accounts.</p>",
+        "OrganizationalUnitDistinguishedNamesList$member": null
+      }
+    },
+    "OrganizationalUnitDistinguishedNamesList": {
+      "base": null,
+      "refs": {
+        "CreateDirectoryConfigRequest$OrganizationalUnitDistinguishedNames": "<p>The distinguished names of the organizational units for computer accounts.</p>",
+        "DirectoryConfig$OrganizationalUnitDistinguishedNames": "<p>The distinguished names of the organizational units for computer accounts.</p>",
+        "UpdateDirectoryConfigRequest$OrganizationalUnitDistinguishedNames": "<p>The distinguished names of the organizational units for computer accounts.</p>"
+      }
+    },
     "PlatformType": {
       "base": null,
       "refs": {
-        "Image$Platform": "<p>The operating system platform of the image.</p>"
+        "Image$Platform": "<p>The operating system platform of the image.</p>",
+        "ImageBuilder$Platform": null
       }
     },
     "ResourceAlreadyExistsException": {
@@ -409,10 +624,22 @@
       "refs": {
       }
     },
+    "ResourceError": {
+      "base": null,
+      "refs": {
+        "ResourceErrors$member": null
+      }
+    },
+    "ResourceErrors": {
+      "base": null,
+      "refs": {
+        "ImageBuilder$ImageBuilderErrors": null
+      }
+    },
     "ResourceIdentifier": {
       "base": "<p>The ARN of the resource.</p>",
       "refs": {
-        "StorageConnector$ResourceIdentifier": "<p>The ARN associated with the storage connector.</p>"
+        "StorageConnector$ResourceIdentifier": "<p>The ARN of the storage connector.</p>"
       }
     },
     "ResourceInUseException": {
@@ -431,13 +658,21 @@
       }
     },
     "SecurityGroupIdList": {
-      "base": "<p>A list of security groups.</p>",
+      "base": "<p>The security group IDs.</p>",
       "refs": {
-        "VpcConfig$SecurityGroupIds": "<p>Security groups associated with the fleet.</p>"
+        "VpcConfig$SecurityGroupIds": "<p>The security groups for the fleet.</p>"
+      }
+    },
+    "ServiceAccountCredentials": {
+      "base": "<p>Describes the credentials for the service account used by the streaming instance to connect to the directory.</p>",
+      "refs": {
+        "CreateDirectoryConfigRequest$ServiceAccountCredentials": "<p>The credentials for the service account used by the streaming instance to connect to the directory.</p>",
+        "DirectoryConfig$ServiceAccountCredentials": "<p>The credentials for the service account used by the streaming instance to connect to the directory.</p>",
+        "UpdateDirectoryConfigRequest$ServiceAccountCredentials": "<p>The credentials for the service account used by the streaming instance to connect to the directory.</p>"
       }
     },
     "Session": {
-      "base": "<p>Contains the parameters for a streaming session.</p>",
+      "base": "<p>Describes a streaming session.</p>",
       "refs": {
         "SessionList$member": null
       }
@@ -445,7 +680,7 @@
     "SessionList": {
       "base": "<p>List of sessions.</p>",
       "refs": {
-        "DescribeSessionsResult$Sessions": "<p>The list of streaming sessions.</p>"
+        "DescribeSessionsResult$Sessions": "<p>Information about the streaming sessions.</p>"
       }
     },
     "SessionState": {
@@ -455,15 +690,15 @@
       }
     },
     "Stack": {
-      "base": "<p>Details about a stack.</p>",
+      "base": "<p>Describes a stack.</p>",
       "refs": {
-        "CreateStackResult$Stack": "<p>The details for the created stack.</p>",
+        "CreateStackResult$Stack": "<p>Information about the stack.</p>",
         "StackList$member": null,
-        "UpdateStackResult$Stack": "<p>A list of stack details.</p>"
+        "UpdateStackResult$Stack": "<p>Information about the stack.</p>"
       }
     },
     "StackError": {
-      "base": "<p>Contains the parameters for a stack error.</p>",
+      "base": "<p>Describes a stack error.</p>",
       "refs": {
         "StackErrors$member": null
       }
@@ -471,19 +706,19 @@
     "StackErrorCode": {
       "base": null,
       "refs": {
-        "StackError$ErrorCode": "<p>The error code of a stack error.</p>"
+        "StackError$ErrorCode": "<p>The error code.</p>"
       }
     },
     "StackErrors": {
-      "base": "<p>A list of stack errors.</p>",
+      "base": "<p>The stack errors.</p>",
       "refs": {
-        "Stack$StackErrors": "<p>The list of errors associated with the stack.</p>"
+        "Stack$StackErrors": "<p>The errors for the stack.</p>"
       }
     },
     "StackList": {
-      "base": "<p>A list of stacks.</p>",
+      "base": "<p>The stacks.</p>",
       "refs": {
-        "DescribeStacksResult$Stacks": "<p>The list of stack details.</p>"
+        "DescribeStacksResult$Stacks": "<p>Information about the stacks.</p>"
       }
     },
     "StartFleetRequest": {
@@ -492,6 +727,16 @@
       }
     },
     "StartFleetResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartImageBuilderRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StartImageBuilderResult": {
       "base": null,
       "refs": {
       }
@@ -506,117 +751,164 @@
       "refs": {
       }
     },
+    "StopImageBuilderRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "StopImageBuilderResult": {
+      "base": null,
+      "refs": {
+      }
+    },
     "StorageConnector": {
-      "base": "<p>Contains the parameters for a storage connector.</p>",
+      "base": "<p>Describes a storage connector.</p>",
       "refs": {
         "StorageConnectorList$member": null
       }
     },
     "StorageConnectorList": {
-      "base": "<p>A list of storage connectors.</p>",
+      "base": "<p>The storage connectors.</p>",
       "refs": {
-        "CreateStackRequest$StorageConnectors": "<p>The storage connectors to be enabled for the stack.</p>",
-        "Stack$StorageConnectors": "<p>The storage connectors to be enabled for the stack.</p>",
-        "UpdateStackRequest$StorageConnectors": "<p>The storage connectors to be enabled for the stack.</p>"
+        "CreateStackRequest$StorageConnectors": "<p>The storage connectors to enable.</p>",
+        "Stack$StorageConnectors": "<p>The storage connectors to enable.</p>",
+        "UpdateStackRequest$StorageConnectors": "<p>The storage connectors to enable.</p>"
       }
     },
     "StorageConnectorType": {
-      "base": "<p>The type of storage connector. The possible values include: HOMEFOLDERS.</p>",
+      "base": "<p>The type of storage connector.</p>",
       "refs": {
-        "StorageConnector$ConnectorType": "<p>The type of storage connector. The possible values include: HOMEFOLDERS.</p>"
+        "StorageConnector$ConnectorType": "<p>The type of storage connector.</p>"
+      }
+    },
+    "StreamingUrlUserId": {
+      "base": null,
+      "refs": {
+        "CreateStreamingURLRequest$UserId": "<p>The ID of the user.</p>"
       }
     },
     "String": {
       "base": null,
       "refs": {
-        "Application$Name": "<p>The unique identifier for the application.</p>",
-        "Application$DisplayName": "<p>The name of the application shown to the end users.</p>",
-        "Application$IconURL": "<p>The URL for the application icon. This URL may be time-limited.</p>",
+        "Application$Name": "<p>The name of the application.</p>",
+        "Application$DisplayName": "<p>The application name displayed to end users.</p>",
+        "Application$IconURL": "<p>The URL for the application icon. This URL might be time-limited.</p>",
         "Application$LaunchPath": "<p>The path to the application executable in the instance.</p>",
-        "Application$LaunchParameters": "<p>A list of arguments that are passed to the application at launch.</p>",
-        "AssociateFleetRequest$FleetName": "<p>The name of the fleet to associate.</p>",
-        "AssociateFleetRequest$StackName": "<p>The name of the stack to which the fleet is associated.</p>",
-        "CreateFleetRequest$ImageName": "<p>Unique name of the image used by the fleet.</p>",
-        "CreateFleetRequest$InstanceType": "<p>The instance type of compute resources for the fleet. Fleet instances are launched from this instance type.</p>",
-        "CreateStackRequest$Name": "<p>The unique identifier for this stack.</p>",
-        "CreateStreamingURLRequest$StackName": "<p>The stack for which the URL is generated.</p>",
-        "CreateStreamingURLRequest$FleetName": "<p>The fleet for which the URL is generated.</p>",
+        "Application$LaunchParameters": "<p>The arguments that are passed to the application at launch.</p>",
+        "AssociateFleetRequest$FleetName": "<p>The name of the fleet.</p>",
+        "AssociateFleetRequest$StackName": "<p>The name of the stack.</p>",
+        "CreateFleetRequest$ImageName": "<p>The name of the image used by the fleet.</p>",
+        "CreateFleetRequest$InstanceType": "<p>The instance type to use when launching fleet instances. The following instance types are available:</p> <ul> <li> <p>stream.standard.medium</p> </li> <li> <p>stream.standard.large</p> </li> <li> <p>stream.compute.large</p> </li> <li> <p>stream.compute.xlarge</p> </li> <li> <p>stream.compute.2xlarge</p> </li> <li> <p>stream.compute.4xlarge</p> </li> <li> <p>stream.compute.8xlarge</p> </li> <li> <p>stream.memory.large</p> </li> <li> <p>stream.memory.xlarge</p> </li> <li> <p>stream.memory.2xlarge</p> </li> <li> <p>stream.memory.4xlarge</p> </li> <li> <p>stream.memory.8xlarge</p> </li> <li> <p>stream.graphics-design.large</p> </li> <li> <p>stream.graphics-design.xlarge</p> </li> <li> <p>stream.graphics-design.2xlarge</p> </li> <li> <p>stream.graphics-design.4xlarge</p> </li> <li> <p>stream.graphics-desktop.2xlarge</p> </li> <li> <p>stream.graphics-pro.4xlarge</p> </li> <li> <p>stream.graphics-pro.8xlarge</p> </li> <li> <p>stream.graphics-pro.16xlarge</p> </li> </ul>",
+        "CreateImageBuilderRequest$ImageName": null,
+        "CreateImageBuilderRequest$InstanceType": null,
+        "CreateImageBuilderStreamingURLRequest$Name": null,
+        "CreateImageBuilderStreamingURLResult$StreamingURL": null,
+        "CreateStackRequest$Name": "<p>The name of the stack.</p>",
+        "CreateStreamingURLRequest$StackName": "<p>The name of the stack.</p>",
+        "CreateStreamingURLRequest$FleetName": "<p>The name of the fleet.</p>",
         "CreateStreamingURLRequest$ApplicationId": "<p>The ID of the application that must be launched after the session starts.</p>",
-        "CreateStreamingURLRequest$SessionContext": "<p>The sessionContext of the streaming URL.</p>",
+        "CreateStreamingURLRequest$SessionContext": "<p>The session context of the streaming URL.</p>",
         "CreateStreamingURLResult$StreamingURL": "<p>The URL to start the AppStream 2.0 streaming session.</p>",
-        "DeleteFleetRequest$Name": "<p>The name of the fleet to be deleted.</p>",
-        "DeleteStackRequest$Name": "<p>The name of the stack to delete.</p>",
+        "DeleteFleetRequest$Name": "<p>The name of the fleet.</p>",
+        "DeleteStackRequest$Name": "<p>The name of the stack.</p>",
+        "DescribeDirectoryConfigsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
+        "DescribeDirectoryConfigsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
         "DescribeFleetsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
         "DescribeFleetsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "DescribeSessionsRequest$StackName": "<p>The name of the stack for which to list sessions.</p>",
-        "DescribeSessionsRequest$FleetName": "<p>The name of the fleet for which to list sessions.</p>",
+        "DescribeImageBuildersRequest$NextToken": null,
+        "DescribeImageBuildersResult$NextToken": null,
+        "DescribeSessionsRequest$StackName": "<p>The name of the stack.</p>",
+        "DescribeSessionsRequest$FleetName": "<p>The name of the fleet.</p>",
         "DescribeSessionsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
         "DescribeSessionsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
         "DescribeStacksRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
         "DescribeStacksResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "DisassociateFleetRequest$FleetName": "<p>The name of the fleet to disassociate.</p>",
-        "DisassociateFleetRequest$StackName": "<p>The name of the stack with which the fleet is associated.</p>",
-        "ExpireSessionRequest$SessionId": "<p>The unique identifier of the streaming session to be stopped.</p>",
+        "DisassociateFleetRequest$FleetName": "<p>The name of the fleet.</p>",
+        "DisassociateFleetRequest$StackName": "<p>The name of the stack.</p>",
+        "ExpireSessionRequest$SessionId": "<p>The ID of the streaming session.</p>",
         "Fleet$Name": "<p>The name of the fleet.</p>",
-        "Fleet$DisplayName": "<p>The name displayed to end users on the AppStream 2.0 portal.</p>",
-        "Fleet$Description": "<p>The description displayed to end users on the AppStream 2.0 portal.</p>",
+        "Fleet$DisplayName": "<p>The fleet name displayed to end users.</p>",
+        "Fleet$Description": "<p>The description displayed to end users.</p>",
         "Fleet$ImageName": "<p>The image used by the fleet.</p>",
-        "Fleet$InstanceType": "<p>The instance type of compute resources for the fleet. The fleet instances are launched from this instance type. </p>",
-        "FleetError$ErrorMessage": "<p>The error message generated when the fleet has errors.</p>",
-        "Image$Name": "<p>The unique identifier for the image.</p>",
-        "Image$DisplayName": "<p>The display name for the image.</p>",
-        "Image$Description": "<p>A meaningful description for the image.</p>",
-        "ImageStateChangeReason$Message": "<p>The state change reason message to the end user.</p>",
-        "ListAssociatedFleetsRequest$StackName": "<p>The name of the stack whose associated fleets are listed.</p>",
+        "Fleet$InstanceType": "<p>The instance type to use when launching fleet instances.</p>",
+        "FleetError$ErrorMessage": "<p>The error message.</p>",
+        "Image$Name": "<p>The name of the image.</p>",
+        "Image$DisplayName": "<p>The image name displayed to end users.</p>",
+        "Image$Description": "<p>The description displayed to end users.</p>",
+        "ImageBuilder$Name": null,
+        "ImageBuilder$Description": null,
+        "ImageBuilder$DisplayName": null,
+        "ImageBuilder$InstanceType": null,
+        "ImageBuilderStateChangeReason$Message": null,
+        "ImageStateChangeReason$Message": "<p>The state change reason message.</p>",
+        "ListAssociatedFleetsRequest$StackName": "<p>The name of the stack.</p>",
         "ListAssociatedFleetsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
         "ListAssociatedFleetsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "ListAssociatedStacksRequest$FleetName": "<p>The name of the fleet whose associated stacks are listed.</p>",
+        "ListAssociatedStacksRequest$FleetName": "<p>The name of the fleet.</p>",
         "ListAssociatedStacksRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
         "ListAssociatedStacksResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
         "Metadata$key": null,
         "Metadata$value": null,
+        "ResourceError$ErrorMessage": null,
         "SecurityGroupIdList$member": null,
-        "Session$Id": "<p>The unique ID for a streaming session.</p>",
-        "Session$StackName": "<p>The name of the stack for which the streaming session was created.</p>",
-        "Session$FleetName": "<p>The name of the fleet for which the streaming session was created.</p>",
-        "Stack$Name": "<p>The unique identifier of the stack.</p>",
-        "Stack$Description": "<p>A meaningful description for the stack.</p>",
-        "Stack$DisplayName": "<p>A display name for the stack.</p>",
-        "StackError$ErrorMessage": "<p>The error message of a stack error.</p>",
-        "StartFleetRequest$Name": "<p>The name of the fleet to start.</p>",
-        "StopFleetRequest$Name": "<p>The name of the fleet to stop.</p>",
+        "Session$Id": "<p>The ID of the streaming session.</p>",
+        "Session$StackName": "<p>The name of the stack for the streaming session.</p>",
+        "Session$FleetName": "<p>The name of the fleet for the streaming session.</p>",
+        "Stack$Name": "<p>The name of the stack.</p>",
+        "Stack$Description": "<p>The description displayed to end users.</p>",
+        "Stack$DisplayName": "<p>The stack name displayed to end users.</p>",
+        "StackError$ErrorMessage": "<p>The error message.</p>",
+        "StartFleetRequest$Name": "<p>The name of the fleet.</p>",
+        "StartImageBuilderRequest$Name": null,
+        "StopFleetRequest$Name": "<p>The name of the fleet.</p>",
+        "StopImageBuilderRequest$Name": null,
         "StringList$member": null,
         "SubnetIdList$member": null,
-        "UpdateFleetRequest$ImageName": "<p>The image name from which a fleet is created.</p>",
-        "UpdateFleetRequest$Name": "<p>The name of the fleet.</p>",
-        "UpdateFleetRequest$InstanceType": "<p>The instance type of compute resources for the fleet. Fleet instances are launched from this instance type.</p>",
-        "UpdateStackRequest$Name": "<p>The name of the stack to update.</p>"
+        "UpdateFleetRequest$ImageName": "<p>The name of the image used by the fleet.</p>",
+        "UpdateFleetRequest$Name": "<p>A unique name for the fleet.</p>",
+        "UpdateFleetRequest$InstanceType": "<p>The instance type to use when launching fleet instances. The following instance types are available:</p> <ul> <li> <p>stream.standard.medium</p> </li> <li> <p>stream.standard.large</p> </li> <li> <p>stream.compute.large</p> </li> <li> <p>stream.compute.xlarge</p> </li> <li> <p>stream.compute.2xlarge</p> </li> <li> <p>stream.compute.4xlarge</p> </li> <li> <p>stream.compute.8xlarge</p> </li> <li> <p>stream.memory.large</p> </li> <li> <p>stream.memory.xlarge</p> </li> <li> <p>stream.memory.2xlarge</p> </li> <li> <p>stream.memory.4xlarge</p> </li> <li> <p>stream.memory.8xlarge</p> </li> <li> <p>stream.graphics-design.large</p> </li> <li> <p>stream.graphics-design.xlarge</p> </li> <li> <p>stream.graphics-design.2xlarge</p> </li> <li> <p>stream.graphics-design.4xlarge</p> </li> <li> <p>stream.graphics-desktop.2xlarge</p> </li> <li> <p>stream.graphics-pro.4xlarge</p> </li> <li> <p>stream.graphics-pro.8xlarge</p> </li> <li> <p>stream.graphics-pro.16xlarge</p> </li> </ul>",
+        "UpdateStackRequest$Name": "<p>The name of the stack.</p>"
       }
     },
     "StringList": {
       "base": null,
       "refs": {
-        "DescribeFleetsRequest$Names": "<p>The fleet names to describe. Use null to describe all the fleets for the AWS account.</p>",
-        "DescribeImagesRequest$Names": "<p>A specific list of images to describe.</p>",
-        "DescribeStacksRequest$Names": "<p>The stack names to describe. Use null to describe all the stacks for the AWS account.</p>",
-        "ListAssociatedFleetsResult$Names": "<p>The names of associated fleets.</p>",
-        "ListAssociatedStacksResult$Names": "<p>The names of associated stacks.</p>"
+        "DescribeFleetsRequest$Names": "<p>The names of the fleets to describe.</p>",
+        "DescribeImageBuildersRequest$Names": null,
+        "DescribeImagesRequest$Names": "<p>The names of the images to describe.</p>",
+        "DescribeStacksRequest$Names": "<p>The names of the stacks to describe.</p>",
+        "ListAssociatedFleetsResult$Names": "<p>The names of the fleets.</p>",
+        "ListAssociatedStacksResult$Names": "<p>The names of the stacks.</p>"
       }
     },
     "SubnetIdList": {
-      "base": "<p>A list of subnet IDs.</p>",
+      "base": "<p>The subnet IDs.</p>",
       "refs": {
-        "VpcConfig$SubnetIds": "<p>The list of subnets to which a network interface is established from the fleet instance.</p>"
+        "VpcConfig$SubnetIds": "<p>The subnets to which a network interface is established from the fleet instance.</p>"
       }
     },
     "Timestamp": {
       "base": null,
       "refs": {
-        "CreateStreamingURLResult$Expires": "<p>Elapsed seconds after the Unix epoch, at which time this URL expires.</p>",
-        "Fleet$CreatedTime": "<p>The time at which the fleet was created.</p>",
-        "Image$CreatedTime": "<p>The timestamp when the image was created.</p>",
-        "Image$PublicBaseImageReleasedDate": "<p>The AWS release date of the public base image. For private images, this date is the release date of the base image from which the image was created.</p>",
-        "Stack$CreatedTime": "<p>The timestamp when the stack was created.</p>"
+        "CreateImageBuilderStreamingURLResult$Expires": null,
+        "CreateStreamingURLResult$Expires": "<p>The elapsed time, in seconds after the Unix epoch, when this URL expires.</p>",
+        "DirectoryConfig$CreatedTime": "<p>The time the directory configuration was created.</p>",
+        "Fleet$CreatedTime": "<p>The time the fleet was created.</p>",
+        "Image$CreatedTime": "<p>The time the image was created.</p>",
+        "Image$PublicBaseImageReleasedDate": "<p>The release date of the public base image. For private images, this date is the release date of the base image from which the image was created.</p>",
+        "ImageBuilder$CreatedTime": null,
+        "ResourceError$ErrorTimestamp": null,
+        "Stack$CreatedTime": "<p>The time the stack was created.</p>"
+      }
+    },
+    "UpdateDirectoryConfigRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateDirectoryConfigResult": {
+      "base": null,
+      "refs": {
       }
     },
     "UpdateFleetRequest": {
@@ -642,22 +934,23 @@
     "UserId": {
       "base": null,
       "refs": {
-        "CreateStreamingURLRequest$UserId": "<p>A unique user ID for whom the URL is generated.</p>",
-        "DescribeSessionsRequest$UserId": "<p>The user for whom to list sessions. Use null to describe all the sessions for the stack and fleet.</p>",
+        "DescribeSessionsRequest$UserId": "<p>The user ID.</p>",
         "Session$UserId": "<p>The identifier of the user for whom the session was created.</p>"
       }
     },
     "VisibilityType": {
       "base": null,
       "refs": {
-        "Image$Visibility": "<p>The visibility of an image to the user; images can be public or private.</p>"
+        "Image$Visibility": "<p>Indicates whether the image is public or private.</p>"
       }
     },
     "VpcConfig": {
-      "base": "<p>VPC configuration information.</p>",
+      "base": "<p>Describes VPC configuration information.</p>",
       "refs": {
         "CreateFleetRequest$VpcConfig": "<p>The VPC configuration for the fleet.</p>",
+        "CreateImageBuilderRequest$VpcConfig": null,
         "Fleet$VpcConfig": "<p>The VPC configuration for the fleet.</p>",
+        "ImageBuilder$VpcConfig": null,
         "UpdateFleetRequest$VpcConfig": "<p>The VPC configuration for the fleet.</p>"
       }
     }

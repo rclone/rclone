@@ -5,9 +5,11 @@
 package cryptobyte_test
 
 import (
-	"encoding/asn1"
+	"errors"
 	"fmt"
+
 	"golang.org/x/crypto/cryptobyte"
+	"golang.org/x/crypto/cryptobyte/asn1"
 )
 
 func ExampleString_lengthPrefixed() {
@@ -37,7 +39,7 @@ func ExampleString_lengthPrefixed() {
 	fmt.Printf("%#v\n", result)
 }
 
-func ExampleString_asn1() {
+func ExampleString_aSN1() {
 	// This is an example of parsing ASN.1 data that looks like:
 	//    Foo ::= SEQUENCE {
 	//      version [6] INTEGER DEFAULT 0
@@ -51,12 +53,12 @@ func ExampleString_asn1() {
 		data, inner, versionBytes cryptobyte.String
 		haveVersion               bool
 	)
-	if !input.ReadASN1(&inner, cryptobyte.Tag(asn1.TagSequence).Constructed()) ||
+	if !input.ReadASN1(&inner, asn1.SEQUENCE) ||
 		!input.Empty() ||
-		!inner.ReadOptionalASN1(&versionBytes, &haveVersion, cryptobyte.Tag(6).Constructed().ContextSpecific()) ||
+		!inner.ReadOptionalASN1(&versionBytes, &haveVersion, asn1.Tag(6).Constructed().ContextSpecific()) ||
 		(haveVersion && !versionBytes.ReadASN1Integer(&version)) ||
 		(haveVersion && !versionBytes.Empty()) ||
-		!inner.ReadASN1(&data, asn1.TagOctetString) ||
+		!inner.ReadASN1(&data, asn1.OCTET_STRING) ||
 		!inner.Empty() {
 		panic("bad format")
 	}
@@ -65,7 +67,7 @@ func ExampleString_asn1() {
 	fmt.Printf("haveVersion: %t, version: %d, data: %s\n", haveVersion, version, string(data))
 }
 
-func ExampleBuilder_asn1() {
+func ExampleBuilder_aSN1() {
 	// This is an example of building ASN.1 data that looks like:
 	//    Foo ::= SEQUENCE {
 	//      version [6] INTEGER DEFAULT 0
@@ -77,9 +79,9 @@ func ExampleBuilder_asn1() {
 	const defaultVersion = 0
 
 	var b cryptobyte.Builder
-	b.AddASN1(cryptobyte.Tag(asn1.TagSequence).Constructed(), func(b *cryptobyte.Builder) {
+	b.AddASN1(asn1.SEQUENCE, func(b *cryptobyte.Builder) {
 		if version != defaultVersion {
-			b.AddASN1(cryptobyte.Tag(6).Constructed().ContextSpecific(), func(b *cryptobyte.Builder) {
+			b.AddASN1(asn1.Tag(6).Constructed().ContextSpecific(), func(b *cryptobyte.Builder) {
 				b.AddASN1Int64(version)
 			})
 		}
@@ -117,4 +119,36 @@ func ExampleBuilder_lengthPrefixed() {
 
 	// Output: 000c0568656c6c6f05776f726c64
 	fmt.Printf("%x\n", result)
+}
+
+func ExampleBuilder_lengthPrefixOverflow() {
+	// Writing more data that can be expressed by the length prefix results
+	// in an error from Bytes().
+
+	tooLarge := make([]byte, 256)
+
+	var b cryptobyte.Builder
+	b.AddUint8LengthPrefixed(func(b *cryptobyte.Builder) {
+		b.AddBytes(tooLarge)
+	})
+
+	result, err := b.Bytes()
+	fmt.Printf("len=%d err=%s\n", len(result), err)
+
+	// Output: len=0 err=cryptobyte: pending child length 256 exceeds 1-byte length prefix
+}
+
+func ExampleBuilderContinuation_errorHandling() {
+	var b cryptobyte.Builder
+	// Continuations that panic with a BuildError will cause Bytes to
+	// return the inner error.
+	b.AddUint16LengthPrefixed(func(b *cryptobyte.Builder) {
+		b.AddUint32(0)
+		panic(cryptobyte.BuildError{Err: errors.New("example error")})
+	})
+
+	result, err := b.Bytes()
+	fmt.Printf("len=%d err=%s\n", len(result), err)
+
+	// Output: len=0 err=example error
 }

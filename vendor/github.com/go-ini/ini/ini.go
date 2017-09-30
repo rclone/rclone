@@ -24,10 +24,8 @@ import (
 	"os"
 	"regexp"
 	"runtime"
-	"strconv"
 	"strings"
 	"sync"
-	"time"
 )
 
 const (
@@ -37,7 +35,7 @@ const (
 
 	// Maximum allowed depth when recursively substituing variable names.
 	_DEPTH_VALUES = 99
-	_VERSION      = "1.28.0"
+	_VERSION      = "1.28.2"
 )
 
 // Version returns current package version literal.
@@ -398,10 +396,7 @@ func (f *File) Append(source interface{}, others ...interface{}) error {
 	return f.Reload()
 }
 
-// WriteToIndent writes content into io.Writer with given indention.
-// If PrettyFormat has been set to be true,
-// it will align "=" sign with spaces under each section.
-func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
+func (f *File) writeToBuffer(indent string) (*bytes.Buffer, error) {
 	equalSign := "="
 	if PrettyFormat {
 		equalSign = " = "
@@ -415,14 +410,14 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 			if sec.Comment[0] != '#' && sec.Comment[0] != ';' {
 				sec.Comment = "; " + sec.Comment
 			}
-			if _, err = buf.WriteString(sec.Comment + LineBreak); err != nil {
-				return 0, err
+			if _, err := buf.WriteString(sec.Comment + LineBreak); err != nil {
+				return nil, err
 			}
 		}
 
 		if i > 0 || DefaultHeader {
-			if _, err = buf.WriteString("[" + sname + "]" + LineBreak); err != nil {
-				return 0, err
+			if _, err := buf.WriteString("[" + sname + "]" + LineBreak); err != nil {
+				return nil, err
 			}
 		} else {
 			// Write nothing if default section is empty
@@ -432,8 +427,8 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 		}
 
 		if sec.isRawSection {
-			if _, err = buf.WriteString(sec.rawBody); err != nil {
-				return 0, err
+			if _, err := buf.WriteString(sec.rawBody); err != nil {
+				return nil, err
 			}
 			continue
 		}
@@ -469,8 +464,8 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 				if key.Comment[0] != '#' && key.Comment[0] != ';' {
 					key.Comment = "; " + key.Comment
 				}
-				if _, err = buf.WriteString(key.Comment + LineBreak); err != nil {
-					return 0, err
+				if _, err := buf.WriteString(key.Comment + LineBreak); err != nil {
+					return nil, err
 				}
 			}
 
@@ -488,8 +483,8 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 			}
 
 			for _, val := range key.ValueWithShadows() {
-				if _, err = buf.WriteString(kname); err != nil {
-					return 0, err
+				if _, err := buf.WriteString(kname); err != nil {
+					return nil, err
 				}
 
 				if key.isBooleanType {
@@ -510,20 +505,31 @@ func (f *File) WriteToIndent(w io.Writer, indent string) (n int64, err error) {
 				} else if !f.options.IgnoreInlineComment && strings.ContainsAny(val, "#;") {
 					val = "`" + val + "`"
 				}
-				if _, err = buf.WriteString(equalSign + val + LineBreak); err != nil {
-					return 0, err
+				if _, err := buf.WriteString(equalSign + val + LineBreak); err != nil {
+					return nil, err
 				}
 			}
 		}
 
 		if PrettySection {
 			// Put a line between sections
-			if _, err = buf.WriteString(LineBreak); err != nil {
-				return 0, err
+			if _, err := buf.WriteString(LineBreak); err != nil {
+				return nil, err
 			}
 		}
 	}
 
+	return buf, nil
+}
+
+// WriteToIndent writes content into io.Writer with given indention.
+// If PrettyFormat has been set to be true,
+// it will align "=" sign with spaces under each section.
+func (f *File) WriteToIndent(w io.Writer, indent string) (int64, error) {
+	buf, err := f.writeToBuffer(indent)
+	if err != nil {
+		return 0, err
+	}
 	return buf.WriteTo(w)
 }
 
@@ -536,23 +542,12 @@ func (f *File) WriteTo(w io.Writer) (int64, error) {
 func (f *File) SaveToIndent(filename, indent string) error {
 	// Note: Because we are truncating with os.Create,
 	// 	so it's safer to save to a temporary file location and rename afte done.
-	tmpPath := filename + "." + strconv.Itoa(time.Now().Nanosecond()) + ".tmp"
-	defer os.Remove(tmpPath)
-
-	fw, err := os.Create(tmpPath)
+	buf, err := f.writeToBuffer(indent)
 	if err != nil {
 		return err
 	}
 
-	if _, err = f.WriteToIndent(fw, indent); err != nil {
-		fw.Close()
-		return err
-	}
-	fw.Close()
-
-	// Remove old file and rename the new one.
-	os.Remove(filename)
-	return os.Rename(tmpPath, filename)
+	return ioutil.WriteFile(filename, buf.Bytes(), 0666)
 }
 
 // SaveTo writes content to file system.

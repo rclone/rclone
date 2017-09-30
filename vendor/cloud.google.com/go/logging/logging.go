@@ -86,7 +86,11 @@ var now = time.Now
 
 // ErrOverflow signals that the number of buffered entries for a Logger
 // exceeds its BufferLimit.
-var ErrOverflow = errors.New("logging: log entry overflowed buffer limits")
+var ErrOverflow = bundler.ErrOverflow
+
+// ErrOversizedEntry signals that an entry's size exceeds the maximum number of
+// bytes that will be sent in a single call to the logging service.
+var ErrOversizedEntry = bundler.ErrOversizedItem
 
 // Client is a Logging client. A Client is associated with a single Cloud project.
 type Client struct {
@@ -331,10 +335,10 @@ type entryByteThreshold int
 func (e entryByteThreshold) set(l *Logger) { l.bundler.BundleByteThreshold = int(e) }
 
 // EntryByteLimit is the maximum number of bytes of entries that will be sent
-// in a single call to the logging service. This option limits the size of a
-// single RPC payload, to account for network or service issues with large
-// RPCs. If EntryByteLimit is smaller than EntryByteThreshold, the latter has
-// no effect.
+// in a single call to the logging service. ErrOversizedEntry is returned if an
+// entry exceeds EntryByteLimit. This option limits the size of a single RPC
+// payload, to account for network or service issues with large RPCs. If
+// EntryByteLimit is smaller than EntryByteThreshold, the latter has no effect.
 // The default is zero, meaning there is no limit.
 func EntryByteLimit(n int) LoggerOption { return entryByteLimit(n) }
 

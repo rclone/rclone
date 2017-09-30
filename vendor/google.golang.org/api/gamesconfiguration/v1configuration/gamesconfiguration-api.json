@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/EeinYhdEv3oJM--OvCR7gDew1T4\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/V9bMC5OL2jFg9_Lf_SdJ5NVszwI\"",
  "discoveryVersion": "v1",
  "id": "gamesConfiguration:v1configuration",
  "name": "gamesConfiguration",
  "canonicalName": "Games Configuration",
  "version": "v1configuration",
- "revision": "20170601",
+ "revision": "20170911",
  "title": "Google Play Game Services Publishing API",
  "description": "The Publishing API for Google Play Game Services.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/games/v1configuration/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "games/v1configuration/",
- "batchPath": "batch",
+ "batchPath": "batch/gamesConfiguration/v1configuration",
  "parameters": {
   "alt": {
    "type": "string",

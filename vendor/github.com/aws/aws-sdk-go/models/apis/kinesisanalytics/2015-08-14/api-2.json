@@ -40,7 +40,8 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"ResourceInUseException"},
         {"shape":"InvalidArgumentException"},
-        {"shape":"ConcurrentModificationException"}
+        {"shape":"ConcurrentModificationException"},
+        {"shape":"CodeValidationException"}
       ]
     },
     "AddApplicationOutput":{
@@ -170,7 +171,8 @@
       "errors":[
         {"shape":"InvalidArgumentException"},
         {"shape":"UnableToDetectSchemaException"},
-        {"shape":"ResourceProvisionedThroughputExceededException"}
+        {"shape":"ResourceProvisionedThroughputExceededException"},
+        {"shape":"ServiceUnavailableException"}
       ]
     },
     "ListApplications":{
@@ -666,7 +668,7 @@
     },
     "InputParallelismCount":{
       "type":"integer",
-      "max":10,
+      "max":64,
       "min":1
     },
     "InputParallelismUpdate":{
@@ -960,7 +962,7 @@
     "RecordColumnMapping":{"type":"string"},
     "RecordColumnName":{
       "type":"string",
-      "pattern":"[a-zA-Z][a-zA-Z0-9_]+"
+      "pattern":"[a-zA-Z_][a-zA-Z0-9_]*"
     },
     "RecordColumnSqlType":{"type":"string"},
     "RecordColumns":{
@@ -1103,6 +1105,13 @@
         "FileKeyUpdate":{"shape":"FileKey"},
         "ReferenceRoleARNUpdate":{"shape":"RoleARN"}
       }
+    },
+    "ServiceUnavailableException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
     },
     "SourceSchema":{
       "type":"structure",

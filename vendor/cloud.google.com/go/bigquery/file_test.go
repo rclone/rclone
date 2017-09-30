@@ -15,10 +15,10 @@
 package bigquery
 
 import (
-	"reflect"
 	"testing"
 
 	"cloud.google.com/go/internal/pretty"
+	"cloud.google.com/go/internal/testutil"
 	bq "google.golang.org/api/bigquery/v2"
 )
 
@@ -84,7 +84,7 @@ func TestPopulateLoadConfig(t *testing.T) {
 	}
 	got := &bq.JobConfigurationLoad{}
 	fc.populateLoadConfig(got)
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("got:\n%v\nwant:\n%v", pretty.Value(got), pretty.Value(want))
 	}
 }

@@ -21,7 +21,7 @@ import (
 //
 // The best way to use this interface is so the SDK's service client's calls
 // can be stubbed out for unit testing your code with the SDK without needing
-// to inject custom request handlers into the the SDK's request pipeline.
+// to inject custom request handlers into the SDK's request pipeline.
 //
 //    // myFunc uses an SDK service client to make a request to
 //    // Amazon Inspector.
@@ -128,29 +128,50 @@ type InspectorAPI interface {
 	ListAssessmentRunAgentsWithContext(aws.Context, *inspector.ListAssessmentRunAgentsInput, ...request.Option) (*inspector.ListAssessmentRunAgentsOutput, error)
 	ListAssessmentRunAgentsRequest(*inspector.ListAssessmentRunAgentsInput) (*request.Request, *inspector.ListAssessmentRunAgentsOutput)
 
+	ListAssessmentRunAgentsPages(*inspector.ListAssessmentRunAgentsInput, func(*inspector.ListAssessmentRunAgentsOutput, bool) bool) error
+	ListAssessmentRunAgentsPagesWithContext(aws.Context, *inspector.ListAssessmentRunAgentsInput, func(*inspector.ListAssessmentRunAgentsOutput, bool) bool, ...request.Option) error
+
 	ListAssessmentRuns(*inspector.ListAssessmentRunsInput) (*inspector.ListAssessmentRunsOutput, error)
 	ListAssessmentRunsWithContext(aws.Context, *inspector.ListAssessmentRunsInput, ...request.Option) (*inspector.ListAssessmentRunsOutput, error)
 	ListAssessmentRunsRequest(*inspector.ListAssessmentRunsInput) (*request.Request, *inspector.ListAssessmentRunsOutput)
+
+	ListAssessmentRunsPages(*inspector.ListAssessmentRunsInput, func(*inspector.ListAssessmentRunsOutput, bool) bool) error
+	ListAssessmentRunsPagesWithContext(aws.Context, *inspector.ListAssessmentRunsInput, func(*inspector.ListAssessmentRunsOutput, bool) bool, ...request.Option) error
 
 	ListAssessmentTargets(*inspector.ListAssessmentTargetsInput) (*inspector.ListAssessmentTargetsOutput, error)
 	ListAssessmentTargetsWithContext(aws.Context, *inspector.ListAssessmentTargetsInput, ...request.Option) (*inspector.ListAssessmentTargetsOutput, error)
 	ListAssessmentTargetsRequest(*inspector.ListAssessmentTargetsInput) (*request.Request, *inspector.ListAssessmentTargetsOutput)
 
+	ListAssessmentTargetsPages(*inspector.ListAssessmentTargetsInput, func(*inspector.ListAssessmentTargetsOutput, bool) bool) error
+	ListAssessmentTargetsPagesWithContext(aws.Context, *inspector.ListAssessmentTargetsInput, func(*inspector.ListAssessmentTargetsOutput, bool) bool, ...request.Option) error
+
 	ListAssessmentTemplates(*inspector.ListAssessmentTemplatesInput) (*inspector.ListAssessmentTemplatesOutput, error)
 	ListAssessmentTemplatesWithContext(aws.Context, *inspector.ListAssessmentTemplatesInput, ...request.Option) (*inspector.ListAssessmentTemplatesOutput, error)
 	ListAssessmentTemplatesRequest(*inspector.ListAssessmentTemplatesInput) (*request.Request, *inspector.ListAssessmentTemplatesOutput)
+
+	ListAssessmentTemplatesPages(*inspector.ListAssessmentTemplatesInput, func(*inspector.ListAssessmentTemplatesOutput, bool) bool) error
+	ListAssessmentTemplatesPagesWithContext(aws.Context, *inspector.ListAssessmentTemplatesInput, func(*inspector.ListAssessmentTemplatesOutput, bool) bool, ...request.Option) error
 
 	ListEventSubscriptions(*inspector.ListEventSubscriptionsInput) (*inspector.ListEventSubscriptionsOutput, error)
 	ListEventSubscriptionsWithContext(aws.Context, *inspector.ListEventSubscriptionsInput, ...request.Option) (*inspector.ListEventSubscriptionsOutput, error)
 	ListEventSubscriptionsRequest(*inspector.ListEventSubscriptionsInput) (*request.Request, *inspector.ListEventSubscriptionsOutput)
 
+	ListEventSubscriptionsPages(*inspector.ListEventSubscriptionsInput, func(*inspector.ListEventSubscriptionsOutput, bool) bool) error
+	ListEventSubscriptionsPagesWithContext(aws.Context, *inspector.ListEventSubscriptionsInput, func(*inspector.ListEventSubscriptionsOutput, bool) bool, ...request.Option) error
+
 	ListFindings(*inspector.ListFindingsInput) (*inspector.ListFindingsOutput, error)
 	ListFindingsWithContext(aws.Context, *inspector.ListFindingsInput, ...request.Option) (*inspector.ListFindingsOutput, error)
 	ListFindingsRequest(*inspector.ListFindingsInput) (*request.Request, *inspector.ListFindingsOutput)
 
+	ListFindingsPages(*inspector.ListFindingsInput, func(*inspector.ListFindingsOutput, bool) bool) error
+	ListFindingsPagesWithContext(aws.Context, *inspector.ListFindingsInput, func(*inspector.ListFindingsOutput, bool) bool, ...request.Option) error
+
 	ListRulesPackages(*inspector.ListRulesPackagesInput) (*inspector.ListRulesPackagesOutput, error)
 	ListRulesPackagesWithContext(aws.Context, *inspector.ListRulesPackagesInput, ...request.Option) (*inspector.ListRulesPackagesOutput, error)
 	ListRulesPackagesRequest(*inspector.ListRulesPackagesInput) (*request.Request, *inspector.ListRulesPackagesOutput)
+
+	ListRulesPackagesPages(*inspector.ListRulesPackagesInput, func(*inspector.ListRulesPackagesOutput, bool) bool) error
+	ListRulesPackagesPagesWithContext(aws.Context, *inspector.ListRulesPackagesInput, func(*inspector.ListRulesPackagesOutput, bool) bool, ...request.Option) error
 
 	ListTagsForResource(*inspector.ListTagsForResourceInput) (*inspector.ListTagsForResourceOutput, error)
 	ListTagsForResourceWithContext(aws.Context, *inspector.ListTagsForResourceInput, ...request.Option) (*inspector.ListTagsForResourceOutput, error)
@@ -159,6 +180,9 @@ type InspectorAPI interface {
 	PreviewAgents(*inspector.PreviewAgentsInput) (*inspector.PreviewAgentsOutput, error)
 	PreviewAgentsWithContext(aws.Context, *inspector.PreviewAgentsInput, ...request.Option) (*inspector.PreviewAgentsOutput, error)
 	PreviewAgentsRequest(*inspector.PreviewAgentsInput) (*request.Request, *inspector.PreviewAgentsOutput)
+
+	PreviewAgentsPages(*inspector.PreviewAgentsInput, func(*inspector.PreviewAgentsOutput, bool) bool) error
+	PreviewAgentsPagesWithContext(aws.Context, *inspector.PreviewAgentsInput, func(*inspector.PreviewAgentsOutput, bool) bool, ...request.Option) error
 
 	RegisterCrossAccountAccessRole(*inspector.RegisterCrossAccountAccessRoleInput) (*inspector.RegisterCrossAccountAccessRoleOutput, error)
 	RegisterCrossAccountAccessRoleWithContext(aws.Context, *inspector.RegisterCrossAccountAccessRoleInput, ...request.Option) (*inspector.RegisterCrossAccountAccessRoleOutput, error)

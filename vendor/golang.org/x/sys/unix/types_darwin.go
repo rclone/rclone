@@ -242,6 +242,8 @@ type BpfHdr C.struct_bpf_hdr
 
 type Termios C.struct_termios
 
+type Winsize C.struct_winsize
+
 // fchmodat-like syscalls.
 
 const (

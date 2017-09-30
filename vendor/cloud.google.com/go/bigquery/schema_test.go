@@ -22,6 +22,7 @@ import (
 
 	"cloud.google.com/go/civil"
 	"cloud.google.com/go/internal/pretty"
+	"cloud.google.com/go/internal/testutil"
 
 	bq "google.golang.org/api/bigquery/v2"
 )
@@ -192,12 +193,12 @@ func TestSchemaConversion(t *testing.T) {
 
 	for _, tc := range testCases {
 		bqSchema := tc.schema.asTableSchema()
-		if !reflect.DeepEqual(bqSchema, tc.bqSchema) {
+		if !testutil.Equal(bqSchema, tc.bqSchema) {
 			t.Errorf("converting to TableSchema: got:\n%v\nwant:\n%v",
 				pretty.Value(bqSchema), pretty.Value(tc.bqSchema))
 		}
 		schema := convertTableSchema(tc.bqSchema)
-		if !reflect.DeepEqual(schema, tc.schema) {
+		if !testutil.Equal(schema, tc.schema) {
 			t.Errorf("converting to Schema: got:\n%v\nwant:\n%v", schema, tc.schema)
 		}
 	}
@@ -311,7 +312,7 @@ func TestSimpleInference(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%T: error inferring TableSchema: %v", tc.in, err)
 		}
-		if !reflect.DeepEqual(got, tc.want) {
+		if !testutil.Equal(got, tc.want) {
 			t.Errorf("%T: inferring TableSchema: got:\n%#v\nwant:\n%#v", tc.in,
 				pretty.Value(got), pretty.Value(tc.want))
 		}
@@ -414,7 +415,7 @@ func TestNestedInference(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%T: error inferring TableSchema: %v", tc.in, err)
 		}
-		if !reflect.DeepEqual(got, tc.want) {
+		if !testutil.Equal(got, tc.want) {
 			t.Errorf("%T: inferring TableSchema: got:\n%#v\nwant:\n%#v", tc.in,
 				pretty.Value(got), pretty.Value(tc.want))
 		}
@@ -483,7 +484,7 @@ func TestRepeatedInference(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%d: error inferring TableSchema: %v", i, err)
 		}
-		if !reflect.DeepEqual(got, tc.want) {
+		if !testutil.Equal(got, tc.want) {
 			t.Errorf("%d: inferring TableSchema: got:\n%#v\nwant:\n%#v", i,
 				pretty.Value(got), pretty.Value(tc.want))
 		}
@@ -512,7 +513,7 @@ func TestEmbeddedInference(t *testing.T) {
 		reqField("Embedded", "INTEGER"),
 		reqField("Embedded2", "INTEGER"),
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("got %v, want %v", pretty.Value(got), pretty.Value(want))
 	}
 }
@@ -617,7 +618,7 @@ func TestTagInference(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%d: error inferring TableSchema: %v", i, err)
 		}
-		if !reflect.DeepEqual(got, tc.want) {
+		if !testutil.Equal(got, tc.want) {
 			t.Errorf("%d: inferring TableSchema: got:\n%#v\nwant:\n%#v", i,
 				pretty.Value(got), pretty.Value(tc.want))
 		}
@@ -675,7 +676,7 @@ func TestTagInferenceErrors(t *testing.T) {
 	for i, tc := range testCases {
 		want := tc.err
 		_, got := InferSchema(tc.in)
-		if !reflect.DeepEqual(got, want) {
+		if got != want {
 			t.Errorf("%d: inferring TableSchema: got:\n%#v\nwant:\n%#v", i, got, want)
 		}
 	}
@@ -746,7 +747,7 @@ func TestSchemaErrors(t *testing.T) {
 	for _, tc := range testCases {
 		want := tc.err
 		_, got := InferSchema(tc.in)
-		if !reflect.DeepEqual(got, want) {
+		if got != want {
 			t.Errorf("%#v: got:\n%#v\nwant:\n%#v", tc.in, got, want)
 		}
 	}

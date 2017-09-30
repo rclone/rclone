@@ -54,18 +54,23 @@ type MockCloudSpannerClient struct {
 	sessions map[string]bool
 	// Expected set of actions that will be executed by the client.
 	actions []Action
-	// Session ping history
+	// Session ping history.
 	pings []string
-	// Injected error, will be returned by all APIs
+	// Injected error, will be returned by all APIs.
 	injErr map[string]error
-	// nice client will not fail on any request
+	// Client will not fail on any request.
 	nice bool
+	// Client will stall on any requests.
+	freezed chan struct{}
 }
 
 // NewMockCloudSpannerClient creates new MockCloudSpannerClient instance.
 func NewMockCloudSpannerClient(t *testing.T, acts ...Action) *MockCloudSpannerClient {
 	mc := &MockCloudSpannerClient{t: t, sessions: map[string]bool{}, injErr: map[string]error{}}
 	mc.SetActions(acts...)
+	// Produce a closed channel, so the default action of ready is to not block.
+	mc.Freeze()
+	mc.Unfreeze()
 	return mc
 }
 
@@ -121,6 +126,7 @@ func (m *MockCloudSpannerClient) DumpSessions() map[string]bool {
 
 // CreateSession is a placeholder for SpannerClient.CreateSession.
 func (m *MockCloudSpannerClient) CreateSession(c context.Context, r *sppb.CreateSessionRequest, opts ...grpc.CallOption) (*sppb.Session, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.injErr["CreateSession"]; err != nil {
@@ -139,6 +145,7 @@ func (m *MockCloudSpannerClient) CreateSession(c context.Context, r *sppb.Create
 
 // GetSession is a placeholder for SpannerClient.GetSession.
 func (m *MockCloudSpannerClient) GetSession(c context.Context, r *sppb.GetSessionRequest, opts ...grpc.CallOption) (*sppb.Session, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.injErr["GetSession"]; err != nil {
@@ -153,6 +160,7 @@ func (m *MockCloudSpannerClient) GetSession(c context.Context, r *sppb.GetSessio
 
 // DeleteSession is a placeholder for SpannerClient.DeleteSession.
 func (m *MockCloudSpannerClient) DeleteSession(c context.Context, r *sppb.DeleteSessionRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.injErr["DeleteSession"]; err != nil {
@@ -169,11 +177,13 @@ func (m *MockCloudSpannerClient) DeleteSession(c context.Context, r *sppb.Delete
 
 // ExecuteSql is a placeholder for SpannerClient.ExecuteSql.
 func (m *MockCloudSpannerClient) ExecuteSql(c context.Context, r *sppb.ExecuteSqlRequest, opts ...grpc.CallOption) (*sppb.ResultSet, error) {
+	m.ready()
 	return nil, errors.New("Unimplemented")
 }
 
 // ExecuteStreamingSql is a mock implementation of SpannerClient.ExecuteStreamingSql.
 func (m *MockCloudSpannerClient) ExecuteStreamingSql(c context.Context, r *sppb.ExecuteSqlRequest, opts ...grpc.CallOption) (sppb.Spanner_ExecuteStreamingSqlClient, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.injErr["ExecuteStreamingSql"]; err != nil {
@@ -220,12 +230,14 @@ func (m *MockCloudSpannerClient) ExecuteStreamingSql(c context.Context, r *sppb.
 
 // Read is a placeholder for SpannerClient.Read.
 func (m *MockCloudSpannerClient) Read(c context.Context, r *sppb.ReadRequest, opts ...grpc.CallOption) (*sppb.ResultSet, error) {
+	m.ready()
 	m.t.Fatalf("Read is unimplemented")
 	return nil, errors.New("Unimplemented")
 }
 
 // StreamingRead is a placeholder for SpannerClient.StreamingRead.
 func (m *MockCloudSpannerClient) StreamingRead(c context.Context, r *sppb.ReadRequest, opts ...grpc.CallOption) (sppb.Spanner_StreamingReadClient, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if err := m.injErr["StreamingRead"]; err != nil {
@@ -258,15 +270,15 @@ func (m *MockCloudSpannerClient) StreamingRead(c context.Context, r *sppb.ReadRe
 		Table:   "t_mock",
 		Columns: []string{"col1", "col2"},
 		KeySet: &sppb.KeySet{
-			[]*proto3.ListValue{
+			Keys: []*proto3.ListValue{
 				&proto3.ListValue{
 					Values: []*proto3.Value{
 						&proto3.Value{Kind: &proto3.Value_StringValue{StringValue: "foo"}},
 					},
 				},
 			},
-			[]*sppb.KeyRange{},
-			false,
+			Ranges: []*sppb.KeyRange{},
+			All:    false,
 		},
 	}
 	if act.method == "StreamingIndexRead" {
@@ -283,6 +295,7 @@ func (m *MockCloudSpannerClient) StreamingRead(c context.Context, r *sppb.ReadRe
 
 // BeginTransaction is a placeholder for SpannerClient.BeginTransaction.
 func (m *MockCloudSpannerClient) BeginTransaction(c context.Context, r *sppb.BeginTransactionRequest, opts ...grpc.CallOption) (*sppb.Transaction, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if !m.nice {
@@ -310,6 +323,7 @@ func (m *MockCloudSpannerClient) BeginTransaction(c context.Context, r *sppb.Beg
 
 // Commit is a placeholder for SpannerClient.Commit.
 func (m *MockCloudSpannerClient) Commit(c context.Context, r *sppb.CommitRequest, opts ...grpc.CallOption) (*sppb.CommitResponse, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if !m.nice {
@@ -333,6 +347,7 @@ func (m *MockCloudSpannerClient) Commit(c context.Context, r *sppb.CommitRequest
 
 // Rollback is a placeholder for SpannerClient.Rollback.
 func (m *MockCloudSpannerClient) Rollback(c context.Context, r *sppb.RollbackRequest, opts ...grpc.CallOption) (*empty.Empty, error) {
+	m.ready()
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if !m.nice {
@@ -352,4 +367,21 @@ func (m *MockCloudSpannerClient) Rollback(c context.Context, r *sppb.RollbackReq
 		}
 	}
 	return nil, nil
+}
+
+// Freeze stalls all requests.
+func (m *MockCloudSpannerClient) Freeze() {
+	m.freezed = make(chan struct{})
+}
+
+// Unfreeze restores processing requests.
+func (m *MockCloudSpannerClient) Unfreeze() {
+	close(m.freezed)
+}
+
+// ready checks conditions before executing requests
+// TODO: also check injected errors, actions
+func (m *MockCloudSpannerClient) ready() {
+	// check if client should be freezed
+	<-m.freezed
 }

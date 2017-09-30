@@ -167,7 +167,7 @@ and configures the S3 service client to use that role for API requests.
 
   // Create service client value configured for credentials
   // from assumed role.
-  svc := s3.New(sess, &aws.Config{Credentials: creds})/
+  svc := s3.New(sess, &aws.Config{Credentials: creds})
 ```
 
 See the [credentials][credentials_pkg] package documentation for more information on credential

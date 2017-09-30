@@ -302,7 +302,8 @@
       "output":{"shape":"DeregisterTargetFromMaintenanceWindowResult"},
       "errors":[
         {"shape":"DoesNotExistException"},
-        {"shape":"InternalServerError"}
+        {"shape":"InternalServerError"},
+        {"shape":"TargetInUseException"}
       ]
     },
     "DeregisterTaskFromMaintenanceWindow":{
@@ -342,6 +343,7 @@
       "output":{"shape":"DescribeAssociationResult"},
       "errors":[
         {"shape":"AssociationDoesNotExist"},
+        {"shape":"InvalidAssociationVersion"},
         {"shape":"InternalServerError"},
         {"shape":"InvalidDocument"},
         {"shape":"InvalidInstanceId"}
@@ -767,6 +769,32 @@
         {"shape":"InternalServerError"}
       ]
     },
+    "GetMaintenanceWindowExecutionTaskInvocation":{
+      "name":"GetMaintenanceWindowExecutionTaskInvocation",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetMaintenanceWindowExecutionTaskInvocationRequest"},
+      "output":{"shape":"GetMaintenanceWindowExecutionTaskInvocationResult"},
+      "errors":[
+        {"shape":"DoesNotExistException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "GetMaintenanceWindowTask":{
+      "name":"GetMaintenanceWindowTask",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetMaintenanceWindowTaskRequest"},
+      "output":{"shape":"GetMaintenanceWindowTaskResult"},
+      "errors":[
+        {"shape":"DoesNotExistException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "GetParameter":{
       "name":"GetParameter",
       "http":{
@@ -852,6 +880,20 @@
         {"shape":"InternalServerError"}
       ]
     },
+    "ListAssociationVersions":{
+      "name":"ListAssociationVersions",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListAssociationVersionsRequest"},
+      "output":{"shape":"ListAssociationVersionsResult"},
+      "errors":[
+        {"shape":"InternalServerError"},
+        {"shape":"InvalidNextToken"},
+        {"shape":"AssociationDoesNotExist"}
+      ]
+    },
     "ListAssociations":{
       "name":"ListAssociations",
       "http":{
@@ -895,6 +937,36 @@
         {"shape":"InvalidInstanceId"},
         {"shape":"InvalidFilterKey"},
         {"shape":"InvalidNextToken"}
+      ]
+    },
+    "ListComplianceItems":{
+      "name":"ListComplianceItems",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListComplianceItemsRequest"},
+      "output":{"shape":"ListComplianceItemsResult"},
+      "errors":[
+        {"shape":"InvalidResourceType"},
+        {"shape":"InvalidResourceId"},
+        {"shape":"InternalServerError"},
+        {"shape":"InvalidFilter"},
+        {"shape":"InvalidNextToken"}
+      ]
+    },
+    "ListComplianceSummaries":{
+      "name":"ListComplianceSummaries",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListComplianceSummariesRequest"},
+      "output":{"shape":"ListComplianceSummariesResult"},
+      "errors":[
+        {"shape":"InvalidFilter"},
+        {"shape":"InvalidNextToken"},
+        {"shape":"InternalServerError"}
       ]
     },
     "ListDocumentVersions":{
@@ -941,6 +1013,20 @@
         {"shape":"InvalidNextToken"}
       ]
     },
+    "ListResourceComplianceSummaries":{
+      "name":"ListResourceComplianceSummaries",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListResourceComplianceSummariesRequest"},
+      "output":{"shape":"ListResourceComplianceSummariesResult"},
+      "errors":[
+        {"shape":"InvalidFilter"},
+        {"shape":"InvalidNextToken"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "ListResourceDataSync":{
       "name":"ListResourceDataSync",
       "http":{
@@ -984,6 +1070,24 @@
         {"shape":"DocumentLimitExceeded"}
       ]
     },
+    "PutComplianceItems":{
+      "name":"PutComplianceItems",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PutComplianceItemsRequest"},
+      "output":{"shape":"PutComplianceItemsResult"},
+      "errors":[
+        {"shape":"InternalServerError"},
+        {"shape":"InvalidItemContentException"},
+        {"shape":"TotalSizeLimitExceededException"},
+        {"shape":"ItemSizeLimitExceededException"},
+        {"shape":"ComplianceTypeCountLimitExceededException"},
+        {"shape":"InvalidResourceType"},
+        {"shape":"InvalidResourceId"}
+      ]
+    },
     "PutInventory":{
       "name":"PutInventory",
       "http":{
@@ -1001,7 +1105,10 @@
         {"shape":"ItemSizeLimitExceededException"},
         {"shape":"ItemContentMismatchException"},
         {"shape":"CustomSchemaCountLimitExceededException"},
-        {"shape":"UnsupportedInventorySchemaVersionException"}
+        {"shape":"UnsupportedInventorySchemaVersionException"},
+        {"shape":"UnsupportedInventoryItemContextException"},
+        {"shape":"InvalidInventoryItemContextException"},
+        {"shape":"SubTypeCountLimitExceededException"}
       ]
     },
     "PutParameter":{
@@ -1082,6 +1189,7 @@
         {"shape":"IdempotentParameterMismatch"},
         {"shape":"DoesNotExistException"},
         {"shape":"ResourceLimitExceededException"},
+        {"shape":"FeatureNotAvailableException"},
         {"shape":"InternalServerError"}
       ]
     },
@@ -1096,6 +1204,20 @@
       "errors":[
         {"shape":"InvalidResourceType"},
         {"shape":"InvalidResourceId"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "SendAutomationSignal":{
+      "name":"SendAutomationSignal",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"SendAutomationSignalRequest"},
+      "output":{"shape":"SendAutomationSignalResult"},
+      "errors":[
+        {"shape":"AutomationExecutionNotFoundException"},
+        {"shape":"InvalidAutomationSignalException"},
         {"shape":"InternalServerError"}
       ]
     },
@@ -1133,6 +1255,7 @@
         {"shape":"InvalidAutomationExecutionParametersException"},
         {"shape":"AutomationExecutionLimitExceededException"},
         {"shape":"AutomationDefinitionVersionNotFoundException"},
+        {"shape":"IdempotentParameterMismatch"},
         {"shape":"InternalServerError"}
       ]
     },
@@ -1167,7 +1290,9 @@
         {"shape":"InvalidUpdate"},
         {"shape":"TooManyUpdates"},
         {"shape":"InvalidDocument"},
-        {"shape":"InvalidTarget"}
+        {"shape":"InvalidTarget"},
+        {"shape":"InvalidAssociationVersion"},
+        {"shape":"AssociationVersionLimitExceeded"}
       ]
     },
     "UpdateAssociationStatus":{
@@ -1229,6 +1354,32 @@
       },
       "input":{"shape":"UpdateMaintenanceWindowRequest"},
       "output":{"shape":"UpdateMaintenanceWindowResult"},
+      "errors":[
+        {"shape":"DoesNotExistException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "UpdateMaintenanceWindowTarget":{
+      "name":"UpdateMaintenanceWindowTarget",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateMaintenanceWindowTargetRequest"},
+      "output":{"shape":"UpdateMaintenanceWindowTargetResult"},
+      "errors":[
+        {"shape":"DoesNotExistException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
+    "UpdateMaintenanceWindowTask":{
+      "name":"UpdateMaintenanceWindowTask",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateMaintenanceWindowTaskRequest"},
+      "output":{"shape":"UpdateMaintenanceWindowTaskResult"},
       "errors":[
         {"shape":"DoesNotExistException"},
         {"shape":"InternalServerError"}
@@ -1357,11 +1508,13 @@
         "Name":{"shape":"DocumentName"},
         "InstanceId":{"shape":"InstanceId"},
         "AssociationId":{"shape":"AssociationId"},
+        "AssociationVersion":{"shape":"AssociationVersion"},
         "DocumentVersion":{"shape":"DocumentVersion"},
         "Targets":{"shape":"Targets"},
         "LastExecutionDate":{"shape":"DateTime"},
         "Overview":{"shape":"AssociationOverview"},
-        "ScheduleExpression":{"shape":"ScheduleExpression"}
+        "ScheduleExpression":{"shape":"ScheduleExpression"},
+        "AssociationName":{"shape":"AssociationName"}
       }
     },
     "AssociationAlreadyExists":{
@@ -1375,6 +1528,7 @@
       "members":{
         "Name":{"shape":"DocumentName"},
         "InstanceId":{"shape":"InstanceId"},
+        "AssociationVersion":{"shape":"AssociationVersion"},
         "Date":{"shape":"DateTime"},
         "LastUpdateAssociationDate":{"shape":"DateTime"},
         "Status":{"shape":"AssociationStatus"},
@@ -1386,7 +1540,8 @@
         "ScheduleExpression":{"shape":"ScheduleExpression"},
         "OutputLocation":{"shape":"InstanceAssociationOutputLocation"},
         "LastExecutionDate":{"shape":"DateTime"},
-        "LastSuccessfulExecutionDate":{"shape":"DateTime"}
+        "LastSuccessfulExecutionDate":{"shape":"DateTime"},
+        "AssociationName":{"shape":"AssociationName"}
       }
     },
     "AssociationDescriptionList":{
@@ -1422,7 +1577,8 @@
         "AssociationId",
         "AssociationStatusName",
         "LastExecutedBefore",
-        "LastExecutedAfter"
+        "LastExecutedAfter",
+        "AssociationName"
       ]
     },
     "AssociationFilterList":{
@@ -1453,6 +1609,10 @@
         "shape":"Association",
         "locationName":"Association"
       }
+    },
+    "AssociationName":{
+      "type":"string",
+      "pattern":"^[a-zA-Z0-9_\\-.]{3,128}$"
     },
     "AssociationOverview":{
       "type":"structure",
@@ -1489,6 +1649,37 @@
         "Failed"
       ]
     },
+    "AssociationVersion":{
+      "type":"string",
+      "pattern":"([$]LATEST)|([1-9][0-9]*)"
+    },
+    "AssociationVersionInfo":{
+      "type":"structure",
+      "members":{
+        "AssociationId":{"shape":"AssociationId"},
+        "AssociationVersion":{"shape":"AssociationVersion"},
+        "CreatedDate":{"shape":"DateTime"},
+        "Name":{"shape":"DocumentName"},
+        "DocumentVersion":{"shape":"DocumentVersion"},
+        "Parameters":{"shape":"Parameters"},
+        "Targets":{"shape":"Targets"},
+        "ScheduleExpression":{"shape":"ScheduleExpression"},
+        "OutputLocation":{"shape":"InstanceAssociationOutputLocation"},
+        "AssociationName":{"shape":"AssociationName"}
+      }
+    },
+    "AssociationVersionLimitExceeded":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
+    "AssociationVersionList":{
+      "type":"list",
+      "member":{"shape":"AssociationVersionInfo"},
+      "min":1
+    },
     "AttributeName":{
       "type":"string",
       "max":64,
@@ -1496,7 +1687,7 @@
     },
     "AttributeValue":{
       "type":"string",
-      "max":1024,
+      "max":4096,
       "min":0
     },
     "AutomationActionName":{
@@ -1611,6 +1802,7 @@
       "enum":[
         "Pending",
         "InProgress",
+        "Waiting",
         "Success",
         "TimedOut",
         "Cancelled",
@@ -1838,6 +2030,196 @@
       "max":100
     },
     "CompletedCount":{"type":"integer"},
+    "ComplianceExecutionId":{
+      "type":"string",
+      "max":100
+    },
+    "ComplianceExecutionSummary":{
+      "type":"structure",
+      "required":["ExecutionTime"],
+      "members":{
+        "ExecutionTime":{"shape":"DateTime"},
+        "ExecutionId":{"shape":"ComplianceExecutionId"},
+        "ExecutionType":{"shape":"ComplianceExecutionType"}
+      }
+    },
+    "ComplianceExecutionType":{
+      "type":"string",
+      "max":50
+    },
+    "ComplianceFilterValue":{"type":"string"},
+    "ComplianceItem":{
+      "type":"structure",
+      "members":{
+        "ComplianceType":{"shape":"ComplianceTypeName"},
+        "ResourceType":{"shape":"ComplianceResourceType"},
+        "ResourceId":{"shape":"ComplianceResourceId"},
+        "Id":{"shape":"ComplianceItemId"},
+        "Title":{"shape":"ComplianceItemTitle"},
+        "Status":{"shape":"ComplianceStatus"},
+        "Severity":{"shape":"ComplianceSeverity"},
+        "ExecutionSummary":{"shape":"ComplianceExecutionSummary"},
+        "Details":{"shape":"ComplianceItemDetails"}
+      }
+    },
+    "ComplianceItemContentHash":{
+      "type":"string",
+      "max":256
+    },
+    "ComplianceItemDetails":{
+      "type":"map",
+      "key":{"shape":"AttributeName"},
+      "value":{"shape":"AttributeValue"}
+    },
+    "ComplianceItemEntry":{
+      "type":"structure",
+      "required":[
+        "Severity",
+        "Status"
+      ],
+      "members":{
+        "Id":{"shape":"ComplianceItemId"},
+        "Title":{"shape":"ComplianceItemTitle"},
+        "Severity":{"shape":"ComplianceSeverity"},
+        "Status":{"shape":"ComplianceStatus"},
+        "Details":{"shape":"ComplianceItemDetails"}
+      }
+    },
+    "ComplianceItemEntryList":{
+      "type":"list",
+      "member":{"shape":"ComplianceItemEntry"},
+      "max":10000,
+      "min":0
+    },
+    "ComplianceItemId":{
+      "type":"string",
+      "max":100,
+      "min":1
+    },
+    "ComplianceItemList":{
+      "type":"list",
+      "member":{
+        "shape":"ComplianceItem",
+        "locationName":"Item"
+      }
+    },
+    "ComplianceItemTitle":{
+      "type":"string",
+      "max":500
+    },
+    "ComplianceQueryOperatorType":{
+      "type":"string",
+      "enum":[
+        "EQUAL",
+        "NOT_EQUAL",
+        "BEGIN_WITH",
+        "LESS_THAN",
+        "GREATER_THAN"
+      ]
+    },
+    "ComplianceResourceId":{
+      "type":"string",
+      "max":100,
+      "min":1
+    },
+    "ComplianceResourceIdList":{
+      "type":"list",
+      "member":{"shape":"ComplianceResourceId"},
+      "min":1
+    },
+    "ComplianceResourceType":{
+      "type":"string",
+      "max":50,
+      "min":1
+    },
+    "ComplianceResourceTypeList":{
+      "type":"list",
+      "member":{"shape":"ComplianceResourceType"},
+      "min":1
+    },
+    "ComplianceSeverity":{
+      "type":"string",
+      "enum":[
+        "CRITICAL",
+        "HIGH",
+        "MEDIUM",
+        "LOW",
+        "INFORMATIONAL",
+        "UNSPECIFIED"
+      ]
+    },
+    "ComplianceStatus":{
+      "type":"string",
+      "enum":[
+        "COMPLIANT",
+        "NON_COMPLIANT"
+      ]
+    },
+    "ComplianceStringFilter":{
+      "type":"structure",
+      "members":{
+        "Key":{"shape":"ComplianceStringFilterKey"},
+        "Values":{"shape":"ComplianceStringFilterValueList"},
+        "Type":{"shape":"ComplianceQueryOperatorType"}
+      }
+    },
+    "ComplianceStringFilterKey":{
+      "type":"string",
+      "max":200,
+      "min":1
+    },
+    "ComplianceStringFilterList":{
+      "type":"list",
+      "member":{
+        "shape":"ComplianceStringFilter",
+        "locationName":"ComplianceFilter"
+      }
+    },
+    "ComplianceStringFilterValueList":{
+      "type":"list",
+      "member":{
+        "shape":"ComplianceFilterValue",
+        "locationName":"FilterValue"
+      },
+      "max":20,
+      "min":1
+    },
+    "ComplianceSummaryCount":{"type":"integer"},
+    "ComplianceSummaryItem":{
+      "type":"structure",
+      "members":{
+        "ComplianceType":{"shape":"ComplianceTypeName"},
+        "CompliantSummary":{"shape":"CompliantSummary"},
+        "NonCompliantSummary":{"shape":"NonCompliantSummary"}
+      }
+    },
+    "ComplianceSummaryItemList":{
+      "type":"list",
+      "member":{
+        "shape":"ComplianceSummaryItem",
+        "locationName":"Item"
+      }
+    },
+    "ComplianceTypeCountLimitExceededException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
+    "ComplianceTypeName":{
+      "type":"string",
+      "max":100,
+      "min":1,
+      "pattern":"[A-Za-z0-9_\\-]\\w+|Custom:[a-zA-Z0-9_\\-]\\w+"
+    },
+    "CompliantSummary":{
+      "type":"structure",
+      "members":{
+        "CompliantCount":{"shape":"ComplianceSummaryCount"},
+        "SeveritySummary":{"shape":"SeveritySummary"}
+      }
+    },
     "ComputerName":{
       "type":"string",
       "max":255,
@@ -1889,7 +2271,8 @@
         "DocumentVersion":{"shape":"DocumentVersion"},
         "Targets":{"shape":"Targets"},
         "ScheduleExpression":{"shape":"ScheduleExpression"},
-        "OutputLocation":{"shape":"InstanceAssociationOutputLocation"}
+        "OutputLocation":{"shape":"InstanceAssociationOutputLocation"},
+        "AssociationName":{"shape":"AssociationName"}
       }
     },
     "CreateAssociationBatchResult":{
@@ -1909,7 +2292,8 @@
         "Parameters":{"shape":"Parameters"},
         "Targets":{"shape":"Targets"},
         "ScheduleExpression":{"shape":"ScheduleExpression"},
-        "OutputLocation":{"shape":"InstanceAssociationOutputLocation"}
+        "OutputLocation":{"shape":"InstanceAssociationOutputLocation"},
+        "AssociationName":{"shape":"AssociationName"}
       }
     },
     "CreateAssociationResult":{
@@ -1947,6 +2331,7 @@
       ],
       "members":{
         "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
         "Schedule":{"shape":"MaintenanceWindowSchedule"},
         "Duration":{"shape":"MaintenanceWindowDurationHours"},
         "Cutoff":{"shape":"MaintenanceWindowCutoff"},
@@ -2158,7 +2543,11 @@
       ],
       "members":{
         "WindowId":{"shape":"MaintenanceWindowId"},
-        "WindowTargetId":{"shape":"MaintenanceWindowTargetId"}
+        "WindowTargetId":{"shape":"MaintenanceWindowTargetId"},
+        "Safe":{
+          "shape":"Boolean",
+          "box":true
+        }
       }
     },
     "DeregisterTargetFromMaintenanceWindowResult":{
@@ -2228,7 +2617,8 @@
       "members":{
         "Name":{"shape":"DocumentName"},
         "InstanceId":{"shape":"InstanceId"},
-        "AssociationId":{"shape":"AssociationId"}
+        "AssociationId":{"shape":"AssociationId"},
+        "AssociationVersion":{"shape":"AssociationVersion"}
       }
     },
     "DescribeAssociationResult":{
@@ -2907,6 +3297,13 @@
         "Unknown"
       ]
     },
+    "FeatureNotAvailableException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
     "GetAutomationExecutionRequest":{
       "type":"structure",
       "required":["AutomationExecutionId"],
@@ -3034,6 +3431,10 @@
         "MaxResults":{
           "shape":"GetInventorySchemaMaxResults",
           "box":true
+        },
+        "SubType":{
+          "shape":"IsSubTypeSchema",
+          "box":true
         }
       }
     },
@@ -3060,6 +3461,36 @@
         "StatusDetails":{"shape":"MaintenanceWindowExecutionStatusDetails"},
         "StartTime":{"shape":"DateTime"},
         "EndTime":{"shape":"DateTime"}
+      }
+    },
+    "GetMaintenanceWindowExecutionTaskInvocationRequest":{
+      "type":"structure",
+      "required":[
+        "WindowExecutionId",
+        "TaskId",
+        "InvocationId"
+      ],
+      "members":{
+        "WindowExecutionId":{"shape":"MaintenanceWindowExecutionId"},
+        "TaskId":{"shape":"MaintenanceWindowExecutionTaskId"},
+        "InvocationId":{"shape":"MaintenanceWindowExecutionTaskInvocationId"}
+      }
+    },
+    "GetMaintenanceWindowExecutionTaskInvocationResult":{
+      "type":"structure",
+      "members":{
+        "WindowExecutionId":{"shape":"MaintenanceWindowExecutionId"},
+        "TaskExecutionId":{"shape":"MaintenanceWindowExecutionTaskId"},
+        "InvocationId":{"shape":"MaintenanceWindowExecutionTaskInvocationId"},
+        "ExecutionId":{"shape":"MaintenanceWindowExecutionTaskExecutionId"},
+        "TaskType":{"shape":"MaintenanceWindowTaskType"},
+        "Parameters":{"shape":"MaintenanceWindowExecutionTaskInvocationParameters"},
+        "Status":{"shape":"MaintenanceWindowExecutionStatus"},
+        "StatusDetails":{"shape":"MaintenanceWindowExecutionStatusDetails"},
+        "StartTime":{"shape":"DateTime"},
+        "EndTime":{"shape":"DateTime"},
+        "OwnerInformation":{"shape":"OwnerInformation"},
+        "WindowTargetId":{"shape":"MaintenanceWindowTaskTargetId"}
       }
     },
     "GetMaintenanceWindowExecutionTaskRequest":{
@@ -3103,6 +3534,7 @@
       "members":{
         "WindowId":{"shape":"MaintenanceWindowId"},
         "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
         "Schedule":{"shape":"MaintenanceWindowSchedule"},
         "Duration":{"shape":"MaintenanceWindowDurationHours"},
         "Cutoff":{"shape":"MaintenanceWindowCutoff"},
@@ -3110,6 +3542,36 @@
         "Enabled":{"shape":"MaintenanceWindowEnabled"},
         "CreatedDate":{"shape":"DateTime"},
         "ModifiedDate":{"shape":"DateTime"}
+      }
+    },
+    "GetMaintenanceWindowTaskRequest":{
+      "type":"structure",
+      "required":[
+        "WindowId",
+        "WindowTaskId"
+      ],
+      "members":{
+        "WindowId":{"shape":"MaintenanceWindowId"},
+        "WindowTaskId":{"shape":"MaintenanceWindowTaskId"}
+      }
+    },
+    "GetMaintenanceWindowTaskResult":{
+      "type":"structure",
+      "members":{
+        "WindowId":{"shape":"MaintenanceWindowId"},
+        "WindowTaskId":{"shape":"MaintenanceWindowTaskId"},
+        "Targets":{"shape":"Targets"},
+        "TaskArn":{"shape":"MaintenanceWindowTaskArn"},
+        "ServiceRoleArn":{"shape":"ServiceRole"},
+        "TaskType":{"shape":"MaintenanceWindowTaskType"},
+        "TaskParameters":{"shape":"MaintenanceWindowTaskParameters"},
+        "TaskInvocationParameters":{"shape":"MaintenanceWindowTaskInvocationParameters"},
+        "Priority":{"shape":"MaintenanceWindowTaskPriority"},
+        "MaxConcurrency":{"shape":"MaxConcurrency"},
+        "MaxErrors":{"shape":"MaxErrors"},
+        "LoggingInfo":{"shape":"LoggingInfo"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"}
       }
     },
     "GetParameterHistoryRequest":{
@@ -3266,6 +3728,12 @@
       "type":"string",
       "max":64
     },
+    "IdempotencyToken":{
+      "type":"string",
+      "max":36,
+      "min":36,
+      "pattern":"[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}"
+    },
     "IdempotentParameterMismatch":{
       "type":"structure",
       "members":{
@@ -3285,7 +3753,8 @@
       "members":{
         "AssociationId":{"shape":"AssociationId"},
         "InstanceId":{"shape":"InstanceId"},
-        "Content":{"shape":"DocumentContent"}
+        "Content":{"shape":"DocumentContent"},
+        "AssociationVersion":{"shape":"AssociationVersion"}
       }
     },
     "InstanceAssociationExecutionSummary":{
@@ -3320,13 +3789,15 @@
         "AssociationId":{"shape":"AssociationId"},
         "Name":{"shape":"DocumentName"},
         "DocumentVersion":{"shape":"DocumentVersion"},
+        "AssociationVersion":{"shape":"AssociationVersion"},
         "InstanceId":{"shape":"InstanceId"},
         "ExecutionDate":{"shape":"DateTime"},
         "Status":{"shape":"StatusName"},
         "DetailedStatus":{"shape":"StatusName"},
         "ExecutionSummary":{"shape":"InstanceAssociationExecutionSummary"},
         "ErrorCode":{"shape":"AgentErrorCode"},
-        "OutputUrl":{"shape":"InstanceAssociationOutputUrl"}
+        "OutputUrl":{"shape":"InstanceAssociationOutputUrl"},
+        "AssociationName":{"shape":"AssociationName"}
       }
     },
     "InstanceAssociationStatusInfos":{
@@ -3561,7 +4032,21 @@
       },
       "exception":true
     },
+    "InvalidAssociationVersion":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
     "InvalidAutomationExecutionParametersException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
+    "InvalidAutomationSignalException":{
       "type":"structure",
       "members":{
         "Message":{"shape":"String"}
@@ -3647,6 +4132,13 @@
       "type":"structure",
       "members":{
         "message":{"shape":"String"}
+      },
+      "exception":true
+    },
+    "InvalidInventoryItemContextException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
       },
       "exception":true
     },
@@ -3820,7 +4312,8 @@
         "SchemaVersion":{"shape":"InventoryItemSchemaVersion"},
         "CaptureTime":{"shape":"InventoryItemCaptureTime"},
         "ContentHash":{"shape":"InventoryItemContentHash"},
-        "Content":{"shape":"InventoryItemEntryList"}
+        "Content":{"shape":"InventoryItemEntryList"},
+        "Context":{"shape":"InventoryItemContentContext"}
       }
     },
     "InventoryItemAttribute":{
@@ -3847,6 +4340,13 @@
     "InventoryItemCaptureTime":{
       "type":"string",
       "pattern":"^(20)[0-9][0-9]-(0[1-9]|1[012])-([12][0-9]|3[01]|0[1-9])(T)(2[0-3]|[0-1][0-9])(:[0-5][0-9])(:[0-5][0-9])(Z)$"
+    },
+    "InventoryItemContentContext":{
+      "type":"map",
+      "key":{"shape":"AttributeName"},
+      "value":{"shape":"AttributeValue"},
+      "max":50,
+      "min":0
     },
     "InventoryItemContentHash":{
       "type":"string",
@@ -3961,6 +4461,7 @@
       "type":"string",
       "max":2500
     },
+    "IsSubTypeSchema":{"type":"boolean"},
     "ItemContentMismatchException":{
       "type":"structure",
       "members":{
@@ -3991,6 +4492,25 @@
     },
     "LastResourceDataSyncTime":{"type":"timestamp"},
     "LastSuccessfulResourceDataSyncTime":{"type":"timestamp"},
+    "ListAssociationVersionsRequest":{
+      "type":"structure",
+      "required":["AssociationId"],
+      "members":{
+        "AssociationId":{"shape":"AssociationId"},
+        "MaxResults":{
+          "shape":"MaxResults",
+          "box":true
+        },
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
+    "ListAssociationVersionsResult":{
+      "type":"structure",
+      "members":{
+        "AssociationVersions":{"shape":"AssociationVersionList"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
     "ListAssociationsRequest":{
       "type":"structure",
       "members":{
@@ -4047,6 +4567,44 @@
       "type":"structure",
       "members":{
         "Commands":{"shape":"CommandList"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
+    "ListComplianceItemsRequest":{
+      "type":"structure",
+      "members":{
+        "Filters":{"shape":"ComplianceStringFilterList"},
+        "ResourceIds":{"shape":"ComplianceResourceIdList"},
+        "ResourceTypes":{"shape":"ComplianceResourceTypeList"},
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{
+          "shape":"MaxResults",
+          "box":true
+        }
+      }
+    },
+    "ListComplianceItemsResult":{
+      "type":"structure",
+      "members":{
+        "ComplianceItems":{"shape":"ComplianceItemList"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
+    "ListComplianceSummariesRequest":{
+      "type":"structure",
+      "members":{
+        "Filters":{"shape":"ComplianceStringFilterList"},
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{
+          "shape":"MaxResults",
+          "box":true
+        }
+      }
+    },
+    "ListComplianceSummariesResult":{
+      "type":"structure",
+      "members":{
+        "ComplianceSummaryItems":{"shape":"ComplianceSummaryItemList"},
         "NextToken":{"shape":"NextToken"}
       }
     },
@@ -4115,6 +4673,24 @@
         "NextToken":{"shape":"NextToken"}
       }
     },
+    "ListResourceComplianceSummariesRequest":{
+      "type":"structure",
+      "members":{
+        "Filters":{"shape":"ComplianceStringFilterList"},
+        "NextToken":{"shape":"NextToken"},
+        "MaxResults":{
+          "shape":"MaxResults",
+          "box":true
+        }
+      }
+    },
+    "ListResourceComplianceSummariesResult":{
+      "type":"structure",
+      "members":{
+        "ResourceComplianceSummaryItems":{"shape":"ResourceComplianceSummaryItemList"},
+        "NextToken":{"shape":"NextToken"}
+      }
+    },
     "ListResourceDataSyncRequest":{
       "type":"structure",
       "members":{
@@ -4162,10 +4738,23 @@
       }
     },
     "MaintenanceWindowAllowUnassociatedTargets":{"type":"boolean"},
+    "MaintenanceWindowAutomationParameters":{
+      "type":"structure",
+      "members":{
+        "DocumentVersion":{"shape":"DocumentVersion"},
+        "Parameters":{"shape":"AutomationParameterMap"}
+      }
+    },
     "MaintenanceWindowCutoff":{
       "type":"integer",
       "max":23,
       "min":0
+    },
+    "MaintenanceWindowDescription":{
+      "type":"string",
+      "max":128,
+      "min":1,
+      "sensitive":true
     },
     "MaintenanceWindowDurationHours":{
       "type":"integer",
@@ -4253,6 +4842,7 @@
         "TaskExecutionId":{"shape":"MaintenanceWindowExecutionTaskId"},
         "InvocationId":{"shape":"MaintenanceWindowExecutionTaskInvocationId"},
         "ExecutionId":{"shape":"MaintenanceWindowExecutionTaskExecutionId"},
+        "TaskType":{"shape":"MaintenanceWindowTaskType"},
         "Parameters":{"shape":"MaintenanceWindowExecutionTaskInvocationParameters"},
         "Status":{"shape":"MaintenanceWindowExecutionStatus"},
         "StatusDetails":{"shape":"MaintenanceWindowExecutionStatusDetails"},
@@ -4308,6 +4898,7 @@
       "members":{
         "WindowId":{"shape":"MaintenanceWindowId"},
         "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
         "Enabled":{"shape":"MaintenanceWindowEnabled"},
         "Duration":{"shape":"MaintenanceWindowDurationHours"},
         "Cutoff":{"shape":"MaintenanceWindowCutoff"}
@@ -4316,6 +4907,29 @@
     "MaintenanceWindowIdentityList":{
       "type":"list",
       "member":{"shape":"MaintenanceWindowIdentity"}
+    },
+    "MaintenanceWindowLambdaClientContext":{
+      "type":"string",
+      "max":8000,
+      "min":1
+    },
+    "MaintenanceWindowLambdaParameters":{
+      "type":"structure",
+      "members":{
+        "ClientContext":{"shape":"MaintenanceWindowLambdaClientContext"},
+        "Qualifier":{"shape":"MaintenanceWindowLambdaQualifier"},
+        "Payload":{"shape":"MaintenanceWindowLambdaPayload"}
+      }
+    },
+    "MaintenanceWindowLambdaPayload":{
+      "type":"blob",
+      "max":4096,
+      "sensitive":true
+    },
+    "MaintenanceWindowLambdaQualifier":{
+      "type":"string",
+      "max":128,
+      "min":1
     },
     "MaintenanceWindowMaxResults":{
       "type":"integer",
@@ -4332,10 +4946,44 @@
       "type":"string",
       "enum":["INSTANCE"]
     },
+    "MaintenanceWindowRunCommandParameters":{
+      "type":"structure",
+      "members":{
+        "Comment":{"shape":"Comment"},
+        "DocumentHash":{"shape":"DocumentHash"},
+        "DocumentHashType":{"shape":"DocumentHashType"},
+        "NotificationConfig":{"shape":"NotificationConfig"},
+        "OutputS3BucketName":{"shape":"S3BucketName"},
+        "OutputS3KeyPrefix":{"shape":"S3KeyPrefix"},
+        "Parameters":{"shape":"Parameters"},
+        "ServiceRoleArn":{"shape":"ServiceRole"},
+        "TimeoutSeconds":{
+          "shape":"TimeoutSeconds",
+          "box":true
+        }
+      }
+    },
     "MaintenanceWindowSchedule":{
       "type":"string",
       "max":256,
       "min":1
+    },
+    "MaintenanceWindowStepFunctionsInput":{
+      "type":"string",
+      "max":4096,
+      "sensitive":true
+    },
+    "MaintenanceWindowStepFunctionsName":{
+      "type":"string",
+      "max":80,
+      "min":1
+    },
+    "MaintenanceWindowStepFunctionsParameters":{
+      "type":"structure",
+      "members":{
+        "Input":{"shape":"MaintenanceWindowStepFunctionsInput"},
+        "Name":{"shape":"MaintenanceWindowStepFunctionsName"}
+      }
     },
     "MaintenanceWindowTarget":{
       "type":"structure",
@@ -4344,7 +4992,9 @@
         "WindowTargetId":{"shape":"MaintenanceWindowTargetId"},
         "ResourceType":{"shape":"MaintenanceWindowResourceType"},
         "Targets":{"shape":"Targets"},
-        "OwnerInformation":{"shape":"OwnerInformation"}
+        "OwnerInformation":{"shape":"OwnerInformation"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"}
       }
     },
     "MaintenanceWindowTargetId":{
@@ -4370,7 +5020,9 @@
         "LoggingInfo":{"shape":"LoggingInfo"},
         "ServiceRoleArn":{"shape":"ServiceRole"},
         "MaxConcurrency":{"shape":"MaxConcurrency"},
-        "MaxErrors":{"shape":"MaxErrors"}
+        "MaxErrors":{"shape":"MaxErrors"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"}
       }
     },
     "MaintenanceWindowTaskArn":{
@@ -4383,6 +5035,15 @@
       "max":36,
       "min":36,
       "pattern":"^[0-9a-fA-F]{8}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{4}\\-[0-9a-fA-F]{12}$"
+    },
+    "MaintenanceWindowTaskInvocationParameters":{
+      "type":"structure",
+      "members":{
+        "RunCommand":{"shape":"MaintenanceWindowRunCommandParameters"},
+        "Automation":{"shape":"MaintenanceWindowAutomationParameters"},
+        "StepFunctions":{"shape":"MaintenanceWindowStepFunctionsParameters"},
+        "Lambda":{"shape":"MaintenanceWindowLambdaParameters"}
+      }
     },
     "MaintenanceWindowTaskList":{
       "type":"list",
@@ -4432,7 +5093,12 @@
     },
     "MaintenanceWindowTaskType":{
       "type":"string",
-      "enum":["RUN_COMMAND"]
+      "enum":[
+        "RUN_COMMAND",
+        "AUTOMATION",
+        "STEP_FUNCTIONS",
+        "LAMBDA"
+      ]
     },
     "ManagedInstanceId":{
       "type":"string",
@@ -4486,6 +5152,13 @@
       }
     },
     "NextToken":{"type":"string"},
+    "NonCompliantSummary":{
+      "type":"structure",
+      "members":{
+        "NonCompliantCount":{"shape":"ComplianceSummaryCount"},
+        "SeveritySummary":{"shape":"SeveritySummary"}
+      }
+    },
     "NormalStringMap":{
       "type":"map",
       "key":{"shape":"String"},
@@ -5013,6 +5686,29 @@
       }
     },
     "Product":{"type":"string"},
+    "PutComplianceItemsRequest":{
+      "type":"structure",
+      "required":[
+        "ResourceId",
+        "ResourceType",
+        "ComplianceType",
+        "ExecutionSummary",
+        "Items"
+      ],
+      "members":{
+        "ResourceId":{"shape":"ComplianceResourceId"},
+        "ResourceType":{"shape":"ComplianceResourceType"},
+        "ComplianceType":{"shape":"ComplianceTypeName"},
+        "ExecutionSummary":{"shape":"ComplianceExecutionSummary"},
+        "Items":{"shape":"ComplianceItemEntryList"},
+        "ItemContentHash":{"shape":"ComplianceItemContentHash"}
+      }
+    },
+    "PutComplianceItemsResult":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "PutInventoryRequest":{
       "type":"structure",
       "required":[
@@ -5097,6 +5793,8 @@
         "ResourceType":{"shape":"MaintenanceWindowResourceType"},
         "Targets":{"shape":"Targets"},
         "OwnerInformation":{"shape":"OwnerInformation"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
         "ClientToken":{
           "shape":"ClientToken",
           "idempotencyToken":true
@@ -5127,6 +5825,7 @@
         "ServiceRoleArn":{"shape":"ServiceRole"},
         "TaskType":{"shape":"MaintenanceWindowTaskType"},
         "TaskParameters":{"shape":"MaintenanceWindowTaskParameters"},
+        "TaskInvocationParameters":{"shape":"MaintenanceWindowTaskInvocationParameters"},
         "Priority":{
           "shape":"MaintenanceWindowTaskPriority",
           "box":true
@@ -5134,6 +5833,8 @@
         "MaxConcurrency":{"shape":"MaxConcurrency"},
         "MaxErrors":{"shape":"MaxErrors"},
         "LoggingInfo":{"shape":"LoggingInfo"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
         "ClientToken":{
           "shape":"ClientToken",
           "idempotencyToken":true
@@ -5173,6 +5874,32 @@
       "type":"structure",
       "members":{
       }
+    },
+    "ResourceComplianceSummaryItem":{
+      "type":"structure",
+      "members":{
+        "ComplianceType":{"shape":"ComplianceTypeName"},
+        "ResourceType":{"shape":"ComplianceResourceType"},
+        "ResourceId":{"shape":"ComplianceResourceId"},
+        "Status":{"shape":"ComplianceStatus"},
+        "OverallSeverity":{"shape":"ComplianceSeverity"},
+        "ExecutionSummary":{"shape":"ComplianceExecutionSummary"},
+        "CompliantSummary":{"shape":"CompliantSummary"},
+        "NonCompliantSummary":{"shape":"NonCompliantSummary"}
+      }
+    },
+    "ResourceComplianceSummaryItemList":{
+      "type":"list",
+      "member":{
+        "shape":"ResourceComplianceSummaryItem",
+        "locationName":"Item"
+      }
+    },
+    "ResourceDataSyncAWSKMSKeyARN":{
+      "type":"string",
+      "max":512,
+      "min":1,
+      "pattern":"arn:.*"
     },
     "ResourceDataSyncAlreadyExistsException":{
       "type":"structure",
@@ -5239,7 +5966,8 @@
         "BucketName":{"shape":"ResourceDataSyncS3BucketName"},
         "Prefix":{"shape":"ResourceDataSyncS3Prefix"},
         "SyncFormat":{"shape":"ResourceDataSyncS3Format"},
-        "Region":{"shape":"ResourceDataSyncS3Region"}
+        "Region":{"shape":"ResourceDataSyncS3Region"},
+        "AWSKMSKeyARN":{"shape":"ResourceDataSyncAWSKMSKeyARN"}
       }
     },
     "ResourceDataSyncS3Format":{
@@ -5337,6 +6065,23 @@
       "max":256,
       "min":1
     },
+    "SendAutomationSignalRequest":{
+      "type":"structure",
+      "required":[
+        "AutomationExecutionId",
+        "SignalType"
+      ],
+      "members":{
+        "AutomationExecutionId":{"shape":"AutomationExecutionId"},
+        "SignalType":{"shape":"SignalType"},
+        "Payload":{"shape":"AutomationParameterMap"}
+      }
+    },
+    "SendAutomationSignalResult":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "SendCommandRequest":{
       "type":"structure",
       "required":["DocumentName"],
@@ -5368,6 +6113,24 @@
       }
     },
     "ServiceRole":{"type":"string"},
+    "SeveritySummary":{
+      "type":"structure",
+      "members":{
+        "CriticalCount":{"shape":"ComplianceSummaryCount"},
+        "HighCount":{"shape":"ComplianceSummaryCount"},
+        "MediumCount":{"shape":"ComplianceSummaryCount"},
+        "LowCount":{"shape":"ComplianceSummaryCount"},
+        "InformationalCount":{"shape":"ComplianceSummaryCount"},
+        "UnspecifiedCount":{"shape":"ComplianceSummaryCount"}
+      }
+    },
+    "SignalType":{
+      "type":"string",
+      "enum":[
+        "Approve",
+        "Reject"
+      ]
+    },
     "SnapshotDownloadUrl":{"type":"string"},
     "SnapshotId":{
       "type":"string",
@@ -5392,7 +6155,8 @@
           "shape":"DocumentVersion",
           "box":true
         },
-        "Parameters":{"shape":"AutomationParameterMap"}
+        "Parameters":{"shape":"AutomationParameterMap"},
+        "ClientToken":{"shape":"IdempotencyToken"}
       }
     },
     "StartAutomationExecutionResult":{
@@ -5465,6 +6229,13 @@
       "type":"list",
       "member":{"shape":"String"}
     },
+    "SubTypeCountLimitExceededException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
     "Tag":{
       "type":"structure",
       "required":[
@@ -5500,6 +6271,13 @@
       }
     },
     "TargetCount":{"type":"integer"},
+    "TargetInUseException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
     "TargetKey":{
       "type":"string",
       "max":128,
@@ -5544,6 +6322,14 @@
       },
       "exception":true
     },
+    "UnsupportedInventoryItemContextException":{
+      "type":"structure",
+      "members":{
+        "TypeName":{"shape":"InventoryItemTypeName"},
+        "Message":{"shape":"String"}
+      },
+      "exception":true
+    },
     "UnsupportedInventorySchemaVersionException":{
       "type":"structure",
       "members":{
@@ -5582,7 +6368,9 @@
         "ScheduleExpression":{"shape":"ScheduleExpression"},
         "OutputLocation":{"shape":"InstanceAssociationOutputLocation"},
         "Name":{"shape":"DocumentName"},
-        "Targets":{"shape":"Targets"}
+        "Targets":{"shape":"Targets"},
+        "AssociationName":{"shape":"AssociationName"},
+        "AssociationVersion":{"shape":"AssociationVersion"}
       }
     },
     "UpdateAssociationResult":{
@@ -5651,6 +6439,7 @@
       "members":{
         "WindowId":{"shape":"MaintenanceWindowId"},
         "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
         "Schedule":{"shape":"MaintenanceWindowSchedule"},
         "Duration":{
           "shape":"MaintenanceWindowDurationHours",
@@ -5667,6 +6456,10 @@
         "Enabled":{
           "shape":"MaintenanceWindowEnabled",
           "box":true
+        },
+        "Replace":{
+          "shape":"Boolean",
+          "box":true
         }
       }
     },
@@ -5675,11 +6468,89 @@
       "members":{
         "WindowId":{"shape":"MaintenanceWindowId"},
         "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
         "Schedule":{"shape":"MaintenanceWindowSchedule"},
         "Duration":{"shape":"MaintenanceWindowDurationHours"},
         "Cutoff":{"shape":"MaintenanceWindowCutoff"},
         "AllowUnassociatedTargets":{"shape":"MaintenanceWindowAllowUnassociatedTargets"},
         "Enabled":{"shape":"MaintenanceWindowEnabled"}
+      }
+    },
+    "UpdateMaintenanceWindowTargetRequest":{
+      "type":"structure",
+      "required":[
+        "WindowId",
+        "WindowTargetId"
+      ],
+      "members":{
+        "WindowId":{"shape":"MaintenanceWindowId"},
+        "WindowTargetId":{"shape":"MaintenanceWindowTargetId"},
+        "Targets":{"shape":"Targets"},
+        "OwnerInformation":{"shape":"OwnerInformation"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
+        "Replace":{
+          "shape":"Boolean",
+          "box":true
+        }
+      }
+    },
+    "UpdateMaintenanceWindowTargetResult":{
+      "type":"structure",
+      "members":{
+        "WindowId":{"shape":"MaintenanceWindowId"},
+        "WindowTargetId":{"shape":"MaintenanceWindowTargetId"},
+        "Targets":{"shape":"Targets"},
+        "OwnerInformation":{"shape":"OwnerInformation"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"}
+      }
+    },
+    "UpdateMaintenanceWindowTaskRequest":{
+      "type":"structure",
+      "required":[
+        "WindowId",
+        "WindowTaskId"
+      ],
+      "members":{
+        "WindowId":{"shape":"MaintenanceWindowId"},
+        "WindowTaskId":{"shape":"MaintenanceWindowTaskId"},
+        "Targets":{"shape":"Targets"},
+        "TaskArn":{"shape":"MaintenanceWindowTaskArn"},
+        "ServiceRoleArn":{"shape":"ServiceRole"},
+        "TaskParameters":{"shape":"MaintenanceWindowTaskParameters"},
+        "TaskInvocationParameters":{"shape":"MaintenanceWindowTaskInvocationParameters"},
+        "Priority":{
+          "shape":"MaintenanceWindowTaskPriority",
+          "box":true
+        },
+        "MaxConcurrency":{"shape":"MaxConcurrency"},
+        "MaxErrors":{"shape":"MaxErrors"},
+        "LoggingInfo":{"shape":"LoggingInfo"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"},
+        "Replace":{
+          "shape":"Boolean",
+          "box":true
+        }
+      }
+    },
+    "UpdateMaintenanceWindowTaskResult":{
+      "type":"structure",
+      "members":{
+        "WindowId":{"shape":"MaintenanceWindowId"},
+        "WindowTaskId":{"shape":"MaintenanceWindowTaskId"},
+        "Targets":{"shape":"Targets"},
+        "TaskArn":{"shape":"MaintenanceWindowTaskArn"},
+        "ServiceRoleArn":{"shape":"ServiceRole"},
+        "TaskParameters":{"shape":"MaintenanceWindowTaskParameters"},
+        "TaskInvocationParameters":{"shape":"MaintenanceWindowTaskInvocationParameters"},
+        "Priority":{"shape":"MaintenanceWindowTaskPriority"},
+        "MaxConcurrency":{"shape":"MaxConcurrency"},
+        "MaxErrors":{"shape":"MaxErrors"},
+        "LoggingInfo":{"shape":"LoggingInfo"},
+        "Name":{"shape":"MaintenanceWindowName"},
+        "Description":{"shape":"MaintenanceWindowDescription"}
       }
     },
     "UpdateManagedInstanceRoleRequest":{

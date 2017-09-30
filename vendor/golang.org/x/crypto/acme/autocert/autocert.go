@@ -83,8 +83,10 @@ func defaultHostPolicy(context.Context, string) error {
 // It obtains and refreshes certificates automatically,
 // as well as providing them to a TLS server via tls.Config.
 //
-// To preserve issued certificates and improve overall performance,
-// use a cache implementation of Cache. For instance, DirCache.
+// You must specify a cache implementation, such as DirCache,
+// to reuse obtained certificates across program restarts.
+// Otherwise your server is very likely to exceed the certificate
+// issuer's request rate limits.
 type Manager struct {
 	// Prompt specifies a callback function to conditionally accept a CA's Terms of Service (TOS).
 	// The registration may require the caller to agree to the CA's TOS.

@@ -167,9 +167,8 @@ func core(out *[64]byte, in *[16]byte, k *[32]byte) {
 }
 
 // XORKeyStream crypts bytes from in to out using the given key and counters.
-// In and out may be the same slice but otherwise should not overlap. Counter
-// contains the raw ChaCha20 counter bytes (i.e. block counter followed by
-// nonce).
+// In and out must overlap entirely or not at all. Counter contains the raw
+// ChaCha20 counter bytes (i.e. block counter followed by nonce).
 func XORKeyStream(out, in []byte, counter *[16]byte, key *[32]byte) {
 	var block [64]byte
 	var counterCopy [16]byte

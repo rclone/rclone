@@ -15,8 +15,10 @@
 package display // import "golang.org/x/text/language/display"
 
 import (
+	"fmt"
 	"strings"
 
+	"golang.org/x/text/internal/format"
 	"golang.org/x/text/language"
 )
 
@@ -31,6 +33,65 @@ All fairly low priority at the moment:
     - Reduce size of offset tables.
     - Consider compressing infrequently used languages and decompress on demand.
 */
+
+// A Formatter formats a tag in the current language. It is used in conjunction
+// with the message package.
+type Formatter struct {
+	lookup func(tag int, x interface{}) string
+	x      interface{}
+}
+
+// Format implements "golang.org/x/text/internal/format".Formatter.
+func (f Formatter) Format(state format.State, verb rune) {
+	// TODO: there are a lot of inefficiencies in this code. Fix it when we
+	// language.Tag has embedded compact tags.
+	t := state.Language()
+	_, index, _ := matcher.Match(t)
+	str := f.lookup(index, f.x)
+	if str == "" {
+		// TODO: use language-specific punctuation.
+		// TODO: use codePattern instead of language?
+		if unknown := f.lookup(index, language.Und); unknown != "" {
+			fmt.Fprintf(state, "%v (%v)", unknown, f.x)
+		} else {
+			fmt.Fprintf(state, "[language: %v]", f.x)
+		}
+	} else {
+		state.Write([]byte(str))
+	}
+}
+
+// Language returns a Formatter that renders the name for lang in the
+// the current language. x may be a language.Base or a language.Tag.
+// It renders lang in the default language if no translation for the current
+// language is supported.
+func Language(lang interface{}) Formatter {
+	return Formatter{langFunc, lang}
+}
+
+// Region returns a Formatter that renders the name for region in the current
+// language. region may be a language.Region or a language.Tag.
+// It renders region in the default language if no translation for the current
+// language is supported.
+func Region(region interface{}) Formatter {
+	return Formatter{regionFunc, region}
+}
+
+// Script returns a Formatter that renders the name for script in the current
+// language. script may be a language.Script or a language.Tag.
+// It renders script in the default language if no translation for the current
+// language is supported.
+func Script(script interface{}) Formatter {
+	return Formatter{scriptFunc, script}
+}
+
+// Script returns a Formatter that renders the name for tag in the current
+// language. tag may be a language.Tag.
+// It renders tag in the default language if no translation for the current
+// language is supported.
+func Tag(tag interface{}) Formatter {
+	return Formatter{tagFunc, tag}
+}
 
 // A Namer is used to get the name for a given value, such as a Tag, Language,
 // Script or Region.
@@ -84,6 +145,10 @@ func Languages(t language.Tag) Namer {
 
 type languageNamer int
 
+func langFunc(i int, x interface{}) string {
+	return nameLanguage(languageNamer(i), x)
+}
+
 func (n languageNamer) name(i int) string {
 	return lookup(langHeaders[:], int(n), i)
 }
@@ -116,6 +181,10 @@ func Scripts(t language.Tag) Namer {
 
 type scriptNamer int
 
+func scriptFunc(i int, x interface{}) string {
+	return nameScript(scriptNamer(i), x)
+}
+
 func (n scriptNamer) name(i int) string {
 	return lookup(scriptHeaders[:], int(n), i)
 }
@@ -140,6 +209,10 @@ func Regions(t language.Tag) Namer {
 
 type regionNamer int
 
+func regionFunc(i int, x interface{}) string {
+	return nameRegion(regionNamer(i), x)
+}
+
 func (n regionNamer) name(i int) string {
 	return lookup(regionHeaders[:], int(n), i)
 }
@@ -161,6 +234,10 @@ func Tags(t language.Tag) Namer {
 }
 
 type tagNamer int
+
+func tagFunc(i int, x interface{}) string {
+	return nameTag(languageNamer(i), scriptNamer(i), regionNamer(i), x)
+}
 
 // Name implements the Namer interface for tag names.
 func (n tagNamer) Name(x interface{}) string {

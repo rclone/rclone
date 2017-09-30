@@ -5,6 +5,7 @@ import (
 	"log"
 	"math"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -209,11 +210,29 @@ func DoRetryForStatusCodes(attempts int, backoff time.Duration, codes ...int) Se
 				if err != nil || !ResponseHasStatusCode(resp, codes...) {
 					return resp, err
 				}
-				DelayForBackoff(backoff, attempt, r.Cancel)
+				delayed := DelayWithRetryAfter(resp, r.Cancel)
+				if !delayed {
+					DelayForBackoff(backoff, attempt, r.Cancel)
+				}
 			}
 			return resp, err
 		})
 	}
+}
+
+// DelayWithRetryAfter invokes time.After for the duration specified in the "Retry-After" header in
+// responses with status code 429
+func DelayWithRetryAfter(resp *http.Response, cancel <-chan struct{}) bool {
+	retryAfter, _ := strconv.Atoi(resp.Header.Get("Retry-After"))
+	if resp.StatusCode == http.StatusTooManyRequests && retryAfter > 0 {
+		select {
+		case <-time.After(time.Duration(retryAfter) * time.Second):
+			return true
+		case <-cancel:
+			return false
+		}
+	}
+	return false
 }
 
 // DoRetryForDuration returns a SendDecorator that retries the request until the total time is equal

@@ -1,10 +1,158 @@
 package sftp
 
 import (
+	"testing"
+	"os"
+	"regexp"
+	"time"
 	"io"
 	"sync"
-	"testing"
 )
+
+const (
+	typeDirectory = "d"
+	typeFile      = "[^d]"
+)
+
+func TestRunLsWithExamplesDirectory(t *testing.T) {
+	path := "examples"
+	item, _ := os.Stat(path)
+	result := runLs(path, item)
+	runLsTestHelper(t, result, typeDirectory, path)
+}
+
+func TestRunLsWithLicensesFile(t *testing.T) {
+	path := "LICENSE"
+	item, _ := os.Stat(path)
+	result := runLs(path, item)
+	runLsTestHelper(t, result, typeFile, path)
+}
+
+/*
+   The format of the `longname' field is unspecified by this protocol.
+   It MUST be suitable for use in the output of a directory listing
+   command (in fact, the recommended operation for a directory listing
+   command is to simply display this data).  However, clients SHOULD NOT
+   attempt to parse the longname field for file attributes; they SHOULD
+   use the attrs field instead.
+
+    The recommended format for the longname field is as follows:
+
+        -rwxr-xr-x   1 mjos     staff      348911 Mar 25 14:29 t-filexfer
+        1234567890 123 12345678 12345678 12345678 123456789012
+
+   Here, the first line is sample output, and the second field indicates
+   widths of the various fields.  Fields are separated by spaces.  The
+   first field lists file permissions for user, group, and others; the
+   second field is link count; the third field is the name of the user
+   who owns the file; the fourth field is the name of the group that
+   owns the file; the fifth field is the size of the file in bytes; the
+   sixth field (which actually may contain spaces, but is fixed to 12
+   characters) is the file modification time, and the seventh field is
+   the file name.  Each field is specified to be a minimum of certain
+   number of character positions (indicated by the second line above),
+   but may also be longer if the data does not fit in the specified
+   length.
+
+    The SSH_FXP_ATTRS response has the following format:
+
+        uint32     id
+        ATTRS      attrs
+
+   where `id' is the request identifier, and `attrs' is the returned
+   file attributes as described in Section ``File Attributes''.
+ */
+func runLsTestHelper(t *testing.T, result, expectedType, path string) {
+	// using regular expressions to make tests work on all systems
+	// a virtual file system (like afero) would be needed to mock valid filesystem checks
+	// expected layout is:
+	// drwxr-xr-x   8 501      20            272 Aug  9 19:46 examples
+
+	// permissions (len 10, "drwxr-xr-x")
+	got := result[0:10]
+	if ok, err := regexp.MatchString("^"+expectedType+"[rwx-]{9}$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): permission field mismatch, expected dir, got: %#v, err: %#v", path, got, err)
+	}
+
+	// space
+	got = result[10:11]
+	if ok, err := regexp.MatchString("^\\s$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): spacer 1 mismatch, expected whitespace, got: %#v, err: %#v", path, got, err)
+	}
+
+	// link count (len 3, number)
+	got = result[12:15]
+	if ok, err := regexp.MatchString("^\\s*[0-9]+$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): link count field mismatch, got: %#v, err: %#v", path, got, err)
+	}
+
+	// spacer
+	got = result[15:16]
+	if ok, err := regexp.MatchString("^\\s$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): spacer 2 mismatch, expected whitespace, got: %#v, err: %#v", path, got, err)
+	}
+
+	// username / uid (len 8, number or string)
+	got = result[16:24]
+	if ok, err := regexp.MatchString("^[^\\s]{1,8}\\s*$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): username / uid mismatch, expected user, got: %#v, err: %#v", path, got, err)
+	}
+
+	// spacer
+	got = result[24:25]
+	if ok, err := regexp.MatchString("^\\s$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): spacer 3 mismatch, expected whitespace, got: %#v, err: %#v", path, got, err)
+	}
+
+	// groupname / gid (len 8, number or string)
+	got = result[25:33]
+	if ok, err := regexp.MatchString("^[^\\s]{1,8}\\s*$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): groupname / gid mismatch, expected group, got: %#v, err: %#v", path, got, err)
+	}
+
+	// spacer
+	got = result[33:34]
+	if ok, err := regexp.MatchString("^\\s$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): spacer 4 mismatch, expected whitespace, got: %#v, err: %#v", path, got, err)
+	}
+
+	// filesize (len 8)
+	got = result[34:42]
+	if ok, err := regexp.MatchString("^\\s*[0-9]+$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): filesize field mismatch, expected size in bytes, got: %#v, err: %#v", path, got, err)
+	}
+
+	// spacer
+	got = result[42:43]
+	if ok, err := regexp.MatchString("^\\s$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): spacer 5 mismatch, expected whitespace, got: %#v, err: %#v", path, got, err)
+	}
+
+	// mod time (len 12, e.g. Aug  9 19:46)
+	got = result[43:55]
+	layout := "Jan  2 15:04"
+	_, err := time.Parse(layout, got)
+
+	if err != nil {
+		layout = "Jan  2 2006"
+		_, err = time.Parse(layout, got)
+	}
+	if err != nil {
+		t.Errorf("runLs(%#v, *FileInfo): mod time field mismatch, expected date layout %s, got: %#v, err: %#v", path, layout, got, err)
+	}
+
+	// spacer
+	got = result[55:56]
+	if ok, err := regexp.MatchString("^\\s$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): spacer 6 mismatch, expected whitespace, got: %#v, err: %#v", path, got, err)
+	}
+
+	// filename
+	got = result[56:]
+	if ok, err := regexp.MatchString("^"+path+"$", got); !ok {
+		t.Errorf("runLs(%#v, *FileInfo): name field mismatch, expected examples, got: %#v, err: %#v", path, got, err)
+	}
+}
 
 func clientServerPair(t *testing.T) (*Client, *Server) {
 	cr, sw := io.Pipe()

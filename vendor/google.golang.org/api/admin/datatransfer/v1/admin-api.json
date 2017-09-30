@@ -22,7 +22,7 @@
  "basePath": "/admin/datatransfer/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "admin/datatransfer/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/admin/datatransfer_v1",
  "parameters": {
   "alt": {
    "type": "string",

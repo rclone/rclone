@@ -25,6 +25,9 @@ import (
 // CopierFrom creates a Copier that can copy src to dst.
 // You can immediately call Run on the returned Copier, or
 // you can configure it first.
+//
+// For Requester Pays buckets, the user project of dst is billed, unless it is empty,
+// in which case the user project of src is billed.
 func (dst *ObjectHandle) CopierFrom(src *ObjectHandle) *Copier {
 	return &Copier{dst: dst, src: src}
 }
@@ -73,7 +76,7 @@ func (c *Copier) Run(ctx context.Context) (*ObjectAttrs, error) {
 	// does not cause any problems.
 	rawObject := c.ObjectAttrs.toRawObject("")
 	for {
-		res, err := c.callRewrite(ctx, c.src, rawObject)
+		res, err := c.callRewrite(ctx, rawObject)
 		if err != nil {
 			return nil, err
 		}
@@ -86,8 +89,8 @@ func (c *Copier) Run(ctx context.Context) (*ObjectAttrs, error) {
 	}
 }
 
-func (c *Copier) callRewrite(ctx context.Context, src *ObjectHandle, rawObj *raw.Object) (*raw.RewriteResponse, error) {
-	call := c.dst.c.raw.Objects.Rewrite(src.bucket, src.object, c.dst.bucket, c.dst.object, rawObj)
+func (c *Copier) callRewrite(ctx context.Context, rawObj *raw.Object) (*raw.RewriteResponse, error) {
+	call := c.dst.c.raw.Objects.Rewrite(c.src.bucket, c.src.object, c.dst.bucket, c.dst.object, rawObj)
 
 	call.Context(ctx).Projection("full")
 	if c.RewriteToken != "" {
@@ -95,6 +98,11 @@ func (c *Copier) callRewrite(ctx context.Context, src *ObjectHandle, rawObj *raw
 	}
 	if err := applyConds("Copy destination", c.dst.gen, c.dst.conds, call); err != nil {
 		return nil, err
+	}
+	if c.dst.userProject != "" {
+		call.UserProject(c.dst.userProject)
+	} else if c.src.userProject != "" {
+		call.UserProject(c.src.userProject)
 	}
 	if err := applySourceConds(c.src.gen, c.src.conds, call); err != nil {
 		return nil, err
@@ -128,6 +136,8 @@ func (dst *ObjectHandle) ComposerFrom(srcs ...*ObjectHandle) *Composer {
 }
 
 // A Composer composes source objects into a destination object.
+//
+// For Requester Pays buckets, the user project of dst is billed.
 type Composer struct {
 	// ObjectAttrs are optional attributes to set on the destination object.
 	// Any attributes must be initialized before any calls on the Composer. Nil
@@ -173,6 +183,9 @@ func (c *Composer) Run(ctx context.Context) (*ObjectAttrs, error) {
 	call := c.dst.c.raw.Objects.Compose(c.dst.bucket, c.dst.object, req).Context(ctx)
 	if err := applyConds("ComposeFrom destination", c.dst.gen, c.dst.conds, call); err != nil {
 		return nil, err
+	}
+	if c.dst.userProject != "" {
+		call.UserProject(c.dst.userProject)
 	}
 	if err := setEncryptionHeaders(call.Header(), c.dst.encryptionKey, false); err != nil {
 		return nil, err

@@ -99,6 +99,7 @@ type Connection struct {
 	Domain         string            // User's domain name
 	DomainId       string            // User's domain Id
 	UserName       string            // UserName for api
+	UserId         string            // User Id
 	ApiKey         string            // Key for api access
 	AuthUrl        string            // Auth URL
 	Retries        int               // Retries on error (default is 3)
@@ -191,6 +192,7 @@ func setFromEnv(param interface{}, name string) (err error) {
 // For v3 authentication
 //     OS_AUTH_URL - Auth URL
 //     OS_USERNAME - UserName for api
+//     OS_USER_ID - User Id
 //     OS_PASSWORD - Key for api access
 //     OS_USER_DOMAIN_NAME - User's domain name
 //     OS_USER_DOMAIN_ID - User's domain Id
@@ -223,6 +225,7 @@ func (c *Connection) ApplyEnvironment() (err error) {
 		{&c.Domain, "OS_USER_DOMAIN_NAME"},
 		{&c.DomainId, "OS_USER_DOMAIN_ID"},
 		{&c.UserName, "OS_USERNAME"},
+		{&c.UserId, "OS_USER_ID"},
 		{&c.ApiKey, "OS_PASSWORD"},
 		{&c.AuthUrl, "OS_AUTH_URL"},
 		{&c.Retries, "GOSWIFT_RETRIES"},
@@ -284,6 +287,7 @@ type errorMap map[int]error
 
 var (
 	// Specific Errors you might want to check for equality
+	NotModified         = newError(304, "Not Modified")
 	BadRequest          = newError(400, "Bad Request")
 	AuthorizationFailed = newError(401, "Authorization Failed")
 	ContainerNotFound   = newError(404, "Container Not Found")
@@ -311,6 +315,7 @@ var (
 
 	// Mappings for object errors
 	objectErrorMap = errorMap{
+		304: NotModified,
 		400: BadRequest,
 		403: Forbidden,
 		404: ObjectNotFound,

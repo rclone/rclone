@@ -61,7 +61,7 @@ func buildAPI() *API {
 	}
 
 	operations := map[string]*Operation{
-		"Foo": &Operation{
+		"Foo": {
 			API:          a,
 			Name:         "Foo",
 			ExportedName: "Foo",

@@ -24,20 +24,18 @@ type State interface {
 	// Language reports the requested language in which to render a message.
 	Language() language.Tag
 
+	// TODO: consider this and removing rune from the Format method in the
+	// Formatter interface.
+	//
+	// Verb returns the format variant to render, analogous to the types used
+	// in fmt. Use 'v' for the default or only variant.
+	// Verb() rune
+
 	// TODO: more info:
-	// - sentence context
-	// - user preferences, like measurement systems
-	// - options
+	// - sentence context such as linguistic features passed by the translator.
 }
 
-// A Statement is a Var or an Expression.
-type Statement interface {
-	statement()
+// Formatter is analogous to fmt.Formatter.
+type Formatter interface {
+	Format(state State, verb rune)
 }
-
-// A String a literal string format.
-type String string
-
-func (String) statement() {}
-
-// TODO: Select, Var, Case, StatementSequence

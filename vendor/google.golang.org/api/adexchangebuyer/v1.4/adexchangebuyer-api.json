@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/XvWFbU-Khae3KqVnoqt96DoRPGo\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/nD15-sVgx0hSdEaD_RN4E40IFV8\"",
  "discoveryVersion": "v1",
  "id": "adexchangebuyer:v1.4",
  "name": "adexchangebuyer",
  "canonicalName": "Ad Exchange Buyer",
  "version": "v1.4",
- "revision": "20170504",
+ "revision": "20170810",
  "title": "Ad Exchange Buyer API",
  "description": "Accesses your bidding-account information, submits creatives for validation, finds available direct deals, and retrieves performance reports.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/adexchangebuyer/v1.4/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "adexchangebuyer/v1.4/",
- "batchPath": "batch",
+ "batchPath": "batch/adexchangebuyer/v1.4",
  "parameters": {
   "alt": {
    "type": "string",
@@ -2160,7 +2160,7 @@
    "properties": {
     "accountId": {
      "type": "string",
-     "description": "The account id of the seller."
+     "description": "Deprecated: use the seller.account_id. The account id of the seller."
     },
     "audience": {
      "type": "string",

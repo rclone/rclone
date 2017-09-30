@@ -24,7 +24,7 @@ const (
 	// ErrCodeRead is an error that is returned during HTTP reads.
 	ErrCodeRead = "ReadError"
 
-	// ErrCodeResponseTimeout is the connection timeout error that is recieved
+	// ErrCodeResponseTimeout is the connection timeout error that is received
 	// during body reads.
 	ErrCodeResponseTimeout = "ResponseTimeout"
 
@@ -269,11 +269,17 @@ func (r *Request) Presign(expireTime time.Duration) (string, error) {
 	return r.HTTPRequest.URL.String(), nil
 }
 
-// PresignRequest behaves just like presign, but hoists all headers and signs them.
-// Also returns the signed hash back to the user
+// PresignRequest behaves just like presign, with the addition of returning a
+// set of headers that were signed.
+//
+// Returns the URL string for the API operation with signature in the query string,
+// and the HTTP headers that were included in the signature. These headers must
+// be included in any HTTP request made with the presigned URL.
+//
+// To prevent hoisting any headers to the query string set NotHoist to true on
+// this Request value prior to calling PresignRequest.
 func (r *Request) PresignRequest(expireTime time.Duration) (string, http.Header, error) {
 	r.ExpireTime = expireTime
-	r.NotHoist = true
 	r.Sign()
 	if r.Error != nil {
 		return "", nil, r.Error

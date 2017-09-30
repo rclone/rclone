@@ -554,9 +554,10 @@ type DatabaseInstance struct {
 	CurrentDiskSize int64 `json:"currentDiskSize,omitempty,string"`
 
 	// DatabaseVersion: The database engine type and version. The
-	// databaseVersion can not be changed after instance creation. Can be
-	// MYSQL_5_5, MYSQL_5_6 or MYSQL_5_7. Defaults to MYSQL_5_6. MYSQL_5_7
-	// is applicable only to Second Generation instances.
+	// databaseVersion field can not be changed after instance creation.
+	// MySQL Second Generation instances: MYSQL_5_7 (default) or MYSQL_5_6.
+	// PostgreSQL instances: POSTGRES_9_6 MySQL First Generation instances:
+	// MYSQL_5_6 (default) or MYSQL_5_5
 	DatabaseVersion string `json:"databaseVersion,omitempty"`
 
 	// Etag: HTTP 1.1 Entity tag for the resource.
@@ -565,6 +566,11 @@ type DatabaseInstance struct {
 	// FailoverReplica: The name and status of the failover replica. This
 	// property is applicable only to Second Generation instances.
 	FailoverReplica *DatabaseInstanceFailoverReplica `json:"failoverReplica,omitempty"`
+
+	// GceZone: The GCE zone that the instance is serving from. In case when
+	// the instance is failed over to standby zone, this value may be
+	// different with what user specified in the settings.
+	GceZone string `json:"gceZone,omitempty"`
 
 	// InstanceType: The instance type. This can be one of the
 	// following.
@@ -1005,8 +1011,8 @@ type ImportContext struct {
 	// CSV: The file contains CSV data.
 	FileType string `json:"fileType,omitempty"`
 
-	// ImportUser: The PostgreSQL user to use for this import operation.
-	// Defaults to cloudsqlsuperuser. Does not apply to MySQL instances.
+	// ImportUser: The PostgreSQL user for this import operation. Defaults
+	// to cloudsqlsuperuser. Used only for PostgreSQL instances.
 	ImportUser string `json:"importUser,omitempty"`
 
 	// Kind: This is always sql#importContext.
@@ -1299,8 +1305,8 @@ type IpConfiguration struct {
 	// not.
 	Ipv4Enabled bool `json:"ipv4Enabled,omitempty"`
 
-	// RequireSsl: Whether the mysqld should default to 'REQUIRE X509' for
-	// users connecting over IP.
+	// RequireSsl: Whether SSL connections over IP should be enforced or
+	// not.
 	RequireSsl bool `json:"requireSsl,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "AuthorizedNetworks")

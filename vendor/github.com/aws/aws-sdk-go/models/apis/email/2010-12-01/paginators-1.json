@@ -2,8 +2,8 @@
   "pagination": {
     "ListIdentities": {
       "input_token": "NextToken",
-      "output_token": "NextToken",
       "limit_key": "MaxItems",
+      "output_token": "NextToken",
       "result_key": "Identities"
     },
     "ListVerifiedEmailAddresses": {

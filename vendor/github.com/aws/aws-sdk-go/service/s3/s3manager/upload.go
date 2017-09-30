@@ -117,6 +117,9 @@ type UploadInput struct {
 	// The language the content is in.
 	ContentLanguage *string `location:"header" locationName:"Content-Language" type:"string"`
 
+	// The base64-encoded 128-bit MD5 digest of the part data.
+	ContentMD5 *string `location:"header" locationName:"Content-MD5" type:"string"`
+
 	// A standard MIME type describing the format of the object data.
 	ContentType *string `location:"header" locationName:"Content-Type" type:"string"`
 
@@ -218,8 +221,11 @@ type Uploader struct {
 	// if this value is set to zero, the DefaultUploadPartSize value will be used.
 	PartSize int64
 
-	// The number of goroutines to spin up in parallel when sending parts.
-	// If this is set to zero, the DefaultUploadConcurrency value will be used.
+	// The number of goroutines to spin up in parallel per call to Upload when
+	// sending parts. If this is set to zero, the DefaultUploadConcurrency value
+	// will be used.
+	//
+	// The concurrency pool is not shared between calls to Upload.
 	Concurrency int
 
 	// Setting this value to true will cause the SDK to avoid calling

@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/CyBb_evhvzpTXXhgZSc7wED-pLk\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/fiMIPCbr-8OYnnFx-elRq37f8OU\"",
  "discoveryVersion": "v1",
  "id": "doubleclickbidmanager:v1",
  "name": "doubleclickbidmanager",
  "canonicalName": "DoubleClick Bid Manager",
  "version": "v1",
- "revision": "20170531",
+ "revision": "20170705",
  "title": "DoubleClick Bid Manager API",
  "description": "API for viewing and managing your reports in DoubleClick Bid Manager.",
  "ownerDomain": "google.com",
@@ -24,7 +24,7 @@
  "basePath": "/doubleclickbidmanager/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "doubleclickbidmanager/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/doubleclickbidmanager/v1",
  "parameters": {
   "alt": {
    "type": "string",
@@ -136,7 +136,7 @@
    "properties": {
     "lineItems": {
      "type": "string",
-     "description": "Retrieved line items in CSV format. Refer to  Entity Write File Format or  Structured Data File Format for more information on file formats."
+     "description": "Retrieved line items in CSV format. For more information about file formats, see  Entity Write File Format."
     }
    }
   },

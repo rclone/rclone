@@ -15,14 +15,12 @@
 // Package transport/grpc supports network connections to GRPC servers.
 // This package is not intended for use by end developers. Use the
 // google.golang.org/api/option package to configure API clients.
-package transport
+package grpc
 
 import (
 	"errors"
-	"fmt"
 
 	"golang.org/x/net/context"
-	"golang.org/x/oauth2/google"
 	"google.golang.org/api/internal"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
@@ -46,22 +44,12 @@ func Dial(ctx context.Context, opts ...option.ClientOption) (*grpc.ClientConn, e
 	if o.GRPCConn != nil {
 		return o.GRPCConn, nil
 	}
-	if o.ServiceAccountJSONFilename != "" {
-		ts, err := internal.ServiceAcctTokenSource(ctx, o.ServiceAccountJSONFilename, o.Scopes...)
-		if err != nil {
-			return nil, err
-		}
-		o.TokenSource = ts
-	}
-	if o.TokenSource == nil {
-		var err error
-		o.TokenSource, err = google.DefaultTokenSource(ctx, o.Scopes...)
-		if err != nil {
-			return nil, fmt.Errorf("google.DefaultTokenSource: %v", err)
-		}
+	creds, err := internal.Creds(ctx, &o)
+	if err != nil {
+		return nil, err
 	}
 	grpcOpts := []grpc.DialOption{
-		grpc.WithPerRPCCredentials(oauth.TokenSource{o.TokenSource}),
+		grpc.WithPerRPCCredentials(oauth.TokenSource{creds.TokenSource}),
 		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")),
 	}
 	if appengineDialerHook != nil {

@@ -28,7 +28,7 @@ import (
 	cd "google.golang.org/api/clouddebugger/v2"
 	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
-	"google.golang.org/api/transport"
+	htransport "google.golang.org/api/transport/http"
 )
 
 const (
@@ -92,7 +92,7 @@ type serviceInterface interface {
 }
 
 var newService = func(ctx context.Context, tokenSource oauth2.TokenSource) (serviceInterface, error) {
-	httpClient, endpoint, err := transport.NewHTTPClient(ctx, option.WithTokenSource(tokenSource))
+	httpClient, endpoint, err := htransport.NewClient(ctx, option.WithTokenSource(tokenSource))
 	if err != nil {
 		return nil, err
 	}

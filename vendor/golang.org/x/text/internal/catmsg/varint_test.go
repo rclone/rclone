@@ -109,7 +109,7 @@ func TestDecodeUint(t *testing.T) {
 			t.Run(fmt.Sprintf("%s:%q", f.name, tc.enc), func(t *testing.T) {
 				x, size, err := f.decode(tc.enc)
 				if err != tc.err {
-					t.Error("err = %q; want %q", err, tc.err)
+					t.Errorf("err = %q; want %q", err, tc.err)
 				}
 				if size != tc.size {
 					t.Errorf("size = %d; want %d", size, tc.size)

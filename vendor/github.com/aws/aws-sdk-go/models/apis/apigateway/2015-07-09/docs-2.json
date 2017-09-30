@@ -156,10 +156,10 @@
       }
     },
     "AuthorizerType": {
-      "base": "<p>The authorizer type. the current value is <code>TOKEN</code> for a Lambda function or <code>COGNITO_USER_POOLS</code> for an Amazon Cognito Your User Pool.</p>",
+      "base": "<p>[Required] The authorizer type. Valid values are <code>TOKEN</code> for a Lambda function using a single authorization token submitted in a custom header, <code>REQUEST</code> for a Lambda function using incoming request parameters, and <code>COGNITO_USER_POOLS</code> for using an Amazon Cognito user pool.</p>",
       "refs": {
-        "Authorizer$type": "<p>[Required] The type of the authorizer. Currently, the valid type is <code>TOKEN</code> for a Lambda function or <code>COGNITO_USER_POOLS</code> for an Amazon Cognito user pool.</p>",
-        "CreateAuthorizerRequest$type": "<p>[Required] The type of the authorizer.</p>"
+        "Authorizer$type": "<p>[Required] The authorizer type. Valid values are <code>TOKEN</code> for a Lambda function using a single authorization token submitted in a custom header, <code>REQUEST</code> for a Lambda function using incoming request parameters, and <code>COGNITO_USER_POOLS</code> for using an Amazon Cognito user pool.</p>",
+        "CreateAuthorizerRequest$type": "<p>[Required] The authorizer type. Valid values are <code>TOKEN</code> for a Lambda function using a single authorization token submitted in a custom header, <code>REQUEST</code> for a Lambda function using incoming request parameters, and <code>COGNITO_USER_POOLS</code> for using an Amazon Cognito user pool.</p>"
       }
     },
     "Authorizers": {
@@ -168,7 +168,7 @@
       }
     },
     "BadRequestException": {
-      "base": null,
+      "base": "<p>The submitted request is not valid, for example, the input is incomplete or incorrect. See the accompanying error message for details.</p>",
       "refs": {
       }
     },
@@ -237,7 +237,7 @@
       }
     },
     "ClientCertificate": {
-      "base": "<p>Represents a client certificate used to configure client-side SSL authentication while sending requests to the integration endpoint.</p> <div class=\"remarks\">Client certificates are used authenticate an API by the back-end server. To authenticate an API client (or user), use a custom <a>Authorizer</a>.</div> <div class=\"seeAlso\"> <a href=\"http://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started-client-side-ssl-authentication.html\">Use Client-Side Certificate</a> </div>",
+      "base": "<p>Represents a client certificate used to configure client-side SSL authentication while sending requests to the integration endpoint.</p> <div class=\"remarks\">Client certificates are used to authenticate an API by the backend server. To authenticate an API client (or user), use IAM roles and policies, a custom <a>Authorizer</a> or an Amazon Cognito user pool.</div> <div class=\"seeAlso\"> <a href=\"http://docs.aws.amazon.com/apigateway/latest/developerguide/getting-started-client-side-ssl-authentication.html\">Use Client-Side Certificate</a> </div>",
       "refs": {
         "ListOfClientCertificate$member": null
       }
@@ -248,7 +248,7 @@
       }
     },
     "ConflictException": {
-      "base": null,
+      "base": "<p>The request configuration has conflicts. For details, see the accompanying error message.</p>",
       "refs": {
       }
     },
@@ -469,7 +469,7 @@
     "DocumentationPartType": {
       "base": null,
       "refs": {
-        "DocumentationPartLocation$type": "<p>The type of API entity to which the documentation content applies. It is a valid and required field for API entity types of <code>API</code>, <code>AUTHORIZER</code>, <code>MODEL</code>, <code>RESOURCE</code>, <code>METHOD</code>, <code>PATH_PARAMETER</code>, <code>QUERY_PARAMETER</code>, <code>REQUEST_HEADER</code>, <code>REQUEST_BODY</code>, <code>RESPONSE</code>, <code>RESPONSE_HEADER</code>, and <code>RESPONSE_BODY</code>. Content inheritance does not apply to any entity of the <code>API</code>, <code>AUTHROZER</code>, <code>METHOD</code>, <code>MODEL</code>, <code>REQUEST_BODY</code>, or <code>RESOURCE</code> type.</p>",
+        "DocumentationPartLocation$type": "<p>The type of API entity to which the documentation content applies. It is a valid and required field for API entity types of <code>API</code>, <code>AUTHORIZER</code>, <code>MODEL</code>, <code>RESOURCE</code>, <code>METHOD</code>, <code>PATH_PARAMETER</code>, <code>QUERY_PARAMETER</code>, <code>REQUEST_HEADER</code>, <code>REQUEST_BODY</code>, <code>RESPONSE</code>, <code>RESPONSE_HEADER</code>, and <code>RESPONSE_BODY</code>. Content inheritance does not apply to any entity of the <code>API</code>, <code>AUTHORIZER</code>, <code>METHOD</code>, <code>MODEL</code>, <code>REQUEST_BODY</code>, or <code>RESOURCE</code> type.</p>",
         "GetDocumentationPartsRequest$type": "<p>The type of API entities of the to-be-retrieved documentation parts. </p>"
       }
     },
@@ -810,15 +810,15 @@
       }
     },
     "LimitExceededException": {
-      "base": null,
+      "base": "<p>The request exceeded the rate limit. Retry after the specified time period.</p>",
       "refs": {
       }
     },
     "ListOfARNs": {
       "base": null,
       "refs": {
-        "Authorizer$providerARNs": "<p>A list of the provider ARNs of the authorizer. For an <code>TOKEN</code> authorizer, this is not defined. For authorizers of the <code>COGNITO_USER_POOLS</code> type, each element corresponds to a user pool ARN of this format: <code>arn:aws:cognito-idp:{region}:{account_id}:userpool/{user_pool_id}</code>. </p>",
-        "CreateAuthorizerRequest$providerARNs": "<p>A list of the Cognito Your User Pool authorizer's provider ARNs.</p>"
+        "Authorizer$providerARNs": "<p>A list of the Amazon Cognito user pool ARNs for the <code>COGNITO_USER_POOLS</code> authorizer. Each element is of this format: <code>arn:aws:cognito-idp:{region}:{account_id}:userpool/{user_pool_id}</code>. For a <code>TOKEN</code> or <code>REQUEST</code> authorizer, this is not defined. </p>",
+        "CreateAuthorizerRequest$providerARNs": "<p>A list of the Amazon Cognito user pool ARNs for the <code>COGNITO_USER_POOLS</code> authorizer. Each element is of this format: <code>arn:aws:cognito-idp:{region}:{account_id}:userpool/{user_pool_id}</code>. For a <code>TOKEN</code> or <code>REQUEST</code> authorizer, this is not defined. </p>"
       }
     },
     "ListOfApiKey": {
@@ -1076,7 +1076,7 @@
         "GatewayResponse$responseParameters": "<p>Response parameters (paths, query strings and headers) of the <a>GatewayResponse</a> as a string-to-string map of key-value pairs.</p>",
         "GatewayResponse$responseTemplates": "<p>Response templates of the <a>GatewayResponse</a> as a string-to-string map of key-value pairs.</p>",
         "GetExportRequest$parameters": "<p>A key-value map of query string parameters that specify properties of the export, depending on the requested <code>exportType</code>. For <code>exportType</code> <code>swagger</code>, any combination of the following parameters are supported: <code>integrations</code> will export the API with x-amazon-apigateway-integration extensions. <code>authorizers</code> will export the API with x-amazon-apigateway-authorizer extensions. <code>postman</code> will export the API with Postman extensions, allowing for import to the Postman tool</p>",
-        "GetSdkRequest$parameters": "<p>A key-value map of query string parameters that specify properties of the SDK, depending on the requested <code>sdkType</code>. For <code>sdkType</code> of <code>objectivec</code>, a parameter named <code>classPrefix</code> is required. For <code>sdkType</code> of <code>android</code>, parameters named <code>groupId</code>, <code>artifactId</code>, <code>artifactVersion</code>, and <code>invokerPackage</code> are required.</p>",
+        "GetSdkRequest$parameters": "<p>A string-to-string key-value map of query parameters <code>sdkType</code>-dependent properties of the SDK. For <code>sdkType</code> of <code>objectivec</code> or <code>swift</code>, a parameter named <code>classPrefix</code> is required. For <code>sdkType</code> of <code>android</code>, parameters named <code>groupId</code>, <code>artifactId</code>, <code>artifactVersion</code>, and <code>invokerPackage</code> are required. For <code>sdkType</code> of <code>java</code>, parameters named <code>serviceName</code> and <code>javaPackageName</code> are required. </p>",
         "ImportRestApiRequest$parameters": "<p>Custom header parameters as part of the request. For example, to exclude <a>DocumentationParts</a> from an imported API, set <code>ignore=documentation</code> as a <code>parameters</code> value, as in the AWS CLI command of <code>aws apigateway import-rest-api --parameters ignore=documentation --body 'file:///path/to/imported-api-body.json</code>.</p>",
         "Integration$requestParameters": "<p>A key-value map specifying request parameters that are passed from the method request to the back end. The key is an integration request parameter name and the associated value is a method request parameter value or static value that must be enclosed within single quotes and pre-encoded as required by the back end. The method request parameter value must match the pattern of <code>method.request.{location}.{name}</code>, where <code>location</code> is <code>querystring</code>, <code>path</code>, or <code>header</code> and <code>name</code> must be a valid and unique method request parameter name.</p>",
         "Integration$requestTemplates": "<p>Represents a map of Velocity templates that are applied on the request payload based on the value of the Content-Type header sent by the client. The content type value is the key in this map, and the template (as a String) is the value.</p>",
@@ -1136,7 +1136,7 @@
       }
     },
     "NotFoundException": {
-      "base": null,
+      "base": "<p>The requested resource is not found. Make sure that the request URI is correct.</p>",
       "refs": {
       }
     },
@@ -1153,8 +1153,8 @@
     "NullableInteger": {
       "base": null,
       "refs": {
-        "Authorizer$authorizerResultTtlInSeconds": "<p>The TTL in seconds of cached authorizer results. If greater than 0, API Gateway will cache authorizer responses. If this field is not set, the default value is 300. The maximum value is 3600, or 1 hour.</p>",
-        "CreateAuthorizerRequest$authorizerResultTtlInSeconds": "<p>The TTL of cached authorizer results.</p>",
+        "Authorizer$authorizerResultTtlInSeconds": "<p>The TTL in seconds of cached authorizer results. If it equals 0, authorization caching is disabled. If it is greater than 0, API Gateway will cache authorizer responses. If this field is not set, the default value is 300. The maximum value is 3600, or 1 hour.</p>",
+        "CreateAuthorizerRequest$authorizerResultTtlInSeconds": "<p>The TTL in seconds of cached authorizer results. If it equals 0, authorization caching is disabled. If it is greater than 0, API Gateway will cache authorizer responses. If this field is not set, the default value is 300. The maximum value is 3600, or 1 hour.</p>",
         "GetApiKeysRequest$limit": "<p>The maximum number of returned results per page.</p>",
         "GetAuthorizersRequest$limit": "<p>The maximum number of returned results per page.</p>",
         "GetBasePathMappingsRequest$limit": "<p>The maximum number of returned results per page. The value is 25 by default and could be between 1 - 500.</p>",
@@ -1304,7 +1304,7 @@
       }
     },
     "ServiceUnavailableException": {
-      "base": null,
+      "base": "<p>The requested service is not available. For details see the accompanying error message. Retry after the specified time period.</p>",
       "refs": {
       }
     },
@@ -1357,11 +1357,11 @@
         "ApiStage$stage": "<p>API stage name of the associated API stage in a usage plan.</p>",
         "Authorizer$id": "<p>The identifier for the authorizer resource.</p>",
         "Authorizer$name": "<p>[Required] The name of the authorizer.</p>",
-        "Authorizer$authType": "<p>Optional customer-defined field, used in Swagger imports/exports. Has no functional impact.</p>",
-        "Authorizer$authorizerUri": "<p>[Required] Specifies the authorizer's Uniform Resource Identifier (URI). For <code>TOKEN</code> authorizers, this must be a well-formed Lambda function URI, for example, <code>arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:{account_id}:function:{lambda_function_name}/invocations</code>. In general, the URI has this form <code>arn:aws:apigateway:{region}:lambda:path/{service_api}</code>, where <code>{region}</code> is the same as the region hosting the Lambda function, <code>path</code> indicates that the remaining substring in the URI should be treated as the path to the resource, including the initial <code>/</code>. For Lambda functions, this is usually of the form /2015-03-31/functions/[FunctionARN]/invocations.</p>",
-        "Authorizer$authorizerCredentials": "<p>Specifies the credentials required for the authorizer, if any. Two options are available. To specify an IAM role for Amazon API Gateway to assume, use the role's Amazon Resource Name (ARN). To use resource-based permissions on the Lambda function, specify null.</p>",
-        "Authorizer$identitySource": "<p>[Required] The source of the identity in an incoming request. For a <code>TOKEN</code> authorizer, this value is a mapping expression with the same syntax as integration parameter mappings. The only valid source for tokens is 'header', so the expression should match 'method.request.header.[headerName]'. The value of the header '[headerName]' will be interpreted as the incoming token. For <code>COGNITO_USER_POOLS</code> authorizers, this property is used.</p>",
-        "Authorizer$identityValidationExpression": "<p>A validation expression for the incoming identity. For <code>TOKEN</code> authorizers, this value should be a regular expression. The incoming token from the client is matched against this expression, and will proceed if the token matches. If the token doesn't match, the client receives a 401 Unauthorized response.</p>",
+        "Authorizer$authType": "<p>Optional customer-defined field, used in Swagger imports and exports without functional impact.</p>",
+        "Authorizer$authorizerUri": "<p>Specifies the authorizer's Uniform Resource Identifier (URI). For <code>TOKEN</code> or <code>REQUEST</code> authorizers, this must be a well-formed Lambda function URI, for example, <code>arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:{account_id}:function:{lambda_function_name}/invocations</code>. In general, the URI has this form <code>arn:aws:apigateway:{region}:lambda:path/{service_api}</code>, where <code>{region}</code> is the same as the region hosting the Lambda function, <code>path</code> indicates that the remaining substring in the URI should be treated as the path to the resource, including the initial <code>/</code>. For Lambda functions, this is usually of the form <code>/2015-03-31/functions/[FunctionARN]/invocations</code>.</p>",
+        "Authorizer$authorizerCredentials": "<p>Specifies the required credentials as an IAM role for Amazon API Gateway to invoke the authorizer. To specify an IAM role for Amazon API Gateway to assume, use the role's Amazon Resource Name (ARN). To use resource-based permissions on the Lambda function, specify null.</p>",
+        "Authorizer$identitySource": "<p>The identity source for which authorization is requested. <ul><li>For a <code>TOKEN</code> authorizer, this is required and specifies the request header mapping expression for the custom header holding the authorization token submitted by the client. For example, if the token header name is <code>Auth</code>, the header mapping expression is <code>method.request.header.Auth</code>.</li><li>For the <code>REQUEST</code> authorizer, this is required when authorization caching is enabled. The value is a comma-separated string of one or more mapping expressions of the specified request parameters. For example, if an <code>Auth</code> header, a <code>Name</code> query string parameter are defined as identity sources, this value is <code>method.request.header.Auth, method.request.querystring.Name</code>. These parameters will be used to derive the authorization caching key and to perform runtime validation of the <code>REQUEST</code> authorizer by verifying all of the identity-related request parameters are present, not null and non-empty. Only when this is true does the authorizer invoke the authorizer Lambda function, otherwise, it returns a 401 Unauthorized response without calling the Lambda function. The valid value is a string of comma-separated mapping expressions of the specified request parameters. When the authorization caching is not enabled, this property is optional.</li><li>For a <code>COGNITO_USER_POOLS</code> authorizer, this property is not used.</li></ul></p>",
+        "Authorizer$identityValidationExpression": "<p>A validation expression for the incoming identity token. For <code>TOKEN</code> authorizers, this value is a regular expression. Amazon API Gateway will match the incoming token from the client against the specified regular expression. It will invoke the authorizer's Lambda function there is a match. Otherwise, it will return a 401 Unauthorized response without calling the Lambda function. The validation expression does not apply to the <code>REQUEST</code> authorizer.</p>",
         "Authorizers$position": null,
         "BadRequestException$message": null,
         "BasePathMapping$basePath": "<p>The base path name that callers of the API must provide as part of the URL after the domain name.</p>",
@@ -1379,11 +1379,11 @@
         "CreateApiKeyRequest$customerId": "<p>An AWS Marketplace customer identifier , when integrating with the AWS SaaS Marketplace.</p>",
         "CreateAuthorizerRequest$restApiId": "<p>The string identifier of the associated <a>RestApi</a>.</p>",
         "CreateAuthorizerRequest$name": "<p>[Required] The name of the authorizer.</p>",
-        "CreateAuthorizerRequest$authType": "<p>Optional customer-defined field, used in Swagger imports/exports. Has no functional impact.</p>",
-        "CreateAuthorizerRequest$authorizerUri": "<p>[Required] Specifies the authorizer's Uniform Resource Identifier (URI).</p>",
-        "CreateAuthorizerRequest$authorizerCredentials": "<p>Specifies the credentials required for the authorizer, if any.</p>",
-        "CreateAuthorizerRequest$identitySource": "<p>[Required] The source of the identity in an incoming request.</p>",
-        "CreateAuthorizerRequest$identityValidationExpression": "<p>A validation expression for the incoming identity.</p>",
+        "CreateAuthorizerRequest$authType": "<p>Optional customer-defined field, used in Swagger imports and exports without functional impact.</p>",
+        "CreateAuthorizerRequest$authorizerUri": "<p>Specifies the authorizer's Uniform Resource Identifier (URI). For <code>TOKEN</code> or <code>REQUEST</code> authorizers, this must be a well-formed Lambda function URI, for example, <code>arn:aws:apigateway:us-west-2:lambda:path/2015-03-31/functions/arn:aws:lambda:us-west-2:{account_id}:function:{lambda_function_name}/invocations</code>. In general, the URI has this form <code>arn:aws:apigateway:{region}:lambda:path/{service_api}</code>, where <code>{region}</code> is the same as the region hosting the Lambda function, <code>path</code> indicates that the remaining substring in the URI should be treated as the path to the resource, including the initial <code>/</code>. For Lambda functions, this is usually of the form <code>/2015-03-31/functions/[FunctionARN]/invocations</code>.</p>",
+        "CreateAuthorizerRequest$authorizerCredentials": "<p>Specifies the required credentials as an IAM role for Amazon API Gateway to invoke the authorizer. To specify an IAM role for Amazon API Gateway to assume, use the role's Amazon Resource Name (ARN). To use resource-based permissions on the Lambda function, specify null.</p>",
+        "CreateAuthorizerRequest$identitySource": "<p>The identity source for which authorization is requested. <ul><li>For a <code>TOKEN</code> authorizer, this is required and specifies the request header mapping expression for the custom header holding the authorization token submitted by the client. For example, if the token header name is <code>Auth</code>, the header mapping expression is <code>method.request.header.Auth</code>.</li><li>For the <code>REQUEST</code> authorizer, this is required when authorization caching is enabled. The value is a comma-separated string of one or more mapping expressions of the specified request parameters. For example, if an <code>Auth</code> header, a <code>Name</code> query string parameter are defined as identity sources, this value is <code>method.request.header.Auth, method.request.querystring.Name</code>. These parameters will be used to derive the authorization caching key and to perform runtime validation of the <code>REQUEST</code> authorizer by verifying all of the identity-related request parameters are present, not null and non-empty. Only when this is true does the authorizer invoke the authorizer Lambda function, otherwise, it returns a 401 Unauthorized response without calling the Lambda function. The valid value is a string of comma-separated mapping expressions of the specified request parameters. When the authorization caching is not enabled, this property is optional.</li><li>For a <code>COGNITO_USER_POOLS</code> authorizer, this property is not used.</li></ul></p>",
+        "CreateAuthorizerRequest$identityValidationExpression": "<p>A validation expression for the incoming identity token. For <code>TOKEN</code> authorizers, this value is a regular expression. Amazon API Gateway will match the incoming token from the client against the specified regular expression. It will invoke the authorizer's Lambda function there is a match. Otherwise, it will return a 401 Unauthorized response without calling the Lambda function. The validation expression does not apply to the <code>REQUEST</code> authorizer.</p>",
         "CreateBasePathMappingRequest$domainName": "<p>The domain name of the <a>BasePathMapping</a> resource to create.</p>",
         "CreateBasePathMappingRequest$basePath": "<p>The base path name that callers of the API must provide as part of the URL after the domain name. This value must be unique for all of the mappings across a single API. Leave this blank if you do not want callers to specify a base path name after the domain name.</p>",
         "CreateBasePathMappingRequest$restApiId": "<p>The string identifier of the associated <a>RestApi</a>.</p>",
@@ -1405,7 +1405,7 @@
         "CreateDomainNameRequest$certificateChain": "<p>[Deprecated] The intermediate certificates and optionally the root certificate, one after the other without any blank lines. If you include the root certificate, your certificate chain must start with intermediate certificates and end with the root certificate. Use the intermediate certificates that were provided by your certificate authority. Do not include any intermediaries that are not in the chain of trust path.</p>",
         "CreateDomainNameRequest$certificateArn": "<p>The reference to an AWS-managed certificate. AWS Certificate Manager is the only supported source.</p>",
         "CreateModelRequest$restApiId": "<p>The <a>RestApi</a> identifier under which the <a>Model</a> will be created.</p>",
-        "CreateModelRequest$name": "<p>The name of the model.</p>",
+        "CreateModelRequest$name": "<p>The name of the model. Must be alphanumeric.</p>",
         "CreateModelRequest$description": "<p>The description of the model.</p>",
         "CreateModelRequest$schema": "<p>The schema for the model. For <code>application/json</code> models, this should be <a href=\"http://json-schema.org/documentation.html\" target=\"_blank\">JSON-schema draft v4</a> model.</p>",
         "CreateModelRequest$contentType": "<p>The content-type for the model.</p>",
@@ -1558,7 +1558,7 @@
         "GetRestApisRequest$position": "<p>The current pagination position in the paged result set.</p>",
         "GetSdkRequest$restApiId": "<p>The string identifier of the associated <a>RestApi</a>.</p>",
         "GetSdkRequest$stageName": "<p>The name of the <a>Stage</a> that the SDK will use.</p>",
-        "GetSdkRequest$sdkType": "<p>The language for the generated SDK. Currently <code>javascript</code>, <code>android</code>, and <code>objectivec</code> (for iOS) are supported.</p>",
+        "GetSdkRequest$sdkType": "<p>The language for the generated SDK. Currently <code>java</code>, <code>javascript</code>, <code>android</code>, <code>objectivec</code> and <code>swift</code> (for iOS) are supported.</p>",
         "GetSdkTypeRequest$id": "<p>The identifier of the queried <a>SdkType</a> instance.</p>",
         "GetSdkTypesRequest$position": "<p>The current pagination position in the paged result set.</p>",
         "GetStageRequest$restApiId": "<p>The string identifier of the associated <a>RestApi</a>.</p>",
@@ -1608,7 +1608,7 @@
         "MethodSetting$loggingLevel": "<p>Specifies the logging level for this method, which effects the log entries pushed to Amazon CloudWatch Logs. The PATCH path for this setting is <code>/{method_setting_key}/logging/loglevel</code>, and the available levels are <code>OFF</code>, <code>ERROR</code>, and <code>INFO</code>.</p>",
         "MethodSnapshot$authorizationType": "<p>The method's authorization type. Valid values are <code>NONE</code> for open access, <code>AWS_IAM</code> for using AWS IAM permissions, <code>CUSTOM</code> for using a custom authorizer, or <code>COGNITO_USER_POOLS</code> for using a Cognito user pool.</p>",
         "Model$id": "<p>The identifier for the model resource.</p>",
-        "Model$name": "<p>The name of the model.</p>",
+        "Model$name": "<p>The name of the model. Must be an alphanumeric string.</p>",
         "Model$description": "<p>The description of the model.</p>",
         "Model$schema": "<p>The schema for the model. For <code>application/json</code> models, this should be <a href=\"http://json-schema.org/documentation.html\" target=\"_blank\">JSON-schema draft v4</a> model. Do not include \"\\*/\" characters in the description of any properties because such \"\\*/\" characters may be interpreted as the closing marker for comments in some languages, such as Java or JavaScript, causing the installation of your API's SDK generated by API Gateway to fail.</p>",
         "Model$contentType": "<p>The content-type for the model.</p>",
@@ -1796,7 +1796,7 @@
       }
     },
     "TooManyRequestsException": {
-      "base": null,
+      "base": "<p>The request has reached its throttling limit. Retry after the specified time period.</p>",
       "refs": {
       }
     },
@@ -1807,7 +1807,7 @@
       }
     },
     "UnauthorizedException": {
-      "base": null,
+      "base": "<p>The request is denied because the caller has insufficient permissions.</p>",
       "refs": {
       }
     },

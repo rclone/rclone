@@ -62,6 +62,8 @@ package unix
 #include <linux/fs.h>
 #include <linux/vm_sockets.h>
 #include <linux/random.h>
+#include <linux/taskstats.h>
+#include <linux/genetlink.h>
 
 // On mips64, the glibc stat and kernel stat do not agree
 #if (defined(__mips__) && _MIPS_SIM == _MIPS_SIM_ABI64)
@@ -111,14 +113,6 @@ struct stat {
 #include <sys/types.h>
 
 #endif
-
-// Certain constants and structs are missing from the fs/crypto UAPI
-#define FS_MAX_KEY_SIZE                 64
-struct fscrypt_key {
-  __u32 mode;
-  __u8 raw[FS_MAX_KEY_SIZE];
-  __u32 size;
-};
 
 #ifdef TCSETS2
 // On systems that have "struct termios2" use this as type Termios.
@@ -316,6 +310,8 @@ type IPMreqn C.struct_ip_mreqn
 
 type IPv6Mreq C.struct_ipv6_mreq
 
+type PacketMreq C.struct_packet_mreq
+
 type Msghdr C.struct_msghdr
 
 type Cmsghdr C.struct_cmsghdr
@@ -344,9 +340,11 @@ const (
 	SizeofSockaddrALG       = C.sizeof_struct_sockaddr_alg
 	SizeofSockaddrVM        = C.sizeof_struct_sockaddr_vm
 	SizeofLinger            = C.sizeof_struct_linger
+	SizeofIovec             = C.sizeof_struct_iovec
 	SizeofIPMreq            = C.sizeof_struct_ip_mreq
 	SizeofIPMreqn           = C.sizeof_struct_ip_mreqn
 	SizeofIPv6Mreq          = C.sizeof_struct_ipv6_mreq
+	SizeofPacketMreq        = C.sizeof_struct_packet_mreq
 	SizeofMsghdr            = C.sizeof_struct_msghdr
 	SizeofCmsghdr           = C.sizeof_struct_cmsghdr
 	SizeofInet4Pktinfo      = C.sizeof_struct_in_pktinfo
@@ -537,12 +535,61 @@ const RNDGETENTCNT = C.RNDGETENTCNT
 
 const PERF_IOC_FLAG_GROUP = C.PERF_IOC_FLAG_GROUP
 
-// sysconf information
-
-const _SC_PAGESIZE = C._SC_PAGESIZE
-
 // Terminal handling
 
 type Termios C.termios_t
 
 type Winsize C.struct_winsize
+
+// Taskstats
+
+type Taskstats C.struct_taskstats
+
+const (
+	TASKSTATS_CMD_UNSPEC                  = C.TASKSTATS_CMD_UNSPEC
+	TASKSTATS_CMD_GET                     = C.TASKSTATS_CMD_GET
+	TASKSTATS_CMD_NEW                     = C.TASKSTATS_CMD_NEW
+	TASKSTATS_TYPE_UNSPEC                 = C.TASKSTATS_TYPE_UNSPEC
+	TASKSTATS_TYPE_PID                    = C.TASKSTATS_TYPE_PID
+	TASKSTATS_TYPE_TGID                   = C.TASKSTATS_TYPE_TGID
+	TASKSTATS_TYPE_STATS                  = C.TASKSTATS_TYPE_STATS
+	TASKSTATS_TYPE_AGGR_PID               = C.TASKSTATS_TYPE_AGGR_PID
+	TASKSTATS_TYPE_AGGR_TGID              = C.TASKSTATS_TYPE_AGGR_TGID
+	TASKSTATS_TYPE_NULL                   = C.TASKSTATS_TYPE_NULL
+	TASKSTATS_CMD_ATTR_UNSPEC             = C.TASKSTATS_CMD_ATTR_UNSPEC
+	TASKSTATS_CMD_ATTR_PID                = C.TASKSTATS_CMD_ATTR_PID
+	TASKSTATS_CMD_ATTR_TGID               = C.TASKSTATS_CMD_ATTR_TGID
+	TASKSTATS_CMD_ATTR_REGISTER_CPUMASK   = C.TASKSTATS_CMD_ATTR_REGISTER_CPUMASK
+	TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK = C.TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK
+)
+
+// Generic netlink
+
+type Genlmsghdr C.struct_genlmsghdr
+
+const (
+	CTRL_CMD_UNSPEC            = C.CTRL_CMD_UNSPEC
+	CTRL_CMD_NEWFAMILY         = C.CTRL_CMD_NEWFAMILY
+	CTRL_CMD_DELFAMILY         = C.CTRL_CMD_DELFAMILY
+	CTRL_CMD_GETFAMILY         = C.CTRL_CMD_GETFAMILY
+	CTRL_CMD_NEWOPS            = C.CTRL_CMD_NEWOPS
+	CTRL_CMD_DELOPS            = C.CTRL_CMD_DELOPS
+	CTRL_CMD_GETOPS            = C.CTRL_CMD_GETOPS
+	CTRL_CMD_NEWMCAST_GRP      = C.CTRL_CMD_NEWMCAST_GRP
+	CTRL_CMD_DELMCAST_GRP      = C.CTRL_CMD_DELMCAST_GRP
+	CTRL_CMD_GETMCAST_GRP      = C.CTRL_CMD_GETMCAST_GRP
+	CTRL_ATTR_UNSPEC           = C.CTRL_ATTR_UNSPEC
+	CTRL_ATTR_FAMILY_ID        = C.CTRL_ATTR_FAMILY_ID
+	CTRL_ATTR_FAMILY_NAME      = C.CTRL_ATTR_FAMILY_NAME
+	CTRL_ATTR_VERSION          = C.CTRL_ATTR_VERSION
+	CTRL_ATTR_HDRSIZE          = C.CTRL_ATTR_HDRSIZE
+	CTRL_ATTR_MAXATTR          = C.CTRL_ATTR_MAXATTR
+	CTRL_ATTR_OPS              = C.CTRL_ATTR_OPS
+	CTRL_ATTR_MCAST_GROUPS     = C.CTRL_ATTR_MCAST_GROUPS
+	CTRL_ATTR_OP_UNSPEC        = C.CTRL_ATTR_OP_UNSPEC
+	CTRL_ATTR_OP_ID            = C.CTRL_ATTR_OP_ID
+	CTRL_ATTR_OP_FLAGS         = C.CTRL_ATTR_OP_FLAGS
+	CTRL_ATTR_MCAST_GRP_UNSPEC = C.CTRL_ATTR_MCAST_GRP_UNSPEC
+	CTRL_ATTR_MCAST_GRP_NAME   = C.CTRL_ATTR_MCAST_GRP_NAME
+	CTRL_ATTR_MCAST_GRP_ID     = C.CTRL_ATTR_MCAST_GRP_ID
+)

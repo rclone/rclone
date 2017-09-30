@@ -173,9 +173,8 @@ func (s *DownloadLineItemsRequest) MarshalJSON() ([]byte, error) {
 
 // DownloadLineItemsResponse: Download line items response.
 type DownloadLineItemsResponse struct {
-	// LineItems: Retrieved line items in CSV format. Refer to  Entity Write
-	// File Format or  Structured Data File Format for more information on
-	// file formats.
+	// LineItems: Retrieved line items in CSV format. For more information
+	// about file formats, see  Entity Write File Format.
 	LineItems string `json:"lineItems,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the

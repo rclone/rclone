@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/UFnN-1uMaWxq-BESPylMBj6ravQ\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/4lSDxYnFTkLYmJZsTikGDh17fVo\"",
  "discoveryVersion": "v1",
  "id": "drive:v3",
  "name": "drive",
  "version": "v3",
- "revision": "20170623",
+ "revision": "20170825",
  "title": "Drive API",
  "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/drive/v3/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "drive/v3/",
- "batchPath": "batch",
+ "batchPath": "batch/drive/v3",
  "parameters": {
   "alt": {
    "type": "string",
@@ -755,6 +755,13 @@
     "parents": {
      "type": "array",
      "description": "The IDs of the parent folders which contain the file.\nIf not specified as part of a create request, the file will be placed directly in the My Drive folder. Update requests must use the addParents and removeParents parameters to modify the values.",
+     "items": {
+      "type": "string"
+     }
+    },
+    "permissionIds": {
+     "type": "array",
+     "description": "List of permission IDs for users with access to this file.",
      "items": {
       "type": "string"
      }
@@ -2112,7 +2119,7 @@
       },
       "orderBy": {
        "type": "string",
-       "description": "A comma-separated list of sort keys. Valid keys are 'createdTime', 'folder', 'modifiedByMeTime', 'modifiedTime', 'name', 'quotaBytesUsed', 'recency', 'sharedWithMeTime', 'starred', and 'viewedByMeTime'. Each key sorts ascending by default, but may be reversed with the 'desc' modifier. Example usage: ?orderBy=folder,modifiedTime desc,name. Please note that there is a current limitation for users with approximately one million files in which the requested sort order is ignored.",
+       "description": "A comma-separated list of sort keys. Valid keys are 'createdTime', 'folder', 'modifiedByMeTime', 'modifiedTime', 'name', 'name_natural', 'quotaBytesUsed', 'recency', 'sharedWithMeTime', 'starred', and 'viewedByMeTime'. Each key sorts ascending by default, but may be reversed with the 'desc' modifier. Example usage: ?orderBy=folder,modifiedTime desc,name. Please note that there is a current limitation for users with approximately one million files in which the requested sort order is ignored.",
        "location": "query"
       },
       "pageSize": {

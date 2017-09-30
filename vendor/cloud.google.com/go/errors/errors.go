@@ -18,14 +18,7 @@
 //
 // See https://cloud.google.com/error-reporting/ for more information.
 //
-// To initialize a client, use the NewClient function.  Generally you will want
-// to do this on program initialization.  The NewClient function takes as
-// arguments a context, the project name, a service name, and a version string.
-// The service name and version string identify the running program, and are
-// included in error reports.  The version string can be left empty.  NewClient
-// also takes a bool that indicates whether to report errors using Stackdriver
-// Logging, which will result in errors appearing in both the logs and the error
-// dashboard.  This is useful if you are already a user of Stackdriver Logging.
+// To initialize a client, use the NewClient function.
 //
 //   import "cloud.google.com/go/errors"
 //   ...
@@ -76,6 +69,8 @@
 // If you try to write an error report with a nil client, or if the client
 // fails to write the report to the server, the error report is logged using
 // log.Println.
+//
+// Deprecated: Use cloud.google.com/go/errorreporting instead.
 package errors // import "cloud.google.com/go/errors"
 
 import (
@@ -155,9 +150,9 @@ type loggingSender struct {
 	logger         loggerInterface
 	projectID      string
 	serviceContext map[string]string
-	client         *logging.Client
 }
 
+// Client represents a Google Cloud Error Reporting client.
 type Client struct {
 	sender
 	// RepanicDefault determines whether Catch will re-panic after recovering a
@@ -166,6 +161,16 @@ type Client struct {
 	RepanicDefault bool
 }
 
+// NewClient returns a new error reporting client. Generally you will want
+// to create a client on program initialization and use it through the lifetime
+// of the process.
+//
+// The service name and version string identify the running program, and are
+// included in error reports.  The version string can be left empty.
+//
+// Set useLogging to report errors also using Stackdriver Logging,
+// which will result in errors appearing in both the logs and the error
+// dashboard.  This is useful if you are already a user of Stackdriver Logging.
 func NewClient(ctx context.Context, projectID, serviceName, serviceVersion string, useLogging bool, opts ...option.ClientOption) (*Client, error) {
 	if useLogging {
 		l, err := newLoggerInterface(ctx, projectID, opts...)
@@ -383,7 +388,7 @@ func (s *loggingSender) send(ctx context.Context, r *http.Request, message strin
 }
 
 func (s *loggingSender) close() error {
-	return s.client.Close()
+	return s.logger.Close()
 }
 
 func (s *errorApiSender) send(ctx context.Context, r *http.Request, message string) {

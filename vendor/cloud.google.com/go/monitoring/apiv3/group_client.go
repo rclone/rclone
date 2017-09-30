@@ -32,11 +32,6 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-var (
-	groupProjectPathTemplate = gax.MustCompilePathTemplate("projects/{project}")
-	groupGroupPathTemplate   = gax.MustCompilePathTemplate("projects/{project}/groups/{group}")
-)
-
 // GroupCallOptions contains the retry settings for each method of GroupClient.
 type GroupCallOptions struct {
 	ListGroups       []gax.CallOption
@@ -97,7 +92,7 @@ type GroupClient struct {
 // NewGroupClient creates a new group service client.
 //
 // The Group API lets you inspect and manage your
-// [groups](google.monitoring.v3.Group).
+// groups (at google.monitoring.v3.Group).
 //
 // A group is a named filter that is used to identify
 // a collection of monitored resources. Groups are typically used to
@@ -119,7 +114,7 @@ func NewGroupClient(ctx context.Context, opts ...option.ClientOption) (*GroupCli
 
 		groupClient: monitoringpb.NewGroupServiceClient(conn),
 	}
-	c.SetGoogleClientInfo()
+	c.setGoogleClientInfo()
 	return c, nil
 }
 
@@ -134,10 +129,10 @@ func (c *GroupClient) Close() error {
 	return c.conn.Close()
 }
 
-// SetGoogleClientInfo sets the name and version of the application in
+// setGoogleClientInfo sets the name and version of the application in
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
-func (c *GroupClient) SetGoogleClientInfo(keyval ...string) {
+func (c *GroupClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
@@ -145,25 +140,20 @@ func (c *GroupClient) SetGoogleClientInfo(keyval ...string) {
 
 // GroupProjectPath returns the path for the project resource.
 func GroupProjectPath(project string) string {
-	path, err := groupProjectPathTemplate.Render(map[string]string{
-		"project": project,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		""
 }
 
 // GroupGroupPath returns the path for the group resource.
 func GroupGroupPath(project, group string) string {
-	path, err := groupGroupPathTemplate.Render(map[string]string{
-		"project": project,
-		"group":   group,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		"/groups/" +
+		group +
+		""
 }
 
 // ListGroups lists the existing groups.
@@ -234,7 +224,7 @@ func (c *GroupClient) CreateGroup(ctx context.Context, req *monitoringpb.CreateG
 }
 
 // UpdateGroup updates an existing group.
-// You can change any group attributes except `name`.
+// You can change any group attributes except name.
 func (c *GroupClient) UpdateGroup(ctx context.Context, req *monitoringpb.UpdateGroupRequest, opts ...gax.CallOption) (*monitoringpb.Group, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
 	opts = append(c.CallOptions.UpdateGroup[0:len(c.CallOptions.UpdateGroup):len(c.CallOptions.UpdateGroup)], opts...)

@@ -21,7 +21,7 @@
  "basePath": "/adexchangeseller/v2.0/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "adexchangeseller/v2.0/",
- "batchPath": "batch",
+ "batchPath": "batch/adexchangeseller/v2.0",
  "parameters": {
   "alt": {
    "type": "string",

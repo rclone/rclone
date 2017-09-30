@@ -9,19 +9,19 @@
         {
           "state": "success",
           "matcher": "pathAll",
-          "argument": "fleets[].state",
+          "argument": "Fleets[].State",
           "expected": "ACTIVE"
         },
         {
           "state": "failure",
           "matcher": "pathAny",
-          "argument": "fleets[].state",
+          "argument": "Fleets[].State",
           "expected": "PENDING_DEACTIVATE"
         },
         {
           "state": "failure",
           "matcher": "pathAny",
-          "argument": "fleets[].state",
+          "argument": "Fleets[].State",
           "expected": "INACTIVE"
         }
       ]
@@ -34,19 +34,19 @@
         {
           "state": "success",
           "matcher": "pathAll",
-          "argument": "fleets[].state",
+          "argument": "Fleets[].State",
           "expected": "INACTIVE"
         },
         {
           "state": "failure",
           "matcher": "pathAny",
-          "argument": "fleets[].state",
+          "argument": "Fleets[].State",
           "expected": "PENDING_ACTIVATE"
         },
         {
           "state": "failure",
           "matcher": "pathAny",
-          "argument": "fleets[].state",
+          "argument": "Fleets[].State",
           "expected": "ACTIVE"
         }
       ]

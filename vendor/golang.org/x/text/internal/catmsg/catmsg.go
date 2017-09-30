@@ -294,7 +294,7 @@ func (r Raw) Compile(e *Encoder) (err error) {
 //   d.Arg(1)
 //   d.Render(resultOfInvites)
 //   d.Render(" %[2]v to ")
-//   d.Arg(1)
+//   d.Arg(2)
 //   d.Render(resultOfTheir)
 //   d.Render(" party.")
 // where the messages for "invites" and "their" both use a plural.Select

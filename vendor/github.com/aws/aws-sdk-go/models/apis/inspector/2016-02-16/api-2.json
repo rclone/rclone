@@ -819,7 +819,8 @@
         "FAILED",
         "ERROR",
         "COMPLETED",
-        "COMPLETED_WITH_ERRORS"
+        "COMPLETED_WITH_ERRORS",
+        "CANCELED"
       ]
     },
     "AssessmentRunStateChange":{
@@ -1894,11 +1895,19 @@
         "assessmentRunArn":{"shape":"Arn"}
       }
     },
+    "StopAction":{
+      "type":"string",
+      "enum":[
+        "START_EVALUATION",
+        "SKIP_EVALUATION"
+      ]
+    },
     "StopAssessmentRunRequest":{
       "type":"structure",
       "required":["assessmentRunArn"],
       "members":{
-        "assessmentRunArn":{"shape":"Arn"}
+        "assessmentRunArn":{"shape":"Arn"},
+        "stopAction":{"shape":"StopAction"}
       }
     },
     "SubscribeToEventRequest":{

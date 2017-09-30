@@ -43,7 +43,7 @@ var _ = ctxhttp.Do
 const apiId = "firebasedynamiclinks:v1"
 const apiName = "firebasedynamiclinks"
 const apiVersion = "v1"
-const basePath = "https://firebasedynamiclinks.googleapis.com/"
+const basePath = "https://firebasedynamiclinks-ipv6.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -254,6 +254,47 @@ type CreateShortDynamicLinkResponse struct {
 
 func (s *CreateShortDynamicLinkResponse) MarshalJSON() ([]byte, error) {
 	type noMethod CreateShortDynamicLinkResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// DeviceInfo: Signals associated with the device making the request.
+type DeviceInfo struct {
+	// DeviceModelName: Device model name.
+	DeviceModelName string `json:"deviceModelName,omitempty"`
+
+	// LanguageCode: Device language code setting.
+	LanguageCode string `json:"languageCode,omitempty"`
+
+	// ScreenResolutionHeight: Device display resolution height.
+	ScreenResolutionHeight int64 `json:"screenResolutionHeight,omitempty,string"`
+
+	// ScreenResolutionWidth: Device display resolution width.
+	ScreenResolutionWidth int64 `json:"screenResolutionWidth,omitempty,string"`
+
+	// Timezone: Device timezone setting.
+	Timezone string `json:"timezone,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DeviceModelName") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DeviceModelName") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *DeviceInfo) MarshalJSON() ([]byte, error) {
+	type noMethod DeviceInfo
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -482,6 +523,10 @@ type DynamicLinkWarning struct {
 	// not match with the given iOS store ID.
 	WarningCode string `json:"warningCode,omitempty"`
 
+	// WarningDocumentLink: The document describing the warning, and helps
+	// resolve.
+	WarningDocumentLink string `json:"warningDocumentLink,omitempty"`
+
 	// WarningMessage: The warning message to help developers improve their
 	// requests.
 	WarningMessage string `json:"warningMessage,omitempty"`
@@ -505,6 +550,208 @@ type DynamicLinkWarning struct {
 
 func (s *DynamicLinkWarning) MarshalJSON() ([]byte, error) {
 	type noMethod DynamicLinkWarning
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GetIosPostInstallAttributionRequest: Request for iSDK to execute
+// strong match flow for post-install attribution.
+// This is meant for iOS requests only. Requests from other platforms
+// will
+// not be honored.
+type GetIosPostInstallAttributionRequest struct {
+	// AppInstallationTime: App installation epoch time
+	// (https://en.wikipedia.org/wiki/Unix_time).
+	// This is a client signal for a more accurate weak match.
+	AppInstallationTime int64 `json:"appInstallationTime,omitempty,string"`
+
+	// BundleId: APP bundle ID.
+	BundleId string `json:"bundleId,omitempty"`
+
+	// Device: Device information.
+	Device *DeviceInfo `json:"device,omitempty"`
+
+	// IosVersion: iOS version, ie: 9.3.5.
+	// Consider adding "build".
+	IosVersion string `json:"iosVersion,omitempty"`
+
+	// RetrievalMethod: App post install attribution retrieval information.
+	// Disambiguates
+	// mechanism (iSDK or developer invoked) to retrieve payload
+	// from
+	// clicked link.
+	//
+	// Possible values:
+	//   "UNKNOWN_PAYLOAD_RETRIEVAL_METHOD" - Unknown method.
+	//   "IMPLICIT_WEAK_MATCH" - iSDK performs a server lookup by device
+	// fingerprint in the background
+	// when app is first-opened; no API called by developer.
+	//   "EXPLICIT_WEAK_MATCH" - iSDK performs a server lookup by device
+	// fingerprint upon a dev API call.
+	//   "EXPLICIT_STRONG_AFTER_WEAK_MATCH" - iSDK performs a strong match
+	// only if weak match is found upon a dev
+	// API call.
+	RetrievalMethod string `json:"retrievalMethod,omitempty"`
+
+	// SdkVersion: Google SDK version.
+	SdkVersion string `json:"sdkVersion,omitempty"`
+
+	// UniqueMatchLinkToCheck: Possible unique matched link that server need
+	// to check before performing
+	// fingerprint match. If passed link is short server need to expand the
+	// link.
+	// If link is long server need to vslidate the link.
+	UniqueMatchLinkToCheck string `json:"uniqueMatchLinkToCheck,omitempty"`
+
+	// VisualStyle: Strong match page information. Disambiguates between
+	// default UI and
+	// custom page to present when strong match succeeds/fails to find
+	// cookie.
+	//
+	// Possible values:
+	//   "UNKNOWN_VISUAL_STYLE" - Unknown style.
+	//   "DEFAULT_STYLE" - Default style.
+	//   "CUSTOM_STYLE" - Custom style.
+	VisualStyle string `json:"visualStyle,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AppInstallationTime")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AppInstallationTime") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GetIosPostInstallAttributionRequest) MarshalJSON() ([]byte, error) {
+	type noMethod GetIosPostInstallAttributionRequest
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GetIosPostInstallAttributionResponse: Response for iSDK to execute
+// strong match flow for post-install attribution.
+type GetIosPostInstallAttributionResponse struct {
+	// AppMinimumVersion: The minimum version for app, specified by dev
+	// through ?imv= parameter.
+	// Return to iSDK to allow app to evaluate if current version meets
+	// this.
+	AppMinimumVersion string `json:"appMinimumVersion,omitempty"`
+
+	// AttributionConfidence: The confidence of the returned attribution.
+	//
+	// Possible values:
+	//   "UNKNOWN_ATTRIBUTION_CONFIDENCE" - Unset.
+	//   "WEAK" - Weak confidence, more than one matching link found or link
+	// suspected to
+	// be false positive
+	//   "DEFAULT" - Default confidence, match based on fingerprint
+	//   "UNIQUE" - Unique confidence, match based on "unique match link to
+	// check" or other
+	// means
+	AttributionConfidence string `json:"attributionConfidence,omitempty"`
+
+	// DeepLink: The deep-link attributed post-install via one of several
+	// techniques
+	// (fingerprint, copy unique).
+	DeepLink string `json:"deepLink,omitempty"`
+
+	// ExternalBrowserDestinationLink: User-agent specific custom-scheme
+	// URIs for iSDK to open. This will be set
+	// according to the user-agent tha the click was originally made in.
+	// There is
+	// no Safari-equivalent custom-scheme open URLs.
+	// ie: googlechrome://www.example.com
+	// ie: firefox://open-url?url=http://www.example.com
+	// ie: opera-http://example.com
+	ExternalBrowserDestinationLink string `json:"externalBrowserDestinationLink,omitempty"`
+
+	// FallbackLink: The link to navigate to update the app if min version
+	// is not met.
+	// This is either (in order): 1) fallback link (from ?ifl= parameter,
+	// if
+	// specified by developer) or 2) AppStore URL (from ?isi= parameter,
+	// if
+	// specified), or 3) the payload link (from required link= parameter).
+	FallbackLink string `json:"fallbackLink,omitempty"`
+
+	// InvitationId: Invitation ID attributed post-install via one of
+	// several techniques
+	// (fingerprint, copy unique).
+	InvitationId string `json:"invitationId,omitempty"`
+
+	// IsStrongMatchExecutable: Instruction for iSDK to attemmpt to perform
+	// strong match. For instance,
+	// if browser does not support/allow cookie or outside of support
+	// browsers,
+	// this will be false.
+	IsStrongMatchExecutable bool `json:"isStrongMatchExecutable,omitempty"`
+
+	// MatchMessage: Describes why match failed, ie: "discarded due to low
+	// confidence".
+	// This message will be publicly visible.
+	MatchMessage string `json:"matchMessage,omitempty"`
+
+	// RequestedLink: Entire FDL (short or long) attributed post-install via
+	// one of several
+	// techniques (fingerprint, copy unique).
+	RequestedLink string `json:"requestedLink,omitempty"`
+
+	// ResolvedLink: The entire FDL, expanded from a short link. It is the
+	// same as the
+	// requested_link, if it is long. Parameters from this should not
+	// be
+	// used directly (ie: server can default utm_[campaign|medium|source]
+	// to a value when requested_link lack them, server determine the
+	// best
+	// fallback_link when requested_link specifies >1 fallback links).
+	ResolvedLink string `json:"resolvedLink,omitempty"`
+
+	// UtmCampaign: Scion campaign value to be propagated by iSDK to Scion
+	// at post-install.
+	UtmCampaign string `json:"utmCampaign,omitempty"`
+
+	// UtmMedium: Scion medium value to be propagated by iSDK to Scion at
+	// post-install.
+	UtmMedium string `json:"utmMedium,omitempty"`
+
+	// UtmSource: Scion source value to be propagated by iSDK to Scion at
+	// post-install.
+	UtmSource string `json:"utmSource,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "AppMinimumVersion")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AppMinimumVersion") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GetIosPostInstallAttributionResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GetIosPostInstallAttributionResponse
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -1050,6 +1297,128 @@ func (c *V1GetLinkStatsCall) Do(opts ...googleapi.CallOption) (*DynamicLinkStats
 	//   "path": "v1/{dynamicLink}/linkStats",
 	//   "response": {
 	//     "$ref": "DynamicLinkStats"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/firebase"
+	//   ]
+	// }
+
+}
+
+// method id "firebasedynamiclinks.installAttribution":
+
+type V1InstallAttributionCall struct {
+	s                                   *Service
+	getiospostinstallattributionrequest *GetIosPostInstallAttributionRequest
+	urlParams_                          gensupport.URLParams
+	ctx_                                context.Context
+	header_                             http.Header
+}
+
+// InstallAttribution: Get iOS strong/weak-match info for post-install
+// attribution.
+func (r *V1Service) InstallAttribution(getiospostinstallattributionrequest *GetIosPostInstallAttributionRequest) *V1InstallAttributionCall {
+	c := &V1InstallAttributionCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.getiospostinstallattributionrequest = getiospostinstallattributionrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *V1InstallAttributionCall) Fields(s ...googleapi.Field) *V1InstallAttributionCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *V1InstallAttributionCall) Context(ctx context.Context) *V1InstallAttributionCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *V1InstallAttributionCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *V1InstallAttributionCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.getiospostinstallattributionrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/installAttribution")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "firebasedynamiclinks.installAttribution" call.
+// Exactly one of *GetIosPostInstallAttributionResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *GetIosPostInstallAttributionResponse.ServerResponse.Header or
+// (if a response was returned at all) in
+// error.(*googleapi.Error).Header. Use googleapi.IsNotModified to check
+// whether the returned error was because http.StatusNotModified was
+// returned.
+func (c *V1InstallAttributionCall) Do(opts ...googleapi.CallOption) (*GetIosPostInstallAttributionResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GetIosPostInstallAttributionResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Get iOS strong/weak-match info for post-install attribution.",
+	//   "flatPath": "v1/installAttribution",
+	//   "httpMethod": "POST",
+	//   "id": "firebasedynamiclinks.installAttribution",
+	//   "parameterOrder": [],
+	//   "parameters": {},
+	//   "path": "v1/installAttribution",
+	//   "request": {
+	//     "$ref": "GetIosPostInstallAttributionRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "GetIosPostInstallAttributionResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/firebase"

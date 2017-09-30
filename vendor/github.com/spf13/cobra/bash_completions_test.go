@@ -118,7 +118,7 @@ func TestBashCompletions(t *testing.T) {
 	check(t, str, `flags_completion+=("_filedir")`)
 	// check for filename extension flags
 	check(t, str, `must_have_one_noun+=("three")`)
-	// check for filename extention flags
+	// check for filename extension flags
 	check(t, str, `flags_completion+=("__handle_filename_extension_flag json|yaml|yml")`)
 	// check for custom flags
 	check(t, str, `flags_completion+=("__complete_custom")`)

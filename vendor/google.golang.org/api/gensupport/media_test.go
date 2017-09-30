@@ -8,8 +8,12 @@ import (
 	"bytes"
 	"io"
 	"io/ioutil"
+	"net/http"
 	"reflect"
+	"strings"
 	"testing"
+
+	"google.golang.org/api/googleapi"
 )
 
 func TestContentSniffing(t *testing.T) {
@@ -139,4 +143,196 @@ func TestDetermineContentType(t *testing.T) {
 			t.Fatalf("Content type got: %q; want: %q", ctype, tc.wantContentType)
 		}
 	}
+}
+
+func TestNewInfoFromMedia(t *testing.T) {
+	const textType = "text/plain; charset=utf-8"
+	for _, test := range []struct {
+		desc                                   string
+		r                                      io.Reader
+		opts                                   []googleapi.MediaOption
+		wantType                               string
+		wantMedia, wantBuffer, wantSingleChunk bool
+	}{
+		{
+			desc:            "an empty reader results in a MediaBuffer with a single, empty chunk",
+			r:               new(bytes.Buffer),
+			opts:            nil,
+			wantType:        textType,
+			wantBuffer:      true,
+			wantSingleChunk: true,
+		},
+		{
+			desc:            "ContentType is observed",
+			r:               new(bytes.Buffer),
+			opts:            []googleapi.MediaOption{googleapi.ContentType("xyz")},
+			wantType:        "xyz",
+			wantBuffer:      true,
+			wantSingleChunk: true,
+		},
+		{
+			desc:            "chunk size of zero: don't use a MediaBuffer; upload as a single chunk",
+			r:               strings.NewReader("12345"),
+			opts:            []googleapi.MediaOption{googleapi.ChunkSize(0)},
+			wantType:        textType,
+			wantMedia:       true,
+			wantSingleChunk: true,
+		},
+		{
+			desc:            "chunk size > data size: MediaBuffer with single chunk",
+			r:               strings.NewReader("12345"),
+			opts:            []googleapi.MediaOption{googleapi.ChunkSize(100)},
+			wantType:        textType,
+			wantBuffer:      true,
+			wantSingleChunk: true,
+		},
+		{
+			desc:            "chunk size == data size: MediaBuffer with single chunk",
+			r:               &nullReader{googleapi.MinUploadChunkSize},
+			opts:            []googleapi.MediaOption{googleapi.ChunkSize(1)},
+			wantType:        "application/octet-stream",
+			wantBuffer:      true,
+			wantSingleChunk: true,
+		},
+		{
+			desc: "chunk size < data size: MediaBuffer, not single chunk",
+			// Note that ChunkSize = 1 is rounded up to googleapi.MinUploadChunkSize.
+			r:               &nullReader{2 * googleapi.MinUploadChunkSize},
+			opts:            []googleapi.MediaOption{googleapi.ChunkSize(1)},
+			wantType:        "application/octet-stream",
+			wantBuffer:      true,
+			wantSingleChunk: false,
+		},
+	} {
+
+		mi := NewInfoFromMedia(test.r, test.opts)
+		if got, want := mi.mType, test.wantType; got != want {
+			t.Errorf("%s: type: got %q, want %q", test.desc, got, want)
+		}
+		if got, want := (mi.media != nil), test.wantMedia; got != want {
+			t.Errorf("%s: media non-nil: got %t, want %t", test.desc, got, want)
+		}
+		if got, want := (mi.buffer != nil), test.wantBuffer; got != want {
+			t.Errorf("%s: buffer non-nil: got %t, want %t", test.desc, got, want)
+		}
+		if got, want := mi.singleChunk, test.wantSingleChunk; got != want {
+			t.Errorf("%s: singleChunk: got %t, want %t", test.desc, got, want)
+		}
+	}
+}
+
+func TestUploadRequest(t *testing.T) {
+	for _, test := range []struct {
+		desc            string
+		r               io.Reader
+		chunkSize       int
+		wantContentType string
+		wantUploadType  string
+	}{
+		{
+			desc:            "chunk size of zero: don't use a MediaBuffer; upload as a single chunk",
+			r:               strings.NewReader("12345"),
+			chunkSize:       0,
+			wantContentType: "multipart/related;",
+		},
+		{
+			desc:            "chunk size > data size: MediaBuffer with single chunk",
+			r:               strings.NewReader("12345"),
+			chunkSize:       100,
+			wantContentType: "multipart/related;",
+		},
+		{
+			desc:            "chunk size == data size: MediaBuffer with single chunk",
+			r:               &nullReader{googleapi.MinUploadChunkSize},
+			chunkSize:       1,
+			wantContentType: "multipart/related;",
+		},
+		{
+			desc: "chunk size < data size: MediaBuffer, not single chunk",
+			// Note that ChunkSize = 1 is rounded up to googleapi.MinUploadChunkSize.
+			r:              &nullReader{2 * googleapi.MinUploadChunkSize},
+			chunkSize:      1,
+			wantUploadType: "application/octet-stream",
+		},
+	} {
+		mi := NewInfoFromMedia(test.r, []googleapi.MediaOption{googleapi.ChunkSize(test.chunkSize)})
+		h := http.Header{}
+		mi.UploadRequest(h, new(bytes.Buffer))
+		if got, want := h.Get("Content-Type"), test.wantContentType; !strings.HasPrefix(got, want) {
+			t.Errorf("%s: Content-Type: got %q, want prefix %q", test.desc, got, want)
+		}
+		if got, want := h.Get("X-Upload-Content-Type"), test.wantUploadType; got != want {
+			t.Errorf("%s: X-Upload-Content-Type: got %q, want %q", test.desc, got, want)
+		}
+	}
+}
+
+func TestResumableUpload(t *testing.T) {
+	for _, test := range []struct {
+		desc                string
+		r                   io.Reader
+		chunkSize           int
+		wantUploadType      string
+		wantResumableUpload bool
+	}{
+
+		{
+			desc:                "chunk size of zero: don't use a MediaBuffer; upload as a single chunk",
+			r:                   strings.NewReader("12345"),
+			chunkSize:           0,
+			wantUploadType:      "multipart",
+			wantResumableUpload: false,
+		},
+		{
+			desc:                "chunk size > data size: MediaBuffer with single chunk",
+			r:                   strings.NewReader("12345"),
+			chunkSize:           100,
+			wantUploadType:      "multipart",
+			wantResumableUpload: false,
+		},
+		{
+			desc: "chunk size == data size: MediaBuffer with single chunk",
+			// (Because nullReader returns EOF with the last bytes.)
+			r:                   &nullReader{googleapi.MinUploadChunkSize},
+			chunkSize:           googleapi.MinUploadChunkSize,
+			wantUploadType:      "multipart",
+			wantResumableUpload: false,
+		},
+		{
+			desc: "chunk size < data size: MediaBuffer, not single chunk",
+			// Note that ChunkSize = 1 is rounded up to googleapi.MinUploadChunkSize.
+			r:                   &nullReader{2 * googleapi.MinUploadChunkSize},
+			chunkSize:           1,
+			wantUploadType:      "resumable",
+			wantResumableUpload: true,
+		},
+	} {
+		mi := NewInfoFromMedia(test.r, []googleapi.MediaOption{googleapi.ChunkSize(test.chunkSize)})
+		if got, want := mi.UploadType(), test.wantUploadType; got != want {
+			t.Errorf("%s: upload type: got %q, want %q", test.desc, got, want)
+		}
+		if got, want := mi.ResumableUpload("") != nil, test.wantResumableUpload; got != want {
+			t.Errorf("%s: resumable upload non-nil: got %t, want %t", test.desc, got, want)
+		}
+	}
+}
+
+// A nullReader simulates reading a fixed number of bytes.
+type nullReader struct {
+	remain int
+}
+
+// Read doesn't touch buf, but it does reduce the amount of bytes remaining
+// by len(buf).
+func (r *nullReader) Read(buf []byte) (int, error) {
+	n := len(buf)
+	if r.remain < n {
+		n = r.remain
+	}
+	r.remain -= n
+	var err error
+	if r.remain == 0 {
+		err = io.EOF
+	}
+	return n, err
 }

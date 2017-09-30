@@ -91,9 +91,9 @@ type Debugger2Client struct {
 // and without modifying its state.  An application may include one or
 // more replicated processes performing the same work.
 //
-// The application is represented using the Debuggee concept. The Debugger
-// service provides a way to query for available Debuggees, but does not
-// provide a way to create one.  A debuggee is created using the Controller
+// A debugged application is represented using the Debuggee concept. The
+// Debugger service provides a way to query for available debuggees, but does
+// not provide a way to create one.  A debuggee is created using the Controller
 // service, usually by running a debugger agent with the application.
 //
 // The Debugger service enables the client to set one or more Breakpoints on a
@@ -193,7 +193,7 @@ func (c *Debugger2Client) ListBreakpoints(ctx context.Context, req *clouddebugge
 	return resp, nil
 }
 
-// ListDebuggees lists all the debuggees that the user can set breakpoints to.
+// ListDebuggees lists all the debuggees that the user has access to.
 func (c *Debugger2Client) ListDebuggees(ctx context.Context, req *clouddebuggerpb.ListDebuggeesRequest, opts ...gax.CallOption) (*clouddebuggerpb.ListDebuggeesResponse, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
 	opts = append(c.CallOptions.ListDebuggees[0:len(c.CallOptions.ListDebuggees):len(c.CallOptions.ListDebuggees)], opts...)

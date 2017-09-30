@@ -17,19 +17,18 @@ const opBatchGetItem = "BatchGetItem"
 
 // BatchGetItemRequest generates a "aws/request.Request" representing the
 // client's request for the BatchGetItem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See BatchGetItem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the BatchGetItem method directly
-// instead.
+// See BatchGetItem for more information on using the BatchGetItem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the BatchGetItemRequest method.
 //    req, resp := client.BatchGetItemRequest(params)
@@ -213,19 +212,18 @@ const opBatchWriteItem = "BatchWriteItem"
 
 // BatchWriteItemRequest generates a "aws/request.Request" representing the
 // client's request for the BatchWriteItem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See BatchWriteItem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the BatchWriteItem method directly
-// instead.
+// See BatchWriteItem for more information on using the BatchWriteItem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the BatchWriteItemRequest method.
 //    req, resp := client.BatchWriteItemRequest(params)
@@ -377,19 +375,18 @@ const opCreateTable = "CreateTable"
 
 // CreateTableRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTable operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateTable for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateTable method directly
-// instead.
+// See CreateTable for more information on using the CreateTable
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateTableRequest method.
 //    req, resp := client.CreateTableRequest(params)
@@ -486,19 +483,18 @@ const opDeleteItem = "DeleteItem"
 
 // DeleteItemRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteItem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteItem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteItem method directly
-// instead.
+// See DeleteItem for more information on using the DeleteItem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteItemRequest method.
 //    req, resp := client.DeleteItemRequest(params)
@@ -598,19 +594,18 @@ const opDeleteTable = "DeleteTable"
 
 // DeleteTableRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTable operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteTable for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteTable method directly
-// instead.
+// See DeleteTable for more information on using the DeleteTable
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteTableRequest method.
 //    req, resp := client.DeleteTableRequest(params)
@@ -714,19 +709,18 @@ const opDescribeLimits = "DescribeLimits"
 
 // DescribeLimitsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeLimits operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeLimits for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeLimits method directly
-// instead.
+// See DescribeLimits for more information on using the DescribeLimits
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeLimitsRequest method.
 //    req, resp := client.DescribeLimitsRequest(params)
@@ -850,19 +844,18 @@ const opDescribeTable = "DescribeTable"
 
 // DescribeTableRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTable operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeTable for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeTable method directly
-// instead.
+// See DescribeTable for more information on using the DescribeTable
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeTableRequest method.
 //    req, resp := client.DescribeTableRequest(params)
@@ -942,19 +935,18 @@ const opDescribeTimeToLive = "DescribeTimeToLive"
 
 // DescribeTimeToLiveRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTimeToLive operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeTimeToLive for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeTimeToLive method directly
-// instead.
+// See DescribeTimeToLive for more information on using the DescribeTimeToLive
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeTimeToLiveRequest method.
 //    req, resp := client.DescribeTimeToLiveRequest(params)
@@ -1026,19 +1018,18 @@ const opGetItem = "GetItem"
 
 // GetItemRequest generates a "aws/request.Request" representing the
 // client's request for the GetItem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetItem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetItem method directly
-// instead.
+// See GetItem for more information on using the GetItem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetItemRequest method.
 //    req, resp := client.GetItemRequest(params)
@@ -1125,19 +1116,18 @@ const opListTables = "ListTables"
 
 // ListTablesRequest generates a "aws/request.Request" representing the
 // client's request for the ListTables operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListTables for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListTables method directly
-// instead.
+// See ListTables for more information on using the ListTables
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListTablesRequest method.
 //    req, resp := client.ListTablesRequest(params)
@@ -1263,19 +1253,18 @@ const opListTagsOfResource = "ListTagsOfResource"
 
 // ListTagsOfResourceRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsOfResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListTagsOfResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListTagsOfResource method directly
-// instead.
+// See ListTagsOfResource for more information on using the ListTagsOfResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListTagsOfResourceRequest method.
 //    req, resp := client.ListTagsOfResourceRequest(params)
@@ -1351,19 +1340,18 @@ const opPutItem = "PutItem"
 
 // PutItemRequest generates a "aws/request.Request" representing the
 // client's request for the PutItem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutItem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutItem method directly
-// instead.
+// See PutItem for more information on using the PutItem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutItemRequest method.
 //    req, resp := client.PutItemRequest(params)
@@ -1397,10 +1385,31 @@ func (c *DynamoDB) PutItemRequest(input *PutItemInput) (req *request.Request, ou
 // table, the new item completely replaces the existing item. You can perform
 // a conditional put operation (add a new item if one with the specified primary
 // key doesn't exist), or replace an existing item if it has certain attribute
-// values.
+// values. You can return the item's attribute values in the same operation,
+// using the ReturnValues parameter.
 //
-// In addition to putting an item, you can also return the item's attribute
-// values in the same operation, using the ReturnValues parameter.
+// This topic provides general information about the PutItem API.
+//
+// For information on how to call the PutItem API using the AWS SDK in specific
+// languages, see the following:
+//
+//  PutItem in the AWS Command Line Interface  (http://docs.aws.amazon.com/goto/aws-cli/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for .NET  (http://docs.aws.amazon.com/goto/DotNetSDKV3/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for C++  (http://docs.aws.amazon.com/goto/SdkForCpp/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for Go  (http://docs.aws.amazon.com/goto/SdkForGoV1/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for Java  (http://docs.aws.amazon.com/goto/SdkForJava/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for JavaScript  (http://docs.aws.amazon.com/goto/AWSJavaScriptSDK/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for PHP V3  (http://docs.aws.amazon.com/goto/SdkForPHPV3/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for Python  (http://docs.aws.amazon.com/goto/boto3/dynamodb-2012-08-10/PutItem)
+//
+//  PutItem in the AWS SDK for Ruby V2  (http://docs.aws.amazon.com/goto/SdkForRubyV2/dynamodb-2012-08-10/PutItem)
 //
 // When you add an item, the primary key attribute(s) are the only required
 // attributes. Attribute values cannot be null. String and Binary type attributes
@@ -1472,19 +1481,18 @@ const opQuery = "Query"
 
 // QueryRequest generates a "aws/request.Request" representing the
 // client's request for the Query operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See Query for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the Query method directly
-// instead.
+// See Query for more information on using the Query
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the QueryRequest method.
 //    req, resp := client.QueryRequest(params)
@@ -1519,26 +1527,48 @@ func (c *DynamoDB) QueryRequest(input *QueryInput) (req *request.Request, output
 
 // Query API operation for Amazon DynamoDB.
 //
-// A Query operation uses the primary key of a table or a secondary index to
-// directly access items from that table or index.
+// The Query operation finds items based on primary key values. You can query
+// any table or secondary index that has a composite primary key (a partition
+// key and a sort key).
 //
 // Use the KeyConditionExpression parameter to provide a specific value for
 // the partition key. The Query operation will return all of the items from
 // the table or index with that partition key value. You can optionally narrow
 // the scope of the Query operation by specifying a sort key value and a comparison
-// operator in KeyConditionExpression. You can use the ScanIndexForward parameter
-// to get results in forward or reverse order, by sort key.
+// operator in KeyConditionExpression. To further refine the Query results,
+// you can optionally provide a FilterExpression. A FilterExpression determines
+// which items within the results should be returned to you. All of the other
+// results are discarded.
 //
-// Queries that do not return results consume the minimum number of read capacity
-// units for that type of read operation.
+// A Query operation always returns a result set. If no matching items are found,
+// the result set will be empty. Queries that do not return results consume
+// the minimum number of read capacity units for that type of read operation.
 //
-// If the total number of items meeting the query criteria exceeds the result
-// set size limit of 1 MB, the query stops and results are returned to the user
-// with the LastEvaluatedKey element to continue the query in a subsequent operation.
-// Unlike a Scan operation, a Query operation never returns both an empty result
-// set and a LastEvaluatedKey value. LastEvaluatedKey is only provided if you
-// have used the Limit parameter, or if the result set exceeds 1 MB (prior to
-// applying a filter).
+// DynamoDB calculates the number of read capacity units consumed based on item
+// size, not on the amount of data that is returned to an application. The number
+// of capacity units consumed will be the same whether you request all of the
+// attributes (the default behavior) or just some of them (using a projection
+// expression). The number will also be the same whether or not you use a FilterExpression.
+//
+// Query results are always sorted by the sort key value. If the data type of
+// the sort key is Number, the results are returned in numeric order; otherwise,
+// the results are returned in order of UTF-8 bytes. By default, the sort order
+// is ascending. To reverse the order, set the ScanIndexForward parameter to
+// false.
+//
+// A single Query operation will read up to the maximum number of items set
+// (if using the Limit parameter) or a maximum of 1 MB of data and then apply
+// any filtering to the results using FilterExpression. If LastEvaluatedKey
+// is present in the response, you will need to paginate the result set. For
+// more information, see Paginating the Results (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Query.html#Query.Pagination)
+// in the Amazon DynamoDB Developer Guide.
+//
+// FilterExpression is applied after a Query finishes, but before the results
+// are returned. A FilterExpression cannot contain partition key or sort key
+// attributes. You need to specify those attributes in the KeyConditionExpression.
+//
+// A Query operation can return an empty result set and a LastEvaluatedKey if
+// all the items read for the page of results are filtered out.
 //
 // You can query a table, a local secondary index, or a global secondary index.
 // For a query on a table or on a local secondary index, you can set the ConsistentRead
@@ -1645,19 +1675,18 @@ const opScan = "Scan"
 
 // ScanRequest generates a "aws/request.Request" representing the
 // client's request for the Scan operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See Scan for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the Scan method directly
-// instead.
+// See Scan for more information on using the Scan
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ScanRequest method.
 //    req, resp := client.ScanRequest(params)
@@ -1702,16 +1731,23 @@ func (c *DynamoDB) ScanRequest(input *ScanInput) (req *request.Request, output *
 // the number of items exceeding the limit. A scan can result in no table data
 // meeting the filter criteria.
 //
-// By default, Scan operations proceed sequentially; however, for faster performance
-// on a large table or secondary index, applications can request a parallel
-// Scan operation by providing the Segment and TotalSegments parameters. For
-// more information, see Parallel Scan (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/QueryAndScan.html#QueryAndScanParallelScan)
+// A single Scan operation will read up to the maximum number of items set (if
+// using the Limit parameter) or a maximum of 1 MB of data and then apply any
+// filtering to the results using FilterExpression. If LastEvaluatedKey is present
+// in the response, you will need to paginate the result set. For more information,
+// see Paginating the Results (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.Pagination)
 // in the Amazon DynamoDB Developer Guide.
 //
-// By default, Scan uses eventually consistent reads when accessing the data
-// in a table; therefore, the result set might not include the changes to data
-// in the table immediately before the operation began. If you need a consistent
-// copy of the data, as of the time that the Scan begins, you can set the ConsistentRead
+// Scan operations proceed sequentially; however, for faster performance on
+// a large table or secondary index, applications can request a parallel Scan
+// operation by providing the Segment and TotalSegments parameters. For more
+// information, see Parallel Scan (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Scan.html#Scan.ParallelScan)
+// in the Amazon DynamoDB Developer Guide.
+//
+// Scan uses eventually consistent reads when accessing the data in a table;
+// therefore, the result set might not include the changes to data in the table
+// immediately before the operation began. If you need a consistent copy of
+// the data, as of the time that the Scan begins, you can set the ConsistentRead
 // parameter to true.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -1813,19 +1849,18 @@ const opTagResource = "TagResource"
 
 // TagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the TagResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See TagResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the TagResource method directly
-// instead.
+// See TagResource for more information on using the TagResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the TagResourceRequest method.
 //    req, resp := client.TagResourceRequest(params)
@@ -1920,19 +1955,18 @@ const opUntagResource = "UntagResource"
 
 // UntagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UntagResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UntagResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UntagResource method directly
-// instead.
+// See UntagResource for more information on using the UntagResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UntagResourceRequest method.
 //    req, resp := client.UntagResourceRequest(params)
@@ -2025,19 +2059,18 @@ const opUpdateItem = "UpdateItem"
 
 // UpdateItemRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateItem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateItem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateItem method directly
-// instead.
+// See UpdateItem for more information on using the UpdateItem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateItemRequest method.
 //    req, resp := client.UpdateItemRequest(params)
@@ -2131,19 +2164,18 @@ const opUpdateTable = "UpdateTable"
 
 // UpdateTableRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTable operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateTable for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateTable method directly
-// instead.
+// See UpdateTable for more information on using the UpdateTable
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateTableRequest method.
 //    req, resp := client.UpdateTableRequest(params)
@@ -2247,19 +2279,18 @@ const opUpdateTimeToLive = "UpdateTimeToLive"
 
 // UpdateTimeToLiveRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTimeToLive operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateTimeToLive for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateTimeToLive method directly
-// instead.
+// See UpdateTimeToLive for more information on using the UpdateTimeToLive
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateTimeToLiveRequest method.
 //    req, resp := client.UpdateTimeToLiveRequest(params)
@@ -2288,11 +2319,11 @@ func (c *DynamoDB) UpdateTimeToLiveRequest(input *UpdateTimeToLiveInput) (req *r
 
 // UpdateTimeToLive API operation for Amazon DynamoDB.
 //
-// Specify the lifetime of individual table items. The database automatically
-// removes the item at the expiration of the item. The UpdateTimeToLive method
-// will enable or disable TTL for the specified table. A successful UpdateTimeToLive
-// call returns the current TimeToLiveSpecification; it may take up to one hour
-// for the change to fully process.
+// The UpdateTimeToLive method will enable or disable TTL for the specified
+// table. A successful UpdateTimeToLive call returns the current TimeToLiveSpecification;
+// it may take up to one hour for the change to fully process. Any additional
+// UpdateTimeToLive calls for the same table during this one hour duration result
+// in a ValidationException.
 //
 // TTL compares the current time in epoch time format to the time stored in
 // the TTL attribute of an item. If the epoch time value stored in the attribute
@@ -2908,8 +2939,8 @@ type BatchWriteItemInput struct {
 	//    * DeleteRequest - Perform a DeleteItem operation on the specified item.
 	//    The item to be deleted is identified by a Key subelement:
 	//
-	// Key - A map of primary key attribute values that uniquely identify the !
-	//    item. Each entry in this map consists of an attribute name and an attribute
+	// Key - A map of primary key attribute values that uniquely identify the item.
+	//    Each entry in this map consists of an attribute name and an attribute
 	//    value. For each primary key, you must provide all of the key attributes.
 	//    For example, with a simple primary key, you only need to provide a value
 	//    for the partition key. For a composite primary key, you must provide values
@@ -3786,7 +3817,7 @@ type DeleteItemInput struct {
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
-	// This is a legacy parameter. Use ConditionExpresssion instead. For more information,
+	// This is a legacy parameter. Use ConditionExpression instead. For more information,
 	// see Expected (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Expected map[string]*ExpectedAttributeValue `type:"map"`
@@ -5953,7 +5984,7 @@ type PutItemInput struct {
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
-	// This is a legacy parameter. Use ConditionExpresssion instead. For more information,
+	// This is a legacy parameter. Use ConditionExpression instead. For more information,
 	// see Expected (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Expected map[string]*ExpectedAttributeValue `type:"map"`
@@ -8050,7 +8081,7 @@ type UpdateItemInput struct {
 	// in the Amazon DynamoDB Developer Guide.
 	ConditionalOperator *string `type:"string" enum:"ConditionalOperator"`
 
-	// This is a legacy parameter. Use ConditionExpresssion instead. For more information,
+	// This is a legacy parameter. Use ConditionExpression instead. For more information,
 	// see Expected (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/LegacyConditionalParameters.Expected.html)
 	// in the Amazon DynamoDB Developer Guide.
 	Expected map[string]*ExpectedAttributeValue `type:"map"`
@@ -8148,9 +8179,8 @@ type UpdateItemInput struct {
 	// (the default), no statistics are returned.
 	ReturnItemCollectionMetrics *string `type:"string" enum:"ReturnItemCollectionMetrics"`
 
-	// Use ReturnValues if you want to get the item attributes as they appeared
-	// either before or after they were updated. For UpdateItem, the valid values
-	// are:
+	// Use ReturnValues if you want to get the item attributes as they appear before
+	// or after they are updated. For UpdateItem, the valid values are:
 	//
 	//    * NONE - If ReturnValues is not specified, or if its value is NONE, then
 	//    nothing is returned. (This setting is the default for ReturnValues.)
@@ -8169,9 +8199,9 @@ type UpdateItemInput struct {
 	//
 	// There is no additional cost associated with requesting a return value aside
 	// from the small network and processing overhead of receiving a larger response.
-	// No Read Capacity Units are consumed.
+	// No read capacity units are consumed.
 	//
-	// Values returned are strongly consistent
+	// The values returned are strongly consistent.
 	ReturnValues *string `type:"string" enum:"ReturnValue"`
 
 	// The name of the table containing the item to update.
@@ -8361,9 +8391,11 @@ func (s *UpdateItemInput) SetUpdateExpression(v string) *UpdateItemInput {
 type UpdateItemOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A map of attribute values as they appeared before the UpdateItem operation.
-	// This map only appears if ReturnValues was specified as something other than
-	// NONE in the request. Each element represents one attribute.
+	// A map of attribute values as they appear before or after the UpdateItem operation,
+	// as determined by the ReturnValues parameter.
+	//
+	// The Attributes map is only present if ReturnValues was specified as something
+	// other than NONE in the request. Each element represents one attribute.
 	Attributes map[string]*AttributeValue `type:"map"`
 
 	// The capacity units consumed by the UpdateItem operation. The data returned

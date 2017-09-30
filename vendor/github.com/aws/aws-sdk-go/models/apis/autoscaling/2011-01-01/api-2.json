@@ -1045,6 +1045,7 @@
         "VPCZoneIdentifier":{"shape":"XmlStringMaxLen2047"},
         "TerminationPolicies":{"shape":"TerminationPolicies"},
         "NewInstancesProtectedFromScaleIn":{"shape":"InstanceProtected"},
+        "LifecycleHookSpecificationList":{"shape":"LifecycleHookSpecifications"},
         "Tags":{"shape":"Tags"}
       }
     },
@@ -1588,6 +1589,23 @@
       "type":"list",
       "member":{"shape":"AsciiStringMaxLen255"},
       "max":50
+    },
+    "LifecycleHookSpecification":{
+      "type":"structure",
+      "required":["LifecycleHookName"],
+      "members":{
+        "LifecycleHookName":{"shape":"AsciiStringMaxLen255"},
+        "LifecycleTransition":{"shape":"LifecycleTransition"},
+        "NotificationMetadata":{"shape":"XmlStringMaxLen1023"},
+        "HeartbeatTimeout":{"shape":"HeartbeatTimeout"},
+        "DefaultResult":{"shape":"LifecycleActionResult"},
+        "NotificationTargetARN":{"shape":"NotificationTargetResourceName"},
+        "RoleARN":{"shape":"ResourceName"}
+      }
+    },
+    "LifecycleHookSpecifications":{
+      "type":"list",
+      "member":{"shape":"LifecycleHookSpecification"}
     },
     "LifecycleHooks":{
       "type":"list",

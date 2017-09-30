@@ -28,7 +28,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
-	"google.golang.org/api/transport"
+	gtransport "google.golang.org/api/transport/grpc"
 	btpb "google.golang.org/genproto/googleapis/bigtable/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -53,9 +53,15 @@ func NewClient(ctx context.Context, project, instance string, opts ...option.Cli
 		return nil, err
 	}
 	// Default to a small connection pool that can be overridden.
-	o = append(o, option.WithGRPCConnectionPool(4))
+	o = append(o,
+		option.WithGRPCConnectionPool(4),
+		// Set the max size to correspond to server-side limits.
+		option.WithGRPCDialOption(grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100<<20), grpc.MaxCallRecvMsgSize(100<<20))),
+		// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
+		// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
+		option.WithGRPCDialOption(grpc.WithBlock()))
 	o = append(o, opts...)
-	conn, err := transport.DialGRPC(ctx, o...)
+	conn, err := gtransport.Dial(ctx, o...)
 	if err != nil {
 		return nil, fmt.Errorf("dialing: %v", err)
 	}
@@ -211,6 +217,7 @@ func decodeFamilyProto(r Row, row string, f *btpb.Family) {
 }
 
 // RowSet is a set of rows to be read. It is satisfied by RowList, RowRange and RowRangeList.
+// The serialized size of the RowSet must be no larger than 1MiB.
 type RowSet interface {
 	proto() *btpb.RowSet
 
@@ -391,6 +398,9 @@ type ReadOption interface {
 }
 
 // RowFilter returns a ReadOption that applies f to the contents of read rows.
+//
+// If multiple RowFilters are provided, only the last is used. To combine filters,
+// use ChainFilters or InterleaveFilters instead.
 func RowFilter(f Filter) ReadOption { return rowFilter{f} }
 
 type rowFilter struct{ f Filter }
@@ -571,7 +581,7 @@ type entryErr struct {
 	Err   error
 }
 
-// ApplyBulk applies multiple Mutations.
+// ApplyBulk applies multiple Mutations, up to a maximum of 100,000.
 // Each mutation is individually applied atomically,
 // but the set of mutations may be applied in any order.
 //

@@ -197,8 +197,8 @@ func (s *LongRunningRecognizeRequest) MarshalJSON() ([]byte, error) {
 type Operation struct {
 	// Done: If the value is `false`, it means the operation is still in
 	// progress.
-	// If true, the operation is completed, and either `error` or `response`
-	// is
+	// If `true`, the operation is completed, and either `error` or
+	// `response` is
 	// available.
 	Done bool `json:"done,omitempty"`
 
@@ -319,6 +319,15 @@ func (s *RecognitionAudio) MarshalJSON() ([]byte, error) {
 // specifies how to process the
 // request.
 type RecognitionConfig struct {
+	// EnableWordTimeOffsets: *Optional* If `true`, the top result includes
+	// a list of words and
+	// the start and end time offsets (timestamps) for those words.
+	// If
+	// `false`, no word-level time offset information is returned. The
+	// default is
+	// `false`.
+	EnableWordTimeOffsets bool `json:"enableWordTimeOffsets,omitempty"`
+
 	// Encoding: *Required* Encoding of audio data sent in all
 	// `RecognitionAudio` messages.
 	//
@@ -415,20 +424,22 @@ type RecognitionConfig struct {
 	// speech recognition.
 	SpeechContexts []*SpeechContext `json:"speechContexts,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Encoding") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
+	// ForceSendFields is a list of field names (e.g.
+	// "EnableWordTimeOffsets") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Encoding") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
+	// NullFields is a list of field names (e.g. "EnableWordTimeOffsets") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
 	NullFields []string `json:"-"`
 }
 
@@ -571,6 +582,10 @@ type SpeechRecognitionAlternative struct {
 	// the user spoke.
 	Transcript string `json:"transcript,omitempty"`
 
+	// Words: *Output-only* A list of word-specific information for each
+	// recognized word.
+	Words []*WordInfo `json:"words,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "Confidence") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -614,8 +629,8 @@ type SpeechRecognitionResult struct {
 	// Alternatives: *Output-only* May contain one or more recognition
 	// hypotheses (up to the
 	// maximum specified in `max_alternatives`).
-	// These alternatives are ordered in terms of accuracy, with the
-	// first/top
+	// These alternatives are ordered in terms of accuracy, with the top
+	// (first)
 	// alternative being the most probable, as ranked by the recognizer.
 	Alternatives []*SpeechRecognitionAlternative `json:"alternatives,omitempty"`
 
@@ -726,9 +741,9 @@ type Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details.  There will
-	// be a
-	// common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details.  There is a
+	// common set of
+	// message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
@@ -757,6 +772,59 @@ type Status struct {
 
 func (s *Status) MarshalJSON() ([]byte, error) {
 	type noMethod Status
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// WordInfo: Word-specific information for recognized words. Word
+// information is only
+// included in the response when certain request parameters are set,
+// such
+// as `enable_word_time_offsets`.
+type WordInfo struct {
+	// EndTime: *Output-only* Time offset relative to the beginning of the
+	// audio,
+	// and corresponding to the end of the spoken word.
+	// This field is only set if `enable_word_time_offsets=true` and only
+	// in the top hypothesis.
+	// This is an experimental feature and the accuracy of the time offset
+	// can
+	// vary.
+	EndTime string `json:"endTime,omitempty"`
+
+	// StartTime: *Output-only* Time offset relative to the beginning of the
+	// audio,
+	// and corresponding to the start of the spoken word.
+	// This field is only set if `enable_word_time_offsets=true` and only
+	// in the top hypothesis.
+	// This is an experimental feature and the accuracy of the time offset
+	// can
+	// vary.
+	StartTime string `json:"startTime,omitempty"`
+
+	// Word: *Output-only* The word corresponding to this set of
+	// information.
+	Word string `json:"word,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "EndTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "EndTime") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *WordInfo) MarshalJSON() ([]byte, error) {
+	type noMethod WordInfo
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

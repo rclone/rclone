@@ -21,9 +21,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"reflect"
 	"strings"
 	"testing"
+
+	"cloud.google.com/go/internal/testutil"
 
 	"golang.org/x/net/context"
 
@@ -32,6 +33,7 @@ import (
 
 type fakeTransport struct {
 	gotReq  *http.Request
+	gotBody []byte
 	results []transportResult
 }
 
@@ -46,6 +48,14 @@ func (t *fakeTransport) addResult(res *http.Response, err error) {
 
 func (t *fakeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	t.gotReq = req
+	t.gotBody = nil
+	if req.Body != nil {
+		bytes, err := ioutil.ReadAll(req.Body)
+		if err != nil {
+			return nil, err
+		}
+		t.gotBody = bytes
+	}
 	if len(t.results) == 0 {
 		return nil, fmt.Errorf("error handling request")
 	}
@@ -57,6 +67,7 @@ func (t *fakeTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 func TestErrorOnObjectsInsertCall(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
+	const contents = "hello world"
 
 	doWrite := func(hc *http.Client) *Writer {
 		client, err := NewClient(ctx, option.WithHTTPClient(hc))
@@ -68,7 +79,7 @@ func TestErrorOnObjectsInsertCall(t *testing.T) {
 
 		// We can't check that the Write fails, since it depends on the write to the
 		// underling fakeTransport failing which is racy.
-		wc.Write([]byte("hello world"))
+		wc.Write([]byte(contents))
 		return wc
 	}
 
@@ -92,6 +103,10 @@ func TestErrorOnObjectsInsertCall(t *testing.T) {
 	wc = doWrite(&http.Client{Transport: ft})
 	if err := wc.Close(); err != nil {
 		t.Errorf("got %v, want nil", err)
+	}
+	got := string(ft.gotBody)
+	if !strings.Contains(got, contents) {
+		t.Errorf("got body %q, which does not contain %q", got, contents)
 	}
 }
 
@@ -117,7 +132,7 @@ func TestEncryption(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decoding key: %v", err)
 	}
-	if !reflect.DeepEqual(gotKey, key) {
+	if !testutil.Equal(gotKey, key) {
 		t.Errorf("key: got %v, want %v", gotKey, key)
 	}
 	wantHash := sha256.Sum256(key)
@@ -125,7 +140,7 @@ func TestEncryption(t *testing.T) {
 	if err != nil {
 		t.Fatalf("decoding hash: %v", err)
 	}
-	if !reflect.DeepEqual(gotHash, wantHash[:]) { // wantHash is an array
+	if !testutil.Equal(gotHash, wantHash[:]) { // wantHash is an array
 		t.Errorf("hash: got\n%v, want\n%v", gotHash, wantHash)
 	}
 }

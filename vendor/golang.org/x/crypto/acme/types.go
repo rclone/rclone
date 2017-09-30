@@ -5,6 +5,8 @@
 package acme
 
 import (
+	"crypto"
+	"crypto/x509"
 	"errors"
 	"fmt"
 	"net/http"
@@ -293,3 +295,35 @@ func (e *wireError) error(h http.Header) *Error {
 		Header:      h,
 	}
 }
+
+// CertOption is an optional argument type for the TLSSNIxChallengeCert methods for
+// customizing a temporary certificate for TLS-SNI challenges.
+type CertOption interface {
+	privateCertOpt()
+}
+
+// WithKey creates an option holding a private/public key pair.
+// The private part signs a certificate, and the public part represents the signee.
+func WithKey(key crypto.Signer) CertOption {
+	return &certOptKey{key}
+}
+
+type certOptKey struct {
+	key crypto.Signer
+}
+
+func (*certOptKey) privateCertOpt() {}
+
+// WithTemplate creates an option for specifying a certificate template.
+// See x509.CreateCertificate for template usage details.
+//
+// In TLSSNIxChallengeCert methods, the template is also used as parent,
+// resulting in a self-signed certificate.
+// The DNSNames field of t is always overwritten for tls-sni challenge certs.
+func WithTemplate(t *x509.Certificate) CertOption {
+	return (*certOptTemplate)(t)
+}
+
+type certOptTemplate x509.Certificate
+
+func (*certOptTemplate) privateCertOpt() {}

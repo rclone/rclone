@@ -38,7 +38,7 @@ go get -v ./...
 # cd $GOCLOUD_HOME
 
 # Run tests and tee output to log file, to be pushed to GCS as artifact.
-go test -race -v -short ./... 2>&1 | tee $KOKORO_ARTIFACTS_DIR/$KOKORO_GERRIT_REVISION.log
+go test -race -v -short ./... 2>&1 | tee $KOKORO_ARTIFACTS_DIR/$KOKORO_GERRIT_CHANGE_NUMBER.txt
 
 # Make sure README.md is up to date.
 make -C internal/readme test diff

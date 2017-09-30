@@ -6,11 +6,10 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
+	"reflect"
 	"strings"
 	"testing"
 	"time"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/credentials"
@@ -20,8 +19,10 @@ import (
 
 func TestStripExcessHeaders(t *testing.T) {
 	vals := []string{
+		"",
 		"123",
 		"1 2 3",
+		"1 2 3 ",
 		"  1 2 3",
 		"1  2 3",
 		"1  23",
@@ -35,7 +36,9 @@ func TestStripExcessHeaders(t *testing.T) {
 	}
 
 	expected := []string{
+		"",
 		"123",
+		"1 2 3",
 		"1 2 3",
 		"1 2 3",
 		"1 2 3",
@@ -51,7 +54,9 @@ func TestStripExcessHeaders(t *testing.T) {
 
 	stripExcessSpaces(vals)
 	for i := 0; i < len(vals); i++ {
-		assert.Equal(t, expected[i], vals[i], "test: %d", i)
+		if e, a := expected[i], vals[i]; e != a {
+			t.Errorf("%d, expect %v, got %v", i, e, a)
+		}
 	}
 }
 
@@ -101,12 +106,24 @@ func TestPresignRequest(t *testing.T) {
 	expectedTarget := "prefix.Operation"
 
 	q := req.URL.Query()
-	assert.Equal(t, expectedSig, q.Get("X-Amz-Signature"))
-	assert.Equal(t, expectedCred, q.Get("X-Amz-Credential"))
-	assert.Equal(t, expectedHeaders, q.Get("X-Amz-SignedHeaders"))
-	assert.Equal(t, expectedDate, q.Get("X-Amz-Date"))
-	assert.Empty(t, q.Get("X-Amz-Meta-Other-Header"))
-	assert.Equal(t, expectedTarget, q.Get("X-Amz-Target"))
+	if e, a := expectedSig, q.Get("X-Amz-Signature"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedCred, q.Get("X-Amz-Credential"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedHeaders, q.Get("X-Amz-SignedHeaders"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedDate, q.Get("X-Amz-Date"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if a := q.Get("X-Amz-Meta-Other-Header"); len(a) != 0 {
+		t.Errorf("expect %v to be empty", a)
+	}
+	if e, a := expectedTarget, q.Get("X-Amz-Target"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestPresignBodyWithArrayRequest(t *testing.T) {
@@ -123,12 +140,24 @@ func TestPresignBodyWithArrayRequest(t *testing.T) {
 	expectedTarget := "prefix.Operation"
 
 	q := req.URL.Query()
-	assert.Equal(t, expectedSig, q.Get("X-Amz-Signature"))
-	assert.Equal(t, expectedCred, q.Get("X-Amz-Credential"))
-	assert.Equal(t, expectedHeaders, q.Get("X-Amz-SignedHeaders"))
-	assert.Equal(t, expectedDate, q.Get("X-Amz-Date"))
-	assert.Empty(t, q.Get("X-Amz-Meta-Other-Header"))
-	assert.Equal(t, expectedTarget, q.Get("X-Amz-Target"))
+	if e, a := expectedSig, q.Get("X-Amz-Signature"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedCred, q.Get("X-Amz-Credential"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedHeaders, q.Get("X-Amz-SignedHeaders"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedDate, q.Get("X-Amz-Date"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if a := q.Get("X-Amz-Meta-Other-Header"); len(a) != 0 {
+		t.Errorf("expect %v to be empty, was not", a)
+	}
+	if e, a := expectedTarget, q.Get("X-Amz-Target"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestSignRequest(t *testing.T) {
@@ -140,8 +169,12 @@ func TestSignRequest(t *testing.T) {
 	expectedSig := "AWS4-HMAC-SHA256 Credential=AKID/19700101/us-east-1/dynamodb/aws4_request, SignedHeaders=content-length;content-type;host;x-amz-date;x-amz-meta-other-header;x-amz-meta-other-header_with_underscore;x-amz-security-token;x-amz-target, Signature=ea766cabd2ec977d955a3c2bae1ae54f4515d70752f2207618396f20aa85bd21"
 
 	q := req.Header
-	assert.Equal(t, expectedSig, q.Get("Authorization"))
-	assert.Equal(t, expectedDate, q.Get("X-Amz-Date"))
+	if e, a := expectedSig, q.Get("Authorization"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedDate, q.Get("X-Amz-Date"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestSignBodyS3(t *testing.T) {
@@ -149,7 +182,9 @@ func TestSignBodyS3(t *testing.T) {
 	signer := buildSigner()
 	signer.Sign(req, body, "s3", "us-east-1", time.Now())
 	hash := req.Header.Get("X-Amz-Content-Sha256")
-	assert.Equal(t, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", hash)
+	if e, a := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", hash; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestSignBodyGlacier(t *testing.T) {
@@ -157,7 +192,9 @@ func TestSignBodyGlacier(t *testing.T) {
 	signer := buildSigner()
 	signer.Sign(req, body, "glacier", "us-east-1", time.Now())
 	hash := req.Header.Get("X-Amz-Content-Sha256")
-	assert.Equal(t, "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", hash)
+	if e, a := "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824", hash; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestPresignEmptyBodyS3(t *testing.T) {
@@ -165,7 +202,9 @@ func TestPresignEmptyBodyS3(t *testing.T) {
 	signer := buildSigner()
 	signer.Presign(req, body, "s3", "us-east-1", 5*time.Minute, time.Now())
 	hash := req.Header.Get("X-Amz-Content-Sha256")
-	assert.Equal(t, "UNSIGNED-PAYLOAD", hash)
+	if e, a := "UNSIGNED-PAYLOAD", hash; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestSignPrecomputedBodyChecksum(t *testing.T) {
@@ -174,7 +213,9 @@ func TestSignPrecomputedBodyChecksum(t *testing.T) {
 	signer := buildSigner()
 	signer.Sign(req, body, "dynamodb", "us-east-1", time.Now())
 	hash := req.Header.Get("X-Amz-Content-Sha256")
-	assert.Equal(t, "PRECOMPUTED", hash)
+	if e, a := "PRECOMPUTED", hash; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestAnonymousCredentials(t *testing.T) {
@@ -191,14 +232,26 @@ func TestAnonymousCredentials(t *testing.T) {
 	SignSDKRequest(r)
 
 	urlQ := r.HTTPRequest.URL.Query()
-	assert.Empty(t, urlQ.Get("X-Amz-Signature"))
-	assert.Empty(t, urlQ.Get("X-Amz-Credential"))
-	assert.Empty(t, urlQ.Get("X-Amz-SignedHeaders"))
-	assert.Empty(t, urlQ.Get("X-Amz-Date"))
+	if a := urlQ.Get("X-Amz-Signature"); len(a) != 0 {
+		t.Errorf("expect %v to be empty, was not", a)
+	}
+	if a := urlQ.Get("X-Amz-Credential"); len(a) != 0 {
+		t.Errorf("expect %v to be empty, was not", a)
+	}
+	if a := urlQ.Get("X-Amz-SignedHeaders"); len(a) != 0 {
+		t.Errorf("expect %v to be empty, was not", a)
+	}
+	if a := urlQ.Get("X-Amz-Date"); len(a) != 0 {
+		t.Errorf("expect %v to be empty, was not", a)
+	}
 
 	hQ := r.HTTPRequest.Header
-	assert.Empty(t, hQ.Get("Authorization"))
-	assert.Empty(t, hQ.Get("X-Amz-Date"))
+	if a := hQ.Get("Authorization"); len(a) != 0 {
+		t.Errorf("expect %v to be empty, was not", a)
+	}
+	if a := hQ.Get("X-Amz-Date"); len(a) != 0 {
+		t.Errorf("expect %v to be empty, was not", a)
+	}
 }
 
 func TestIgnoreResignRequestWithValidCreds(t *testing.T) {
@@ -224,7 +277,9 @@ func TestIgnoreResignRequestWithValidCreds(t *testing.T) {
 		// when it is resigned.
 		return time.Now().Add(1 * time.Second)
 	})
-	assert.NotEqual(t, sig, r.HTTPRequest.Header.Get("Authorization"))
+	if e, a := sig, r.HTTPRequest.Header.Get("Authorization"); e == a {
+		t.Errorf("expect %v to be %v, but was not", e, a)
+	}
 }
 
 func TestIgnorePreResignRequestWithValidCreds(t *testing.T) {
@@ -251,7 +306,9 @@ func TestIgnorePreResignRequestWithValidCreds(t *testing.T) {
 		// when it is resigned.
 		return time.Now().Add(1 * time.Second)
 	})
-	assert.NotEqual(t, sig, r.HTTPRequest.URL.Query().Get("X-Amz-Signature"))
+	if e, a := sig, r.HTTPRequest.URL.Query().Get("X-Amz-Signature"); e == a {
+		t.Errorf("expect %v to be %v, but was not", e, a)
+	}
 }
 
 func TestResignRequestExpiredCreds(t *testing.T) {
@@ -275,8 +332,12 @@ func TestResignRequestExpiredCreds(t *testing.T) {
 			break
 		}
 	}
-	assert.NotEmpty(t, origSignedHeaders)
-	assert.NotContains(t, origSignedHeaders, "authorization")
+	if a := origSignedHeaders; len(a) == 0 {
+		t.Errorf("expect not to be empty, but was")
+	}
+	if e, a := origSignedHeaders, "authorization"; strings.Contains(a, e) {
+		t.Errorf("expect %v to not be in %v, but was", e, a)
+	}
 	origSignedAt := r.LastSignedAt
 
 	creds.Expire()
@@ -287,7 +348,9 @@ func TestResignRequestExpiredCreds(t *testing.T) {
 		return time.Now().Add(1 * time.Second)
 	})
 	updatedQuerySig := r.HTTPRequest.Header.Get("Authorization")
-	assert.NotEqual(t, querySig, updatedQuerySig)
+	if e, a := querySig, updatedQuerySig; e == a {
+		t.Errorf("expect %v to be %v, was not", e, a)
+	}
 
 	var updatedSignedHeaders string
 	for _, p := range strings.Split(updatedQuerySig, ", ") {
@@ -296,9 +359,15 @@ func TestResignRequestExpiredCreds(t *testing.T) {
 			break
 		}
 	}
-	assert.NotEmpty(t, updatedSignedHeaders)
-	assert.NotContains(t, updatedQuerySig, "authorization")
-	assert.NotEqual(t, origSignedAt, r.LastSignedAt)
+	if a := updatedSignedHeaders; len(a) == 0 {
+		t.Errorf("expect not to be empty, but was")
+	}
+	if e, a := updatedQuerySig, "authorization"; strings.Contains(a, e) {
+		t.Errorf("expect %v to not be in %v, but was", e, a)
+	}
+	if e, a := origSignedAt, r.LastSignedAt; e == a {
+		t.Errorf("expect %v to be %v, was not", e, a)
+	}
 }
 
 func TestPreResignRequestExpiredCreds(t *testing.T) {
@@ -323,7 +392,9 @@ func TestPreResignRequestExpiredCreds(t *testing.T) {
 	SignSDKRequest(r)
 	querySig := r.HTTPRequest.URL.Query().Get("X-Amz-Signature")
 	signedHeaders := r.HTTPRequest.URL.Query().Get("X-Amz-SignedHeaders")
-	assert.NotEmpty(t, signedHeaders)
+	if a := signedHeaders; len(a) == 0 {
+		t.Errorf("expect not to be empty, but was")
+	}
 	origSignedAt := r.LastSignedAt
 
 	creds.Expire()
@@ -332,11 +403,19 @@ func TestPreResignRequestExpiredCreds(t *testing.T) {
 		// Simulate the request occurred 15 minutes in the past
 		return time.Now().Add(-48 * time.Hour)
 	})
-	assert.NotEqual(t, querySig, r.HTTPRequest.URL.Query().Get("X-Amz-Signature"))
+	if e, a := querySig, r.HTTPRequest.URL.Query().Get("X-Amz-Signature"); e == a {
+		t.Errorf("expect %v to be %v, was not", e, a)
+	}
 	resignedHeaders := r.HTTPRequest.URL.Query().Get("X-Amz-SignedHeaders")
-	assert.Equal(t, signedHeaders, resignedHeaders)
-	assert.NotContains(t, signedHeaders, "x-amz-signedHeaders")
-	assert.NotEqual(t, origSignedAt, r.LastSignedAt)
+	if e, a := signedHeaders, resignedHeaders; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := signedHeaders, "x-amz-signedHeaders"; strings.Contains(a, e) {
+		t.Errorf("expect %v to not be in %v, but was", e, a)
+	}
+	if e, a := origSignedAt, r.LastSignedAt; e == a {
+		t.Errorf("expect %v to be %v, was not", e, a)
+	}
 }
 
 func TestResignRequestExpiredRequest(t *testing.T) {
@@ -360,8 +439,12 @@ func TestResignRequestExpiredRequest(t *testing.T) {
 		// Simulate the request occurred 15 minutes in the past
 		return time.Now().Add(15 * time.Minute)
 	})
-	assert.NotEqual(t, querySig, r.HTTPRequest.Header.Get("Authorization"))
-	assert.NotEqual(t, origSignedAt, r.LastSignedAt)
+	if e, a := querySig, r.HTTPRequest.Header.Get("Authorization"); e == a {
+		t.Errorf("expect %v to be %v, was not", e, a)
+	}
+	if e, a := origSignedAt, r.LastSignedAt; e == a {
+		t.Errorf("expect %v to be %v, was not", e, a)
+	}
 }
 
 func TestSignWithRequestBody(t *testing.T) {
@@ -373,19 +456,29 @@ func TestSignWithRequestBody(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		r.Body.Close()
-		assert.NoError(t, err)
-		assert.Equal(t, expectBody, b)
+		if err != nil {
+			t.Errorf("expect no error, got %v", err)
+		}
+		if e, a := expectBody, b; !reflect.DeepEqual(e, a) {
+			t.Errorf("expect %v, got %v", e, a)
+		}
 		w.WriteHeader(http.StatusOK)
 	}))
 
 	req, err := http.NewRequest("POST", server.URL, nil)
 
 	_, err = signer.Sign(req, bytes.NewReader(expectBody), "service", "region", time.Now())
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect not no error, got %v", err)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	if err != nil {
+		t.Errorf("expect not no error, got %v", err)
+	}
+	if e, a := http.StatusOK, resp.StatusCode; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestSignWithRequestBody_Overwrite(t *testing.T) {
@@ -397,8 +490,12 @@ func TestSignWithRequestBody_Overwrite(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		b, err := ioutil.ReadAll(r.Body)
 		r.Body.Close()
-		assert.NoError(t, err)
-		assert.Equal(t, len(expectBody), len(b))
+		if err != nil {
+			t.Errorf("expect not no error, got %v", err)
+		}
+		if e, a := len(expectBody), len(b); e != a {
+			t.Errorf("expect %v, got %v", e, a)
+		}
 		w.WriteHeader(http.StatusOK)
 	}))
 
@@ -407,11 +504,17 @@ func TestSignWithRequestBody_Overwrite(t *testing.T) {
 	_, err = signer.Sign(req, nil, "service", "region", time.Now())
 	req.ContentLength = 0
 
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect not no error, got %v", err)
+	}
 
 	resp, err := http.DefaultClient.Do(req)
-	assert.NoError(t, err)
-	assert.Equal(t, http.StatusOK, resp.StatusCode)
+	if err != nil {
+		t.Errorf("expect not no error, got %v", err)
+	}
+	if e, a := http.StatusOK, resp.StatusCode; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestBuildCanonicalRequest(t *testing.T) {
@@ -429,7 +532,9 @@ func TestBuildCanonicalRequest(t *testing.T) {
 
 	ctx.buildCanonicalString()
 	expected := "https://example.org/bucket/key-._~,!@#$%^&*()?Foo=z&Foo=o&Foo=m&Foo=a"
-	assert.Equal(t, expected, ctx.Request.URL.String())
+	if e, a := expected, ctx.Request.URL.String(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestSignWithBody_ReplaceRequestBody(t *testing.T) {

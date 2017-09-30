@@ -12,7 +12,10 @@ import (
 )
 
 func TestKeyExpiry(t *testing.T) {
-	kring, _ := ReadKeyRing(readerFromHex(expiringKeyHex))
+	kring, err := ReadKeyRing(readerFromHex(expiringKeyHex))
+	if err != nil {
+		t.Fatal(err)
+	}
 	entity := kring[0]
 
 	const timeFormat = "2006-01-02"
@@ -104,7 +107,10 @@ func TestGoodCrossSignature(t *testing.T) {
 
 // TestExternallyRevokableKey attempts to load and parse a key with a third party revocation permission.
 func TestExternallyRevocableKey(t *testing.T) {
-	kring, _ := ReadKeyRing(readerFromHex(subkeyUsageHex))
+	kring, err := ReadKeyRing(readerFromHex(subkeyUsageHex))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// The 0xA42704B92866382A key can be revoked by 0xBE3893CB843D0FE70C
 	// according to this signature that appears within the key:
@@ -125,7 +131,10 @@ func TestExternallyRevocableKey(t *testing.T) {
 }
 
 func TestKeyRevocation(t *testing.T) {
-	kring, _ := ReadKeyRing(readerFromHex(revokedKeyHex))
+	kring, err := ReadKeyRing(readerFromHex(revokedKeyHex))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// revokedKeyHex contains these keys:
 	// pub   1024R/9A34F7C0 2014-03-25 [revoked: 2014-03-25]
@@ -145,7 +154,10 @@ func TestKeyRevocation(t *testing.T) {
 }
 
 func TestSubkeyRevocation(t *testing.T) {
-	kring, _ := ReadKeyRing(readerFromHex(revokedSubkeyHex))
+	kring, err := ReadKeyRing(readerFromHex(revokedSubkeyHex))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// revokedSubkeyHex contains these keys:
 	// pub   1024R/4EF7E4BECCDE97F0 2014-03-25
@@ -178,7 +190,10 @@ func TestSubkeyRevocation(t *testing.T) {
 }
 
 func TestKeyUsage(t *testing.T) {
-	kring, _ := ReadKeyRing(readerFromHex(subkeyUsageHex))
+	kring, err := ReadKeyRing(readerFromHex(subkeyUsageHex))
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	// subkeyUsageHex contains these keys:
 	// pub  1024R/2866382A  created: 2014-04-01  expires: never       usage: SC

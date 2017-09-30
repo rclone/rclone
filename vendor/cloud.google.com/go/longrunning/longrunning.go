@@ -119,14 +119,27 @@ func (op *Operation) Poll(ctx context.Context, resp proto.Message, opts ...gax.C
 	}
 }
 
-// Wait blocks until the operation is completed.
+// DefaultWaitInterval is the polling interval used by Operation.Wait.
+const DefaultWaitInterval = 60 * time.Second
+
+// Wait is equivalent to WaitWithInterval using DefaultWaitInterval.
+func (op *Operation) Wait(ctx context.Context, resp proto.Message, opts ...gax.CallOption) error {
+	return op.WaitWithInterval(ctx, resp, DefaultWaitInterval, opts...)
+}
+
+// WaitWithInterval blocks until the operation is completed.
 // If resp != nil, Wait stores the response in resp.
+// WaitWithInterval polls every interval, except initially
+// when it polls using exponential backoff.
 //
 // See documentation of Poll for error-handling information.
-func (op *Operation) Wait(ctx context.Context, resp proto.Message, opts ...gax.CallOption) error {
+func (op *Operation) WaitWithInterval(ctx context.Context, resp proto.Message, interval time.Duration, opts ...gax.CallOption) error {
 	bo := gax.Backoff{
-		Initial: 100 * time.Millisecond,
-		Max:     10 * time.Second,
+		Initial: 1 * time.Second,
+		Max:     interval,
+	}
+	if bo.Max < bo.Initial {
+		bo.Max = bo.Initial
 	}
 	return op.wait(ctx, resp, &bo, gax.Sleep, opts...)
 }

@@ -33,9 +33,9 @@ type FakeProperties struct {
 	CD *int    `name:"c-d"`
 }
 type FakeInput struct {
-	ParamA    *string    `location:"params" name:"a"`
-	ParamB    *string    `location:"params" name:"b"`
-	ParamCD   *int       `location:"params" name:"c_d" default:"1024"`
+	ParamA    *string    `location:"query" name:"a"`
+	ParamB    *string    `location:"query" name:"b"`
+	ParamCD   *int       `location:"query" name:"c_d" default:"1024"`
 	HeaderA   *string    `location:"headers" name:"A"`
 	HeaderB   *time.Time `location:"headers" name:"B" format:"RFC 822"`
 	HeaderCD  *int       `location:"headers" name:"C-D"`
@@ -109,7 +109,7 @@ func TestBaseBuilder_BuildHTTPRequest(t *testing.T) {
 	assert.Equal(t, &map[string]string{
 		"a":   "param_a",
 		"c_d": "1024",
-	}, builder.parsedParams)
+	}, builder.parsedQuery)
 	assert.Equal(t, &map[string]string{
 		"A":            "header_a",
 		"B":            "Thu, 01 Sep 2016 07:30:00 GMT",

@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/q_YPaIOiITyXFUcvpP2ZjCeLRJA\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/yxKXEK0f6thaLbXelK6zwxd96bE\"",
  "discoveryVersion": "v1",
  "id": "games:v1",
  "name": "games",
  "canonicalName": "Games",
  "version": "v1",
- "revision": "20170601",
+ "revision": "20170911",
  "title": "Google Play Game Services API",
  "description": "The API for Google Play Game Services.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/games/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "games/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/games/v1",
  "parameters": {
   "alt": {
    "type": "string",

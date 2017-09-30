@@ -20,7 +20,7 @@
  "basePath": "/groups/v1/groups/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "groups/v1/groups/",
- "batchPath": "batch",
+ "batchPath": "batch/groupssettings/v1",
  "parameters": {
   "alt": {
    "type": "string",

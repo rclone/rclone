@@ -11,7 +11,7 @@ import (
 
 // WaitUntilAnyInstanceInService uses the Elastic Load Balancing API operation
 // DescribeInstanceHealth to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ELB) WaitUntilAnyInstanceInService(input *DescribeInstanceHealthInput) error {
 	return c.WaitUntilAnyInstanceInServiceWithContext(aws.BackgroundContext(), input)
@@ -57,7 +57,7 @@ func (c *ELB) WaitUntilAnyInstanceInServiceWithContext(ctx aws.Context, input *D
 
 // WaitUntilInstanceDeregistered uses the Elastic Load Balancing API operation
 // DescribeInstanceHealth to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ELB) WaitUntilInstanceDeregistered(input *DescribeInstanceHealthInput) error {
 	return c.WaitUntilInstanceDeregisteredWithContext(aws.BackgroundContext(), input)
@@ -108,7 +108,7 @@ func (c *ELB) WaitUntilInstanceDeregisteredWithContext(ctx aws.Context, input *D
 
 // WaitUntilInstanceInService uses the Elastic Load Balancing API operation
 // DescribeInstanceHealth to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ELB) WaitUntilInstanceInService(input *DescribeInstanceHealthInput) error {
 	return c.WaitUntilInstanceInServiceWithContext(aws.BackgroundContext(), input)

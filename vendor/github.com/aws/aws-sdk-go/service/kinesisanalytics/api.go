@@ -15,19 +15,18 @@ const opAddApplicationCloudWatchLoggingOption = "AddApplicationCloudWatchLogging
 
 // AddApplicationCloudWatchLoggingOptionRequest generates a "aws/request.Request" representing the
 // client's request for the AddApplicationCloudWatchLoggingOption operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AddApplicationCloudWatchLoggingOption for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AddApplicationCloudWatchLoggingOption method directly
-// instead.
+// See AddApplicationCloudWatchLoggingOption for more information on using the AddApplicationCloudWatchLoggingOption
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AddApplicationCloudWatchLoggingOptionRequest method.
 //    req, resp := client.AddApplicationCloudWatchLoggingOptionRequest(params)
@@ -58,7 +57,7 @@ func (c *KinesisAnalytics) AddApplicationCloudWatchLoggingOptionRequest(input *A
 //
 // Adds a CloudWatch log stream to monitor application configuration errors.
 // For more information about using CloudWatch log streams with Amazon Kinesis
-// Analytics applications, see Monitoring Configuration Errors (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html).
+// Analytics applications, see Working with Amazon CloudWatch Logs (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-logs.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -108,19 +107,18 @@ const opAddApplicationInput = "AddApplicationInput"
 
 // AddApplicationInputRequest generates a "aws/request.Request" representing the
 // client's request for the AddApplicationInput operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AddApplicationInput for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AddApplicationInput method directly
-// instead.
+// See AddApplicationInput for more information on using the AddApplicationInput
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AddApplicationInputRequest method.
 //    req, resp := client.AddApplicationInputRequest(params)
@@ -185,6 +183,10 @@ func (c *KinesisAnalytics) AddApplicationInputRequest(input *AddApplicationInput
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
+//   * ErrCodeCodeValidationException "CodeValidationException"
+//   User-provided application code (query) is invalid. This can be a simple syntax
+//   error.
+//
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInput
 func (c *KinesisAnalytics) AddApplicationInput(input *AddApplicationInputInput) (*AddApplicationInputOutput, error) {
 	req, out := c.AddApplicationInputRequest(input)
@@ -211,19 +213,18 @@ const opAddApplicationOutput = "AddApplicationOutput"
 
 // AddApplicationOutputRequest generates a "aws/request.Request" representing the
 // client's request for the AddApplicationOutput operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AddApplicationOutput for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AddApplicationOutput method directly
-// instead.
+// See AddApplicationOutput for more information on using the AddApplicationOutput
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AddApplicationOutputRequest method.
 //    req, resp := client.AddApplicationOutputRequest(params)
@@ -324,19 +325,18 @@ const opAddApplicationReferenceDataSource = "AddApplicationReferenceDataSource"
 
 // AddApplicationReferenceDataSourceRequest generates a "aws/request.Request" representing the
 // client's request for the AddApplicationReferenceDataSource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AddApplicationReferenceDataSource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AddApplicationReferenceDataSource method directly
-// instead.
+// See AddApplicationReferenceDataSource for more information on using the AddApplicationReferenceDataSource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AddApplicationReferenceDataSourceRequest method.
 //    req, resp := client.AddApplicationReferenceDataSourceRequest(params)
@@ -429,19 +429,18 @@ const opCreateApplication = "CreateApplication"
 
 // CreateApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateApplication operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateApplication for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateApplication method directly
-// instead.
+// See CreateApplication for more information on using the CreateApplication
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateApplicationRequest method.
 //    req, resp := client.CreateApplicationRequest(params)
@@ -544,19 +543,18 @@ const opDeleteApplication = "DeleteApplication"
 
 // DeleteApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApplication operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteApplication for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteApplication method directly
-// instead.
+// See DeleteApplication for more information on using the DeleteApplication
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteApplicationRequest method.
 //    req, resp := client.DeleteApplicationRequest(params)
@@ -637,19 +635,18 @@ const opDeleteApplicationCloudWatchLoggingOption = "DeleteApplicationCloudWatchL
 
 // DeleteApplicationCloudWatchLoggingOptionRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApplicationCloudWatchLoggingOption operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteApplicationCloudWatchLoggingOption for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteApplicationCloudWatchLoggingOption method directly
-// instead.
+// See DeleteApplicationCloudWatchLoggingOption for more information on using the DeleteApplicationCloudWatchLoggingOption
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteApplicationCloudWatchLoggingOptionRequest method.
 //    req, resp := client.DeleteApplicationCloudWatchLoggingOptionRequest(params)
@@ -680,7 +677,7 @@ func (c *KinesisAnalytics) DeleteApplicationCloudWatchLoggingOptionRequest(input
 //
 // Deletes a CloudWatch log stream from an application. For more information
 // about using CloudWatch log streams with Amazon Kinesis Analytics applications,
-// see Monitoring Configuration Errors (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html).
+// see Working with Amazon CloudWatch Logs (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-logs.html).
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -730,19 +727,18 @@ const opDeleteApplicationOutput = "DeleteApplicationOutput"
 
 // DeleteApplicationOutputRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApplicationOutput operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteApplicationOutput for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteApplicationOutput method directly
-// instead.
+// See DeleteApplicationOutput for more information on using the DeleteApplicationOutput
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteApplicationOutputRequest method.
 //    req, resp := client.DeleteApplicationOutputRequest(params)
@@ -826,19 +822,18 @@ const opDeleteApplicationReferenceDataSource = "DeleteApplicationReferenceDataSo
 
 // DeleteApplicationReferenceDataSourceRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApplicationReferenceDataSource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteApplicationReferenceDataSource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteApplicationReferenceDataSource method directly
-// instead.
+// See DeleteApplicationReferenceDataSource for more information on using the DeleteApplicationReferenceDataSource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteApplicationReferenceDataSourceRequest method.
 //    req, resp := client.DeleteApplicationReferenceDataSourceRequest(params)
@@ -925,19 +920,18 @@ const opDescribeApplication = "DescribeApplication"
 
 // DescribeApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeApplication operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeApplication for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeApplication method directly
-// instead.
+// See DescribeApplication for more information on using the DescribeApplication
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeApplicationRequest method.
 //    req, resp := client.DescribeApplicationRequest(params)
@@ -1012,19 +1006,18 @@ const opDiscoverInputSchema = "DiscoverInputSchema"
 
 // DiscoverInputSchemaRequest generates a "aws/request.Request" representing the
 // client's request for the DiscoverInputSchema operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DiscoverInputSchema for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DiscoverInputSchema method directly
-// instead.
+// See DiscoverInputSchema for more information on using the DiscoverInputSchema
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DiscoverInputSchemaRequest method.
 //    req, resp := client.DiscoverInputSchemaRequest(params)
@@ -1089,6 +1082,9 @@ func (c *KinesisAnalytics) DiscoverInputSchemaRequest(input *DiscoverInputSchema
 //   see GetRecords (http://docs.aws.amazon.com/kinesis/latest/APIReference/API_GetRecords.html)
 //   in the Amazon Kinesis Streams API Reference.
 //
+//   * ErrCodeServiceUnavailableException "ServiceUnavailableException"
+//   The service is unavailable, back off and retry the operation.
+//
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchema
 func (c *KinesisAnalytics) DiscoverInputSchema(input *DiscoverInputSchemaInput) (*DiscoverInputSchemaOutput, error) {
 	req, out := c.DiscoverInputSchemaRequest(input)
@@ -1115,19 +1111,18 @@ const opListApplications = "ListApplications"
 
 // ListApplicationsRequest generates a "aws/request.Request" representing the
 // client's request for the ListApplications operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListApplications for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListApplications method directly
-// instead.
+// See ListApplications for more information on using the ListApplications
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListApplicationsRequest method.
 //    req, resp := client.ListApplicationsRequest(params)
@@ -1200,19 +1195,18 @@ const opStartApplication = "StartApplication"
 
 // StartApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the StartApplication operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See StartApplication for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the StartApplication method directly
-// instead.
+// See StartApplication for more information on using the StartApplication
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the StartApplicationRequest method.
 //    req, resp := client.StartApplicationRequest(params)
@@ -1303,19 +1297,18 @@ const opStopApplication = "StopApplication"
 
 // StopApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the StopApplication operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See StopApplication for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the StopApplication method directly
-// instead.
+// See StopApplication for more information on using the StopApplication
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the StopApplicationRequest method.
 //    req, resp := client.StopApplicationRequest(params)
@@ -1393,19 +1386,18 @@ const opUpdateApplication = "UpdateApplication"
 
 // UpdateApplicationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApplication operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateApplication for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateApplication method directly
-// instead.
+// See UpdateApplication for more information on using the UpdateApplication
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateApplicationRequest method.
 //    req, resp := client.UpdateApplicationRequest(params)
@@ -1495,19 +1487,19 @@ func (c *KinesisAnalytics) UpdateApplicationWithContext(ctx aws.Context, input *
 type AddApplicationCloudWatchLoggingOptionInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Kinesis Analytics application name.
+	// The Kinesis Analytics application name.
 	//
 	// ApplicationName is a required field
 	ApplicationName *string `min:"1" type:"string" required:"true"`
 
-	// Provide the CloudWatch log stream ARN and the IAM role ARN. Note: To write
-	// application messages to CloudWatch, the IAM role used must have the PutLogEvents
-	// policy action enabled.
+	// Provides the CloudWatch log stream Amazon Resource Name (ARN) and the IAM
+	// role ARN. Note: To write application messages to CloudWatch, the IAM role
+	// that is used must have the PutLogEvents policy action enabled.
 	//
 	// CloudWatchLoggingOption is a required field
 	CloudWatchLoggingOption *CloudWatchLoggingOption `type:"structure" required:"true"`
 
-	// The version ID of the Amazon Kinesis Analytics application.
+	// The version ID of the Kinesis Analytics application.
 	//
 	// CurrentApplicationVersionId is a required field
 	CurrentApplicationVersionId *int64 `min:"1" type:"long" required:"true"`
@@ -1916,9 +1908,9 @@ type ApplicationDetail struct {
 	// ApplicationVersionId is a required field
 	ApplicationVersionId *int64 `min:"1" type:"long" required:"true"`
 
-	// Describes the CloudWatch log streams configured to receive application messages.
-	// For more information about using CloudWatch log streams with Amazon Kinesis
-	// Analytics applications, see Monitoring Configuration Errors (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html).
+	// Describes the CloudWatch log streams that are configured to receive application
+	// messages. For more information about using CloudWatch log streams with Amazon
+	// Kinesis Analytics applications, see Working with Amazon CloudWatch Logs (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-logs.html).
 	CloudWatchLoggingOptionDescriptions []*CloudWatchLoggingOptionDescription `type:"list"`
 
 	// Timestamp when the application version was created.
@@ -2252,7 +2244,7 @@ func (s *CSVMappingParameters) SetRecordRowDelimiter(v string) *CSVMappingParame
 }
 
 // Provides a description of CloudWatch logging options, including the log stream
-// ARN and the role ARN.
+// Amazon Resource Name (ARN) and the role ARN.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CloudWatchLoggingOption
 type CloudWatchLoggingOption struct {
 	_ struct{} `type:"structure"`
@@ -2263,8 +2255,8 @@ type CloudWatchLoggingOption struct {
 	LogStreamARN *string `min:"1" type:"string" required:"true"`
 
 	// IAM ARN of the role to use to send application messages. Note: To write application
-	// messages to CloudWatch, the IAM role used must have the PutLogEvents policy
-	// action enabled.
+	// messages to CloudWatch, the IAM role that is used must have the PutLogEvents
+	// policy action enabled.
 	//
 	// RoleARN is a required field
 	RoleARN *string `min:"1" type:"string" required:"true"`
@@ -2463,8 +2455,8 @@ type CreateApplicationInput struct {
 	ApplicationName *string `min:"1" type:"string" required:"true"`
 
 	// Use this parameter to configure a CloudWatch log stream to monitor application
-	// configuration errors. For more information, see Monitoring Configuration
-	// Errors (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-monitor-configuration.html).
+	// configuration errors. For more information, see Working with Amazon CloudWatch
+	// Logs (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-logs.html).
 	CloudWatchLoggingOptions []*CloudWatchLoggingOption `type:"list"`
 
 	// Use this parameter to configure the application input.
@@ -2628,7 +2620,7 @@ func (s *CreateApplicationOutput) SetApplicationSummary(v *ApplicationSummary) *
 type DeleteApplicationCloudWatchLoggingOptionInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Kinesis Analytics application name.
+	// The Kinesis Analytics application name.
 	//
 	// ApplicationName is a required field
 	ApplicationName *string `min:"1" type:"string" required:"true"`
@@ -2639,7 +2631,7 @@ type DeleteApplicationCloudWatchLoggingOptionInput struct {
 	// CloudWatchLoggingOptionId is a required field
 	CloudWatchLoggingOptionId *string `min:"1" type:"string" required:"true"`
 
-	// The version ID of the Amazon Kinesis Analytics application.
+	// The version ID of the Kinesis Analytics application.
 	//
 	// CurrentApplicationVersionId is a required field
 	CurrentApplicationVersionId *int64 `min:"1" type:"long" required:"true"`
@@ -3223,11 +3215,15 @@ type Input struct {
 	// If the streaming source is an Amazon Kinesis Firehose delivery stream, identifies
 	// the Firehose delivery stream's ARN and an IAM role that enables Amazon Kinesis
 	// Analytics to access the stream on your behalf.
+	//
+	// Note: Either KinesisStreamsInput or KinesisFirehoseInput is required.
 	KinesisFirehoseInput *KinesisFirehoseInput `type:"structure"`
 
 	// If the streaming source is an Amazon Kinesis stream, identifies the stream's
 	// Amazon Resource Name (ARN) and an IAM role that enables Amazon Kinesis Analytics
 	// to access the stream on your behalf.
+	//
+	// Note: Either KinesisStreamsInput or KinesisFirehoseInput is required.
 	KinesisStreamsInput *KinesisStreamsInput `type:"structure"`
 
 	// Name prefix to use when creating in-application stream. Suppose you specify
@@ -3790,11 +3786,6 @@ type JSONMappingParameters struct {
 	_ struct{} `type:"structure"`
 
 	// Path to the top-level parent that contains the records.
-	//
-	// For example, consider the following JSON record:
-	//
-	// In the RecordRowPath, "$" refers to the root and path "$.vehicle.Model" refers
-	// to the specific "Model" key in the JSON.
 	//
 	// RecordRowPath is a required field
 	RecordRowPath *string `type:"string" required:"true"`

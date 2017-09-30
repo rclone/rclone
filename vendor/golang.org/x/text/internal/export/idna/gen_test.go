@@ -65,6 +65,15 @@ func TestTables(t *testing.T) {
 		if got != want {
 			t.Errorf("IsVirama(%U) = %v; want %v", r, got, want)
 		}
+
+		rtl := false
+		switch p.String(ucd.BidiClass) {
+		case "R", "AL", "AN":
+			rtl = true
+		}
+		if got := x.isBidi("A"); got != rtl && !x.isMapped() {
+			t.Errorf("IsBidi(%U) = %v; want %v", r, got, rtl)
+		}
 	})
 
 	ucd.Parse(gen.OpenUCDFile("extracted/DerivedJoiningType.txt"), func(p *ucd.Parser) {

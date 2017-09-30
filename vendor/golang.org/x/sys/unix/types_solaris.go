@@ -256,10 +256,6 @@ type BpfTimeval C.struct_bpf_timeval
 
 type BpfHdr C.struct_bpf_hdr
 
-// sysconf information
-
-const _SC_PAGESIZE = C._SC_PAGESIZE
-
 // Terminal handling
 
 type Termios C.struct_termios

@@ -11,7 +11,7 @@ import (
 
 // WaitUntilChangeSetCreateComplete uses the AWS CloudFormation API operation
 // DescribeChangeSet to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFormation) WaitUntilChangeSetCreateComplete(input *DescribeChangeSetInput) error {
 	return c.WaitUntilChangeSetCreateCompleteWithContext(aws.BackgroundContext(), input)
@@ -67,7 +67,7 @@ func (c *CloudFormation) WaitUntilChangeSetCreateCompleteWithContext(ctx aws.Con
 
 // WaitUntilStackCreateComplete uses the AWS CloudFormation API operation
 // DescribeStacks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFormation) WaitUntilStackCreateComplete(input *DescribeStacksInput) error {
 	return c.WaitUntilStackCreateCompleteWithContext(aws.BackgroundContext(), input)
@@ -143,7 +143,7 @@ func (c *CloudFormation) WaitUntilStackCreateCompleteWithContext(ctx aws.Context
 
 // WaitUntilStackDeleteComplete uses the AWS CloudFormation API operation
 // DescribeStacks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFormation) WaitUntilStackDeleteComplete(input *DescribeStacksInput) error {
 	return c.WaitUntilStackDeleteCompleteWithContext(aws.BackgroundContext(), input)
@@ -219,7 +219,7 @@ func (c *CloudFormation) WaitUntilStackDeleteCompleteWithContext(ctx aws.Context
 
 // WaitUntilStackExists uses the AWS CloudFormation API operation
 // DescribeStacks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFormation) WaitUntilStackExists(input *DescribeStacksInput) error {
 	return c.WaitUntilStackExistsWithContext(aws.BackgroundContext(), input)
@@ -270,7 +270,7 @@ func (c *CloudFormation) WaitUntilStackExistsWithContext(ctx aws.Context, input 
 
 // WaitUntilStackUpdateComplete uses the AWS CloudFormation API operation
 // DescribeStacks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFormation) WaitUntilStackUpdateComplete(input *DescribeStacksInput) error {
 	return c.WaitUntilStackUpdateCompleteWithContext(aws.BackgroundContext(), input)

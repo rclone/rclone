@@ -167,9 +167,233 @@
           ]
         }
       }
+    },
+    "services": {
+      "resources": {
+        "skus": {
+          "methods": {
+            "list": {
+              "id": "cloudbilling.services.skus.list",
+              "response": {
+                "$ref": "ListSkusResponse"
+              },
+              "parameterOrder": [
+                "parent"
+              ],
+              "description": "Lists all publicly available SKUs for a given cloud service.",
+              "flatPath": "v1/services/{servicesId}/skus",
+              "httpMethod": "GET",
+              "parameters": {
+                "parent": {
+                  "description": "The name of the service.\nExample: \"services/DA34-426B-A397\"",
+                  "required": true,
+                  "pattern": "^services/[^/]+$",
+                  "location": "path",
+                  "type": "string"
+                },
+                "currencyCode": {
+                  "description": "The ISO 4217 currency code for the pricing info in the response proto.\nWill use the conversion rate as of start_time.\nOptional. If not specified USD will be used.",
+                  "location": "query",
+                  "type": "string"
+                },
+                "endTime": {
+                  "description": "Optional exclusive end time of the time range for which the pricing\nversions will be returned. Timestamps in the future are not allowed.\nMaximum allowable time range is 1 month (31 days). Time range as a whole\nis optional. If not specified, the latest pricing will be returned (up to\n12 hours old at most).",
+                  "location": "query",
+                  "type": "string",
+                  "format": "google-datetime"
+                },
+                "pageSize": {
+                  "description": "Requested page size. Defaults to 5000.",
+                  "location": "query",
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "startTime": {
+                  "description": "Optional inclusive start time of the time range for which the pricing\nversions will be returned. Timestamps in the future are not allowed.\nMaximum allowable time range is 1 month (31 days). Time range as a whole\nis optional. If not specified, the latest pricing will be returned (up to\n12 hours old at most).",
+                  "location": "query",
+                  "type": "string",
+                  "format": "google-datetime"
+                },
+                "pageToken": {
+                  "description": "A token identifying a page of results to return. This should be a\n`next_page_token` value returned from a previous `ListSkus`\ncall. If unspecified, the first page of results is returned.",
+                  "location": "query",
+                  "type": "string"
+                }
+              },
+              "path": "v1/{+parent}/skus"
+            }
+          }
+        }
+      },
+      "methods": {
+        "list": {
+          "id": "cloudbilling.services.list",
+          "response": {
+            "$ref": "ListServicesResponse"
+          },
+          "parameterOrder": [],
+          "description": "Lists all public cloud services.",
+          "flatPath": "v1/services",
+          "httpMethod": "GET",
+          "parameters": {
+            "pageSize": {
+              "description": "Requested page size. Defaults to 5000.",
+              "location": "query",
+              "type": "integer",
+              "format": "int32"
+            },
+            "pageToken": {
+              "description": "A token identifying a page of results to return. This should be a\n`next_page_token` value returned from a previous `ListServices`\ncall. If unspecified, the first page of results is returned.",
+              "location": "query",
+              "type": "string"
+            }
+          },
+          "path": "v1/services"
+        }
+      }
     }
   },
   "schemas": {
+    "PricingExpression": {
+      "description": "Expresses a mathematical pricing formula. For Example:-\n\n`usage_unit: GBy`\n`tiered_rates:`\n   `[start_usage_amount: 20, unit_price: $10]`\n   `[start_usage_amount: 100, unit_price: $5]`\n\nThe above expresses a pricing formula where the first 20GB is free, the\nnext 80GB is priced at $10 per GB followed by $5 per GB for additional\nusage.",
+      "type": "object",
+      "properties": {
+        "displayQuantity": {
+          "description": "The recommended quantity of units for displaying pricing info. When\ndisplaying pricing info it is recommended to display:\n(unit_price * display_quantity) per display_quantity usage_unit.\nThis field does not affect the pricing formula and is for display purposes\nonly.\nExample: If the unit_price is \"0.0001 USD\", the usage_unit is \"GB\" and\nthe display_quantity is \"1000\" then the recommended way of displaying the\npricing info is \"0.10 USD per 1000 GB\"",
+          "type": "number",
+          "format": "double"
+        },
+        "baseUnitDescription": {
+          "description": "The base unit in human readable form.\nExample: \"byte\".",
+          "type": "string"
+        },
+        "baseUnitConversionFactor": {
+          "description": "Conversion factor for converting from price per usage_unit to price per\nbase_unit, and start_usage_amount to start_usage_amount in base_unit.\nunit_price / base_unit_conversion_factor = price per base_unit.\nstart_usage_amount * base_unit_conversion_factor = start_usage_amount in\nbase_unit.",
+          "type": "number",
+          "format": "double"
+        },
+        "usageUnit": {
+          "description": "The short hand for unit of usage this pricing is specified in.\nExample: usage_unit of \"GiBy\" means that usage is specified in \"Gibi Byte\".",
+          "type": "string"
+        },
+        "baseUnit": {
+          "description": "The base unit for the SKU which is the unit used in usage exports.\nExample: \"By\"",
+          "type": "string"
+        },
+        "usageUnitDescription": {
+          "description": "The unit of usage in human readable form.\nExample: \"gibi byte\".",
+          "type": "string"
+        },
+        "tieredRates": {
+          "description": "The list of tiered rates for this pricing. The total cost is computed by\napplying each of the tiered rates on usage. This repeated list is sorted\nby ascending order of start_usage_amount.",
+          "type": "array",
+          "items": {
+            "$ref": "TierRate"
+          }
+        }
+      },
+      "id": "PricingExpression"
+    },
+    "Sku": {
+      "description": "Encapsulates a single SKU in Google Cloud Platform",
+      "type": "object",
+      "properties": {
+        "description": {
+          "description": "A human readable description of the SKU, has a maximum length of 256\ncharacters.",
+          "type": "string"
+        },
+        "serviceRegions": {
+          "description": "List of service regions this SKU is offered at.\nExample: \"asia-east1\"\nService regions can be found at https://cloud.google.com/about/locations/",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "serviceProviderName": {
+          "description": "Identifies the service provider.\nThis is 'Google' for first party services in Google Cloud Platform.",
+          "type": "string"
+        },
+        "pricingInfo": {
+          "description": "A timeline of pricing info for this SKU in chronological order.",
+          "type": "array",
+          "items": {
+            "$ref": "PricingInfo"
+          }
+        },
+        "skuId": {
+          "description": "The identifier for the SKU.\nExample: \"AA95-CD31-42FE\"",
+          "type": "string"
+        },
+        "name": {
+          "description": "The resource name for the SKU.\nExample: \"services/DA34-426B-A397/skus/AA95-CD31-42FE\"",
+          "type": "string"
+        },
+        "category": {
+          "description": "The category hierarchy of this SKU, purely for organizational purpose.",
+          "$ref": "Category"
+        }
+      },
+      "id": "Sku"
+    },
+    "Money": {
+      "description": "Represents an amount of money with its currency type.",
+      "type": "object",
+      "properties": {
+        "currencyCode": {
+          "description": "The 3-letter currency code defined in ISO 4217.",
+          "type": "string"
+        },
+        "units": {
+          "description": "The whole units of the amount.\nFor example if `currencyCode` is `\"USD\"`, then 1 unit is one US dollar.",
+          "type": "string",
+          "format": "int64"
+        },
+        "nanos": {
+          "description": "Number of nano (10^-9) units of the amount.\nThe value must be between -999,999,999 and +999,999,999 inclusive.\nIf `units` is positive, `nanos` must be positive or zero.\nIf `units` is zero, `nanos` can be positive, zero, or negative.\nIf `units` is negative, `nanos` must be negative or zero.\nFor example $-1.75 is represented as `units`=-1 and `nanos`=-750,000,000.",
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "id": "Money"
+    },
+    "AggregationInfo": {
+      "description": "Represents the aggregation level and interval for pricing of a single SKU.",
+      "type": "object",
+      "properties": {
+        "aggregationInterval": {
+          "enum": [
+            "AGGREGATION_INTERVAL_UNSPECIFIED",
+            "DAILY",
+            "MONTHLY"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        },
+        "aggregationLevel": {
+          "enum": [
+            "AGGREGATION_LEVEL_UNSPECIFIED",
+            "ACCOUNT",
+            "PROJECT"
+          ],
+          "enumDescriptions": [
+            "",
+            "",
+            ""
+          ],
+          "type": "string"
+        },
+        "aggregationCount": {
+          "description": "The number of intervals to aggregate over.\nExample: If aggregation_level is \"DAILY\" and aggregation_count is 14,\naggregation will be over 14 days.",
+          "type": "integer",
+          "format": "int32"
+        }
+      },
+      "id": "AggregationInfo"
+    },
     "ProjectBillingInfo": {
       "description": "Encapsulation of billing information for a Cloud Console project. A project\nhas at most one associated billing account at a time (but a billing account\ncan be assigned to multiple projects).",
       "type": "object",
@@ -193,6 +417,106 @@
       },
       "id": "ProjectBillingInfo"
     },
+    "ListBillingAccountsResponse": {
+      "description": "Response message for `ListBillingAccounts`.",
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "description": "A token to retrieve the next page of results. To retrieve the next page,\ncall `ListBillingAccounts` again with the `page_token` field set to this\nvalue. This field is empty if there are no more results to retrieve.",
+          "type": "string"
+        },
+        "billingAccounts": {
+          "description": "A list of billing accounts.",
+          "type": "array",
+          "items": {
+            "$ref": "BillingAccount"
+          }
+        }
+      },
+      "id": "ListBillingAccountsResponse"
+    },
+    "ListSkusResponse": {
+      "description": "Response message for `ListSkus`.",
+      "type": "object",
+      "properties": {
+        "nextPageToken": {
+          "description": "A token to retrieve the next page of results. To retrieve the next page,\ncall `ListSkus` again with the `page_token` field set to this\nvalue. This field is empty if there are no more results to retrieve.",
+          "type": "string"
+        },
+        "skus": {
+          "description": "The list of public SKUs of the given service.",
+          "type": "array",
+          "items": {
+            "$ref": "Sku"
+          }
+        }
+      },
+      "id": "ListSkusResponse"
+    },
+    "Service": {
+      "description": "Encapsulates a single service in Google Cloud Platform.",
+      "type": "object",
+      "properties": {
+        "displayName": {
+          "description": "A human readable display name for this service.",
+          "type": "string"
+        },
+        "serviceId": {
+          "description": "The identifier for the service.\nExample: \"DA34-426B-A397\"",
+          "type": "string"
+        },
+        "name": {
+          "description": "The resource name for the service.\nExample: \"services/DA34-426B-A397\"",
+          "type": "string"
+        }
+      },
+      "id": "Service"
+    },
+    "TierRate": {
+      "description": "The price rate indicating starting usage and its corresponding price.",
+      "type": "object",
+      "properties": {
+        "unitPrice": {
+          "description": "The price per unit of usage.\nExample: unit_price of amount $10 indicates that each unit will cost $10.",
+          "$ref": "Money"
+        },
+        "startUsageAmount": {
+          "description": "Usage is priced at this rate only after this amount.\nExample: start_usage_amount of 10 indicates that the usage will be priced\nat the unit_price after the first 10 usage_units.",
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "id": "TierRate"
+    },
+    "PricingInfo": {
+      "description": "Represents the pricing information for a SKU at a single point of time.",
+      "type": "object",
+      "properties": {
+        "effectiveTime": {
+          "description": "The timestamp from which this pricing was effective.",
+          "type": "string",
+          "format": "google-datetime"
+        },
+        "aggregationInfo": {
+          "description": "Aggregation Info. This can be left unspecified if the pricing expression\ndoesn't require aggregation.",
+          "$ref": "AggregationInfo"
+        },
+        "currencyConversionRate": {
+          "description": "Conversion rate for currency conversion, from USD to the currency specified\nin the request. If the currency is not specified this defaults to 1.0.\nExample: USD * currency_conversion_rate = JPY",
+          "type": "number",
+          "format": "double"
+        },
+        "pricingExpression": {
+          "description": "Expresses the pricing formula. See `PricingExpression` for an example.",
+          "$ref": "PricingExpression"
+        },
+        "summary": {
+          "description": "An optional human readable summary of the pricing information, has a\nmaximum length of 256 characters.",
+          "type": "string"
+        }
+      },
+      "id": "PricingInfo"
+    },
     "ListProjectBillingInfoResponse": {
       "description": "Request message for `ListProjectBillingInfoResponse`.",
       "type": "object",
@@ -211,23 +535,23 @@
       },
       "id": "ListProjectBillingInfoResponse"
     },
-    "ListBillingAccountsResponse": {
-      "description": "Response message for `ListBillingAccounts`.",
+    "ListServicesResponse": {
+      "description": "Response message for `ListServices`.",
       "type": "object",
       "properties": {
         "nextPageToken": {
-          "description": "A token to retrieve the next page of results. To retrieve the next page,\ncall `ListBillingAccounts` again with the `page_token` field set to this\nvalue. This field is empty if there are no more results to retrieve.",
+          "description": "A token to retrieve the next page of results. To retrieve the next page,\ncall `ListServices` again with the `page_token` field set to this\nvalue. This field is empty if there are no more results to retrieve.",
           "type": "string"
         },
-        "billingAccounts": {
-          "description": "A list of billing accounts.",
+        "services": {
+          "description": "A list of services.",
           "type": "array",
           "items": {
-            "$ref": "BillingAccount"
+            "$ref": "Service"
           }
         }
       },
-      "id": "ListBillingAccountsResponse"
+      "id": "ListServicesResponse"
     },
     "BillingAccount": {
       "description": "A billing account in [Google Cloud\nConsole](https://console.cloud.google.com/). You can assign a billing account\nto one or more projects.",
@@ -247,15 +571,40 @@
         }
       },
       "id": "BillingAccount"
+    },
+    "Category": {
+      "description": "Represents the category hierarchy of a SKU.",
+      "type": "object",
+      "properties": {
+        "resourceFamily": {
+          "description": "The type of product the SKU refers to.\nExample: \"Compute\", \"Storage\", \"Network\", \"ApplicationServices\" etc.",
+          "type": "string"
+        },
+        "usageType": {
+          "description": "Represents how the SKU is consumed.\nExample: \"OnDemand\", \"Preemptible\", \"Commit1Mo\", \"Commit1Yr\" etc.",
+          "type": "string"
+        },
+        "resourceGroup": {
+          "description": "A group classification for related SKUs.\nExample: \"RAM\", \"GPU\", \"Prediction\", \"Ops\", \"GoogleEgress\" etc.",
+          "type": "string"
+        },
+        "serviceDisplayName": {
+          "description": "The display name of the service this SKU belongs to.",
+          "type": "string"
+        }
+      },
+      "id": "Category"
     }
   },
-  "revision": "20170524",
+  "revision": "20170813",
   "basePath": "",
   "icons": {
     "x32": "http://www.google.com/images/icons/product/search-32.gif",
     "x16": "http://www.google.com/images/icons/product/search-16.gif"
   },
+  "canonicalName": "Cloudbilling",
   "discoveryVersion": "v1",
+  "fullyEncodeReservedExpansion": true,
   "baseUrl": "https://cloudbilling.googleapis.com/",
   "name": "cloudbilling",
   "parameters": {

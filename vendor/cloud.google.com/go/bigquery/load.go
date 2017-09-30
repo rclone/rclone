@@ -21,8 +21,11 @@ import (
 
 // LoadConfig holds the configuration for a load job.
 type LoadConfig struct {
-	// JobID is the ID to use for the load job. If unset, a job ID will be automatically created.
+	// JobID is the ID to use for the job. If empty, a random job ID will be generated.
 	JobID string
+
+	// If AddJobIDSuffix is true, then a random string will be appended to JobID.
+	AddJobIDSuffix bool
 
 	// Src is the source from which data will be loaded.
 	Src LoadSource
@@ -56,6 +59,8 @@ type LoadSource interface {
 
 // LoaderFrom returns a Loader which can be used to load data into a BigQuery table.
 // The returned Loader may optionally be further configured before its Run method is called.
+// See GCSReference and ReaderSource for additional configuration options that
+// affect loading.
 func (t *Table) LoaderFrom(src LoadSource) *Loader {
 	return &Loader{
 		c: t.c,
@@ -69,6 +74,7 @@ func (t *Table) LoaderFrom(src LoadSource) *Loader {
 // Run initiates a load job.
 func (l *Loader) Run(ctx context.Context) (*Job, error) {
 	job := &bq.Job{
+		JobReference: createJobRef(l.JobID, l.AddJobIDSuffix, l.c.projectID),
 		Configuration: &bq.JobConfiguration{
 			Load: &bq.JobConfigurationLoad{
 				CreateDisposition: string(l.CreateDisposition),
@@ -78,9 +84,6 @@ func (l *Loader) Run(ctx context.Context) (*Job, error) {
 	}
 	conf := &insertJobConf{job: job}
 	l.Src.populateInsertJobConfForLoad(conf)
-	setJobRef(job, l.JobID, l.c.projectID)
-
 	job.Configuration.Load.DestinationTable = l.Dst.tableRefProto()
-
 	return l.c.insertJob(ctx, conf)
 }

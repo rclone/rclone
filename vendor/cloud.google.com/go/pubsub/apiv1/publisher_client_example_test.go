@@ -85,6 +85,24 @@ func ExamplePublisherClient_CreateTopic() {
 	_ = resp
 }
 
+func ExamplePublisherClient_UpdateTopic() {
+	ctx := context.Background()
+	c, err := pubsub.NewPublisherClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &pubsubpb.UpdateTopicRequest{
+	// TODO: Fill request struct fields.
+	}
+	resp, err := c.UpdateTopic(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
 func ExamplePublisherClient_Publish() {
 	ctx := context.Background()
 	c, err := pubsub.NewPublisherClient(ctx)

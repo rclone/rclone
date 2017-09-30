@@ -11,7 +11,7 @@ import (
 
 // WaitUntilClusterAvailable uses the Amazon Redshift API operation
 // DescribeClusters to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *Redshift) WaitUntilClusterAvailable(input *DescribeClustersInput) error {
 	return c.WaitUntilClusterAvailableWithContext(aws.BackgroundContext(), input)
@@ -67,7 +67,7 @@ func (c *Redshift) WaitUntilClusterAvailableWithContext(ctx aws.Context, input *
 
 // WaitUntilClusterDeleted uses the Amazon Redshift API operation
 // DescribeClusters to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *Redshift) WaitUntilClusterDeleted(input *DescribeClustersInput) error {
 	return c.WaitUntilClusterDeletedWithContext(aws.BackgroundContext(), input)
@@ -123,7 +123,7 @@ func (c *Redshift) WaitUntilClusterDeletedWithContext(ctx aws.Context, input *De
 
 // WaitUntilClusterRestored uses the Amazon Redshift API operation
 // DescribeClusters to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *Redshift) WaitUntilClusterRestored(input *DescribeClustersInput) error {
 	return c.WaitUntilClusterRestoredWithContext(aws.BackgroundContext(), input)
@@ -174,7 +174,7 @@ func (c *Redshift) WaitUntilClusterRestoredWithContext(ctx aws.Context, input *D
 
 // WaitUntilSnapshotAvailable uses the Amazon Redshift API operation
 // DescribeClusterSnapshots to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *Redshift) WaitUntilSnapshotAvailable(input *DescribeClusterSnapshotsInput) error {
 	return c.WaitUntilSnapshotAvailableWithContext(aws.BackgroundContext(), input)

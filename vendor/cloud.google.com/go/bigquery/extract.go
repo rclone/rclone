@@ -21,8 +21,11 @@ import (
 
 // ExtractConfig holds the configuration for an extract job.
 type ExtractConfig struct {
-	// JobID is the ID to use for the extract job. If empty, a job ID will be automatically created.
+	// JobID is the ID to use for the job. If empty, a random job ID will be generated.
 	JobID string
+
+	// If AddJobIDSuffix is true, then a random string will be appended to JobID.
+	AddJobIDSuffix bool
 
 	// Src is the table from which data will be extracted.
 	Src *Table
@@ -55,22 +58,23 @@ func (t *Table) ExtractorTo(dst *GCSReference) *Extractor {
 
 // Run initiates an extract job.
 func (e *Extractor) Run(ctx context.Context) (*Job, error) {
-	conf := &bq.JobConfigurationExtract{}
-	job := &bq.Job{Configuration: &bq.JobConfiguration{Extract: conf}}
-
-	setJobRef(job, e.JobID, e.c.projectID)
-
-	conf.DestinationUris = append([]string{}, e.Dst.uris...)
-	conf.Compression = string(e.Dst.Compression)
-	conf.DestinationFormat = string(e.Dst.DestinationFormat)
-	conf.FieldDelimiter = e.Dst.FieldDelimiter
-
-	conf.SourceTable = e.Src.tableRefProto()
-
+	var printHeader *bool
 	if e.DisableHeader {
 		f := false
-		conf.PrintHeader = &f
+		printHeader = &f
 	}
-
+	job := &bq.Job{
+		JobReference: createJobRef(e.JobID, e.AddJobIDSuffix, e.c.projectID),
+		Configuration: &bq.JobConfiguration{
+			Extract: &bq.JobConfigurationExtract{
+				DestinationUris:   append([]string{}, e.Dst.uris...),
+				Compression:       string(e.Dst.Compression),
+				DestinationFormat: string(e.Dst.DestinationFormat),
+				FieldDelimiter:    e.Dst.FieldDelimiter,
+				SourceTable:       e.Src.tableRefProto(),
+				PrintHeader:       printHeader,
+			},
+		},
+	}
 	return e.c.insertJob(ctx, &insertJobConf{job: job})
 }

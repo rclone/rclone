@@ -6,9 +6,37 @@
     "serviceFullName" : "Amazon Pinpoint",
     "signatureVersion":"v4",
     "protocol" : "rest-json",
-    "jsonVersion" : "1.1"
+    "jsonVersion" : "1.1",
+    "uid":"pinpoint-2016-12-01"
   },
   "operations" : {
+    "CreateApp" : {
+      "name" : "CreateApp",
+      "http" : {
+        "method" : "POST",
+        "requestUri" : "/v1/apps",
+        "responseCode" : 201
+      },
+      "input" : {
+        "shape" : "CreateAppRequest"
+      },
+      "output" : {
+        "shape" : "CreateAppResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
     "CreateCampaign" : {
       "name" : "CreateCampaign",
       "http" : {
@@ -90,6 +118,33 @@
         "shape" : "TooManyRequestsException"
       } ]
     },
+    "DeleteAdmChannel" : {
+      "name" : "DeleteAdmChannel",
+      "http" : {
+        "method" : "DELETE",
+        "requestUri" : "/v1/apps/{application-id}/channels/adm",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "DeleteAdmChannelRequest"
+      },
+      "output" : {
+        "shape" : "DeleteAdmChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
     "DeleteApnsChannel" : {
       "name" : "DeleteApnsChannel",
       "http" : {
@@ -129,6 +184,60 @@
       },
       "output" : {
         "shape" : "DeleteApnsSandboxChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "DeleteApp" : {
+      "name" : "DeleteApp",
+      "http" : {
+        "method" : "DELETE",
+        "requestUri" : "/v1/apps/{application-id}",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "DeleteAppRequest"
+      },
+      "output" : {
+        "shape" : "DeleteAppResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "DeleteBaiduChannel" : {
+      "name" : "DeleteBaiduChannel",
+      "http" : {
+        "method" : "DELETE",
+        "requestUri" : "/v1/apps/{application-id}/channels/baidu",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "DeleteBaiduChannelRequest"
+      },
+      "output" : {
+        "shape" : "DeleteBaiduChannelResponse"
       },
       "errors" : [ {
         "shape" : "BadRequestException"
@@ -306,6 +415,33 @@
         "shape" : "TooManyRequestsException"
       } ]
     },
+    "GetAdmChannel" : {
+      "name" : "GetAdmChannel",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/v1/apps/{application-id}/channels/adm",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetAdmChannelRequest"
+      },
+      "output" : {
+        "shape" : "GetAdmChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
     "GetApnsChannel" : {
       "name" : "GetApnsChannel",
       "http" : {
@@ -360,6 +496,33 @@
         "shape" : "TooManyRequestsException"
       } ]
     },
+    "GetApp" : {
+      "name" : "GetApp",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/v1/apps/{application-id}",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetAppRequest"
+      },
+      "output" : {
+        "shape" : "GetAppResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
     "GetApplicationSettings" : {
       "name" : "GetApplicationSettings",
       "http" : {
@@ -372,6 +535,60 @@
       },
       "output" : {
         "shape" : "GetApplicationSettingsResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "GetApps" : {
+      "name" : "GetApps",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/v1/apps",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetAppsRequest"
+      },
+      "output" : {
+        "shape" : "GetAppsResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "GetBaiduChannel" : {
+      "name" : "GetBaiduChannel",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/v1/apps/{application-id}/channels/baidu",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetBaiduChannelRequest"
+      },
+      "output" : {
+        "shape" : "GetBaiduChannelResponse"
       },
       "errors" : [ {
         "shape" : "BadRequestException"
@@ -900,6 +1117,60 @@
         "shape" : "TooManyRequestsException"
       } ]
     },
+    "SendUsersMessages" : {
+      "name" : "SendUsersMessages",
+      "http" : {
+        "method" : "POST",
+        "requestUri" : "/v1/apps/{application-id}/users-messages",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "SendUsersMessagesRequest"
+      },
+      "output" : {
+        "shape" : "SendUsersMessagesResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "UpdateAdmChannel" : {
+      "name" : "UpdateAdmChannel",
+      "http" : {
+        "method" : "PUT",
+        "requestUri" : "/v1/apps/{application-id}/channels/adm",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "UpdateAdmChannelRequest"
+      },
+      "output" : {
+        "shape" : "UpdateAdmChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
     "UpdateApnsChannel" : {
       "name" : "UpdateApnsChannel",
       "http" : {
@@ -966,6 +1237,33 @@
       },
       "output" : {
         "shape" : "UpdateApplicationSettingsResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "UpdateBaiduChannel" : {
+      "name" : "UpdateBaiduChannel",
+      "http" : {
+        "method" : "PUT",
+        "requestUri" : "/v1/apps/{application-id}/channels/baidu",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "UpdateBaiduChannelRequest"
+      },
+      "output" : {
+        "shape" : "UpdateBaiduChannelResponse"
       },
       "errors" : [ {
         "shape" : "BadRequestException"
@@ -1172,16 +1470,133 @@
     }
   },
   "shapes" : {
+    "ADMChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ClientId" : {
+          "shape" : "__string"
+        },
+        "ClientSecret" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        }
+      }
+    },
+    "ADMChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string"
+        },
+        "CreationDate" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "IsArchived" : {
+          "shape" : "__boolean"
+        },
+        "LastModifiedBy" : {
+          "shape" : "__string"
+        },
+        "LastModifiedDate" : {
+          "shape" : "__string"
+        },
+        "Platform" : {
+          "shape" : "__string"
+        },
+        "Version" : {
+          "shape" : "__integer"
+        }
+      }
+    },
+    "ADMMessage" : {
+      "type" : "structure",
+      "members" : {
+        "Action" : {
+          "shape" : "Action"
+        },
+        "Body" : {
+          "shape" : "__string"
+        },
+        "ConsolidationKey" : {
+          "shape" : "__string"
+        },
+        "Data" : {
+          "shape" : "MapOf__string"
+        },
+        "ExpiresAfter" : {
+          "shape" : "__string"
+        },
+        "IconReference" : {
+          "shape" : "__string"
+        },
+        "ImageIconUrl" : {
+          "shape" : "__string"
+        },
+        "ImageUrl" : {
+          "shape" : "__string"
+        },
+        "JsonData" : {
+          "shape" : "__string"
+        },
+        "MD5" : {
+          "shape" : "__string"
+        },
+        "RawContent" : {
+          "shape" : "__string"
+        },
+        "SilentPush" : {
+          "shape" : "__boolean"
+        },
+        "SmallImageIconUrl" : {
+          "shape" : "__string"
+        },
+        "Sound" : {
+          "shape" : "__string"
+        },
+        "Substitutions" : {
+          "shape" : "MapOfListOf__string"
+        },
+        "Title" : {
+          "shape" : "__string"
+        },
+        "Url" : {
+          "shape" : "__string"
+        }
+      }
+    },
     "APNSChannelRequest" : {
       "type" : "structure",
       "members" : {
+        "BundleId" : {
+          "shape" : "__string"
+        },
         "Certificate" : {
+          "shape" : "__string"
+        },
+        "DefaultAuthenticationMethod" : {
           "shape" : "__string"
         },
         "Enabled" : {
           "shape" : "__boolean"
         },
         "PrivateKey" : {
+          "shape" : "__string"
+        },
+        "TeamId" : {
+          "shape" : "__string"
+        },
+        "TokenKey" : {
+          "shape" : "__string"
+        },
+        "TokenKeyId" : {
           "shape" : "__string"
         }
       }
@@ -1236,7 +1651,13 @@
         "Data" : {
           "shape" : "MapOf__string"
         },
+        "JsonData" : {
+          "shape" : "__string"
+        },
         "MediaUrl" : {
+          "shape" : "__string"
+        },
+        "PreferredAuthenticationMethod" : {
           "shape" : "__string"
         },
         "RawContent" : {
@@ -1265,13 +1686,28 @@
     "APNSSandboxChannelRequest" : {
       "type" : "structure",
       "members" : {
+        "BundleId" : {
+          "shape" : "__string"
+        },
         "Certificate" : {
+          "shape" : "__string"
+        },
+        "DefaultAuthenticationMethod" : {
           "shape" : "__string"
         },
         "Enabled" : {
           "shape" : "__boolean"
         },
         "PrivateKey" : {
+          "shape" : "__string"
+        },
+        "TeamId" : {
+          "shape" : "__string"
+        },
+        "TokenKey" : {
+          "shape" : "__string"
+        },
+        "TokenKeyId" : {
           "shape" : "__string"
         }
       }
@@ -1387,6 +1823,17 @@
         }
       }
     },
+    "ApplicationResponse" : {
+      "type" : "structure",
+      "members" : {
+        "Id" : {
+          "shape" : "__string"
+        },
+        "Name" : {
+          "shape" : "__string"
+        }
+      }
+    },
     "ApplicationSettingsResource" : {
       "type" : "structure",
       "members" : {
@@ -1401,6 +1848,17 @@
         },
         "QuietTime" : {
           "shape" : "QuietTime"
+        }
+      }
+    },
+    "ApplicationsResponse" : {
+      "type" : "structure",
+      "members" : {
+        "Item" : {
+          "shape" : "ListOfApplicationResponse"
+        },
+        "NextToken" : {
+          "shape" : "__string"
         }
       }
     },
@@ -1434,10 +1892,109 @@
         "httpStatusCode" : 400
       }
     },
+    "BaiduChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApiKey" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "SecretKey" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "BaiduChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string"
+        },
+        "CreationDate" : {
+          "shape" : "__string"
+        },
+        "Credential" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "IsArchived" : {
+          "shape" : "__boolean"
+        },
+        "LastModifiedBy" : {
+          "shape" : "__string"
+        },
+        "LastModifiedDate" : {
+          "shape" : "__string"
+        },
+        "Platform" : {
+          "shape" : "__string"
+        },
+        "Version" : {
+          "shape" : "__integer"
+        }
+      }
+    },
+    "BaiduMessage" : {
+      "type" : "structure",
+      "members" : {
+        "Action" : {
+          "shape" : "Action"
+        },
+        "Body" : {
+          "shape" : "__string"
+        },
+        "Data" : {
+          "shape" : "MapOf__string"
+        },
+        "IconReference" : {
+          "shape" : "__string"
+        },
+        "ImageIconUrl" : {
+          "shape" : "__string"
+        },
+        "ImageUrl" : {
+          "shape" : "__string"
+        },
+        "JsonData" : {
+          "shape" : "__string"
+        },
+        "RawContent" : {
+          "shape" : "__string"
+        },
+        "SilentPush" : {
+          "shape" : "__boolean"
+        },
+        "SmallImageIconUrl" : {
+          "shape" : "__string"
+        },
+        "Sound" : {
+          "shape" : "__string"
+        },
+        "Substitutions" : {
+          "shape" : "MapOfListOf__string"
+        },
+        "Title" : {
+          "shape" : "__string"
+        },
+        "Url" : {
+          "shape" : "__string"
+        }
+      }
+    },
     "CampaignEmailMessage" : {
       "type" : "structure",
       "members" : {
         "Body" : {
+          "shape" : "__string"
+        },
+        "FromAddress" : {
           "shape" : "__string"
         },
         "HtmlBody" : {
@@ -1452,6 +2009,12 @@
       "type" : "structure",
       "members" : {
         "Daily" : {
+          "shape" : "__integer"
+        },
+        "MaximumDuration" : {
+          "shape" : "__integer"
+        },
+        "MessagesPerSecond" : {
           "shape" : "__integer"
         },
         "Total" : {
@@ -1560,7 +2123,35 @@
     },
     "ChannelType" : {
       "type" : "string",
-      "enum" : [ "GCM", "APNS", "APNS_SANDBOX", "ADM", "SMS", "EMAIL" ]
+      "enum" : [ "GCM", "APNS", "APNS_SANDBOX", "ADM", "SMS", "EMAIL", "BAIDU" ]
+    },
+    "CreateAppRequest" : {
+      "type" : "structure",
+      "members" : {
+        "CreateApplicationRequest" : {
+          "shape" : "CreateApplicationRequest"
+        }
+      },
+      "required" : [ "CreateApplicationRequest" ],
+      "payload" : "CreateApplicationRequest"
+    },
+    "CreateAppResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationResponse" : {
+          "shape" : "ApplicationResponse"
+        }
+      },
+      "required" : [ "ApplicationResponse" ],
+      "payload" : "ApplicationResponse"
+    },
+    "CreateApplicationRequest" : {
+      "type" : "structure",
+      "members" : {
+        "Name" : {
+          "shape" : "__string"
+        }
+      }
     },
     "CreateCampaignRequest" : {
       "type" : "structure",
@@ -1660,6 +2251,9 @@
         "Data" : {
           "shape" : "MapOf__string"
         },
+        "JsonData" : {
+          "shape" : "__string"
+        },
         "SilentPush" : {
           "shape" : "__boolean"
         },
@@ -1673,6 +2267,27 @@
           "shape" : "__string"
         }
       }
+    },
+    "DeleteAdmChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "DeleteAdmChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ADMChannelResponse" : {
+          "shape" : "ADMChannelResponse"
+        }
+      },
+      "required" : [ "ADMChannelResponse" ],
+      "payload" : "ADMChannelResponse"
     },
     "DeleteApnsChannelRequest" : {
       "type" : "structure",
@@ -1715,6 +2330,48 @@
       },
       "required" : [ "APNSSandboxChannelResponse" ],
       "payload" : "APNSSandboxChannelResponse"
+    },
+    "DeleteAppRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "DeleteAppResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationResponse" : {
+          "shape" : "ApplicationResponse"
+        }
+      },
+      "required" : [ "ApplicationResponse" ],
+      "payload" : "ApplicationResponse"
+    },
+    "DeleteBaiduChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "DeleteBaiduChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "BaiduChannelResponse" : {
+          "shape" : "BaiduChannelResponse"
+        }
+      },
+      "required" : [ "BaiduChannelResponse" ],
+      "payload" : "BaiduChannelResponse"
     },
     "DeleteCampaignRequest" : {
       "type" : "structure",
@@ -1854,7 +2511,7 @@
     },
     "DeliveryStatus" : {
       "type" : "string",
-      "enum" : [ "SUCCESSFUL", "THROTTLED", "TEMPORARY_FAILURE", "PERMANENT_FAILURE" ]
+      "enum" : [ "SUCCESSFUL", "THROTTLED", "TEMPORARY_FAILURE", "PERMANENT_FAILURE", "UNKNOWN_FAILURE", "OPT_OUT", "DUPLICATE" ]
     },
     "DimensionType" : {
       "type" : "string",
@@ -1863,14 +2520,23 @@
     "DirectMessageConfiguration" : {
       "type" : "structure",
       "members" : {
+        "ADMMessage" : {
+          "shape" : "ADMMessage"
+        },
         "APNSMessage" : {
           "shape" : "APNSMessage"
+        },
+        "BaiduMessage" : {
+          "shape" : "BaiduMessage"
         },
         "DefaultMessage" : {
           "shape" : "DefaultMessage"
         },
         "DefaultPushNotificationMessage" : {
           "shape" : "DefaultPushNotificationMessage"
+        },
+        "EmailMessage" : {
+          "shape" : "EmailMessage"
         },
         "GCMMessage" : {
           "shape" : "GCMMessage"
@@ -1939,6 +2605,29 @@
         },
         "Version" : {
           "shape" : "__integer"
+        }
+      }
+    },
+    "EmailMessage" : {
+      "type" : "structure",
+      "members" : {
+        "Body" : {
+          "shape" : "__string"
+        },
+        "FromAddress" : {
+          "shape" : "__string"
+        },
+        "HtmlBody" : {
+          "shape" : "__string"
+        },
+        "Substitutions" : {
+          "shape" : "MapOfListOf__string"
+        },
+        "TemplateArn" : {
+          "shape" : "__string"
+        },
+        "Title" : {
+          "shape" : "__string"
         }
       }
     },
@@ -2043,6 +2732,26 @@
         }
       }
     },
+    "EndpointMessageResult" : {
+      "type" : "structure",
+      "members" : {
+        "Address" : {
+          "shape" : "__string"
+        },
+        "DeliveryStatus" : {
+          "shape" : "DeliveryStatus"
+        },
+        "StatusCode" : {
+          "shape" : "__integer"
+        },
+        "StatusMessage" : {
+          "shape" : "__string"
+        },
+        "UpdatedToken" : {
+          "shape" : "__string"
+        }
+      }
+    },
     "EndpointRequest" : {
       "type" : "structure",
       "members" : {
@@ -2131,6 +2840,26 @@
         },
         "User" : {
           "shape" : "EndpointUser"
+        }
+      }
+    },
+    "EndpointSendConfiguration" : {
+      "type" : "structure",
+      "members" : {
+        "BodyOverride" : {
+          "shape" : "__string"
+        },
+        "Context" : {
+          "shape" : "MapOf__string"
+        },
+        "RawContent" : {
+          "shape" : "__string"
+        },
+        "Substitutions" : {
+          "shape" : "MapOfListOf__string"
+        },
+        "TitleOverride" : {
+          "shape" : "__string"
         }
       }
     },
@@ -2261,6 +2990,9 @@
         "ImageUrl" : {
           "shape" : "__string"
         },
+        "JsonData" : {
+          "shape" : "__string"
+        },
         "RawContent" : {
           "shape" : "__string"
         },
@@ -2286,6 +3018,27 @@
           "shape" : "__string"
         }
       }
+    },
+    "GetAdmChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "GetAdmChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ADMChannelResponse" : {
+          "shape" : "ADMChannelResponse"
+        }
+      },
+      "required" : [ "ADMChannelResponse" ],
+      "payload" : "ADMChannelResponse"
     },
     "GetApnsChannelRequest" : {
       "type" : "structure",
@@ -2329,6 +3082,27 @@
       "required" : [ "APNSSandboxChannelResponse" ],
       "payload" : "APNSSandboxChannelResponse"
     },
+    "GetAppRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "GetAppResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationResponse" : {
+          "shape" : "ApplicationResponse"
+        }
+      },
+      "required" : [ "ApplicationResponse" ],
+      "payload" : "ApplicationResponse"
+    },
     "GetApplicationSettingsRequest" : {
       "type" : "structure",
       "members" : {
@@ -2349,6 +3123,52 @@
       },
       "required" : [ "ApplicationSettingsResource" ],
       "payload" : "ApplicationSettingsResource"
+    },
+    "GetAppsRequest" : {
+      "type" : "structure",
+      "members" : {
+        "PageSize" : {
+          "shape" : "__string",
+          "location" : "querystring",
+          "locationName" : "page-size"
+        },
+        "Token" : {
+          "shape" : "__string",
+          "location" : "querystring",
+          "locationName" : "token"
+        }
+      }
+    },
+    "GetAppsResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationsResponse" : {
+          "shape" : "ApplicationsResponse"
+        }
+      },
+      "required" : [ "ApplicationsResponse" ],
+      "payload" : "ApplicationsResponse"
+    },
+    "GetBaiduChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "GetBaiduChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "BaiduChannelResponse" : {
+          "shape" : "BaiduChannelResponse"
+        }
+      },
+      "required" : [ "BaiduChannelResponse" ],
+      "payload" : "BaiduChannelResponse"
     },
     "GetCampaignActivitiesRequest" : {
       "type" : "structure",
@@ -2975,6 +3795,12 @@
         "shape" : "ActivityResponse"
       }
     },
+    "ListOfApplicationResponse" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ApplicationResponse"
+      }
+    },
     "ListOfCampaignResponse" : {
       "type" : "list",
       "member" : {
@@ -3035,6 +3861,24 @@
         "shape" : "AttributeDimension"
       }
     },
+    "MapOfEndpointMessageResult" : {
+      "type" : "map",
+      "key" : {
+        "shape" : "__string"
+      },
+      "value" : {
+        "shape" : "EndpointMessageResult"
+      }
+    },
+    "MapOfEndpointSendConfiguration" : {
+      "type" : "map",
+      "key" : {
+        "shape" : "__string"
+      },
+      "value" : {
+        "shape" : "EndpointSendConfiguration"
+      }
+    },
     "MapOfListOf__string" : {
       "type" : "map",
       "key" : {
@@ -3042,6 +3886,15 @@
       },
       "value" : {
         "shape" : "ListOf__string"
+      }
+    },
+    "MapOfMapOfEndpointMessageResult" : {
+      "type" : "map",
+      "key" : {
+        "shape" : "__string"
+      },
+      "value" : {
+        "shape" : "MapOfEndpointMessageResult"
       }
     },
     "MapOfMessageResult" : {
@@ -3104,6 +3957,9 @@
         "MediaUrl" : {
           "shape" : "__string"
         },
+        "RawContent" : {
+          "shape" : "__string"
+        },
         "SilentPush" : {
           "shape" : "__boolean"
         },
@@ -3152,11 +4008,20 @@
         "Addresses" : {
           "shape" : "MapOfAddressConfiguration"
         },
+        "Campaign" : {
+          "shape" : "MapOf__string"
+        },
         "Context" : {
           "shape" : "MapOf__string"
         },
+        "Endpoints" : {
+          "shape" : "MapOfEndpointSendConfiguration"
+        },
         "MessageConfiguration" : {
           "shape" : "DirectMessageConfiguration"
+        },
+        "RequestId" : {
+          "shape" : "__string"
         }
       }
     },
@@ -3165,6 +4030,9 @@
       "members" : {
         "ApplicationId" : {
           "shape" : "__string"
+        },
+        "EndpointResult" : {
+          "shape" : "MapOfEndpointMessageResult"
         },
         "RequestId" : {
           "shape" : "__string"
@@ -3283,6 +4151,9 @@
           "shape" : "__boolean"
         },
         "SenderId" : {
+          "shape" : "__string"
+        },
+        "ShortCode" : {
           "shape" : "__string"
         }
       }
@@ -3519,6 +4390,62 @@
       "required" : [ "MessageResponse" ],
       "payload" : "MessageResponse"
     },
+    "SendUsersMessageRequest" : {
+      "type" : "structure",
+      "members" : {
+        "Context" : {
+          "shape" : "MapOf__string"
+        },
+        "MessageConfiguration" : {
+          "shape" : "DirectMessageConfiguration"
+        },
+        "RequestId" : {
+          "shape" : "__string"
+        },
+        "Users" : {
+          "shape" : "MapOfEndpointSendConfiguration"
+        }
+      }
+    },
+    "SendUsersMessageResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string"
+        },
+        "RequestId" : {
+          "shape" : "__string"
+        },
+        "Result" : {
+          "shape" : "MapOfMapOfEndpointMessageResult"
+        }
+      }
+    },
+    "SendUsersMessagesRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        },
+        "SendUsersMessageRequest" : {
+          "shape" : "SendUsersMessageRequest"
+        }
+      },
+      "required" : [ "ApplicationId", "SendUsersMessageRequest" ],
+      "payload" : "SendUsersMessageRequest"
+    },
+    "SendUsersMessagesResponse" : {
+      "type" : "structure",
+      "members" : {
+        "SendUsersMessageResponse" : {
+          "shape" : "SendUsersMessageResponse"
+        }
+      },
+      "required" : [ "SendUsersMessageResponse" ],
+      "payload" : "SendUsersMessageResponse"
+    },
     "SetDimension" : {
       "type" : "structure",
       "members" : {
@@ -3570,6 +4497,31 @@
           "shape" : "__string"
         }
       }
+    },
+    "UpdateAdmChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ADMChannelRequest" : {
+          "shape" : "ADMChannelRequest"
+        },
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId", "ADMChannelRequest" ],
+      "payload" : "ADMChannelRequest"
+    },
+    "UpdateAdmChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ADMChannelResponse" : {
+          "shape" : "ADMChannelResponse"
+        }
+      },
+      "required" : [ "ADMChannelResponse" ],
+      "payload" : "ADMChannelResponse"
     },
     "UpdateApnsChannelRequest" : {
       "type" : "structure",
@@ -3645,6 +4597,31 @@
       },
       "required" : [ "ApplicationSettingsResource" ],
       "payload" : "ApplicationSettingsResource"
+    },
+    "UpdateBaiduChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        },
+        "BaiduChannelRequest" : {
+          "shape" : "BaiduChannelRequest"
+        }
+      },
+      "required" : [ "ApplicationId", "BaiduChannelRequest" ],
+      "payload" : "BaiduChannelRequest"
+    },
+    "UpdateBaiduChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "BaiduChannelResponse" : {
+          "shape" : "BaiduChannelResponse"
+        }
+      },
+      "required" : [ "BaiduChannelResponse" ],
+      "payload" : "BaiduChannelResponse"
     },
     "UpdateCampaignRequest" : {
       "type" : "structure",
@@ -3880,6 +4857,9 @@
         "SegmentVersion" : {
           "shape" : "__integer"
         },
+        "Trace" : {
+          "shape" : "__boolean"
+        },
         "TreatmentDescription" : {
           "shape" : "__string"
         },
@@ -3892,6 +4872,9 @@
       "type" : "structure",
       "members" : {
         "DestinationStreamArn" : {
+          "shape" : "__string"
+        },
+        "ExternalId" : {
           "shape" : "__string"
         },
         "RoleArn" : {

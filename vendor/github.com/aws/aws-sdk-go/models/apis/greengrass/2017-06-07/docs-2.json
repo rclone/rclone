@@ -1,5 +1,5 @@
 {
-  "version" : "1.0",
+  "version" : "2.0",
   "service" : "AWS Greengrass seamlessly extends AWS onto physical devices so they can act locally on the data they generate, while still using the cloud for management, analytics, and durable storage. AWS Greengrass ensures your devices can respond quickly to local events and operate with intermittent connectivity. AWS Greengrass minimizes the cost of transmitting data to the cloud by allowing you to author AWS Lambda functions that execute locally.",
   "operations" : {
     "AssociateRoleToGroup" : "Associates a role with a group. The role will be used by the AWS Greengrass core in order to access AWS cloud services. The role's permissions will allow Greengrass core Lambda functions to perform actions against the cloud.",
@@ -58,6 +58,7 @@
     "ListLoggerDefinitions" : "Retrieves a list of logger definitions.",
     "ListSubscriptionDefinitionVersions" : "Lists the versions of a subscription definition.",
     "ListSubscriptionDefinitions" : "Retrieves a list of subscription definitions.",
+    "ResetDeployments" : "Resets a group's deployments.",
     "UpdateConnectivityInfo" : "Updates the connectivity information for the core. Any devices that belong to the group which has this core will receive this information in order to find the location of the core and connect to it.",
     "UpdateCoreDefinition" : "Updates a core definition.",
     "UpdateDeviceDefinition" : "Updates a device definition.",
@@ -91,8 +92,8 @@
     "ConnectivityInfo" : {
       "base" : "Connectivity Info",
       "refs" : {
-        "GetConnectivityInfoResponse$ConnectivityInfo" : "Connectivity info array",
-        "UpdateConnectivityInfoRequest$ConnectivityInfo" : "Connectivity info array"
+        "GetConnectivityInfoResponse$ConnectivityInfo" : "Connectivity info list",
+        "UpdateConnectivityInfoRequest$ConnectivityInfo" : "Connectivity info list"
       }
     },
     "Core" : {
@@ -134,13 +135,15 @@
     "DeploymentType" : {
       "base" : null,
       "refs" : {
-        "CreateDeploymentRequest$DeploymentType" : "Type of deployment"
+        "CreateDeploymentRequest$DeploymentType" : "Type of deployment. When used in CreateDeployment, only NewDeployment and Redeployment are valid. ",
+        "Deployment$DeploymentType" : "The type of deployment.",
+        "GetDeploymentStatusResponse$DeploymentType" : "The type of the deployment."
       }
     },
     "Deployments" : {
       "base" : null,
       "refs" : {
-        "ListDeploymentsResponse$Deployments" : "Information on deployments"
+        "ListDeploymentsResponse$Deployments" : "List of deployments for the requested groups"
       }
     },
     "Device" : {
@@ -176,7 +179,8 @@
     "ErrorDetails" : {
       "base" : "Error Details",
       "refs" : {
-        "GeneralError$ErrorDetails" : "Error Details"
+        "GeneralError$ErrorDetails" : "Error Details",
+        "GetDeploymentStatusResponse$ErrorDetails" : "The error Details"
       }
     },
     "Function" : {
@@ -262,7 +266,7 @@
       "refs" : { }
     },
     "GroupInformation" : {
-      "base" : "Information of a group",
+      "base" : "Information on the group",
       "refs" : {
         "ListGroupsResponse$Groups" : "Groups"
       }
@@ -274,11 +278,11 @@
       }
     },
     "InternalServerErrorException" : {
-      "base" : "This request was invalid.",
+      "base" : "Server Error",
       "refs" : { }
     },
     "ListDefinitionsResponse" : {
-      "base" : "List of definition response",
+      "base" : "List of definition responses",
       "refs" : { }
     },
     "ListDeploymentsResponse" : {
@@ -371,6 +375,14 @@
       "base" : null,
       "refs" : { }
     },
+    "ResetDeploymentsRequest" : {
+      "base" : "Information needed to perform a reset of a group's deployments.",
+      "refs" : { }
+    },
+    "ResetDeploymentsResponse" : {
+      "base" : null,
+      "refs" : { }
+    },
     "Subscription" : {
       "base" : "Information on subscription",
       "refs" : {
@@ -406,7 +418,8 @@
       "refs" : {
         "Core$SyncShadow" : "If true, the local shadow value automatically syncs with the cloud's shadow state.",
         "Device$SyncShadow" : "If true, the local shadow value automatically syncs with the cloud's shadow state.",
-        "FunctionConfiguration$Pinned" : "Whether the function is pinned or not. Pinned means the function is long-lived and starts when the core starts."
+        "FunctionConfiguration$Pinned" : "Whether the function is pinned or not. Pinned means the function is long-lived and starts when the core starts.",
+        "ResetDeploymentsRequest$Force" : "When set to true, perform a best-effort only core reset."
       }
     },
     "__integer" : {
@@ -433,8 +446,8 @@
         "Core$ThingArn" : "Thing arn of the core.",
         "CreateDeploymentRequest$DeploymentId" : "Id of the deployment if you wish to redeploy a previous deployment.",
         "CreateDeploymentRequest$GroupVersionId" : "Group Version you wish to deploy.",
-        "CreateDeploymentResponse$DeploymentArn" : "Arn of the deployment.",
-        "CreateDeploymentResponse$DeploymentId" : "Id of the deployment.",
+        "CreateDeploymentResponse$DeploymentArn" : "The arn of the deployment.",
+        "CreateDeploymentResponse$DeploymentId" : "The id of the deployment.",
         "CreateGroupCertificateAuthorityResponse$GroupCertificateAuthorityArn" : "Arn of the group certificate authority.",
         "DefinitionInformation$Arn" : "Arn of the definition.",
         "DefinitionInformation$CreationTimestamp" : "Timestamp of when the definition was created.",
@@ -458,7 +471,7 @@
         "Function$Id" : "Id of the function in this version.",
         "FunctionConfiguration$ExecArgs" : "Execution Arguments",
         "FunctionConfiguration$Executable" : "Executable",
-        "GeneralError$Message" : "Message",
+        "GeneralError$Message" : "Message containing information about the error",
         "GetAssociatedRoleResponse$AssociatedAt" : "Time when the role was associated for the group.",
         "GetAssociatedRoleResponse$RoleArn" : "Arn of the role that is associated with the group.",
         "GetConnectivityInfoResponse$message" : "Response Text",
@@ -516,6 +529,8 @@
         "ListGroupsResponse$NextToken" : "The token for the next set of results, or ''null'' if there are no additional results.",
         "ListVersionsResponse$NextToken" : "The token for the next set of results, or ''null'' if there are no additional results.",
         "Logger$Id" : "Element Id for this entry in the list.",
+        "ResetDeploymentsResponse$DeploymentArn" : "The arn of the reset deployment.",
+        "ResetDeploymentsResponse$DeploymentId" : "The id of the reset deployment.",
         "Subscription$Id" : "Element Id for this entry in the list.",
         "Subscription$Source" : "Source of the subscription. Can be a thing arn, lambda arn or word 'cloud'",
         "Subscription$Subject" : "Subject of the message.",

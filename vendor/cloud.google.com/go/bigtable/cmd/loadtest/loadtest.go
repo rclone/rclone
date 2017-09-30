@@ -36,6 +36,7 @@ import (
 	"cloud.google.com/go/bigtable/internal/stat"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
+	"google.golang.org/grpc"
 )
 
 var (
@@ -74,7 +75,12 @@ func main() {
 
 	var options []option.ClientOption
 	if *poolSize > 1 {
-		options = append(options, option.WithGRPCConnectionPool(*poolSize))
+		options = append(options,
+			option.WithGRPCConnectionPool(*poolSize),
+
+			// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
+			// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
+			option.WithGRPCDialOption(grpc.WithBlock()))
 	}
 
 	var csvFile *os.File

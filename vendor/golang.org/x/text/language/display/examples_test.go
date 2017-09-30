@@ -9,7 +9,25 @@ import (
 
 	"golang.org/x/text/language"
 	"golang.org/x/text/language/display"
+	"golang.org/x/text/message"
 )
+
+func ExampleFormatter() {
+	message.SetString(language.Dutch, "In %v people speak %v.", "In %v spreekt men %v.")
+
+	fr := language.French
+	region, _ := fr.Region()
+	for _, tag := range []string{"en", "nl"} {
+		p := message.NewPrinter(language.Make(tag))
+
+		p.Printf("In %v people speak %v.", display.Region(region), display.Language(fr))
+		p.Println()
+	}
+
+	// Output:
+	// In France people speak French.
+	// In Frankrijk spreekt men Frans.
+}
 
 func ExampleNamer() {
 	supported := []string{

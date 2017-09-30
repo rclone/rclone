@@ -7,13 +7,15 @@
 // compiles your source code, runs unit tests, and produces artifacts that are
 // ready to deploy. AWS CodeBuild eliminates the need to provision, manage,
 // and scale your own build servers. It provides prepackaged build environments
-// for the most popular programming languages and build tools, such as Apach
+// for the most popular programming languages and build tools, such as Apache
 // Maven, Gradle, and more. You can also fully customize build environments
 // in AWS CodeBuild to use your own build tools. AWS CodeBuild scales automatically
 // to meet peak build requests, and you pay only for the build time you consume.
 // For more information about AWS CodeBuild, see the AWS CodeBuild User Guide.
 //
 // AWS CodeBuild supports these operations:
+//
+//    * BatchDeleteBuilds: Deletes one or more builds.
 //
 //    * BatchGetProjects: Gets information about one or more build projects.
 //    A build project defines how AWS CodeBuild will run a build. This includes
@@ -26,7 +28,17 @@
 //
 //    * CreateProject: Creates a build project.
 //
+//    * CreateWebhook: For an existing AWS CodeBuild build project that has
+//    its source code stored in a GitHub repository, enables AWS CodeBuild to
+//    begin automatically rebuilding the source code every time a code change
+//    is pushed to the repository.
+//
 //    * DeleteProject: Deletes a build project.
+//
+//    * DeleteWebhook: For an existing AWS CodeBuild build project that has
+//    its source code stored in a GitHub repository, stops AWS CodeBuild from
+//    automatically rebuilding the source code every time a code change is pushed
+//    to the repository.
 //
 //    * ListProjects: Gets a list of build project names, with each build project
 //    name representing a single build project.
@@ -55,69 +67,17 @@
 //
 // Using the Client
 //
-// To use the client for AWS CodeBuild you will first need
-// to create a new instance of it.
+// To AWS CodeBuild with the SDK use the New function to create
+// a new service client. With that client you can make API requests to the service.
+// These clients are safe to use concurrently.
 //
-// When creating a client for an AWS service you'll first need to have a Session
-// already created. The Session provides configuration that can be shared
-// between multiple service clients. Additional configuration can be applied to
-// the Session and service's client when they are constructed. The aws package's
-// Config type contains several fields such as Region for the AWS Region the
-// client should make API requests too. The optional Config value can be provided
-// as the variadic argument for Sessions and client creation.
-//
-// Once the service's client is created you can use it to make API requests the
-// AWS service. These clients are safe to use concurrently.
-//
-//   // Create a session to share configuration, and load external configuration.
-//   sess := session.Must(session.NewSession())
-//
-//   // Create the service's client with the session.
-//   svc := codebuild.New(sess)
-//
-// See the SDK's documentation for more information on how to use service clients.
+// See the SDK's documentation for more information on how to use the SDK.
 // https://docs.aws.amazon.com/sdk-for-go/api/
 //
-// See aws package's Config type for more information on configuration options.
+// See aws.Config documentation for more information on configuring SDK clients.
 // https://docs.aws.amazon.com/sdk-for-go/api/aws/#Config
 //
 // See the AWS CodeBuild client CodeBuild for more
-// information on creating the service's client.
+// information on creating client for this service.
 // https://docs.aws.amazon.com/sdk-for-go/api/service/codebuild/#New
-//
-// Once the client is created you can make an API request to the service.
-// Each API method takes a input parameter, and returns the service response
-// and an error.
-//
-// The API method will document which error codes the service can be returned
-// by the operation if the service models the API operation's errors. These
-// errors will also be available as const strings prefixed with "ErrCode".
-//
-//   result, err := svc.BatchGetBuilds(params)
-//   if err != nil {
-//       // Cast err to awserr.Error to handle specific error codes.
-//       aerr, ok := err.(awserr.Error)
-//       if ok && aerr.Code() == <error code to check for> {
-//           // Specific error code handling
-//       }
-//       return err
-//   }
-//
-//   fmt.Println("BatchGetBuilds result:")
-//   fmt.Println(result)
-//
-// Using the Client with Context
-//
-// The service's client also provides methods to make API requests with a Context
-// value. This allows you to control the timeout, and cancellation of pending
-// requests. These methods also take request Option as variadic parameter to apply
-// additional configuration to the API request.
-//
-//   ctx := context.Background()
-//
-//   result, err := svc.BatchGetBuildsWithContext(ctx, params)
-//
-// See the request package documentation for more information on using Context pattern
-// with the SDK.
-// https://docs.aws.amazon.com/sdk-for-go/api/aws/request/
 package codebuild

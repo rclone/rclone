@@ -140,9 +140,12 @@ type AcceleratorConfig struct {
 	// exposed to this instance.
 	AcceleratorCount int64 `json:"acceleratorCount,omitempty"`
 
-	// AcceleratorTypeUri: Full or partial URI of the accelerator type
-	// resource to expose to this instance. See Google Compute Engine
-	// AcceleratorTypes( /compute/docs/reference/beta/acceleratorTypes)
+	// AcceleratorTypeUri: Full URL, partial URI, or short name of the
+	// accelerator type resource to expose to this instance. See Google
+	// Compute Engine AcceleratorTypes(
+	// /compute/docs/reference/beta/acceleratorTypes)Examples *
+	// https://www.googleapis.com/compute/beta/projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 * projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 *
+	// nvidia-tesla-k80
 	AcceleratorTypeUri string `json:"acceleratorTypeUri,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "AcceleratorCount") to
@@ -495,37 +498,6 @@ func (s *ClusterStatus) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// DiagnoseClusterOutputLocation: The location where output from
-// diagnostic command can be found.
-type DiagnoseClusterOutputLocation struct {
-	// OutputUri: Output-only The Google Cloud Storage URI of the diagnostic
-	// output. This will be a plain text file with summary of collected
-	// diagnostics.
-	OutputUri string `json:"outputUri,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "OutputUri") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "OutputUri") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *DiagnoseClusterOutputLocation) MarshalJSON() ([]byte, error) {
-	type noMethod DiagnoseClusterOutputLocation
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // DiagnoseClusterRequest: A request to collect cluster diagnostic
 // information.
 type DiagnoseClusterRequest struct {
@@ -639,9 +611,14 @@ type GceClusterConfig struct {
 	// for machine communications. Cannot be specified with subnetwork_uri.
 	// If neither network_uri nor subnetwork_uri is specified, the "default"
 	// network of the project is used, if it exists. Cannot be a "Custom
-	// Subnet Network" (see Using Subnetworks for more information).
-	// Example:
-	// https://www.googleapis.com/compute/v1/projects/[project_id]/regions/global/default.
+	// Subnet Network" (see Using Subnetworks for more information).A full
+	// URL, partial URI, or short name are valid.
+	// Examples:
+	// https://www.googleapis.com/compute/v1/projects/[project_id]/
+	// regions/global/default
+	// projects/[project_id]/regions/global/default
+	// de
+	// fault
 	NetworkUri string `json:"networkUri,omitempty"`
 
 	// ServiceAccount: Optional. The service account of the instances.
@@ -675,17 +652,29 @@ type GceClusterConfig struct {
 
 	// SubnetworkUri: Optional. The Google Compute Engine subnetwork to be
 	// used for machine communications. Cannot be specified with
-	// network_uri. Example:
-	// https://www.googleapis.com/compute/v1/projects/[project_id]/regions/us-east1/sub0.
+	// network_uri.A full URL, partial URI, or short name are valid.
+	// Examples:
+	// https://www.googleapis.com/compute/v1/projects/[project_id]/
+	// regions/us-east1/sub0
+	// projects/[project_id]/regions/us-east1/sub0
+	// sub0
 	SubnetworkUri string `json:"subnetworkUri,omitempty"`
 
 	// Tags: The Google Compute Engine tags to add to all instances (see
 	// Tagging instances).
 	Tags []string `json:"tags,omitempty"`
 
-	// ZoneUri: Required. The zone where the Google Compute Engine cluster
-	// will be located. Example:
-	// https://www.googleapis.com/compute/v1/projects/[project_id]/zones/[zone].
+	// ZoneUri: Optional. The zone where the Google Compute Engine cluster
+	// will be located. On a create request, it is required in the "global"
+	// region. If omitted in a non-global Cloud Dataproc region, the service
+	// will pick a zone in the corresponding Compute Engine region. On a get
+	// request, zone will always be present.A full URL, partial URI, or
+	// short name are valid.
+	// Examples:
+	// https://www.googleapis.com/compute/v1/projects/[project_id]/
+	// zones/[zone]
+	// projects/[project_id]/zones/[zone]
+	// us-central1-f
 	ZoneUri string `json:"zoneUri,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "InternalIpOnly") to
@@ -863,9 +852,15 @@ type InstanceGroupConfig struct {
 	// preemptible instances.
 	IsPreemptible bool `json:"isPreemptible,omitempty"`
 
-	// MachineTypeUri: Required. The Google Compute Engine machine type used
-	// for cluster instances. Example:
-	// https://www.googleapis.com/compute/v1/projects/[project_id]/zones/us-east1-a/machineTypes/n1-standard-2.
+	// MachineTypeUri: Optional. The Google Compute Engine machine type used
+	// for cluster instances.A full URL, partial URI, or short name are
+	// valid.
+	// Examples:
+	// https://www.googleapis.com/compute/v1/projects/[project_id]/
+	// zones/us-east1-a/machineTypes/n1-standard-2
+	// projects/[project_id]/zone
+	// s/us-east1-a/machineTypes/n1-standard-2
+	// n1-standard-2
 	MachineTypeUri string `json:"machineTypeUri,omitempty"`
 
 	// ManagedGroupConfig: Output-only. The config for Google Compute Engine
@@ -873,7 +868,7 @@ type InstanceGroupConfig struct {
 	// preemptible instance groups.
 	ManagedGroupConfig *ManagedGroupConfig `json:"managedGroupConfig,omitempty"`
 
-	// NumInstances: Required. The number of VM instances in the instance
+	// NumInstances: Optional. The number of VM instances in the instance
 	// group. For master instance groups, must be set to 1.
 	NumInstances int64 `json:"numInstances,omitempty"`
 
@@ -1446,119 +1441,6 @@ func (s *Operation) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// OperationMetadata: Metadata describing the operation.
-type OperationMetadata struct {
-	// ClusterName: Name of the cluster for the operation.
-	ClusterName string `json:"clusterName,omitempty"`
-
-	// ClusterUuid: Cluster UUId for the operation.
-	ClusterUuid string `json:"clusterUuid,omitempty"`
-
-	// Description: Output-only Short description of operation.
-	Description string `json:"description,omitempty"`
-
-	// Details: A message containing any operation metadata details.
-	Details string `json:"details,omitempty"`
-
-	// EndTime: The time that the operation completed.
-	EndTime string `json:"endTime,omitempty"`
-
-	// InnerState: A message containing the detailed operation state.
-	InnerState string `json:"innerState,omitempty"`
-
-	// InsertTime: The time that the operation was requested.
-	InsertTime string `json:"insertTime,omitempty"`
-
-	// OperationType: Output-only The operation type.
-	OperationType string `json:"operationType,omitempty"`
-
-	// StartTime: The time that the operation was started by the server.
-	StartTime string `json:"startTime,omitempty"`
-
-	// State: A message containing the operation state.
-	//
-	// Possible values:
-	//   "UNKNOWN" - Unused.
-	//   "PENDING" - The operation has been created.
-	//   "RUNNING" - The operation is currently running.
-	//   "DONE" - The operation is done, either cancelled or completed.
-	State string `json:"state,omitempty"`
-
-	// Status: Output-only Current operation status.
-	Status *OperationStatus `json:"status,omitempty"`
-
-	// StatusHistory: Output-only Previous operation status.
-	StatusHistory []*OperationStatus `json:"statusHistory,omitempty"`
-
-	// Warnings: Output-only Errors encountered during operation execution.
-	Warnings []string `json:"warnings,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "ClusterName") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "ClusterName") to include
-	// in API requests with the JSON null value. By default, fields with
-	// empty values are omitted from API requests. However, any field with
-	// an empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *OperationMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod OperationMetadata
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// OperationStatus: The status of the operation.
-type OperationStatus struct {
-	// Details: A message containing any operation metadata details.
-	Details string `json:"details,omitempty"`
-
-	// InnerState: A message containing the detailed operation state.
-	InnerState string `json:"innerState,omitempty"`
-
-	// State: A message containing the operation state.
-	//
-	// Possible values:
-	//   "UNKNOWN" - Unused.
-	//   "PENDING" - The operation has been created.
-	//   "RUNNING" - The operation is running.
-	//   "DONE" - The operation is done; either cancelled or completed.
-	State string `json:"state,omitempty"`
-
-	// StateStartTime: The time this state was entered.
-	StateStartTime string `json:"stateStartTime,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Details") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Details") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *OperationStatus) MarshalJSON() ([]byte, error) {
-	type noMethod OperationStatus
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // PigJob: A Cloud Dataproc job for running Apache Pig
 // (https://pig.apache.org/) queries on YARN.
 type PigJob struct {
@@ -1741,7 +1623,7 @@ type SoftwareConfig struct {
 	// mapred: mapred-site.xml
 	// pig: pig.properties
 	// spark: spark-defaults.conf
-	// yarn: yarn-site.xml
+	// yarn: yarn-site.xmlFor more information, see Cluster properties.
 	Properties map[string]string `json:"properties,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ImageVersion") to
@@ -1922,8 +1804,8 @@ type Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details. There will
-	// be a common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details. There is a
+	// common set of message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in

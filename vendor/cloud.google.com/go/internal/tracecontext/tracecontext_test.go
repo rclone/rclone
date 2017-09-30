@@ -15,8 +15,9 @@
 package tracecontext
 
 import (
-	"reflect"
 	"testing"
+
+	"cloud.google.com/go/internal/testutil"
 )
 
 var validData = []byte{0, 0, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 1, 97, 98, 99, 100, 101, 102, 103, 104, 2, 1}
@@ -65,7 +66,7 @@ func TestDecode(t *testing.T) {
 	}
 	for _, tt := range tests {
 		gotTraceID, gotSpanID, gotOpts, gotOk := Decode(tt.data)
-		if !reflect.DeepEqual(gotTraceID, tt.wantTraceID) {
+		if !testutil.Equal(gotTraceID, tt.wantTraceID) {
 			t.Errorf("%s: Decode() gotTraceID = %v, want %v", tt.name, gotTraceID, tt.wantTraceID)
 		}
 		if gotSpanID != tt.wantSpanID {
@@ -114,7 +115,7 @@ func TestEncode(t *testing.T) {
 		if gotN != tt.wantN {
 			t.Errorf("%s: n = %v, want %v", tt.name, gotN, tt.wantN)
 		}
-		if gotData := tt.dst; !reflect.DeepEqual(gotData, tt.wantData) {
+		if gotData := tt.dst; !testutil.Equal(gotData, tt.wantData) {
 			t.Errorf("%s: dst = %v, want %v", tt.name, gotData, tt.wantData)
 		}
 	}

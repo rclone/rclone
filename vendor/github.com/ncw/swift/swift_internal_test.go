@@ -576,6 +576,7 @@ func TestApplyEnvironmentAll(t *testing.T) {
 			{1, &c.Domain, "OS_USER_DOMAIN_NAME", "os_user_domain_name", "os_user_domain_name", ""},
 			{1, &c.DomainId, "OS_USER_DOMAIN_ID", "os_user_domain_id", "os_user_domain_id", ""},
 			{1, &c.UserName, "OS_USERNAME", "os_username", "os_username", ""},
+			{1, &c.UserId, "OS_USER_ID", "os_user_id", "os_user_id", ""},
 			{1, &c.ApiKey, "OS_PASSWORD", "os_password", "os_password", ""},
 			{1, &c.AuthUrl, "OS_AUTH_URL", "os_auth_url", "os_auth_url", ""},
 			{1, &c.Retries, "GOSWIFT_RETRIES", "4", 4, ""},

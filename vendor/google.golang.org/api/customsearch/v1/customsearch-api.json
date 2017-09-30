@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/mEVn7ZP7sXAW_2rxSFljK04NT4w\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/vjsLOntBAplI6gHuETouIyrKBJI\"",
  "discoveryVersion": "v1",
  "id": "customsearch:v1",
  "name": "customsearch",
  "version": "v1",
- "revision": "20170530",
+ "revision": "20170615",
  "title": "CustomSearch API",
  "description": "Searches over a website or collection of websites",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/customsearch/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "customsearch/",
- "batchPath": "batch",
+ "batchPath": "batch/customsearch/v1",
  "parameters": {
   "alt": {
    "type": "string",

@@ -13,7 +13,7 @@ type file struct {
 	size    int64
 	files   []*file
 	lastMod time.Time
-	stat_t  interface{}
+	stat    interface{}
 	mode    os.FileMode
 }
 
@@ -23,8 +23,8 @@ func (f file) Mode() (o os.FileMode) {
 	if f.mode != o {
 		return f.mode
 	}
-	if f.stat_t != nil {
-		stat := (f.stat_t).(*syscall.Stat_t)
+	if f.stat != nil {
+		stat := (f.stat).(*syscall.Stat_t)
 		o = os.FileMode(stat.Mode)
 	}
 	return
@@ -32,10 +32,10 @@ func (f file) Mode() (o os.FileMode) {
 func (f file) ModTime() time.Time { return f.lastMod }
 func (f file) IsDir() bool        { return nil != f.files }
 func (f file) Sys() interface{} {
-	if f.stat_t == nil {
+	if f.stat == nil {
 		return new(syscall.Stat_t)
 	}
-	return f.stat_t
+	return f.stat
 }
 
 // Mock filesystem
@@ -99,8 +99,10 @@ var (
 
 type treeTest struct {
 	name     string
-	opts     *Options
-	expected string
+	opts     *Options // test params.
+	expected string   // expected output.
+	dirs     int      // expected dir count.
+	files    int      // expected file count.
 }
 
 var listTests = []treeTest{
@@ -110,60 +112,73 @@ var listTests = []treeTest{
 └── c
     ├── d
     └── e
-`}, {"all", &Options{Fs: fs, OutFile: out, All: true, NoSort: true}, `root
+`, 1, 4},
+	{"all", &Options{Fs: fs, OutFile: out, All: true, NoSort: true}, `root
 ├── a
 ├── b
 └── c
     ├── d
     ├── e
     └── .f
-`}, {"dirs", &Options{Fs: fs, OutFile: out, DirsOnly: true}, `root
+`, 1, 5},
+	{"dirs", &Options{Fs: fs, OutFile: out, DirsOnly: true}, `root
 └── c
-`}, {"fullPath", &Options{Fs: fs, OutFile: out, FullPath: true}, `root
+`, 1, 0},
+	{"fullPath", &Options{Fs: fs, OutFile: out, FullPath: true}, `root
 ├── root/a
 ├── root/b
 └── root/c
     ├── root/c/d
     └── root/c/e
-`}, {"deepLevel", &Options{Fs: fs, OutFile: out, DeepLevel: 1}, `root
+`, 1, 4},
+	{"deepLevel", &Options{Fs: fs, OutFile: out, DeepLevel: 1}, `root
 ├── a
 ├── b
 └── c
-`}, {"pattern", &Options{Fs: fs, OutFile: out, Pattern: "(a|e)"}, `root
+`, 1, 2},
+	{"pattern", &Options{Fs: fs, OutFile: out, Pattern: "(a|e)"}, `root
 ├── a
 └── c
     └── e
-`}, {"ipattern", &Options{Fs: fs, OutFile: out, IPattern: "(a|e)"}, `root
+`, 1, 2},
+	{"ipattern", &Options{Fs: fs, OutFile: out, IPattern: "(a|e)"}, `root
 ├── b
 └── c
     └── d
-`}, {"ignore-case", &Options{Fs: fs, OutFile: out, Pattern: "(A)", IgnoreCase: true}, `root
+`, 1, 2},
+	{"ignore-case", &Options{Fs: fs, OutFile: out, Pattern: "(A)", IgnoreCase: true}, `root
 ├── a
 └── c
-`}}
+`, 1, 1}}
 
-// Tests
 func TestSimple(t *testing.T) {
 	root := &file{
 		name: "root",
 		size: 200,
 		files: []*file{
-			&file{name: "a", size: 50},
-			&file{name: "b", size: 50},
-			&file{
+			{name: "a", size: 50},
+			{name: "b", size: 50},
+			{
 				name: "c",
 				size: 100,
 				files: []*file{
-					&file{name: "d", size: 50},
-					&file{name: "e", size: 50},
-					&file{name: ".f", size: 0},
+					{name: "d", size: 50},
+					{name: "e", size: 50},
+					{name: ".f", size: 0},
 				},
-			}},
+			},
+		},
 	}
 	fs.clean().addFile(root.name, root)
 	for _, test := range listTests {
 		inf := New(root.name)
-		inf.Visit(test.opts)
+		d, f := inf.Visit(test.opts)
+		if d != test.dirs {
+			t.Errorf("wrong dir count for test %q:\ngot:\n%d\nexpected:\n%d", test.name, d, test.dirs)
+		}
+		if f != test.files {
+			t.Errorf("wrong dir count for test %q:\ngot:\n%d\nexpected:\n%d", test.name, d, test.files)
+		}
 		inf.Print(test.opts)
 		if !out.equal(test.expected) {
 			t.Errorf("%s:\ngot:\n%+v\nexpected:\n%+v", test.name, out.str, test.expected)
@@ -178,40 +193,45 @@ var sortTests = []treeTest{
 ├── b
 └── c
     └── d
-`}, {"dirs-first sort", &Options{Fs: fs, OutFile: out, DirSort: true}, `root
+`, 1, 3},
+	{"dirs-first sort", &Options{Fs: fs, OutFile: out, DirSort: true}, `root
 ├── c
 │   └── d
 ├── b
 └── a
-`}, {"reverse sort", &Options{Fs: fs, OutFile: out, ReverSort: true, DirSort: true}, `root
+`, 1, 3},
+	{"reverse sort", &Options{Fs: fs, OutFile: out, ReverSort: true, DirSort: true}, `root
 ├── b
 ├── a
 └── c
     └── d
-`}, {"no-sort", &Options{Fs: fs, OutFile: out, NoSort: true, DirSort: true}, `root
+`, 1, 3},
+	{"no-sort", &Options{Fs: fs, OutFile: out, NoSort: true, DirSort: true}, `root
 ├── b
 ├── c
 │   └── d
 └── a
-`}, {"size-sort", &Options{Fs: fs, OutFile: out, SizeSort: true}, `root
+`, 1, 3},
+	{"size-sort", &Options{Fs: fs, OutFile: out, SizeSort: true}, `root
 ├── a
 ├── c
 │   └── d
 └── b
-`}, {"last-mod-sort", &Options{Fs: fs, OutFile: out, ModSort: true}, `root
+`, 1, 3},
+	{"last-mod-sort", &Options{Fs: fs, OutFile: out, ModSort: true}, `root
 ├── a
 ├── b
 └── c
     └── d
-`}, {"c-time-sort", &Options{Fs: fs, OutFile: out, CTimeSort: true}, `root
+`, 1, 3},
+	{"c-time-sort", &Options{Fs: fs, OutFile: out, CTimeSort: true}, `root
 ├── b
 ├── c
 │   └── d
 └── a
-`}}
+`, 1, 3}}
 
 func TestSort(t *testing.T) {
-
 	tFmt := "2006-Jan-02"
 	aTime, _ := time.Parse(tFmt, "2015-Aug-01")
 	bTime, _ := time.Parse(tFmt, "2015-Sep-01")
@@ -220,11 +240,9 @@ func TestSort(t *testing.T) {
 		name: "root",
 		size: 200,
 		files: []*file{
-			&file{name: "b", size: 11, lastMod: bTime},
-			&file{name: "c", size: 10, files: []*file{
-				&file{name: "d", size: 10, lastMod: cTime},
-			}, lastMod: cTime},
-			&file{name: "a", size: 9, lastMod: aTime},
+			{name: "b", size: 11, lastMod: bTime},
+			{name: "c", size: 10, files: []*file{{name: "d", size: 10, lastMod: cTime}}, lastMod: cTime},
+			{name: "a", size: 9, lastMod: aTime},
 		},
 	}
 	fs.clean().addFile(root.name, root)
@@ -244,31 +262,37 @@ var graphicTests = []treeTest{
 a
 b
 c
-`}, {"quotes", &Options{Fs: fs, OutFile: out, Quotes: true}, `"root"
+`, 0, 3},
+	{"quotes", &Options{Fs: fs, OutFile: out, Quotes: true}, `"root"
 ├── "a"
 ├── "b"
 └── "c"
-`}, {"byte-size", &Options{Fs: fs, OutFile: out, ByteSize: true}, `[      12499]  root
+`, 0, 3},
+	{"byte-size", &Options{Fs: fs, OutFile: out, ByteSize: true}, `[      12499]  root
 ├── [       1500]  a
 ├── [       9999]  b
 └── [       1000]  c
-`}, {"unit-size", &Options{Fs: fs, OutFile: out, UnitSize: true}, `[ 12K]  root
+`, 0, 3},
+	{"unit-size", &Options{Fs: fs, OutFile: out, UnitSize: true}, `[ 12K]  root
 ├── [1.5K]  a
 ├── [9.8K]  b
 └── [1000]  c
-`}, {"show-gid", &Options{Fs: fs, OutFile: out, ShowGid: true}, `root
+`, 0, 3},
+	{"show-gid", &Options{Fs: fs, OutFile: out, ShowGid: true}, `root
 ├── [1   ]  a
 ├── [2   ]  b
 └── [1   ]  c
-`}, {"mode", &Options{Fs: fs, OutFile: out, FileMode: true}, `root
+`, 0, 3},
+	{"mode", &Options{Fs: fs, OutFile: out, FileMode: true}, `root
 ├── [-rw-r--r--]  a
 ├── [-rwxr-xr-x]  b
 └── [-rw-rw-rw-]  c
-`}, {"lastMod", &Options{Fs: fs, OutFile: out, LastMod: true}, `root
+`, 0, 3},
+	{"lastMod", &Options{Fs: fs, OutFile: out, LastMod: true}, `root
 ├── [Feb 11 00:00]  a
 ├── [Jan 28 00:00]  b
 └── [Jul 12 00:00]  c
-`}}
+`, 0, 3}}
 
 func TestGraphics(t *testing.T) {
 	tFmt := "2006-Jan-02"
@@ -279,11 +303,11 @@ func TestGraphics(t *testing.T) {
 		name: "root",
 		size: 11499,
 		files: []*file{
-			&file{name: "a", size: 1500, lastMod: aTime, stat_t: &syscall.Stat_t{Gid: 1, Mode: 0644}},
-			&file{name: "b", size: 9999, lastMod: bTime, stat_t: &syscall.Stat_t{Gid: 2, Mode: 0755}},
-			&file{name: "c", size: 1000, lastMod: cTime, stat_t: &syscall.Stat_t{Gid: 1, Mode: 0666}},
+			{name: "a", size: 1500, lastMod: aTime, stat: &syscall.Stat_t{Gid: 1, Mode: 0644}},
+			{name: "b", size: 9999, lastMod: bTime, stat: &syscall.Stat_t{Gid: 2, Mode: 0755}},
+			{name: "c", size: 1000, lastMod: cTime, stat: &syscall.Stat_t{Gid: 1, Mode: 0666}},
 		},
-		stat_t: &syscall.Stat_t{Gid: 1},
+		stat: &syscall.Stat_t{Gid: 1},
 	}
 	fs.clean().addFile(root.name, root)
 	for _, test := range graphicTests {
@@ -300,9 +324,10 @@ func TestGraphics(t *testing.T) {
 var symlinkTests = []treeTest{
 	{"symlink", &Options{Fs: fs, OutFile: out}, `root
 └── symlink -> root/symlink
-`}, {"symlink-rec", &Options{Fs: fs, OutFile: out, FollowLink: true}, `root
+`, 0, 1},
+	{"symlink-rec", &Options{Fs: fs, OutFile: out, FollowLink: true}, `root
 └── symlink -> root/symlink [recursive, not followed]
-`}}
+`, 0, 1}}
 
 func TestSymlink(t *testing.T) {
 	root := &file{
@@ -320,5 +345,54 @@ func TestSymlink(t *testing.T) {
 			t.Errorf("%s:\ngot:\n%+v\nexpected:\n%+v", test.name, out.str, test.expected)
 		}
 		out.clear()
+	}
+}
+
+func TestCount(t *testing.T) {
+	defer out.clear()
+	root := &file{
+		name: "root",
+		files: []*file{
+			&file{
+				name: "a",
+				files: []*file{
+					{
+						name:  "b",
+						files: []*file{{name: "c"}},
+					},
+					{
+						name: "d",
+						files: []*file{
+							{
+								name:  "e",
+								files: []*file{{name: "f"}, {name: "g"}},
+							},
+						},
+					},
+					{
+						name: "h",
+						files: []*file{
+							{
+								name:  "i",
+								files: []*file{{name: "j"}},
+							},
+							{
+								name:  "k",
+								files: []*file{{name: "l"}, {name: "m"}},
+							},
+							{name: "n"},
+							{name: "o"},
+						},
+					},
+				},
+			}},
+	}
+	fs.clean().addFile(root.name, root)
+	opt := &Options{Fs: fs, OutFile: out}
+	inf := New(root.name)
+	d, f := inf.Visit(opt)
+	if d != 7 || f != 8 {
+		inf.Print(opt)
+		t.Errorf("TestCount - expect (dir, file) count to be equal to (7, 8)\n%s", out.str)
 	}
 }

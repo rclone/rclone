@@ -446,6 +446,15 @@ type BuiltInVariable struct {
 	//   "referrer"
 	//   "resolution"
 	//   "sdkVersion"
+	//   "videoCurrentTime"
+	//   "videoDuration"
+	//   "videoElapsedTime"
+	//   "videoPercent"
+	//   "videoProvider"
+	//   "videoStatus"
+	//   "videoTitle"
+	//   "videoUrl"
+	//   "videoVisible"
 	Type string `json:"type,omitempty"`
 
 	// WorkspaceId: GTM Workspace ID.
@@ -697,6 +706,9 @@ type ContainerVersion struct {
 	// from.
 	Variable []*Variable `json:"variable,omitempty"`
 
+	// Zone: The zones in the container that this version was taken from.
+	Zone []*Zone `json:"zone,omitempty"`
+
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
@@ -758,6 +770,9 @@ type ContainerVersionHeader struct {
 
 	// NumVariables: Number of variables in the container version.
 	NumVariables string `json:"numVariables,omitempty"`
+
+	// NumZones: Number of zones in the container version.
+	NumZones string `json:"numZones,omitempty"`
 
 	// Path: GTM Container Versions's API relative path.
 	Path string `json:"path,omitempty"`
@@ -2391,6 +2406,9 @@ type Trigger struct {
 	// Notes: User notes on how to apply this trigger in the container.
 	Notes string `json:"notes,omitempty"`
 
+	// Parameter: Additional parameters.
+	Parameter []*Parameter `json:"parameter,omitempty"`
+
 	// ParentFolderId: Parent folder id.
 	ParentFolderId string `json:"parentFolderId,omitempty"`
 
@@ -2442,6 +2460,7 @@ type Trigger struct {
 	//   "pageview"
 	//   "timer"
 	//   "windowLoaded"
+	//   "youTubeVideo"
 	Type string `json:"type,omitempty"`
 
 	// UniqueTriggerId: Globally unique id of the trigger that
@@ -2966,6 +2985,164 @@ type WorkspaceProposalUser struct {
 
 func (s *WorkspaceProposalUser) MarshalJSON() ([]byte, error) {
 	type noMethod WorkspaceProposalUser
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Zone: Represents a Google Tag Manager Zone's contents.
+type Zone struct {
+	// AccountId: GTM Account ID.
+	AccountId string `json:"accountId,omitempty"`
+
+	// Boundary: This Zone's boundary.
+	Boundary *ZoneBoundary `json:"boundary,omitempty"`
+
+	// ChildContainer: Containers that are children of this Zone.
+	ChildContainer []*ZoneChildContainer `json:"childContainer,omitempty"`
+
+	// ContainerId: GTM Container ID.
+	ContainerId string `json:"containerId,omitempty"`
+
+	// Fingerprint: The fingerprint of the GTM Zone as computed at storage
+	// time. This value is recomputed whenever the zone is modified.
+	Fingerprint string `json:"fingerprint,omitempty"`
+
+	// Name: Zone display name.
+	Name string `json:"name,omitempty"`
+
+	// Notes: User notes on how to apply this zone in the container.
+	Notes string `json:"notes,omitempty"`
+
+	// Path: GTM Zone's API relative path.
+	Path string `json:"path,omitempty"`
+
+	// TagManagerUrl: Auto generated link to the tag manager UI
+	TagManagerUrl string `json:"tagManagerUrl,omitempty"`
+
+	// TypeRestriction: This Zone's type restrictions.
+	TypeRestriction *ZoneTypeRestriction `json:"typeRestriction,omitempty"`
+
+	// WorkspaceId: GTM Workspace ID.
+	WorkspaceId string `json:"workspaceId,omitempty"`
+
+	// ZoneId: The Zone ID uniquely identifies the GTM Zone.
+	ZoneId string `json:"zoneId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AccountId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AccountId") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Zone) MarshalJSON() ([]byte, error) {
+	type noMethod Zone
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ZoneBoundary: Represents a Zone's boundaries.
+type ZoneBoundary struct {
+	// Condition: The conditions that, when conjoined, make up the boundary.
+	Condition []*Condition `json:"condition,omitempty"`
+
+	// CustomEvaluationTriggerId: Custom evaluation trigger IDs. A zone will
+	// evaluate its boundary conditions when any of the listed triggers are
+	// true.
+	CustomEvaluationTriggerId []string `json:"customEvaluationTriggerId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Condition") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Condition") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ZoneBoundary) MarshalJSON() ([]byte, error) {
+	type noMethod ZoneBoundary
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ZoneChildContainer: Represents a child container of a Zone.
+type ZoneChildContainer struct {
+	// Nickname: The zone's nickname for the child container.
+	Nickname string `json:"nickname,omitempty"`
+
+	// PublicId: The child container's public id.
+	PublicId string `json:"publicId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Nickname") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Nickname") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ZoneChildContainer) MarshalJSON() ([]byte, error) {
+	type noMethod ZoneChildContainer
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ZoneTypeRestriction: Represents a Zone's type restrictions.
+type ZoneTypeRestriction struct {
+	// Enable: True if type restrictions have been enabled for this Zone.
+	Enable bool `json:"enable,omitempty"`
+
+	// WhitelistedTypeId: List of type public ids that have been whitelisted
+	// for use in this Zone.
+	WhitelistedTypeId []string `json:"whitelistedTypeId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Enable") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Enable") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ZoneTypeRestriction) MarshalJSON() ([]byte, error) {
+	type noMethod ZoneTypeRestriction
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -7993,6 +8170,15 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Create(parent stri
 //   "referrer"
 //   "resolution"
 //   "sdkVersion"
+//   "videoCurrentTime"
+//   "videoDuration"
+//   "videoElapsedTime"
+//   "videoPercent"
+//   "videoProvider"
+//   "videoStatus"
+//   "videoTitle"
+//   "videoUrl"
+//   "videoVisible"
 func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) Type(type_ ...string) *AccountsContainersWorkspacesBuiltInVariablesCreateCall {
 	c.urlParams_.SetMulti("type", append([]string{}, type_...))
 	return c
@@ -8182,9 +8368,27 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesCreateCall) Do(opts ...goog
 	//         "randomNumber",
 	//         "referrer",
 	//         "resolution",
-	//         "sdkVersion"
+	//         "sdkVersion",
+	//         "videoCurrentTime",
+	//         "videoDuration",
+	//         "videoElapsedTime",
+	//         "videoPercent",
+	//         "videoProvider",
+	//         "videoStatus",
+	//         "videoTitle",
+	//         "videoUrl",
+	//         "videoVisible"
 	//       ],
 	//       "enumDescriptions": [
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
 	//         "",
 	//         "",
 	//         "",
@@ -8399,6 +8603,15 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Delete(path string
 //   "referrer"
 //   "resolution"
 //   "sdkVersion"
+//   "videoCurrentTime"
+//   "videoDuration"
+//   "videoElapsedTime"
+//   "videoPercent"
+//   "videoProvider"
+//   "videoStatus"
+//   "videoTitle"
+//   "videoUrl"
+//   "videoVisible"
 func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) Type(type_ ...string) *AccountsContainersWorkspacesBuiltInVariablesDeleteCall {
 	c.urlParams_.SetMulti("type", append([]string{}, type_...))
 	return c
@@ -8563,9 +8776,27 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesDeleteCall) Do(opts ...goog
 	//         "randomNumber",
 	//         "referrer",
 	//         "resolution",
-	//         "sdkVersion"
+	//         "sdkVersion",
+	//         "videoCurrentTime",
+	//         "videoDuration",
+	//         "videoElapsedTime",
+	//         "videoPercent",
+	//         "videoProvider",
+	//         "videoStatus",
+	//         "videoTitle",
+	//         "videoUrl",
+	//         "videoVisible"
 	//       ],
 	//       "enumDescriptions": [
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
 	//         "",
 	//         "",
 	//         "",
@@ -8950,6 +9181,15 @@ func (r *AccountsContainersWorkspacesBuiltInVariablesService) Revert(path string
 //   "referrer"
 //   "resolution"
 //   "sdkVersion"
+//   "videoCurrentTime"
+//   "videoDuration"
+//   "videoElapsedTime"
+//   "videoPercent"
+//   "videoProvider"
+//   "videoStatus"
+//   "videoTitle"
+//   "videoUrl"
+//   "videoVisible"
 func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) Type(type_ string) *AccountsContainersWorkspacesBuiltInVariablesRevertCall {
 	c.urlParams_.Set("type", type_)
 	return c
@@ -9139,9 +9379,27 @@ func (c *AccountsContainersWorkspacesBuiltInVariablesRevertCall) Do(opts ...goog
 	//         "randomNumber",
 	//         "referrer",
 	//         "resolution",
-	//         "sdkVersion"
+	//         "sdkVersion",
+	//         "videoCurrentTime",
+	//         "videoDuration",
+	//         "videoElapsedTime",
+	//         "videoPercent",
+	//         "videoProvider",
+	//         "videoStatus",
+	//         "videoTitle",
+	//         "videoUrl",
+	//         "videoVisible"
 	//       ],
 	//       "enumDescriptions": [
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
+	//         "",
 	//         "",
 	//         "",
 	//         "",

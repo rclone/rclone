@@ -67,7 +67,7 @@ type ServerConfig struct {
 	PasswordCallback func(conn ConnMetadata, password []byte) (*Permissions, error)
 
 	// PublicKeyCallback, if non-nil, is called when a client
-	// offers a public key for authentication. It must return true
+	// offers a public key for authentication. It must return a nil error
 	// if the given public key can be used to authenticate the
 	// given user. For example, see CertChecker.Authenticate. A
 	// call to this function does not guarantee that the key

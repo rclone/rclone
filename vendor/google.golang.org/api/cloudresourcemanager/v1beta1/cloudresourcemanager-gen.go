@@ -997,7 +997,8 @@ type ResourceId struct {
 
 	// Type: Required field representing the resource type this id is
 	// for.
-	// At present, the valid types are "project" and "organization".
+	// At present, the valid types are "project", "folder", and
+	// "organization".
 	Type string `json:"type,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Id") to

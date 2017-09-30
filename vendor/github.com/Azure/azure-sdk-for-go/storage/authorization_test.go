@@ -1,5 +1,19 @@
 package storage
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"encoding/base64"
 	"net/http"
@@ -60,26 +74,41 @@ func (a *AuthorizationSuite) Test_buildCanonicalizedResource(c *chk.C) {
 		url      string
 		auth     authentication
 		expected string
+		sas      bool
 	}
 	tests := []test{
 		// Shared Key
-		{"https://golangrocksonazure.blob.core.windows.net/path?a=b&c=d", sharedKey, "/golangrocksonazure/path\na:b\nc:d"},
-		{"https://golangrocksonazure.blob.core.windows.net/?comp=list", sharedKey, "/golangrocksonazure/\ncomp:list"},
-		{"https://golangrocksonazure.blob.core.windows.net/cnt/blob", sharedKey, "/golangrocksonazure/cnt/blob"},
-		{"https://golangrocksonazure.blob.core.windows.net/cnt/bl ob", sharedKey, "/golangrocksonazure/cnt/bl%20ob"},
-		{"https://golangrocksonazure.blob.core.windows.net/c nt/blob", sharedKey, "/golangrocksonazure/c%20nt/blob"},
-		{"https://golangrocksonazure.blob.core.windows.net/cnt/blob%3F%23%5B%5D%21$&%27%28%29%2A blob", sharedKey, "/golangrocksonazure/cnt/blob%3F%23%5B%5D%21$&%27%28%29%2A%20blob"},
-		{"https://golangrocksonazure.blob.core.windows.net/cnt/blob-._~:,@;+=blob", sharedKey, "/golangrocksonazure/cnt/blob-._~:,@;+=blob"},
-		{"https://golangrocksonazure.blob.core.windows.net/c nt/blob-._~:%3F%23%5B%5D@%21$&%27%28%29%2A,;+=/blob", sharedKey, "/golangrocksonazure/c%20nt/blob-._~:%3F%23%5B%5D@%21$&%27%28%29%2A,;+=/blob"},
+		{"https://golangrocksonazure.blob.core.windows.net/path?a=b&c=d", sharedKey, "/golangrocksonazure/path\na:b\nc:d", false},
+		{"https://golangrocksonazure.blob.core.windows.net/?comp=list", sharedKey, "/golangrocksonazure/\ncomp:list", false},
+		{"https://golangrocksonazure.blob.core.windows.net/cnt/blob", sharedKey, "/golangrocksonazure/cnt/blob", false},
+		{"https://golangrocksonazure.blob.core.windows.net/cnt/bl ob", sharedKey, "/golangrocksonazure/cnt/bl%20ob", false},
+		{"https://golangrocksonazure.blob.core.windows.net/c nt/blob", sharedKey, "/golangrocksonazure/c%20nt/blob", false},
+		{"https://golangrocksonazure.blob.core.windows.net/cnt/blob%3F%23%5B%5D%21$&%27%28%29%2A blob", sharedKey, "/golangrocksonazure/cnt/blob%3F%23%5B%5D%21$&%27%28%29%2A%20blob", false},
+		{"https://golangrocksonazure.blob.core.windows.net/cnt/blob-._~:,@;+=blob", sharedKey, "/golangrocksonazure/cnt/blob-._~:,@;+=blob", false},
+		{"https://golangrocksonazure.blob.core.windows.net/c nt/blob-._~:%3F%23%5B%5D@%21$&%27%28%29%2A,;+=/blob", sharedKey, "/golangrocksonazure/c%20nt/blob-._~:%3F%23%5B%5D@%21$&%27%28%29%2A,;+=/blob", false},
 		// Shared Key Lite for Table
-		{"https://golangrocksonazure.table.core.windows.net/mytable", sharedKeyLiteForTable, "/golangrocksonazure/mytable"},
-		{"https://golangrocksonazure.table.core.windows.net/mytable?comp=acl", sharedKeyLiteForTable, "/golangrocksonazure/mytable?comp=acl"},
-		{"https://golangrocksonazure.table.core.windows.net/mytable?comp=acl&timeout=10", sharedKeyForTable, "/golangrocksonazure/mytable?comp=acl"},
-		{"https://golangrocksonazure.table.core.windows.net/mytable(PartitionKey='pkey',RowKey='rowkey%3D')", sharedKeyForTable, "/golangrocksonazure/mytable(PartitionKey='pkey',RowKey='rowkey%3D')"},
+		{"https://golangrocksonazure.table.core.windows.net/mytable", sharedKeyLiteForTable, "/golangrocksonazure/mytable", false},
+		{"https://golangrocksonazure.table.core.windows.net/mytable?comp=acl", sharedKeyLiteForTable, "/golangrocksonazure/mytable?comp=acl", false},
+		{"https://golangrocksonazure.table.core.windows.net/mytable?comp=acl&timeout=10", sharedKeyForTable, "/golangrocksonazure/mytable?comp=acl", false},
+		{"https://golangrocksonazure.table.core.windows.net/mytable(PartitionKey='pkey',RowKey='rowkey%3D')", sharedKeyForTable, "/golangrocksonazure/mytable(PartitionKey='pkey',RowKey='rowkey%3D')", false},
+		// Canonicalized Resource with SAS
+		{"https://golangrocksonazure.blob.core.windows.net/cnt/blob", sharedKey, "/golangrocksonazure/cnt/blob", true},
 	}
 
 	for _, t := range tests {
-		out, err := cli.buildCanonicalizedResource(t.url, t.auth)
+		out, err := cli.buildCanonicalizedResource(t.url, t.auth, t.sas)
+		c.Assert(err, chk.IsNil)
+		c.Assert(out, chk.Equals, t.expected)
+	}
+
+	eCli, err := NewEmulatorClient()
+	c.Assert(err, chk.IsNil)
+	eTests := []test{
+		{"http://127.0.0.1:10000/devstoreaccount1/cnt/blob", sharedKey, "/devstoreaccount1/cnt/blob", true},
+		{"http://127.0.0.1:10000/devstoreaccount1/cnt/blob", sharedKey, "/devstoreaccount1/devstoreaccount1/cnt/blob", false},
+	}
+	for _, t := range eTests {
+		out, err := eCli.buildCanonicalizedResource(t.url, t.auth, t.sas)
 		c.Assert(err, chk.IsNil)
 		c.Assert(out, chk.Equals, t.expected)
 	}

@@ -566,9 +566,10 @@ func (s *GoogleServiceAccount) MarshalJSON() ([]byte, error) {
 //
 // For an example of a valid TSV file, see
 // [Transferring data from
-// URLs](https://cloud.google.com/storage/transfer/#urls)
+// URLs](https://cloud.google.com/storage/transfer/create-url-list).
 //
-// When transferring data based on a URL list, keep the following in
+// Whe
+// n transferring data based on a URL list, keep the following in
 // mind:
 //
 // * When an object located at `http(s)://hostname:port/<URL-path>` is
@@ -819,8 +820,8 @@ func (s *ObjectConditions) MarshalJSON() ([]byte, error) {
 type Operation struct {
 	// Done: If the value is `false`, it means the operation is still in
 	// progress.
-	// If true, the operation is completed, and either `error` or `response`
-	// is
+	// If `true`, the operation is completed, and either `error` or
+	// `response` is
 	// available.
 	Done bool `json:"done,omitempty"`
 
@@ -1031,9 +1032,9 @@ type Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details.  There will
-	// be a
-	// common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details.  There is a
+	// common set of
+	// message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
@@ -1236,11 +1237,9 @@ type TransferJob struct {
 
 	// ProjectId: The ID of the Google Cloud Platform Console project that
 	// owns the job.
-	// Required.
 	ProjectId string `json:"projectId,omitempty"`
 
 	// Schedule: Schedule specification.
-	// Required.
 	Schedule *Schedule `json:"schedule,omitempty"`
 
 	// Status: Status of the job. This value MUST be specified
@@ -1266,7 +1265,6 @@ type TransferJob struct {
 	Status string `json:"status,omitempty"`
 
 	// TransferSpec: Transfer specification.
-	// Required.
 	TransferSpec *TransferSpec `json:"transferSpec,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1468,7 +1466,13 @@ type UpdateTransferJobRequest struct {
 	// Required.
 	ProjectId string `json:"projectId,omitempty"`
 
-	// TransferJob: The job to update.
+	// TransferJob: The job to update. `transferJob` is expected to specify
+	// only three fields:
+	// `description`, `transferSpec`, and `status`.  An
+	// UpdateTransferJobRequest
+	// that specifies other fields will be rejected with an
+	// error
+	// `INVALID_ARGUMENT`.
 	// Required.
 	TransferJob *TransferJob `json:"transferJob,omitempty"`
 

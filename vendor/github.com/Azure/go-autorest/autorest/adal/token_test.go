@@ -17,6 +17,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/mocks"
 )
 
@@ -124,6 +125,44 @@ func TestServicePrincipalTokenRefreshUsesPOST(t *testing.T) {
 		})())
 	spt.SetSender(s)
 	err := spt.Refresh()
+	if err != nil {
+		t.Fatalf("adal: ServicePrincipalToken#Refresh returned an unexpected error (%v)", err)
+	}
+
+	if body.IsOpen() {
+		t.Fatalf("the response was not closed!")
+	}
+}
+
+func TestServicePrincipalTokenFromMSIRefreshUsesPOST(t *testing.T) {
+	resource := "https://resource"
+	cb := func(token Token) error { return nil }
+
+	spt, err := NewServicePrincipalTokenFromMSI("http://msiendpoint/", resource, cb)
+	if err != nil {
+		t.Fatalf("Failed to get MSI SPT: %v", err)
+	}
+
+	body := mocks.NewBody(newTokenJSON("test", "test"))
+	resp := mocks.NewResponseWithBodyAndStatus(body, http.StatusOK, "OK")
+
+	c := mocks.NewSender()
+	s := DecorateSender(c,
+		(func() SendDecorator {
+			return func(s Sender) Sender {
+				return SenderFunc(func(r *http.Request) (*http.Response, error) {
+					if r.Method != "POST" {
+						t.Fatalf("adal: ServicePrincipalToken#Refresh did not correctly set HTTP method -- expected %v, received %v", "POST", r.Method)
+					}
+					if h := r.Header.Get("Metadata"); h != "true" {
+						t.Fatalf("adal: ServicePrincipalToken#Refresh did not correctly set Metadata header for MSI")
+					}
+					return resp, nil
+				})
+			}
+		})())
+	spt.SetSender(s)
+	err = spt.Refresh()
 	if err != nil {
 		t.Fatalf("adal: ServicePrincipalToken#Refresh returned an unexpected error (%v)", err)
 	}
@@ -342,7 +381,7 @@ func TestServicePrincipalTokenRefreshReturnsErrorIfNotOk(t *testing.T) {
 func TestServicePrincipalTokenRefreshUnmarshals(t *testing.T) {
 	spt := newServicePrincipalToken()
 
-	expiresOn := strconv.Itoa(int(time.Now().Add(3600 * time.Second).Sub(expirationBase).Seconds()))
+	expiresOn := strconv.Itoa(int(time.Now().Add(3600 * time.Second).Sub(date.UnixEpoch()).Seconds()))
 	j := newTokenJSON(expiresOn, "resource")
 	resp := mocks.NewResponseWithContent(j)
 	c := mocks.NewSender()
@@ -430,7 +469,7 @@ func TestRefreshCallback(t *testing.T) {
 		return nil
 	})
 
-	expiresOn := strconv.Itoa(int(time.Now().Add(3600 * time.Second).Sub(expirationBase).Seconds()))
+	expiresOn := strconv.Itoa(int(time.Now().Add(3600 * time.Second).Sub(date.UnixEpoch()).Seconds()))
 
 	sender := mocks.NewSender()
 	j := newTokenJSON(expiresOn, "resource")
@@ -451,7 +490,7 @@ func TestRefreshCallbackErrorPropagates(t *testing.T) {
 		return fmt.Errorf(errorText)
 	})
 
-	expiresOn := strconv.Itoa(int(time.Now().Add(3600 * time.Second).Sub(expirationBase).Seconds()))
+	expiresOn := strconv.Itoa(int(time.Now().Add(3600 * time.Second).Sub(date.UnixEpoch()).Seconds()))
 
 	sender := mocks.NewSender()
 	j := newTokenJSON(expiresOn, "resource")
@@ -476,32 +515,9 @@ func TestServicePrincipalTokenManualRefreshFailsWithoutRefresh(t *testing.T) {
 
 func TestNewServicePrincipalTokenFromMSI(t *testing.T) {
 	resource := "https://resource"
-
 	cb := func(token Token) error { return nil }
-	tempSettingsFile, err := ioutil.TempFile("", "ManagedIdentity-Settings")
-	if err != nil {
-		t.Fatal("Couldn't write temp settings file")
-	}
-	defer os.Remove(tempSettingsFile.Name())
 
-	settingsContents := []byte(`{
-		"url": "http://msiendpoint/"
-	}`)
-
-	if _, err := tempSettingsFile.Write(settingsContents); err != nil {
-		t.Fatal("Couldn't fill temp settings file")
-	}
-
-	oauthConfig, err := NewOAuthConfig("http://adendpoint", "1-2-3-4")
-	if err != nil {
-		t.Fatal("Failed to construct oauthconfig")
-	}
-
-	spt, err := newServicePrincipalTokenFromMSI(
-		*oauthConfig,
-		resource,
-		tempSettingsFile.Name(),
-		cb)
+	spt, err := NewServicePrincipalTokenFromMSI("http://msiendpoint/", resource, cb)
 	if err != nil {
 		t.Fatalf("Failed to get MSI SPT: %v", err)
 	}
@@ -517,6 +533,31 @@ func TestNewServicePrincipalTokenFromMSI(t *testing.T) {
 
 	if len(spt.refreshCallbacks) != 1 {
 		t.Fatal("SPT had incorrect refresh callbacks.")
+	}
+}
+
+func TestGetVMEndpoint(t *testing.T) {
+	tempSettingsFile, err := ioutil.TempFile("", "ManagedIdentity-Settings")
+	if err != nil {
+		t.Fatal("Couldn't write temp settings file")
+	}
+	defer os.Remove(tempSettingsFile.Name())
+
+	settingsContents := []byte(`{
+		"url": "http://msiendpoint/"
+	}`)
+
+	if _, err := tempSettingsFile.Write(settingsContents); err != nil {
+		t.Fatal("Couldn't fill temp settings file")
+	}
+
+	endpoint, err := getMSIVMEndpoint(tempSettingsFile.Name())
+	if err != nil {
+		t.Fatal("Coudn't get VM endpoint")
+	}
+
+	if endpoint != "http://msiendpoint/" {
+		t.Fatal("Didn't get correct endpoint")
 	}
 }
 
@@ -554,7 +595,7 @@ func expireToken(t *Token) *Token {
 
 func setTokenToExpireAt(t *Token, expireAt time.Time) *Token {
 	t.ExpiresIn = "3600"
-	t.ExpiresOn = strconv.Itoa(int(expireAt.Sub(expirationBase).Seconds()))
+	t.ExpiresOn = strconv.Itoa(int(expireAt.Sub(date.UnixEpoch()).Seconds()))
 	t.NotBefore = t.ExpiresOn
 	return t
 }

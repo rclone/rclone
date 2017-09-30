@@ -56,6 +56,10 @@
   },
   "shapes":{
     "Accept":{"type":"string"},
+    "AttributesString":{
+      "type":"string",
+      "sensitive":true
+    },
     "BadGatewayException":{
       "type":"structure",
       "members":{
@@ -215,10 +219,16 @@
           "locationName":"userId"
         },
         "sessionAttributes":{
-          "shape":"String",
+          "shape":"AttributesString",
           "jsonvalue":true,
           "location":"header",
           "locationName":"x-amz-lex-session-attributes"
+        },
+        "requestAttributes":{
+          "shape":"AttributesString",
+          "jsonvalue":true,
+          "location":"header",
+          "locationName":"x-amz-lex-request-attributes"
         },
         "contentType":{
           "shape":"HttpContentType",
@@ -308,6 +318,7 @@
           "locationName":"userId"
         },
         "sessionAttributes":{"shape":"StringMap"},
+        "requestAttributes":{"shape":"StringMap"},
         "inputText":{"shape":"Text"}
       }
     },
@@ -343,7 +354,8 @@
     "StringMap":{
       "type":"map",
       "key":{"shape":"String"},
-      "value":{"shape":"String"}
+      "value":{"shape":"String"},
+      "sensitive":true
     },
     "StringUrlWithLength":{
       "type":"string",
@@ -358,7 +370,8 @@
     "Text":{
       "type":"string",
       "max":1024,
-      "min":1
+      "min":1,
+      "sensitive":true
     },
     "UnsupportedMediaTypeException":{
       "type":"structure",

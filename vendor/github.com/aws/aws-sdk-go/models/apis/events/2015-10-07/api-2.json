@@ -134,7 +134,8 @@
       "errors":[
         {"shape":"ResourceNotFoundException"},
         {"shape":"PolicyLengthExceededException"},
-        {"shape":"InternalException"}
+        {"shape":"InternalException"},
+        {"shape":"ConcurrentModificationException"}
       ]
     },
     "PutRule":{
@@ -176,7 +177,8 @@
       "input":{"shape":"RemovePermissionRequest"},
       "errors":[
         {"shape":"ResourceNotFoundException"},
-        {"shape":"InternalException"}
+        {"shape":"InternalException"},
+        {"shape":"ConcurrentModificationException"}
       ]
     },
     "RemoveTargets":{

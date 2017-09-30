@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/p-RysYnjE2Jp5kxjC09O1FcghzI\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/3Wqk_k4XWB3JARQsnkZ477HngjY\"",
  "discoveryVersion": "v1",
  "id": "dfareporting:v2.7",
  "name": "dfareporting",
  "version": "v2.7",
- "revision": "20170428",
+ "revision": "20170818",
  "title": "DCM/DFA Reporting And Trafficking API",
  "description": "Manages your DoubleClick Campaign Manager ad campaigns and reports.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/dfareporting/v2.7/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "dfareporting/v2.7/",
- "batchPath": "batch",
+ "batchPath": "batch/dfareporting/v2.7",
  "parameters": {
   "alt": {
    "type": "string",
@@ -2229,7 +2229,7 @@
     },
     "htmlCode": {
      "type": "string",
-     "description": "HTML code for the creative. This is a required field when applicable. This field is ignored if htmlCodeLocked is false. Applicable to the following creative types: all CUSTOM, FLASH_INPAGE, and HTML5_BANNER, and all RICH_MEDIA."
+     "description": "HTML code for the creative. This is a required field when applicable. This field is ignored if htmlCodeLocked is true. Applicable to the following creative types: all CUSTOM, FLASH_INPAGE, and HTML5_BANNER, and all RICH_MEDIA."
     },
     "htmlCodeLocked": {
      "type": "boolean",
@@ -4569,7 +4569,7 @@
     },
     "videoActiveViewOptOut": {
      "type": "boolean",
-     "description": "Whether this directory site has disabled active view for in-stream video creatives."
+     "description": "Whether this directory site has disabled active view for in-stream video creatives. This is a read-only field."
     }
    }
   },
@@ -5200,7 +5200,7 @@
     },
     "userDefinedVariableTypes": {
      "type": "array",
-     "description": "List of the user-defined variables used by this conversion tag. These map to the \"u[1-20]=\" in the tags. Each of these can have a user defined type.\nAcceptable values are:\n- \"U1\"\n- \"U2\"\n- \"U3\"\n- \"U4\"\n- \"U5\"\n- \"U6\"\n- \"U7\"\n- \"U8\"\n- \"U9\"\n- \"U10\"\n- \"U11\"\n- \"U12\"\n- \"U13\"\n- \"U14\"\n- \"U15\"\n- \"U16\"\n- \"U17\"\n- \"U18\"\n- \"U19\"\n- \"U20\"",
+     "description": "List of the user-defined variables used by this conversion tag. These map to the \"u[1-100]=\" in the tags. Each of these can have a user defined type.\nAcceptable values are U1 to U100, inclusive.",
      "items": {
       "type": "string",
       "enum": [
@@ -7125,7 +7125,7 @@
     },
     "vpaidAdapterChoice": {
      "type": "string",
-     "description": "VPAID adapter setting for this placement. Controls which VPAID format the measurement adapter will use for in-stream video creatives assigned to this placement.",
+     "description": "VPAID adapter setting for this placement. Controls which VPAID format the measurement adapter will use for in-stream video creatives assigned to this placement.\n\nNote: Flash is no longer supported. This field now defaults to HTML5 when the following values are provided: FLASH, BOTH.",
      "enum": [
       "BOTH",
       "DEFAULT",
@@ -9017,7 +9017,7 @@
     },
     "vpaidAdapterChoiceTemplate": {
      "type": "string",
-     "description": "Default VPAID adapter setting for new placements created under this site. This value will be used to populate the placements.vpaidAdapterChoice field, when no value is specified for the new placement. Controls which VPAID format the measurement adapter will use for in-stream video creatives assigned to the placement. The publisher's specifications will typically determine this setting. For VPAID creatives, the adapter format will match the VPAID format (HTML5 VPAID creatives use the HTML5 adapter, and Flash VPAID creatives use the Flash adapter).",
+     "description": "Default VPAID adapter setting for new placements created under this site. This value will be used to populate the placements.vpaidAdapterChoice field, when no value is specified for the new placement. Controls which VPAID format the measurement adapter will use for in-stream video creatives assigned to the placement. The publisher's specifications will typically determine this setting. For VPAID creatives, the adapter format will match the VPAID format (HTML5 VPAID creatives use the HTML5 adapter).\n\nNote: Flash is no longer supported. This field now defaults to HTML5 when the following values are provided: FLASH, BOTH.",
      "enum": [
       "BOTH",
       "DEFAULT",
@@ -16824,7 +16824,7 @@
       },
       "tagFormats": {
        "type": "string",
-       "description": "Tag formats to generate for these placements.",
+       "description": "Tag formats to generate for these placements.\n\nNote: PLACEMENT_TAG_STANDARD can only be generated for 1x1 placements.",
        "enum": [
         "PLACEMENT_TAG_CLICK_COMMANDS",
         "PLACEMENT_TAG_IFRAME_ILAYER",

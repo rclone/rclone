@@ -58,6 +58,12 @@ const (
 	// in the Amazon Kinesis Streams API Reference.
 	ErrCodeResourceProvisionedThroughputExceededException = "ResourceProvisionedThroughputExceededException"
 
+	// ErrCodeServiceUnavailableException for service response error code
+	// "ServiceUnavailableException".
+	//
+	// The service is unavailable, back off and retry the operation.
+	ErrCodeServiceUnavailableException = "ServiceUnavailableException"
+
 	// ErrCodeUnableToDetectSchemaException for service response error code
 	// "UnableToDetectSchemaException".
 	//

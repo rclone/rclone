@@ -111,6 +111,7 @@ When the .proto file specifies `syntax="proto3"`, there are some differences:
 Consider file test.proto, containing
 
 ```proto
+	syntax = "proto2";
 	package example;
 	
 	enum FOO { X = 17; };

@@ -15,19 +15,18 @@ const opAcceptPortfolioShare = "AcceptPortfolioShare"
 
 // AcceptPortfolioShareRequest generates a "aws/request.Request" representing the
 // client's request for the AcceptPortfolioShare operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AcceptPortfolioShare for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AcceptPortfolioShare method directly
-// instead.
+// See AcceptPortfolioShare for more information on using the AcceptPortfolioShare
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AcceptPortfolioShareRequest method.
 //    req, resp := client.AcceptPortfolioShareRequest(params)
@@ -102,19 +101,18 @@ const opAssociatePrincipalWithPortfolio = "AssociatePrincipalWithPortfolio"
 
 // AssociatePrincipalWithPortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the AssociatePrincipalWithPortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AssociatePrincipalWithPortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AssociatePrincipalWithPortfolio method directly
-// instead.
+// See AssociatePrincipalWithPortfolio for more information on using the AssociatePrincipalWithPortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AssociatePrincipalWithPortfolioRequest method.
 //    req, resp := client.AssociatePrincipalWithPortfolioRequest(params)
@@ -189,19 +187,18 @@ const opAssociateProductWithPortfolio = "AssociateProductWithPortfolio"
 
 // AssociateProductWithPortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateProductWithPortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AssociateProductWithPortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AssociateProductWithPortfolio method directly
-// instead.
+// See AssociateProductWithPortfolio for more information on using the AssociateProductWithPortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AssociateProductWithPortfolioRequest method.
 //    req, resp := client.AssociateProductWithPortfolioRequest(params)
@@ -276,19 +273,18 @@ const opAssociateTagOptionWithResource = "AssociateTagOptionWithResource"
 
 // AssociateTagOptionWithResourceRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateTagOptionWithResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AssociateTagOptionWithResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AssociateTagOptionWithResource method directly
-// instead.
+// See AssociateTagOptionWithResource for more information on using the AssociateTagOptionWithResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AssociateTagOptionWithResourceRequest method.
 //    req, resp := client.AssociateTagOptionWithResourceRequest(params)
@@ -372,23 +368,111 @@ func (c *ServiceCatalog) AssociateTagOptionWithResourceWithContext(ctx aws.Conte
 	return out, req.Send()
 }
 
+const opCopyProduct = "CopyProduct"
+
+// CopyProductRequest generates a "aws/request.Request" representing the
+// client's request for the CopyProduct operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CopyProduct for more information on using the CopyProduct
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CopyProductRequest method.
+//    req, resp := client.CopyProductRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/CopyProduct
+func (c *ServiceCatalog) CopyProductRequest(input *CopyProductInput) (req *request.Request, output *CopyProductOutput) {
+	op := &request.Operation{
+		Name:       opCopyProduct,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &CopyProductInput{}
+	}
+
+	output = &CopyProductOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CopyProduct API operation for AWS Service Catalog.
+//
+// Copies the specified source product to the specified target product or a
+// new product.
+//
+// You can copy the product to the same account or another account. You can
+// copy the product to the same region or another region.
+//
+// This operation is performed asynchronously. To track the progress of the
+// operation, use DescribeCopyProductStatus.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Service Catalog's
+// API operation CopyProduct for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The specified resource was not found.
+//
+//   * ErrCodeInvalidParametersException "InvalidParametersException"
+//   One or more parameters provided to the operation are invalid.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/CopyProduct
+func (c *ServiceCatalog) CopyProduct(input *CopyProductInput) (*CopyProductOutput, error) {
+	req, out := c.CopyProductRequest(input)
+	return out, req.Send()
+}
+
+// CopyProductWithContext is the same as CopyProduct with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CopyProduct for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) CopyProductWithContext(ctx aws.Context, input *CopyProductInput, opts ...request.Option) (*CopyProductOutput, error) {
+	req, out := c.CopyProductRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateConstraint = "CreateConstraint"
 
 // CreateConstraintRequest generates a "aws/request.Request" representing the
 // client's request for the CreateConstraint operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateConstraint for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateConstraint method directly
-// instead.
+// See CreateConstraint for more information on using the CreateConstraint
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateConstraintRequest method.
 //    req, resp := client.CreateConstraintRequest(params)
@@ -466,19 +550,18 @@ const opCreatePortfolio = "CreatePortfolio"
 
 // CreatePortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreatePortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreatePortfolio method directly
-// instead.
+// See CreatePortfolio for more information on using the CreatePortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreatePortfolioRequest method.
 //    req, resp := client.CreatePortfolioRequest(params)
@@ -555,19 +638,18 @@ const opCreatePortfolioShare = "CreatePortfolioShare"
 
 // CreatePortfolioShareRequest generates a "aws/request.Request" representing the
 // client's request for the CreatePortfolioShare operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreatePortfolioShare for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreatePortfolioShare method directly
-// instead.
+// See CreatePortfolioShare for more information on using the CreatePortfolioShare
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreatePortfolioShareRequest method.
 //    req, resp := client.CreatePortfolioShareRequest(params)
@@ -642,19 +724,18 @@ const opCreateProduct = "CreateProduct"
 
 // CreateProductRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateProduct method directly
-// instead.
+// See CreateProduct for more information on using the CreateProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateProductRequest method.
 //    req, resp := client.CreateProductRequest(params)
@@ -731,19 +812,18 @@ const opCreateProvisioningArtifact = "CreateProvisioningArtifact"
 
 // CreateProvisioningArtifactRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProvisioningArtifact operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateProvisioningArtifact for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateProvisioningArtifact method directly
-// instead.
+// See CreateProvisioningArtifact for more information on using the CreateProvisioningArtifact
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateProvisioningArtifactRequest method.
 //    req, resp := client.CreateProvisioningArtifactRequest(params)
@@ -774,8 +854,6 @@ func (c *ServiceCatalog) CreateProvisioningArtifactRequest(input *CreateProvisio
 //
 // Create a new provisioning artifact for the specified product. This operation
 // does not work with a product that has been shared with you.
-//
-// See the bottom of this topic for an example JSON request.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -821,19 +899,18 @@ const opCreateTagOption = "CreateTagOption"
 
 // CreateTagOptionRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTagOption operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateTagOption for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateTagOption method directly
-// instead.
+// See CreateTagOption for more information on using the CreateTagOption
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateTagOptionRequest method.
 //    req, resp := client.CreateTagOptionRequest(params)
@@ -910,19 +987,18 @@ const opDeleteConstraint = "DeleteConstraint"
 
 // DeleteConstraintRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteConstraint operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteConstraint for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteConstraint method directly
-// instead.
+// See DeleteConstraint for more information on using the DeleteConstraint
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteConstraintRequest method.
 //    req, resp := client.DeleteConstraintRequest(params)
@@ -993,19 +1069,18 @@ const opDeletePortfolio = "DeletePortfolio"
 
 // DeletePortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeletePortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeletePortfolio method directly
-// instead.
+// See DeletePortfolio for more information on using the DeletePortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeletePortfolioRequest method.
 //    req, resp := client.DeletePortfolioRequest(params)
@@ -1087,19 +1162,18 @@ const opDeletePortfolioShare = "DeletePortfolioShare"
 
 // DeletePortfolioShareRequest generates a "aws/request.Request" representing the
 // client's request for the DeletePortfolioShare operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeletePortfolioShare for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeletePortfolioShare method directly
-// instead.
+// See DeletePortfolioShare for more information on using the DeletePortfolioShare
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeletePortfolioShareRequest method.
 //    req, resp := client.DeletePortfolioShareRequest(params)
@@ -1167,19 +1241,18 @@ const opDeleteProduct = "DeleteProduct"
 
 // DeleteProductRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteProduct method directly
-// instead.
+// See DeleteProduct for more information on using the DeleteProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteProductRequest method.
 //    req, resp := client.DeleteProductRequest(params)
@@ -1260,19 +1333,18 @@ const opDeleteProvisioningArtifact = "DeleteProvisioningArtifact"
 
 // DeleteProvisioningArtifactRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProvisioningArtifact operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteProvisioningArtifact for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteProvisioningArtifact method directly
-// instead.
+// See DeleteProvisioningArtifact for more information on using the DeleteProvisioningArtifact
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteProvisioningArtifactRequest method.
 //    req, resp := client.DeleteProvisioningArtifactRequest(params)
@@ -1350,19 +1422,18 @@ const opDescribeConstraint = "DescribeConstraint"
 
 // DescribeConstraintRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConstraint operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeConstraint for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeConstraint method directly
-// instead.
+// See DescribeConstraint for more information on using the DescribeConstraint
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeConstraintRequest method.
 //    req, resp := client.DescribeConstraintRequest(params)
@@ -1426,23 +1497,101 @@ func (c *ServiceCatalog) DescribeConstraintWithContext(ctx aws.Context, input *D
 	return out, req.Send()
 }
 
+const opDescribeCopyProductStatus = "DescribeCopyProductStatus"
+
+// DescribeCopyProductStatusRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeCopyProductStatus operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeCopyProductStatus for more information on using the DescribeCopyProductStatus
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeCopyProductStatusRequest method.
+//    req, resp := client.DescribeCopyProductStatusRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/DescribeCopyProductStatus
+func (c *ServiceCatalog) DescribeCopyProductStatusRequest(input *DescribeCopyProductStatusInput) (req *request.Request, output *DescribeCopyProductStatusOutput) {
+	op := &request.Operation{
+		Name:       opDescribeCopyProductStatus,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeCopyProductStatusInput{}
+	}
+
+	output = &DescribeCopyProductStatusOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeCopyProductStatus API operation for AWS Service Catalog.
+//
+// Describes the status of the specified copy product operation.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Service Catalog's
+// API operation DescribeCopyProductStatus for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   The specified resource was not found.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/DescribeCopyProductStatus
+func (c *ServiceCatalog) DescribeCopyProductStatus(input *DescribeCopyProductStatusInput) (*DescribeCopyProductStatusOutput, error) {
+	req, out := c.DescribeCopyProductStatusRequest(input)
+	return out, req.Send()
+}
+
+// DescribeCopyProductStatusWithContext is the same as DescribeCopyProductStatus with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeCopyProductStatus for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) DescribeCopyProductStatusWithContext(ctx aws.Context, input *DescribeCopyProductStatusInput, opts ...request.Option) (*DescribeCopyProductStatusOutput, error) {
+	req, out := c.DescribeCopyProductStatusRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDescribePortfolio = "DescribePortfolio"
 
 // DescribePortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the DescribePortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribePortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribePortfolio method directly
-// instead.
+// See DescribePortfolio for more information on using the DescribePortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribePortfolioRequest method.
 //    req, resp := client.DescribePortfolioRequest(params)
@@ -1511,19 +1660,18 @@ const opDescribeProduct = "DescribeProduct"
 
 // DescribeProductRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeProduct method directly
-// instead.
+// See DescribeProduct for more information on using the DescribeProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeProductRequest method.
 //    req, resp := client.DescribeProductRequest(params)
@@ -1597,19 +1745,18 @@ const opDescribeProductAsAdmin = "DescribeProductAsAdmin"
 
 // DescribeProductAsAdminRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProductAsAdmin operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeProductAsAdmin for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeProductAsAdmin method directly
-// instead.
+// See DescribeProductAsAdmin for more information on using the DescribeProductAsAdmin
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeProductAsAdminRequest method.
 //    req, resp := client.DescribeProductAsAdminRequest(params)
@@ -1677,19 +1824,18 @@ const opDescribeProductView = "DescribeProductView"
 
 // DescribeProductViewRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProductView operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeProductView for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeProductView method directly
-// instead.
+// See DescribeProductView for more information on using the DescribeProductView
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeProductViewRequest method.
 //    req, resp := client.DescribeProductViewRequest(params)
@@ -1763,19 +1909,18 @@ const opDescribeProvisionedProduct = "DescribeProvisionedProduct"
 
 // DescribeProvisionedProductRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProvisionedProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeProvisionedProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeProvisionedProduct method directly
-// instead.
+// See DescribeProvisionedProduct for more information on using the DescribeProvisionedProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeProvisionedProductRequest method.
 //    req, resp := client.DescribeProvisionedProductRequest(params)
@@ -1843,19 +1988,18 @@ const opDescribeProvisioningArtifact = "DescribeProvisioningArtifact"
 
 // DescribeProvisioningArtifactRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProvisioningArtifact operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeProvisioningArtifact for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeProvisioningArtifact method directly
-// instead.
+// See DescribeProvisioningArtifact for more information on using the DescribeProvisioningArtifact
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeProvisioningArtifactRequest method.
 //    req, resp := client.DescribeProvisioningArtifactRequest(params)
@@ -1923,19 +2067,18 @@ const opDescribeProvisioningParameters = "DescribeProvisioningParameters"
 
 // DescribeProvisioningParametersRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProvisioningParameters operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeProvisioningParameters for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeProvisioningParameters method directly
-// instead.
+// See DescribeProvisioningParameters for more information on using the DescribeProvisioningParameters
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeProvisioningParametersRequest method.
 //    req, resp := client.DescribeProvisioningParametersRequest(params)
@@ -2018,19 +2161,18 @@ const opDescribeRecord = "DescribeRecord"
 
 // DescribeRecordRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeRecord operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeRecord for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeRecord method directly
-// instead.
+// See DescribeRecord for more information on using the DescribeRecord
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeRecordRequest method.
 //    req, resp := client.DescribeRecordRequest(params)
@@ -2100,19 +2242,18 @@ const opDescribeTagOption = "DescribeTagOption"
 
 // DescribeTagOptionRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTagOption operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeTagOption for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeTagOption method directly
-// instead.
+// See DescribeTagOption for more information on using the DescribeTagOption
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeTagOptionRequest method.
 //    req, resp := client.DescribeTagOptionRequest(params)
@@ -2185,19 +2326,18 @@ const opDisassociatePrincipalFromPortfolio = "DisassociatePrincipalFromPortfolio
 
 // DisassociatePrincipalFromPortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociatePrincipalFromPortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DisassociatePrincipalFromPortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DisassociatePrincipalFromPortfolio method directly
-// instead.
+// See DisassociatePrincipalFromPortfolio for more information on using the DisassociatePrincipalFromPortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DisassociatePrincipalFromPortfolioRequest method.
 //    req, resp := client.DisassociatePrincipalFromPortfolioRequest(params)
@@ -2268,19 +2408,18 @@ const opDisassociateProductFromPortfolio = "DisassociateProductFromPortfolio"
 
 // DisassociateProductFromPortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateProductFromPortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DisassociateProductFromPortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DisassociateProductFromPortfolio method directly
-// instead.
+// See DisassociateProductFromPortfolio for more information on using the DisassociateProductFromPortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DisassociateProductFromPortfolioRequest method.
 //    req, resp := client.DisassociateProductFromPortfolioRequest(params)
@@ -2355,19 +2494,18 @@ const opDisassociateTagOptionFromResource = "DisassociateTagOptionFromResource"
 
 // DisassociateTagOptionFromResourceRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateTagOptionFromResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DisassociateTagOptionFromResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DisassociateTagOptionFromResource method directly
-// instead.
+// See DisassociateTagOptionFromResource for more information on using the DisassociateTagOptionFromResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DisassociateTagOptionFromResourceRequest method.
 //    req, resp := client.DisassociateTagOptionFromResourceRequest(params)
@@ -2440,19 +2578,18 @@ const opListAcceptedPortfolioShares = "ListAcceptedPortfolioShares"
 
 // ListAcceptedPortfolioSharesRequest generates a "aws/request.Request" representing the
 // client's request for the ListAcceptedPortfolioShares operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListAcceptedPortfolioShares for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListAcceptedPortfolioShares method directly
-// instead.
+// See ListAcceptedPortfolioShares for more information on using the ListAcceptedPortfolioShares
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListAcceptedPortfolioSharesRequest method.
 //    req, resp := client.ListAcceptedPortfolioSharesRequest(params)
@@ -2468,6 +2605,12 @@ func (c *ServiceCatalog) ListAcceptedPortfolioSharesRequest(input *ListAcceptedP
 		Name:       opListAcceptedPortfolioShares,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -2516,23 +2659,72 @@ func (c *ServiceCatalog) ListAcceptedPortfolioSharesWithContext(ctx aws.Context,
 	return out, req.Send()
 }
 
+// ListAcceptedPortfolioSharesPages iterates over the pages of a ListAcceptedPortfolioShares operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListAcceptedPortfolioShares method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListAcceptedPortfolioShares operation.
+//    pageNum := 0
+//    err := client.ListAcceptedPortfolioSharesPages(params,
+//        func(page *ListAcceptedPortfolioSharesOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) ListAcceptedPortfolioSharesPages(input *ListAcceptedPortfolioSharesInput, fn func(*ListAcceptedPortfolioSharesOutput, bool) bool) error {
+	return c.ListAcceptedPortfolioSharesPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListAcceptedPortfolioSharesPagesWithContext same as ListAcceptedPortfolioSharesPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) ListAcceptedPortfolioSharesPagesWithContext(ctx aws.Context, input *ListAcceptedPortfolioSharesInput, fn func(*ListAcceptedPortfolioSharesOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListAcceptedPortfolioSharesInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListAcceptedPortfolioSharesRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListAcceptedPortfolioSharesOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListConstraintsForPortfolio = "ListConstraintsForPortfolio"
 
 // ListConstraintsForPortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the ListConstraintsForPortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListConstraintsForPortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListConstraintsForPortfolio method directly
-// instead.
+// See ListConstraintsForPortfolio for more information on using the ListConstraintsForPortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListConstraintsForPortfolioRequest method.
 //    req, resp := client.ListConstraintsForPortfolioRequest(params)
@@ -2548,6 +2740,12 @@ func (c *ServiceCatalog) ListConstraintsForPortfolioRequest(input *ListConstrain
 		Name:       opListConstraintsForPortfolio,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -2600,23 +2798,72 @@ func (c *ServiceCatalog) ListConstraintsForPortfolioWithContext(ctx aws.Context,
 	return out, req.Send()
 }
 
+// ListConstraintsForPortfolioPages iterates over the pages of a ListConstraintsForPortfolio operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListConstraintsForPortfolio method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListConstraintsForPortfolio operation.
+//    pageNum := 0
+//    err := client.ListConstraintsForPortfolioPages(params,
+//        func(page *ListConstraintsForPortfolioOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) ListConstraintsForPortfolioPages(input *ListConstraintsForPortfolioInput, fn func(*ListConstraintsForPortfolioOutput, bool) bool) error {
+	return c.ListConstraintsForPortfolioPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListConstraintsForPortfolioPagesWithContext same as ListConstraintsForPortfolioPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) ListConstraintsForPortfolioPagesWithContext(ctx aws.Context, input *ListConstraintsForPortfolioInput, fn func(*ListConstraintsForPortfolioOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListConstraintsForPortfolioInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListConstraintsForPortfolioRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListConstraintsForPortfolioOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListLaunchPaths = "ListLaunchPaths"
 
 // ListLaunchPathsRequest generates a "aws/request.Request" representing the
 // client's request for the ListLaunchPaths operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListLaunchPaths for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListLaunchPaths method directly
-// instead.
+// See ListLaunchPaths for more information on using the ListLaunchPaths
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListLaunchPathsRequest method.
 //    req, resp := client.ListLaunchPathsRequest(params)
@@ -2632,6 +2879,12 @@ func (c *ServiceCatalog) ListLaunchPathsRequest(input *ListLaunchPathsInput) (re
 		Name:       opListLaunchPaths,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -2685,23 +2938,72 @@ func (c *ServiceCatalog) ListLaunchPathsWithContext(ctx aws.Context, input *List
 	return out, req.Send()
 }
 
+// ListLaunchPathsPages iterates over the pages of a ListLaunchPaths operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListLaunchPaths method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListLaunchPaths operation.
+//    pageNum := 0
+//    err := client.ListLaunchPathsPages(params,
+//        func(page *ListLaunchPathsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) ListLaunchPathsPages(input *ListLaunchPathsInput, fn func(*ListLaunchPathsOutput, bool) bool) error {
+	return c.ListLaunchPathsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListLaunchPathsPagesWithContext same as ListLaunchPathsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) ListLaunchPathsPagesWithContext(ctx aws.Context, input *ListLaunchPathsInput, fn func(*ListLaunchPathsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListLaunchPathsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListLaunchPathsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListLaunchPathsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListPortfolioAccess = "ListPortfolioAccess"
 
 // ListPortfolioAccessRequest generates a "aws/request.Request" representing the
 // client's request for the ListPortfolioAccess operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListPortfolioAccess for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListPortfolioAccess method directly
-// instead.
+// See ListPortfolioAccess for more information on using the ListPortfolioAccess
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListPortfolioAccessRequest method.
 //    req, resp := client.ListPortfolioAccessRequest(params)
@@ -2770,19 +3072,18 @@ const opListPortfolios = "ListPortfolios"
 
 // ListPortfoliosRequest generates a "aws/request.Request" representing the
 // client's request for the ListPortfolios operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListPortfolios for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListPortfolios method directly
-// instead.
+// See ListPortfolios for more information on using the ListPortfolios
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListPortfoliosRequest method.
 //    req, resp := client.ListPortfoliosRequest(params)
@@ -2798,6 +3099,12 @@ func (c *ServiceCatalog) ListPortfoliosRequest(input *ListPortfoliosInput) (req 
 		Name:       opListPortfolios,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -2846,23 +3153,72 @@ func (c *ServiceCatalog) ListPortfoliosWithContext(ctx aws.Context, input *ListP
 	return out, req.Send()
 }
 
+// ListPortfoliosPages iterates over the pages of a ListPortfolios operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListPortfolios method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListPortfolios operation.
+//    pageNum := 0
+//    err := client.ListPortfoliosPages(params,
+//        func(page *ListPortfoliosOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) ListPortfoliosPages(input *ListPortfoliosInput, fn func(*ListPortfoliosOutput, bool) bool) error {
+	return c.ListPortfoliosPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListPortfoliosPagesWithContext same as ListPortfoliosPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) ListPortfoliosPagesWithContext(ctx aws.Context, input *ListPortfoliosInput, fn func(*ListPortfoliosOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListPortfoliosInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListPortfoliosRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListPortfoliosOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListPortfoliosForProduct = "ListPortfoliosForProduct"
 
 // ListPortfoliosForProductRequest generates a "aws/request.Request" representing the
 // client's request for the ListPortfoliosForProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListPortfoliosForProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListPortfoliosForProduct method directly
-// instead.
+// See ListPortfoliosForProduct for more information on using the ListPortfoliosForProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListPortfoliosForProductRequest method.
 //    req, resp := client.ListPortfoliosForProductRequest(params)
@@ -2878,6 +3234,12 @@ func (c *ServiceCatalog) ListPortfoliosForProductRequest(input *ListPortfoliosFo
 		Name:       opListPortfoliosForProduct,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -2929,23 +3291,72 @@ func (c *ServiceCatalog) ListPortfoliosForProductWithContext(ctx aws.Context, in
 	return out, req.Send()
 }
 
+// ListPortfoliosForProductPages iterates over the pages of a ListPortfoliosForProduct operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListPortfoliosForProduct method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListPortfoliosForProduct operation.
+//    pageNum := 0
+//    err := client.ListPortfoliosForProductPages(params,
+//        func(page *ListPortfoliosForProductOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) ListPortfoliosForProductPages(input *ListPortfoliosForProductInput, fn func(*ListPortfoliosForProductOutput, bool) bool) error {
+	return c.ListPortfoliosForProductPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListPortfoliosForProductPagesWithContext same as ListPortfoliosForProductPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) ListPortfoliosForProductPagesWithContext(ctx aws.Context, input *ListPortfoliosForProductInput, fn func(*ListPortfoliosForProductOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListPortfoliosForProductInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListPortfoliosForProductRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListPortfoliosForProductOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListPrincipalsForPortfolio = "ListPrincipalsForPortfolio"
 
 // ListPrincipalsForPortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the ListPrincipalsForPortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListPrincipalsForPortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListPrincipalsForPortfolio method directly
-// instead.
+// See ListPrincipalsForPortfolio for more information on using the ListPrincipalsForPortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListPrincipalsForPortfolioRequest method.
 //    req, resp := client.ListPrincipalsForPortfolioRequest(params)
@@ -2961,6 +3372,12 @@ func (c *ServiceCatalog) ListPrincipalsForPortfolioRequest(input *ListPrincipals
 		Name:       opListPrincipalsForPortfolio,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -3012,23 +3429,72 @@ func (c *ServiceCatalog) ListPrincipalsForPortfolioWithContext(ctx aws.Context, 
 	return out, req.Send()
 }
 
+// ListPrincipalsForPortfolioPages iterates over the pages of a ListPrincipalsForPortfolio operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See ListPrincipalsForPortfolio method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a ListPrincipalsForPortfolio operation.
+//    pageNum := 0
+//    err := client.ListPrincipalsForPortfolioPages(params,
+//        func(page *ListPrincipalsForPortfolioOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) ListPrincipalsForPortfolioPages(input *ListPrincipalsForPortfolioInput, fn func(*ListPrincipalsForPortfolioOutput, bool) bool) error {
+	return c.ListPrincipalsForPortfolioPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// ListPrincipalsForPortfolioPagesWithContext same as ListPrincipalsForPortfolioPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) ListPrincipalsForPortfolioPagesWithContext(ctx aws.Context, input *ListPrincipalsForPortfolioInput, fn func(*ListPrincipalsForPortfolioOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *ListPrincipalsForPortfolioInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.ListPrincipalsForPortfolioRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*ListPrincipalsForPortfolioOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opListProvisioningArtifacts = "ListProvisioningArtifacts"
 
 // ListProvisioningArtifactsRequest generates a "aws/request.Request" representing the
 // client's request for the ListProvisioningArtifacts operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListProvisioningArtifacts for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListProvisioningArtifacts method directly
-// instead.
+// See ListProvisioningArtifacts for more information on using the ListProvisioningArtifacts
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListProvisioningArtifactsRequest method.
 //    req, resp := client.ListProvisioningArtifactsRequest(params)
@@ -3099,19 +3565,18 @@ const opListRecordHistory = "ListRecordHistory"
 
 // ListRecordHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the ListRecordHistory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListRecordHistory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListRecordHistory method directly
-// instead.
+// See ListRecordHistory for more information on using the ListRecordHistory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListRecordHistoryRequest method.
 //    req, resp := client.ListRecordHistoryRequest(params)
@@ -3180,19 +3645,18 @@ const opListResourcesForTagOption = "ListResourcesForTagOption"
 
 // ListResourcesForTagOptionRequest generates a "aws/request.Request" representing the
 // client's request for the ListResourcesForTagOption operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListResourcesForTagOption for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListResourcesForTagOption method directly
-// instead.
+// See ListResourcesForTagOption for more information on using the ListResourcesForTagOption
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListResourcesForTagOptionRequest method.
 //    req, resp := client.ListResourcesForTagOptionRequest(params)
@@ -3324,19 +3788,18 @@ const opListTagOptions = "ListTagOptions"
 
 // ListTagOptionsRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagOptions operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListTagOptions for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListTagOptions method directly
-// instead.
+// See ListTagOptions for more information on using the ListTagOptions
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListTagOptionsRequest method.
 //    req, resp := client.ListTagOptionsRequest(params)
@@ -3465,19 +3928,18 @@ const opProvisionProduct = "ProvisionProduct"
 
 // ProvisionProductRequest generates a "aws/request.Request" representing the
 // client's request for the ProvisionProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ProvisionProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ProvisionProduct method directly
-// instead.
+// See ProvisionProduct for more information on using the ProvisionProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ProvisionProductRequest method.
 //    req, resp := client.ProvisionProductRequest(params)
@@ -3562,19 +4024,18 @@ const opRejectPortfolioShare = "RejectPortfolioShare"
 
 // RejectPortfolioShareRequest generates a "aws/request.Request" representing the
 // client's request for the RejectPortfolioShare operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See RejectPortfolioShare for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the RejectPortfolioShare method directly
-// instead.
+// See RejectPortfolioShare for more information on using the RejectPortfolioShare
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the RejectPortfolioShareRequest method.
 //    req, resp := client.RejectPortfolioShareRequest(params)
@@ -3642,19 +4103,18 @@ const opScanProvisionedProducts = "ScanProvisionedProducts"
 
 // ScanProvisionedProductsRequest generates a "aws/request.Request" representing the
 // client's request for the ScanProvisionedProducts operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ScanProvisionedProducts for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ScanProvisionedProducts method directly
-// instead.
+// See ScanProvisionedProducts for more information on using the ScanProvisionedProducts
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ScanProvisionedProductsRequest method.
 //    req, resp := client.ScanProvisionedProductsRequest(params)
@@ -3723,19 +4183,18 @@ const opSearchProducts = "SearchProducts"
 
 // SearchProductsRequest generates a "aws/request.Request" representing the
 // client's request for the SearchProducts operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See SearchProducts for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the SearchProducts method directly
-// instead.
+// See SearchProducts for more information on using the SearchProducts
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the SearchProductsRequest method.
 //    req, resp := client.SearchProductsRequest(params)
@@ -3751,6 +4210,12 @@ func (c *ServiceCatalog) SearchProductsRequest(input *SearchProductsInput) (req 
 		Name:       opSearchProducts,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -3803,23 +4268,72 @@ func (c *ServiceCatalog) SearchProductsWithContext(ctx aws.Context, input *Searc
 	return out, req.Send()
 }
 
+// SearchProductsPages iterates over the pages of a SearchProducts operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See SearchProducts method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a SearchProducts operation.
+//    pageNum := 0
+//    err := client.SearchProductsPages(params,
+//        func(page *SearchProductsOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) SearchProductsPages(input *SearchProductsInput, fn func(*SearchProductsOutput, bool) bool) error {
+	return c.SearchProductsPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// SearchProductsPagesWithContext same as SearchProductsPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) SearchProductsPagesWithContext(ctx aws.Context, input *SearchProductsInput, fn func(*SearchProductsOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *SearchProductsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.SearchProductsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*SearchProductsOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opSearchProductsAsAdmin = "SearchProductsAsAdmin"
 
 // SearchProductsAsAdminRequest generates a "aws/request.Request" representing the
 // client's request for the SearchProductsAsAdmin operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See SearchProductsAsAdmin for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the SearchProductsAsAdmin method directly
-// instead.
+// See SearchProductsAsAdmin for more information on using the SearchProductsAsAdmin
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the SearchProductsAsAdminRequest method.
 //    req, resp := client.SearchProductsAsAdminRequest(params)
@@ -3835,6 +4349,12 @@ func (c *ServiceCatalog) SearchProductsAsAdminRequest(input *SearchProductsAsAdm
 		Name:       opSearchProductsAsAdmin,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"PageToken"},
+			OutputTokens:    []string{"NextPageToken"},
+			LimitToken:      "PageSize",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -3889,23 +4409,72 @@ func (c *ServiceCatalog) SearchProductsAsAdminWithContext(ctx aws.Context, input
 	return out, req.Send()
 }
 
+// SearchProductsAsAdminPages iterates over the pages of a SearchProductsAsAdmin operation,
+// calling the "fn" function with the response data for each page. To stop
+// iterating, return false from the fn function.
+//
+// See SearchProductsAsAdmin method for more information on how to use this operation.
+//
+// Note: This operation can generate multiple requests to a service.
+//
+//    // Example iterating over at most 3 pages of a SearchProductsAsAdmin operation.
+//    pageNum := 0
+//    err := client.SearchProductsAsAdminPages(params,
+//        func(page *SearchProductsAsAdminOutput, lastPage bool) bool {
+//            pageNum++
+//            fmt.Println(page)
+//            return pageNum <= 3
+//        })
+//
+func (c *ServiceCatalog) SearchProductsAsAdminPages(input *SearchProductsAsAdminInput, fn func(*SearchProductsAsAdminOutput, bool) bool) error {
+	return c.SearchProductsAsAdminPagesWithContext(aws.BackgroundContext(), input, fn)
+}
+
+// SearchProductsAsAdminPagesWithContext same as SearchProductsAsAdminPages except
+// it takes a Context and allows setting request options on the pages.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ServiceCatalog) SearchProductsAsAdminPagesWithContext(ctx aws.Context, input *SearchProductsAsAdminInput, fn func(*SearchProductsAsAdminOutput, bool) bool, opts ...request.Option) error {
+	p := request.Pagination{
+		NewRequest: func() (*request.Request, error) {
+			var inCpy *SearchProductsAsAdminInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.SearchProductsAsAdminRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+
+	cont := true
+	for p.Next() && cont {
+		cont = fn(p.Page().(*SearchProductsAsAdminOutput), !p.HasNextPage())
+	}
+	return p.Err()
+}
+
 const opTerminateProvisionedProduct = "TerminateProvisionedProduct"
 
 // TerminateProvisionedProductRequest generates a "aws/request.Request" representing the
 // client's request for the TerminateProvisionedProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See TerminateProvisionedProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the TerminateProvisionedProduct method directly
-// instead.
+// See TerminateProvisionedProduct for more information on using the TerminateProvisionedProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the TerminateProvisionedProductRequest method.
 //    req, resp := client.TerminateProvisionedProductRequest(params)
@@ -3980,19 +4549,18 @@ const opUpdateConstraint = "UpdateConstraint"
 
 // UpdateConstraintRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateConstraint operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateConstraint for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateConstraint method directly
-// instead.
+// See UpdateConstraint for more information on using the UpdateConstraint
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateConstraintRequest method.
 //    req, resp := client.UpdateConstraintRequest(params)
@@ -4063,19 +4631,18 @@ const opUpdatePortfolio = "UpdatePortfolio"
 
 // UpdatePortfolioRequest generates a "aws/request.Request" representing the
 // client's request for the UpdatePortfolio operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdatePortfolio for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdatePortfolio method directly
-// instead.
+// See UpdatePortfolio for more information on using the UpdatePortfolio
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdatePortfolioRequest method.
 //    req, resp := client.UpdatePortfolioRequest(params)
@@ -4156,19 +4723,18 @@ const opUpdateProduct = "UpdateProduct"
 
 // UpdateProductRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateProduct method directly
-// instead.
+// See UpdateProduct for more information on using the UpdateProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateProductRequest method.
 //    req, resp := client.UpdateProductRequest(params)
@@ -4244,19 +4810,18 @@ const opUpdateProvisionedProduct = "UpdateProvisionedProduct"
 
 // UpdateProvisionedProductRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProvisionedProduct operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateProvisionedProduct for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateProvisionedProduct method directly
-// instead.
+// See UpdateProvisionedProduct for more information on using the UpdateProvisionedProduct
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateProvisionedProductRequest method.
 //    req, resp := client.UpdateProvisionedProductRequest(params)
@@ -4333,19 +4898,18 @@ const opUpdateProvisioningArtifact = "UpdateProvisioningArtifact"
 
 // UpdateProvisioningArtifactRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProvisioningArtifact operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateProvisioningArtifact for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateProvisioningArtifact method directly
-// instead.
+// See UpdateProvisioningArtifact for more information on using the UpdateProvisioningArtifact
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateProvisioningArtifactRequest method.
 //    req, resp := client.UpdateProvisioningArtifactRequest(params)
@@ -4418,19 +4982,18 @@ const opUpdateTagOption = "UpdateTagOption"
 
 // UpdateTagOptionRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTagOption operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateTagOption for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateTagOption method directly
-// instead.
+// See UpdateTagOption for more information on using the UpdateTagOption
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateTagOptionRequest method.
 //    req, resp := client.UpdateTagOptionRequest(params)
@@ -4509,16 +5072,13 @@ func (c *ServiceCatalog) UpdateTagOptionWithContext(ctx aws.Context, input *Upda
 type AcceptPortfolioShareInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The portfolio identifier.
@@ -4625,16 +5185,13 @@ func (s *AccessLevelFilter) SetValue(v string) *AccessLevelFilter {
 type AssociatePrincipalWithPortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The portfolio identifier.
@@ -4731,16 +5288,13 @@ func (s AssociatePrincipalWithPortfolioOutput) GoString() string {
 type AssociateProductWithPortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The portfolio identifier.
@@ -4988,34 +5542,173 @@ func (s *ConstraintSummary) SetType(v string) *ConstraintSummary {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/CopyProductInput
+type CopyProductInput struct {
+	_ struct{} `type:"structure"`
+
+	// The language code.
+	//
+	//    * en - English (default)
+	//
+	//    * jp - Japanese
+	//
+	//    * zh - Chinese
+	AcceptLanguage *string `type:"string"`
+
+	// The copy options. If the value is CopyTags, the tags from the source product
+	// are copied to the target product.
+	CopyOptions []*string `type:"list"`
+
+	// A token to disambiguate duplicate requests. You can use the same input in
+	// multiple requests, provided that you also specify a different idempotency
+	// token for each request.
+	//
+	// IdempotencyToken is a required field
+	IdempotencyToken *string `min:"1" type:"string" required:"true" idempotencyToken:"true"`
+
+	// The Amazon Resource Name (ARN) of the source product.
+	//
+	// SourceProductArn is a required field
+	SourceProductArn *string `min:"1" type:"string" required:"true"`
+
+	// The IDs of the product versions to copy. By default, all provisioning artifacts
+	// are copied.
+	SourceProvisioningArtifactIdentifiers []map[string]*string `type:"list"`
+
+	// The ID of the target product. By default, a new product is created.
+	TargetProductId *string `min:"1" type:"string"`
+
+	// A name for the target product. The default is the name of the source product.
+	TargetProductName *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CopyProductInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CopyProductInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CopyProductInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CopyProductInput"}
+	if s.IdempotencyToken == nil {
+		invalidParams.Add(request.NewErrParamRequired("IdempotencyToken"))
+	}
+	if s.IdempotencyToken != nil && len(*s.IdempotencyToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("IdempotencyToken", 1))
+	}
+	if s.SourceProductArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceProductArn"))
+	}
+	if s.SourceProductArn != nil && len(*s.SourceProductArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SourceProductArn", 1))
+	}
+	if s.TargetProductId != nil && len(*s.TargetProductId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("TargetProductId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAcceptLanguage sets the AcceptLanguage field's value.
+func (s *CopyProductInput) SetAcceptLanguage(v string) *CopyProductInput {
+	s.AcceptLanguage = &v
+	return s
+}
+
+// SetCopyOptions sets the CopyOptions field's value.
+func (s *CopyProductInput) SetCopyOptions(v []*string) *CopyProductInput {
+	s.CopyOptions = v
+	return s
+}
+
+// SetIdempotencyToken sets the IdempotencyToken field's value.
+func (s *CopyProductInput) SetIdempotencyToken(v string) *CopyProductInput {
+	s.IdempotencyToken = &v
+	return s
+}
+
+// SetSourceProductArn sets the SourceProductArn field's value.
+func (s *CopyProductInput) SetSourceProductArn(v string) *CopyProductInput {
+	s.SourceProductArn = &v
+	return s
+}
+
+// SetSourceProvisioningArtifactIdentifiers sets the SourceProvisioningArtifactIdentifiers field's value.
+func (s *CopyProductInput) SetSourceProvisioningArtifactIdentifiers(v []map[string]*string) *CopyProductInput {
+	s.SourceProvisioningArtifactIdentifiers = v
+	return s
+}
+
+// SetTargetProductId sets the TargetProductId field's value.
+func (s *CopyProductInput) SetTargetProductId(v string) *CopyProductInput {
+	s.TargetProductId = &v
+	return s
+}
+
+// SetTargetProductName sets the TargetProductName field's value.
+func (s *CopyProductInput) SetTargetProductName(v string) *CopyProductInput {
+	s.TargetProductName = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/CopyProductOutput
+type CopyProductOutput struct {
+	_ struct{} `type:"structure"`
+
+	// A unique token to pass to DescribeCopyProductStatus to track the progress
+	// of the operation.
+	CopyProductToken *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s CopyProductOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CopyProductOutput) GoString() string {
+	return s.String()
+}
+
+// SetCopyProductToken sets the CopyProductToken field's value.
+func (s *CopyProductOutput) SetCopyProductToken(v string) *CopyProductOutput {
+	s.CopyProductToken = &v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/CreateConstraintInput
 type CreateConstraintInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The text description of the constraint.
 	Description *string `type:"string"`
 
-	// A token to disambiguate duplicate requests. You can create multiple resources
-	// using the same input in multiple requests, provided that you also specify
-	// a different idempotency token for each request.
+	// A token to disambiguate duplicate requests. You can use the same input in
+	// multiple requests, provided that you also specify a different idempotency
+	// token for each request.
 	//
 	// IdempotencyToken is a required field
 	IdempotencyToken *string `min:"1" type:"string" required:"true" idempotencyToken:"true"`
 
 	// The constraint parameters. Expected values vary depending on which Type is
-	// specified. For examples, see the bottom of this topic.
+	// specified. For more information, see the Examples section.
 	//
 	// For Type LAUNCH, the RoleArn property is required.
 	//
@@ -5178,16 +5871,13 @@ func (s *CreateConstraintOutput) SetStatus(v string) *CreateConstraintOutput {
 type CreatePortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The text description of the portfolio.
@@ -5198,9 +5888,9 @@ type CreatePortfolioInput struct {
 	// DisplayName is a required field
 	DisplayName *string `min:"1" type:"string" required:"true"`
 
-	// A token to disambiguate duplicate requests. You can create multiple resources
-	// using the same input in multiple requests, provided that you also specify
-	// a different idempotency token for each request.
+	// A token to disambiguate duplicate requests. You can use the same input in
+	// multiple requests, provided that you also specify a different idempotency
+	// token for each request.
 	//
 	// IdempotencyToken is a required field
 	IdempotencyToken *string `min:"1" type:"string" required:"true" idempotencyToken:"true"`
@@ -5335,16 +6025,13 @@ func (s *CreatePortfolioOutput) SetTags(v []*Tag) *CreatePortfolioOutput {
 type CreatePortfolioShareInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The account ID with which to share the portfolio.
@@ -5424,16 +6111,13 @@ func (s CreatePortfolioShareOutput) GoString() string {
 type CreateProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The text description of the product.
@@ -5442,9 +6126,9 @@ type CreateProductInput struct {
 	// The distributor of the product.
 	Distributor *string `type:"string"`
 
-	// A token to disambiguate duplicate requests. You can create multiple resources
-	// using the same input in multiple requests, provided that you also specify
-	// a different idempotency token for each request.
+	// A token to disambiguate duplicate requests. You can use the same input in
+	// multiple requests, provided that you also specify a different idempotency
+	// token for each request.
 	//
 	// IdempotencyToken is a required field
 	IdempotencyToken *string `min:"1" type:"string" required:"true" idempotencyToken:"true"`
@@ -5653,21 +6337,18 @@ func (s *CreateProductOutput) SetTags(v []*Tag) *CreateProductOutput {
 type CreateProvisioningArtifactInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
-	// A token to disambiguate duplicate requests. You can create multiple resources
-	// using the same input in multiple requests, provided that you also specify
-	// a different idempotency token for each request.
+	// A token to disambiguate duplicate requests. You can use the same input in
+	// multiple requests, provided that you also specify a different idempotency
+	// token for each request.
 	//
 	// IdempotencyToken is a required field
 	IdempotencyToken *string `min:"1" type:"string" required:"true" idempotencyToken:"true"`
@@ -5876,16 +6557,13 @@ func (s *CreateTagOptionOutput) SetTagOptionDetail(v *TagOptionDetail) *CreateTa
 type DeleteConstraintInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the constraint to delete.
@@ -5951,16 +6629,13 @@ func (s DeleteConstraintOutput) GoString() string {
 type DeletePortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the portfolio for the delete request.
@@ -6026,16 +6701,13 @@ func (s DeletePortfolioOutput) GoString() string {
 type DeletePortfolioShareInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The account ID associated with the share to delete.
@@ -6115,16 +6787,13 @@ func (s DeletePortfolioShareOutput) GoString() string {
 type DeleteProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the product for the delete request.
@@ -6190,16 +6859,13 @@ func (s DeleteProductOutput) GoString() string {
 type DeleteProvisioningArtifactInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The product identifier.
@@ -6283,16 +6949,13 @@ func (s DeleteProvisioningArtifactOutput) GoString() string {
 type DescribeConstraintInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the constraint.
@@ -6381,20 +7044,116 @@ func (s *DescribeConstraintOutput) SetStatus(v string) *DescribeConstraintOutput
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/DescribeCopyProductStatusInput
+type DescribeCopyProductStatusInput struct {
+	_ struct{} `type:"structure"`
+
+	// The language code.
+	//
+	//    * en - English (default)
+	//
+	//    * jp - Japanese
+	//
+	//    * zh - Chinese
+	AcceptLanguage *string `type:"string"`
+
+	// The token returned from the call to CopyProduct that initiated the operation.
+	//
+	// CopyProductToken is a required field
+	CopyProductToken *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeCopyProductStatusInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCopyProductStatusInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeCopyProductStatusInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeCopyProductStatusInput"}
+	if s.CopyProductToken == nil {
+		invalidParams.Add(request.NewErrParamRequired("CopyProductToken"))
+	}
+	if s.CopyProductToken != nil && len(*s.CopyProductToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("CopyProductToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAcceptLanguage sets the AcceptLanguage field's value.
+func (s *DescribeCopyProductStatusInput) SetAcceptLanguage(v string) *DescribeCopyProductStatusInput {
+	s.AcceptLanguage = &v
+	return s
+}
+
+// SetCopyProductToken sets the CopyProductToken field's value.
+func (s *DescribeCopyProductStatusInput) SetCopyProductToken(v string) *DescribeCopyProductStatusInput {
+	s.CopyProductToken = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/DescribeCopyProductStatusOutput
+type DescribeCopyProductStatusOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The status of the copy product operation.
+	CopyProductStatus *string `type:"string" enum:"CopyProductStatus"`
+
+	// The status message.
+	StatusDetail *string `type:"string"`
+
+	// The ID of the copied product.
+	TargetProductId *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s DescribeCopyProductStatusOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeCopyProductStatusOutput) GoString() string {
+	return s.String()
+}
+
+// SetCopyProductStatus sets the CopyProductStatus field's value.
+func (s *DescribeCopyProductStatusOutput) SetCopyProductStatus(v string) *DescribeCopyProductStatusOutput {
+	s.CopyProductStatus = &v
+	return s
+}
+
+// SetStatusDetail sets the StatusDetail field's value.
+func (s *DescribeCopyProductStatusOutput) SetStatusDetail(v string) *DescribeCopyProductStatusOutput {
+	s.StatusDetail = &v
+	return s
+}
+
+// SetTargetProductId sets the TargetProductId field's value.
+func (s *DescribeCopyProductStatusOutput) SetTargetProductId(v string) *DescribeCopyProductStatusOutput {
+	s.TargetProductId = &v
+	return s
+}
+
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/servicecatalog-2015-12-10/DescribePortfolioInput
 type DescribePortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the portfolio for which to retrieve information.
@@ -6487,16 +7246,13 @@ func (s *DescribePortfolioOutput) SetTags(v []*Tag) *DescribePortfolioOutput {
 type DescribeProductAsAdminInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the product for which to retrieve information.
@@ -6598,16 +7354,13 @@ func (s *DescribeProductAsAdminOutput) SetTags(v []*Tag) *DescribeProductAsAdmin
 type DescribeProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The ProductId of the product to describe.
@@ -6692,16 +7445,13 @@ func (s *DescribeProductOutput) SetProvisioningArtifacts(v []*ProvisioningArtifa
 type DescribeProductViewInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The ProductViewId of the product to describe.
@@ -6786,16 +7536,13 @@ func (s *DescribeProductViewOutput) SetProvisioningArtifacts(v []*ProvisioningAr
 type DescribeProvisionedProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The provisioned product identifier.
@@ -6870,16 +7617,13 @@ func (s *DescribeProvisionedProductOutput) SetProvisionedProductDetail(v *Provis
 type DescribeProvisioningArtifactInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The product identifier.
@@ -6999,16 +7743,13 @@ func (s *DescribeProvisioningArtifactOutput) SetStatus(v string) *DescribeProvis
 type DescribeProvisioningParametersInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the path for this product's provisioning. This value is
@@ -7144,16 +7885,13 @@ func (s *DescribeProvisioningParametersOutput) SetUsageInstructions(v []*UsageIn
 type DescribeRecordInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The record identifier of the ProvisionedProduct object for which to retrieve
@@ -7338,16 +8076,13 @@ func (s *DescribeTagOptionOutput) SetTagOptionDetail(v *TagOptionDetail) *Descri
 type DisassociatePrincipalFromPortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The portfolio identifier.
@@ -7430,16 +8165,13 @@ func (s DisassociatePrincipalFromPortfolioOutput) GoString() string {
 type DisassociateProductFromPortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The portfolio identifier.
@@ -7646,16 +8378,13 @@ func (s *LaunchPathSummary) SetTags(v []*Tag) *LaunchPathSummary {
 type ListAcceptedPortfolioSharesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The maximum number of items to return in the results. If more results exist
@@ -7734,16 +8463,13 @@ func (s *ListAcceptedPortfolioSharesOutput) SetPortfolioDetails(v []*PortfolioDe
 type ListConstraintsForPortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The maximum number of items to return in the results. If more results exist
@@ -7861,16 +8587,13 @@ func (s *ListConstraintsForPortfolioOutput) SetNextPageToken(v string) *ListCons
 type ListLaunchPathsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The maximum number of items to return in the results. If more results exist
@@ -7977,16 +8700,13 @@ func (s *ListLaunchPathsOutput) SetNextPageToken(v string) *ListLaunchPathsOutpu
 type ListPortfolioAccessInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The portfolio identifier.
@@ -8071,16 +8791,13 @@ func (s *ListPortfolioAccessOutput) SetNextPageToken(v string) *ListPortfolioAcc
 type ListPortfoliosForProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The maximum number of items to return in the results. If more results exist
@@ -8186,16 +8903,13 @@ func (s *ListPortfoliosForProductOutput) SetPortfolioDetails(v []*PortfolioDetai
 type ListPortfoliosInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The maximum number of items to return in the results. If more results exist
@@ -8274,16 +8988,13 @@ func (s *ListPortfoliosOutput) SetPortfolioDetails(v []*PortfolioDetail) *ListPo
 type ListPrincipalsForPortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The maximum number of items to return in the results. If more results exist
@@ -8389,16 +9100,13 @@ func (s *ListPrincipalsForPortfolioOutput) SetPrincipals(v []*Principal) *ListPr
 type ListProvisioningArtifactsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The product identifier.
@@ -8483,16 +9191,13 @@ func (s *ListProvisioningArtifactsOutput) SetProvisioningArtifactDetails(v []*Pr
 type ListRecordHistoryInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The access level for obtaining results. If left unspecified, User level access
@@ -9229,16 +9934,13 @@ func (s *ProductViewSummary) SetType(v string) *ProductViewSummary {
 type ProvisionProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// Passed to CloudFormation. The SNS topic ARNs to which to publish stack-related
@@ -9443,9 +10145,9 @@ type ProvisionedProductDetail struct {
 	// The identifier of the ProvisionedProduct object.
 	Id *string `type:"string"`
 
-	// A token to disambiguate duplicate requests. You can create multiple resources
-	// using the same input in multiple requests, provided that you also specify
-	// a different idempotency token for each request.
+	// A token to disambiguate duplicate requests. You can use the same input in
+	// multiple requests, provided that you also specify a different idempotency
+	// token for each request.
 	IdempotencyToken *string `min:"1" type:"string"`
 
 	// The record identifier of the last request performed on this ProvisionedProduct
@@ -10187,16 +10889,13 @@ func (s *RecordTag) SetValue(v string) *RecordTag {
 type RejectPortfolioShareInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The portfolio identifier.
@@ -10323,16 +11022,13 @@ func (s *ResourceDetail) SetName(v string) *ResourceDetail {
 type ScanProvisionedProductsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The access level for obtaining results. If left unspecified, User level access
@@ -10421,16 +11117,13 @@ func (s *ScanProvisionedProductsOutput) SetProvisionedProducts(v []*ProvisionedP
 type SearchProductsAsAdminInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The list of filters with which to limit search results. If no search filters
@@ -10569,16 +11262,13 @@ func (s *SearchProductsAsAdminOutput) SetProductViewDetails(v []*ProductViewDeta
 type SearchProductsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The list of filters with which to limit search results. If no search filters
@@ -10842,16 +11532,13 @@ func (s *TagOptionSummary) SetValues(v []*string) *TagOptionSummary {
 type TerminateProvisionedProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// If set to true, AWS Service Catalog stops managing the specified ProvisionedProduct
@@ -10968,16 +11655,13 @@ func (s *TerminateProvisionedProductOutput) SetRecordDetail(v *RecordDetail) *Te
 type UpdateConstraintInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The updated text description of the constraint.
@@ -11079,16 +11763,13 @@ func (s *UpdateConstraintOutput) SetStatus(v string) *UpdateConstraintOutput {
 type UpdatePortfolioInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// Tags to add to the existing list of tags associated with the portfolio.
@@ -11233,16 +11914,13 @@ func (s *UpdatePortfolioOutput) SetTags(v []*Tag) *UpdatePortfolioOutput {
 type UpdateProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// Tags to add to the existing list of tags associated with the product.
@@ -11417,16 +12095,13 @@ func (s *UpdateProductOutput) SetTags(v []*Tag) *UpdateProductOutput {
 type UpdateProvisionedProductInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The identifier of the path to use in the updated ProvisionedProduct object.
@@ -11589,16 +12264,13 @@ func (s *UpdateProvisionedProductOutput) SetRecordDetail(v *RecordDetail) *Updat
 type UpdateProvisioningArtifactInput struct {
 	_ struct{} `type:"structure"`
 
-	// The language code to use for this operation. Supported language codes are
-	// as follows:
+	// The language code.
 	//
-	// "en" (English)
+	//    * en - English (default)
 	//
-	// "jp" (Japanese)
+	//    * jp - Japanese
 	//
-	// "zh" (Chinese)
-	//
-	// If no code is specified, "en" is used as the default.
+	//    * zh - Chinese
 	AcceptLanguage *string `type:"string"`
 
 	// The updated text description of the provisioning artifact.
@@ -11916,6 +12588,22 @@ const (
 )
 
 const (
+	// CopyOptionCopyTags is a CopyOption enum value
+	CopyOptionCopyTags = "CopyTags"
+)
+
+const (
+	// CopyProductStatusSucceeded is a CopyProductStatus enum value
+	CopyProductStatusSucceeded = "SUCCEEDED"
+
+	// CopyProductStatusInProgress is a CopyProductStatus enum value
+	CopyProductStatusInProgress = "IN_PROGRESS"
+
+	// CopyProductStatusFailed is a CopyProductStatus enum value
+	CopyProductStatusFailed = "FAILED"
+)
+
+const (
 	// PrincipalTypeIam is a PrincipalType enum value
 	PrincipalTypeIam = "IAM"
 )
@@ -11970,6 +12658,11 @@ const (
 
 	// ProvisionedProductStatusError is a ProvisionedProductStatus enum value
 	ProvisionedProductStatusError = "ERROR"
+)
+
+const (
+	// ProvisioningArtifactPropertyNameId is a ProvisioningArtifactPropertyName enum value
+	ProvisioningArtifactPropertyNameId = "Id"
 )
 
 const (

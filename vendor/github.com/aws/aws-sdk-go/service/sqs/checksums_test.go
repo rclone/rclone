@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"io/ioutil"
 	"net/http"
+	"strings"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -36,7 +35,9 @@ func TestSendMessageChecksum(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no error, got %v", err)
+	}
 }
 
 func TestSendMessageChecksumInvalid(t *testing.T) {
@@ -52,10 +53,16 @@ func TestSendMessageChecksumInvalid(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expect error, got nil")
+	}
 
-	assert.Equal(t, "InvalidChecksum", err.(awserr.Error).Code())
-	assert.Contains(t, err.(awserr.Error).Message(), "expected MD5 checksum '000', got '098f6bcd4621d373cade4e832627b4f6'")
+	if e, a := "InvalidChecksum", err.(awserr.Error).Code(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := err.(awserr.Error).Message(), "expected MD5 checksum '000', got '098f6bcd4621d373cade4e832627b4f6'"; !strings.Contains(a, e) {
+		t.Errorf("expect %v to be in %v, was not", e, a)
+	}
 }
 
 func TestSendMessageChecksumInvalidNoValidation(t *testing.T) {
@@ -77,7 +84,9 @@ func TestSendMessageChecksumInvalidNoValidation(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no error, got %v", err)
+	}
 }
 
 func TestSendMessageChecksumNoInput(t *testing.T) {
@@ -88,10 +97,16 @@ func TestSendMessageChecksumNoInput(t *testing.T) {
 		r.Data = &sqs.SendMessageOutput{}
 	})
 	err := req.Send()
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expect error, got nil")
+	}
 
-	assert.Equal(t, "InvalidChecksum", err.(awserr.Error).Code())
-	assert.Contains(t, err.(awserr.Error).Message(), "cannot compute checksum. missing body")
+	if e, a := "InvalidChecksum", err.(awserr.Error).Code(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := err.(awserr.Error).Message(), "cannot compute checksum. missing body"; !strings.Contains(a, e) {
+		t.Errorf("expect %v to be in %v, was not", e, a)
+	}
 }
 
 func TestSendMessageChecksumNoOutput(t *testing.T) {
@@ -104,10 +119,16 @@ func TestSendMessageChecksumNoOutput(t *testing.T) {
 		r.Data = &sqs.SendMessageOutput{}
 	})
 	err := req.Send()
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expect error, got nil")
+	}
 
-	assert.Equal(t, "InvalidChecksum", err.(awserr.Error).Code())
-	assert.Contains(t, err.(awserr.Error).Message(), "cannot verify checksum. missing response MD5")
+	if e, a := "InvalidChecksum", err.(awserr.Error).Code(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := err.(awserr.Error).Message(), "cannot verify checksum. missing response MD5"; !strings.Contains(a, e) {
+		t.Errorf("expect %v to be in %v, was not", e, a)
+	}
 }
 
 func TestRecieveMessageChecksum(t *testing.T) {
@@ -126,7 +147,9 @@ func TestRecieveMessageChecksum(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no error, got %v", err)
+	}
 }
 
 func TestRecieveMessageChecksumInvalid(t *testing.T) {
@@ -146,10 +169,16 @@ func TestRecieveMessageChecksumInvalid(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expect error, got nil")
+	}
 
-	assert.Equal(t, "InvalidChecksum", err.(awserr.Error).Code())
-	assert.Contains(t, err.(awserr.Error).Message(), "invalid messages: 123, 456")
+	if e, a := "InvalidChecksum", err.(awserr.Error).Code(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := err.(awserr.Error).Message(), "invalid messages: 123, 456"; !strings.Contains(a, e) {
+		t.Errorf("expect %v to be in %v, was not", e, a)
+	}
 }
 
 func TestSendMessageBatchChecksum(t *testing.T) {
@@ -175,7 +204,9 @@ func TestSendMessageBatchChecksum(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no error, got %v", err)
+	}
 }
 
 func TestSendMessageBatchChecksumInvalid(t *testing.T) {
@@ -201,8 +232,14 @@ func TestSendMessageBatchChecksumInvalid(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.Error(t, err)
+	if err == nil {
+		t.Fatalf("expect error, got nil")
+	}
 
-	assert.Equal(t, "InvalidChecksum", err.(awserr.Error).Code())
-	assert.Contains(t, err.(awserr.Error).Message(), "invalid messages: 456, 789")
+	if e, a := "InvalidChecksum", err.(awserr.Error).Code(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := err.(awserr.Error).Message(), "invalid messages: 456, 789"; !strings.Contains(a, e) {
+		t.Errorf("expect %v to be in %v, was not", e, a)
+	}
 }

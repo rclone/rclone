@@ -166,8 +166,8 @@ type AuthorizedCertificate struct {
 	// DomainMappingsCount: Aggregate count of the domain mappings with this
 	// certificate mapped. This count includes domain mappings on
 	// applications for which the user does not have VIEWER permissions.Only
-	// returned by GET requests when specifically requested by the view=FULL
-	// option.@OutputOnly
+	// returned by GET or LIST requests when specifically requested by the
+	// view=FULL_CERTIFICATE option.@OutputOnly
 	DomainMappingsCount int64 `json:"domainMappingsCount,omitempty"`
 
 	// DomainNames: Topmost applicable domains of this certificate. This
@@ -203,8 +203,8 @@ type AuthorizedCertificate struct {
 	// list of mapped domain mappings if the user does not have VIEWER
 	// permissions on all of the applications that have this certificate
 	// mapped. See domain_mappings_count for a complete count.Only returned
-	// by GET requests when specifically requested by the view=FULL
-	// option.@OutputOnly
+	// by GET or LIST requests when specifically requested by the
+	// view=FULL_CERTIFICATE option.@OutputOnly
 	VisibleDomainMappings []string `json:"visibleDomainMappings,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1175,8 +1175,8 @@ type Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details. There will
-	// be a common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details. There is a
+	// common set of message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
@@ -1678,6 +1678,17 @@ func (c *AppsAuthorizedCertificatesListCall) PageToken(pageToken string) *AppsAu
 	return c
 }
 
+// View sets the optional parameter "view": Controls the set of fields
+// returned in the LIST response.
+//
+// Possible values:
+//   "BASIC_CERTIFICATE"
+//   "FULL_CERTIFICATE"
+func (c *AppsAuthorizedCertificatesListCall) View(view string) *AppsAuthorizedCertificatesListCall {
+	c.urlParams_.Set("view", view)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -1795,6 +1806,15 @@ func (c *AppsAuthorizedCertificatesListCall) Do(opts ...googleapi.CallOption) (*
 	//     },
 	//     "pageToken": {
 	//       "description": "Continuation token for fetching the next page of results.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "view": {
+	//       "description": "Controls the set of fields returned in the LIST response.",
+	//       "enum": [
+	//         "BASIC_CERTIFICATE",
+	//         "FULL_CERTIFICATE"
+	//       ],
 	//       "location": "query",
 	//       "type": "string"
 	//     }
@@ -2833,7 +2853,7 @@ func (r *AppsDomainMappingsService) Patch(appsId string, domainMappingsId string
 
 // NoManagedCertificate sets the optional parameter
 // "noManagedCertificate": Whether a managed certificate should be
-// provided by App Engine. If true, a certificate ID must be manaually
+// provided by App Engine. If true, a certificate ID must be manually
 // set in the DomainMapping resource to configure SSL for this domain.
 // If false, a managed certificate will be provisioned and a certificate
 // ID will be automatically populated. Only applicable if
@@ -2959,7 +2979,7 @@ func (c *AppsDomainMappingsPatchCall) Do(opts ...googleapi.CallOption) (*Operati
 	//       "type": "string"
 	//     },
 	//     "noManagedCertificate": {
-	//       "description": "Whether a managed certificate should be provided by App Engine. If true, a certificate ID must be manaually set in the DomainMapping resource to configure SSL for this domain. If false, a managed certificate will be provisioned and a certificate ID will be automatically populated. Only applicable if ssl_settings.certificate_id is specified in the update mask.",
+	//       "description": "Whether a managed certificate should be provided by App Engine. If true, a certificate ID must be manually set in the DomainMapping resource to configure SSL for this domain. If false, a managed certificate will be provisioned and a certificate ID will be automatically populated. Only applicable if ssl_settings.certificate_id is specified in the update mask.",
 	//       "location": "query",
 	//       "type": "boolean"
 	//     },

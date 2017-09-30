@@ -1,7 +1,6 @@
 package simpledb
 
 import (
-	"github.com/stretchr/testify/assert"
 	"net/http"
 	"testing"
 
@@ -27,7 +26,13 @@ func TestUnmarhsalErrorLeak(t *testing.T) {
 	reader := req.HTTPResponse.Body.(*awstesting.ReadCloser)
 	unmarshalError(req)
 
-	assert.NotNil(t, req.Error)
-	assert.Equal(t, reader.Closed, true)
-	assert.Equal(t, reader.Size, 0)
+	if req.Error == nil {
+		t.Errorf("expect error, got nil")
+	}
+	if !reader.Closed {
+		t.Errorf("expect closed, was not")
+	}
+	if e, a := 0, reader.Size; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }

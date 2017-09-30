@@ -2,9 +2,19 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
-// Package cryptobyte implements building and parsing of byte strings for
-// DER-encoded ASN.1 and TLS messages. See the examples for the Builder and
-// String types to get started.
+// Package cryptobyte contains types that help with parsing and constructing
+// length-prefixed, binary messages, including ASN.1 DER. (The asn1 subpackage
+// contains useful ASN.1 constants.)
+//
+// The String type is for parsing. It wraps a []byte slice and provides helper
+// functions for consuming structures, value by value.
+//
+// The Builder type is for constructing messages. It providers helper functions
+// for appending values and also for appending length-prefixed submessages –
+// without having to worry about calculating the length prefix ahead of time.
+//
+// See the documentation and examples for the Builder and String types to get
+// started.
 package cryptobyte // import "golang.org/x/crypto/cryptobyte"
 
 // String represents a string of bytes. It provides methods for parsing

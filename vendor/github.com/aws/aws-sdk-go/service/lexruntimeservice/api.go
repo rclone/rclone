@@ -15,19 +15,18 @@ const opPostContent = "PostContent"
 
 // PostContentRequest generates a "aws/request.Request" representing the
 // client's request for the PostContent operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PostContent for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PostContent method directly
-// instead.
+// See PostContent for more information on using the PostContent
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PostContentRequest method.
 //    req, resp := client.PostContentRequest(params)
@@ -60,8 +59,12 @@ func (c *LexRuntimeService) PostContentRequest(input *PostContentInput) (req *re
 // PostContent API operation for Amazon Lex Runtime Service.
 //
 // Sends user input (text or speech) to Amazon Lex. Clients use this API to
-// send requests to Amazon Lex at runtime. Amazon Lex interprets the user input
-// using the machine learning model that it built for the bot.
+// send text and audio requests to Amazon Lex at runtime. Amazon Lex interprets
+// the user input using the machine learning model that it built for the bot.
+//
+// The PostContent operation supports audio input at 8kHz and 16kHz. You can
+// use 8kHz audio to achieve higher speech recognition accuracy in telephone
+// audio applications.
 //
 // In response, Amazon Lex returns the next message to convey to the user. Consider
 // the following example messages:
@@ -125,7 +128,7 @@ func (c *LexRuntimeService) PostContentRequest(input *PostContentInput) (req *re
 //
 //   * ErrCodeBadRequestException "BadRequestException"
 //   Request validation failed, there is no usable message in the context, or
-//   the bot build failed.
+//   the bot build failed, is still in progress, or contains unbuilt changes.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
 //   Exceeded a limit.
@@ -146,17 +149,23 @@ func (c *LexRuntimeService) PostContentRequest(input *PostContentInput) (req *re
 //   The input speech is too long.
 //
 //   * ErrCodeDependencyFailedException "DependencyFailedException"
-//   One of the downstream dependencies, such as AWS Lambda or Amazon Polly, threw
-//   an exception. For example, if Amazon Lex does not have sufficient permissions
-//   to call a Lambda function, it results in Lambda throwing an exception.
+//   One of the dependencies, such as AWS Lambda or Amazon Polly, threw an exception.
+//   For example,
+//
+//      * If Amazon Lex does not have sufficient permissions to call a Lambda
+//      function.
+//
+//      * If a Lambda function takes longer than 30 seconds to execute.
+//
+//      * If a fulfillment Lambda function returns a Delegate dialog action without
+//      removing any slot values.
 //
 //   * ErrCodeBadGatewayException "BadGatewayException"
 //   Either the Amazon Lex bot is still building, or one of the dependent services
 //   (Amazon Polly, AWS Lambda) failed with an internal service error.
 //
 //   * ErrCodeLoopDetectedException "LoopDetectedException"
-//   Lambda fulfilment function returned DelegateDialogAction to Amazon Lex without
-//   changing any slot values.
+//   This exception is not used.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContent
 func (c *LexRuntimeService) PostContent(input *PostContentInput) (*PostContentOutput, error) {
@@ -184,19 +193,18 @@ const opPostText = "PostText"
 
 // PostTextRequest generates a "aws/request.Request" representing the
 // client's request for the PostText operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PostText for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PostText method directly
-// instead.
+// See PostText for more information on using the PostText
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PostTextRequest method.
 //    req, resp := client.PostTextRequest(params)
@@ -289,7 +297,7 @@ func (c *LexRuntimeService) PostTextRequest(input *PostTextInput) (req *request.
 //
 //   * ErrCodeBadRequestException "BadRequestException"
 //   Request validation failed, there is no usable message in the context, or
-//   the bot build failed.
+//   the bot build failed, is still in progress, or contains unbuilt changes.
 //
 //   * ErrCodeLimitExceededException "LimitExceededException"
 //   Exceeded a limit.
@@ -301,17 +309,23 @@ func (c *LexRuntimeService) PostTextRequest(input *PostTextInput) (req *request.
 //   Two clients are using the same AWS account, Amazon Lex bot, and user ID.
 //
 //   * ErrCodeDependencyFailedException "DependencyFailedException"
-//   One of the downstream dependencies, such as AWS Lambda or Amazon Polly, threw
-//   an exception. For example, if Amazon Lex does not have sufficient permissions
-//   to call a Lambda function, it results in Lambda throwing an exception.
+//   One of the dependencies, such as AWS Lambda or Amazon Polly, threw an exception.
+//   For example,
+//
+//      * If Amazon Lex does not have sufficient permissions to call a Lambda
+//      function.
+//
+//      * If a Lambda function takes longer than 30 seconds to execute.
+//
+//      * If a fulfillment Lambda function returns a Delegate dialog action without
+//      removing any slot values.
 //
 //   * ErrCodeBadGatewayException "BadGatewayException"
 //   Either the Amazon Lex bot is still building, or one of the dependent services
 //   (Amazon Polly, AWS Lambda) failed with an internal service error.
 //
 //   * ErrCodeLoopDetectedException "LoopDetectedException"
-//   Lambda fulfilment function returned DelegateDialogAction to Amazon Lex without
-//   changing any slot values.
+//   This exception is not used.
 //
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostText
 func (c *LexRuntimeService) PostText(input *PostTextInput) (*PostTextOutput, error) {
@@ -478,20 +492,23 @@ type PostContentInput struct {
 	// BotName is a required field
 	BotName *string `location:"uri" locationName:"botName" type:"string" required:"true"`
 
-	// You pass this values as the Content-Type HTTP header.
+	// You pass this value as the Content-Type HTTP header.
 	//
 	// Indicates the audio format or text. The header value must start with one
 	// of the following prefixes:
 	//
-	//    * PCM format
+	//    * PCM format, audio data must be in little-endian byte order.
 	//
 	// audio/l16; rate=16000; channels=1
 	//
 	// audio/x-l16; sample-rate=16000; channel-count=1
 	//
+	// audio/lpcm; sample-rate=8000; sample-size-bits=16; channel-count=1; is-big-endian=false
+	//
+	//
 	//    * Opus format
 	//
-	// audio/x-cbr-opus-with-preamble; preamble-size=0; bit-rate=1; frame-size-milliseconds=1.1
+	// audio/x-cbr-opus-with-preamble; preamble-size=0; bit-rate=256000; frame-size-milliseconds=4
 	//
 	//    * Text format
 	//
@@ -503,70 +520,59 @@ type PostContentInput struct {
 	// User input in PCM or Opus audio format or text format as described in the
 	// Content-Type HTTP header.
 	//
+	// You can stream audio data to Amazon Lex or you can create a local buffer
+	// that captures all of the audio data before sending. In general, you get better
+	// performance if you stream audio data rather than buffering the data locally.
+	//
 	// InputStream is a required field
 	InputStream io.ReadSeeker `locationName:"inputStream" type:"blob" required:"true"`
 
-	// You pass this value in the x-amz-lex-session-attributes HTTP header. The
-	// value must be map (keys and values must be strings) that is JSON serialized
-	// and then base64 encoded.
+	// You pass this value as the x-amz-lex-request-attributes HTTP header.
 	//
-	// A session represents dialog between a user and Amazon Lex. At runtime, a
-	// client application can pass contextual information, in the request to Amazon
-	// Lex. For example,
+	// Request-specific information passed between Amazon Lex and a client application.
+	// The value must be a JSON serialized and base64 encoded map with string keys
+	// and values. The total size of the requestAttributes and sessionAttributes
+	// headers is limited to 12 KB.
 	//
-	//    * You might use session attributes to track the requestID of user requests.
+	// The namespace x-amz-lex: is reserved for special attributes. Don't create
+	// any request attributes with the prefix x-amz-lex:.
 	//
-	//    * In Getting Started Exercise 1, the example bot uses the price session
-	//    attribute to maintain the price of flowers ordered (for example, "price":25).
-	//    The code hook (Lambda function) sets this attribute based on the type
-	//    of flowers ordered. For more information, see Review the Details of Information
-	//    Flow (http://docs.aws.amazon.com/lex/latest/dg/gs-bp-details-after-lambda.html).
+	// For more information, see Setting Request Attributes (http://docs.aws.amazon.com/lex/latest/dg/context-mgmt.html#context-mgmt-request-attribs).
+	RequestAttributes aws.JSONValue `location:"header" locationName:"x-amz-lex-request-attributes" type:"jsonvalue"`
+
+	// You pass this value as the x-amz-lex-session-attributes HTTP header.
 	//
+	// Application-specific information passed between Amazon Lex and a client application.
+	// The value must be a JSON serialized and base64 encoded map with string keys
+	// and values. The total size of the sessionAttributes and requestAttributes
+	// headers is limited to 12 KB.
 	//
-	//    * In the BookTrip bot exercise, the bot uses the currentReservation session
-	//    attribute to maintains the slot data during the in-progress conversation
-	//    to book a hotel or book a car. For more information, see Details of Information
-	//    Flow (http://docs.aws.amazon.com/lex/latest/dg/book-trip-detail-flow.html).
-	//
-	//
-	// Amazon Lex passes these session attributes to the Lambda functions configured
-	// for the intent In the your Lambda function, you can use the session attributes
-	// for initialization and customization (prompts). Some examples are:
-	//
-	//    *  Initialization - In a pizza ordering bot, if you pass user location
-	//    (for example, "Location : 111 Maple Street"), then your Lambda function
-	//    might use this information to determine the closest pizzeria to place
-	//    the order (and perhaps set the storeAddress slot value as well).
-	//
-	//  Personalized prompts - For example, you can configure prompts to refer to
-	//    the user by name (for example, "Hey [firstName], what toppings would you
-	//    like?"). You can pass the user's name as a session attribute ("firstName":
-	//    "Joe") so that Amazon Lex can substitute the placeholder to provide a
-	//    personalized prompt to the user ("Hey Joe, what toppings would you like?").
-	//
-	//
-	// Amazon Lex does not persist session attributes.
-	//
-	//  If you configured a code hook for the intent, Amazon Lex passes the incoming
-	// session attributes to the Lambda function. The Lambda function must return
-	// these session attributes if you want Amazon Lex to return them to the client.
-	//
-	//  If there is no code hook configured for the intent Amazon Lex simply returns
-	// the session attributes to the client application.
+	// For more information, see Setting Session Attributes (http://docs.aws.amazon.com/lex/latest/dg/context-mgmt.html#context-mgmt-session-attribs).
 	SessionAttributes aws.JSONValue `location:"header" locationName:"x-amz-lex-session-attributes" type:"jsonvalue"`
 
-	// ID of the client application user. Typically, each of your application users
-	// should have a unique ID. The application developer decides the user IDs.
-	// At runtime, each request must include the user ID. Note the following considerations:
+	// The ID of the client application user. Amazon Lex uses this to identify a
+	// user's conversation with your bot. At runtime, each request must contain
+	// the userID field.
 	//
-	//    *  If you want a user to start conversation on one device and continue
-	//    the conversation on another device, you might choose a user-specific identifier,
-	//    such as the user's login, or Amazon Cognito user ID (assuming your application
-	//    is using Amazon Cognito).
+	// To decide the user ID to use for your application, consider the following
+	// factors.
 	//
-	//    *  If you want the same user to be able to have two independent conversations
-	//    on two different devices, you might choose device-specific identifier,
-	//    such as device ID, or some globally unique identifier.
+	//    * The userID field must not contain any personally identifiable information
+	//    of the user, for example, name, personal identification numbers, or other
+	//    end user personal information.
+	//
+	//    * If you want a user to start a conversation on one device and continue
+	//    on another device, use a user-specific identifier.
+	//
+	//    * If you want the same user to be able to have two independent conversations
+	//    on two different devices, choose a device-specific identifier.
+	//
+	//    * A user can't have two independent conversations with two different versions
+	//    of the same bot. For example, a user can't have a conversation with the
+	//    PROD and BETA versions of the same bot. If you anticipate that a user
+	//    will need to have conversation with two different versions, for example,
+	//    while testing, include the bot alias in the user ID to separate the two
+	//    conversations.
 	//
 	// UserId is a required field
 	UserId *string `location:"uri" locationName:"userId" min:"2" type:"string" required:"true"`
@@ -640,6 +646,12 @@ func (s *PostContentInput) SetInputStream(v io.ReadSeeker) *PostContentInput {
 	return s
 }
 
+// SetRequestAttributes sets the RequestAttributes field's value.
+func (s *PostContentInput) SetRequestAttributes(v aws.JSONValue) *PostContentInput {
+	s.RequestAttributes = v
+	return s
+}
+
 // SetSessionAttributes sets the SessionAttributes field's value.
 func (s *PostContentInput) SetSessionAttributes(v aws.JSONValue) *PostContentInput {
 	s.SessionAttributes = v
@@ -672,14 +684,14 @@ type PostContentOutput struct {
 	// one of the following values as dialogState. The client can optionally use
 	// this information to customize the user interface.
 	//
-	//    * ElicitIntent – Amazon Lex wants to elicit the user's intent. Consider
+	//    * ElicitIntent - Amazon Lex wants to elicit the user's intent. Consider
 	//    the following examples:
 	//
 	//  For example, a user might utter an intent ("I want to order a pizza"). If
 	//    Amazon Lex cannot infer the user intent from this utterance, it will return
 	//    this dialog state.
 	//
-	//    * ConfirmIntent – Amazon Lex is expecting a "yes" or "no" response.
+	//    * ConfirmIntent - Amazon Lex is expecting a "yes" or "no" response.
 	//
 	// For example, Amazon Lex wants user confirmation before fulfilling an intent.
 	//    Instead of a simple "yes" or "no" response, a user might respond with
@@ -688,7 +700,7 @@ type PostContentOutput struct {
 	//    information (in these examples, update the crust type slot or change the
 	//    intent from OrderPizza to OrderDrink).
 	//
-	//    * ElicitSlot – Amazon Lex is expecting the value of a slot for the current
+	//    * ElicitSlot - Amazon Lex is expecting the value of a slot for the current
 	//    intent.
 	//
 	//  For example, suppose that in the response Amazon Lex sends this message:
@@ -697,13 +709,13 @@ type PostContentOutput struct {
 	//    the response (e.g., "medium thick crust pizza"). Amazon Lex can process
 	//    such additional information appropriately.
 	//
-	//    * Fulfilled – Conveys that the Lambda function has successfully fulfilled
+	//    * Fulfilled - Conveys that the Lambda function has successfully fulfilled
 	//    the intent.
 	//
-	//    * ReadyForFulfillment – Conveys that the client has to fullfill the request.
+	//    * ReadyForFulfillment - Conveys that the client has to fulfill the request.
 	//
 	//
-	//    * Failed – Conveys that the conversation with the user failed.
+	//    * Failed - Conveys that the conversation with the user failed.
 	//
 	//  This can happen for various reasons, including that the user does not provide
 	//    an appropriate response to prompts from the service (you can configure
@@ -711,7 +723,12 @@ type PostContentOutput struct {
 	//    or if the Lambda function fails to fulfill the intent.
 	DialogState *string `location:"header" locationName:"x-amz-lex-dialog-state" type:"string" enum:"DialogState"`
 
-	// Transcript of the voice input to the operation.
+	// The text used to process the request.
+	//
+	// If the input was an audio stream, the inputTranscript field contains the
+	// text extracted from the audio stream. This is the text that is actually processed
+	// to recognize intents and slot values. You can use this information to determine
+	// if Amazon Lex is correctly processing the audio that you send.
 	InputTranscript *string `location:"header" locationName:"x-amz-lex-input-transcript" type:"string"`
 
 	// Current user intent that Amazon Lex is aware of.
@@ -740,6 +757,15 @@ type PostContentOutput struct {
 
 	// Map of zero or more intent slots (name/value pairs) Amazon Lex detected from
 	// the user input during the conversation.
+	//
+	// Amazon Lex creates a resolution list containing likely values for a slot.
+	// The value that it returns is determined by the valueSelectionStrategy selected
+	// when the slot type was created or updated. If valueSelectionStrategy is set
+	// to ORIGINAL_VALUE, the value provided by the user is returned, if the user
+	// value is similar to the slot values. If valueSelectionStrategy is set to
+	// TOP_RESOLUTION Amazon Lex returns the first value in the resolution list
+	// or, if there is no resolution list, null. If you don't specify a valueSelectionStrategy,
+	// the default is ORIGINAL_VALUE.
 	Slots aws.JSONValue `location:"header" locationName:"x-amz-lex-slots" type:"jsonvalue"`
 }
 
@@ -826,68 +852,42 @@ type PostTextInput struct {
 	// InputText is a required field
 	InputText *string `locationName:"inputText" min:"1" type:"string" required:"true"`
 
-	// By using session attributes, a client application can pass contextual information
-	// in the request to Amazon Lex For example,
+	// Request-specific information passed between Amazon Lex and a client application.
 	//
-	//    * In Getting Started Exercise 1, the example bot uses the price session
-	//    attribute to maintain the price of the flowers ordered (for example, "Price":25).
-	//    The code hook (the Lambda function) sets this attribute based on the type
-	//    of flowers ordered. For more information, see Review the Details of Information
-	//    Flow (http://docs.aws.amazon.com/lex/latest/dg/gs-bp-details-after-lambda.html).
+	// The namespace x-amz-lex: is reserved for special attributes. Don't create
+	// any request attributes with the prefix x-amz-lex:.
 	//
+	// For more information, see Setting Request Attributes (http://docs.aws.amazon.com/lex/latest/dg/context-mgmt.html#context-mgmt-request-attribs).
+	RequestAttributes map[string]*string `locationName:"requestAttributes" type:"map"`
+
+	// Application-specific information passed between Amazon Lex and a client application.
 	//
-	//    * In the BookTrip bot exercise, the bot uses the currentReservation session
-	//    attribute to maintain slot data during the in-progress conversation to
-	//    book a hotel or book a car. For more information, see Details of Information
-	//    Flow (http://docs.aws.amazon.com/lex/latest/dg/book-trip-detail-flow.html).
-	//
-	//
-	//    * You might use the session attributes (key, value pairs) to track the
-	//    requestID of user requests.
-	//
-	// Amazon Lex simply passes these session attributes to the Lambda functions
-	// configured for the intent.
-	//
-	// In your Lambda function, you can also use the session attributes for initialization
-	// and customization (prompts and response cards). Some examples are:
-	//
-	//    *  Initialization - In a pizza ordering bot, if you can pass the user
-	//    location as a session attribute (for example, "Location" : "111 Maple
-	//    street"), then your Lambda function might use this information to determine
-	//    the closest pizzeria to place the order (perhaps to set the storeAddress
-	//    slot value).
-	//
-	//    *  Personalize prompts - For example, you can configure prompts to refer
-	//    to the user name. (For example, "Hey [FirstName], what toppings would
-	//    you like?"). You can pass the user name as a session attribute ("FirstName"
-	//    : "Joe") so that Amazon Lex can substitute the placeholder to provide
-	//    a personalize prompt to the user ("Hey Joe, what toppings would you like?").
-	//
-	//
-	// Amazon Lex does not persist session attributes.
-	//
-	//  If you configure a code hook for the intent, Amazon Lex passes the incoming
-	// session attributes to the Lambda function. If you want Amazon Lex to return
-	// these session attributes back to the client, the Lambda function must return
-	// them.
-	//
-	//  If there is no code hook configured for the intent, Amazon Lex simply returns
-	// the session attributes back to the client application.
+	// For more information, see Setting Session Attributes (http://docs.aws.amazon.com/lex/latest/dg/context-mgmt.html#context-mgmt-session-attribs).
 	SessionAttributes map[string]*string `locationName:"sessionAttributes" type:"map"`
 
-	// The ID of the client application user. The application developer decides
-	// the user IDs. At runtime, each request must include the user ID. Typically,
-	// each of your application users should have a unique ID. Note the following
-	// considerations:
+	// The ID of the client application user. Amazon Lex uses this to identify a
+	// user's conversation with your bot. At runtime, each request must contain
+	// the userID field.
 	//
-	//    *  If you want a user to start a conversation on one device and continue
-	//    the conversation on another device, you might choose a user-specific identifier,
-	//    such as a login or Amazon Cognito user ID (assuming your application is
-	//    using Amazon Cognito).
+	// To decide the user ID to use for your application, consider the following
+	// factors.
 	//
-	//    *  If you want the same user to be able to have two independent conversations
-	//    on two different devices, you might choose a device-specific identifier,
-	//    such as device ID, or some globally unique identifier.
+	//    * The userID field must not contain any personally identifiable information
+	//    of the user, for example, name, personal identification numbers, or other
+	//    end user personal information.
+	//
+	//    * If you want a user to start a conversation on one device and continue
+	//    on another device, use a user-specific identifier.
+	//
+	//    * If you want the same user to be able to have two independent conversations
+	//    on two different devices, choose a device-specific identifier.
+	//
+	//    * A user can't have two independent conversations with two different versions
+	//    of the same bot. For example, a user can't have a conversation with the
+	//    PROD and BETA versions of the same bot. If you anticipate that a user
+	//    will need to have conversation with two different versions, for example,
+	//    while testing, include the bot alias in the user ID to separate the two
+	//    conversations.
 	//
 	// UserId is a required field
 	UserId *string `location:"uri" locationName:"userId" min:"2" type:"string" required:"true"`
@@ -949,6 +949,12 @@ func (s *PostTextInput) SetInputText(v string) *PostTextInput {
 	return s
 }
 
+// SetRequestAttributes sets the RequestAttributes field's value.
+func (s *PostTextInput) SetRequestAttributes(v map[string]*string) *PostTextInput {
+	s.RequestAttributes = v
+	return s
+}
+
 // SetSessionAttributes sets the SessionAttributes field's value.
 func (s *PostTextInput) SetSessionAttributes(v map[string]*string) *PostTextInput {
 	s.SessionAttributes = v
@@ -969,13 +975,13 @@ type PostTextOutput struct {
 	// one of the following values as dialogState. The client can optionally use
 	// this information to customize the user interface.
 	//
-	//    * ElicitIntent – Amazon Lex wants to elicit user intent.
+	//    * ElicitIntent - Amazon Lex wants to elicit user intent.
 	//
 	// For example, a user might utter an intent ("I want to order a pizza"). If
 	//    Amazon Lex cannot infer the user intent from this utterance, it will return
 	//    this dialogState.
 	//
-	//    * ConfirmIntent – Amazon Lex is expecting a "yes" or "no" response.
+	//    * ConfirmIntent - Amazon Lex is expecting a "yes" or "no" response.
 	//
 	//  For example, Amazon Lex wants user confirmation before fulfilling an intent.
 	//
@@ -986,7 +992,7 @@ type PostTextOutput struct {
 	//    examples, update the crust type slot value, or change intent from OrderPizza
 	//    to OrderDrink).
 	//
-	//    * ElicitSlot – Amazon Lex is expecting a slot value for the current intent.
+	//    * ElicitSlot - Amazon Lex is expecting a slot value for the current intent.
 	//
 	//
 	// For example, suppose that in the response Amazon Lex sends this message:
@@ -995,13 +1001,13 @@ type PostTextOutput struct {
 	//    the response (e.g., "medium thick crust pizza"). Amazon Lex can process
 	//    such additional information appropriately.
 	//
-	//    * Fulfilled – Conveys that the Lambda function configured for the intent
+	//    * Fulfilled - Conveys that the Lambda function configured for the intent
 	//    has successfully fulfilled the intent.
 	//
-	//    * ReadyForFulfillment – Conveys that the client has to fulfill the intent.
+	//    * ReadyForFulfillment - Conveys that the client has to fulfill the intent.
 	//
 	//
-	//    * Failed – Conveys that the conversation with the user failed.
+	//    * Failed - Conveys that the conversation with the user failed.
 	//
 	//  This can happen for various reasons including that the user did not provide
 	//    an appropriate response to prompts from the service (you can configure
@@ -1038,8 +1044,16 @@ type PostTextOutput struct {
 	// which Amazon Lex is eliciting a value.
 	SlotToElicit *string `locationName:"slotToElicit" type:"string"`
 
-	// The intent slots (name/value pairs) that Amazon Lex detected so far from
-	// the user input in the conversation.
+	// The intent slots that Amazon Lex detected from the user input in the conversation.
+	//
+	// Amazon Lex creates a resolution list containing likely values for a slot.
+	// The value that it returns is determined by the valueSelectionStrategy selected
+	// when the slot type was created or updated. If valueSelectionStrategy is set
+	// to ORIGINAL_VALUE, the value provided by the user is returned, if the user
+	// value is similar to the slot values. If valueSelectionStrategy is set to
+	// TOP_RESOLUTION Amazon Lex returns the first value in the resolution list
+	// or, if there is no resolution list, null. If you don't specify a valueSelectionStrategy,
+	// the default is ORIGINAL_VALUE.
 	Slots map[string]*string `locationName:"slots" type:"map"`
 }
 

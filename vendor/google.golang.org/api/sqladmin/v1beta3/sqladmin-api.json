@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/49KRnzlsfCajyooOx9JRESIbzZg\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/lsRSA9rF-4KQu4xYN0id-kYxBtA\"",
  "discoveryVersion": "v1",
  "id": "sqladmin:v1beta3",
  "name": "sqladmin",
  "canonicalName": "SQL Admin",
  "version": "v1beta3",
- "revision": "20170606",
+ "revision": "20170807",
  "title": "Cloud SQL Administration API",
  "description": "Creates and configures Cloud SQL instances, which provide fully-managed MySQL databases.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/sql/v1beta3/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "sql/v1beta3/",
- "batchPath": "batch",
+ "batchPath": "batch/sqladmin/v1beta3",
  "parameters": {
   "alt": {
    "type": "string",
@@ -783,7 +783,7 @@
     },
     "requireSsl": {
      "type": "boolean",
-     "description": "Whether the mysqld should default to 'REQUIRE X509' for users connecting over IP."
+     "description": "Whether SSL connections over IP should be enforced or not."
     }
    }
   },

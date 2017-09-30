@@ -11,7 +11,7 @@ import (
 
 // WaitUntilInstanceProfileExists uses the IAM API operation
 // GetInstanceProfile to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *IAM) WaitUntilInstanceProfileExists(input *GetInstanceProfileInput) error {
 	return c.WaitUntilInstanceProfileExistsWithContext(aws.BackgroundContext(), input)
@@ -62,7 +62,7 @@ func (c *IAM) WaitUntilInstanceProfileExistsWithContext(ctx aws.Context, input *
 
 // WaitUntilUserExists uses the IAM API operation
 // GetUser to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *IAM) WaitUntilUserExists(input *GetUserInput) error {
 	return c.WaitUntilUserExistsWithContext(aws.BackgroundContext(), input)

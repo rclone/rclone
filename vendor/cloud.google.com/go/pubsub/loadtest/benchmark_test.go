@@ -31,7 +31,7 @@ import (
 
 	"cloud.google.com/go/internal/testutil"
 	"cloud.google.com/go/pubsub"
-	"google.golang.org/api/transport"
+	gtransport "google.golang.org/api/transport/grpc"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
 
@@ -100,9 +100,13 @@ func perfClient(pubDelay time.Duration, nConns int, f interface {
 	if err != nil {
 		f.Fatal(err)
 	}
-	conn, err := transport.DialGRPCInsecure(ctx,
+	conn, err := gtransport.DialInsecure(ctx,
 		option.WithEndpoint(srv.Addr),
-		option.WithGRPCConnectionPool(nConns))
+		option.WithGRPCConnectionPool(nConns),
+
+		// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
+		// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
+		option.WithGRPCDialOption(grpc.WithBlock()))
 	if err != nil {
 		f.Fatal(err)
 	}

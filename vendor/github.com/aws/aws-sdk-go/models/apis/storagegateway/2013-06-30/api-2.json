@@ -1211,7 +1211,8 @@
       "type":"structure",
       "required":["FileShareARN"],
       "members":{
-        "FileShareARN":{"shape":"FileShareARN"}
+        "FileShareARN":{"shape":"FileShareARN"},
+        "ForceDelete":{"shape":"boolean"}
       }
     },
     "DeleteFileShareOutput":{

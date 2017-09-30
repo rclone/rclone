@@ -111,6 +111,10 @@ func TestCodec(t *testing.T) {
 		},
 		tests: single("foo|BAZ", ""),
 	}, {
+		desc:  "nested value",
+		m:     nestedLang{nestedLang{empty{}}},
+		tests: single("nl|nl", ""),
+	}, {
 		desc: "not shadowed variable",
 		m: seq{
 			&Var{"bar", String("baz")},
@@ -207,8 +211,9 @@ func TestCodec(t *testing.T) {
 	dec := NewDecoder(language.Und, r, macros)
 	for _, tc := range testCases {
 		t.Run(tc.desc, func(t *testing.T) {
-
-			data, err := Compile(language.Und, macros, tc.m)
+			// Use a language other than Und so that we can test
+			// passing the language to nested values.
+			data, err := Compile(language.Dutch, macros, tc.m)
 			if failErr(err, tc.encErr) {
 				t.Errorf("encoding error: got %+q; want %+q", err, tc.encErr)
 			}
@@ -263,6 +268,23 @@ type incomplete struct{}
 func (incomplete) Compile(e *Encoder) (err error) {
 	e.EncodeMessageType(msgIncomplete)
 	return ErrIncomplete
+}
+
+var msgNested = Register(
+	"golang.org/x/text/internal/catmsg.nested",
+	func(d *Decoder) bool {
+		d.Render(d.DecodeString())
+		d.ExecuteMessage()
+		return true
+	})
+
+type nestedLang struct{ Message }
+
+func (n nestedLang) Compile(e *Encoder) (err error) {
+	e.EncodeMessageType(msgNested)
+	e.EncodeString(e.Language().String())
+	e.EncodeMessage(n.Message)
+	return nil
 }
 
 type errorCompileMsg struct{}

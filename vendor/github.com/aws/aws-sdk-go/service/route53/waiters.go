@@ -11,7 +11,7 @@ import (
 
 // WaitUntilResourceRecordSetsChanged uses the Route 53 API operation
 // GetChange to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *Route53) WaitUntilResourceRecordSetsChanged(input *GetChangeInput) error {
 	return c.WaitUntilResourceRecordSetsChangedWithContext(aws.BackgroundContext(), input)

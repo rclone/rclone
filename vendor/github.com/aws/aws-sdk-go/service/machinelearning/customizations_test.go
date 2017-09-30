@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
@@ -32,6 +30,10 @@ func TestPredictEndpoint(t *testing.T) {
 	})
 	err := req.Send()
 
-	assert.Nil(t, err)
-	assert.Equal(t, "https://localhost/endpoint", req.HTTPRequest.URL.String())
+	if err != nil {
+		t.Errorf("expect no error, got %v", err)
+	}
+	if e, a := "https://localhost/endpoint", req.HTTPRequest.URL.String(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }

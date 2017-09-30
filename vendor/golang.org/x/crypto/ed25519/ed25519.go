@@ -13,10 +13,10 @@ package ed25519
 // from SUPERCOP.
 
 import (
+	"bytes"
 	"crypto"
 	cryptorand "crypto/rand"
 	"crypto/sha512"
-	"crypto/subtle"
 	"errors"
 	"io"
 	"strconv"
@@ -177,5 +177,5 @@ func Verify(publicKey PublicKey, message, sig []byte) bool {
 
 	var checkR [32]byte
 	R.ToBytes(&checkR)
-	return subtle.ConstantTimeCompare(sig[:32], checkR[:]) == 1
+	return bytes.Equal(sig[:32], checkR[:])
 }

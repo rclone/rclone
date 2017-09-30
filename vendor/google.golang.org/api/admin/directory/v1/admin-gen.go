@@ -608,6 +608,11 @@ type CalendarResource struct {
 	// Etags: ETag of the resource.
 	Etags string `json:"etags,omitempty"`
 
+	// GeneratedResourceName: The auto-generated name of the calendar
+	// resource which includes metadata about the resource such as building
+	// name, floor, capacity, etc. For example, NYC-2-Training Room 1A (16)
+	GeneratedResourceName string `json:"generatedResourceName,omitempty"`
+
 	// Kind: The type of the resource. For calendar resources, the value is
 	// admin#directory#resources#calendars#CalendarResource.
 	Kind string `json:"kind,omitempty"`
@@ -1015,6 +1020,35 @@ type ChromeOsDevices struct {
 
 func (s *ChromeOsDevices) MarshalJSON() ([]byte, error) {
 	type noMethod ChromeOsDevices
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// ChromeOsMoveDevicesToOu: JSON request template for moving ChromeOs
+// Device to given OU in Directory Devices API.
+type ChromeOsMoveDevicesToOu struct {
+	// DeviceIds: ChromeOs Devices to be moved to OU
+	DeviceIds []string `json:"deviceIds,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DeviceIds") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DeviceIds") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ChromeOsMoveDevicesToOu) MarshalJSON() ([]byte, error) {
+	type noMethod ChromeOsMoveDevicesToOu
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2620,6 +2654,8 @@ type User struct {
 
 	ExternalIds interface{} `json:"externalIds,omitempty"`
 
+	Gender interface{} `json:"gender,omitempty"`
+
 	// HashFunction: Hash function name for password. Supported are MD5,
 	// SHA-1 and crypt
 	HashFunction string `json:"hashFunction,omitempty"`
@@ -2651,6 +2687,8 @@ type User struct {
 
 	// IsMailboxSetup: Is mailbox setup (Read-only)
 	IsMailboxSetup bool `json:"isMailboxSetup,omitempty"`
+
+	Keywords interface{} `json:"keywords,omitempty"`
 
 	// Kind: Kind of resource this is.
 	Kind string `json:"kind,omitempty"`
@@ -2911,6 +2949,41 @@ func (s *UserExternalId) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type UserGender struct {
+	// AddressMeAs: AddressMeAs. A human-readable string containing the
+	// proper way to refer to the profile owner by humans, for example
+	// "he/him/his" or "they/them/their".
+	AddressMeAs string `json:"addressMeAs,omitempty"`
+
+	// CustomGender: Custom gender.
+	CustomGender string `json:"customGender,omitempty"`
+
+	// Type: Gender.
+	Type string `json:"type,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AddressMeAs") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AddressMeAs") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UserGender) MarshalJSON() ([]byte, error) {
+	type noMethod UserGender
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // UserIm: JSON template for instant messenger of an user.
 type UserIm struct {
 	// CustomProtocol: Custom protocol.
@@ -2958,6 +3031,44 @@ type UserIm struct {
 
 func (s *UserIm) MarshalJSON() ([]byte, error) {
 	type noMethod UserIm
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// UserKeyword: JSON template for a keyword entry.
+type UserKeyword struct {
+	// CustomType: Custom Type.
+	CustomType string `json:"customType,omitempty"`
+
+	// Type: Each entry can have a type which indicates standard type of
+	// that entry. For example, keyword could be of type occupation or
+	// outlook. In addition to the standard type, an entry can have a custom
+	// type and can give it any name. Such types should have the CUSTOM
+	// value as type and also have a customType value.
+	Type string `json:"type,omitempty"`
+
+	// Value: Keyword.
+	Value string `json:"value,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CustomType") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CustomType") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UserKeyword) MarshalJSON() ([]byte, error) {
+	type noMethod UserKeyword
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3283,7 +3394,7 @@ type UserPosixAccount struct {
 	Gecos string `json:"gecos,omitempty"`
 
 	// Gid: The default group ID.
-	Gid int64 `json:"gid,omitempty"`
+	Gid uint64 `json:"gid,omitempty,string"`
 
 	// HomeDirectory: The path to the home directory for this account.
 	HomeDirectory string `json:"homeDirectory,omitempty"`
@@ -3299,7 +3410,7 @@ type UserPosixAccount struct {
 	SystemId string `json:"systemId,omitempty"`
 
 	// Uid: The POSIX compliant user ID.
-	Uid int64 `json:"uid,omitempty"`
+	Uid uint64 `json:"uid,omitempty,string"`
 
 	// Username: The username of the account.
 	Username string `json:"username,omitempty"`
@@ -4664,6 +4775,120 @@ func (c *ChromeosdevicesListCall) Pages(ctx context.Context, f func(*ChromeOsDev
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+// method id "directory.chromeosdevices.moveDevicesToOu":
+
+type ChromeosdevicesMoveDevicesToOuCall struct {
+	s                       *Service
+	customerId              string
+	chromeosmovedevicestoou *ChromeOsMoveDevicesToOu
+	urlParams_              gensupport.URLParams
+	ctx_                    context.Context
+	header_                 http.Header
+}
+
+// MoveDevicesToOu: Move or insert multiple Chrome OS Devices to
+// Organization Unit
+func (r *ChromeosdevicesService) MoveDevicesToOu(customerId string, orgUnitPath string, chromeosmovedevicestoou *ChromeOsMoveDevicesToOu) *ChromeosdevicesMoveDevicesToOuCall {
+	c := &ChromeosdevicesMoveDevicesToOuCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.customerId = customerId
+	c.urlParams_.Set("orgUnitPath", orgUnitPath)
+	c.chromeosmovedevicestoou = chromeosmovedevicestoou
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ChromeosdevicesMoveDevicesToOuCall) Fields(s ...googleapi.Field) *ChromeosdevicesMoveDevicesToOuCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ChromeosdevicesMoveDevicesToOuCall) Context(ctx context.Context) *ChromeosdevicesMoveDevicesToOuCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ChromeosdevicesMoveDevicesToOuCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ChromeosdevicesMoveDevicesToOuCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.chromeosmovedevicestoou)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "customer/{customerId}/devices/chromeos/moveDevicesToOu")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"customerId": c.customerId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "directory.chromeosdevices.moveDevicesToOu" call.
+func (c *ChromeosdevicesMoveDevicesToOuCall) Do(opts ...googleapi.CallOption) error {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if err != nil {
+		return err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return err
+	}
+	return nil
+	// {
+	//   "description": "Move or insert multiple Chrome OS Devices to Organization Unit",
+	//   "httpMethod": "POST",
+	//   "id": "directory.chromeosdevices.moveDevicesToOu",
+	//   "parameterOrder": [
+	//     "customerId",
+	//     "orgUnitPath"
+	//   ],
+	//   "parameters": {
+	//     "customerId": {
+	//       "description": "Immutable ID of the G Suite account",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "orgUnitPath": {
+	//       "description": "Full path of the target organization unit or its Id",
+	//       "location": "query",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "customer/{customerId}/devices/chromeos/moveDevicesToOu",
+	//   "request": {
+	//     "$ref": "ChromeOsMoveDevicesToOu"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/admin.directory.device.chromeos"
+	//   ]
+	// }
+
 }
 
 // method id "directory.chromeosdevices.patch":

@@ -170,6 +170,7 @@ func TestGetMulti(t *testing.T) {
 		{key: NameKey("X", "item1", p), put: true},
 		{key: NameKey("X", "item2", p), put: false},
 		{key: NameKey("X", "item3", p), put: false},
+		{key: NameKey("X", "item3", p), put: false},
 		{key: NameKey("X", "item4", p), put: true},
 	}
 
@@ -1003,6 +1004,8 @@ func TestNilPointers(t *testing.T) {
 		t.Errorf("Get: err %v; want %v", err, want)
 	}
 
+	// Test that deleting with duplicate keys work.
+	keys = append(keys, keys...)
 	if err := client.DeleteMulti(ctx, keys); err != nil {
 		t.Errorf("Delete: %v", err)
 	}

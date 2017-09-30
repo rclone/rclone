@@ -126,7 +126,7 @@ func testHashes2X(t *testing.T) {
 			t.Fatalf("#%d (single write): error from Read: %v", i, err)
 		}
 		if n, err := h.Read(sum); n != 0 || err != io.EOF {
-			t.Fatalf("#%d (single write): Read did not return (0, os.EOF) after exhaustion, got (%v, %v)", i, n, err)
+			t.Fatalf("#%d (single write): Read did not return (0, io.EOF) after exhaustion, got (%v, %v)", i, n, err)
 		}
 		if gotHex := fmt.Sprintf("%x", sum); gotHex != expectedHex {
 			t.Fatalf("#%d (single write): got %s, wanted %s", i, gotHex, expectedHex)

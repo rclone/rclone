@@ -313,7 +313,7 @@ var nameMap = map[string]htmlEncoding{
 }
 
 var localeMap = []htmlEncoding{
-	windows1252, // und
+	windows1252, // und_Latn
 	windows1256, // ar
 	windows1251, // ba
 	windows1251, // be
@@ -349,4 +349,4 @@ var localeMap = []htmlEncoding{
 	big5,        // zh-hant
 }
 
-const locales = "und ar ba be bg cs el et fa he hr hu ja kk ko ku ky lt lv mk pl ru sah sk sl sr tg th tr tt uk vi zh-hans zh-hant"
+const locales = "und_Latn ar ba be bg cs el et fa he hr hu ja kk ko ku ky lt lv mk pl ru sah sk sl sr tg th tr tt uk vi zh-hans zh-hant"

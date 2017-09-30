@@ -158,7 +158,7 @@ func TestSelectOnePerGroup(t *testing.T) {
 		s := MakeSlice(&sl)
 		s.SelectOnePerGroup(tt.attr, tt.values)
 		if len(sl) != len(tt.refs) {
-			t.Errorf("%d: found result lenght %d; want %d", i, len(sl), len(tt.refs))
+			t.Errorf("%d: found result length %d; want %d", i, len(sl), len(tt.refs))
 			continue
 		}
 		for j, e := range sl {

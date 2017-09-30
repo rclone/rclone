@@ -29,7 +29,7 @@ func doTestsReference(t *testing.T, files []string, flag int) {
 	var candidate string
 	defer func() {
 		if err := recover(); err != nil {
-			t.Errorf("\npanic while processing [%#v]\n", candidate)
+			t.Errorf("\npanic while processing [%#v]: %s\n", candidate, err)
 		}
 	}()
 

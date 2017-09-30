@@ -26,7 +26,7 @@ type Envelope struct {
 	// IV is the randomly generated IV base64 encoded.
 	IV string `json:"x-amz-iv"`
 	// CipherKey is the randomly generated cipher key.
-	CipherKey string `json:"x-amz-key-v2, x-amz-key"`
+	CipherKey string `json:"x-amz-key-v2"`
 	// MaterialDesc is a description to distinguish from other envelopes.
 	MatDesc               string `json:"x-amz-matdesc"`
 	WrapAlg               string `json:"x-amz-wrap-alg"`

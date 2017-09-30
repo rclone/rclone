@@ -2,20 +2,28 @@
   "version" : "2.0",
   "service" : null,
   "operations" : {
+    "CreateApp" : "Creates or updates an app.",
     "CreateCampaign" : "Creates or updates a campaign.",
     "CreateImportJob" : "Creates or updates an import job.",
     "CreateSegment" : "Used to create or update a segment.",
+    "DeleteAdmChannel" : "Delete an ADM channel",
     "DeleteApnsChannel" : "Deletes the APNs channel for an app.",
     "DeleteApnsSandboxChannel" : "Delete an APNS sandbox channel",
+    "DeleteApp" : "Deletes an app.",
+    "DeleteBaiduChannel" : "Delete a BAIDU GCM channel",
     "DeleteCampaign" : "Deletes a campaign.",
     "DeleteEmailChannel" : "Delete an email channel",
     "DeleteEventStream" : "Deletes the event stream for an app.",
     "DeleteGcmChannel" : "Deletes the GCM channel for an app.",
     "DeleteSegment" : "Deletes a segment.",
     "DeleteSmsChannel" : "Delete an SMS channel",
+    "GetAdmChannel" : "Get an ADM channel",
     "GetApnsChannel" : "Returns information about the APNs channel for an app.",
     "GetApnsSandboxChannel" : "Get an APNS sandbox channel",
+    "GetApp" : "Returns information about an app.",
     "GetApplicationSettings" : "Used to request the settings for an app.",
+    "GetApps" : "Returns information about your apps.",
+    "GetBaiduChannel" : "Get a BAIDU GCM channel",
     "GetCampaign" : "Returns information about a campaign.",
     "GetCampaignActivities" : "Returns information about the activity performed by a campaign.",
     "GetCampaignVersion" : "Returns information about a specific version of a campaign.",
@@ -35,9 +43,12 @@
     "GetSmsChannel" : "Get an SMS channel",
     "PutEventStream" : "Use to create or update the event stream for an app.",
     "SendMessages" : "Send a batch of messages",
+    "SendUsersMessages" : "Send a batch of messages to users",
+    "UpdateAdmChannel" : "Update an ADM channel",
     "UpdateApnsChannel" : "Use to update the APNs channel for an app.",
     "UpdateApnsSandboxChannel" : "Update an APNS sandbox channel",
     "UpdateApplicationSettings" : "Used to update the settings for an app.",
+    "UpdateBaiduChannel" : "Update a BAIDU GCM channel",
     "UpdateCampaign" : "Use to update a campaign.",
     "UpdateEmailChannel" : "Update an email channel",
     "UpdateEndpoint" : "Use to update an endpoint.",
@@ -47,6 +58,20 @@
     "UpdateSmsChannel" : "Update an SMS channel"
   },
   "shapes" : {
+    "ADMChannelRequest" : {
+      "base" : "Amazon Device Messaging channel definition.",
+      "refs" : { }
+    },
+    "ADMChannelResponse" : {
+      "base" : "Amazon Device Messaging channel definition.",
+      "refs" : { }
+    },
+    "ADMMessage" : {
+      "base" : "ADM Message.",
+      "refs" : {
+        "DirectMessageConfiguration$ADMMessage" : "The message to ADM channels. Overrides the default push notification message."
+      }
+    },
     "APNSChannelRequest" : {
       "base" : "Apple Push Notification Service channel definition.",
       "refs" : { }
@@ -72,7 +97,9 @@
     "Action" : {
       "base" : null,
       "refs" : {
+        "ADMMessage$Action" : "The action that occurs if the user taps a push notification delivered by the campaign: OPEN_APP - Your app launches, or it becomes the foreground app if it has been sent to the background. This is the default action. DEEP_LINK - Uses deep linking features in iOS and Android to open your app and display a designated user interface within the app. URL - The default mobile browser on the user's device launches and opens a web page at the URL you specify. Possible values include: OPEN_APP | DEEP_LINK | URL",
         "APNSMessage$Action" : "The action that occurs if the user taps a push notification delivered by the campaign: OPEN_APP - Your app launches, or it becomes the foreground app if it has been sent to the background. This is the default action. DEEP_LINK - Uses deep linking features in iOS and Android to open your app and display a designated user interface within the app. URL - The default mobile browser on the user's device launches and opens a web page at the URL you specify. Possible values include: OPEN_APP | DEEP_LINK | URL",
+        "BaiduMessage$Action" : "The action that occurs if the user taps a push notification delivered by the campaign: OPEN_APP - Your app launches, or it becomes the foreground app if it has been sent to the background. This is the default action. DEEP_LINK - Uses deep linking features in iOS and Android to open your app and display a designated user interface within the app. URL - The default mobile browser on the user's device launches and opens a web page at the URL you specify. Possible values include: OPEN_APP | DEEP_LINK | URL",
         "DefaultPushNotificationMessage$Action" : "The action that occurs if the user taps a push notification delivered by the campaign: OPEN_APP - Your app launches, or it becomes the foreground app if it has been sent to the background. This is the default action. DEEP_LINK - Uses deep linking features in iOS and Android to open your app and display a designated user interface within the app. URL - The default mobile browser on the user's device launches and opens a web page at the URL you specify. Possible values include: OPEN_APP | DEEP_LINK | URL",
         "GCMMessage$Action" : "The action that occurs if the user taps a push notification delivered by the campaign: OPEN_APP - Your app launches, or it becomes the foreground app if it has been sent to the background. This is the default action. DEEP_LINK - Uses deep linking features in iOS and Android to open your app and display a designated user interface within the app. URL - The default mobile browser on the user's device launches and opens a web page at the URL you specify. Possible values include: OPEN_APP | DEEP_LINK | URL",
         "Message$Action" : "The action that occurs if the user taps a push notification delivered by the campaign:\nOPEN_APP - Your app launches, or it becomes the foreground app if it has been sent to the background. This is the default action.\n\nDEEP_LINK - Uses deep linking features in iOS and Android to open your app and display a designated user interface within the app.\n\nURL - The default mobile browser on the user's device launches and opens a web page at the URL you specify."
@@ -94,8 +121,18 @@
         "MessageRequest$Addresses" : "A map of destination addresses, with the address as the key(Email address, phone number or push token) and the Address Configuration as the value."
       }
     },
+    "ApplicationResponse" : {
+      "base" : "Application Response.",
+      "refs" : {
+        "ApplicationsResponse$Item" : "List of applications returned in this page."
+      }
+    },
     "ApplicationSettingsResource" : {
       "base" : "Application settings.",
+      "refs" : { }
+    },
+    "ApplicationsResponse" : {
+      "base" : "Get Applications Result.",
       "refs" : { }
     },
     "AttributeDimension" : {
@@ -114,6 +151,20 @@
     "BadRequestException" : {
       "base" : null,
       "refs" : { }
+    },
+    "BaiduChannelRequest" : {
+      "base" : "Baidu Cloud Push credentials",
+      "refs" : { }
+    },
+    "BaiduChannelResponse" : {
+      "base" : "Baidu Cloud Messaging channel definition",
+      "refs" : { }
+    },
+    "BaiduMessage" : {
+      "base" : "Baidu Message.",
+      "refs" : {
+        "DirectMessageConfiguration$BaiduMessage" : "The message to Baidu GCM channels. Overrides the default push notification message."
+      }
     },
     "CampaignEmailMessage" : {
       "base" : "The email message configuration.",
@@ -163,11 +214,15 @@
     "ChannelType" : {
       "base" : null,
       "refs" : {
-        "AddressConfiguration$ChannelType" : "Type of channel of this address",
-        "EndpointBatchItem$ChannelType" : "The channel type.\n\nValid values: APNS, GCM",
-        "EndpointRequest$ChannelType" : "The channel type.\n\nValid values: APNS, GCM",
-        "EndpointResponse$ChannelType" : "The channel type.\n\nValid values: APNS, GCM"
+        "AddressConfiguration$ChannelType" : "The channel type.\n\nValid values: GCM | APNS | SMS | EMAIL",
+        "EndpointBatchItem$ChannelType" : "The channel type.\n\nValid values: GCM | APNS | SMS | EMAIL",
+        "EndpointRequest$ChannelType" : "The channel type.\n\nValid values: GCM | APNS | SMS | EMAIL",
+        "EndpointResponse$ChannelType" : "The channel type.\n\nValid values: GCM | APNS | SMS | EMAIL"
       }
+    },
+    "CreateApplicationRequest" : {
+      "base" : "Application Request.",
+      "refs" : { }
     },
     "DefaultMessage" : {
       "base" : "Default Message across push notification, email, and sms.",
@@ -184,6 +239,7 @@
     "DeliveryStatus" : {
       "base" : null,
       "refs" : {
+        "EndpointMessageResult$DeliveryStatus" : "Delivery status of message.",
         "MessageResult$DeliveryStatus" : "Delivery status of message."
       }
     },
@@ -196,7 +252,8 @@
     "DirectMessageConfiguration" : {
       "base" : "The message configuration.",
       "refs" : {
-        "MessageRequest$MessageConfiguration" : "Message configuration."
+        "MessageRequest$MessageConfiguration" : "Message configuration.",
+        "SendUsersMessageRequest$MessageConfiguration" : "Message configuration."
       }
     },
     "Duration" : {
@@ -212,6 +269,12 @@
     "EmailChannelResponse" : {
       "base" : "Email Channel Response.",
       "refs" : { }
+    },
+    "EmailMessage" : {
+      "base" : "Email Message.",
+      "refs" : {
+        "DirectMessageConfiguration$EmailMessage" : "The message to Email channels. Overrides the default message."
+      }
     },
     "EndpointBatchItem" : {
       "base" : "Endpoint update request",
@@ -239,6 +302,13 @@
         "EndpointResponse$Location" : "The endpoint location attributes."
       }
     },
+    "EndpointMessageResult" : {
+      "base" : "The result from sending a message to an endpoint.",
+      "refs" : {
+        "MessageResponse$EndpointResult" : "A map containing a multi part response for each address, with the endpointId as the key and the result as the value.",
+        "SendUsersMessageResponse$Result" : "A map containing of UserId to Map of EndpointId to Endpoint Message Result."
+      }
+    },
     "EndpointRequest" : {
       "base" : "Endpoint update request",
       "refs" : { }
@@ -246,6 +316,13 @@
     "EndpointResponse" : {
       "base" : "Endpoint response",
       "refs" : { }
+    },
+    "EndpointSendConfiguration" : {
+      "base" : "Endpoint send configuration.",
+      "refs" : {
+        "MessageRequest$Endpoints" : "A map of destination addresses, with the address as the key(Email address, phone number or push token) and the Address Configuration as the value.",
+        "SendUsersMessageRequest$Users" : "A map of destination endpoints, with the EndpointId as the key Endpoint Message Configuration as the value."
+      }
     },
     "EndpointUser" : {
       "base" : "Endpoint user specific custom userAttributes",
@@ -325,6 +402,10 @@
       "base" : null,
       "refs" : { }
     },
+    "ListOfApplicationResponse" : {
+      "base" : null,
+      "refs" : { }
+    },
     "ListOfCampaignResponse" : {
       "base" : null,
       "refs" : { }
@@ -361,7 +442,19 @@
       "base" : null,
       "refs" : { }
     },
+    "MapOfEndpointMessageResult" : {
+      "base" : null,
+      "refs" : { }
+    },
+    "MapOfEndpointSendConfiguration" : {
+      "base" : null,
+      "refs" : { }
+    },
     "MapOfListOf__string" : {
+      "base" : null,
+      "refs" : { }
+    },
+    "MapOfMapOfEndpointMessageResult" : {
       "base" : null,
       "refs" : { }
     },
@@ -521,6 +614,14 @@
       "base" : "Segments in your account.",
       "refs" : { }
     },
+    "SendUsersMessageRequest" : {
+      "base" : "Send message request.",
+      "refs" : { }
+    },
+    "SendUsersMessageResponse" : {
+      "base" : "User send message response.",
+      "refs" : { }
+    },
     "SetDimension" : {
       "base" : "Dimension specification of a segment.",
       "refs" : {
@@ -568,6 +669,10 @@
     "__boolean" : {
       "base" : null,
       "refs" : {
+        "ADMChannelRequest$Enabled" : "If the channel is enabled for sending messages.",
+        "ADMChannelResponse$Enabled" : "If the channel is enabled for sending messages.",
+        "ADMChannelResponse$IsArchived" : "Is this channel archived",
+        "ADMMessage$SilentPush" : "Indicates if the message should display on the users device. Silent pushes can be used for Remote Configuration and Phone Home use cases.",
         "APNSChannelRequest$Enabled" : "If the channel is enabled for sending messages.",
         "APNSChannelResponse$Enabled" : "If the channel is enabled for sending messages.",
         "APNSChannelResponse$IsArchived" : "Is this channel archived",
@@ -575,6 +680,10 @@
         "APNSSandboxChannelRequest$Enabled" : "If the channel is enabled for sending messages.",
         "APNSSandboxChannelResponse$Enabled" : "If the channel is enabled for sending messages.",
         "APNSSandboxChannelResponse$IsArchived" : "Is this channel archived",
+        "BaiduChannelRequest$Enabled" : "If the channel is enabled for sending messages.",
+        "BaiduChannelResponse$Enabled" : "If the channel is enabled for sending messages.",
+        "BaiduChannelResponse$IsArchived" : "Is this channel archived",
+        "BaiduMessage$SilentPush" : "Indicates if the message should display on the users device. Silent pushes can be used for Remote Configuration and Phone Home use cases.",
         "CampaignResponse$IsPaused" : "Indicates whether the campaign is paused. A paused campaign does not send messages unless you resume it by setting IsPaused to false.",
         "DefaultPushNotificationMessage$SilentPush" : "Indicates if the message should display on the users device. Silent pushes can be used for Remote Configuration and Phone Home use cases.",
         "EmailChannelRequest$Enabled" : "If the channel is enabled for sending messages.",
@@ -593,7 +702,8 @@
         "SMSChannelResponse$Enabled" : "If the channel is enabled for sending messages.",
         "SMSChannelResponse$IsArchived" : "Is this channel archived",
         "Schedule$IsLocalTime" : "Indicates whether the campaign schedule takes effect according to each user's local time.",
-        "WriteCampaignRequest$IsPaused" : "Indicates whether the campaign is paused. A paused campaign does not send messages unless you resume it by setting IsPaused to false."
+        "WriteCampaignRequest$IsPaused" : "Indicates whether the campaign is paused. A paused campaign does not send messages unless you resume it by setting IsPaused to false.",
+        "WriteCampaignRequest$Trace" : "Whether or not to enable trace logging for the campaign. Undocumented"
       }
     },
     "__double" : {
@@ -606,6 +716,7 @@
     "__integer" : {
       "base" : null,
       "refs" : {
+        "ADMChannelResponse$Version" : "Version of channel",
         "APNSChannelResponse$Version" : "Version of channel",
         "APNSMessage$Badge" : "Include this key when you want the system to modify the badge of your app icon. If this key is not included in the dictionary, the badge is not changed. To remove the badge, set the value of this key to 0.",
         "APNSSandboxChannelResponse$Version" : "Version of channel",
@@ -613,12 +724,16 @@
         "ActivityResponse$TimezonesCompletedCount" : "The total number of timezones completed.",
         "ActivityResponse$TimezonesTotalCount" : "The total number of unique timezones present in the segment.",
         "ActivityResponse$TotalEndpointCount" : "The total number of endpoints to which the campaign attempts to deliver messages.",
+        "BaiduChannelResponse$Version" : "Version of channel",
         "CampaignLimits$Daily" : "The maximum number of messages that the campaign can send daily.",
+        "CampaignLimits$MaximumDuration" : "The maximum duration of a campaign from the scheduled start. Must be a minimum of 60 seconds.",
+        "CampaignLimits$MessagesPerSecond" : "The maximum number of messages per second that the campaign will send. This is a best effort maximum cap and can go as high as 20000 and as low as 50",
         "CampaignLimits$Total" : "The maximum total number of messages that the campaign can send.",
         "CampaignResponse$HoldoutPercent" : "The allocated percentage of end users who will not receive messages from this campaign.",
         "CampaignResponse$SegmentVersion" : "The version of the segment to which the campaign sends messages.",
         "CampaignResponse$Version" : "The campaign version number.",
         "EmailChannelResponse$Version" : "Version of channel",
+        "EndpointMessageResult$StatusCode" : "Downstream service status code.",
         "GCMChannelResponse$Version" : "Version of channel",
         "ImportJobResponse$CompletedPieces" : "The number of pieces that have successfully imported as of the time of the request.",
         "ImportJobResponse$FailedPieces" : "The number of pieces that have failed to import as of the time of the request.",
@@ -638,30 +753,63 @@
     "__string" : {
       "base" : null,
       "refs" : {
+        "ADMChannelRequest$ClientId" : "Client ID as gotten from Amazon",
+        "ADMChannelRequest$ClientSecret" : "Client secret as gotten from Amazon",
+        "ADMChannelResponse$ApplicationId" : "Application id",
+        "ADMChannelResponse$CreationDate" : "When was this segment created",
+        "ADMChannelResponse$Id" : "Channel ID. Not used, only for backwards compatibility.",
+        "ADMChannelResponse$LastModifiedBy" : "Who last updated this entry",
+        "ADMChannelResponse$LastModifiedDate" : "Last date this was updated",
+        "ADMChannelResponse$Platform" : "Platform type. Will be \"ADM\"",
+        "ADMMessage$Body" : "The message body of the notification, the email body or the text message.",
+        "ADMMessage$ConsolidationKey" : "Optional. Arbitrary string used to indicate multiple messages are logically the same and that ADM is allowed to drop previously enqueued messages in favor of this one.",
+        "ADMMessage$ExpiresAfter" : "Optional. Number of seconds ADM should retain the message if the device is offline",
+        "ADMMessage$IconReference" : "The icon image name of the asset saved in your application.",
+        "ADMMessage$ImageIconUrl" : "The URL that points to an image used as the large icon to the notification content view.",
+        "ADMMessage$ImageUrl" : "The URL that points to an image used in the push notification.",
+        "ADMMessage$JsonData" : "The data payload used for a silent push. This payload is added to the notifications' data.pinpoint.jsonBody' object",
+        "ADMMessage$MD5" : "Optional. Base-64-encoded MD5 checksum of the data parameter. Used to verify data integrity",
+        "ADMMessage$RawContent" : "The Raw JSON formatted string to be used as the payload. This value overrides the message.",
+        "ADMMessage$SmallImageIconUrl" : "The URL that points to an image used as the small icon for the notification which will be used to represent the notification in the status bar and content view",
+        "ADMMessage$Sound" : "Indicates a sound to play when the device receives the notification. Supports default, or the filename of a sound resource bundled in the app. Android sound files must reside in /res/raw/",
+        "ADMMessage$Title" : "The message title that displays above the message on the user's device.",
+        "ADMMessage$Url" : "The URL to open in the user's mobile browser. Used if the value for Action is URL.",
+        "APNSChannelRequest$BundleId" : "The bundle id used for APNs Tokens.",
         "APNSChannelRequest$Certificate" : "The distribution certificate from Apple.",
+        "APNSChannelRequest$DefaultAuthenticationMethod" : "The default authentication method used for APNs.",
         "APNSChannelRequest$PrivateKey" : "The certificate private key.",
+        "APNSChannelRequest$TeamId" : "The team id used for APNs Tokens.",
+        "APNSChannelRequest$TokenKey" : "The token key used for APNs Tokens.",
+        "APNSChannelRequest$TokenKeyId" : "The token key used for APNs Tokens.",
         "APNSChannelResponse$ApplicationId" : "The ID of the application to which the channel applies.",
         "APNSChannelResponse$CreationDate" : "When was this segment created",
-        "APNSChannelResponse$Id" : "Channel ID. Not used, only for backwards compatibility.",
+        "APNSChannelResponse$Id" : "Channel ID. Not used. Present only for backwards compatibility.",
         "APNSChannelResponse$LastModifiedBy" : "Who last updated this entry",
         "APNSChannelResponse$LastModifiedDate" : "Last date this was updated",
         "APNSChannelResponse$Platform" : "The platform type. Will be APNS.",
         "APNSMessage$Body" : "The message body of the notification, the email body or the text message.",
         "APNSMessage$Category" : "Provide this key with a string value that represents the notification's type. This value corresponds to the value in the identifier property of one of your app's registered categories.",
+        "APNSMessage$JsonData" : "The data payload used for a silent push. This payload is added to the notifications' data.pinpoint.jsonBody' object",
         "APNSMessage$MediaUrl" : "The URL that points to a video used in the push notification.",
+        "APNSMessage$PreferredAuthenticationMethod" : "The preferred authentication method, either \"CERTIFICATE\" or \"TOKEN\"",
         "APNSMessage$RawContent" : "The Raw JSON formatted string to be used as the payload. This value overrides the message.",
         "APNSMessage$Sound" : "Include this key when you want the system to play a sound. The value of this key is the name of a sound file in your app's main bundle or in the Library/Sounds folder of your app's data container. If the sound file cannot be found, or if you specify defaultfor the value, the system plays the default alert sound.",
         "APNSMessage$ThreadId" : "Provide this key with a string value that represents the app-specific identifier for grouping notifications. If you provide a Notification Content app extension, you can use this value to group your notifications together.",
         "APNSMessage$Title" : "The message title that displays above the message on the user's device.",
         "APNSMessage$Url" : "The URL to open in the user's mobile browser. Used if the value for Action is URL.",
+        "APNSSandboxChannelRequest$BundleId" : "The bundle id used for APNs Tokens.",
         "APNSSandboxChannelRequest$Certificate" : "The distribution certificate from Apple.",
+        "APNSSandboxChannelRequest$DefaultAuthenticationMethod" : "The default authentication method used for APNs.",
         "APNSSandboxChannelRequest$PrivateKey" : "The certificate private key.",
+        "APNSSandboxChannelRequest$TeamId" : "The team id used for APNs Tokens.",
+        "APNSSandboxChannelRequest$TokenKey" : "The token key used for APNs Tokens.",
+        "APNSSandboxChannelRequest$TokenKeyId" : "The token key used for APNs Tokens.",
         "APNSSandboxChannelResponse$ApplicationId" : "Application id",
         "APNSSandboxChannelResponse$CreationDate" : "When was this segment created",
         "APNSSandboxChannelResponse$Id" : "Channel ID. Not used, only for backwards compatibility.",
         "APNSSandboxChannelResponse$LastModifiedBy" : "Who last updated this entry",
         "APNSSandboxChannelResponse$LastModifiedDate" : "Last date this was updated",
-        "APNSSandboxChannelResponse$Platform" : "The platform type. Will be APNS.",
+        "APNSSandboxChannelResponse$Platform" : "The platform type. Will be APNS_SANDBOX.",
         "ActivityResponse$ApplicationId" : "The ID of the application to which the campaign applies.",
         "ActivityResponse$CampaignId" : "The ID of the campaign to which the activity applies.",
         "ActivityResponse$End" : "The actual time the activity was marked CANCELLED or COMPLETED. Provided in ISO 8601 format.",
@@ -674,9 +822,32 @@
         "AddressConfiguration$BodyOverride" : "Body override. If specified will override default body.",
         "AddressConfiguration$RawContent" : "The Raw JSON formatted string to be used as the payload. This value overrides the message.",
         "AddressConfiguration$TitleOverride" : "Title override. If specified will override default title if applicable.",
+        "ApplicationResponse$Id" : "The unique application ID.",
+        "ApplicationResponse$Name" : "The display name of the application.",
         "ApplicationSettingsResource$ApplicationId" : "The unique ID for the application.",
         "ApplicationSettingsResource$LastModifiedDate" : "The date that the settings were last updated in ISO 8601 format.",
+        "ApplicationsResponse$NextToken" : "The string that you use in a subsequent request to get the next page of results in a paginated response.",
+        "BaiduChannelRequest$ApiKey" : "Platform credential API key from Baidu.",
+        "BaiduChannelRequest$SecretKey" : "Platform credential Secret key from Baidu.",
+        "BaiduChannelResponse$ApplicationId" : "Application id",
+        "BaiduChannelResponse$CreationDate" : "When was this segment created",
+        "BaiduChannelResponse$Credential" : "The Baidu API key from Baidu.",
+        "BaiduChannelResponse$Id" : "Channel ID. Not used, only for backwards compatibility.",
+        "BaiduChannelResponse$LastModifiedBy" : "Who made the last change",
+        "BaiduChannelResponse$LastModifiedDate" : "Last date this was updated",
+        "BaiduChannelResponse$Platform" : "The platform type. Will be BAIDU",
+        "BaiduMessage$Body" : "The message body of the notification, the email body or the text message.",
+        "BaiduMessage$IconReference" : "The icon image name of the asset saved in your application.",
+        "BaiduMessage$ImageIconUrl" : "The URL that points to an image used as the large icon to the notification content view.",
+        "BaiduMessage$ImageUrl" : "The URL that points to an image used in the push notification.",
+        "BaiduMessage$JsonData" : "The data payload used for a silent push. This payload is added to the notifications' data.pinpoint.jsonBody' object",
+        "BaiduMessage$RawContent" : "The Raw JSON formatted string to be used as the payload. This value overrides the message.",
+        "BaiduMessage$SmallImageIconUrl" : "The URL that points to an image used as the small icon for the notification which will be used to represent the notification in the status bar and content view",
+        "BaiduMessage$Sound" : "Indicates a sound to play when the device receives the notification. Supports default, or the filename of a sound resource bundled in the app. Android sound files must reside in /res/raw/",
+        "BaiduMessage$Title" : "The message title that displays above the message on the user's device.",
+        "BaiduMessage$Url" : "The URL to open in the user's mobile browser. Used if the value for Action is URL.",
         "CampaignEmailMessage$Body" : "The email text body.",
+        "CampaignEmailMessage$FromAddress" : "The email address used to send the email from. Defaults to use FromAddress specified in the Email Channel.",
         "CampaignEmailMessage$HtmlBody" : "The email html body.",
         "CampaignEmailMessage$Title" : "The email title (Or subject).",
         "CampaignResponse$ApplicationId" : "The ID of the application to which the campaign applies.",
@@ -691,14 +862,16 @@
         "CampaignSmsMessage$Body" : "The SMS text body.",
         "CampaignSmsMessage$SenderId" : "Sender ID of sent message.",
         "CampaignsResponse$NextToken" : "The string that you use in a subsequent request to get the next page of results in a paginated response.",
+        "CreateApplicationRequest$Name" : "The display name of the application. Used in the Amazon Pinpoint console.",
         "DefaultMessage$Body" : "The message body of the notification, the email body or the text message.",
         "DefaultPushNotificationMessage$Body" : "The message body of the notification, the email body or the text message.",
+        "DefaultPushNotificationMessage$JsonData" : "The data payload used for a silent push. This payload is added to the notifications' data.pinpoint.jsonBody' object",
         "DefaultPushNotificationMessage$Title" : "The message title that displays above the message on the user's device.",
         "DefaultPushNotificationMessage$Url" : "The URL to open in the user's mobile browser. Used if the value for Action is URL.",
         "EmailChannelRequest$FromAddress" : "The email address used to send emails from.",
         "EmailChannelRequest$Identity" : "The ARN of an identity verified with SES.",
         "EmailChannelRequest$RoleArn" : "The ARN of an IAM Role used to submit events to Mobile Analytics' event ingestion service",
-        "EmailChannelResponse$ApplicationId" : "Application id",
+        "EmailChannelResponse$ApplicationId" : "The unique ID of the application to which the email channel belongs.",
         "EmailChannelResponse$CreationDate" : "The date that the settings were last updated in ISO 8601 format.",
         "EmailChannelResponse$FromAddress" : "The email address used to send emails from.",
         "EmailChannelResponse$Id" : "Channel ID. Not used, only for backwards compatibility.",
@@ -707,11 +880,16 @@
         "EmailChannelResponse$LastModifiedDate" : "Last date this was updated",
         "EmailChannelResponse$Platform" : "Platform type. Will be \"EMAIL\"",
         "EmailChannelResponse$RoleArn" : "The ARN of an IAM Role used to submit events to Mobile Analytics' event ingestion service",
+        "EmailMessage$Body" : "The message body of the notification, the email body or the text message.",
+        "EmailMessage$FromAddress" : "The email address used to send the email from. Defaults to use FromAddress specified in the Email Channel.",
+        "EmailMessage$HtmlBody" : "The HTML part of the email.",
+        "EmailMessage$TemplateArn" : "The ARN of the template to use for the email.",
+        "EmailMessage$Title" : "The subject of the email.",
         "EndpointBatchItem$Address" : "The address or token of the endpoint as provided by your push provider (e.g. DeviceToken or RegistrationId).",
         "EndpointBatchItem$EffectiveDate" : "The last time the endpoint was updated. Provided in ISO 8601 format.",
         "EndpointBatchItem$EndpointStatus" : "The endpoint status. Can be either ACTIVE or INACTIVE. Will be set to INACTIVE if a delivery fails. Will be set to ACTIVE if the address is updated.",
         "EndpointBatchItem$Id" : "The unique Id for the Endpoint in the batch.",
-        "EndpointBatchItem$OptOut" : "Indicates whether a user has opted out of receiving messages with one of the following values:\n\nALL – User receives all messages.\nNONE – User receives no messages.",
+        "EndpointBatchItem$OptOut" : "Indicates whether a user has opted out of receiving messages with one of the following values:\n\nALL - User has opted out of all messages.\n\nNONE - Users has not opted out and receives all messages.",
         "EndpointBatchItem$RequestId" : "The unique ID for the most recent request to update the endpoint.",
         "EndpointDemographic$AppVersion" : "The version of the application associated with the endpoint.",
         "EndpointDemographic$Locale" : "The endpoint locale in the following format: The ISO 639-1 alpha-2 code, followed by an underscore, followed by an ISO 3166-1 alpha-2 value.\n",
@@ -725,10 +903,13 @@
         "EndpointLocation$Country" : "Country according to ISO 3166-1 Alpha-2 codes. For example, US.",
         "EndpointLocation$PostalCode" : "The postal code or zip code of the endpoint.",
         "EndpointLocation$Region" : "The region of the endpoint location. For example, corresponds to a state in US.",
+        "EndpointMessageResult$Address" : "Address that endpoint message was delivered to.",
+        "EndpointMessageResult$StatusMessage" : "Status message for message delivery.",
+        "EndpointMessageResult$UpdatedToken" : "If token was updated as part of delivery. (This is GCM Specific)",
         "EndpointRequest$Address" : "The address or token of the endpoint as provided by your push provider (e.g. DeviceToken or RegistrationId).",
         "EndpointRequest$EffectiveDate" : "The last time the endpoint was updated. Provided in ISO 8601 format.",
         "EndpointRequest$EndpointStatus" : "The endpoint status. Can be either ACTIVE or INACTIVE. Will be set to INACTIVE if a delivery fails. Will be set to ACTIVE if the address is updated.",
-        "EndpointRequest$OptOut" : "Indicates whether a user has opted out of receiving messages with one of the following values:\n\nALL – User receives all messages.\nNONE – User receives no messages.",
+        "EndpointRequest$OptOut" : "Indicates whether a user has opted out of receiving messages with one of the following values:\n\nALL - User has opted out of all messages.\n\nNONE - Users has not opted out and receives all messages.",
         "EndpointRequest$RequestId" : "The unique ID for the most recent request to update the endpoint.",
         "EndpointResponse$Address" : "The address or token of the endpoint as provided by your push provider (e.g. DeviceToken or RegistrationId).",
         "EndpointResponse$ApplicationId" : "The ID of the application associated with the endpoint.",
@@ -737,8 +918,12 @@
         "EndpointResponse$EffectiveDate" : "The last time the endpoint was updated. Provided in ISO 8601 format.",
         "EndpointResponse$EndpointStatus" : "The endpoint status. Can be either ACTIVE or INACTIVE. Will be set to INACTIVE if a delivery fails. Will be set to ACTIVE if the address is updated.",
         "EndpointResponse$Id" : "The unique ID that you assigned to the endpoint. The ID should be a globally unique identifier (GUID) to ensure that it is unique compared to all other endpoints for the application.",
-        "EndpointResponse$OptOut" : "Indicates whether a user has opted out of receiving messages with one of the following values:\n\nALL – User receives all messages.\nNONE – User receives no messages.",
+        "EndpointResponse$OptOut" : "Indicates whether a user has opted out of receiving messages with one of the following values:\n\nALL - User has opted out of all messages.\n\nNONE - Users has not opted out and receives all messages.",
         "EndpointResponse$RequestId" : "The unique ID for the most recent request to update the endpoint.",
+        "EndpointResponse$ShardId" : "The ShardId of endpoint.",
+        "EndpointSendConfiguration$BodyOverride" : "Body override. If specified will override default body.",
+        "EndpointSendConfiguration$RawContent" : "The Raw JSON formatted string to be used as the payload. This value overrides the message.",
+        "EndpointSendConfiguration$TitleOverride" : "Title override. If specified will override default title if applicable.",
         "EndpointUser$UserId" : "The unique ID of the user.",
         "EventStream$ApplicationId" : "The ID of the application from which events should be published.",
         "EventStream$DestinationStreamArn" : "The Amazon Resource Name (ARN) of the Amazon Kinesis stream or Firehose delivery stream to which you want to publish events.\n Firehose ARN: arn:aws:firehose:REGION:ACCOUNT_ID:deliverystream/STREAM_NAME\n Kinesis ARN: arn:aws:kinesis:REGION:ACCOUNT_ID:stream/STREAM_NAME",
@@ -750,7 +935,7 @@
         "GCMChannelResponse$ApplicationId" : "The ID of the application to which the channel applies.",
         "GCMChannelResponse$CreationDate" : "When was this segment created",
         "GCMChannelResponse$Credential" : "The GCM API key from Google.",
-        "GCMChannelResponse$Id" : "Channel ID. Not used, only for backwards compatibility.",
+        "GCMChannelResponse$Id" : "Channel ID. Not used. Present only for backwards compatibility.",
         "GCMChannelResponse$LastModifiedBy" : "Who last updated this entry",
         "GCMChannelResponse$LastModifiedDate" : "Last date this was updated",
         "GCMChannelResponse$Platform" : "The platform type. Will be GCM",
@@ -759,6 +944,7 @@
         "GCMMessage$IconReference" : "The icon image name of the asset saved in your application.",
         "GCMMessage$ImageIconUrl" : "The URL that points to an image used as the large icon to the notification content view.",
         "GCMMessage$ImageUrl" : "The URL that points to an image used in the push notification.",
+        "GCMMessage$JsonData" : "The data payload used for a silent push. This payload is added to the notifications' data.pinpoint.jsonBody' object",
         "GCMMessage$RawContent" : "The Raw JSON formatted string to be used as the payload. This value overrides the message.",
         "GCMMessage$RestrictedPackageName" : "This parameter specifies the package name of the application where the registration tokens must match in order to receive the message.",
         "GCMMessage$SmallImageIconUrl" : "The URL that points to an image used as the small icon for the notification which will be used to represent the notification in the status bar and content view",
@@ -787,10 +973,12 @@
         "Message$ImageUrl" : "The URL that points to an image used in the push notification.",
         "Message$JsonBody" : "The JSON payload used for a silent push.",
         "Message$MediaUrl" : "The URL that points to the media resource, for example a .mp4 or .gif file.",
+        "Message$RawContent" : "The Raw JSON formatted string to be used as the payload. This value overrides the message.",
         "Message$Title" : "The message title that displays above the message on the user's device.",
         "Message$Url" : "The URL to open in the user's mobile browser. Used if the value for Action is URL.",
         "MessageBody$Message" : "The error message returned from the API.",
         "MessageBody$RequestID" : "The unique message body ID.",
+        "MessageRequest$RequestId" : "Original request Id for which this message is delivered.",
         "MessageResponse$ApplicationId" : "Application id of the message.",
         "MessageResponse$RequestId" : "Original request Id for which this message was delivered.",
         "MessageResult$StatusMessage" : "Status message for message delivery.",
@@ -798,7 +986,8 @@
         "QuietTime$End" : "The default end time for quiet time in ISO 8601 format.",
         "QuietTime$Start" : "The default start time for quiet time in ISO 8601 format.",
         "SMSChannelRequest$SenderId" : "Sender identifier of your messages.",
-        "SMSChannelResponse$ApplicationId" : "Application id",
+        "SMSChannelRequest$ShortCode" : "ShortCode registered with phone provider.",
+        "SMSChannelResponse$ApplicationId" : "The unique ID of the application to which the SMS channel belongs.",
         "SMSChannelResponse$CreationDate" : "The date that the settings were last updated in ISO 8601 format.",
         "SMSChannelResponse$Id" : "Channel ID. Not used, only for backwards compatibility.",
         "SMSChannelResponse$LastModifiedBy" : "Who last updated this entry",
@@ -820,6 +1009,9 @@
         "SegmentResponse$LastModifiedDate" : "The date the segment was last updated in ISO 8601 format.",
         "SegmentResponse$Name" : "The name of segment",
         "SegmentsResponse$NextToken" : "An identifier used to retrieve the next page of results. The token is null if no additional pages exist.",
+        "SendUsersMessageRequest$RequestId" : "Original request Id for which this message is delivered.",
+        "SendUsersMessageResponse$ApplicationId" : "Application id of the message.",
+        "SendUsersMessageResponse$RequestId" : "Original request Id for which this message was delivered.",
         "TreatmentResource$Id" : "The unique treatment ID.",
         "TreatmentResource$TreatmentDescription" : "A custom description for the treatment.",
         "TreatmentResource$TreatmentName" : "The custom name of a variation of the campaign used for A/B testing.",
@@ -829,14 +1021,11 @@
         "WriteCampaignRequest$TreatmentDescription" : "A custom description for the treatment.",
         "WriteCampaignRequest$TreatmentName" : "The custom name of a variation of the campaign used for A/B testing.",
         "WriteEventStream$DestinationStreamArn" : "The Amazon Resource Name (ARN) of the Amazon Kinesis stream or Firehose delivery stream to which you want to publish events.\n Firehose ARN: arn:aws:firehose:REGION:ACCOUNT_ID:deliverystream/STREAM_NAME\n Kinesis ARN: arn:aws:kinesis:REGION:ACCOUNT_ID:stream/STREAM_NAME",
+        "WriteEventStream$ExternalId" : "The external ID assigned the IAM role that authorizes Amazon Pinpoint to publish to the stream.",
         "WriteEventStream$RoleArn" : "The IAM role that authorizes Amazon Pinpoint to publish events to the stream in your account.",
         "WriteSegmentRequest$Name" : "The name of segment",
         "WriteTreatmentResource$TreatmentDescription" : "A custom description for the treatment.",
-        "WriteTreatmentResource$TreatmentName" : "The custom name of a variation of the campaign used for A/B testing.",
-        "PutEventStreamRequest$ApplicationId": "Application Id.",
-        "PutEventStreamRequest$WriteEventStream": "Write event stream wrapper.",
-        "GetEventStreamRequest$ApplicationId": "Application Id.",
-        "DeleteEventStreamRequest$ApplicationId": "Application Id."
+        "WriteTreatmentResource$TreatmentName" : "The custom name of a variation of the campaign used for A/B testing."
       }
     }
   }

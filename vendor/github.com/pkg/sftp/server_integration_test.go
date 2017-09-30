@@ -6,7 +6,12 @@ package sftp
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	crand "crypto/rand"
+	"crypto/x509"
 	"encoding/hex"
+	"encoding/pem"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -316,7 +321,7 @@ func (chsvr *sshSessionChannelServer) handleSubsystem(req *ssh.Request) error {
 // starts an ssh server to test. returns: host string and port
 func testServer(t *testing.T, useSubsystem bool, readonly bool) (net.Listener, string, int) {
 	if !*testIntegration {
-		t.Skip("skipping intergration test")
+		t.Skip("skipping integration test")
 	}
 
 	listener, err := net.Listen("tcp", "127.0.0.1:0")
@@ -357,17 +362,59 @@ func testServer(t *testing.T, useSubsystem bool, readonly bool) (net.Listener, s
 	return listener, host, port
 }
 
+func makeDummyKey() (string, error) {
+	priv, err := ecdsa.GenerateKey(elliptic.P256(), crand.Reader)
+	if err != nil {
+		return "", fmt.Errorf("cannot generate key: %v", err)
+	}
+	der, err := x509.MarshalECPrivateKey(priv)
+	if err != nil {
+		return "", fmt.Errorf("cannot marshal key: %v", err)
+	}
+	block := &pem.Block{Type: "EC PRIVATE KEY", Bytes: der}
+	f, err := ioutil.TempFile("", "sftp-test-key-")
+	if err != nil {
+		return "", fmt.Errorf("cannot create temp file: %v", err)
+	}
+	defer func() {
+		if f != nil {
+			_ = f.Close()
+			_ = os.Remove(f.Name())
+		}
+	}()
+	if err := pem.Encode(f, block); err != nil {
+		return "", fmt.Errorf("cannot write key: %v", err)
+	}
+	if err := f.Close(); err != nil {
+		return "", fmt.Errorf("error closing key file: %v", err)
+	}
+	path := f.Name()
+	f = nil
+	return path, nil
+}
+
 func runSftpClient(t *testing.T, script string, path string, host string, port int) (string, error) {
 	// if sftp client binary is unavailable, skip test
 	if _, err := os.Stat(*testSftpClientBin); err != nil {
 		t.Skip("sftp client binary unavailable")
 	}
+
+	// make a dummy key so we don't rely on ssh-agent
+	dummyKey, err := makeDummyKey()
+	if err != nil {
+		return "", err
+	}
+	defer os.Remove(dummyKey)
+
 	args := []string{
 		// "-vvvv",
 		"-b", "-",
 		"-o", "StrictHostKeyChecking=no",
 		"-o", "LogLevel=ERROR",
 		"-o", "UserKnownHostsFile /dev/null",
+		// do not trigger ssh-agent prompting
+		"-o", "IdentityFile=" + dummyKey,
+		"-o", "IdentitiesOnly=yes",
 		"-P", fmt.Sprintf("%d", port), fmt.Sprintf("%s:%s", host, path),
 	}
 	cmd := exec.Command(*testSftpClientBin, args...)
@@ -378,7 +425,7 @@ func runSftpClient(t *testing.T, script string, path string, host string, port i
 	if err := cmd.Start(); err != nil {
 		return "", err
 	}
-	err := cmd.Wait()
+	err = cmd.Wait()
 	return string(stdout.Bytes()), err
 }
 

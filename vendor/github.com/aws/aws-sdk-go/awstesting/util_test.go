@@ -4,8 +4,6 @@ import (
 	"io"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/aws/aws-sdk-go/awstesting"
 )
 
@@ -13,9 +11,15 @@ func TestReadCloserClose(t *testing.T) {
 	rc := awstesting.ReadCloser{Size: 1}
 	err := rc.Close()
 
-	assert.Nil(t, err)
-	assert.True(t, rc.Closed)
-	assert.Equal(t, rc.Size, 1)
+	if err != nil {
+		t.Errorf("expect nil, got %v", err)
+	}
+	if !rc.Closed {
+		t.Errorf("expect closed, was not")
+	}
+	if e, a := rc.Size, 1; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestReadCloserRead(t *testing.T) {
@@ -24,16 +28,30 @@ func TestReadCloserRead(t *testing.T) {
 
 	n, err := rc.Read(b)
 
-	assert.Nil(t, err)
-	assert.Equal(t, n, 2)
-	assert.False(t, rc.Closed)
-	assert.Equal(t, rc.Size, 3)
+	if err != nil {
+		t.Errorf("expect nil, got %v", err)
+	}
+	if e, a := n, 2; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if rc.Closed {
+		t.Errorf("expect not to be closed")
+	}
+	if e, a := rc.Size, 3; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	err = rc.Close()
-	assert.Nil(t, err)
+	if err != nil {
+		t.Errorf("expect nil, got %v", err)
+	}
 	n, err = rc.Read(b)
-	assert.Equal(t, err, io.EOF)
-	assert.Equal(t, n, 0)
+	if e, a := err, io.EOF; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := n, 0; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestReadCloserReadAll(t *testing.T) {
@@ -42,8 +60,16 @@ func TestReadCloserReadAll(t *testing.T) {
 
 	n, err := rc.Read(b)
 
-	assert.Equal(t, err, io.EOF)
-	assert.Equal(t, n, 5)
-	assert.False(t, rc.Closed)
-	assert.Equal(t, rc.Size, 0)
+	if e, a := err, io.EOF; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := n, 5; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if rc.Closed {
+		t.Errorf("expect not to be closed")
+	}
+	if e, a := rc.Size, 0; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }

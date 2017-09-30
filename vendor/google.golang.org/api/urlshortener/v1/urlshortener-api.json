@@ -20,7 +20,7 @@
  "basePath": "/urlshortener/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "urlshortener/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/urlshortener/v1",
  "parameters": {
   "alt": {
    "type": "string",

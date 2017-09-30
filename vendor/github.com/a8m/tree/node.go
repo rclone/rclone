@@ -95,9 +95,13 @@ func (node *Node) Visit(opts *Options) (dirs, files int) {
 	if !fi.IsDir() {
 		return 0, 1
 	}
+	// increase dirs only if it's a dir, but not the root.
+	if node.depth != 0 {
+		dirs++
+	}
 	// DeepLevel option
 	if opts.DeepLevel > 0 && opts.DeepLevel <= node.depth {
-		return 1, 0
+		return
 	}
 	names, err := opts.Fs.ReadDir(node.path)
 	if err != nil {
@@ -147,7 +151,7 @@ func (node *Node) Visit(opts *Options) (dirs, files int) {
 	if !opts.NoSort {
 		node.sort(opts)
 	}
-	return dirs + 1, files
+	return
 }
 
 func (node *Node) sort(opts *Options) {

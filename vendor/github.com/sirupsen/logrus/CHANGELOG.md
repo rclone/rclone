@@ -1,3 +1,7 @@
+# 1.0.3
+
+* Replace example files with testable examples
+
 # 1.0.2
 
 * bug: quote non-string values in text formatter (#583)

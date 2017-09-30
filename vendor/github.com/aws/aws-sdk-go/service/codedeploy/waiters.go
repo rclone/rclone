@@ -11,7 +11,7 @@ import (
 
 // WaitUntilDeploymentSuccessful uses the CodeDeploy API operation
 // GetDeployment to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CodeDeploy) WaitUntilDeploymentSuccessful(input *GetDeploymentInput) error {
 	return c.WaitUntilDeploymentSuccessfulWithContext(aws.BackgroundContext(), input)

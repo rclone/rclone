@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/JUMbdVC6DhXRHvBUzk6DkwfoKao\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/7ntJIFhXAMpoi22k7BYPHzYytS0\"",
  "discoveryVersion": "v1",
  "id": "youtubeAnalytics:v1beta1",
  "name": "youtubeAnalytics",
  "canonicalName": "YouTube Analytics",
  "version": "v1beta1",
- "revision": "20170604",
+ "revision": "20170913",
  "title": "YouTube Analytics API",
  "description": "Retrieves your YouTube Analytics data.",
  "ownerDomain": "google.com",
@@ -24,7 +24,7 @@
  "basePath": "/youtube/analytics/v1beta1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "youtube/analytics/v1beta1/",
- "batchPath": "batch",
+ "batchPath": "batch/youtubeAnalytics/v1beta1",
  "parameters": {
   "alt": {
    "type": "string",

@@ -11,7 +11,7 @@ import (
 
 // WaitUntilDBInstanceAvailable uses the Amazon RDS API operation
 // DescribeDBInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *RDS) WaitUntilDBInstanceAvailable(input *DescribeDBInstancesInput) error {
 	return c.WaitUntilDBInstanceAvailableWithContext(aws.BackgroundContext(), input)
@@ -82,7 +82,7 @@ func (c *RDS) WaitUntilDBInstanceAvailableWithContext(ctx aws.Context, input *De
 
 // WaitUntilDBInstanceDeleted uses the Amazon RDS API operation
 // DescribeDBInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *RDS) WaitUntilDBInstanceDeleted(input *DescribeDBInstancesInput) error {
 	return c.WaitUntilDBInstanceDeletedWithContext(aws.BackgroundContext(), input)

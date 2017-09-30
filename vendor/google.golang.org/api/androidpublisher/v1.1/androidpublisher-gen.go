@@ -113,6 +113,10 @@ type InappPurchase struct {
 	// androidpublisher service.
 	Kind string `json:"kind,omitempty"`
 
+	// OrderId: The order id associated with the purchase of the inapp
+	// product.
+	OrderId string `json:"orderId,omitempty"`
+
 	// PurchaseState: The purchase state of the order. Possible values are:
 	//
 	// - Purchased

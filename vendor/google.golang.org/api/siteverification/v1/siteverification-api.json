@@ -20,7 +20,7 @@
  "basePath": "/siteVerification/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "siteVerification/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/siteVerification/v1",
  "parameters": {
   "alt": {
    "type": "string",

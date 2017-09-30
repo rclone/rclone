@@ -39,6 +39,7 @@
     "DeleteSAMLProvider": "<p>Deletes a SAML provider resource in IAM.</p> <p>Deleting the provider resource from IAM does not update any roles that reference the SAML provider resource's ARN as a principal in their trust policies. Any attempt to assume a role that references a non-existent provider resource ARN fails.</p> <note> <p> This operation requires <a href=\"http://docs.aws.amazon.com/general/latest/gr/signature-version-4.html\">Signature Version 4</a>.</p> </note>",
     "DeleteSSHPublicKey": "<p>Deletes the specified SSH public key.</p> <p>The SSH public key deleted by this action is used only for authenticating the associated IAM user to an AWS CodeCommit repository. For more information about using SSH keys to authenticate to an AWS CodeCommit repository, see <a href=\"http://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html\">Set up AWS CodeCommit for SSH Connections</a> in the <i>AWS CodeCommit User Guide</i>.</p>",
     "DeleteServerCertificate": "<p>Deletes the specified server certificate.</p> <p>For more information about working with server certificates, including a list of AWS services that can use the server certificates that you manage with IAM, go to <a href=\"http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html\">Working with Server Certificates</a> in the <i>IAM User Guide</i>.</p> <important> <p> If you are using a server certificate with Elastic Load Balancing, deleting the certificate could have implications for your application. If Elastic Load Balancing doesn't detect the deletion of bound certificates, it may continue to use the certificates. This could cause Elastic Load Balancing to stop accepting traffic. We recommend that you remove the reference to the certificate from Elastic Load Balancing before using this command to delete the certificate. For more information, go to <a href=\"http://docs.aws.amazon.com/ElasticLoadBalancing/latest/APIReference/API_DeleteLoadBalancerListeners.html\">DeleteLoadBalancerListeners</a> in the <i>Elastic Load Balancing API Reference</i>.</p> </important>",
+    "DeleteServiceLinkedRole": "<p>Submits a service-linked role deletion request and returns a <code>DeletionTaskId</code>, which you can use to check the status of the deletion. Before you call this operation, confirm that the role has no active sessions and that any resources used by the role in the linked service are deleted. If you call this operation more than once for the same service-linked role and an earlier deletion task is not complete, then the <code>DeletionTaskId</code> of the earlier request is returned.</p> <p>If you submit a deletion request for a service-linked role whose linked service is still accessing a resource, then the deletion task fails. If it fails, the <a>GetServiceLinkedRoleDeletionStatus</a> API operation returns the reason for the failure, including the resources that must be deleted. To delete the service-linked role, you must first remove those resources from the linked service and then submit the deletion request again. Resources are specific to the service that is linked to the role. For more information about removing resources from a service, see the <a href=\"http://docs.aws.amazon.com/\">AWS documentation</a> for your service.</p> <p>For more information about service-linked roles, see <a href=\"http://docs.aws.amazon.com/IAM/latest/UserGuide/id_roles_terms-and-concepts.html#iam-term-service-linked-role\">Roles Terms and Concepts: AWS Service-Linked Role</a> in the <i>IAM User Guide</i>.</p>",
     "DeleteServiceSpecificCredential": "<p>Deletes the specified service-specific credential.</p>",
     "DeleteSigningCertificate": "<p>Deletes a signing certificate associated with the specified IAM user.</p> <p>If you do not specify a user name, IAM determines the user name implicitly based on the AWS access key ID signing the request. Because this action works for access keys under the AWS account, you can use this action to manage root credentials even if the AWS account has no associated IAM users.</p>",
     "DeleteUser": "<p>Deletes the specified IAM user. The user must not belong to any groups or have any access keys, signing certificates, or attached policies.</p>",
@@ -68,6 +69,7 @@
     "GetSAMLProvider": "<p>Returns the SAML provider metadocument that was uploaded when the IAM SAML provider resource object was created or updated.</p> <note> <p>This operation requires <a href=\"http://docs.aws.amazon.com/general/latest/gr/signature-version-4.html\">Signature Version 4</a>.</p> </note>",
     "GetSSHPublicKey": "<p>Retrieves the specified SSH public key, including metadata about the key.</p> <p>The SSH public key retrieved by this action is used only for authenticating the associated IAM user to an AWS CodeCommit repository. For more information about using SSH keys to authenticate to an AWS CodeCommit repository, see <a href=\"http://docs.aws.amazon.com/codecommit/latest/userguide/setting-up-credentials-ssh.html\">Set up AWS CodeCommit for SSH Connections</a> in the <i>AWS CodeCommit User Guide</i>.</p>",
     "GetServerCertificate": "<p>Retrieves information about the specified server certificate stored in IAM.</p> <p>For more information about working with server certificates, including a list of AWS services that can use the server certificates that you manage with IAM, go to <a href=\"http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_server-certs.html\">Working with Server Certificates</a> in the <i>IAM User Guide</i>.</p>",
+    "GetServiceLinkedRoleDeletionStatus": "<p>Retrieves the status of your service-linked role deletion. After you use the <a>DeleteServiceLinkedRole</a> API operation to submit a service-linked role for deletion, you can use the <code>DeletionTaskId</code> parameter in <code>GetServiceLinkedRoleDeletionStatus</code> to check the status of the deletion. If the deletion fails, this operation returns the reason that it failed.</p>",
     "GetUser": "<p>Retrieves information about the specified IAM user, including the user's creation date, path, unique ID, and ARN.</p> <p>If you do not specify a user name, IAM determines the user name implicitly based on the AWS access key ID used to sign the request to this API.</p>",
     "GetUserPolicy": "<p>Retrieves the specified inline policy document that is embedded in the specified IAM user.</p> <note> <p>Policies returned by this API are URL-encoded compliant with <a href=\"https://tools.ietf.org/html/rfc3986\">RFC 3986</a>. You can use a URL decoding method to convert the policy back to plain JSON text. For example, if you use Java, you can use the <code>decode</code> method of the <code>java.net.URLDecoder</code> utility class in the Java SDK. Other languages and SDKs provide similar functionality.</p> </note> <p>An IAM user can also have managed policies attached to it. To retrieve a managed policy document that is attached to a user, use <a>GetPolicy</a> to determine the policy's default version, then use <a>GetPolicyVersion</a> to retrieve the policy document.</p> <p>For more information about policies, see <a href=\"http://docs.aws.amazon.com/IAM/latest/UserGuide/policies-managed-vs-inline.html\">Managed Policies and Inline Policies</a> in the <i>IAM User Guide</i>.</p>",
     "ListAccessKeys": "<p>Returns information about the access key IDs associated with the specified IAM user. If there are none, the action returns an empty list.</p> <p>Although each user is limited to a small number of keys, you can still paginate the results using the <code>MaxItems</code> and <code>Marker</code> parameters.</p> <p>If the <code>UserName</code> field is not specified, the UserName is determined implicitly based on the AWS access key ID used to sign the request. Because this action works for access keys under the AWS account, you can use this action to manage root credentials even if the AWS account has no associated users.</p> <note> <p>To ensure the security of your AWS account, the secret access key is accessible only during key and user creation.</p> </note>",
@@ -169,6 +171,12 @@
     "AddUserToGroupRequest": {
       "base": null,
       "refs": {
+      }
+    },
+    "ArnListType": {
+      "base": null,
+      "refs": {
+        "RoleUsageType$Resources": "<p>The name of the resource that is using the service-linked role.</p>"
       }
     },
     "AttachGroupPolicyRequest": {
@@ -486,6 +494,16 @@
       "refs": {
       }
     },
+    "DeleteServiceLinkedRoleRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteServiceLinkedRoleResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DeleteServiceSpecificCredentialRequest": {
       "base": null,
       "refs": {
@@ -509,6 +527,25 @@
     "DeleteVirtualMFADeviceRequest": {
       "base": null,
       "refs": {
+      }
+    },
+    "DeletionTaskFailureReasonType": {
+      "base": "<p>The reason that the service-linked role deletion failed.</p> <p>This data type is used as a response element in the <a>GetServiceLinkedRoleDeletionStatus</a> operation.</p>",
+      "refs": {
+        "GetServiceLinkedRoleDeletionStatusResponse$Reason": "<p>An object that contains details about the reason the deletion failed.</p>"
+      }
+    },
+    "DeletionTaskIdType": {
+      "base": null,
+      "refs": {
+        "DeleteServiceLinkedRoleResponse$DeletionTaskId": "<p>The deletion task identifier that you can use to check the status of the deletion. This identifier is returned in the format <code>task/aws-service-role/&lt;service-principal-name&gt;/&lt;role-name&gt;/&lt;task-uuid&gt;</code>.</p>",
+        "GetServiceLinkedRoleDeletionStatusRequest$DeletionTaskId": "<p>The deletion task identifier. This identifier is returned by the <a>DeleteServiceLinkedRole</a> operation in the format <code>task/aws-service-role/&lt;service-principal-name&gt;/&lt;role-name&gt;/&lt;task-uuid&gt;</code>.</p>"
+      }
+    },
+    "DeletionTaskStatusType": {
+      "base": null,
+      "refs": {
+        "GetServiceLinkedRoleDeletionStatusResponse$Status": "<p>The status of the deletion.</p>"
       }
     },
     "DetachGroupPolicyRequest": {
@@ -755,6 +792,16 @@
     },
     "GetServerCertificateResponse": {
       "base": "<p>Contains the response to a successful <a>GetServerCertificate</a> request. </p>",
+      "refs": {
+      }
+    },
+    "GetServiceLinkedRoleDeletionStatusRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetServiceLinkedRoleDeletionStatusResponse": {
+      "base": null,
       "refs": {
       }
     },
@@ -1190,7 +1237,7 @@
       }
     },
     "PolicyEvaluationException": {
-      "base": "<p>The request failed because a provided policy could not be successfully evaluated. An additional detail message indicates the source of the failure.</p>",
+      "base": "<p>The request failed because a provided policy could not be successfully evaluated. An additional detailed message indicates the source of the failure.</p>",
       "refs": {
       }
     },
@@ -1210,6 +1257,11 @@
       "base": null,
       "refs": {
         "Statement$SourcePolicyId": "<p>The identifier of the policy that was provided as an input.</p>"
+      }
+    },
+    "PolicyNotAttachableException": {
+      "base": "<p>The request failed because AWS service role policies can only be attached to the service-linked role for that service.</p>",
+      "refs": {
       }
     },
     "PolicyRole": {
@@ -1270,6 +1322,18 @@
     "PutUserPolicyRequest": {
       "base": null,
       "refs": {
+      }
+    },
+    "ReasonType": {
+      "base": null,
+      "refs": {
+        "DeletionTaskFailureReasonType$Reason": "<p>A short description of the reason that the service-linked role deletion failed.</p>"
+      }
+    },
+    "RegionNameType": {
+      "base": null,
+      "refs": {
+        "RoleUsageType$Region": "<p>The name of the region where the service-linked role is being used.</p>"
       }
     },
     "RemoveClientIDFromOpenIDConnectProviderRequest": {
@@ -1378,6 +1442,18 @@
       "base": "<p>Contains information about an IAM role, including all of the role's policies.</p> <p>This data type is used as a response element in the <a>GetAccountAuthorizationDetails</a> action.</p>",
       "refs": {
         "roleDetailListType$member": null
+      }
+    },
+    "RoleUsageListType": {
+      "base": null,
+      "refs": {
+        "DeletionTaskFailureReasonType$RoleUsageList": "<p>A list of objects that contains details about the service-linked role deletion failure. If the service-linked role has active sessions or if any resources that were used by the role have not been deleted from the linked service, the role can't be deleted. This parameter includes a list of the resources that are associated with the role and the region in which the resources are being used.</p>"
+      }
+    },
+    "RoleUsageType": {
+      "base": "<p>An object that contains details about how a service-linked role is used.</p> <p>This data type is used as a response element in the <a>GetServiceLinkedRoleDeletionStatus</a> operation.</p>",
+      "refs": {
+        "RoleUsageListType$member": null
       }
     },
     "SAMLMetadataDocumentType": {
@@ -1694,6 +1770,7 @@
       "base": "<p>The Amazon Resource Name (ARN). ARNs are unique identifiers for AWS resources.</p> <p>For more information about ARNs, go to <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html\">Amazon Resource Names (ARNs) and AWS Service Namespaces</a> in the <i>AWS General Reference</i>. </p>",
       "refs": {
         "AddClientIDToOpenIDConnectProviderRequest$OpenIDConnectProviderArn": "<p>The Amazon Resource Name (ARN) of the IAM OpenID Connect (OIDC) provider resource to add the client ID to. You can get a list of OIDC provider ARNs by using the <a>ListOpenIDConnectProviders</a> action.</p>",
+        "ArnListType$member": null,
         "AttachGroupPolicyRequest$PolicyArn": "<p>The Amazon Resource Name (ARN) of the IAM policy you want to attach.</p> <p>For more information about ARNs, see <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html\">Amazon Resource Names (ARNs) and AWS Service Namespaces</a> in the <i>AWS General Reference</i>.</p>",
         "AttachRolePolicyRequest$PolicyArn": "<p>The Amazon Resource Name (ARN) of the IAM policy you want to attach.</p> <p>For more information about ARNs, see <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html\">Amazon Resource Names (ARNs) and AWS Service Namespaces</a> in the <i>AWS General Reference</i>.</p>",
         "AttachUserPolicyRequest$PolicyArn": "<p>The Amazon Resource Name (ARN) of the IAM policy you want to attach.</p> <p>For more information about ARNs, see <a href=\"http://docs.aws.amazon.com/general/latest/gr/aws-arns-and-namespaces.html\">Amazon Resource Names (ARNs) and AWS Service Namespaces</a> in the <i>AWS General Reference</i>.</p>",
@@ -1926,7 +2003,7 @@
         "ServiceSpecificCredentialMetadata$CreateDate": "<p>The date and time, in <a href=\"http://www.iso.org/iso/iso8601\">ISO 8601 date-time format</a>, when the service-specific credential were created.</p>",
         "SigningCertificate$UploadDate": "<p>The date when the signing certificate was uploaded.</p>",
         "User$CreateDate": "<p>The date and time, in <a href=\"http://www.iso.org/iso/iso8601\">ISO 8601 date-time format</a>, when the user was created.</p>",
-        "User$PasswordLastUsed": "<p>The date and time, in <a href=\"http://www.iso.org/iso/iso8601\">ISO 8601 date-time format</a>, when the user's password was last used to sign in to an AWS website. For a list of AWS websites that capture a user's last sign-in time, see the <a href=\"http://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html\">Credential Reports</a> topic in the <i>Using IAM</i> guide. If a password is used more than once in a five-minute span, only the first use is returned in this field. This field is null (not present) when:</p> <ul> <li> <p>The user does not have a password</p> </li> <li> <p>The password exists but has never been used (at least not since IAM started tracking this information on October 20th, 2014</p> </li> <li> <p>there is no sign-in data associated with the user</p> </li> </ul> <p>This value is returned only in the <a>GetUser</a> and <a>ListUsers</a> actions. </p>",
+        "User$PasswordLastUsed": "<p>The date and time, in <a href=\"http://www.iso.org/iso/iso8601\">ISO 8601 date-time format</a>, when the user's password was last used to sign in to an AWS website. For a list of AWS websites that capture a user's last sign-in time, see the <a href=\"http://docs.aws.amazon.com/IAM/latest/UserGuide/credential-reports.html\">Credential Reports</a> topic in the <i>Using IAM</i> guide. If a password is used more than once in a five-minute span, only the first use is returned in this field. If the field is null (no value) then it indicates that they never signed in with a password. This can be because:</p> <ul> <li> <p>The user never had a password.</p> </li> <li> <p>A password exists but has not been used since IAM started tracking this information on October 20th, 2014.</p> </li> </ul> <p>A null does not mean that the user <i>never</i> had a password. Also, if the user does not currently have a password, but had one in the past, then this field contains the date and time the most recent password was used.</p> <p>This value is returned only in the <a>GetUser</a> and <a>ListUsers</a> actions. </p>",
         "UserDetail$CreateDate": "<p>The date and time, in <a href=\"http://www.iso.org/iso/iso8601\">ISO 8601 date-time format</a>, when the user was created.</p>",
         "VirtualMFADevice$EnableDate": "<p>The date and time on which the virtual MFA device was enabled.</p>"
       }
@@ -2365,7 +2442,7 @@
     "policyNameListType": {
       "base": "<p>Contains a list of policy names.</p> <p>This data type is used as a response element in the <a>ListPolicies</a> action.</p>",
       "refs": {
-        "ListGroupPoliciesResponse$PolicyNames": "<p>A list of policy names.</p>",
+        "ListGroupPoliciesResponse$PolicyNames": "<p>A list of policy names.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
         "ListRolePoliciesResponse$PolicyNames": "<p>A list of policy names.</p>",
         "ListUserPoliciesResponse$PolicyNames": "<p>A list of policy names.</p>"
       }
@@ -2374,23 +2451,29 @@
       "base": null,
       "refs": {
         "AttachedPolicy$PolicyName": "<p>The friendly name of the attached policy.</p>",
-        "CreatePolicyRequest$PolicyName": "<p>The friendly name of the policy.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
-        "DeleteGroupPolicyRequest$PolicyName": "<p>The name identifying the policy document to delete.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
-        "DeleteRolePolicyRequest$PolicyName": "<p>The name of the inline policy to delete from the specified IAM role.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
-        "DeleteUserPolicyRequest$PolicyName": "<p>The name identifying the policy document to delete.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
-        "GetGroupPolicyRequest$PolicyName": "<p>The name of the policy document to get.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
+        "CreatePolicyRequest$PolicyName": "<p>The friendly name of the policy.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
+        "DeleteGroupPolicyRequest$PolicyName": "<p>The name identifying the policy document to delete.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
+        "DeleteRolePolicyRequest$PolicyName": "<p>The name of the inline policy to delete from the specified IAM role.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
+        "DeleteUserPolicyRequest$PolicyName": "<p>The name identifying the policy document to delete.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
+        "GetGroupPolicyRequest$PolicyName": "<p>The name of the policy document to get.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
         "GetGroupPolicyResponse$PolicyName": "<p>The name of the policy.</p>",
-        "GetRolePolicyRequest$PolicyName": "<p>The name of the policy document to get.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
+        "GetRolePolicyRequest$PolicyName": "<p>The name of the policy document to get.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
         "GetRolePolicyResponse$PolicyName": "<p>The name of the policy.</p>",
-        "GetUserPolicyRequest$PolicyName": "<p>The name of the policy document to get.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
+        "GetUserPolicyRequest$PolicyName": "<p>The name of the policy document to get.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
         "GetUserPolicyResponse$PolicyName": "<p>The name of the policy.</p>",
         "ManagedPolicyDetail$PolicyName": "<p>The friendly name (not ARN) identifying the policy.</p>",
         "Policy$PolicyName": "<p>The friendly name (not ARN) identifying the policy.</p>",
         "PolicyDetail$PolicyName": "<p>The name of the policy.</p>",
-        "PutGroupPolicyRequest$PolicyName": "<p>The name of the policy document.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
-        "PutRolePolicyRequest$PolicyName": "<p>The name of the policy document.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
-        "PutUserPolicyRequest$PolicyName": "<p>The name of the policy document.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-</p>",
+        "PutGroupPolicyRequest$PolicyName": "<p>The name of the policy document.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
+        "PutRolePolicyRequest$PolicyName": "<p>The name of the policy document.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
+        "PutUserPolicyRequest$PolicyName": "<p>The name of the policy document.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: =,.@-+</p>",
         "policyNameListType$member": null
+      }
+    },
+    "policyNotAttachableMessage": {
+      "base": null,
+      "refs": {
+        "PolicyNotAttachableException$message": null
       }
     },
     "policyPathType": {
@@ -2481,6 +2564,7 @@
         "CreateRoleRequest$RoleName": "<p>The name of the role to create.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: _+=,.@-</p> <p>Role names are not distinguished by case. For example, you cannot create roles named both \"PRODROLE\" and \"prodrole\".</p>",
         "DeleteRolePolicyRequest$RoleName": "<p>The name (friendly name, not ARN) identifying the role that the policy is embedded in.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: _+=,.@-</p>",
         "DeleteRoleRequest$RoleName": "<p>The name of the role to delete.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: _+=,.@-</p>",
+        "DeleteServiceLinkedRoleRequest$RoleName": "<p>The name of the service-linked role to be deleted.</p>",
         "DetachRolePolicyRequest$RoleName": "<p>The name (friendly name, not ARN) of the IAM role to detach the policy from.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: _+=,.@-</p>",
         "GetRolePolicyRequest$RoleName": "<p>The name of the role associated with the policy.</p> <p>This parameter allows (per its <a href=\"http://wikipedia.org/wiki/regex\">regex pattern</a>) a string of characters consisting of upper and lowercase alphanumeric characters with no spaces. You can also include any of the following characters: _+=,.@-</p>",
         "GetRolePolicyResponse$RoleName": "<p>The role the policy is associated with.</p>",

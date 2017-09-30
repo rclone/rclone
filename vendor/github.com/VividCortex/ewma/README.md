@@ -103,23 +103,24 @@ View the GoDoc generated documentation [here](http://godoc.org/github.com/VividC
 
 ```go
 package main
+
 import "github.com/VividCortex/ewma"
 
 func main() {
-  samples := [100]float64{
-    4599, 5711, 4746, 4621, 5037, 4218, 4925, 4281, 5207, 5203, 5594, 5149,
-  }
+	samples := [100]float64{
+		4599, 5711, 4746, 4621, 5037, 4218, 4925, 4281, 5207, 5203, 5594, 5149,
+	}
 
-  e := ewma.NewMovingAverage()       //=> Returns a SimpleEWMA if called without params
-  a := ewma.NewMovingAverage(5)      //=> returns a VariableEWMA with a decay of 2 / (5 + 1)
+	e := ewma.NewMovingAverage()  //=> Returns a SimpleEWMA if called without params
+	a := ewma.NewMovingAverage(5) //=> returns a VariableEWMA with a decay of 2 / (5 + 1)
 
-  for _, f := range samples {
-    e.Add(f)
-    a.Add(f)
-  }
+	for _, f := range samples {
+		e.Add(f)
+		a.Add(f)
+	}
 
-  e.Value() //=> 13.577404704631077
-  a.Value() //=> 1.5806140565521463e-12
+	e.Value() //=> 13.577404704631077
+	a.Value() //=> 1.5806140565521463e-12
 }
 ```
 

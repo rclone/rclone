@@ -1,12 +1,13 @@
 // +build !windows,!nacl,!plan9
 
-package logrus_syslog
+package syslog
 
 import (
 	"fmt"
-	"github.com/sirupsen/logrus"
 	"log/syslog"
 	"os"
+
+	"github.com/sirupsen/logrus"
 )
 
 // SyslogHook to send logs via syslog.

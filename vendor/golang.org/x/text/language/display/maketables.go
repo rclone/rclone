@@ -205,7 +205,13 @@ func (b *builder) generate() {
 	b.setData("lang", func(g *group, loc language.Tag, ldn *cldr.LocaleDisplayNames) {
 		if ldn.Languages != nil {
 			for _, v := range ldn.Languages.Language {
-				tag := tagForm.MustParse(v.Type)
+				lang := v.Type
+				if lang == "root" {
+					// We prefer the data from "und"
+					// TODO: allow both the data for root and und somehow.
+					continue
+				}
+				tag := tagForm.MustParse(lang)
 				if tags.contains(tag) {
 					g.set(loc, tag.String(), v.Data())
 				}

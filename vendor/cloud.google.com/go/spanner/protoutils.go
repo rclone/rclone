@@ -101,7 +101,7 @@ func listType(t *sppb.Type) *sppb.Type {
 }
 
 func mkField(n string, t *sppb.Type) *sppb.StructType_Field {
-	return &sppb.StructType_Field{n, t}
+	return &sppb.StructType_Field{Name: n, Type: t}
 }
 
 func structType(fields ...*sppb.StructType_Field) *sppb.Type {

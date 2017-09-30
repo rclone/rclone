@@ -413,11 +413,11 @@ func TestColumnTypeErr(t *testing.T) {
 	badDst := &struct{}{}
 	for i, f := range row.fields { // For each of the columns, try to decode it into badDst.
 		tc := f.Type.Code
-		isArray := strings.Contains(f.Name, "ARRAY")
-		if isArray {
-			tc = f.Type.ArrayElementType.Code
+		var etc sppb.TypeCode
+		if strings.Contains(f.Name, "ARRAY") {
+			etc = f.Type.ArrayElementType.Code
 		}
-		wantErr := errDecodeColumn(i, errTypeMismatch(tc, isArray, badDst))
+		wantErr := errDecodeColumn(i, errTypeMismatch(tc, etc, badDst))
 		if gotErr := row.Column(i, badDst); !reflect.DeepEqual(gotErr, wantErr) {
 			t.Errorf("Column(%v): decoding into destination with wrong type %T returns error %v, want %v",
 				i, badDst, gotErr, wantErr)
@@ -427,7 +427,7 @@ func TestColumnTypeErr(t *testing.T) {
 				f.Name, badDst, gotErr, wantErr)
 		}
 	}
-	wantErr := errDecodeColumn(1, errTypeMismatch(sppb.TypeCode_STRING, false, badDst))
+	wantErr := errDecodeColumn(1, errTypeMismatch(sppb.TypeCode_STRING, sppb.TypeCode_TYPE_CODE_UNSPECIFIED, badDst))
 	// badDst is used to receive column 1.
 	vals := []interface{}{nil, badDst} // Row.Column() is expected to fail at column 1.
 	// Skip decoding the rest columns by providing nils as the destinations.
@@ -571,7 +571,7 @@ func TestToStructInvalidDst(t *testing.T) {
 				PK1 int64 `spanner:"STRING"`
 			}{},
 			errDecodeStructField(&sppb.StructType{Fields: row.fields}, "STRING",
-				errTypeMismatch(sppb.TypeCode_STRING, false, proto.Int64(0))),
+				errTypeMismatch(sppb.TypeCode_STRING, sppb.TypeCode_TYPE_CODE_UNSPECIFIED, proto.Int64(0))),
 		},
 	} {
 		if gotErr := row.ToStruct(test.dst); !reflect.DeepEqual(gotErr, test.wantErr) {
@@ -1770,6 +1770,15 @@ func TestNewRow(t *testing.T) {
 		if !reflect.DeepEqual(got, test.want) {
 			t.Errorf("NewRow(%v,%v) = %s, want %s", test.names, test.values, got, test.want)
 			continue
+		}
+	}
+}
+
+func BenchmarkColumn(b *testing.B) {
+	var s string
+	for i := 0; i < b.N; i++ {
+		if err := row.Column(0, &s); err != nil {
+			b.Fatal(err)
 		}
 	}
 }

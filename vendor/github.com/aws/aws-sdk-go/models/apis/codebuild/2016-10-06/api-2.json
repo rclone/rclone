@@ -11,6 +11,18 @@
     "uid":"codebuild-2016-10-06"
   },
   "operations":{
+    "BatchDeleteBuilds":{
+      "name":"BatchDeleteBuilds",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"BatchDeleteBuildsInput"},
+      "output":{"shape":"BatchDeleteBuildsOutput"},
+      "errors":[
+        {"shape":"InvalidInputException"}
+      ]
+    },
     "BatchGetBuilds":{
       "name":"BatchGetBuilds",
       "http":{
@@ -49,6 +61,21 @@
         {"shape":"AccountLimitExceededException"}
       ]
     },
+    "CreateWebhook":{
+      "name":"CreateWebhook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateWebhookInput"},
+      "output":{"shape":"CreateWebhookOutput"},
+      "errors":[
+        {"shape":"InvalidInputException"},
+        {"shape":"OAuthProviderException"},
+        {"shape":"ResourceAlreadyExistsException"},
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
     "DeleteProject":{
       "name":"DeleteProject",
       "http":{
@@ -59,6 +86,20 @@
       "output":{"shape":"DeleteProjectOutput"},
       "errors":[
         {"shape":"InvalidInputException"}
+      ]
+    },
+    "DeleteWebhook":{
+      "name":"DeleteWebhook",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteWebhookInput"},
+      "output":{"shape":"DeleteWebhookOutput"},
+      "errors":[
+        {"shape":"InvalidInputException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"OAuthProviderException"}
       ]
     },
     "ListBuilds":{
@@ -177,6 +218,20 @@
         "NO_ARTIFACTS"
       ]
     },
+    "BatchDeleteBuildsInput":{
+      "type":"structure",
+      "required":["ids"],
+      "members":{
+        "ids":{"shape":"BuildIds"}
+      }
+    },
+    "BatchDeleteBuildsOutput":{
+      "type":"structure",
+      "members":{
+        "buildsDeleted":{"shape":"BuildIds"},
+        "buildsNotDeleted":{"shape":"BuildsNotDeleted"}
+      }
+    },
     "BatchGetBuildsInput":{
       "type":"structure",
       "required":["ids"],
@@ -241,6 +296,13 @@
       "max":100,
       "min":1
     },
+    "BuildNotDeleted":{
+      "type":"structure",
+      "members":{
+        "id":{"shape":"NonEmptyString"},
+        "statusCode":{"shape":"String"}
+      }
+    },
     "BuildPhase":{
       "type":"structure",
       "members":{
@@ -274,6 +336,10 @@
     "Builds":{
       "type":"list",
       "member":{"shape":"Build"}
+    },
+    "BuildsNotDeleted":{
+      "type":"list",
+      "member":{"shape":"BuildNotDeleted"}
     },
     "ComputeType":{
       "type":"string",
@@ -309,6 +375,19 @@
         "project":{"shape":"Project"}
       }
     },
+    "CreateWebhookInput":{
+      "type":"structure",
+      "required":["projectName"],
+      "members":{
+        "projectName":{"shape":"ProjectName"}
+      }
+    },
+    "CreateWebhookOutput":{
+      "type":"structure",
+      "members":{
+        "webhook":{"shape":"Webhook"}
+      }
+    },
     "DeleteProjectInput":{
       "type":"structure",
       "required":["name"],
@@ -317,6 +396,18 @@
       }
     },
     "DeleteProjectOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "DeleteWebhookInput":{
+      "type":"structure",
+      "required":["projectName"],
+      "members":{
+        "projectName":{"shape":"ProjectName"}
+      }
+    },
+    "DeleteWebhookOutput":{
       "type":"structure",
       "members":{
       }
@@ -366,8 +457,16 @@
       ],
       "members":{
         "name":{"shape":"NonEmptyString"},
-        "value":{"shape":"String"}
+        "value":{"shape":"String"},
+        "type":{"shape":"EnvironmentVariableType"}
       }
+    },
+    "EnvironmentVariableType":{
+      "type":"string",
+      "enum":[
+        "PLAINTEXT",
+        "PARAMETER_STORE"
+      ]
     },
     "EnvironmentVariables":{
       "type":"list",
@@ -395,6 +494,7 @@
         "GOLANG",
         "DOCKER",
         "ANDROID",
+        "DOTNET",
         "BASE"
       ]
     },
@@ -466,6 +566,12 @@
       "type":"string",
       "min":1
     },
+    "OAuthProviderException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "PhaseContext":{
       "type":"structure",
       "members":{
@@ -499,7 +605,8 @@
         "encryptionKey":{"shape":"NonEmptyString"},
         "tags":{"shape":"TagList"},
         "created":{"shape":"Timestamp"},
-        "lastModified":{"shape":"Timestamp"}
+        "lastModified":{"shape":"Timestamp"},
+        "webhook":{"shape":"Webhook"}
       }
     },
     "ProjectArtifacts":{
@@ -605,7 +712,8 @@
         "CODECOMMIT",
         "CODEPIPELINE",
         "GITHUB",
-        "S3"
+        "S3",
+        "BITBUCKET"
       ]
     },
     "StartBuildInput":{
@@ -696,6 +804,12 @@
       "max":255,
       "min":1,
       "pattern":"^([\\\\p{L}\\\\p{Z}\\\\p{N}_.:/=@+\\\\-]*)$"
+    },
+    "Webhook":{
+      "type":"structure",
+      "members":{
+        "url":{"shape":"NonEmptyString"}
+      }
     },
     "WrapperBoolean":{"type":"boolean"},
     "WrapperInt":{"type":"integer"},

@@ -33,12 +33,6 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-var (
-	metricProjectPathTemplate                     = gax.MustCompilePathTemplate("projects/{project}")
-	metricMetricDescriptorPathTemplate            = gax.MustCompilePathTemplate("projects/{project}/metricDescriptors/{metric_descriptor=**}")
-	metricMonitoredResourceDescriptorPathTemplate = gax.MustCompilePathTemplate("projects/{project}/monitoredResourceDescriptors/{monitored_resource_descriptor}")
-)
-
 // MetricCallOptions contains the retry settings for each method of MetricClient.
 type MetricCallOptions struct {
 	ListMonitoredResourceDescriptors []gax.CallOption
@@ -115,7 +109,7 @@ func NewMetricClient(ctx context.Context, opts ...option.ClientOption) (*MetricC
 
 		metricClient: monitoringpb.NewMetricServiceClient(conn),
 	}
-	c.SetGoogleClientInfo()
+	c.setGoogleClientInfo()
 	return c, nil
 }
 
@@ -130,10 +124,10 @@ func (c *MetricClient) Close() error {
 	return c.conn.Close()
 }
 
-// SetGoogleClientInfo sets the name and version of the application in
+// setGoogleClientInfo sets the name and version of the application in
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
-func (c *MetricClient) SetGoogleClientInfo(keyval ...string) {
+func (c *MetricClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
@@ -141,37 +135,30 @@ func (c *MetricClient) SetGoogleClientInfo(keyval ...string) {
 
 // MetricProjectPath returns the path for the project resource.
 func MetricProjectPath(project string) string {
-	path, err := metricProjectPathTemplate.Render(map[string]string{
-		"project": project,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		""
 }
 
 // MetricMetricDescriptorPath returns the path for the metric descriptor resource.
 func MetricMetricDescriptorPath(project, metricDescriptor string) string {
-	path, err := metricMetricDescriptorPathTemplate.Render(map[string]string{
-		"project":           project,
-		"metric_descriptor": metricDescriptor,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		"/metricDescriptors/" +
+		metricDescriptor +
+		""
 }
 
 // MetricMonitoredResourceDescriptorPath returns the path for the monitored resource descriptor resource.
 func MetricMonitoredResourceDescriptorPath(project, monitoredResourceDescriptor string) string {
-	path, err := metricMonitoredResourceDescriptorPathTemplate.Render(map[string]string{
-		"project":                       project,
-		"monitored_resource_descriptor": monitoredResourceDescriptor,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		"/monitoredResourceDescriptors/" +
+		monitoredResourceDescriptor +
+		""
 }
 
 // ListMonitoredResourceDescriptors lists monitored resource descriptors that match a filter. This method does not require a Stackdriver account.
@@ -278,7 +265,7 @@ func (c *MetricClient) GetMetricDescriptor(ctx context.Context, req *monitoringp
 
 // CreateMetricDescriptor creates a new metric descriptor.
 // User-created metric descriptors define
-// [custom metrics](/monitoring/custom-metrics).
+// custom metrics (at /monitoring/custom-metrics).
 func (c *MetricClient) CreateMetricDescriptor(ctx context.Context, req *monitoringpb.CreateMetricDescriptorRequest, opts ...gax.CallOption) (*metricpb.MetricDescriptor, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
 	opts = append(c.CallOptions.CreateMetricDescriptor[0:len(c.CallOptions.CreateMetricDescriptor):len(c.CallOptions.CreateMetricDescriptor)], opts...)
@@ -295,7 +282,7 @@ func (c *MetricClient) CreateMetricDescriptor(ctx context.Context, req *monitori
 }
 
 // DeleteMetricDescriptor deletes a metric descriptor. Only user-created
-// [custom metrics](/monitoring/custom-metrics) can be deleted.
+// custom metrics (at /monitoring/custom-metrics) can be deleted.
 func (c *MetricClient) DeleteMetricDescriptor(ctx context.Context, req *monitoringpb.DeleteMetricDescriptorRequest, opts ...gax.CallOption) error {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
 	opts = append(c.CallOptions.DeleteMetricDescriptor[0:len(c.CallOptions.DeleteMetricDescriptor):len(c.CallOptions.DeleteMetricDescriptor)], opts...)

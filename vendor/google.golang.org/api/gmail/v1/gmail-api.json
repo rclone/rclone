@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/Kao4BYxqk4XjAGvTP0MqtIG26pc\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/yLmXjwrCZrd7tYs9N17TGZKIRRE\"",
  "discoveryVersion": "v1",
  "id": "gmail:v1",
  "name": "gmail",
  "version": "v1",
- "revision": "20170516",
+ "revision": "20170913",
  "title": "Gmail API",
  "description": "Access Gmail mailboxes including sending user email.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/gmail/v1/users/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "gmail/v1/users/",
- "batchPath": "batch",
+ "batchPath": "batch/gmail/v1",
  "parameters": {
   "alt": {
    "type": "string",
@@ -88,7 +88,7 @@
      "description": "View and modify but not delete your email"
     },
     "https://www.googleapis.com/auth/gmail.readonly": {
-     "description": "View your emails messages and settings"
+     "description": "View your email messages and settings"
     },
     "https://www.googleapis.com/auth/gmail.send": {
      "description": "Send email on your behalf"

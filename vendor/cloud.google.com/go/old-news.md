@@ -1,3 +1,19 @@
+_March 17, 2017_
+
+Breaking Pubsub changes.
+* Publish is now asynchronous
+([announcement](https://groups.google.com/d/topic/google-api-go-announce/aaqRDIQ3rvU/discussion)).
+* Subscription.Pull replaced by Subscription.Receive, which takes a callback ([announcement](https://groups.google.com/d/topic/google-api-go-announce/8pt6oetAdKc/discussion)).
+* Message.Done replaced with Message.Ack and Message.Nack.
+
+_February 14, 2017_
+
+Release of a client library for Spanner. See
+the
+[blog post](https://cloudplatform.googleblog.com/2017/02/introducing-Cloud-Spanner-a-global-database-service-for-mission-critical-applications.html).
+
+Note that although the Spanner service is beta, the Go client library is alpha.
+
 _December 12, 2016_
 
 Beta release of BigQuery, DataStore, Logging and Storage. See the

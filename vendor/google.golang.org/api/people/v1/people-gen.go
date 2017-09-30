@@ -447,7 +447,7 @@ type ContactGroup struct {
 
 	// ResourceName: The resource name for the contact group, assigned by
 	// the server. An ASCII
-	// string, in the form of `contactGroups/<contact_group_id>`.
+	// string, in the form of `contactGroups/`<var>contact_group_id</var>.
 	ResourceName string `json:"resourceName,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1218,12 +1218,12 @@ func (s *Membership) MarshalJSON() ([]byte, error) {
 type ModifyContactGroupMembersRequest struct {
 	// ResourceNamesToAdd: The resource names of the contact people to add
 	// in the form of in the form
-	// `people/<person_id>`.
+	// `people/`<var>person_id</var>.
 	ResourceNamesToAdd []string `json:"resourceNamesToAdd,omitempty"`
 
 	// ResourceNamesToRemove: The resource names of the contact people to
 	// remove in the form of in the
-	// form of `people/<person_id>`.
+	// form of `people/`<var>person_id</var>.
 	ResourceNamesToRemove []string `json:"resourceNamesToRemove,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ResourceNamesToAdd")
@@ -1291,14 +1291,13 @@ func (s *ModifyContactGroupMembersResponse) MarshalJSON() ([]byte, error) {
 type Name struct {
 	// DisplayName: The read-only display name formatted according to the
 	// locale specified by
-	// the viewer's account or the <code>Accept-Language</code> HTTP header.
+	// the viewer's account or the `Accept-Language` HTTP header.
 	DisplayName string `json:"displayName,omitempty"`
 
 	// DisplayNameLastFirst: The read-only display name with the last name
 	// first formatted according to
-	// the locale specified by the viewer's account or
-	// the
-	// <code>Accept-Language</code> HTTP header.
+	// the locale specified by the viewer's account or the
+	// `Accept-Language` HTTP header.
 	DisplayNameLastFirst string `json:"displayNameLastFirst,omitempty"`
 
 	// FamilyName: The family name.
@@ -1620,8 +1619,9 @@ type Person struct {
 
 	// ResourceName: The resource name for the person, assigned by the
 	// server. An ASCII string
-	// with a max length of 27 characters, in the form of
-	// `people/<person_id>`.
+	// with a max length of 27 characters, in the form
+	// of
+	// `people/`<var>person_id</var>.
 	ResourceName string `json:"resourceName,omitempty"`
 
 	// Skills: The person's skills.
@@ -1632,6 +1632,9 @@ type Person struct {
 
 	// Urls: The person's associated URLs.
 	Urls []*Url `json:"urls,omitempty"`
+
+	// UserDefined: The person's user defined data.
+	UserDefined []*UserDefined `json:"userDefined,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
@@ -1839,18 +1842,22 @@ func (s *PhoneNumber) MarshalJSON() ([]byte, error) {
 // person's name to
 // help others recognize the person.
 type Photo struct {
+	// Default: True if the photo is a default photo;
+	// false if the photo is a user-provided photo.
+	Default bool `json:"default,omitempty"`
+
 	// Metadata: Metadata about the photo.
 	Metadata *FieldMetadata `json:"metadata,omitempty"`
 
 	// Url: The URL of the photo. You can change the desired size by
 	// appending a query
-	// parameter `sz=<size>` at the end of the url.
+	// parameter `sz=`<var>size</var> at the end of the url.
 	// Example:
 	// `https://lh3.googleusercontent.com/-T_wVWLlmg7w/AAAAAAAAAAI/A
 	// AAAAAAABa8/00gzXvDBYqw/s100/photo.jpg?sz=50`
 	Url string `json:"url,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Metadata") to
+	// ForceSendFields is a list of field names (e.g. "Default") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1858,7 +1865,7 @@ type Photo struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Metadata") to include in
+	// NullFields is a list of field names (e.g. "Default") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -1882,6 +1889,15 @@ type ProfileMetadata struct {
 	//   "PERSON" - Person.
 	//   "PAGE" - [Google+ Page.](http://www.google.com/+/brands/)
 	ObjectType string `json:"objectType,omitempty"`
+
+	// UserTypes: The user types.
+	//
+	// Possible values:
+	//   "USER_TYPE_UNKNOWN" - The user type is not known.
+	//   "GOOGLE_USER" - The user is a Google user.
+	//   "GPLUS_USER" - The user is a Google+ user.
+	//   "GOOGLE_APPS_USER" - The user is a Google Apps for Work user.
+	UserTypes []string `json:"userTypes,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ObjectType") to
 	// unconditionally include in API requests. By default, fields with
@@ -2130,18 +2146,21 @@ func (s *Skill) MarshalJSON() ([]byte, error) {
 
 // Source: The source of a field.
 type Source struct {
-	// Etag: The [HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag)
-	// of the
-	// source. Used for web cache validation. Only populated
-	// in
-	// person.metadata.sources.
+	// Etag: **Only populated in `person.metadata.sources`.**
+	//
+	// The [HTTP entity tag](https://en.wikipedia.org/wiki/HTTP_ETag) of
+	// the
+	// source. Used for web cache validation.
 	Etag string `json:"etag,omitempty"`
 
 	// Id: The unique identifier within the source type generated by the
 	// server.
 	Id string `json:"id,omitempty"`
 
-	// ProfileMetadata: Metadata about a source of type PROFILE.
+	// ProfileMetadata: **Only populated in
+	// `person.metadata.sources`.**
+	//
+	// Metadata about a source of type PROFILE.
 	ProfileMetadata *ProfileMetadata `json:"profileMetadata,omitempty"`
 
 	// Type: The source type.
@@ -2163,7 +2182,9 @@ type Source struct {
 	// is the source id.
 	Type string `json:"type,omitempty"`
 
-	// UpdateTime: Last update timestamp of this source.
+	// UpdateTime: **Only populated in `person.metadata.sources`.**
+	//
+	// Last update timestamp of this source.
 	UpdateTime string `json:"updateTime,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Etag") to
@@ -2273,9 +2294,9 @@ type Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details.  There will
-	// be a
-	// common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details.  There is a
+	// common set of
+	// message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
@@ -2415,6 +2436,40 @@ type Url struct {
 
 func (s *Url) MarshalJSON() ([]byte, error) {
 	type noMethod Url
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// UserDefined: Arbitrary user data that is populated by the end users.
+type UserDefined struct {
+	// Key: The end user specified key of the user defined data.
+	Key string `json:"key,omitempty"`
+
+	// Metadata: Metadata about the user defined data.
+	Metadata *FieldMetadata `json:"metadata,omitempty"`
+
+	// Value: The end user specified value of the user defined data.
+	Value string `json:"value,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Key") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Key") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *UserDefined) MarshalJSON() ([]byte, error) {
+	type noMethod UserDefined
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3295,7 +3350,7 @@ func (c *ContactGroupsUpdateCall) Do(opts ...googleapi.CallOption) (*ContactGrou
 	//   ],
 	//   "parameters": {
 	//     "resourceName": {
-	//       "description": "The resource name for the contact group, assigned by the server. An ASCII\nstring, in the form of `contactGroups/\u003ccontact_group_id\u003e`.",
+	//       "description": "The resource name for the contact group, assigned by the server. An ASCII\nstring, in the form of `contactGroups/`\u003cvar\u003econtact_group_id\u003c/var\u003e.",
 	//       "location": "path",
 	//       "pattern": "^contactGroups/[^/]+$",
 	//       "required": true,
@@ -3898,7 +3953,7 @@ func (c *PeopleGetCall) Do(opts ...googleapi.CallOption) (*Person, error) {
 	//       "type": "string"
 	//     },
 	//     "resourceName": {
-	//       "description": "The resource name of the person to provide information about.\n\n- To get information about the authenticated user, specify `people/me`.\n- To get information about a google account, specify `people/\u003caccount_id\u003e`.\n- To get information about a contact, specify the resource name that\n  identifies the contact as returned by\n[`people.connections.list`](/people/api/rest/v1/people.connections/list).",
+	//       "description": "The resource name of the person to provide information about.\n\n- To get information about the authenticated user, specify `people/me`.\n- To get information about a google account, specify\n `people/`\u003cvar\u003eaccount_id\u003c/var\u003e.\n- To get information about a contact, specify the resource name that\n  identifies the contact as returned by\n[`people.connections.list`](/people/api/rest/v1/people.connections/list).",
 	//       "location": "path",
 	//       "pattern": "^people/[^/]+$",
 	//       "required": true,
@@ -3995,13 +4050,19 @@ func (c *PeopleGetBatchGetCall) RequestMaskIncludeField(requestMaskIncludeField 
 }
 
 // ResourceNames sets the optional parameter "resourceNames": The
-// resource name, such as one returned
+// resource names of the people to provide information about.
+//
+// - To get information about the authenticated user, specify
+// `people/me`.
+// - To get information about a google account, specify
+//   `people/`<var>account_id</var>.
+// - To get information about a contact, specify the resource name that
+//   identifies the contact as returned
 // by
 // [`people.connections.list`](/people/api/rest/v1/people.connections/
-// list),
-// of one of the people to provide information about. You can include
-// this
-// parameter up to 50 times in one request.
+// list).
+//
+// You can include up to 50 resource names in one request.
 func (c *PeopleGetBatchGetCall) ResourceNames(resourceNames ...string) *PeopleGetBatchGetCall {
 	c.urlParams_.SetMulti("resourceNames", append([]string{}, resourceNames...))
 	return c
@@ -4117,7 +4178,7 @@ func (c *PeopleGetBatchGetCall) Do(opts ...googleapi.CallOption) (*GetPeopleResp
 	//       "type": "string"
 	//     },
 	//     "resourceNames": {
-	//       "description": "The resource name, such as one returned by\n[`people.connections.list`](/people/api/rest/v1/people.connections/list),\nof one of the people to provide information about. You can include this\nparameter up to 50 times in one request.",
+	//       "description": "The resource names of the people to provide information about.\n\n- To get information about the authenticated user, specify `people/me`.\n- To get information about a google account, specify\n  `people/`\u003cvar\u003eaccount_id\u003c/var\u003e.\n- To get information about a contact, specify the resource name that\n  identifies the contact as returned by\n[`people.connections.list`](/people/api/rest/v1/people.connections/list).\n\nYou can include up to 50 resource names in one request.",
 	//       "location": "query",
 	//       "repeated": true,
 	//       "type": "string"
@@ -4302,7 +4363,7 @@ func (c *PeopleUpdateContactCall) Do(opts ...googleapi.CallOption) (*Person, err
 	//   ],
 	//   "parameters": {
 	//     "resourceName": {
-	//       "description": "The resource name for the person, assigned by the server. An ASCII string\nwith a max length of 27 characters, in the form of `people/\u003cperson_id\u003e`.",
+	//       "description": "The resource name for the person, assigned by the server. An ASCII string\nwith a max length of 27 characters, in the form of\n`people/`\u003cvar\u003eperson_id\u003c/var\u003e.",
 	//       "location": "path",
 	//       "pattern": "^people/[^/]+$",
 	//       "required": true,

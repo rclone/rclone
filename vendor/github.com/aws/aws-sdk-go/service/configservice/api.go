@@ -17,19 +17,18 @@ const opDeleteConfigRule = "DeleteConfigRule"
 
 // DeleteConfigRuleRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteConfigRule operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteConfigRule for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteConfigRule method directly
-// instead.
+// See DeleteConfigRule for more information on using the DeleteConfigRule
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteConfigRuleRequest method.
 //    req, resp := client.DeleteConfigRuleRequest(params)
@@ -110,19 +109,18 @@ const opDeleteConfigurationRecorder = "DeleteConfigurationRecorder"
 
 // DeleteConfigurationRecorderRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteConfigurationRecorder operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteConfigurationRecorder for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteConfigurationRecorder method directly
-// instead.
+// See DeleteConfigurationRecorder for more information on using the DeleteConfigurationRecorder
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteConfigurationRecorderRequest method.
 //    req, resp := client.DeleteConfigurationRecorderRequest(params)
@@ -201,19 +199,18 @@ const opDeleteDeliveryChannel = "DeleteDeliveryChannel"
 
 // DeleteDeliveryChannelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDeliveryChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteDeliveryChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteDeliveryChannel method directly
-// instead.
+// See DeleteDeliveryChannel for more information on using the DeleteDeliveryChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteDeliveryChannelRequest method.
 //    req, resp := client.DeleteDeliveryChannelRequest(params)
@@ -290,19 +287,18 @@ const opDeleteEvaluationResults = "DeleteEvaluationResults"
 
 // DeleteEvaluationResultsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEvaluationResults operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteEvaluationResults for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteEvaluationResults method directly
-// instead.
+// See DeleteEvaluationResults for more information on using the DeleteEvaluationResults
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteEvaluationResultsRequest method.
 //    req, resp := client.DeleteEvaluationResultsRequest(params)
@@ -378,19 +374,18 @@ const opDeliverConfigSnapshot = "DeliverConfigSnapshot"
 
 // DeliverConfigSnapshotRequest generates a "aws/request.Request" representing the
 // client's request for the DeliverConfigSnapshot operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeliverConfigSnapshot for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeliverConfigSnapshot method directly
-// instead.
+// See DeliverConfigSnapshot for more information on using the DeliverConfigSnapshot
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeliverConfigSnapshotRequest method.
 //    req, resp := client.DeliverConfigSnapshotRequest(params)
@@ -474,19 +469,18 @@ const opDescribeComplianceByConfigRule = "DescribeComplianceByConfigRule"
 
 // DescribeComplianceByConfigRuleRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeComplianceByConfigRule operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeComplianceByConfigRule for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeComplianceByConfigRule method directly
-// instead.
+// See DescribeComplianceByConfigRule for more information on using the DescribeComplianceByConfigRule
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeComplianceByConfigRuleRequest method.
 //    req, resp := client.DescribeComplianceByConfigRuleRequest(params)
@@ -585,19 +579,18 @@ const opDescribeComplianceByResource = "DescribeComplianceByResource"
 
 // DescribeComplianceByResourceRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeComplianceByResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeComplianceByResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeComplianceByResource method directly
-// instead.
+// See DescribeComplianceByResource for more information on using the DescribeComplianceByResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeComplianceByResourceRequest method.
 //    req, resp := client.DescribeComplianceByResourceRequest(params)
@@ -694,19 +687,18 @@ const opDescribeConfigRuleEvaluationStatus = "DescribeConfigRuleEvaluationStatus
 
 // DescribeConfigRuleEvaluationStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConfigRuleEvaluationStatus operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeConfigRuleEvaluationStatus for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeConfigRuleEvaluationStatus method directly
-// instead.
+// See DescribeConfigRuleEvaluationStatus for more information on using the DescribeConfigRuleEvaluationStatus
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeConfigRuleEvaluationStatusRequest method.
 //    req, resp := client.DescribeConfigRuleEvaluationStatusRequest(params)
@@ -786,19 +778,18 @@ const opDescribeConfigRules = "DescribeConfigRules"
 
 // DescribeConfigRulesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConfigRules operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeConfigRules for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeConfigRules method directly
-// instead.
+// See DescribeConfigRules for more information on using the DescribeConfigRules
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeConfigRulesRequest method.
 //    req, resp := client.DescribeConfigRulesRequest(params)
@@ -871,19 +862,18 @@ const opDescribeConfigurationRecorderStatus = "DescribeConfigurationRecorderStat
 
 // DescribeConfigurationRecorderStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConfigurationRecorderStatus operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeConfigurationRecorderStatus for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeConfigurationRecorderStatus method directly
-// instead.
+// See DescribeConfigurationRecorderStatus for more information on using the DescribeConfigurationRecorderStatus
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeConfigurationRecorderStatusRequest method.
 //    req, resp := client.DescribeConfigurationRecorderStatusRequest(params)
@@ -956,19 +946,18 @@ const opDescribeConfigurationRecorders = "DescribeConfigurationRecorders"
 
 // DescribeConfigurationRecordersRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeConfigurationRecorders operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeConfigurationRecorders for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeConfigurationRecorders method directly
-// instead.
+// See DescribeConfigurationRecorders for more information on using the DescribeConfigurationRecorders
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeConfigurationRecordersRequest method.
 //    req, resp := client.DescribeConfigurationRecordersRequest(params)
@@ -1041,19 +1030,18 @@ const opDescribeDeliveryChannelStatus = "DescribeDeliveryChannelStatus"
 
 // DescribeDeliveryChannelStatusRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeDeliveryChannelStatus operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeDeliveryChannelStatus for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeDeliveryChannelStatus method directly
-// instead.
+// See DescribeDeliveryChannelStatus for more information on using the DescribeDeliveryChannelStatus
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeDeliveryChannelStatusRequest method.
 //    req, resp := client.DescribeDeliveryChannelStatusRequest(params)
@@ -1125,19 +1113,18 @@ const opDescribeDeliveryChannels = "DescribeDeliveryChannels"
 
 // DescribeDeliveryChannelsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeDeliveryChannels operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeDeliveryChannels for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeDeliveryChannels method directly
-// instead.
+// See DescribeDeliveryChannels for more information on using the DescribeDeliveryChannels
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeDeliveryChannelsRequest method.
 //    req, resp := client.DescribeDeliveryChannelsRequest(params)
@@ -1209,19 +1196,18 @@ const opGetComplianceDetailsByConfigRule = "GetComplianceDetailsByConfigRule"
 
 // GetComplianceDetailsByConfigRuleRequest generates a "aws/request.Request" representing the
 // client's request for the GetComplianceDetailsByConfigRule operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetComplianceDetailsByConfigRule for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetComplianceDetailsByConfigRule method directly
-// instead.
+// See GetComplianceDetailsByConfigRule for more information on using the GetComplianceDetailsByConfigRule
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetComplianceDetailsByConfigRuleRequest method.
 //    req, resp := client.GetComplianceDetailsByConfigRuleRequest(params)
@@ -1300,19 +1286,18 @@ const opGetComplianceDetailsByResource = "GetComplianceDetailsByResource"
 
 // GetComplianceDetailsByResourceRequest generates a "aws/request.Request" representing the
 // client's request for the GetComplianceDetailsByResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetComplianceDetailsByResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetComplianceDetailsByResource method directly
-// instead.
+// See GetComplianceDetailsByResource for more information on using the GetComplianceDetailsByResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetComplianceDetailsByResourceRequest method.
 //    req, resp := client.GetComplianceDetailsByResourceRequest(params)
@@ -1383,19 +1368,18 @@ const opGetComplianceSummaryByConfigRule = "GetComplianceSummaryByConfigRule"
 
 // GetComplianceSummaryByConfigRuleRequest generates a "aws/request.Request" representing the
 // client's request for the GetComplianceSummaryByConfigRule operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetComplianceSummaryByConfigRule for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetComplianceSummaryByConfigRule method directly
-// instead.
+// See GetComplianceSummaryByConfigRule for more information on using the GetComplianceSummaryByConfigRule
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetComplianceSummaryByConfigRuleRequest method.
 //    req, resp := client.GetComplianceSummaryByConfigRuleRequest(params)
@@ -1459,19 +1443,18 @@ const opGetComplianceSummaryByResourceType = "GetComplianceSummaryByResourceType
 
 // GetComplianceSummaryByResourceTypeRequest generates a "aws/request.Request" representing the
 // client's request for the GetComplianceSummaryByResourceType operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetComplianceSummaryByResourceType for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetComplianceSummaryByResourceType method directly
-// instead.
+// See GetComplianceSummaryByResourceType for more information on using the GetComplianceSummaryByResourceType
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetComplianceSummaryByResourceTypeRequest method.
 //    req, resp := client.GetComplianceSummaryByResourceTypeRequest(params)
@@ -1538,23 +1521,141 @@ func (c *ConfigService) GetComplianceSummaryByResourceTypeWithContext(ctx aws.Co
 	return out, req.Send()
 }
 
+const opGetDiscoveredResourceCounts = "GetDiscoveredResourceCounts"
+
+// GetDiscoveredResourceCountsRequest generates a "aws/request.Request" representing the
+// client's request for the GetDiscoveredResourceCounts operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetDiscoveredResourceCounts for more information on using the GetDiscoveredResourceCounts
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetDiscoveredResourceCountsRequest method.
+//    req, resp := client.GetDiscoveredResourceCountsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/GetDiscoveredResourceCounts
+func (c *ConfigService) GetDiscoveredResourceCountsRequest(input *GetDiscoveredResourceCountsInput) (req *request.Request, output *GetDiscoveredResourceCountsOutput) {
+	op := &request.Operation{
+		Name:       opGetDiscoveredResourceCounts,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &GetDiscoveredResourceCountsInput{}
+	}
+
+	output = &GetDiscoveredResourceCountsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetDiscoveredResourceCounts API operation for AWS Config.
+//
+// Returns the resource types, the number of each resource type, and the total
+// number of resources that AWS Config is recording in this region for your
+// AWS account.
+//
+// Example
+//
+// AWS Config is recording three resource types in the US East (Ohio) Region
+// for your account: 25 EC2 instances, 20 IAM users, and 15 S3 buckets.
+//
+// You make a call to the GetDiscoveredResourceCounts action and specify that
+// you want all resource types.
+//
+// AWS Config returns the following:
+//
+// The resource types (EC2 instances, IAM users, and S3 buckets)
+//
+// The number of each resource type (25, 20, and 15)
+//
+// The total number of all resources (60)
+//
+// The response is paginated. By default, AWS Config lists 100 ResourceCount
+// objects on each page. You can customize this number with the limit parameter.
+// The response includes a nextToken string. To get the next page of results,
+// run the request again and specify the string for the nextToken parameter.
+//
+// If you make a call to the GetDiscoveredResourceCounts action, you may not
+// immediately receive resource counts in the following situations:
+//
+// You are a new AWS Config customer
+//
+// You just enabled resource recording
+//
+// It may take a few minutes for AWS Config to record and count your resources.
+// Wait a few minutes and then retry the GetDiscoveredResourceCounts action.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Config's
+// API operation GetDiscoveredResourceCounts for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeValidationException "ValidationException"
+//   The requested action is not valid.
+//
+//   * ErrCodeInvalidLimitException "InvalidLimitException"
+//   The specified limit is outside the allowable range.
+//
+//   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
+//   The specified next token is invalid. Specify the NextToken string that was
+//   returned in the previous response to get the next page of results.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/GetDiscoveredResourceCounts
+func (c *ConfigService) GetDiscoveredResourceCounts(input *GetDiscoveredResourceCountsInput) (*GetDiscoveredResourceCountsOutput, error) {
+	req, out := c.GetDiscoveredResourceCountsRequest(input)
+	return out, req.Send()
+}
+
+// GetDiscoveredResourceCountsWithContext is the same as GetDiscoveredResourceCounts with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetDiscoveredResourceCounts for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *ConfigService) GetDiscoveredResourceCountsWithContext(ctx aws.Context, input *GetDiscoveredResourceCountsInput, opts ...request.Option) (*GetDiscoveredResourceCountsOutput, error) {
+	req, out := c.GetDiscoveredResourceCountsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetResourceConfigHistory = "GetResourceConfigHistory"
 
 // GetResourceConfigHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the GetResourceConfigHistory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetResourceConfigHistory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetResourceConfigHistory method directly
-// instead.
+// See GetResourceConfigHistory for more information on using the GetResourceConfigHistory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetResourceConfigHistoryRequest method.
 //    req, resp := client.GetResourceConfigHistoryRequest(params)
@@ -1593,11 +1694,10 @@ func (c *ConfigService) GetResourceConfigHistoryRequest(input *GetResourceConfig
 // contains details about each state of the resource during the specified time
 // interval.
 //
-// The response is paginated, and by default, AWS Config returns a limit of
-// 10 configuration items per page. You can customize this number with the limit
-// parameter. The response includes a nextToken string, and to get the next
-// page of results, run the request again and enter this string for the nextToken
-// parameter.
+// The response is paginated. By default, AWS Config returns a limit of 10 configuration
+// items per page. You can customize this number with the limit parameter. The
+// response includes a nextToken string. To get the next page of results, run
+// the request again and specify the string for the nextToken parameter.
 //
 // Each call to the API is limited to span a duration of seven days. It is likely
 // that the number of records returned is smaller than the specified limit.
@@ -1708,19 +1808,18 @@ const opListDiscoveredResources = "ListDiscoveredResources"
 
 // ListDiscoveredResourcesRequest generates a "aws/request.Request" representing the
 // client's request for the ListDiscoveredResources operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListDiscoveredResources for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListDiscoveredResources method directly
-// instead.
+// See ListDiscoveredResources for more information on using the ListDiscoveredResources
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListDiscoveredResourcesRequest method.
 //    req, resp := client.ListDiscoveredResourcesRequest(params)
@@ -1759,10 +1858,10 @@ func (c *ConfigService) ListDiscoveredResourcesRequest(input *ListDiscoveredReso
 // You can specify either resource IDs or a resource name but not both in the
 // same request.
 //
-// The response is paginated, and by default AWS Config lists 100 resource identifiers
+// The response is paginated. By default, AWS Config lists 100 resource identifiers
 // on each page. You can customize this number with the limit parameter. The
-// response includes a nextToken string, and to get the next page of results,
-// run the request again and enter this string for the nextToken parameter.
+// response includes a nextToken string. To get the next page of results, run
+// the request again and specify the string for the nextToken parameter.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1812,19 +1911,18 @@ const opPutConfigRule = "PutConfigRule"
 
 // PutConfigRuleRequest generates a "aws/request.Request" representing the
 // client's request for the PutConfigRule operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutConfigRule for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutConfigRule method directly
-// instead.
+// See PutConfigRule for more information on using the PutConfigRule
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutConfigRuleRequest method.
 //    req, resp := client.PutConfigRuleRequest(params)
@@ -1951,19 +2049,18 @@ const opPutConfigurationRecorder = "PutConfigurationRecorder"
 
 // PutConfigurationRecorderRequest generates a "aws/request.Request" representing the
 // client's request for the PutConfigurationRecorder operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutConfigurationRecorder for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutConfigurationRecorder method directly
-// instead.
+// See PutConfigurationRecorder for more information on using the PutConfigurationRecorder
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutConfigurationRecorderRequest method.
 //    req, resp := client.PutConfigurationRecorderRequest(params)
@@ -2053,19 +2150,18 @@ const opPutDeliveryChannel = "PutDeliveryChannel"
 
 // PutDeliveryChannelRequest generates a "aws/request.Request" representing the
 // client's request for the PutDeliveryChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutDeliveryChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutDeliveryChannel method directly
-// instead.
+// See PutDeliveryChannel for more information on using the PutDeliveryChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutDeliveryChannelRequest method.
 //    req, resp := client.PutDeliveryChannelRequest(params)
@@ -2167,19 +2263,18 @@ const opPutEvaluations = "PutEvaluations"
 
 // PutEvaluationsRequest generates a "aws/request.Request" representing the
 // client's request for the PutEvaluations operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutEvaluations for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutEvaluations method directly
-// instead.
+// See PutEvaluations for more information on using the PutEvaluations
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutEvaluationsRequest method.
 //    req, resp := client.PutEvaluationsRequest(params)
@@ -2257,19 +2352,18 @@ const opStartConfigRulesEvaluation = "StartConfigRulesEvaluation"
 
 // StartConfigRulesEvaluationRequest generates a "aws/request.Request" representing the
 // client's request for the StartConfigRulesEvaluation operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See StartConfigRulesEvaluation for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the StartConfigRulesEvaluation method directly
-// instead.
+// See StartConfigRulesEvaluation for more information on using the StartConfigRulesEvaluation
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the StartConfigRulesEvaluationRequest method.
 //    req, resp := client.StartConfigRulesEvaluationRequest(params)
@@ -2379,19 +2473,18 @@ const opStartConfigurationRecorder = "StartConfigurationRecorder"
 
 // StartConfigurationRecorderRequest generates a "aws/request.Request" representing the
 // client's request for the StartConfigurationRecorder operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See StartConfigurationRecorder for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the StartConfigurationRecorder method directly
-// instead.
+// See StartConfigurationRecorder for more information on using the StartConfigurationRecorder
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the StartConfigurationRecorderRequest method.
 //    req, resp := client.StartConfigurationRecorderRequest(params)
@@ -2468,19 +2561,18 @@ const opStopConfigurationRecorder = "StopConfigurationRecorder"
 
 // StopConfigurationRecorderRequest generates a "aws/request.Request" representing the
 // client's request for the StopConfigurationRecorder operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See StopConfigurationRecorder for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the StopConfigurationRecorder method directly
-// instead.
+// See StopConfigurationRecorder for more information on using the StopConfigurationRecorder
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the StopConfigurationRecorderRequest method.
 //    req, resp := client.StopConfigurationRecorderRequest(params)
@@ -2797,8 +2889,9 @@ func (s *ComplianceSummaryByResourceType) SetResourceType(v string) *ComplianceS
 	return s
 }
 
-// A list that contains the status of the delivery of either the snapshot or
-// the configuration history to the specified Amazon S3 bucket.
+// Provides status of the delivery of the snapshot or the configuration history
+// to the specified Amazon S3 bucket. Also provides the status of notifications
+// about the Amazon S3 delivery to the specified Amazon SNS topic.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/ConfigExportDeliveryInfo
 type ConfigExportDeliveryInfo struct {
 	_ struct{} `type:"structure"`
@@ -5232,6 +5325,117 @@ func (s *GetComplianceSummaryByResourceTypeOutput) SetComplianceSummariesByResou
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/GetDiscoveredResourceCountsRequest
+type GetDiscoveredResourceCountsInput struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of ResourceCount objects returned on each page. The default
+	// is 100. You cannot specify a limit greater than 100. If you specify 0, AWS
+	// Config uses the default.
+	Limit *int64 `locationName:"limit" type:"integer"`
+
+	// The nextToken string returned on a previous page that you use to get the
+	// next page of results in a paginated response.
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// The comma-separated list that specifies the resource types that you want
+	// the AWS Config to return. For example, ("AWS::EC2::Instance", "AWS::IAM::User").
+	//
+	// If a value for resourceTypes is not specified, AWS Config returns all resource
+	// types that AWS Config is recording in the region for your account.
+	//
+	// If the configuration recorder is turned off, AWS Config returns an empty
+	// list of ResourceCount objects. If the configuration recorder is not recording
+	// a specific resource type (for example, S3 buckets), that resource type is
+	// not returned in the list of ResourceCount objects.
+	ResourceTypes []*string `locationName:"resourceTypes" type:"list"`
+}
+
+// String returns the string representation
+func (s GetDiscoveredResourceCountsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetDiscoveredResourceCountsInput) GoString() string {
+	return s.String()
+}
+
+// SetLimit sets the Limit field's value.
+func (s *GetDiscoveredResourceCountsInput) SetLimit(v int64) *GetDiscoveredResourceCountsInput {
+	s.Limit = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetDiscoveredResourceCountsInput) SetNextToken(v string) *GetDiscoveredResourceCountsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetResourceTypes sets the ResourceTypes field's value.
+func (s *GetDiscoveredResourceCountsInput) SetResourceTypes(v []*string) *GetDiscoveredResourceCountsInput {
+	s.ResourceTypes = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/GetDiscoveredResourceCountsResponse
+type GetDiscoveredResourceCountsOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The string that you use in a subsequent request to get the next page of results
+	// in a paginated response.
+	NextToken *string `locationName:"nextToken" type:"string"`
+
+	// The list of ResourceCount objects. Each object is listed in descending order
+	// by the number of resources.
+	ResourceCounts []*ResourceCount `locationName:"resourceCounts" type:"list"`
+
+	// The total number of resources that AWS Config is recording in the region
+	// for your account. If you specify resource types in the request, AWS Config
+	// returns only the total number of resources for those resource types.
+	//
+	// Example
+	//
+	// AWS Config is recording three resource types in the US East (Ohio) Region
+	// for your account: 25 EC2 instances, 20 IAM users, and 15 S3 buckets, for
+	// a total of 60 resources.
+	//
+	// You make a call to the GetDiscoveredResourceCounts action and specify the
+	// resource type, "AWS::EC2::Instances" in the request.
+	//
+	// AWS Config returns 25 for totalDiscoveredResources.
+	TotalDiscoveredResources *int64 `locationName:"totalDiscoveredResources" type:"long"`
+}
+
+// String returns the string representation
+func (s GetDiscoveredResourceCountsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetDiscoveredResourceCountsOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *GetDiscoveredResourceCountsOutput) SetNextToken(v string) *GetDiscoveredResourceCountsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetResourceCounts sets the ResourceCounts field's value.
+func (s *GetDiscoveredResourceCountsOutput) SetResourceCounts(v []*ResourceCount) *GetDiscoveredResourceCountsOutput {
+	s.ResourceCounts = v
+	return s
+}
+
+// SetTotalDiscoveredResources sets the TotalDiscoveredResources field's value.
+func (s *GetDiscoveredResourceCountsOutput) SetTotalDiscoveredResources(v int64) *GetDiscoveredResourceCountsOutput {
+	s.TotalDiscoveredResources = &v
+	return s
+}
+
 // The input for the GetResourceConfigHistory action.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/GetResourceConfigHistoryRequest
 type GetResourceConfigHistoryInput struct {
@@ -5935,6 +6139,40 @@ func (s *Relationship) SetResourceType(v string) *Relationship {
 	return s
 }
 
+// An object that contains the resource type and the number of resources.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/ResourceCount
+type ResourceCount struct {
+	_ struct{} `type:"structure"`
+
+	// The number of resources.
+	Count *int64 `locationName:"count" type:"long"`
+
+	// The resource type, for example "AWS::EC2::Instance".
+	ResourceType *string `locationName:"resourceType" type:"string" enum:"ResourceType"`
+}
+
+// String returns the string representation
+func (s ResourceCount) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ResourceCount) GoString() string {
+	return s.String()
+}
+
+// SetCount sets the Count field's value.
+func (s *ResourceCount) SetCount(v int64) *ResourceCount {
+	s.Count = &v
+	return s
+}
+
+// SetResourceType sets the ResourceType field's value.
+func (s *ResourceCount) SetResourceType(v string) *ResourceCount {
+	s.ResourceType = &v
+	return s
+}
+
 // The details that identify a resource that is discovered by AWS Config, including
 // the resource type, ID, and (if available) the custom resource name.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/config-2014-11-12/ResourceIdentifier
@@ -6008,8 +6246,8 @@ type Scope struct {
 	// a resource ID for ComplianceResourceId.
 	ComplianceResourceTypes []*string `type:"list"`
 
-	// The tag key that is applied to only those AWS resources that you want you
-	// want to trigger an evaluation for the rule.
+	// The tag key that is applied to only those AWS resources that you want to
+	// trigger an evaluation for the rule.
 	TagKey *string `min:"1" type:"string"`
 
 	// The tag value applied to only those AWS resources that you want to trigger
@@ -6091,7 +6329,7 @@ type Source struct {
 	// AWS Managed Config Rules (http://docs.aws.amazon.com/config/latest/developerguide/evaluate-config_use-managed-rules.html).
 	//
 	// For custom rules, the identifier is the Amazon Resource Name (ARN) of the
-	// rule's AWS Lambda function, such as arn:aws:lambda:us-east-1:123456789012:function:custom_rule_name.
+	// rule's AWS Lambda function, such as arn:aws:lambda:us-east-2:123456789012:function:custom_rule_name.
 	//
 	// SourceIdentifier is a required field
 	SourceIdentifier *string `min:"1" type:"string" required:"true"`
@@ -6608,4 +6846,22 @@ const (
 
 	// ResourceTypeAwsCloudWatchAlarm is a ResourceType enum value
 	ResourceTypeAwsCloudWatchAlarm = "AWS::CloudWatch::Alarm"
+
+	// ResourceTypeAwsCloudFormationStack is a ResourceType enum value
+	ResourceTypeAwsCloudFormationStack = "AWS::CloudFormation::Stack"
+
+	// ResourceTypeAwsDynamoDbTable is a ResourceType enum value
+	ResourceTypeAwsDynamoDbTable = "AWS::DynamoDB::Table"
+
+	// ResourceTypeAwsAutoScalingAutoScalingGroup is a ResourceType enum value
+	ResourceTypeAwsAutoScalingAutoScalingGroup = "AWS::AutoScaling::AutoScalingGroup"
+
+	// ResourceTypeAwsAutoScalingLaunchConfiguration is a ResourceType enum value
+	ResourceTypeAwsAutoScalingLaunchConfiguration = "AWS::AutoScaling::LaunchConfiguration"
+
+	// ResourceTypeAwsAutoScalingScalingPolicy is a ResourceType enum value
+	ResourceTypeAwsAutoScalingScalingPolicy = "AWS::AutoScaling::ScalingPolicy"
+
+	// ResourceTypeAwsAutoScalingScheduledAction is a ResourceType enum value
+	ResourceTypeAwsAutoScalingScheduledAction = "AWS::AutoScaling::ScheduledAction"
 )

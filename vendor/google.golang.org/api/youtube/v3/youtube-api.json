@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/f81k8b4sv9uLeywfoj2KpL2xcPg\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/AIWw-yWxHTNchYNbx8LfngbqcZ8\"",
  "discoveryVersion": "v1",
  "id": "youtube:v3",
  "name": "youtube",
  "canonicalName": "YouTube",
  "version": "v3",
- "revision": "20170130",
+ "revision": "20170918",
  "title": "YouTube Data API",
  "description": "Supports core YouTube features, such as uploading videos, creating and managing playlists, searching for content, and much more.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/youtube/v3/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "youtube/v3/",
- "batchPath": "batch",
+ "batchPath": "batch/youtube/v3",
  "parameters": {
   "alt": {
    "type": "string",
@@ -1771,7 +1771,7 @@
   "ContentRating": {
    "id": "ContentRating",
    "type": "object",
-   "description": "Ratings schemes. The country-specific ratings are mostly for movies and shows. NEXT_ID: 69",
+   "description": "Ratings schemes. The country-specific ratings are mostly for movies and shows. NEXT_ID: 71",
    "properties": {
     "acbRating": {
      "type": "string",
@@ -2807,6 +2807,24 @@
       ""
      ]
     },
+    "menaMpaaRating": {
+     "type": "string",
+     "description": "The rating system for MENA countries, a clone of MPAA. It is needed to",
+     "enum": [
+      "menaMpaaG",
+      "menaMpaaPg",
+      "menaMpaaPg13",
+      "menaMpaaR",
+      "menaMpaaUnrated"
+     ],
+     "enumDescriptions": [
+      "",
+      "",
+      "",
+      "",
+      ""
+     ]
+    },
     "mibacRating": {
      "type": "string",
      "description": "The video's rating from the Ministero dei Beni e delle Attività Culturali e del Turismo (Italy).",
@@ -2891,6 +2909,18 @@
       "",
       "",
       "",
+      "",
+      ""
+     ]
+    },
+    "mpaatRating": {
+     "type": "string",
+     "description": "The rating system for trailer, DVD, and Ad in the US. See http://movielabs.com/md/ratings/v2.3/html/US_MPAAT_Ratings.html.",
+     "enum": [
+      "mpaatGb",
+      "mpaatRb"
+     ],
+     "enumDescriptions": [
       "",
       ""
      ]
@@ -3879,9 +3909,6 @@
     "status": {
      "$ref": "LiveBroadcastStatus",
      "description": "The status object contains information about the event's status."
-    },
-    "topicDetails": {
-     "$ref": "LiveBroadcastTopicDetails"
     }
    }
   },
@@ -3947,6 +3974,24 @@
      "type": "boolean",
      "description": "Indicates whether this broadcast has low latency enabled."
     },
+    "latencyPreference": {
+     "type": "string",
+     "description": "If both this and enable_low_latency are set, they must match. LATENCY_NORMAL should match enable_low_latency=false LATENCY_LOW should match enable_low_latency=true LATENCY_ULTRA_LOW should have enable_low_latency omitted.",
+     "enum": [
+      "low",
+      "normal",
+      "ultraLow"
+     ],
+     "enumDescriptions": [
+      "",
+      "",
+      ""
+     ]
+    },
+    "mesh": {
+     "type": "string",
+     "format": "byte"
+    },
     "monitorStream": {
      "$ref": "MonitorStreamInfo",
      "description": "The monitorStream object contains information about the monitor stream, which the broadcaster can use to review the event content before the broadcast stream is shown publicly."
@@ -3956,9 +4001,11 @@
      "description": "The projection format of this broadcast. This defaults to rectangular.",
      "enum": [
       "360",
+      "mesh",
       "rectangular"
      ],
      "enumDescriptions": [
+      "",
       "",
       ""
      ]
@@ -4191,56 +4238,6 @@
       "",
       ""
      ]
-    }
-   }
-  },
-  "LiveBroadcastTopic": {
-   "id": "LiveBroadcastTopic",
-   "type": "object",
-   "properties": {
-    "snippet": {
-     "$ref": "LiveBroadcastTopicSnippet",
-     "description": "Information about the topic matched."
-    },
-    "type": {
-     "type": "string",
-     "description": "The type of the topic.",
-     "enum": [
-      "videoGame"
-     ],
-     "enumDescriptions": [
-      ""
-     ]
-    },
-    "unmatched": {
-     "type": "boolean",
-     "description": "If this flag is set it means that we have not been able to match the topic title and type provided to a known entity."
-    }
-   }
-  },
-  "LiveBroadcastTopicDetails": {
-   "id": "LiveBroadcastTopicDetails",
-   "type": "object",
-   "properties": {
-    "topics": {
-     "type": "array",
-     "items": {
-      "$ref": "LiveBroadcastTopic"
-     }
-    }
-   }
-  },
-  "LiveBroadcastTopicSnippet": {
-   "id": "LiveBroadcastTopicSnippet",
-   "type": "object",
-   "properties": {
-    "name": {
-     "type": "string",
-     "description": "The name of the topic."
-    },
-    "releaseDate": {
-     "type": "string",
-     "description": "The date at which the topic was released. Filled for types: videoGame"
     }
    }
   },
@@ -7307,6 +7304,7 @@
      "items": {
       "type": "string",
       "enum": [
+       "hdrVideo",
        "nonStreamableMov",
        "sendBestQualityVideo",
        "spatialAudio",
@@ -7314,6 +7312,7 @@
        "vrVideo"
       ],
       "enumDescriptions": [
+       "",
        "",
        "",
        "",
@@ -7331,14 +7330,20 @@
        "hasEditlist",
        "inconsistentResolution",
        "problematicAudioCodec",
+       "problematicHdrLookupTable",
        "problematicVideoCodec",
        "unknownAudioCodec",
        "unknownContainer",
        "unknownVideoCodec",
+       "unsupportedHdrColorMetadata",
+       "unsupportedHdrPixelFormat",
        "unsupportedSphericalProjectionType",
        "unsupportedVrStereoMode"
       ],
       "enumDescriptions": [
+       "",
+       "",
+       "",
        "",
        "",
        "",
@@ -7796,6 +7801,11 @@
      "httpMethod": "POST",
      "description": "Uploads a channel banner image to YouTube. This method represents the first two steps in a three-step process to update the banner image for a channel:\n\n- Call the channelBanners.insert method to upload the binary image data to YouTube. The image must have a 16:9 aspect ratio and be at least 2120x1192 pixels.\n- Extract the url property's value from the response that the API returns for step 1.\n- Call the channels.update method to update the channel's branding settings. Set the brandingSettings.image.bannerExternalUrl property's value to the URL obtained in step 2.",
      "parameters": {
+      "channelId": {
+       "type": "string",
+       "description": "The channelId parameter identifies the YouTube channel to which the banner is uploaded. The channelId parameter was introduced as a required parameter in May 2017. As this was a backward-incompatible change, channelBanners.insert requests that do not specify this parameter will not return an error until six months have passed from the time that the parameter was introduced. Please see the API Terms of Service for the official policy regarding backward incompatible changes and the API revision history for the exact date that the parameter was introduced.",
+       "location": "query"
+      },
       "onBehalfOfContentOwner": {
        "type": "string",
        "description": "Note: This parameter is intended exclusively for YouTube content partners.\n\nThe onBehalfOfContentOwner parameter indicates that the request's authorization credentials identify a YouTube CMS user who is acting on behalf of the content owner specified in the parameter value. This parameter is intended for YouTube content partners that own and manage many different YouTube channels. It allows content owners to authenticate once and get access to all their video and channel data, without having to provide authentication credentials for each individual channel. The CMS account that the user authenticates with must be linked to the specified YouTube content owner.",
@@ -10291,7 +10301,7 @@
        "description": "The maxResults parameter specifies the maximum number of items that should be returned in the result set.",
        "default": "5",
        "format": "uint32",
-       "minimum": "0",
+       "minimum": "1",
        "maximum": "50",
        "location": "query"
       },

@@ -21,7 +21,7 @@
  "basePath": "/civicinfo/v2/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "civicinfo/v2/",
- "batchPath": "batch",
+ "batchPath": "batch/civicinfo/v2",
  "parameters": {
   "alt": {
    "type": "string",

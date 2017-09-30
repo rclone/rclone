@@ -11,7 +11,7 @@ import (
 
 // WaitUntilAppExists uses the AWS OpsWorks API operation
 // DescribeApps to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *OpsWorks) WaitUntilAppExists(input *DescribeAppsInput) error {
 	return c.WaitUntilAppExistsWithContext(aws.BackgroundContext(), input)
@@ -62,7 +62,7 @@ func (c *OpsWorks) WaitUntilAppExistsWithContext(ctx aws.Context, input *Describ
 
 // WaitUntilDeploymentSuccessful uses the AWS OpsWorks API operation
 // DescribeDeployments to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *OpsWorks) WaitUntilDeploymentSuccessful(input *DescribeDeploymentsInput) error {
 	return c.WaitUntilDeploymentSuccessfulWithContext(aws.BackgroundContext(), input)
@@ -113,7 +113,7 @@ func (c *OpsWorks) WaitUntilDeploymentSuccessfulWithContext(ctx aws.Context, inp
 
 // WaitUntilInstanceOnline uses the AWS OpsWorks API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *OpsWorks) WaitUntilInstanceOnline(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceOnlineWithContext(aws.BackgroundContext(), input)
@@ -199,7 +199,7 @@ func (c *OpsWorks) WaitUntilInstanceOnlineWithContext(ctx aws.Context, input *De
 
 // WaitUntilInstanceRegistered uses the AWS OpsWorks API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *OpsWorks) WaitUntilInstanceRegistered(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceRegisteredWithContext(aws.BackgroundContext(), input)
@@ -280,7 +280,7 @@ func (c *OpsWorks) WaitUntilInstanceRegisteredWithContext(ctx aws.Context, input
 
 // WaitUntilInstanceStopped uses the AWS OpsWorks API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *OpsWorks) WaitUntilInstanceStopped(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceStoppedWithContext(aws.BackgroundContext(), input)
@@ -371,7 +371,7 @@ func (c *OpsWorks) WaitUntilInstanceStoppedWithContext(ctx aws.Context, input *D
 
 // WaitUntilInstanceTerminated uses the AWS OpsWorks API operation
 // DescribeInstances to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *OpsWorks) WaitUntilInstanceTerminated(input *DescribeInstancesInput) error {
 	return c.WaitUntilInstanceTerminatedWithContext(aws.BackgroundContext(), input)

@@ -125,6 +125,22 @@ func AssertXML(t *testing.T, expect, actual string, container interface{}, msgAn
 	return equal(t, expectVal, actualVal, msgAndArgs...)
 }
 
+// DidPanic returns if the function paniced and returns true if the function paniced.
+func DidPanic(fn func()) (bool, interface{}) {
+	var paniced bool
+	var msg interface{}
+	func() {
+		defer func() {
+			if msg = recover(); msg != nil {
+				paniced = true
+			}
+		}()
+		fn()
+	}()
+
+	return paniced, msg
+}
+
 // objectsAreEqual determines if two objects are considered equal.
 //
 // This function does no assertion of any kind.

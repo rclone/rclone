@@ -33,8 +33,7 @@ func insertXGoog(ctx context.Context, val []string) context.Context {
 	return metadata.NewOutgoingContext(ctx, md)
 }
 
-// DefaultAuthScopes reports the authentication scopes required
-// by this package.
+// DefaultAuthScopes reports the default set of authentication scopes to use with this package.
 func DefaultAuthScopes() []string {
 	return []string{}
 }

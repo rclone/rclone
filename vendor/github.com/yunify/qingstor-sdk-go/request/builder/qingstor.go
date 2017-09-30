@@ -75,20 +75,20 @@ func (qb *QingStorBuilder) BuildHTTPRequest(o *data.Operation, i *reflect.Value)
 		return nil, err
 	}
 
-	logger.Info(fmt.Sprintf(
+	logger.Infof(fmt.Sprintf(
 		"Built QingStor request: [%d] %s",
 		convert.StringToUnixTimestamp(httpRequest.Header.Get("Date"), convert.RFC822),
 		httpRequest.URL.String()),
 	)
 
-	logger.Info(fmt.Sprintf(
+	logger.Infof(fmt.Sprintf(
 		"QingStor request headers: [%d] %s",
 		convert.StringToUnixTimestamp(httpRequest.Header.Get("Date"), convert.RFC822),
 		fmt.Sprint(httpRequest.Header)),
 	)
 
 	if qb.baseBuilder.parsedBodyString != "" {
-		logger.Info(fmt.Sprintf(
+		logger.Infof(fmt.Sprintf(
 			"QingStor request body string: [%d] %s",
 			convert.StringToUnixTimestamp(httpRequest.Header.Get("Date"), convert.RFC822),
 			qb.baseBuilder.parsedBodyString),
@@ -120,9 +120,9 @@ func (qb *QingStorBuilder) parseURL() error {
 		return err
 	}
 
-	if qb.baseBuilder.parsedParams != nil {
+	if qb.baseBuilder.parsedQuery != nil {
 		queryValue := requestURL.Query()
-		for key, value := range *qb.baseBuilder.parsedParams {
+		for key, value := range *qb.baseBuilder.parsedQuery {
 			queryValue.Set(key, value)
 		}
 		requestURL.RawQuery = queryValue.Encode()

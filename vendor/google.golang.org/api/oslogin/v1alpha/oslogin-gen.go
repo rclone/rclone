@@ -1,6 +1,6 @@
 // Package oslogin provides access to the Google Cloud OS Login API.
 //
-// See https://developers.google.com/apis-explorer/#p/oslogin/v1alpha/
+// See https://cloud.google.com/compute/docs/oslogin/rest/
 //
 // Usage example:
 //
@@ -52,6 +52,12 @@ const (
 
 	// View your data across Google Cloud Platform services
 	CloudPlatformReadOnlyScope = "https://www.googleapis.com/auth/cloud-platform.read-only"
+
+	// View and manage your Google Compute Engine resources
+	ComputeScope = "https://www.googleapis.com/auth/compute"
+
+	// View your Google Compute Engine resources
+	ComputeReadonlyScope = "https://www.googleapis.com/auth/compute.readonly"
 )
 
 func New(client *http.Client) (*Service, error) {
@@ -202,7 +208,7 @@ type PosixAccount struct {
 	Gecos string `json:"gecos,omitempty"`
 
 	// Gid: The default group ID.
-	Gid int64 `json:"gid,omitempty"`
+	Gid int64 `json:"gid,omitempty,string"`
 
 	// HomeDirectory: The path to the home directory for this account.
 	HomeDirectory string `json:"homeDirectory,omitempty"`
@@ -219,7 +225,7 @@ type PosixAccount struct {
 	SystemId string `json:"systemId,omitempty"`
 
 	// Uid: The user ID.
-	Uid int64 `json:"uid,omitempty"`
+	Uid int64 `json:"uid,omitempty,string"`
 
 	// Username: The username of the POSIX account.
 	Username string `json:"username,omitempty"`
@@ -253,8 +259,8 @@ type SshPublicKey struct {
 	// ExpirationTimeUsec: An expiration time in microseconds since epoch.
 	ExpirationTimeUsec int64 `json:"expirationTimeUsec,omitempty,string"`
 
-	// Fingerprint: [Output Only] The SHA-256 fingerprint of the SSH public
-	// key.
+	// Fingerprint: The SHA-256 fingerprint of the SSH public key.
+	// Output only.
 	Fingerprint string `json:"fingerprint,omitempty"`
 
 	// Key: Public key text in SSH format, defined by
@@ -427,7 +433,9 @@ func (c *UsersGetLoginProfileCall) Do(opts ...googleapi.CallOption) (*LoginProfi
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",
-	//     "https://www.googleapis.com/auth/cloud-platform.read-only"
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
+	//     "https://www.googleapis.com/auth/compute",
+	//     "https://www.googleapis.com/auth/compute.readonly"
 	//   ]
 	// }
 
@@ -566,7 +574,8 @@ func (c *UsersImportSshPublicKeyCall) Do(opts ...googleapi.CallOption) (*ImportS
 	//     "$ref": "ImportSshPublicKeyResponse"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute"
 	//   ]
 	// }
 
@@ -691,7 +700,8 @@ func (c *UsersSshPublicKeysDeleteCall) Do(opts ...googleapi.CallOption) (*Empty,
 	//     "$ref": "Empty"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute"
 	//   ]
 	// }
 
@@ -830,7 +840,8 @@ func (c *UsersSshPublicKeysGetCall) Do(opts ...googleapi.CallOption) (*SshPublic
 	//     "$ref": "SshPublicKey"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute"
 	//   ]
 	// }
 
@@ -980,7 +991,8 @@ func (c *UsersSshPublicKeysPatchCall) Do(opts ...googleapi.CallOption) (*SshPubl
 	//     "$ref": "SshPublicKey"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/cloud-platform"
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/compute"
 	//   ]
 	// }
 

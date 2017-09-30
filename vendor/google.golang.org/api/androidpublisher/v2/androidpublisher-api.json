@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/fkMKFYhAB3V0ia83SVxm8xZB5LU\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/QjVvqrUMRW1tTVdJHVqdnKd9gLQ\"",
  "discoveryVersion": "v1",
  "id": "androidpublisher:v2",
  "name": "androidpublisher",
  "canonicalName": "Android Publisher",
  "version": "v2",
- "revision": "20170504",
+ "revision": "20170913",
  "title": "Google Play Developer API",
  "description": "Lets Android application developers access their Google Play accounts.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/androidpublisher/v2/applications/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "androidpublisher/v2/applications/",
- "batchPath": "batch",
+ "batchPath": "batch/androidpublisher/v2",
  "parameters": {
   "alt": {
    "type": "string",
@@ -100,6 +100,10 @@
     "sha1": {
      "type": "string",
      "description": "A sha1 hash of the APK payload, encoded as a hex string and matching the output of the sha1sum command."
+    },
+    "sha256": {
+     "type": "string",
+     "description": "A sha256 hash of the APK payload, encoded as a hex string and matching the output of the sha256sum command."
     }
    }
   },
@@ -830,6 +834,10 @@
      "description": "This kind represents an inappPurchase object in the androidpublisher service.",
      "default": "androidpublisher#productPurchase"
     },
+    "orderId": {
+     "type": "string",
+     "description": "The order id associated with the purchase of the inapp product."
+    },
     "purchaseState": {
      "type": "integer",
      "description": "The purchase state of the order. Possible values are:  \n- Purchased \n- Cancelled",
@@ -977,7 +985,7 @@
     },
     "cancelReason": {
      "type": "integer",
-     "description": "The reason why a subscription was cancelled or is not auto-renewing. Possible values are:  \n- User cancelled the subscription \n- Subscription was cancelled by the system, for example because of a billing problem",
+     "description": "The reason why a subscription was cancelled or is not auto-renewing. Possible values are:  \n- User cancelled the subscription \n- Subscription was cancelled by the system, for example because of a billing problem \n- Subscription was replaced with a new subscription",
      "format": "int32"
     },
     "countryCode": {
@@ -998,9 +1006,13 @@
      "description": "This kind represents a subscriptionPurchase object in the androidpublisher service.",
      "default": "androidpublisher#subscriptionPurchase"
     },
+    "orderId": {
+     "type": "string",
+     "description": "The order id of the latest recurring order associated with the purchase of the subscription."
+    },
     "paymentState": {
      "type": "integer",
-     "description": "The payment state of the subscription. Possible values are:  \n- Payment pending \n- Payment received",
+     "description": "The payment state of the subscription. Possible values are:  \n- Payment pending \n- Payment received \n- Free trial",
      "format": "int32"
     },
     "priceAmountMicros": {
@@ -3491,7 +3503,7 @@
        "parameters": {
         "endTime": {
          "type": "string",
-         "description": "The time, in milliseconds since the Epoch, of the newest voided in-app product purchase that you want to see in the response. The value of this parameter cannot be greater than the current time and is ignored if a pagination token is set. Default value is current time.",
+         "description": "The time, in milliseconds since the Epoch, of the newest voided in-app product purchase that you want to see in the response. The value of this parameter cannot be greater than the current time and is ignored if a pagination token is set. Default value is current time. Note: This filter is applied on the time at which the record is seen as voided by our systems and not the actual voided time returned in the response.",
          "format": "int64",
          "location": "query"
         },
@@ -3513,7 +3525,7 @@
         },
         "startTime": {
          "type": "string",
-         "description": "The time, in milliseconds since the Epoch, of the oldest voided in-app product purchase that you want to see in the response. The value of this parameter cannot be older than 30 days and is ignored if a pagination token is set. Default value is current time minus 30 days.",
+         "description": "The time, in milliseconds since the Epoch, of the oldest voided in-app product purchase that you want to see in the response. The value of this parameter cannot be older than 30 days and is ignored if a pagination token is set. Default value is current time minus 30 days. Note: This filter is applied on the time at which the record is seen as voided by our systems and not the actual voided time returned in the response.",
          "format": "int64",
          "location": "query"
         },

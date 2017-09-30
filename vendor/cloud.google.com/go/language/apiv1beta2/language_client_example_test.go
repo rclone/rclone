@@ -104,6 +104,24 @@ func ExampleClient_AnalyzeSyntax() {
 	_ = resp
 }
 
+func ExampleClient_ClassifyText() {
+	ctx := context.Background()
+	c, err := language.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &languagepb.ClassifyTextRequest{
+	// TODO: Fill request struct fields.
+	}
+	resp, err := c.ClassifyText(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
 func ExampleClient_AnnotateText() {
 	ctx := context.Background()
 	c, err := language.NewClient(ctx)

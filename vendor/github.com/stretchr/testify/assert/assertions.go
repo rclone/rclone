@@ -449,9 +449,7 @@ func isEmpty(object interface{}) bool {
 	objValue := reflect.ValueOf(object)
 
 	switch objValue.Kind() {
-	case reflect.Map:
-		fallthrough
-	case reflect.Slice, reflect.Chan:
+	case reflect.Array, reflect.Chan, reflect.Map, reflect.Slice, reflect.String:
 		{
 			return (objValue.Len() == 0)
 		}

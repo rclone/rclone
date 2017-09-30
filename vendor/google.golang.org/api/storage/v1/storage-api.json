@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/-XlPsGE1eaKzlxWDtbwmuSaBoqc\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/aAU6-GJtzQTwC546w_DsCPIRIUA\"",
  "discoveryVersion": "v1",
  "id": "storage:v1",
  "name": "storage",
  "version": "v1",
- "revision": "20170607",
+ "revision": "20170915",
  "title": "Cloud Storage JSON API",
  "description": "Stores and retrieves potentially large, immutable data objects.",
  "ownerDomain": "google.com",
@@ -687,7 +687,7 @@
     },
     "contentType": {
      "type": "string",
-     "description": "Content-Type of the object data. If contentType is not specified, object downloads will be served as application/octet-stream."
+     "description": "Content-Type of the object data. If an object is stored without a Content-Type, it is served as application/octet-stream."
     },
     "crc32c": {
      "type": "string",
@@ -946,6 +946,9 @@
      "items": {
       "type": "object",
       "properties": {
+       "condition": {
+        "type": "any"
+       },
        "members": {
         "type": "array",
         "description": "A collection of identifiers for members who may assume the provided role. Recognized identifiers are as follows:  \n- allUsers — A special identifier that represents anyone on the internet; with or without a Google account.  \n- allAuthenticatedUsers — A special identifier that represents anyone who is authenticated with a Google account or a service account.  \n- user:emailid — An email address that represents a specific account. For example, user:alice@gmail.com or user:joe@example.com.  \n- serviceAccount:emailid — An email address that represents a service account. For example,  serviceAccount:my-other-app@appspot.gserviceaccount.com .  \n- group:emailid — An email address that represents a Google group. For example, group:admins@example.com.  \n- domain:domain — A Google Apps domain name that represents all the users of that domain. For example, domain:google.com or domain:example.com.  \n- projectOwner:projectid — Owners of the given project. For example, projectOwner:my-example-project  \n- projectEditor:projectid — Editors of the given project. For example, projectEditor:my-example-project  \n- projectViewer:projectid — Viewers of the given project. For example, projectViewer:my-example-project",
@@ -990,7 +993,7 @@
     },
     "resourceId": {
      "type": "string",
-     "description": "The ID of the resource to which this policy belongs. Will be of the form buckets/bucket for buckets, and buckets/bucket/objects/object for objects. A specific generation may be specified by appending #generationNumber to the end of the object name, e.g. buckets/my-bucket/objects/data.txt#17. The current generation can be denoted with #0. This field is ignored on input."
+     "description": "The ID of the resource to which this policy belongs. Will be of the form projects/_/buckets/bucket for buckets, and projects/_/buckets/bucket/objects/object for objects. A specific generation may be specified by appending #generationNumber to the end of the object name, e.g. projects/_/buckets/my-bucket/objects/data.txt#17. The current generation can be denoted with #0. This field is ignored on input."
     }
    }
   },
@@ -1471,6 +1474,11 @@
         "Omit owner, acl and defaultObjectAcl properties."
        ],
        "location": "query"
+      },
+      "userProject": {
+       "type": "string",
+       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "location": "query"
       }
      },
      "parameterOrder": [
@@ -1529,6 +1537,11 @@
         "Include all properties.",
         "Omit owner, acl and defaultObjectAcl properties."
        ],
+       "location": "query"
+      },
+      "userProject": {
+       "type": "string",
+       "description": "The project to be billed for this request, for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2176,7 +2189,7 @@
      "parameters": {
       "bucket": {
        "type": "string",
-       "description": "Name of a GCS bucket.",
+       "description": "Name of a Google Cloud Storage bucket.",
        "required": true,
        "location": "path"
       },
@@ -2535,7 +2548,7 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation matches the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -2615,13 +2628,13 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the destination object's current generation matches the given value.",
+       "description": "Makes the operation conditional on whether the destination object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
       "ifGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the destination object's current generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the destination object's current generation does not match the given value. If no live object exists, the precondition fails. Setting to 0 makes the operation succeed only if there is a live version of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -2639,13 +2652,13 @@
       },
       "ifSourceGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the source object's generation matches the given value.",
+       "description": "Makes the operation conditional on whether the source object's current generation matches the given value.",
        "format": "int64",
        "location": "query"
       },
       "ifSourceGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the source object's generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the source object's current generation does not match the given value.",
        "format": "int64",
        "location": "query"
       },
@@ -2738,13 +2751,13 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation matches the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
       "ifGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation does not match the given value. If no live object exists, the precondition fails. Setting to 0 makes the operation succeed only if there is a live version of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -2802,13 +2815,13 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's generation matches the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
       "ifGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation does not match the given value. If no live object exists, the precondition fails. Setting to 0 makes the operation succeed only if there is a live version of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -2930,13 +2943,13 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation matches the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
       "ifGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation does not match the given value. If no live object exists, the precondition fails. Setting to 0 makes the operation succeed only if there is a live version of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -3129,13 +3142,13 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation matches the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
       "ifGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation does not match the given value. If no live object exists, the precondition fails. Setting to 0 makes the operation succeed only if there is a live version of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -3258,13 +3271,13 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the destination object's current generation matches the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
       "ifGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the destination object's current generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation does not match the given value. If no live object exists, the precondition fails. Setting to 0 makes the operation succeed only if there is a live version of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -3282,13 +3295,13 @@
       },
       "ifSourceGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the source object's generation matches the given value.",
+       "description": "Makes the operation conditional on whether the source object's current generation matches the given value.",
        "format": "int64",
        "location": "query"
       },
       "ifSourceGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the source object's generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the source object's current generation does not match the given value.",
        "format": "int64",
        "location": "query"
       },
@@ -3489,13 +3502,13 @@
       },
       "ifGenerationMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation matches the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation matches the given value. Setting to 0 makes the operation succeed only if there are no live versions of the object.",
        "format": "int64",
        "location": "query"
       },
       "ifGenerationNotMatch": {
        "type": "string",
-       "description": "Makes the operation conditional on whether the object's current generation does not match the given value.",
+       "description": "Makes the operation conditional on whether the object's current generation does not match the given value. If no live object exists, the precondition fails. Setting to 0 makes the operation succeed only if there is a live version of the object.",
        "format": "int64",
        "location": "query"
       },
@@ -3662,13 +3675,18 @@
        "id": "storage.projects.serviceAccount.get",
        "path": "projects/{projectId}/serviceAccount",
        "httpMethod": "GET",
-       "description": "Get the email address of this project's GCS service account.",
+       "description": "Get the email address of this project's Google Cloud Storage service account.",
        "parameters": {
         "projectId": {
          "type": "string",
          "description": "Project ID",
          "required": true,
          "location": "path"
+        },
+        "userProject": {
+         "type": "string",
+         "description": "The project to be billed for this request, for Requester Pays buckets.",
+         "location": "query"
         }
        },
        "parameterOrder": [

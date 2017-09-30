@@ -11,7 +11,7 @@ import (
 
 // WaitUntilCacheClusterAvailable uses the Amazon ElastiCache API operation
 // DescribeCacheClusters to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ElastiCache) WaitUntilCacheClusterAvailable(input *DescribeCacheClustersInput) error {
 	return c.WaitUntilCacheClusterAvailableWithContext(aws.BackgroundContext(), input)
@@ -77,7 +77,7 @@ func (c *ElastiCache) WaitUntilCacheClusterAvailableWithContext(ctx aws.Context,
 
 // WaitUntilCacheClusterDeleted uses the Amazon ElastiCache API operation
 // DescribeCacheClusters to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ElastiCache) WaitUntilCacheClusterDeleted(input *DescribeCacheClustersInput) error {
 	return c.WaitUntilCacheClusterDeletedWithContext(aws.BackgroundContext(), input)
@@ -158,7 +158,7 @@ func (c *ElastiCache) WaitUntilCacheClusterDeletedWithContext(ctx aws.Context, i
 
 // WaitUntilReplicationGroupAvailable uses the Amazon ElastiCache API operation
 // DescribeReplicationGroups to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ElastiCache) WaitUntilReplicationGroupAvailable(input *DescribeReplicationGroupsInput) error {
 	return c.WaitUntilReplicationGroupAvailableWithContext(aws.BackgroundContext(), input)
@@ -209,7 +209,7 @@ func (c *ElastiCache) WaitUntilReplicationGroupAvailableWithContext(ctx aws.Cont
 
 // WaitUntilReplicationGroupDeleted uses the Amazon ElastiCache API operation
 // DescribeReplicationGroups to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ElastiCache) WaitUntilReplicationGroupDeleted(input *DescribeReplicationGroupsInput) error {
 	return c.WaitUntilReplicationGroupDeletedWithContext(aws.BackgroundContext(), input)

@@ -21,7 +21,7 @@ package fuse
 
 // Use `set CPATH=C:\Program Files (x86)\WinFsp\inc\fuse` on Windows.
 // The flag `I/usr/local/include/winfsp` only works on xgo and docker.
-#cgo windows CFLAGS: -D_WIN32_WINNT=0x0501 -DFUSE_USE_VERSION=28 -I/usr/local/include/winfsp
+#cgo windows CFLAGS: -DFUSE_USE_VERSION=28 -I/usr/local/include/winfsp
 
 #if !(defined(__APPLE__) || defined(__linux__) || defined(_WIN32))
 #error platform not supported
@@ -100,20 +100,9 @@ static NTSTATUS FspLoad(PVOID *PModule)
 #endif
 #define FSP_DLLPATH                     "bin\\" FSP_DLLNAME
 
-	WINADVAPI
-	LSTATUS
-	APIENTRY
-	RegGetValueW(
-		HKEY hkey,
-		LPCWSTR lpSubKey,
-		LPCWSTR lpValue,
-		DWORD dwFlags,
-		LPDWORD pdwType,
-		PVOID pvData,
-		LPDWORD pcbData);
-
 	WCHAR PathBuf[MAX_PATH];
 	DWORD Size;
+	DWORD RegType;
 	HKEY RegKey;
 	LONG Result;
 	HMODULE Module;
@@ -129,14 +118,20 @@ static NTSTATUS FspLoad(PVOID *PModule)
 		if (ERROR_SUCCESS == Result)
 		{
 			Size = sizeof PathBuf - sizeof L"" FSP_DLLPATH + sizeof(WCHAR);
-			Result = RegGetValueW(RegKey, 0, L"InstallDir",
-				RRF_RT_REG_SZ, 0, PathBuf, &Size);
+			Result = RegQueryValueExW(RegKey, L"InstallDir", 0,
+				&RegType, (LPBYTE)PathBuf, &Size);
 			RegCloseKey(RegKey);
+			if (ERROR_SUCCESS == Result && REG_SZ != RegType)
+				Result = ERROR_FILE_NOT_FOUND;
 		}
 		if (ERROR_SUCCESS != Result)
 			return 0xC0000034;//STATUS_OBJECT_NAME_NOT_FOUND
 
-		RtlCopyMemory(PathBuf + (Size / sizeof(WCHAR) - 1), L"" FSP_DLLPATH, sizeof L"" FSP_DLLPATH);
+		if (0 < Size && L'\0' == PathBuf[Size / sizeof(WCHAR) - 1])
+			Size -= sizeof(WCHAR);
+
+		RtlCopyMemory(PathBuf + Size / sizeof(WCHAR),
+			L"" FSP_DLLPATH, sizeof L"" FSP_DLLPATH);
 		Module = LoadLibraryW(PathBuf);
 		if (0 == Module)
 			return 0xC0000135;//STATUS_DLL_NOT_FOUND

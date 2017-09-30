@@ -20,7 +20,7 @@
  "basePath": "/prediction/v1.2/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "prediction/v1.2/",
- "batchPath": "batch",
+ "batchPath": "batch/prediction/v1.2",
  "parameters": {
   "alt": {
    "type": "string",

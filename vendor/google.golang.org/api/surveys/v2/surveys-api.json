@@ -20,7 +20,7 @@
  "basePath": "/surveys/v2/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "surveys/v2/",
- "batchPath": "batch",
+ "batchPath": "batch/surveys/v2",
  "parameters": {
   "alt": {
    "type": "string",

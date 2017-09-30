@@ -106,14 +106,24 @@ func (c *Client) CreateTopic(ctx context.Context, id string) (*Topic, error) {
 	return t, err
 }
 
-// Topic creates a reference to a topic.
+// Topic creates a reference to a topic in the client's project.
 //
 // If a Topic's Publish method is called, it has background goroutines
 // associated with it. Clean them up by calling Topic.Stop.
 //
 // Avoid creating many Topic instances if you use them to publish.
 func (c *Client) Topic(id string) *Topic {
-	return newTopic(c.s, fmt.Sprintf("projects/%s/topics/%s", c.projectID, id))
+	return c.TopicInProject(id, c.projectID)
+}
+
+// TopicInProject creates a reference to a topic in the given project.
+//
+// If a Topic's Publish method is called, it has background goroutines
+// associated with it. Clean them up by calling Topic.Stop.
+//
+// Avoid creating many Topic instances if you use them to publish.
+func (c *Client) TopicInProject(id, projectID string) *Topic {
+	return newTopic(c.s, fmt.Sprintf("projects/%s/topics/%s", projectID, id))
 }
 
 func newTopic(s service, name string) *Topic {

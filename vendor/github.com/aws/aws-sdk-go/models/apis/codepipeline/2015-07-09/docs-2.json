@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<fullname>AWS CodePipeline</fullname> <p> <b>Overview</b> </p> <p>This is the AWS CodePipeline API Reference. This guide provides descriptions of the actions and data types for AWS CodePipeline. Some functionality for your pipeline is only configurable through the API. For additional information, see the <a href=\"http://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html\">AWS CodePipeline User Guide</a>.</p> <p>You can use the AWS CodePipeline API to work with pipelines, stages, actions, gates, and transitions, as described below.</p> <p> <i>Pipelines</i> are models of automated release processes. Each pipeline is uniquely named, and consists of actions, gates, and stages. </p> <p>You can work with pipelines by calling:</p> <ul> <li> <p> <a>CreatePipeline</a>, which creates a uniquely-named pipeline.</p> </li> <li> <p> <a>DeletePipeline</a>, which deletes the specified pipeline.</p> </li> <li> <p> <a>GetPipeline</a>, which returns information about a pipeline structure.</p> </li> <li> <p> <a>GetPipelineExecution</a>, which returns information about a specific execution of a pipeline.</p> </li> <li> <p> <a>GetPipelineState</a>, which returns information about the current state of the stages and actions of a pipeline.</p> </li> <li> <p> <a>ListPipelines</a>, which gets a summary of all of the pipelines associated with your account.</p> </li> <li> <p> <a>StartPipelineExecution</a>, which runs the the most recent revision of an artifact through the pipeline.</p> </li> <li> <p> <a>UpdatePipeline</a>, which updates a pipeline with edits or changes to the structure of the pipeline.</p> </li> </ul> <p>Pipelines include <i>stages</i>, which are logical groupings of gates and actions. Each stage contains one or more actions that must complete before the next stage begins. A stage will result in success or failure. If a stage fails, then the pipeline stops at that stage and will remain stopped until either a new version of an artifact appears in the source location, or a user takes action to re-run the most recent artifact through the pipeline. You can call <a>GetPipelineState</a>, which displays the status of a pipeline, including the status of stages in the pipeline, or <a>GetPipeline</a>, which returns the entire structure of the pipeline, including the stages of that pipeline. For more information about the structure of stages and actions, also refer to the <a href=\"http://docs.aws.amazon.com/codepipeline/latest/userguide/pipeline-structure.html\">AWS CodePipeline Pipeline Structure Reference</a>.</p> <p>Pipeline stages include <i>actions</i>, which are categorized into categories such as source or build actions performed within a stage of a pipeline. For example, you can use a source action to import artifacts into a pipeline from a source such as Amazon S3. Like stages, you do not work with actions directly in most cases, but you do define and interact with actions when working with pipeline operations such as <a>CreatePipeline</a> and <a>GetPipelineState</a>. </p> <p>Pipelines also include <i>transitions</i>, which allow the transition of artifacts from one stage to the next in a pipeline after the actions in one stage complete.</p> <p>You can work with transitions by calling:</p> <ul> <li> <p> <a>DisableStageTransition</a>, which prevents artifacts from transitioning to the next stage in a pipeline.</p> </li> <li> <p> <a>EnableStageTransition</a>, which enables transition of artifacts between stages in a pipeline. </p> </li> </ul> <p> <b>Using the API to integrate with AWS CodePipeline</b> </p> <p>For third-party integrators or developers who want to create their own integrations with AWS CodePipeline, the expected sequence varies from the standard API user. In order to integrate with AWS CodePipeline, developers will need to work with the following items:</p> <p> <b>Jobs</b>, which are instances of an action. For example, a job for a source action might import a revision of an artifact from a source. </p> <p>You can work with jobs by calling:</p> <ul> <li> <p> <a>AcknowledgeJob</a>, which confirms whether a job worker has received the specified job,</p> </li> <li> <p> <a>GetJobDetails</a>, which returns the details of a job,</p> </li> <li> <p> <a>PollForJobs</a>, which determines whether there are any jobs to act upon, </p> </li> <li> <p> <a>PutJobFailureResult</a>, which provides details of a job failure, and</p> </li> <li> <p> <a>PutJobSuccessResult</a>, which provides details of a job success.</p> </li> </ul> <p> <b>Third party jobs</b>, which are instances of an action created by a partner action and integrated into AWS CodePipeline. Partner actions are created by members of the AWS Partner Network.</p> <p>You can work with third party jobs by calling:</p> <ul> <li> <p> <a>AcknowledgeThirdPartyJob</a>, which confirms whether a job worker has received the specified job,</p> </li> <li> <p> <a>GetThirdPartyJobDetails</a>, which requests the details of a job for a partner action,</p> </li> <li> <p> <a>PollForThirdPartyJobs</a>, which determines whether there are any jobs to act upon, </p> </li> <li> <p> <a>PutThirdPartyJobFailureResult</a>, which provides details of a job failure, and</p> </li> <li> <p> <a>PutThirdPartyJobSuccessResult</a>, which provides details of a job success.</p> </li> </ul>",
+  "service": "<fullname>AWS CodePipeline</fullname> <p> <b>Overview</b> </p> <p>This is the AWS CodePipeline API Reference. This guide provides descriptions of the actions and data types for AWS CodePipeline. Some functionality for your pipeline is only configurable through the API. For additional information, see the <a href=\"http://docs.aws.amazon.com/codepipeline/latest/userguide/welcome.html\">AWS CodePipeline User Guide</a>.</p> <p>You can use the AWS CodePipeline API to work with pipelines, stages, actions, gates, and transitions, as described below.</p> <p> <i>Pipelines</i> are models of automated release processes. Each pipeline is uniquely named, and consists of actions, gates, and stages. </p> <p>You can work with pipelines by calling:</p> <ul> <li> <p> <a>CreatePipeline</a>, which creates a uniquely-named pipeline.</p> </li> <li> <p> <a>DeletePipeline</a>, which deletes the specified pipeline.</p> </li> <li> <p> <a>GetPipeline</a>, which returns information about the pipeline structure and pipeline metadata, including the pipeline Amazon Resource Name (ARN).</p> </li> <li> <p> <a>GetPipelineExecution</a>, which returns information about a specific execution of a pipeline.</p> </li> <li> <p> <a>GetPipelineState</a>, which returns information about the current state of the stages and actions of a pipeline.</p> </li> <li> <p> <a>ListPipelines</a>, which gets a summary of all of the pipelines associated with your account.</p> </li> <li> <p> <a>ListPipelineExecutions</a>, which gets a summary of the most recent executions for a pipeline.</p> </li> <li> <p> <a>StartPipelineExecution</a>, which runs the the most recent revision of an artifact through the pipeline.</p> </li> <li> <p> <a>UpdatePipeline</a>, which updates a pipeline with edits or changes to the structure of the pipeline.</p> </li> </ul> <p>Pipelines include <i>stages</i>, which are logical groupings of gates and actions. Each stage contains one or more actions that must complete before the next stage begins. A stage will result in success or failure. If a stage fails, then the pipeline stops at that stage and will remain stopped until either a new version of an artifact appears in the source location, or a user takes action to re-run the most recent artifact through the pipeline. You can call <a>GetPipelineState</a>, which displays the status of a pipeline, including the status of stages in the pipeline, or <a>GetPipeline</a>, which returns the entire structure of the pipeline, including the stages of that pipeline. For more information about the structure of stages and actions, also refer to the <a href=\"http://docs.aws.amazon.com/codepipeline/latest/userguide/pipeline-structure.html\">AWS CodePipeline Pipeline Structure Reference</a>.</p> <p>Pipeline stages include <i>actions</i>, which are categorized into categories such as source or build actions performed within a stage of a pipeline. For example, you can use a source action to import artifacts into a pipeline from a source such as Amazon S3. Like stages, you do not work with actions directly in most cases, but you do define and interact with actions when working with pipeline operations such as <a>CreatePipeline</a> and <a>GetPipelineState</a>. </p> <p>Pipelines also include <i>transitions</i>, which allow the transition of artifacts from one stage to the next in a pipeline after the actions in one stage complete.</p> <p>You can work with transitions by calling:</p> <ul> <li> <p> <a>DisableStageTransition</a>, which prevents artifacts from transitioning to the next stage in a pipeline.</p> </li> <li> <p> <a>EnableStageTransition</a>, which enables transition of artifacts between stages in a pipeline. </p> </li> </ul> <p> <b>Using the API to integrate with AWS CodePipeline</b> </p> <p>For third-party integrators or developers who want to create their own integrations with AWS CodePipeline, the expected sequence varies from the standard API user. In order to integrate with AWS CodePipeline, developers will need to work with the following items:</p> <p> <b>Jobs</b>, which are instances of an action. For example, a job for a source action might import a revision of an artifact from a source. </p> <p>You can work with jobs by calling:</p> <ul> <li> <p> <a>AcknowledgeJob</a>, which confirms whether a job worker has received the specified job,</p> </li> <li> <p> <a>GetJobDetails</a>, which returns the details of a job,</p> </li> <li> <p> <a>PollForJobs</a>, which determines whether there are any jobs to act upon, </p> </li> <li> <p> <a>PutJobFailureResult</a>, which provides details of a job failure, and</p> </li> <li> <p> <a>PutJobSuccessResult</a>, which provides details of a job success.</p> </li> </ul> <p> <b>Third party jobs</b>, which are instances of an action created by a partner action and integrated into AWS CodePipeline. Partner actions are created by members of the AWS Partner Network.</p> <p>You can work with third party jobs by calling:</p> <ul> <li> <p> <a>AcknowledgeThirdPartyJob</a>, which confirms whether a job worker has received the specified job,</p> </li> <li> <p> <a>GetThirdPartyJobDetails</a>, which requests the details of a job for a partner action,</p> </li> <li> <p> <a>PollForThirdPartyJobs</a>, which determines whether there are any jobs to act upon, </p> </li> <li> <p> <a>PutThirdPartyJobFailureResult</a>, which provides details of a job failure, and</p> </li> <li> <p> <a>PutThirdPartyJobSuccessResult</a>, which provides details of a job success.</p> </li> </ul>",
   "operations": {
     "AcknowledgeJob": "<p>Returns information about a specified job and whether that job has been received by the job worker. Only used for custom actions.</p>",
     "AcknowledgeThirdPartyJob": "<p>Confirms a job worker has received the specified job. Only used for partner actions.</p>",
@@ -52,22 +52,22 @@
       }
     },
     "AcknowledgeJobInput": {
-      "base": "<p>Represents the input of an acknowledge job action.</p>",
+      "base": "<p>Represents the input of an AcknowledgeJob action.</p>",
       "refs": {
       }
     },
     "AcknowledgeJobOutput": {
-      "base": "<p>Represents the output of an acknowledge job action.</p>",
+      "base": "<p>Represents the output of an AcknowledgeJob action.</p>",
       "refs": {
       }
     },
     "AcknowledgeThirdPartyJobInput": {
-      "base": "<p>Represents the input of an acknowledge third party job action.</p>",
+      "base": "<p>Represents the input of an AcknowledgeThirdPartyJob action.</p>",
       "refs": {
       }
     },
     "AcknowledgeThirdPartyJobOutput": {
-      "base": "<p>Represents the output of an acknowledge third party job action.</p>",
+      "base": "<p>Represents the output of an AcknowledgeThirdPartyJob action.</p>",
       "refs": {
       }
     },
@@ -135,7 +135,7 @@
     "ActionContext": {
       "base": "<p>Represents the context of an action within the stage of a pipeline to a job worker.</p>",
       "refs": {
-        "PipelineContext$action": "<p/>"
+        "PipelineContext$action": "<p>The context of an action to a job worker within the stage of a pipeline.</p>"
       }
     },
     "ActionDeclaration": {
@@ -342,7 +342,7 @@
     "ArtifactStore": {
       "base": "<p>The Amazon S3 bucket where artifacts are stored for the pipeline.</p>",
       "refs": {
-        "PipelineDeclaration$artifactStore": "<p>Represents the context of an action within the stage of a pipeline to a job worker. </p>"
+        "PipelineDeclaration$artifactStore": "<p>Represents information about the Amazon S3 bucket where artifacts are stored for the pipeline. </p>"
       }
     },
     "ArtifactStoreLocation": {
@@ -381,7 +381,7 @@
         "ActionConfigurationProperty$required": "<p>Whether the configuration property is a required value.</p>",
         "ActionConfigurationProperty$key": "<p>Whether the configuration property is a key.</p>",
         "ActionConfigurationProperty$secret": "<p>Whether the configuration property is secret. Secrets are hidden from all calls except for GetJobDetails, GetThirdPartyJobDetails, PollForJobs, and PollForThirdPartyJobs.</p> <p>When updating a pipeline, passing * * * * * without changing any other values of the action will preserve the prior value of the secret.</p>",
-        "ActionConfigurationProperty$queryable": "<p>Indicates that the proprety will be used in conjunction with PollForJobs. When creating a custom action, an action can have up to one queryable property. If it has one, that property must be both required and not secret.</p> <p>If you create a pipeline with a custom action type, and that custom action contains a queryable property, the value for that configuration property is subject to additional restrictions. The value must be less than or equal to twenty (20) characters. The value can contain only alphanumeric characters, underscores, and hyphens.</p>",
+        "ActionConfigurationProperty$queryable": "<p>Indicates that the property will be used in conjunction with PollForJobs. When creating a custom action, an action can have up to one queryable property. If it has one, that property must be both required and not secret.</p> <p>If you create a pipeline with a custom action type, and that custom action contains a queryable property, the value for that configuration property is subject to additional restrictions. The value must be less than or equal to twenty (20) characters. The value can contain only alphanumeric characters, underscores, and hyphens.</p>",
         "PutActionRevisionOutput$newRevision": "<p>Indicates whether the artifact revision was previously used in an execution of the specified pipeline.</p>"
       }
     },
@@ -416,22 +416,22 @@
       }
     },
     "CreateCustomActionTypeInput": {
-      "base": "<p>Represents the input of a create custom action operation.</p>",
+      "base": "<p>Represents the input of a CreateCustomActionType operation.</p>",
       "refs": {
       }
     },
     "CreateCustomActionTypeOutput": {
-      "base": "<p>Represents the output of a create custom action operation.</p>",
+      "base": "<p>Represents the output of a CreateCustomActionType operation.</p>",
       "refs": {
       }
     },
     "CreatePipelineInput": {
-      "base": "<p>Represents the input of a create pipeline action.</p>",
+      "base": "<p>Represents the input of a CreatePipeline action.</p>",
       "refs": {
       }
     },
     "CreatePipelineOutput": {
-      "base": "<p>Represents the output of a create pipeline action.</p>",
+      "base": "<p>Represents the output of a CreatePipeline action.</p>",
       "refs": {
       }
     },
@@ -443,12 +443,12 @@
       }
     },
     "DeleteCustomActionTypeInput": {
-      "base": "<p>Represents the input of a delete custom action operation. The custom action will be marked as deleted.</p>",
+      "base": "<p>Represents the input of a DeleteCustomActionType operation. The custom action will be marked as deleted.</p>",
       "refs": {
       }
     },
     "DeletePipelineInput": {
-      "base": "<p>Represents the input of a delete pipeline action.</p>",
+      "base": "<p>Represents the input of a DeletePipeline action.</p>",
       "refs": {
       }
     },
@@ -459,7 +459,7 @@
       }
     },
     "DisableStageTransitionInput": {
-      "base": "<p>Represents the input of a disable stage transition input action.</p>",
+      "base": "<p>Represents the input of a DisableStageTransition action.</p>",
       "refs": {
       }
     },
@@ -471,7 +471,7 @@
       }
     },
     "EnableStageTransitionInput": {
-      "base": "<p>Represents the input of an enable stage transition action.</p>",
+      "base": "<p>Represents the input of an EnableStageTransition action.</p>",
       "refs": {
       }
     },
@@ -543,52 +543,52 @@
       }
     },
     "GetJobDetailsInput": {
-      "base": "<p>Represents the input of a get job details action.</p>",
+      "base": "<p>Represents the input of a GetJobDetails action.</p>",
       "refs": {
       }
     },
     "GetJobDetailsOutput": {
-      "base": "<p>Represents the output of a get job details action.</p>",
+      "base": "<p>Represents the output of a GetJobDetails action.</p>",
       "refs": {
       }
     },
     "GetPipelineExecutionInput": {
-      "base": "<p>Represents the input of a get pipeline execution action.</p>",
+      "base": "<p>Represents the input of a GetPipelineExecution action.</p>",
       "refs": {
       }
     },
     "GetPipelineExecutionOutput": {
-      "base": "<p>Represents the output of a get pipeline execution action.</p>",
+      "base": "<p>Represents the output of a GetPipelineExecution action.</p>",
       "refs": {
       }
     },
     "GetPipelineInput": {
-      "base": "<p>Represents the input of a get pipeline action.</p>",
+      "base": "<p>Represents the input of a GetPipeline action.</p>",
       "refs": {
       }
     },
     "GetPipelineOutput": {
-      "base": "<p>Represents the output of a get pipeline action.</p>",
+      "base": "<p>Represents the output of a GetPipeline action.</p>",
       "refs": {
       }
     },
     "GetPipelineStateInput": {
-      "base": "<p>Represents the input of a get pipeline state action.</p>",
+      "base": "<p>Represents the input of a GetPipelineState action.</p>",
       "refs": {
       }
     },
     "GetPipelineStateOutput": {
-      "base": "<p>Represents the output of a get pipeline state action.</p>",
+      "base": "<p>Represents the output of a GetPipelineState action.</p>",
       "refs": {
       }
     },
     "GetThirdPartyJobDetailsInput": {
-      "base": "<p>Represents the input of a get third party job details action.</p>",
+      "base": "<p>Represents the input of a GetThirdPartyJobDetails action.</p>",
       "refs": {
       }
     },
     "GetThirdPartyJobDetailsOutput": {
-      "base": "<p>Represents the output of a get third party job details action.</p>",
+      "base": "<p>Represents the output of a GetThirdPartyJobDetails action.</p>",
       "refs": {
       }
     },
@@ -727,32 +727,32 @@
       }
     },
     "ListActionTypesInput": {
-      "base": "<p>Represents the input of a list action types action.</p>",
+      "base": "<p>Represents the input of a ListActionTypes action.</p>",
       "refs": {
       }
     },
     "ListActionTypesOutput": {
-      "base": "<p>Represents the output of a list action types action.</p>",
+      "base": "<p>Represents the output of a ListActionTypes action.</p>",
       "refs": {
       }
     },
     "ListPipelineExecutionsInput": {
-      "base": "<p>Represents the input of a list pipeline executions action.</p>",
+      "base": "<p>Represents the input of a ListPipelineExecutions action.</p>",
       "refs": {
       }
     },
     "ListPipelineExecutionsOutput": {
-      "base": "<p>Represents the output of a list pipeline executions action. </p>",
+      "base": "<p>Represents the output of a ListPipelineExecutions action.</p>",
       "refs": {
       }
     },
     "ListPipelinesInput": {
-      "base": "<p>Represents the input of a list pipelines action.</p>",
+      "base": "<p>Represents the input of a ListPipelines action.</p>",
       "refs": {
       }
     },
     "ListPipelinesOutput": {
-      "base": "<p>Represents the output of a list pipelines action.</p>",
+      "base": "<p>Represents the output of a ListPipelines action.</p>",
       "refs": {
       }
     },
@@ -793,8 +793,8 @@
       "refs": {
         "ListActionTypesInput$nextToken": "<p>An identifier that was returned from the previous list action types call, which can be used to return the next set of action types in the list.</p>",
         "ListActionTypesOutput$nextToken": "<p>If the amount of returned information is significantly large, an identifier is also returned which can be used in a subsequent list action types call to return the next set of action types in the list.</p>",
-        "ListPipelineExecutionsInput$nextToken": "<p>The token that was returned from the previous list pipeline executions call, which can be used to return the next set of pipeline executions in the list.</p>",
-        "ListPipelineExecutionsOutput$nextToken": "<p>A token that can be used in the next list pipeline executions call to return the next set of pipeline executions. To view all items in the list, continue to call this operation with each subsequent token until no more nextToken values are returned.</p>",
+        "ListPipelineExecutionsInput$nextToken": "<p>The token that was returned from the previous ListPipelineExecutions call, which can be used to return the next set of pipeline executions in the list.</p>",
+        "ListPipelineExecutionsOutput$nextToken": "<p>A token that can be used in the next ListPipelineExecutions call. To view all items in the list, continue to call this operation with each subsequent token until no more nextToken values are returned.</p>",
         "ListPipelinesInput$nextToken": "<p>An identifier that was returned from the previous list pipelines call, which can be used to return the next set of pipelines in the list.</p>",
         "ListPipelinesOutput$nextToken": "<p>If the amount of returned information is significantly large, an identifier is also returned which can be used in a subsequent list pipelines call to return the next set of pipelines in the list.</p>"
       }
@@ -830,6 +830,12 @@
       "refs": {
         "ActionExecution$percentComplete": "<p>A percentage of completeness of the action as it runs.</p>",
         "ExecutionDetails$percentComplete": "<p>The percentage of work completed on the action, represented on a scale of zero to one hundred percent.</p>"
+      }
+    },
+    "PipelineArn": {
+      "base": null,
+      "refs": {
+        "PipelineMetadata$pipelineArn": "<p>The Amazon Resource Name (ARN) of the pipeline.</p>"
       }
     },
     "PipelineContext": {
@@ -876,8 +882,8 @@
     "PipelineExecutionStatus": {
       "base": null,
       "refs": {
-        "PipelineExecution$status": "<p>The status of the pipeline execution.</p> <ul> <li> <p>InProgress: The pipeline execution is currently running.</p> </li> <li> <p>Succeeded: The pipeline execution completed successfully. </p> </li> <li> <p>Superseded: While this pipeline execution was waiting for the next stage to be completed, a newer pipeline execution caught up and continued through the pipeline instead. </p> </li> <li> <p>Failed: The pipeline execution did not complete successfully.</p> </li> </ul>",
-        "PipelineExecutionSummary$status": "<p>The status of the pipeline execution.</p> <ul> <li> <p>InProgress: The pipeline execution is currently running.</p> </li> <li> <p>Succeeded: The pipeline execution completed successfully. </p> </li> <li> <p>Superseded: While this pipeline execution was waiting for the next stage to be completed, a newer pipeline execution caught up and continued through the pipeline instead. </p> </li> <li> <p>Failed: The pipeline execution did not complete successfully.</p> </li> </ul>"
+        "PipelineExecution$status": "<p>The status of the pipeline execution.</p> <ul> <li> <p>InProgress: The pipeline execution is currently running.</p> </li> <li> <p>Succeeded: The pipeline execution was completed successfully. </p> </li> <li> <p>Superseded: While this pipeline execution was waiting for the next stage to be completed, a newer pipeline execution advanced and continued through the pipeline instead. </p> </li> <li> <p>Failed: The pipeline execution was not completed successfully.</p> </li> </ul>",
+        "PipelineExecutionSummary$status": "<p>The status of the pipeline execution.</p> <ul> <li> <p>InProgress: The pipeline execution is currently running.</p> </li> <li> <p>Succeeded: The pipeline execution was completed successfully. </p> </li> <li> <p>Superseded: While this pipeline execution was waiting for the next stage to be completed, a newer pipeline execution advanced and continued through the pipeline instead. </p> </li> <li> <p>Failed: The pipeline execution was not completed successfully.</p> </li> </ul>"
       }
     },
     "PipelineExecutionSummary": {
@@ -896,6 +902,12 @@
       "base": null,
       "refs": {
         "ListPipelinesOutput$pipelines": "<p>The list of pipelines.</p>"
+      }
+    },
+    "PipelineMetadata": {
+      "base": "<p>Information about a pipeline.</p>",
+      "refs": {
+        "GetPipelineOutput$metadata": "<p>Represents the pipeline metadata information returned as part of the output of a GetPipeline action.</p>"
       }
     },
     "PipelineName": {
@@ -957,62 +969,62 @@
       }
     },
     "PollForJobsInput": {
-      "base": "<p>Represents the input of a poll for jobs action.</p>",
+      "base": "<p>Represents the input of a PollForJobs action.</p>",
       "refs": {
       }
     },
     "PollForJobsOutput": {
-      "base": "<p>Represents the output of a poll for jobs action.</p>",
+      "base": "<p>Represents the output of a PollForJobs action.</p>",
       "refs": {
       }
     },
     "PollForThirdPartyJobsInput": {
-      "base": "<p>Represents the input of a poll for third party jobs action.</p>",
+      "base": "<p>Represents the input of a PollForThirdPartyJobs action.</p>",
       "refs": {
       }
     },
     "PollForThirdPartyJobsOutput": {
-      "base": "<p>Represents the output of a poll for third party jobs action.</p>",
+      "base": "<p>Represents the output of a PollForThirdPartyJobs action.</p>",
       "refs": {
       }
     },
     "PutActionRevisionInput": {
-      "base": "<p>Represents the input of a put action revision action.</p>",
+      "base": "<p>Represents the input of a PutActionRevision action.</p>",
       "refs": {
       }
     },
     "PutActionRevisionOutput": {
-      "base": "<p>Represents the output of a put action revision action.</p>",
+      "base": "<p>Represents the output of a PutActionRevision action.</p>",
       "refs": {
       }
     },
     "PutApprovalResultInput": {
-      "base": "<p>Represents the input of a put approval result action.</p>",
+      "base": "<p>Represents the input of a PutApprovalResult action.</p>",
       "refs": {
       }
     },
     "PutApprovalResultOutput": {
-      "base": "<p>Represents the output of a put approval result action.</p>",
+      "base": "<p>Represents the output of a PutApprovalResult action.</p>",
       "refs": {
       }
     },
     "PutJobFailureResultInput": {
-      "base": "<p>Represents the input of a put job failure result action.</p>",
+      "base": "<p>Represents the input of a PutJobFailureResult action.</p>",
       "refs": {
       }
     },
     "PutJobSuccessResultInput": {
-      "base": "<p>Represents the input of a put job success result action.</p>",
+      "base": "<p>Represents the input of a PutJobSuccessResult action.</p>",
       "refs": {
       }
     },
     "PutThirdPartyJobFailureResultInput": {
-      "base": "<p>Represents the input of a third party job failure result action.</p>",
+      "base": "<p>Represents the input of a PutThirdPartyJobFailureResult action.</p>",
       "refs": {
       }
     },
     "PutThirdPartyJobSuccessResultInput": {
-      "base": "<p>Represents the input of a put third party job success result action.</p>",
+      "base": "<p>Represents the input of a PutThirdPartyJobSuccessResult action.</p>",
       "refs": {
       }
     },
@@ -1023,12 +1035,12 @@
       }
     },
     "RetryStageExecutionInput": {
-      "base": "<p>Represents the input of a retry stage execution action.</p>",
+      "base": "<p>Represents the input of a RetryStageExecution action.</p>",
       "refs": {
       }
     },
     "RetryStageExecutionOutput": {
-      "base": "<p>Represents the output of a retry stage execution action.</p>",
+      "base": "<p>Represents the output of a RetryStageExecution action.</p>",
       "refs": {
       }
     },
@@ -1178,12 +1190,12 @@
       }
     },
     "StartPipelineExecutionInput": {
-      "base": "<p>Represents the input of a start pipeline execution action.</p>",
+      "base": "<p>Represents the input of a StartPipelineExecution action.</p>",
       "refs": {
       }
     },
     "StartPipelineExecutionOutput": {
-      "base": "<p>Represents the output of a start pipeline execution action.</p>",
+      "base": "<p>Represents the output of a StartPipelineExecution action.</p>",
       "refs": {
       }
     },
@@ -1237,6 +1249,8 @@
         "GetPipelineStateOutput$updated": "<p>The date and time the pipeline was last updated, in timestamp format.</p>",
         "PipelineExecutionSummary$startTime": "<p>The date and time when the pipeline execution began, in timestamp format.</p>",
         "PipelineExecutionSummary$lastUpdateTime": "<p>The date and time of the last change to the pipeline execution, in timestamp format.</p>",
+        "PipelineMetadata$created": "<p>The date and time the pipeline was created, in timestamp format.</p>",
+        "PipelineMetadata$updated": "<p>The date and time the pipeline was last updated, in timestamp format.</p>",
         "PipelineSummary$created": "<p>The date and time the pipeline was created, in timestamp format.</p>",
         "PipelineSummary$updated": "<p>The date and time of the last update to the pipeline, in timestamp format.</p>",
         "PutApprovalResultOutput$approvedAt": "<p>The timestamp showing when the approval or rejection was submitted.</p>"
@@ -1249,12 +1263,12 @@
       }
     },
     "UpdatePipelineInput": {
-      "base": "<p>Represents the input of an update pipeline action.</p>",
+      "base": "<p>Represents the input of an UpdatePipeline action.</p>",
       "refs": {
       }
     },
     "UpdatePipelineOutput": {
-      "base": "<p>Represents the output of an update pipeline action.</p>",
+      "base": "<p>Represents the output of an UpdatePipeline action.</p>",
       "refs": {
       }
     },

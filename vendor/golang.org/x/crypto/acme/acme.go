@@ -51,38 +51,6 @@ const (
 	maxNonces = 100
 )
 
-// CertOption is an optional argument type for Client methods which manipulate
-// certificate data.
-type CertOption interface {
-	privateCertOpt()
-}
-
-// WithKey creates an option holding a private/public key pair.
-// The private part signs a certificate, and the public part represents the signee.
-func WithKey(key crypto.Signer) CertOption {
-	return &certOptKey{key}
-}
-
-type certOptKey struct {
-	key crypto.Signer
-}
-
-func (*certOptKey) privateCertOpt() {}
-
-// WithTemplate creates an option for specifying a certificate template.
-// See x509.CreateCertificate for template usage details.
-//
-// In TLSSNIxChallengeCert methods, the template is also used as parent,
-// resulting in a self-signed certificate.
-// The DNSNames field of t is always overwritten for tls-sni challenge certs.
-func WithTemplate(t *x509.Certificate) CertOption {
-	return (*certOptTemplate)(t)
-}
-
-type certOptTemplate x509.Certificate
-
-func (*certOptTemplate) privateCertOpt() {}
-
 // Client is an ACME client.
 // The only required field is Key. An example of creating a client with a new key
 // is as follows:
@@ -289,7 +257,7 @@ func (c *Client) RevokeCert(ctx context.Context, key crypto.Signer, cert []byte,
 func AcceptTOS(tosURL string) bool { return true }
 
 // Register creates a new account registration by following the "new-reg" flow.
-// It returns registered account. The a argument is not modified.
+// It returns registered account. The account is not modified.
 //
 // The registration may require the caller to agree to the CA's Terms of Service (TOS).
 // If so, and the account has not indicated the acceptance of the terms (see Account for details),

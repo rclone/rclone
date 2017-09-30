@@ -124,7 +124,7 @@
             }
           ],
           "jobQueueName": "LowPriority",
-          "priority": 10,
+          "priority": 1,
           "state": "ENABLED"
         },
         "output": {
@@ -154,7 +154,7 @@
             }
           ],
           "jobQueueName": "HighPriority",
-          "priority": 1,
+          "priority": 10,
           "state": "ENABLED"
         },
         "output": {

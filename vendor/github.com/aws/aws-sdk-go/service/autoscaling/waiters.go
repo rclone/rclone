@@ -11,7 +11,7 @@ import (
 
 // WaitUntilGroupExists uses the Auto Scaling API operation
 // DescribeAutoScalingGroups to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *AutoScaling) WaitUntilGroupExists(input *DescribeAutoScalingGroupsInput) error {
 	return c.WaitUntilGroupExistsWithContext(aws.BackgroundContext(), input)
@@ -62,7 +62,7 @@ func (c *AutoScaling) WaitUntilGroupExistsWithContext(ctx aws.Context, input *De
 
 // WaitUntilGroupInService uses the Auto Scaling API operation
 // DescribeAutoScalingGroups to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *AutoScaling) WaitUntilGroupInService(input *DescribeAutoScalingGroupsInput) error {
 	return c.WaitUntilGroupInServiceWithContext(aws.BackgroundContext(), input)
@@ -113,7 +113,7 @@ func (c *AutoScaling) WaitUntilGroupInServiceWithContext(ctx aws.Context, input 
 
 // WaitUntilGroupNotExists uses the Auto Scaling API operation
 // DescribeAutoScalingGroups to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *AutoScaling) WaitUntilGroupNotExists(input *DescribeAutoScalingGroupsInput) error {
 	return c.WaitUntilGroupNotExistsWithContext(aws.BackgroundContext(), input)

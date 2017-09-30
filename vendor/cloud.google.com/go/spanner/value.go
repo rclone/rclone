@@ -128,6 +128,9 @@ type NullRow struct {
 // column.  See google.spanner.v1.ResultSet proto for details.  This can be
 // useful for proxying query results when the result types are not known in
 // advance.
+//
+// If you populate a GenericColumnValue from a row using Row.Column or related
+// methods, do not modify the contents of Type and Value.
 type GenericColumnValue struct {
 	Type  *sppb.Type
 	Value *proto3.Value
@@ -151,12 +154,12 @@ func newGenericColumnValue(v interface{}) (*GenericColumnValue, error) {
 
 // errTypeMismatch returns error for destination not having a compatible type
 // with source Cloud Spanner type.
-func errTypeMismatch(srcType sppb.TypeCode, isArray bool, dst interface{}) error {
-	usage := srcType.String()
-	if isArray {
-		usage = fmt.Sprintf("%v[%v]", sppb.TypeCode_ARRAY, srcType)
+func errTypeMismatch(srcCode, elCode sppb.TypeCode, dst interface{}) error {
+	s := srcCode.String()
+	if srcCode == sppb.TypeCode_ARRAY {
+		s = fmt.Sprintf("%v[%v]", srcCode, elCode)
 	}
-	return spannerErrorf(codes.InvalidArgument, "type %T cannot be used for decoding %v", dst, usage)
+	return spannerErrorf(codes.InvalidArgument, "type %T cannot be used for decoding %s", dst, s)
 }
 
 // errNilSpannerType returns error for nil Cloud Spanner type in decoding.
@@ -196,7 +199,7 @@ func parseNullTime(v *proto3.Value, p *NullTime, code sppb.TypeCode, isNull bool
 		return errNilDst(p)
 	}
 	if code != sppb.TypeCode_TIMESTAMP {
-		return errTypeMismatch(code, false, p)
+		return errTypeMismatch(code, sppb.TypeCode_TYPE_CODE_UNSPECIFIED, p)
 	}
 	if isNull {
 		*p = NullTime{}
@@ -232,11 +235,6 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 		}
 		acode = t.ArrayElementType.Code
 	}
-	typeErr := errTypeMismatch(code, false, ptr)
-	if code == sppb.TypeCode_ARRAY {
-		typeErr = errTypeMismatch(acode, true, ptr)
-	}
-	nullErr := errDstNotForNull(ptr)
 	_, isNull := v.Kind.(*proto3.Value_NullValue)
 
 	// Do the decoding based on the type of ptr.
@@ -248,10 +246,10 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_STRING {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
-			return nullErr
+			return errDstNotForNull(ptr)
 		}
 		x, err := getStringValue(v)
 		if err != nil {
@@ -263,7 +261,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_STRING {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = NullString{}
@@ -280,7 +278,27 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_STRING {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
+		}
+		if isNull {
+			*p = nil
+			break
+		}
+		x, err := getListValue(v)
+		if err != nil {
+			return err
+		}
+		y, err := decodeNullStringArray(x)
+		if err != nil {
+			return err
+		}
+		*p = y
+	case *[]string:
+		if p == nil {
+			return errNilDst(p)
+		}
+		if acode != sppb.TypeCode_STRING {
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -300,7 +318,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_BYTES {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -320,7 +338,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_BYTES {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -340,10 +358,10 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_INT64 {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
-			return nullErr
+			return errDstNotForNull(ptr)
 		}
 		x, err := getStringValue(v)
 		if err != nil {
@@ -359,7 +377,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_INT64 {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = NullInt64{}
@@ -380,7 +398,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_INT64 {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -390,7 +408,27 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 		if err != nil {
 			return err
 		}
-		y, err := decodeIntArray(x)
+		y, err := decodeNullInt64Array(x)
+		if err != nil {
+			return err
+		}
+		*p = y
+	case *[]int64:
+		if p == nil {
+			return errNilDst(p)
+		}
+		if acode != sppb.TypeCode_INT64 {
+			return errTypeMismatch(code, acode, ptr)
+		}
+		if isNull {
+			*p = nil
+			break
+		}
+		x, err := getListValue(v)
+		if err != nil {
+			return err
+		}
+		y, err := decodeInt64Array(x)
 		if err != nil {
 			return err
 		}
@@ -400,10 +438,10 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_BOOL {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
-			return nullErr
+			return errDstNotForNull(ptr)
 		}
 		x, err := getBoolValue(v)
 		if err != nil {
@@ -415,7 +453,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_BOOL {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = NullBool{}
@@ -432,7 +470,27 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_BOOL {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
+		}
+		if isNull {
+			*p = nil
+			break
+		}
+		x, err := getListValue(v)
+		if err != nil {
+			return err
+		}
+		y, err := decodeNullBoolArray(x)
+		if err != nil {
+			return err
+		}
+		*p = y
+	case *[]bool:
+		if p == nil {
+			return errNilDst(p)
+		}
+		if acode != sppb.TypeCode_BOOL {
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -452,10 +510,10 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_FLOAT64 {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
-			return nullErr
+			return errDstNotForNull(ptr)
 		}
 		x, err := getFloat64Value(v)
 		if err != nil {
@@ -467,7 +525,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_FLOAT64 {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = NullFloat64{}
@@ -484,7 +542,27 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_FLOAT64 {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
+		}
+		if isNull {
+			*p = nil
+			break
+		}
+		x, err := getListValue(v)
+		if err != nil {
+			return err
+		}
+		y, err := decodeNullFloat64Array(x)
+		if err != nil {
+			return err
+		}
+		*p = y
+	case *[]float64:
+		if p == nil {
+			return errNilDst(p)
+		}
+		if acode != sppb.TypeCode_FLOAT64 {
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -502,7 +580,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 	case *time.Time:
 		var nt NullTime
 		if isNull {
-			return nullErr
+			return errDstNotForNull(ptr)
 		}
 		err := parseNullTime(v, &nt, code, isNull)
 		if err != nil {
@@ -519,7 +597,27 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_TIMESTAMP {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
+		}
+		if isNull {
+			*p = nil
+			break
+		}
+		x, err := getListValue(v)
+		if err != nil {
+			return err
+		}
+		y, err := decodeNullTimeArray(x)
+		if err != nil {
+			return err
+		}
+		*p = y
+	case *[]time.Time:
+		if p == nil {
+			return errNilDst(p)
+		}
+		if acode != sppb.TypeCode_TIMESTAMP {
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -539,10 +637,10 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_DATE {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
-			return nullErr
+			return errDstNotForNull(ptr)
 		}
 		x, err := getStringValue(v)
 		if err != nil {
@@ -558,7 +656,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if code != sppb.TypeCode_DATE {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = NullDate{}
@@ -579,7 +677,27 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_DATE {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
+		}
+		if isNull {
+			*p = nil
+			break
+		}
+		x, err := getListValue(v)
+		if err != nil {
+			return err
+		}
+		y, err := decodeNullDateArray(x)
+		if err != nil {
+			return err
+		}
+		*p = y
+	case *[]civil.Date:
+		if p == nil {
+			return errNilDst(p)
+		}
+		if acode != sppb.TypeCode_DATE {
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -599,7 +717,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 			return errNilDst(p)
 		}
 		if acode != sppb.TypeCode_STRUCT {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		if isNull {
 			*p = nil
@@ -615,16 +733,11 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 		}
 		*p = y
 	case *GenericColumnValue:
-		*p = GenericColumnValue{
-			// Deep clone to ensure subsequent changes to t or v
-			// don't affect our decoded value.
-			Type:  proto.Clone(t).(*sppb.Type),
-			Value: proto.Clone(v).(*proto3.Value),
-		}
+		*p = GenericColumnValue{Type: t, Value: v}
 	default:
 		// Check if the proto encoding is for an array of structs.
 		if !(code == sppb.TypeCode_ARRAY && acode == sppb.TypeCode_STRUCT) {
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		vp := reflect.ValueOf(p)
 		if !vp.IsValid() {
@@ -632,7 +745,7 @@ func decodeValue(v *proto3.Value, t *sppb.Type, ptr interface{}) error {
 		}
 		if !isPtrStructPtrSlice(vp.Type()) {
 			// The container is not a pointer to a struct pointer slice.
-			return typeErr
+			return errTypeMismatch(code, acode, ptr)
 		}
 		// Only use reflection for nil detection on slow path.
 		// Also, IsNil panics on many types, so check it after the type check.
@@ -739,8 +852,8 @@ func errDecodeArrayElement(i int, v proto.Message, sqlType string, err error) er
 	return se
 }
 
-// decodeStringArray decodes proto3.ListValue pb into a NullString slice.
-func decodeStringArray(pb *proto3.ListValue) ([]NullString, error) {
+// decodeNullStringArray decodes proto3.ListValue pb into a NullString slice.
+func decodeNullStringArray(pb *proto3.ListValue) ([]NullString, error) {
 	if pb == nil {
 		return nil, errNilListValue("STRING")
 	}
@@ -753,8 +866,23 @@ func decodeStringArray(pb *proto3.ListValue) ([]NullString, error) {
 	return a, nil
 }
 
-// decodeIntArray decodes proto3.ListValue pb into a NullInt64 slice.
-func decodeIntArray(pb *proto3.ListValue) ([]NullInt64, error) {
+// decodeStringArray decodes proto3.ListValue pb into a string slice.
+func decodeStringArray(pb *proto3.ListValue) ([]string, error) {
+	if pb == nil {
+		return nil, errNilListValue("STRING")
+	}
+	a := make([]string, len(pb.Values))
+	st := stringType()
+	for i, v := range pb.Values {
+		if err := decodeValue(v, st, &a[i]); err != nil {
+			return nil, errDecodeArrayElement(i, v, "STRING", err)
+		}
+	}
+	return a, nil
+}
+
+// decodeNullInt64Array decodes proto3.ListValue pb into a NullInt64 slice.
+func decodeNullInt64Array(pb *proto3.ListValue) ([]NullInt64, error) {
 	if pb == nil {
 		return nil, errNilListValue("INT64")
 	}
@@ -767,8 +895,22 @@ func decodeIntArray(pb *proto3.ListValue) ([]NullInt64, error) {
 	return a, nil
 }
 
-// decodeBoolArray decodes proto3.ListValue pb into a NullBool slice.
-func decodeBoolArray(pb *proto3.ListValue) ([]NullBool, error) {
+// decodeInt64Array decodes proto3.ListValue pb into a int64 slice.
+func decodeInt64Array(pb *proto3.ListValue) ([]int64, error) {
+	if pb == nil {
+		return nil, errNilListValue("INT64")
+	}
+	a := make([]int64, len(pb.Values))
+	for i, v := range pb.Values {
+		if err := decodeValue(v, intType(), &a[i]); err != nil {
+			return nil, errDecodeArrayElement(i, v, "INT64", err)
+		}
+	}
+	return a, nil
+}
+
+// decodeNullBoolArray decodes proto3.ListValue pb into a NullBool slice.
+func decodeNullBoolArray(pb *proto3.ListValue) ([]NullBool, error) {
 	if pb == nil {
 		return nil, errNilListValue("BOOL")
 	}
@@ -781,12 +923,40 @@ func decodeBoolArray(pb *proto3.ListValue) ([]NullBool, error) {
 	return a, nil
 }
 
-// decodeFloat64Array decodes proto3.ListValue pb into a NullFloat64 slice.
-func decodeFloat64Array(pb *proto3.ListValue) ([]NullFloat64, error) {
+// decodeBoolArray decodes proto3.ListValue pb into a bool slice.
+func decodeBoolArray(pb *proto3.ListValue) ([]bool, error) {
+	if pb == nil {
+		return nil, errNilListValue("BOOL")
+	}
+	a := make([]bool, len(pb.Values))
+	for i, v := range pb.Values {
+		if err := decodeValue(v, boolType(), &a[i]); err != nil {
+			return nil, errDecodeArrayElement(i, v, "BOOL", err)
+		}
+	}
+	return a, nil
+}
+
+// decodeNullFloat64Array decodes proto3.ListValue pb into a NullFloat64 slice.
+func decodeNullFloat64Array(pb *proto3.ListValue) ([]NullFloat64, error) {
 	if pb == nil {
 		return nil, errNilListValue("FLOAT64")
 	}
 	a := make([]NullFloat64, len(pb.Values))
+	for i, v := range pb.Values {
+		if err := decodeValue(v, floatType(), &a[i]); err != nil {
+			return nil, errDecodeArrayElement(i, v, "FLOAT64", err)
+		}
+	}
+	return a, nil
+}
+
+// decodeFloat64Array decodes proto3.ListValue pb into a float64 slice.
+func decodeFloat64Array(pb *proto3.ListValue) ([]float64, error) {
+	if pb == nil {
+		return nil, errNilListValue("FLOAT64")
+	}
+	a := make([]float64, len(pb.Values))
 	for i, v := range pb.Values {
 		if err := decodeValue(v, floatType(), &a[i]); err != nil {
 			return nil, errDecodeArrayElement(i, v, "FLOAT64", err)
@@ -809,8 +979,8 @@ func decodeByteArray(pb *proto3.ListValue) ([][]byte, error) {
 	return a, nil
 }
 
-// decodeTimeArray decodes proto3.ListValue pb into a NullTime slice.
-func decodeTimeArray(pb *proto3.ListValue) ([]NullTime, error) {
+// decodeNullTimeArray decodes proto3.ListValue pb into a NullTime slice.
+func decodeNullTimeArray(pb *proto3.ListValue) ([]NullTime, error) {
 	if pb == nil {
 		return nil, errNilListValue("TIMESTAMP")
 	}
@@ -823,12 +993,40 @@ func decodeTimeArray(pb *proto3.ListValue) ([]NullTime, error) {
 	return a, nil
 }
 
-// decodeDateArray decodes proto3.ListValue pb into a NullDate slice.
-func decodeDateArray(pb *proto3.ListValue) ([]NullDate, error) {
+// decodeTimeArray decodes proto3.ListValue pb into a time.Time slice.
+func decodeTimeArray(pb *proto3.ListValue) ([]time.Time, error) {
+	if pb == nil {
+		return nil, errNilListValue("TIMESTAMP")
+	}
+	a := make([]time.Time, len(pb.Values))
+	for i, v := range pb.Values {
+		if err := decodeValue(v, timeType(), &a[i]); err != nil {
+			return nil, errDecodeArrayElement(i, v, "TIMESTAMP", err)
+		}
+	}
+	return a, nil
+}
+
+// decodeNullDateArray decodes proto3.ListValue pb into a NullDate slice.
+func decodeNullDateArray(pb *proto3.ListValue) ([]NullDate, error) {
 	if pb == nil {
 		return nil, errNilListValue("DATE")
 	}
 	a := make([]NullDate, len(pb.Values))
+	for i, v := range pb.Values {
+		if err := decodeValue(v, dateType(), &a[i]); err != nil {
+			return nil, errDecodeArrayElement(i, v, "DATE", err)
+		}
+	}
+	return a, nil
+}
+
+// decodeDateArray decodes proto3.ListValue pb into a civil.Date slice.
+func decodeDateArray(pb *proto3.ListValue) ([]civil.Date, error) {
+	if pb == nil {
+		return nil, errNilListValue("DATE")
+	}
+	a := make([]civil.Date, len(pb.Values))
 	for i, v := range pb.Values {
 		if err := decodeValue(v, dateType(), &a[i]); err != nil {
 			return nil, errDecodeArrayElement(i, v, "DATE", err)

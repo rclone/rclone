@@ -11,7 +11,7 @@ import (
 
 // WaitUntilJobComplete uses the Amazon Elastic Transcoder API operation
 // ReadJob to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ElasticTranscoder) WaitUntilJobComplete(input *ReadJobInput) error {
 	return c.WaitUntilJobCompleteWithContext(aws.BackgroundContext(), input)

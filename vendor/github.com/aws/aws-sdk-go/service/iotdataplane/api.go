@@ -14,19 +14,18 @@ const opDeleteThingShadow = "DeleteThingShadow"
 
 // DeleteThingShadowRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteThingShadow operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteThingShadow for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteThingShadow method directly
-// instead.
+// See DeleteThingShadow for more information on using the DeleteThingShadow
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteThingShadowRequest method.
 //    req, resp := client.DeleteThingShadowRequest(params)
@@ -35,8 +34,6 @@ const opDeleteThingShadow = "DeleteThingShadow"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
-//
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/DeleteThingShadow
 func (c *IoTDataPlane) DeleteThingShadowRequest(input *DeleteThingShadowInput) (req *request.Request, output *DeleteThingShadowOutput) {
 	op := &request.Operation{
 		Name:       opDeleteThingShadow,
@@ -92,7 +89,6 @@ func (c *IoTDataPlane) DeleteThingShadowRequest(input *DeleteThingShadowInput) (
 //   * ErrCodeUnsupportedDocumentEncodingException "UnsupportedDocumentEncodingException"
 //   The document encoding is not supported.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/DeleteThingShadow
 func (c *IoTDataPlane) DeleteThingShadow(input *DeleteThingShadowInput) (*DeleteThingShadowOutput, error) {
 	req, out := c.DeleteThingShadowRequest(input)
 	return out, req.Send()
@@ -118,19 +114,18 @@ const opGetThingShadow = "GetThingShadow"
 
 // GetThingShadowRequest generates a "aws/request.Request" representing the
 // client's request for the GetThingShadow operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetThingShadow for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetThingShadow method directly
-// instead.
+// See GetThingShadow for more information on using the GetThingShadow
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetThingShadowRequest method.
 //    req, resp := client.GetThingShadowRequest(params)
@@ -139,8 +134,6 @@ const opGetThingShadow = "GetThingShadow"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
-//
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/GetThingShadow
 func (c *IoTDataPlane) GetThingShadowRequest(input *GetThingShadowInput) (req *request.Request, output *GetThingShadowOutput) {
 	op := &request.Operation{
 		Name:       opGetThingShadow,
@@ -196,7 +189,6 @@ func (c *IoTDataPlane) GetThingShadowRequest(input *GetThingShadowInput) (req *r
 //   * ErrCodeUnsupportedDocumentEncodingException "UnsupportedDocumentEncodingException"
 //   The document encoding is not supported.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/GetThingShadow
 func (c *IoTDataPlane) GetThingShadow(input *GetThingShadowInput) (*GetThingShadowOutput, error) {
 	req, out := c.GetThingShadowRequest(input)
 	return out, req.Send()
@@ -222,19 +214,18 @@ const opPublish = "Publish"
 
 // PublishRequest generates a "aws/request.Request" representing the
 // client's request for the Publish operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See Publish for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the Publish method directly
-// instead.
+// See Publish for more information on using the Publish
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PublishRequest method.
 //    req, resp := client.PublishRequest(params)
@@ -243,8 +234,6 @@ const opPublish = "Publish"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
-//
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/Publish
 func (c *IoTDataPlane) PublishRequest(input *PublishInput) (req *request.Request, output *PublishOutput) {
 	op := &request.Operation{
 		Name:       opPublish,
@@ -290,7 +279,6 @@ func (c *IoTDataPlane) PublishRequest(input *PublishInput) (req *request.Request
 //   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
 //   The specified combination of HTTP verb and URI is not supported.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/Publish
 func (c *IoTDataPlane) Publish(input *PublishInput) (*PublishOutput, error) {
 	req, out := c.PublishRequest(input)
 	return out, req.Send()
@@ -316,19 +304,18 @@ const opUpdateThingShadow = "UpdateThingShadow"
 
 // UpdateThingShadowRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateThingShadow operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateThingShadow for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateThingShadow method directly
-// instead.
+// See UpdateThingShadow for more information on using the UpdateThingShadow
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateThingShadowRequest method.
 //    req, resp := client.UpdateThingShadowRequest(params)
@@ -337,8 +324,6 @@ const opUpdateThingShadow = "UpdateThingShadow"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
-//
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/UpdateThingShadow
 func (c *IoTDataPlane) UpdateThingShadowRequest(input *UpdateThingShadowInput) (req *request.Request, output *UpdateThingShadowOutput) {
 	op := &request.Operation{
 		Name:       opUpdateThingShadow,
@@ -397,7 +382,6 @@ func (c *IoTDataPlane) UpdateThingShadowRequest(input *UpdateThingShadowInput) (
 //   * ErrCodeUnsupportedDocumentEncodingException "UnsupportedDocumentEncodingException"
 //   The document encoding is not supported.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/UpdateThingShadow
 func (c *IoTDataPlane) UpdateThingShadow(input *UpdateThingShadowInput) (*UpdateThingShadowOutput, error) {
 	req, out := c.UpdateThingShadowRequest(input)
 	return out, req.Send()
@@ -420,7 +404,6 @@ func (c *IoTDataPlane) UpdateThingShadowWithContext(ctx aws.Context, input *Upda
 }
 
 // The input for the DeleteThingShadow operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/DeleteThingShadowRequest
 type DeleteThingShadowInput struct {
 	_ struct{} `type:"structure"`
 
@@ -463,7 +446,6 @@ func (s *DeleteThingShadowInput) SetThingName(v string) *DeleteThingShadowInput 
 }
 
 // The output from the DeleteThingShadow operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/DeleteThingShadowResponse
 type DeleteThingShadowOutput struct {
 	_ struct{} `type:"structure" payload:"Payload"`
 
@@ -490,7 +472,6 @@ func (s *DeleteThingShadowOutput) SetPayload(v []byte) *DeleteThingShadowOutput 
 }
 
 // The input for the GetThingShadow operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/GetThingShadowRequest
 type GetThingShadowInput struct {
 	_ struct{} `type:"structure"`
 
@@ -533,7 +514,6 @@ func (s *GetThingShadowInput) SetThingName(v string) *GetThingShadowInput {
 }
 
 // The output from the GetThingShadow operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/GetThingShadowResponse
 type GetThingShadowOutput struct {
 	_ struct{} `type:"structure" payload:"Payload"`
 
@@ -558,7 +538,6 @@ func (s *GetThingShadowOutput) SetPayload(v []byte) *GetThingShadowOutput {
 }
 
 // The input for the Publish operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/PublishRequest
 type PublishInput struct {
 	_ struct{} `type:"structure" payload:"Payload"`
 
@@ -615,7 +594,6 @@ func (s *PublishInput) SetTopic(v string) *PublishInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/PublishOutput
 type PublishOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -631,7 +609,6 @@ func (s PublishOutput) GoString() string {
 }
 
 // The input for the UpdateThingShadow operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/UpdateThingShadowRequest
 type UpdateThingShadowInput struct {
 	_ struct{} `type:"structure" payload:"Payload"`
 
@@ -688,7 +665,6 @@ func (s *UpdateThingShadowInput) SetThingName(v string) *UpdateThingShadowInput 
 }
 
 // The output from the UpdateThingShadow operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/iot-data-2015-05-28/UpdateThingShadowResponse
 type UpdateThingShadowOutput struct {
 	_ struct{} `type:"structure" payload:"Payload"`
 

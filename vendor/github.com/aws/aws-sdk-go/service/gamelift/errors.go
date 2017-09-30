@@ -93,4 +93,10 @@ const (
 	//
 	// The client failed authentication. Clients should not retry such requests.
 	ErrCodeUnauthorizedException = "UnauthorizedException"
+
+	// ErrCodeUnsupportedRegionException for service response error code
+	// "UnsupportedRegionException".
+	//
+	// The requested operation is not supported in the region specified.
+	ErrCodeUnsupportedRegionException = "UnsupportedRegionException"
 )

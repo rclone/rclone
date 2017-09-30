@@ -16,8 +16,11 @@ package storage
 
 import (
 	"fmt"
+	"net/http"
+	"reflect"
 
 	"golang.org/x/net/context"
+	"google.golang.org/api/googleapi"
 	raw "google.golang.org/api/storage/v1"
 )
 
@@ -53,10 +56,11 @@ type ACLRule struct {
 
 // ACLHandle provides operations on an access control list for a Google Cloud Storage bucket or object.
 type ACLHandle struct {
-	c         *Client
-	bucket    string
-	object    string
-	isDefault bool
+	c           *Client
+	bucket      string
+	object      string
+	isDefault   bool
+	userProject string // for requester-pays buckets
 }
 
 // Delete permanently deletes the ACL entry for the given entity.
@@ -73,10 +77,10 @@ func (a *ACLHandle) Delete(ctx context.Context, entity ACLEntity) error {
 // Set sets the permission level for the given entity.
 func (a *ACLHandle) Set(ctx context.Context, entity ACLEntity, role ACLRole) error {
 	if a.object != "" {
-		return a.objectSet(ctx, entity, role)
+		return a.objectSet(ctx, entity, role, false)
 	}
 	if a.isDefault {
-		return a.bucketDefaultSet(ctx, entity, role)
+		return a.objectSet(ctx, entity, role, true)
 	}
 	return a.bucketSet(ctx, entity, role)
 }
@@ -96,8 +100,8 @@ func (a *ACLHandle) bucketDefaultList(ctx context.Context) ([]ACLRule, error) {
 	var acls *raw.ObjectAccessControls
 	var err error
 	err = runWithRetry(ctx, func() error {
-		req := a.c.raw.DefaultObjectAccessControls.List(a.bucket).Context(ctx)
-		setClientHeader(req.Header())
+		req := a.c.raw.DefaultObjectAccessControls.List(a.bucket)
+		a.configureCall(req, ctx)
 		acls, err = req.Do()
 		return err
 	})
@@ -107,28 +111,10 @@ func (a *ACLHandle) bucketDefaultList(ctx context.Context) ([]ACLRule, error) {
 	return toACLRules(acls.Items), nil
 }
 
-func (a *ACLHandle) bucketDefaultSet(ctx context.Context, entity ACLEntity, role ACLRole) error {
-	acl := &raw.ObjectAccessControl{
-		Bucket: a.bucket,
-		Entity: string(entity),
-		Role:   string(role),
-	}
-	err := runWithRetry(ctx, func() error {
-		req := a.c.raw.DefaultObjectAccessControls.Update(a.bucket, string(entity), acl).Context(ctx)
-		setClientHeader(req.Header())
-		_, err := req.Do()
-		return err
-	})
-	if err != nil {
-		return fmt.Errorf("storage: error updating default ACL entry for bucket %q, entity %q: %v", a.bucket, entity, err)
-	}
-	return nil
-}
-
 func (a *ACLHandle) bucketDefaultDelete(ctx context.Context, entity ACLEntity) error {
 	err := runWithRetry(ctx, func() error {
-		req := a.c.raw.DefaultObjectAccessControls.Delete(a.bucket, string(entity)).Context(ctx)
-		setClientHeader(req.Header())
+		req := a.c.raw.DefaultObjectAccessControls.Delete(a.bucket, string(entity))
+		a.configureCall(req, ctx)
 		return req.Do()
 	})
 	if err != nil {
@@ -141,8 +127,8 @@ func (a *ACLHandle) bucketList(ctx context.Context) ([]ACLRule, error) {
 	var acls *raw.BucketAccessControls
 	var err error
 	err = runWithRetry(ctx, func() error {
-		req := a.c.raw.BucketAccessControls.List(a.bucket).Context(ctx)
-		setClientHeader(req.Header())
+		req := a.c.raw.BucketAccessControls.List(a.bucket)
+		a.configureCall(req, ctx)
 		acls, err = req.Do()
 		return err
 	})
@@ -164,8 +150,8 @@ func (a *ACLHandle) bucketSet(ctx context.Context, entity ACLEntity, role ACLRol
 		Role:   string(role),
 	}
 	err := runWithRetry(ctx, func() error {
-		req := a.c.raw.BucketAccessControls.Update(a.bucket, string(entity), acl).Context(ctx)
-		setClientHeader(req.Header())
+		req := a.c.raw.BucketAccessControls.Update(a.bucket, string(entity), acl)
+		a.configureCall(req, ctx)
 		_, err := req.Do()
 		return err
 	})
@@ -177,8 +163,8 @@ func (a *ACLHandle) bucketSet(ctx context.Context, entity ACLEntity, role ACLRol
 
 func (a *ACLHandle) bucketDelete(ctx context.Context, entity ACLEntity) error {
 	err := runWithRetry(ctx, func() error {
-		req := a.c.raw.BucketAccessControls.Delete(a.bucket, string(entity)).Context(ctx)
-		setClientHeader(req.Header())
+		req := a.c.raw.BucketAccessControls.Delete(a.bucket, string(entity))
+		a.configureCall(req, ctx)
 		return req.Do()
 	})
 	if err != nil {
@@ -191,8 +177,8 @@ func (a *ACLHandle) objectList(ctx context.Context) ([]ACLRule, error) {
 	var acls *raw.ObjectAccessControls
 	var err error
 	err = runWithRetry(ctx, func() error {
-		req := a.c.raw.ObjectAccessControls.List(a.bucket, a.object).Context(ctx)
-		setClientHeader(req.Header())
+		req := a.c.raw.ObjectAccessControls.List(a.bucket, a.object)
+		a.configureCall(req, ctx)
 		acls, err = req.Do()
 		return err
 	})
@@ -202,34 +188,59 @@ func (a *ACLHandle) objectList(ctx context.Context) ([]ACLRule, error) {
 	return toACLRules(acls.Items), nil
 }
 
-func (a *ACLHandle) objectSet(ctx context.Context, entity ACLEntity, role ACLRole) error {
+func (a *ACLHandle) objectSet(ctx context.Context, entity ACLEntity, role ACLRole, isBucketDefault bool) error {
+	type setRequest interface {
+		Do(opts ...googleapi.CallOption) (*raw.ObjectAccessControl, error)
+		Header() http.Header
+	}
+
 	acl := &raw.ObjectAccessControl{
 		Bucket: a.bucket,
 		Entity: string(entity),
 		Role:   string(role),
 	}
+	var req setRequest
+	if isBucketDefault {
+		req = a.c.raw.DefaultObjectAccessControls.Update(a.bucket, string(entity), acl)
+	} else {
+		req = a.c.raw.ObjectAccessControls.Update(a.bucket, a.object, string(entity), acl)
+	}
+	a.configureCall(req, ctx)
 	err := runWithRetry(ctx, func() error {
-		req := a.c.raw.ObjectAccessControls.Update(a.bucket, a.object, string(entity), acl).Context(ctx)
-		setClientHeader(req.Header())
 		_, err := req.Do()
 		return err
 	})
 	if err != nil {
-		return fmt.Errorf("storage: error updating object ACL entry for bucket %q, file %q, entity %q: %v", a.bucket, a.object, entity, err)
+		if isBucketDefault {
+			return fmt.Errorf("storage: error updating default ACL entry for bucket %q, entity %q: %v", a.bucket, entity, err)
+		} else {
+			return fmt.Errorf("storage: error updating object ACL entry for bucket %q, object %q, entity %q: %v", a.bucket, a.object, entity, err)
+		}
 	}
 	return nil
 }
 
 func (a *ACLHandle) objectDelete(ctx context.Context, entity ACLEntity) error {
 	err := runWithRetry(ctx, func() error {
-		req := a.c.raw.ObjectAccessControls.Delete(a.bucket, a.object, string(entity)).Context(ctx)
-		setClientHeader(req.Header())
+		req := a.c.raw.ObjectAccessControls.Delete(a.bucket, a.object, string(entity))
+		a.configureCall(req, ctx)
 		return req.Do()
 	})
 	if err != nil {
 		return fmt.Errorf("storage: error deleting object ACL entry for bucket %q, file %q, entity %q: %v", a.bucket, a.object, entity, err)
 	}
 	return nil
+}
+
+func (a *ACLHandle) configureCall(call interface {
+	Header() http.Header
+}, ctx context.Context) {
+	vc := reflect.ValueOf(call)
+	vc.MethodByName("Context").Call([]reflect.Value{reflect.ValueOf(ctx)})
+	if a.userProject != "" {
+		vc.MethodByName("UserProject").Call([]reflect.Value{reflect.ValueOf(a.userProject)})
+	}
+	setClientHeader(call.Header())
 }
 
 func toACLRules(items []*raw.ObjectAccessControl) []ACLRule {

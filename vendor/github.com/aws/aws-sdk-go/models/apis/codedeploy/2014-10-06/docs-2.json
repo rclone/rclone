@@ -691,9 +691,10 @@
     "EC2TagFilterList": {
       "base": null,
       "refs": {
-        "CreateDeploymentGroupInput$ec2TagFilters": "<p>The Amazon EC2 tags on which to filter. The deployment group will include EC2 instances with any of the specified tags.</p>",
-        "DeploymentGroupInfo$ec2TagFilters": "<p>The Amazon EC2 tags on which to filter.</p>",
-        "TargetInstances$tagFilters": "<p>The tag filter key, type, and value used to identify Amazon EC2 instances in a replacement environment for a blue/green deployment.</p>",
+        "CreateDeploymentGroupInput$ec2TagFilters": "<p>The Amazon EC2 tags on which to filter. The deployment group will include EC2 instances with any of the specified tags. Cannot be used in the same call as ec2TagSet.</p>",
+        "DeploymentGroupInfo$ec2TagFilters": "<p>The Amazon EC2 tags on which to filter. The deployment group includes EC2 instances with any of the specified tags.</p>",
+        "EC2TagSetList$member": null,
+        "TargetInstances$tagFilters": "<p>The tag filter key, type, and value used to identify Amazon EC2 instances in a replacement environment for a blue/green deployment. Cannot be used in the same call as ec2TagSet.</p>",
         "UpdateDeploymentGroupInput$ec2TagFilters": "<p>The replacement set of Amazon EC2 tags on which to filter, if you want to change them. To keep the existing tags, enter their names. To remove tags, do not enter any tag names.</p>"
       }
     },
@@ -703,8 +704,23 @@
         "EC2TagFilter$Type": "<p>The tag filter type:</p> <ul> <li> <p>KEY_ONLY: Key only.</p> </li> <li> <p>VALUE_ONLY: Value only.</p> </li> <li> <p>KEY_AND_VALUE: Key and value.</p> </li> </ul>"
       }
     },
+    "EC2TagSet": {
+      "base": "<p>Information about groups of EC2 instance tags.</p>",
+      "refs": {
+        "CreateDeploymentGroupInput$ec2TagSet": "<p>Information about groups of tags applied to EC2 instances. The deployment group will include only EC2 instances identified by all the tag groups. Cannot be used in the same call as ec2TagFilters.</p>",
+        "DeploymentGroupInfo$ec2TagSet": "<p>Information about groups of tags applied to an EC2 instance. The deployment group includes only EC2 instances identified by all the tag groups. Cannot be used in the same call as ec2TagFilters.</p>",
+        "TargetInstances$ec2TagSet": "<p>Information about the groups of EC2 instance tags that an instance must be identified by in order for it to be included in the replacement environment for a blue/green deployment. Cannot be used in the same call as tagFilters.</p>",
+        "UpdateDeploymentGroupInput$ec2TagSet": "<p>Information about groups of tags applied to on-premises instances. The deployment group will include only EC2 instances identified by all the tag groups.</p>"
+      }
+    },
+    "EC2TagSetList": {
+      "base": null,
+      "refs": {
+        "EC2TagSet$ec2TagSetList": "<p>A list containing other lists of EC2 instance tag groups. In order for an instance to be included in the deployment group, it must be identified by all the tag groups in the list.</p>"
+      }
+    },
     "ELBInfo": {
-      "base": "<p>Information about a load balancer in Elastic Load Balancing to use in a deployment.</p>",
+      "base": "<p>Information about a load balancer in Elastic Load Balancing to use in a deployment. Instances are registered directly with a load balancer, and traffic is routed to the load balancer.</p>",
       "refs": {
         "ELBInfoList$member": null
       }
@@ -712,13 +728,13 @@
     "ELBInfoList": {
       "base": null,
       "refs": {
-        "LoadBalancerInfo$elbInfoList": "<p>An array containing information about the load balancer in Elastic Load Balancing to use in a deployment.</p>"
+        "LoadBalancerInfo$elbInfoList": "<p>An array containing information about the load balancer to use for load balancing in a deployment. In Elastic Load Balancing, load balancers are used with Classic Load Balancers.</p>"
       }
     },
     "ELBName": {
       "base": null,
       "refs": {
-        "ELBInfo$name": "<p>For blue/green deployments, the name of the load balancer that will be used to route traffic from original instances to replacement instances in a blue/green deployment. For in-place deployments, the name of the load balancer that instances are deregistered from so they are not serving traffic during a deployment, and then re-registered with after the deployment completes.</p>"
+        "ELBInfo$name": "<p>For blue/green deployments, the name of the load balancer that will be used to route traffic from original instances to replacement instances in a blue/green deployment. For in-place deployments, the name of the load balancer that instances are deregistered from, so they are not serving traffic during a deployment, and then re-registered with after the deployment completes.</p>"
       }
     },
     "ETag": {
@@ -1106,6 +1122,11 @@
       "refs": {
       }
     },
+    "InvalidEC2TagCombinationException": {
+      "base": "<p>A call was submitted that specified both Ec2TagFilters and Ec2TagSet, but only one of these data types can be used in a single call.</p>",
+      "refs": {
+      }
+    },
     "InvalidEC2TagException": {
       "base": "<p>The tag was specified in an invalid format.</p>",
       "refs": {
@@ -1158,6 +1179,11 @@
     },
     "InvalidNextTokenException": {
       "base": "<p>The next token was specified in an invalid format.</p>",
+      "refs": {
+      }
+    },
+    "InvalidOnPremisesTagCombinationException": {
+      "base": "<p>A call was submitted that specified both OnPremisesTagFilters and OnPremisesTagSet, but only one of these data types can be used in a single call.</p>",
       "refs": {
       }
     },
@@ -1359,7 +1385,7 @@
       }
     },
     "LoadBalancerInfo": {
-      "base": "<p>Information about the load balancer used in a deployment.</p>",
+      "base": "<p>Information about the Elastic Load Balancing load balancer or target group used in a deployment.</p>",
       "refs": {
         "CreateDeploymentGroupInput$loadBalancerInfo": "<p>Information about the load balancer used in a deployment.</p>",
         "DeploymentGroupInfo$loadBalancerInfo": "<p>Information about the load balancer to use in a deployment.</p>",
@@ -1428,6 +1454,20 @@
       "base": null,
       "refs": {
         "StopDeploymentInput$autoRollbackEnabled": "<p>Indicates, when a deployment is stopped, whether instances that have been updated should be rolled back to the previous version of the application revision.</p>"
+      }
+    },
+    "OnPremisesTagSet": {
+      "base": "<p>Information about groups of on-premises instance tags.</p>",
+      "refs": {
+        "CreateDeploymentGroupInput$onPremisesTagSet": "<p>Information about groups of tags applied to on-premises instances. The deployment group will include only on-premises instances identified by all the tag groups. Cannot be used in the same call as onPremisesInstanceTagFilters.</p>",
+        "DeploymentGroupInfo$onPremisesTagSet": "<p>Information about groups of tags applied to an on-premises instance. The deployment group includes only on-premises instances identified by all the tag groups. Cannot be used in the same call as onPremisesInstanceTagFilters.</p>",
+        "UpdateDeploymentGroupInput$onPremisesTagSet": "<p>Information about an on-premises instance tag set. The deployment group will include only on-premises instances identified by all the tag groups.</p>"
+      }
+    },
+    "OnPremisesTagSetList": {
+      "base": null,
+      "refs": {
+        "OnPremisesTagSet$onPremisesTagSetList": "<p>A list containing other lists of on-premises instance tag groups. In order for an instance to be included in the deployment group, it must be identified by all the tag groups in the list.</p>"
       }
     },
     "RegisterApplicationRevisionInput": {
@@ -1598,9 +1638,10 @@
     "TagFilterList": {
       "base": null,
       "refs": {
-        "CreateDeploymentGroupInput$onPremisesInstanceTagFilters": "<p>The on-premises instance tags on which to filter. The deployment group will include on-premises instances with any of the specified tags.</p>",
-        "DeploymentGroupInfo$onPremisesInstanceTagFilters": "<p>The on-premises instance tags on which to filter.</p>",
+        "CreateDeploymentGroupInput$onPremisesInstanceTagFilters": "<p>The on-premises instance tags on which to filter. The deployment group will include on-premises instances with any of the specified tags. Cannot be used in the same call as OnPremisesTagSet.</p>",
+        "DeploymentGroupInfo$onPremisesInstanceTagFilters": "<p>The on-premises instance tags on which to filter. The deployment group includes on-premises instances with any of the specified tags.</p>",
         "ListOnPremisesInstancesInput$tagFilters": "<p>The on-premises instance tags that will be used to restrict the corresponding on-premises instance names returned.</p>",
+        "OnPremisesTagSetList$member": null,
         "UpdateDeploymentGroupInput$onPremisesInstanceTagFilters": "<p>The replacement set of on-premises instance tags on which to filter, if you want to change them. To keep the existing tags, enter their names. To remove tags, do not enter any tag names.</p>"
       }
     },
@@ -1626,6 +1667,29 @@
     "TagRequiredException": {
       "base": "<p>A tag was not specified.</p>",
       "refs": {
+      }
+    },
+    "TagSetListLimitExceededException": {
+      "base": "<p>The number of tag groups included in the tag set list exceeded the maximum allowed limit of 3.</p>",
+      "refs": {
+      }
+    },
+    "TargetGroupInfo": {
+      "base": "<p>Information about a target group in Elastic Load Balancing to use in a deployment. Instances are registered as targets in a target group, and traffic is routed to the target group.</p>",
+      "refs": {
+        "TargetGroupInfoList$member": null
+      }
+    },
+    "TargetGroupInfoList": {
+      "base": null,
+      "refs": {
+        "LoadBalancerInfo$targetGroupInfoList": "<p>An array containing information about the target group to use for load balancing in a deployment. In Elastic Load Balancing, target groups are used with Application Load Balancers.</p>"
+      }
+    },
+    "TargetGroupName": {
+      "base": null,
+      "refs": {
+        "TargetGroupInfo$name": "<p>For blue/green deployments, the name of the target group that instances in the original environment are deregistered from, and instances in the replacement environment registered with. For in-place deployments, the name of the target group that instances are deregistered from, so they are not serving traffic during a deployment, and then re-registered with after the deployment completes. </p>"
       }
     },
     "TargetInstances": {

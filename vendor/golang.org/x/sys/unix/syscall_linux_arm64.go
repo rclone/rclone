@@ -66,8 +66,6 @@ func Lstat(path string, stat *Stat_t) (err error) {
 //sys	sendmsg(s int, msg *Msghdr, flags int) (n int, err error)
 //sys	mmap(addr uintptr, length uintptr, prot int, flags int, fd int, offset int64) (xaddr uintptr, err error)
 
-func Getpagesize() int { return 65536 }
-
 //sysnb	Gettimeofday(tv *Timeval) (err error)
 
 func TimespecToNsec(ts Timespec) int64 { return int64(ts.Sec)*1e9 + int64(ts.Nsec) }

@@ -612,8 +612,8 @@
     "GenderType":{
       "type":"string",
       "enum":[
-        "MALE",
-        "FEMALE"
+        "Male",
+        "Female"
       ]
     },
     "GetCelebrityInfoRequest":{
@@ -732,31 +732,31 @@
     "LandmarkType":{
       "type":"string",
       "enum":[
-        "EYE_LEFT",
-        "EYE_RIGHT",
-        "NOSE",
-        "MOUTH_LEFT",
-        "MOUTH_RIGHT",
-        "LEFT_EYEBROW_LEFT",
-        "LEFT_EYEBROW_RIGHT",
-        "LEFT_EYEBROW_UP",
-        "RIGHT_EYEBROW_LEFT",
-        "RIGHT_EYEBROW_RIGHT",
-        "RIGHT_EYEBROW_UP",
-        "LEFT_EYE_LEFT",
-        "LEFT_EYE_RIGHT",
-        "LEFT_EYE_UP",
-        "LEFT_EYE_DOWN",
-        "RIGHT_EYE_LEFT",
-        "RIGHT_EYE_RIGHT",
-        "RIGHT_EYE_UP",
-        "RIGHT_EYE_DOWN",
-        "NOSE_LEFT",
-        "NOSE_RIGHT",
-        "MOUTH_UP",
-        "MOUTH_DOWN",
-        "LEFT_PUPIL",
-        "RIGHT_PUPIL"
+        "eyeLeft",
+        "eyeRight",
+        "nose",
+        "mouthLeft",
+        "mouthRight",
+        "leftEyeBrowLeft",
+        "leftEyeBrowRight",
+        "leftEyeBrowUp",
+        "rightEyeBrowLeft",
+        "rightEyeBrowRight",
+        "rightEyeBrowUp",
+        "leftEyeLeft",
+        "leftEyeRight",
+        "leftEyeUp",
+        "leftEyeDown",
+        "rightEyeLeft",
+        "rightEyeRight",
+        "rightEyeUp",
+        "rightEyeDown",
+        "noseLeft",
+        "noseRight",
+        "mouthUp",
+        "mouthDown",
+        "leftPupil",
+        "rightPupil"
       ]
     },
     "Landmarks":{

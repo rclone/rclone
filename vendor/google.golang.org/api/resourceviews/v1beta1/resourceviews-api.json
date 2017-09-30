@@ -23,7 +23,7 @@
  "basePath": "/resourceviews/v1beta1/projects/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "resourceviews/v1beta1/projects/",
- "batchPath": "batch",
+ "batchPath": "batch/resourceviews/v1beta1",
  "parameters": {
   "alt": {
    "type": "string",

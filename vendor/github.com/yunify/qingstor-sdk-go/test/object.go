@@ -67,9 +67,7 @@ func ObjectFeatureContext(s *godog.Suite) {
 }
 
 // --------------------------------------------------------------------------
-const concurrency = 16
-
-var putObjectOutputs [concurrency]*qs.PutObjectOutput
+var putObjectOutputs []*qs.PutObjectOutput
 
 func putObjectWithKey(objectKey string) error {
 	_, err = exec.Command("dd", "if=/dev/zero", "of=/tmp/sdk_bin", "bs=1024", "count=1").Output()
@@ -78,11 +76,12 @@ func putObjectWithKey(objectKey string) error {
 	}
 	defer os.Remove("/tmp/sdk_bin")
 
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	putObjectOutputs = make([]*qs.PutObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -126,7 +125,7 @@ func putObjectWithKey(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -146,14 +145,15 @@ func putObjectStatusCodeIs(statusCode int) error {
 }
 
 // --------------------------------------------------------------------------
-var copyObjectOutputs [concurrency]*qs.PutObjectOutput
+var copyObjectOutputs []*qs.PutObjectOutput
 
 func copyObjectWithKey(objectKey string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	copyObjectOutputs = make([]*qs.PutObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -178,7 +178,7 @@ func copyObjectWithKey(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -198,14 +198,15 @@ func copyObjectStatusCodeIs(statusCode int) error {
 }
 
 // --------------------------------------------------------------------------
-var moveObjectOutputs [concurrency]*qs.PutObjectOutput
+var moveObjectOutputs []*qs.PutObjectOutput
 
 func moveObjectWithKey(objectKey string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	moveObjectOutputs = make([]*qs.PutObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -230,7 +231,7 @@ func moveObjectWithKey(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -251,14 +252,15 @@ func moveObjectStatusCodeIs(statusCode int) error {
 
 // --------------------------------------------------------------------------
 
-var getObjectOutputs [concurrency]*qs.GetObjectOutput
+var getObjectOutputs []*qs.GetObjectOutput
 
 func getObjectWithKey(objectKey string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	getObjectOutputs = make([]*qs.GetObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -279,7 +281,7 @@ func getObjectWithKey(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -313,14 +315,15 @@ func getObjectContentLengthIs(length int) error {
 
 // --------------------------------------------------------------------------
 
-var getObjectWithContentTypeRequests [concurrency]*request.Request
+var getObjectWithContentTypeRequests []*request.Request
 
 func getObjectWithContentType(objectKey, contentType string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	getObjectWithContentTypeRequests = make([]*request.Request, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -354,7 +357,7 @@ func getObjectWithContentType(objectKey, contentType string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -375,14 +378,15 @@ func getObjectContentTypeIs(contentType string) error {
 
 // --------------------------------------------------------------------------
 
-var getObjectWithQuerySignatureURLs [concurrency]string
+var getObjectWithQuerySignatureURLs []string
 
 func getObjectWithQuerySignature(objectKey string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	getObjectWithQuerySignatureURLs = make([]string, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -414,7 +418,7 @@ func getObjectWithQuerySignature(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -443,14 +447,15 @@ func getObjectWithQuerySignatureContentLengthIs(length int) error {
 
 // --------------------------------------------------------------------------
 
-var headObjectOutputs [concurrency]*qs.HeadObjectOutput
+var headObjectOutputs []*qs.HeadObjectOutput
 
 func headObjectWithKey(objectKey string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	headObjectOutputs = make([]*qs.HeadObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -471,7 +476,7 @@ func headObjectWithKey(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -492,14 +497,15 @@ func headObjectStatusCodeIs(statusCode int) error {
 
 // --------------------------------------------------------------------------
 
-var optionsObjectOutputs [concurrency]*qs.OptionsObjectOutput
+var optionsObjectOutputs []*qs.OptionsObjectOutput
 
 func optionsObjectWithMethodAndOrigin(objectKey, method, origin string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	optionsObjectOutputs = make([]*qs.OptionsObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -524,7 +530,7 @@ func optionsObjectWithMethodAndOrigin(objectKey, method, origin string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -545,15 +551,16 @@ func optionsObjectStatusCodeIs(statusCode int) error {
 
 // --------------------------------------------------------------------------
 
-var deleteObjectOutputs [concurrency]*qs.DeleteObjectOutput
-var deleteTheMoveObjectOutputs [concurrency]*qs.DeleteObjectOutput
+var deleteObjectOutputs []*qs.DeleteObjectOutput
+var deleteTheMoveObjectOutputs []*qs.DeleteObjectOutput
 
 func deleteObjectWithKey(objectKey string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	deleteObjectOutputs = make([]*qs.DeleteObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -574,7 +581,7 @@ func deleteObjectWithKey(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err
@@ -594,11 +601,12 @@ func deleteObjectStatusCodeIs(statusCode int) error {
 }
 
 func deleteTheMoveObjectWithKey(objectKey string) error {
-	errChan := make(chan error, concurrency)
+	errChan := make(chan error, tc.Concurrency)
+	deleteTheMoveObjectOutputs = make([]*qs.DeleteObjectOutput, tc.Concurrency)
 
 	wg := sync.WaitGroup{}
-	wg.Add(concurrency)
-	for i := 0; i < concurrency; i++ {
+	wg.Add(tc.Concurrency)
+	for i := 0; i < tc.Concurrency; i++ {
 		go func(index int, errChan chan<- error) {
 			wg.Done()
 
@@ -619,7 +627,7 @@ func deleteTheMoveObjectWithKey(objectKey string) error {
 	}
 	wg.Wait()
 
-	for i := 0; i < concurrency; i++ {
+	for i := 0; i < tc.Concurrency; i++ {
 		err = <-errChan
 		if err != nil {
 			return err

@@ -7,7 +7,6 @@ import (
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
-	"github.com/stretchr/testify/assert"
 )
 
 type testBinarySetStruct struct {
@@ -376,14 +375,18 @@ func assertConvertTest(t *testing.T, i int, actual, expected interface{}, err, e
 	i++
 	if expectedErr != nil {
 		if err != nil {
-			assert.Equal(t, expectedErr, err, "case %d", i)
+			if e, a := expectedErr, err; !reflect.DeepEqual(e, a) {
+				t.Errorf("case %d expect %v, got %v", i, e, a)
+			}
 		} else {
-			assert.Fail(t, "", "case %d, expected error, %v", i)
+			t.Fatalf("case %d, expected error, %v", i, expectedErr)
 		}
 	} else if err != nil {
-		assert.Fail(t, "", "case %d, expect no error, got %v", i, err)
+		t.Fatalf("case %d, expect no error, got %v", i, err)
 	} else {
-		assert.Equal(t, ptrToValue(expected), ptrToValue(actual), "case %d", i)
+		if e, a := ptrToValue(expected), ptrToValue(actual); !reflect.DeepEqual(e, a) {
+			t.Errorf("case %d, expect %v, got %v", i, e, a)
+		}
 	}
 }
 

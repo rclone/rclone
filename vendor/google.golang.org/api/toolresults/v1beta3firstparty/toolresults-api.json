@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/FH4w9B_pRHq9pTaQIMU_qmeewDE\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/oRWw5OqIvzBrnyAI_p6qB5VpgEM\"",
  "discoveryVersion": "v1",
  "id": "toolresults:v1beta3firstparty",
  "name": "toolresults",
  "canonicalName": "Tool Results",
  "version": "v1beta3firstparty",
- "revision": "20170607",
+ "revision": "20170911",
  "title": "Cloud Tool Results firstparty API",
  "description": "Reads and publishes results from Firebase Test Lab.",
  "ownerDomain": "google.com",
@@ -68,6 +68,107 @@
   }
  },
  "schemas": {
+  "AndroidAppInfo": {
+   "id": "AndroidAppInfo",
+   "type": "object",
+   "description": "Android app information.",
+   "properties": {
+    "name": {
+     "type": "string",
+     "description": "The name of the app. Optional"
+    },
+    "packageName": {
+     "type": "string",
+     "description": "The package name of the app. Required."
+    },
+    "versionCode": {
+     "type": "string",
+     "description": "The internal version code of the app. Optional."
+    },
+    "versionName": {
+     "type": "string",
+     "description": "The version name of the app. Optional."
+    }
+   }
+  },
+  "AndroidInstrumentationTest": {
+   "id": "AndroidInstrumentationTest",
+   "type": "object",
+   "description": "A test of an Android application that can control an Android component independently of its normal lifecycle.\n\nSee  for more information on types of Android tests.",
+   "properties": {
+    "testPackageId": {
+     "type": "string",
+     "description": "The java package for the test to be executed. Required"
+    },
+    "testRunnerClass": {
+     "type": "string",
+     "description": "The InstrumentationTestRunner class. Required"
+    },
+    "testTargets": {
+     "type": "array",
+     "description": "Each target must be fully qualified with the package name or class name, in one of these formats: - \"package package_name\" - \"class package_name.class_name\" - \"class package_name.class_name#method_name\"\n\nIf empty, all targets in the module will be run.",
+     "items": {
+      "type": "string"
+     }
+    },
+    "useOrchestrator": {
+     "type": "boolean",
+     "description": "The flag indicates whether Android Test Orchestrator will be used to run test or not. Test orchestrator is used if either: - orchestrator_option field is USE_ORCHESTRATOR, and test runner is compatible with orchestrator. Or - orchestrator_option field is unspecified or ORCHESTRATOR_OPTION_UNSPECIFIED, and test runner is compatible with orchestrator."
+    }
+   }
+  },
+  "AndroidRoboTest": {
+   "id": "AndroidRoboTest",
+   "type": "object",
+   "description": "A test of an android application that explores the application on a virtual or physical Android device, finding culprits and crashes as it goes.",
+   "properties": {
+    "appInitialActivity": {
+     "type": "string",
+     "description": "The initial activity that should be used to start the app. Optional"
+    },
+    "bootstrapPackageId": {
+     "type": "string",
+     "description": "The java package for the bootstrap. Optional"
+    },
+    "bootstrapRunnerClass": {
+     "type": "string",
+     "description": "The runner class for the bootstrap. Optional"
+    },
+    "maxDepth": {
+     "type": "integer",
+     "description": "The max depth of the traversal stack Robo can explore. Optional",
+     "format": "int32"
+    },
+    "maxSteps": {
+     "type": "integer",
+     "description": "The max number of steps/actions Robo can execute. Default is no limit (0). Optional",
+     "format": "int32"
+    }
+   }
+  },
+  "AndroidTest": {
+   "id": "AndroidTest",
+   "type": "object",
+   "description": "An Android mobile test specification.",
+   "properties": {
+    "androidAppInfo": {
+     "$ref": "AndroidAppInfo",
+     "description": "Infomation about the application under test."
+    },
+    "androidInstrumentationTest": {
+     "$ref": "AndroidInstrumentationTest",
+     "description": "An Android instrumentation test."
+    },
+    "androidRoboTest": {
+     "$ref": "AndroidRoboTest",
+     "description": "An Android robo test."
+    },
+    "testTimeout": {
+     "$ref": "Duration",
+     "description": "Max time a test is allowed to run before it is automatically cancelled."
+    }
+   }
+  },
   "Any": {
    "id": "Any",
    "type": "object",
@@ -81,6 +182,20 @@
      "type": "string",
      "description": "Must be a valid serialized protocol buffer of the above specified type.",
      "format": "byte"
+    }
+   }
+  },
+  "AppStartTime": {
+   "id": "AppStartTime",
+   "type": "object",
+   "properties": {
+    "fullyDrawnTime": {
+     "$ref": "Duration",
+     "description": "Optional. The time from app start to reaching the developer-reported \"fully drawn\" time. This is only stored if the app includes a call to Activity.reportFullyDrawn(). See https://developer.android.com/topic/performance/launch-time.html#time-full"
+    },
+    "initialDisplayTime": {
+     "$ref": "Duration",
+     "description": "The time from app start to the first displayed activity being drawn, as reported in Logcat. See https://developer.android.com/topic/performance/launch-time.html#time-initial"
     }
    }
   },
@@ -244,6 +359,10 @@
      "$ref": "Outcome",
      "description": "Classify the result, for example into SUCCESS or FAILURE\n\n- In response: present if set by create/update request - In create/update request: optional"
     },
+    "specification": {
+     "$ref": "Specification",
+     "description": "Lightweight information about execution request.\n\n- In response: present if set by create - In create: optional - In update: optional"
+    },
     "state": {
      "type": "string",
      "description": "The initial state is IN_PROGRESS.\n\nThe only legal state transitions is from IN_PROGRESS to COMPLETE.\n\nA PRECONDITION_FAILED will be returned if an invalid transition is requested.\n\nThe state can only be set to COMPLETE once. A FAILED_PRECONDITION will be returned if the state is set to COMPLETE multiple times.\n\nIf the state is set to COMPLETE, all the in-progress steps within the execution will be set as COMPLETE. If the outcome of the step is not set, the outcome will be set to INCONCLUSIVE.\n\n- In response always set - In create/update request: optional",
@@ -262,7 +381,7 @@
     },
     "testExecutionMatrixId": {
      "type": "string",
-     "description": "TestExecution Matrix ID that the Test Service uses.\n\n- In response: present if set by create - In create: optional - In update: never set"
+     "description": "TestExecution Matrix ID that the TestExecutionService uses.\n\n- In response: present if set by create - In create: optional - In update: never set"
     }
    }
   },
@@ -423,6 +542,19 @@
     }
    }
   },
+  "ListScreenshotClustersResponse": {
+   "id": "ListScreenshotClustersResponse",
+   "type": "object",
+   "properties": {
+    "clusters": {
+     "type": "array",
+     "description": "The set of clustres associated with an execution Always set",
+     "items": {
+      "$ref": "ScreenshotCluster"
+     }
+    }
+   }
+  },
   "ListStepThumbnailsResponse": {
    "id": "ListStepThumbnailsResponse",
    "type": "object",
@@ -536,6 +668,9 @@
    "type": "object",
    "description": "A summary of perf metrics collected and performance environment info",
    "properties": {
+    "appStartTime": {
+     "$ref": "AppStartTime"
+    },
     "executionId": {
      "type": "string",
      "description": "A tool results execution ID."
@@ -655,6 +790,53 @@
     }
    }
   },
+  "Screen": {
+   "id": "Screen",
+   "type": "object",
+   "properties": {
+    "fileReference": {
+     "type": "string",
+     "description": "File reference of the png file. Required."
+    },
+    "locale": {
+     "type": "string",
+     "description": "Locale of the device that the screenshot was taken on. Required."
+    },
+    "model": {
+     "type": "string",
+     "description": "Model of the device that the screenshot was taken on. Required."
+    },
+    "version": {
+     "type": "string",
+     "description": "OS version of the device that the screenshot was taken on. Required."
+    }
+   }
+  },
+  "ScreenshotCluster": {
+   "id": "ScreenshotCluster",
+   "type": "object",
+   "properties": {
+    "activity": {
+     "type": "string",
+     "description": "A string that describes the activity of every screen in the cluster."
+    },
+    "clusterId": {
+     "type": "string",
+     "description": "A unique identifier for the cluster."
+    },
+    "keyScreen": {
+     "$ref": "Screen",
+     "description": "A singular screen that represents the cluster as a whole. This screen will act as the \"cover\" of the entire cluster. When users look at the clusters, only the key screen from each cluster will be shown. Which screen is the key screen is determined by the ClusteringAlgorithm"
+    },
+    "screens": {
+     "type": "array",
+     "description": "Full list of screens.",
+     "items": {
+      "$ref": "Screen"
+     }
+    }
+   }
+  },
   "SkippedDetail": {
    "id": "SkippedDetail",
    "type": "object",
@@ -673,14 +855,33 @@
     }
    }
   },
+  "Specification": {
+   "id": "Specification",
+   "type": "object",
+   "description": "The details about how to run the execution.",
+   "properties": {
+    "androidTest": {
+     "$ref": "AndroidTest",
+     "description": "An Android mobile test execution specification."
+    }
+   }
+  },
   "StackTrace": {
    "id": "StackTrace",
    "type": "object",
    "description": "A stacktrace.",
    "properties": {
+    "clusterId": {
+     "type": "string",
+     "description": "Exception cluster ID"
+    },
     "exception": {
      "type": "string",
      "description": "The stack trace message.\n\nRequired"
+    },
+    "reportId": {
+     "type": "string",
+     "description": "Exception report ID"
     }
    }
   },
@@ -696,7 +897,7 @@
     },
     "details": {
      "type": "array",
-     "description": "A list of messages that carry the error details. There will be a common set of message types for APIs to use.",
+     "description": "A list of messages that carry the error details. There is a common set of message types for APIs to use.",
      "items": {
       "$ref": "Any"
      }
@@ -873,15 +1074,51 @@
   "TestIssue": {
    "id": "TestIssue",
    "type": "object",
-   "description": "An abnormal event observed during the test execution.",
+   "description": "An issue detected occurring during a test execution.",
    "properties": {
     "errorMessage": {
      "type": "string",
-     "description": "A brief human-readable message describing the abnormal event.\n\nRequired."
+     "description": "A brief human-readable message describing the issue. Required."
+    },
+    "severity": {
+     "type": "string",
+     "description": "Severity of issue. Required.",
+     "enum": [
+      "info",
+      "severe",
+      "unspecifiedSeverity",
+      "warning"
+     ],
+     "enumDescriptions": [
+      "",
+      "",
+      "",
+      ""
+     ]
     },
     "stackTrace": {
      "$ref": "StackTrace",
-     "description": "Optional."
+     "description": "Deprecated in favor of stack trace fields inside specific warnings."
+    },
+    "type": {
+     "type": "string",
+     "description": "Type of issue. Required.",
+     "enum": [
+      "anr",
+      "fatalException",
+      "nativeCrash",
+      "unspecifiedType"
+     ],
+     "enumDescriptions": [
+      "",
+      "",
+      "",
+      ""
+     ]
+    },
+    "warning": {
+     "$ref": "Any",
+     "description": "Warning message with additional details of the issue. Should always be a message from com.google.devtools.toolresults.v1.warnings Required."
     }
    }
   },
@@ -1342,6 +1579,85 @@
         }
        },
        "resources": {
+        "clusters": {
+         "methods": {
+          "get": {
+           "id": "toolresults.projects.histories.executions.clusters.get",
+           "path": "{projectId}/histories/{historyId}/executions/{executionId}/clusters/{clusterId}",
+           "httpMethod": "GET",
+           "description": "Retrieves a single screenshot cluster by its ID",
+           "parameters": {
+            "clusterId": {
+             "type": "string",
+             "description": "A Cluster id\n\nRequired.",
+             "required": true,
+             "location": "path"
+            },
+            "executionId": {
+             "type": "string",
+             "description": "An Execution id.\n\nRequired.",
+             "required": true,
+             "location": "path"
+            },
+            "historyId": {
+             "type": "string",
+             "description": "A History id.\n\nRequired.",
+             "required": true,
+             "location": "path"
+            },
+            "projectId": {
+             "type": "string",
+             "description": "A Project id.\n\nRequired.",
+             "required": true,
+             "location": "path"
+            }
+           },
+           "parameterOrder": [
+            "projectId",
+            "historyId",
+            "executionId",
+            "clusterId"
+           ],
+           "response": {
+            "$ref": "ScreenshotCluster"
+           }
+          },
+          "list": {
+           "id": "toolresults.projects.histories.executions.clusters.list",
+           "path": "{projectId}/histories/{historyId}/executions/{executionId}/clusters",
+           "httpMethod": "GET",
+           "description": "Lists Screenshot Clusters\n\nReturns the list of screenshot clusters corresponding to an execution. Screenshot clusters are created after the execution is finished. Clusters are created from a set of screenshots. Between any two screenshots, a matching score is calculated based off their metadata that determines how similar they are. Screenshots are placed in the cluster that has screens which have the highest matching scores.",
+           "parameters": {
+            "executionId": {
+             "type": "string",
+             "description": "An Execution id.\n\nRequired.",
+             "required": true,
+             "location": "path"
+            },
+            "historyId": {
+             "type": "string",
+             "description": "A History id.\n\nRequired.",
+             "required": true,
+             "location": "path"
+            },
+            "projectId": {
+             "type": "string",
+             "description": "A Project id.\n\nRequired.",
+             "required": true,
+             "location": "path"
+            }
+           },
+           "parameterOrder": [
+            "projectId",
+            "historyId",
+            "executionId"
+           ],
+           "response": {
+            "$ref": "ListScreenshotClustersResponse"
+           }
+          }
+         }
+        },
         "steps": {
          "methods": {
           "create": {
@@ -1614,7 +1930,7 @@
              "id": "toolresults.projects.histories.executions.steps.perfMetricsSummary.create",
              "path": "{projectId}/histories/{historyId}/executions/{executionId}/steps/{stepId}/perfMetricsSummary",
              "httpMethod": "POST",
-             "description": "Creates a PerfMetricsSummary resource.\n\nMay return any of the following error code(s): - ALREADY_EXISTS - A PerfMetricSummary already exists for the given Step - NOT_FOUND - The containing Step does not exist",
+             "description": "Creates a PerfMetricsSummary resource. Returns the existing one if it has already been created.\n\nMay return any of the following error code(s): - NOT_FOUND - The containing Step does not exist",
              "parameters": {
               "executionId": {
                "type": "string",

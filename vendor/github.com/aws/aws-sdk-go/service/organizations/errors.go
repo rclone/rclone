@@ -69,6 +69,10 @@ const (
 	//
 	// Note: deleted and closed accounts still count toward your limit.
 	//
+	// If you get an exception that indicates that you exceeded your account limits
+	// for the organization or that you can"t add an account because your organization
+	// is still initializing, please contact  AWS Customer Support (https://console.aws.amazon.com/support/home#/).
+	//
 	//    * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 	//    handshakes you can send in one day.
 	//
@@ -92,20 +96,29 @@ const (
 	//    * ACCOUNT_CANNOT_LEAVE_WITHOUT_EULA: You attempted to remove an account
 	//    from the organization that does not yet have enough information to exist
 	//    as a stand-alone account. This account requires you to first agree to
-	//    the End-User License Agreement (EULA).
+	//    the AWS Customer Agreement. Follow the steps at To leave an organization
+	//    when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+	//    in the AWS Organizations User Guide.
 	//
 	//    * ACCOUNT_CANNOT_LEAVE_WITHOUT_PHONE_VERIFICATION: You attempted to remove
 	//    an account from the organization that does not yet have enough information
 	//    to exist as a stand-alone account. This account requires you to first
-	//    complete phone verification.
+	//    complete phone verification. Follow the steps at To leave an organization
+	//    when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+	//    in the AWS Organizations User Guide.
 	//
 	//    * MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To create an organization
 	//    with this account, you first must associate a payment instrument, such
-	//    as a credit card, with the account.
+	//    as a credit card, with the account. Follow the steps at To leave an organization
+	//    when all required account information has not yet been provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+	//    in the AWS Organizations User Guide.
 	//
 	//    * MEMBER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED: To complete this operation
 	//    with this member account, you first must associate a payment instrument,
-	//    such as a credit card, with the account.
+	//    such as a credit card, with the account. Follow the steps at To leave
+	//    an organization when all required account information has not yet been
+	//    provided (http://docs.aws.amazon.com/organizations/latest/userguide/orgs_manage_accounts_remove.html#leave-without-all-info)
+	//    in the AWS Organizations User Guide.
 	//
 	//    * ACCOUNT_CREATION_RATE_LIMIT_EXCEEDED: You attempted to exceed the number
 	//    of accounts that you can create in one day.
@@ -116,6 +129,10 @@ const (
 	//    For example, accounts with India addresses must be associated with the
 	//    AISPL marketplace. All accounts in an organization must be associated
 	//    with the same marketplace.
+	//
+	//    * MASTER_ACCOUNT_MISSING_CONTACT_INFO: To complete this operation, you
+	//    must first provide contact a valid address and phone number for the master
+	//    account. Then try the operation again.
 	ErrCodeConstraintViolationException = "ConstraintViolationException"
 
 	// ErrCodeCreateAccountStatusNotFoundException for service response error code
@@ -189,6 +206,10 @@ const (
 	//    * ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on
 	//    the number of accounts in an organization. Note: deleted and closed accounts
 	//    still count toward your limit.
+	//
+	// If you get an exception that indicates that you exceeded your account limits
+	//    for the organization or that you can"t add an account because your organization
+	//    is still initializing, please contact  AWS Customer Support (https://console.aws.amazon.com/support/home#/).
 	//
 	//    * HANDSHAKE_RATE_LIMIT_EXCEEDED: You attempted to exceed the number of
 	//    handshakes you can send in one day.

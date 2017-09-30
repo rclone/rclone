@@ -350,6 +350,46 @@ func (s *AdministratorWebTokenSpec) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// AndroidDevicePolicyConfig: The Android Device Policy configuration of
+// an enterprise.
+type AndroidDevicePolicyConfig struct {
+	// Kind: Identifies what kind of resource this is. Value: the fixed
+	// string "androidenterprise#androidDevicePolicyConfig".
+	Kind string `json:"kind,omitempty"`
+
+	// State: The state of Android Device Policy. "enabled" indicates that
+	// Android Device Policy is enabled for the enterprise and the EMM is
+	// allowed to manage devices with Android Device Policy, while
+	// "disabled" means that it cannot.
+	State string `json:"state,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Kind") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Kind") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AndroidDevicePolicyConfig) MarshalJSON() ([]byte, error) {
+	type noMethod AndroidDevicePolicyConfig
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // AppRestrictionsSchema: Represents the list of app restrictions
 // available to be pre-configured for the product.
 type AppRestrictionsSchema struct {
@@ -1073,28 +1113,23 @@ func (s *EntitlementsListResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// GroupLicense: A group license object indicates a product that an
-// enterprise admin has approved for use in the enterprise. The product
-// may be free or paid. For free products, a group license object is
-// created in these cases: if the enterprise admin approves a product in
-// Google Play, if the product is added to a collection, or if an
-// entitlement for the product is created for a user via the API. For
-// paid products, a group license object is only created as part of the
-// first bulk purchase of that product in Google Play by the enterprise
-// admin.
+// GroupLicense: Group license objects allow you to keep track of
+// licenses (called entitlements) for both free and paid apps. For a
+// free app, a group license is created when an enterprise admin first
+// approves the product in Google Play or when the first entitlement for
+// the product is created for a user via the API. For a paid app, a
+// group license object is only created when an enterprise admin
+// purchases the product in Google Play for the first time.
 //
-// The API can be used to query group licenses; the available
-// information includes the total number of licenses purchased (for paid
-// products) and the total number of licenses that have been
-// provisioned, that is, the total number of user entitlements in
-// existence for the product.
+// Use the API to query group licenses. A Grouplicenses resource
+// includes the total number of licenses purchased (paid apps only) and
+// the total number of licenses currently in use. Iyn other words, the
+// total number of Entitlements that exist for the product.
 //
-// Group license objects are never deleted. If, for example, a free app
-// is added to a collection and then removed, the group license will
-// remain, allowing the enterprise admin to keep track of any remaining
-// entitlements. An enterprise admin may indicate they are no longer
-// interested in the group license by marking it as unapproved in Google
-// Play.
+// Only one group license object is created per product and group
+// license objects are never deleted. If a product is unapproved, its
+// group license remains. This allows enterprise admins to keep track of
+// any remaining entitlements for the product.
 type GroupLicense struct {
 	// AcquisitionKind: How this group license was acquired. "bulkPurchase"
 	// means that this Grouplicenses resource was created because the
@@ -1920,9 +1955,7 @@ func (s *Permission) MarshalJSON() ([]byte, error) {
 // to the full Google Play details page) is intended to allow a basic
 // representation of the product within an EMM user interface.
 type Product struct {
-	// AppVersion: App versions currently available for this product. The
-	// returned list contains only public versions. Alpha and beta versions
-	// are not included.
+	// AppVersion: App versions currently available for this product.
 	AppVersion []*AppVersion `json:"appVersion,omitempty"`
 
 	// AuthorName: The name of the author of the product (for example, the
@@ -1962,6 +1995,9 @@ type Product struct {
 
 	// RequiresContainerApp: Deprecated.
 	RequiresContainerApp bool `json:"requiresContainerApp,omitempty"`
+
+	// SigningCertificate: The certificate used to sign this product.
+	SigningCertificate *ProductSigningCertificate `json:"signingCertificate,omitempty"`
 
 	// SmallIconUrl: A link to a smaller image that can be used as an icon
 	// for the product. This image is suitable for use at up to 128px x
@@ -2168,7 +2204,10 @@ type ProductSet struct {
 	// access all products that are approved for the enterprise. If the
 	// value is "allApproved" or "includeAll", the productId field is
 	// ignored. If no value is provided, it is interpreted as "whitelist"
-	// for backwards compatibility.
+	// for backwards compatibility. Further "allApproved" or "includeAll"
+	// does not enable automatic visibility of "alpha" or "beta" tracks for
+	// Android app. Use ProductVisibility to enable "alpha" or "beta" tracks
+	// per user.
 	ProductSetBehavior string `json:"productSetBehavior,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2194,6 +2233,40 @@ type ProductSet struct {
 
 func (s *ProductSet) MarshalJSON() ([]byte, error) {
 	type noMethod ProductSet
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type ProductSigningCertificate struct {
+	// CertificateHashSha1: The base64 urlsafe encoded SHA1 hash of the
+	// certificate. (This field is deprecated in favor of SHA2-256. It
+	// should not be used and may be removed at any time.)
+	CertificateHashSha1 string `json:"certificateHashSha1,omitempty"`
+
+	// CertificateHashSha256: The base64 urlsafe encoded SHA2-256 hash of
+	// the certificate.
+	CertificateHashSha256 string `json:"certificateHashSha256,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CertificateHashSha1")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CertificateHashSha1") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ProductSigningCertificate) MarshalJSON() ([]byte, error) {
+	type noMethod ProductSigningCertificate
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -4397,6 +4470,144 @@ func (c *EnterprisesGetCall) Do(opts ...googleapi.CallOption) (*Enterprise, erro
 
 }
 
+// method id "androidenterprise.enterprises.getAndroidDevicePolicyConfig":
+
+type EnterprisesGetAndroidDevicePolicyConfigCall struct {
+	s            *Service
+	enterpriseId string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetAndroidDevicePolicyConfig: Returns the Android Device Policy
+// config resource.
+func (r *EnterprisesService) GetAndroidDevicePolicyConfig(enterpriseId string) *EnterprisesGetAndroidDevicePolicyConfigCall {
+	c := &EnterprisesGetAndroidDevicePolicyConfigCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.enterpriseId = enterpriseId
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *EnterprisesGetAndroidDevicePolicyConfigCall) Fields(s ...googleapi.Field) *EnterprisesGetAndroidDevicePolicyConfigCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *EnterprisesGetAndroidDevicePolicyConfigCall) IfNoneMatch(entityTag string) *EnterprisesGetAndroidDevicePolicyConfigCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *EnterprisesGetAndroidDevicePolicyConfigCall) Context(ctx context.Context) *EnterprisesGetAndroidDevicePolicyConfigCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *EnterprisesGetAndroidDevicePolicyConfigCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *EnterprisesGetAndroidDevicePolicyConfigCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "enterprises/{enterpriseId}/androidDevicePolicyConfig")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"enterpriseId": c.enterpriseId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "androidenterprise.enterprises.getAndroidDevicePolicyConfig" call.
+// Exactly one of *AndroidDevicePolicyConfig or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *AndroidDevicePolicyConfig.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *EnterprisesGetAndroidDevicePolicyConfigCall) Do(opts ...googleapi.CallOption) (*AndroidDevicePolicyConfig, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &AndroidDevicePolicyConfig{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Returns the Android Device Policy config resource.",
+	//   "httpMethod": "GET",
+	//   "id": "androidenterprise.enterprises.getAndroidDevicePolicyConfig",
+	//   "parameterOrder": [
+	//     "enterpriseId"
+	//   ],
+	//   "parameters": {
+	//     "enterpriseId": {
+	//       "description": "The ID of the enterprise.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "enterprises/{enterpriseId}/androidDevicePolicyConfig",
+	//   "response": {
+	//     "$ref": "AndroidDevicePolicyConfig"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/androidenterprise"
+	//   ]
+	// }
+
+}
+
 // method id "androidenterprise.enterprises.getServiceAccount":
 
 type EnterprisesGetServiceAccountCall struct {
@@ -5147,8 +5358,8 @@ type EnterprisesSendTestPushNotificationCall struct {
 	header_      http.Header
 }
 
-// SendTestPushNotification: Sends a test push notification to validate
-// the EMM integration with the Google Cloud Pub/Sub service for this
+// SendTestPushNotification: Sends a test notification to validate the
+// EMM integration with the Google Cloud Pub/Sub service for this
 // enterprise.
 func (r *EnterprisesService) SendTestPushNotification(enterpriseId string) *EnterprisesSendTestPushNotificationCall {
 	c := &EnterprisesSendTestPushNotificationCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -5239,7 +5450,7 @@ func (c *EnterprisesSendTestPushNotificationCall) Do(opts ...googleapi.CallOptio
 	}
 	return ret, nil
 	// {
-	//   "description": "Sends a test push notification to validate the EMM integration with the Google Cloud Pub/Sub service for this enterprise.",
+	//   "description": "Sends a test notification to validate the EMM integration with the Google Cloud Pub/Sub service for this enterprise.",
 	//   "httpMethod": "POST",
 	//   "id": "androidenterprise.enterprises.sendTestPushNotification",
 	//   "parameterOrder": [
@@ -5390,6 +5601,143 @@ func (c *EnterprisesSetAccountCall) Do(opts ...googleapi.CallOption) (*Enterpris
 	//   },
 	//   "response": {
 	//     "$ref": "EnterpriseAccount"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/androidenterprise"
+	//   ]
+	// }
+
+}
+
+// method id "androidenterprise.enterprises.setAndroidDevicePolicyConfig":
+
+type EnterprisesSetAndroidDevicePolicyConfigCall struct {
+	s                         *Service
+	enterpriseId              string
+	androiddevicepolicyconfig *AndroidDevicePolicyConfig
+	urlParams_                gensupport.URLParams
+	ctx_                      context.Context
+	header_                   http.Header
+}
+
+// SetAndroidDevicePolicyConfig: Sets the Android Device Policy config
+// resource. EMM may use this method to enable or disable Android Device
+// Policy support for the specified enterprise. To learn more about
+// managing devices and apps with Android Device Policy, see the Android
+// Management API.
+func (r *EnterprisesService) SetAndroidDevicePolicyConfig(enterpriseId string, androiddevicepolicyconfig *AndroidDevicePolicyConfig) *EnterprisesSetAndroidDevicePolicyConfigCall {
+	c := &EnterprisesSetAndroidDevicePolicyConfigCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.enterpriseId = enterpriseId
+	c.androiddevicepolicyconfig = androiddevicepolicyconfig
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *EnterprisesSetAndroidDevicePolicyConfigCall) Fields(s ...googleapi.Field) *EnterprisesSetAndroidDevicePolicyConfigCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *EnterprisesSetAndroidDevicePolicyConfigCall) Context(ctx context.Context) *EnterprisesSetAndroidDevicePolicyConfigCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *EnterprisesSetAndroidDevicePolicyConfigCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *EnterprisesSetAndroidDevicePolicyConfigCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.androiddevicepolicyconfig)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "enterprises/{enterpriseId}/androidDevicePolicyConfig")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("PUT", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"enterpriseId": c.enterpriseId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "androidenterprise.enterprises.setAndroidDevicePolicyConfig" call.
+// Exactly one of *AndroidDevicePolicyConfig or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *AndroidDevicePolicyConfig.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *EnterprisesSetAndroidDevicePolicyConfigCall) Do(opts ...googleapi.CallOption) (*AndroidDevicePolicyConfig, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &AndroidDevicePolicyConfig{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Sets the Android Device Policy config resource. EMM may use this method to enable or disable Android Device Policy support for the specified enterprise. To learn more about managing devices and apps with Android Device Policy, see the Android Management API.",
+	//   "httpMethod": "PUT",
+	//   "id": "androidenterprise.enterprises.setAndroidDevicePolicyConfig",
+	//   "parameterOrder": [
+	//     "enterpriseId"
+	//   ],
+	//   "parameters": {
+	//     "enterpriseId": {
+	//       "description": "The ID of the enterprise.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "enterprises/{enterpriseId}/androidDevicePolicyConfig",
+	//   "request": {
+	//     "$ref": "AndroidDevicePolicyConfig"
+	//   },
+	//   "response": {
+	//     "$ref": "AndroidDevicePolicyConfig"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/androidenterprise"

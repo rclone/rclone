@@ -29,7 +29,6 @@ import (
 	"math/rand"
 	"net/http"
 	"os"
-	"reflect"
 	"sort"
 	"strconv"
 	"strings"
@@ -46,7 +45,7 @@ import (
 	"google.golang.org/api/option"
 )
 
-const testPrefix = "-go-cloud-storage-test"
+const testPrefix = "-go-test"
 
 // suffix is a timestamp-based suffix which is added to all buckets created by
 // tests. This reduces flakiness when the tests are run in parallel and allows
@@ -125,7 +124,7 @@ func TestBucketMethods(t *testing.T) {
 	b := client.Bucket(newBucket)
 	// Test Create and Delete.
 	if err := b.Create(ctx, projectID, nil); err != nil {
-		t.Errorf("Bucket(%v).Create(%v, %v) failed: %v", newBucket, projectID, nil, err)
+		t.Fatalf("Bucket(%v).Create(%v, %v) failed: %v", newBucket, projectID, nil, err)
 	}
 	attrs, err := b.Attrs(ctx)
 	if err != nil {
@@ -154,9 +153,35 @@ func TestBucketMethods(t *testing.T) {
 		StorageClass:      "NEARLINE",
 		VersioningEnabled: true,
 		Labels:            labels,
+		Lifecycle: Lifecycle{
+			Rules: []LifecycleRule{{
+				Action: LifecycleAction{
+					Type:         SetStorageClassAction,
+					StorageClass: "NEARLINE",
+				},
+				Condition: LifecycleCondition{
+					AgeInDays:             10,
+					Liveness:              Archived,
+					CreatedBefore:         time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC),
+					MatchesStorageClasses: []string{"MULTI_REGIONAL", "STANDARD"},
+					NumNewerVersions:      3,
+				},
+			}, {
+				Action: LifecycleAction{
+					Type: DeleteAction,
+				},
+				Condition: LifecycleCondition{
+					AgeInDays:             30,
+					Liveness:              Live,
+					CreatedBefore:         time.Date(2017, 1, 1, 0, 0, 0, 0, time.UTC),
+					MatchesStorageClasses: []string{"NEARLINE"},
+					NumNewerVersions:      10,
+				},
+			}},
+		},
 	}
 	if err := client.Bucket(newBucket).Create(ctx, projectID, attrs); err != nil {
-		t.Errorf("Bucket(%v).Create(%v, %v) failed: %v", newBucket, projectID, attrs, err)
+		t.Fatalf("Bucket(%v).Create(%v, %+v) failed: %v", newBucket, projectID, attrs, err)
 	}
 	attrs, err = b.Attrs(ctx)
 	if err != nil {
@@ -171,7 +196,7 @@ func TestBucketMethods(t *testing.T) {
 		if !attrs.VersioningEnabled {
 			t.Error("got versioning disabled, wanted it enabled")
 		}
-		if got, want := attrs.Labels, labels; !reflect.DeepEqual(got, want) {
+		if got, want := attrs.Labels, labels; !testutil.Equal(got, want) {
 			t.Errorf("labels: got %v, want %v", got, want)
 		}
 	}
@@ -224,7 +249,7 @@ func TestIntegration_BucketUpdate(t *testing.T) {
 		"l1":    "v1",
 		"empty": "",
 	}
-	if !reflect.DeepEqual(attrs.Labels, wantLabels) {
+	if !testutil.Equal(attrs.Labels, wantLabels) {
 		t.Fatalf("got %v, want %v", attrs.Labels, wantLabels)
 	}
 
@@ -245,7 +270,7 @@ func TestIntegration_BucketUpdate(t *testing.T) {
 		"l1":  "v2",
 		"new": "new",
 	}
-	if !reflect.DeepEqual(attrs.Labels, wantLabels) {
+	if !testutil.Equal(attrs.Labels, wantLabels) {
 		t.Fatalf("got %v, want %v", attrs.Labels, wantLabels)
 	}
 }
@@ -338,6 +363,9 @@ func TestObjects(t *testing.T) {
 		}
 		if got, want := rc.ContentType(), "text/plain"; got != want {
 			t.Errorf("ContentType (%q) = %q; want %q", obj, got, want)
+		}
+		if got, want := rc.CacheControl(), "public, max-age=60"; got != want {
+			t.Errorf("CacheControl (%q) = %q; want %q", obj, got, want)
 		}
 		rc.Close()
 
@@ -543,7 +571,7 @@ func TestObjects(t *testing.T) {
 		if got, want := updated.ContentLanguage, "en"; got != want {
 			t.Errorf("updated.ContentLanguage == %q; want %q", updated.ContentLanguage, want)
 		}
-		if got, want := updated.Metadata, metadata; !reflect.DeepEqual(got, want) {
+		if got, want := updated.Metadata, metadata; !testutil.Equal(got, want) {
 			t.Errorf("updated.Metadata == %+v; want %+v", updated.Metadata, want)
 		}
 		if got, want := updated.Created, created; got != want {
@@ -912,7 +940,7 @@ func TestZeroSizedObject(t *testing.T) {
 func TestIntegration_Encryption(t *testing.T) {
 	// This function tests customer-supplied encryption keys for all operations
 	// involving objects. Bucket and ACL operations aren't tested because they
-	// aren't affected customer encryption.
+	// aren't affected by customer encryption. Neither is deletion.
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -1157,7 +1185,7 @@ func TestIntegration_BucketInCopyAttrs(t *testing.T) {
 	}
 	copier := obj.CopierFrom(obj)
 	rawObject := copier.ObjectAttrs.toRawObject(bucket)
-	_, err := copier.callRewrite(ctx, obj, rawObject)
+	_, err := copier.callRewrite(ctx, rawObject)
 	if err == nil {
 		t.Errorf("got nil, want error")
 	}
@@ -1299,14 +1327,131 @@ func TestIntegration_BucketIAM(t *testing.T) {
 	}
 	sort.Strings(perms)
 	sort.Strings(got)
-	if !reflect.DeepEqual(got, perms) {
+	if !testutil.Equal(got, perms) {
 		t.Errorf("got %v, want %v", got, perms)
 	}
+}
+
+func TestIntegration_RequesterPays(t *testing.T) {
+	ctx := context.Background()
+	client, bucketName := testConfig(ctx, t)
+	defer client.Close()
+	b := client.Bucket(bucketName + "-rp")
+	projID := testutil.ProjID()
+
+	// Extract the error code from err if it's a googleapi.Error.
+	errCode := func(err error) int {
+		if err == nil {
+			return 0
+		}
+		if err, ok := err.(*googleapi.Error); ok {
+			return err.Code
+		}
+		return -1
+	}
+
+	// Call f twice on b, first without and then with a user project.
+	call := func(msg string, f func(b *BucketHandle) error) {
+		if err := f(b); err == nil {
+			if got, want := errCode(err), 400; got != want {
+				t.Errorf("%s: got error code %d, want %d", msg, got, want)
+			}
+		}
+		if err := f(b.UserProject(projID)); err != nil {
+			t.Errorf("%s: got %v, want nil", msg, err)
+		}
+	}
+
+	// Create a requester-pays bucket.
+	err := b.Create(ctx, projID, &BucketAttrs{RequesterPays: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Getting its attributes requires a user project.
+	var attrs *BucketAttrs
+	call("Bucket attrs", func(b *BucketHandle) (err error) {
+		attrs, err = b.Attrs(ctx)
+		return err
+	})
+	if got, want := attrs.RequesterPays, true; got != want {
+		t.Fatalf("attr.RequesterPays = %b, want %b", got, want)
+	}
+
+	// Object operations.
+	call("write object", func(b *BucketHandle) error {
+		return writeObject(ctx, b.Object("foo"), "text/plain", []byte("hello"))
+	})
+	// // TODO(jba): add read test when XML API has requester-pays support.
+	// callObject("object attrs", o, func(o *ObjectHandle) error {
+	// 	_, err := o.Attrs(ctx)
+	// 	return err
+	// })
+	call("update object", func(b *BucketHandle) error {
+		_, err := b.Object("foo").Update(ctx, ObjectAttrsToUpdate{ContentLanguage: "en"})
+		return err
+	})
+
+	// ACL operations.
+	entity := ACLEntity("domain-google.com")
+	call("bucket acl set", func(b *BucketHandle) error {
+		return b.ACL().Set(ctx, entity, RoleReader)
+	})
+	call("bucket acl list", func(b *BucketHandle) error {
+		_, err := b.ACL().List(ctx)
+		return err
+	})
+	call("bucket acl delete", func(b *BucketHandle) error {
+		return b.ACL().Delete(ctx, entity)
+	})
+	call("default object acl set", func(b *BucketHandle) error {
+		return b.DefaultObjectACL().Set(ctx, entity, RoleReader)
+	})
+	call("default object acl list", func(b *BucketHandle) error {
+		_, err := b.DefaultObjectACL().List(ctx)
+		return err
+	})
+	call("default object acl delete", func(b *BucketHandle) error {
+		return b.DefaultObjectACL().Delete(ctx, entity)
+	})
+	call("object acl set", func(b *BucketHandle) error {
+		return b.Object("foo").ACL().Set(ctx, entity, RoleReader)
+	})
+	call("object acl list", func(b *BucketHandle) error {
+		_, err := b.Object("foo").ACL().List(ctx)
+		return err
+	})
+	call("object acl delete", func(b *BucketHandle) error {
+		return b.Object("foo").ACL().Delete(ctx, entity)
+	})
+
+	// Copy and compose.
+	call("copy", func(b *BucketHandle) error {
+		_, err := b.Object("copy").CopierFrom(b.Object("foo")).Run(ctx)
+		return err
+	})
+	call("compose", func(b *BucketHandle) error {
+		_, err := b.Object("compose").ComposerFrom(b.Object("foo"), b.Object("copy")).Run(ctx)
+		return err
+	})
+
+	// Deletion.
+	call("delete object", func(b *BucketHandle) error {
+		return b.Object("foo").Delete(ctx)
+	})
+	for _, obj := range []string{"copy", "compose"} {
+		if err := b.UserProject(projID).Object(obj).Delete(ctx); err != nil {
+			t.Fatalf("could not delete %q: %v", obj, err)
+		}
+	}
+	call("delete bucket", func(b *BucketHandle) error {
+		return b.Delete(ctx)
+	})
 }
 
 func writeObject(ctx context.Context, obj *ObjectHandle, contentType string, contents []byte) error {
 	w := obj.NewWriter(ctx)
 	w.ContentType = contentType
+	w.CacheControl = "public, max-age=60"
 	if contents != nil {
 		if _, err := w.Write(contents); err != nil {
 			_ = w.Close()

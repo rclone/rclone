@@ -2366,6 +2366,8 @@ type LogUserEventRequest struct {
 	// certificate help icon.
 	//   "SMB_CLICKED_VIDEO_ADS_CERTIFICATE_HELP_ICON" - Advertiser clicked
 	// VideoAds certificate help icon.
+	//   "SMB_VIEWED_DIGITAL_SALES_CERTIFICATE" - Advertiser viewed Digital
+	// Sales certificate.
 	//   "CLICKED_HELP_AT_BOTTOM" - Clicked `help` at bottom.
 	//   "CLICKED_HELP_AT_TOP" - Clicked `help` at top.
 	//   "CLIENT_ERROR" - Client error occurred.

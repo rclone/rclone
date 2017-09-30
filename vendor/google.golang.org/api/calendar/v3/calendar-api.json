@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/euj94Rd_zZNye-Ex23VYZId4hug\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/uAzZjTyNjvCXQxJAVHPs_CfUo-M\"",
  "discoveryVersion": "v1",
  "id": "calendar:v3",
  "name": "calendar",
  "version": "v3",
- "revision": "20170528",
+ "revision": "20170905",
  "title": "Calendar API",
  "description": "Manipulates events and other calendar data.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/calendar/v3/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "calendar/v3/",
- "batchPath": "batch",
+ "batchPath": "batch/calendar/v3",
  "parameters": {
   "alt": {
    "type": "string",
@@ -455,42 +455,6 @@
     }
    }
   },
-  "DeepLinkData": {
-   "id": "DeepLinkData",
-   "type": "object",
-   "properties": {
-    "links": {
-     "type": "array",
-     "items": {
-      "$ref": "Link"
-     }
-    },
-    "url": {
-     "type": "string"
-    }
-   }
-  },
-  "DisplayInfo": {
-   "id": "DisplayInfo",
-   "type": "object",
-   "properties": {
-    "appIconUrl": {
-     "type": "string"
-    },
-    "appShortTitle": {
-     "type": "string"
-    },
-    "appTitle": {
-     "type": "string"
-    },
-    "linkShortTitle": {
-     "type": "string"
-    },
-    "linkTitle": {
-     "type": "string"
-    }
-   }
-  },
   "Error": {
    "id": "Error",
    "type": "object",
@@ -805,7 +769,7 @@
     },
     "transparency": {
      "type": "string",
-     "description": "Whether the event blocks time on the calendar. Optional. Possible values are:  \n- \"opaque\" - The event blocks time on the calendar. This is the default value. \n- \"transparent\" - The event does not block time on the calendar.",
+     "description": "Whether the event blocks time on the calendar. Optional. Possible values are:  \n- \"opaque\" - Default value. The event does block time on the calendar. This is equivalent to setting Show me as to Busy in the Calendar UI. \n- \"transparent\" - The event does not block time on the calendar. This is equivalent to setting Show me as to Available in the Calendar UI.",
      "default": "opaque"
     },
     "updated": {
@@ -928,20 +892,6 @@
     "timeZone": {
      "type": "string",
      "description": "The time zone in which the time is specified. (Formatted as an IANA Time Zone Database name, e.g. \"Europe/Zurich\".) For recurring events this field is required and specifies the time zone in which the recurrence is expanded. For single events this field is optional and indicates a custom time zone for the event start/end."
-    }
-   }
-  },
-  "EventHabitInstance": {
-   "id": "EventHabitInstance",
-   "type": "object",
-   "properties": {
-    "data": {
-     "$ref": "HabitInstanceData",
-     "description": "Metadata specific to this instance."
-    },
-    "parentId": {
-     "type": "string",
-     "description": "Id of the habit this instance belongs to."
     }
    }
   },
@@ -1158,60 +1108,6 @@
      "type": "string",
      "description": "The start of the interval.",
      "format": "date-time"
-    }
-   }
-  },
-  "HabitInstanceData": {
-   "id": "HabitInstanceData",
-   "type": "object",
-   "properties": {
-    "status": {
-     "type": "string"
-    },
-    "statusInferred": {
-     "type": "boolean"
-    },
-    "type": {
-     "type": "string"
-    }
-   }
-  },
-  "LaunchInfo": {
-   "id": "LaunchInfo",
-   "type": "object",
-   "properties": {
-    "appId": {
-     "type": "string"
-    },
-    "installUrl": {
-     "type": "string"
-    },
-    "intentAction": {
-     "type": "string"
-    },
-    "uri": {
-     "type": "string"
-    }
-   }
-  },
-  "Link": {
-   "id": "Link",
-   "type": "object",
-   "properties": {
-    "applinkingSource": {
-     "type": "string"
-    },
-    "displayInfo": {
-     "$ref": "DisplayInfo"
-    },
-    "launchInfo": {
-     "$ref": "LaunchInfo"
-    },
-    "platform": {
-     "type": "string"
-    },
-    "url": {
-     "type": "string"
     }
    }
   },
@@ -2295,13 +2191,13 @@
       },
       "timeMax": {
        "type": "string",
-       "description": "Upper bound (exclusive) for an event's start time to filter by. Optional. The default is not to filter by start time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored.",
+       "description": "Upper bound (exclusive) for an event's start time to filter by. Optional. The default is not to filter by start time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored. If timeMin is set, timeMax must be greater than timeMin.",
        "format": "date-time",
        "location": "query"
       },
       "timeMin": {
        "type": "string",
-       "description": "Lower bound (inclusive) for an event's end time to filter by. Optional. The default is not to filter by end time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored.",
+       "description": "Lower bound (inclusive) for an event's end time to filter by. Optional. The default is not to filter by end time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored. If timeMax is set, timeMin must be smaller than timeMax.",
        "format": "date-time",
        "location": "query"
       },
@@ -2610,13 +2506,13 @@
       },
       "timeMax": {
        "type": "string",
-       "description": "Upper bound (exclusive) for an event's start time to filter by. Optional. The default is not to filter by start time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored.",
+       "description": "Upper bound (exclusive) for an event's start time to filter by. Optional. The default is not to filter by start time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored. If timeMin is set, timeMax must be greater than timeMin.",
        "format": "date-time",
        "location": "query"
       },
       "timeMin": {
        "type": "string",
-       "description": "Lower bound (inclusive) for an event's end time to filter by. Optional. The default is not to filter by end time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored.",
+       "description": "Lower bound (inclusive) for an event's end time to filter by. Optional. The default is not to filter by end time. Must be an RFC3339 timestamp with mandatory time zone offset, e.g., 2011-06-03T10:00:00-07:00, 2011-06-03T10:00:00Z. Milliseconds may be provided but will be ignored. If timeMax is set, timeMin must be smaller than timeMax.",
        "format": "date-time",
        "location": "query"
       },

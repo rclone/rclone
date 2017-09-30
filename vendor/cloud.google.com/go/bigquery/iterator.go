@@ -70,7 +70,7 @@ type RowIterator struct {
 //
 // If dst is a *map[string]Value, a new map will be created if dst is nil. Then
 // for each schema column name, the map key of that name will be set to the column's
-// value.
+// value. STRUCT types (RECORD types or nested schemas) become nested maps.
 //
 // If dst is pointer to a struct, each column in the schema will be matched
 // with an exported field of the struct that has the same name, ignoring case.
@@ -89,8 +89,8 @@ type RowIterator struct {
 //   TIME        civil.Time
 //   DATETIME    civil.DateTime
 //
-// A repeated field corresponds to a slice or array of the element type.
-// A RECORD type (nested schema) corresponds to a nested struct or struct pointer.
+// A repeated field corresponds to a slice or array of the element type. A STRUCT
+// type (RECORD or nested schema) corresponds to a nested struct or struct pointer.
 // All calls to Next on the same iterator must use the same struct type.
 //
 // It is an error to attempt to read a BigQuery NULL value into a struct field.

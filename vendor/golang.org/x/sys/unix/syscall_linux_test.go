@@ -192,6 +192,13 @@ func TestGetrlimit(t *testing.T) {
 	}
 }
 
+func TestSelect(t *testing.T) {
+	_, err := unix.Select(0, nil, nil, nil, &unix.Timeval{0, 0})
+	if err != nil {
+		t.Fatalf("Select: %v", err)
+	}
+}
+
 // utilities taken from os/os_test.go
 
 func touch(t *testing.T, name string) {

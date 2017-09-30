@@ -15,19 +15,18 @@ const opCreateBudget = "CreateBudget"
 
 // CreateBudgetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateBudget operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateBudget for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateBudget method directly
-// instead.
+// See CreateBudget for more information on using the CreateBudget
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateBudgetRequest method.
 //    req, resp := client.CreateBudgetRequest(params)
@@ -104,19 +103,18 @@ const opCreateNotification = "CreateNotification"
 
 // CreateNotificationRequest generates a "aws/request.Request" representing the
 // client's request for the CreateNotification operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateNotification for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateNotification method directly
-// instead.
+// See CreateNotification for more information on using the CreateNotification
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateNotificationRequest method.
 //    req, resp := client.CreateNotificationRequest(params)
@@ -197,19 +195,18 @@ const opCreateSubscriber = "CreateSubscriber"
 
 // CreateSubscriberRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSubscriber operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateSubscriber for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateSubscriber method directly
-// instead.
+// See CreateSubscriber for more information on using the CreateSubscriber
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateSubscriberRequest method.
 //    req, resp := client.CreateSubscriberRequest(params)
@@ -290,19 +287,18 @@ const opDeleteBudget = "DeleteBudget"
 
 // DeleteBudgetRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteBudget operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteBudget for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteBudget method directly
-// instead.
+// See DeleteBudget for more information on using the DeleteBudget
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteBudgetRequest method.
 //    req, resp := client.DeleteBudgetRequest(params)
@@ -375,19 +371,18 @@ const opDeleteNotification = "DeleteNotification"
 
 // DeleteNotificationRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteNotification operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteNotification for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteNotification method directly
-// instead.
+// See DeleteNotification for more information on using the DeleteNotification
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteNotificationRequest method.
 //    req, resp := client.DeleteNotificationRequest(params)
@@ -460,19 +455,18 @@ const opDeleteSubscriber = "DeleteSubscriber"
 
 // DeleteSubscriberRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSubscriber operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteSubscriber for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteSubscriber method directly
-// instead.
+// See DeleteSubscriber for more information on using the DeleteSubscriber
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteSubscriberRequest method.
 //    req, resp := client.DeleteSubscriberRequest(params)
@@ -545,19 +539,18 @@ const opDescribeBudget = "DescribeBudget"
 
 // DescribeBudgetRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeBudget operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeBudget for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeBudget method directly
-// instead.
+// See DescribeBudget for more information on using the DescribeBudget
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeBudgetRequest method.
 //    req, resp := client.DescribeBudgetRequest(params)
@@ -630,19 +623,18 @@ const opDescribeBudgets = "DescribeBudgets"
 
 // DescribeBudgetsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeBudgets operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeBudgets for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeBudgets method directly
-// instead.
+// See DescribeBudgets for more information on using the DescribeBudgets
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeBudgetsRequest method.
 //    req, resp := client.DescribeBudgetsRequest(params)
@@ -722,19 +714,18 @@ const opDescribeNotificationsForBudget = "DescribeNotificationsForBudget"
 
 // DescribeNotificationsForBudgetRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeNotificationsForBudget operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeNotificationsForBudget for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeNotificationsForBudget method directly
-// instead.
+// See DescribeNotificationsForBudget for more information on using the DescribeNotificationsForBudget
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeNotificationsForBudgetRequest method.
 //    req, resp := client.DescribeNotificationsForBudgetRequest(params)
@@ -814,19 +805,18 @@ const opDescribeSubscribersForNotification = "DescribeSubscribersForNotification
 
 // DescribeSubscribersForNotificationRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeSubscribersForNotification operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeSubscribersForNotification for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeSubscribersForNotification method directly
-// instead.
+// See DescribeSubscribersForNotification for more information on using the DescribeSubscribersForNotification
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeSubscribersForNotificationRequest method.
 //    req, resp := client.DescribeSubscribersForNotificationRequest(params)
@@ -906,19 +896,18 @@ const opUpdateBudget = "UpdateBudget"
 
 // UpdateBudgetRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateBudget operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateBudget for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateBudget method directly
-// instead.
+// See UpdateBudget for more information on using the UpdateBudget
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateBudgetRequest method.
 //    req, resp := client.UpdateBudgetRequest(params)
@@ -991,19 +980,18 @@ const opUpdateNotification = "UpdateNotification"
 
 // UpdateNotificationRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateNotification operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateNotification for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateNotification method directly
-// instead.
+// See UpdateNotification for more information on using the UpdateNotification
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateNotificationRequest method.
 //    req, resp := client.UpdateNotificationRequest(params)
@@ -1051,6 +1039,10 @@ func (c *Budgets) UpdateNotificationRequest(input *UpdateNotificationInput) (req
 //   This exception is thrown if a requested entity is not found. E.g., if a budget
 //   id doesn't exist for an account ID.
 //
+//   * ErrCodeDuplicateRecordException "DuplicateRecordException"
+//   The exception is thrown when customer tries to create a record (e.g. budget)
+//   that already exists.
+//
 func (c *Budgets) UpdateNotification(input *UpdateNotificationInput) (*UpdateNotificationOutput, error) {
 	req, out := c.UpdateNotificationRequest(input)
 	return out, req.Send()
@@ -1076,19 +1068,18 @@ const opUpdateSubscriber = "UpdateSubscriber"
 
 // UpdateSubscriberRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSubscriber operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateSubscriber for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateSubscriber method directly
-// instead.
+// See UpdateSubscriber for more information on using the UpdateSubscriber
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateSubscriberRequest method.
 //    req, resp := client.UpdateSubscriberRequest(params)
@@ -1136,6 +1127,10 @@ func (c *Budgets) UpdateSubscriberRequest(input *UpdateSubscriberInput) (req *re
 //   This exception is thrown if a requested entity is not found. E.g., if a budget
 //   id doesn't exist for an account ID.
 //
+//   * ErrCodeDuplicateRecordException "DuplicateRecordException"
+//   The exception is thrown when customer tries to create a record (e.g. budget)
+//   that already exists.
+//
 func (c *Budgets) UpdateSubscriber(input *UpdateSubscriberInput) (*UpdateSubscriberOutput, error) {
 	req, out := c.UpdateSubscriberRequest(input)
 	return out, req.Send()
@@ -1161,8 +1156,8 @@ func (c *Budgets) UpdateSubscriberWithContext(ctx aws.Context, input *UpdateSubs
 type Budget struct {
 	_ struct{} `type:"structure"`
 
-	// A structure represent either a cost spend or usage spend. Contains an amount
-	// and a unit.
+	// A structure that represents either a cost spend or usage spend. Contains
+	// an amount and a unit.
 	//
 	// BudgetLimit is a required field
 	BudgetLimit *Spend `type:"structure" required:"true"`
@@ -1177,10 +1172,10 @@ type Budget struct {
 	// BudgetType is a required field
 	BudgetType *string `type:"string" required:"true" enum:"BudgetType"`
 
-	// A structure holds the actual and forecasted spend for a budget.
+	// A structure that holds the actual and forecasted spend for a budget.
 	CalculatedSpend *CalculatedSpend `type:"structure"`
 
-	// A map represents the cost filters applied to the budget.
+	// A map that represents the cost filters applied to the budget.
 	CostFilters map[string][]*string `type:"map"`
 
 	// This includes the options for getting the cost of a budget.
@@ -1188,7 +1183,7 @@ type Budget struct {
 	// CostTypes is a required field
 	CostTypes *CostTypes `type:"structure" required:"true"`
 
-	// A time period indicated the start date and end date of a budget.
+	// A time period indicating the start date and end date of a budget.
 	//
 	// TimePeriod is a required field
 	TimePeriod *TimePeriod `type:"structure" required:"true"`
@@ -1305,18 +1300,18 @@ func (s *Budget) SetTimeUnit(v string) *Budget {
 	return s
 }
 
-// A structure holds the actual and forecasted spend for a budget.
+// A structure that holds the actual and forecasted spend for a budget.
 type CalculatedSpend struct {
 	_ struct{} `type:"structure"`
 
-	// A structure represent either a cost spend or usage spend. Contains an amount
-	// and a unit.
+	// A structure that represents either a cost spend or usage spend. Contains
+	// an amount and a unit.
 	//
 	// ActualSpend is a required field
 	ActualSpend *Spend `type:"structure" required:"true"`
 
-	// A structure represent either a cost spend or usage spend. Contains an amount
-	// and a unit.
+	// A structure that represents either a cost spend or usage spend. Contains
+	// an amount and a unit.
 	ForecastedSpend *Spend `type:"structure"`
 }
 
@@ -2118,8 +2113,8 @@ type DescribeBudgetsInput struct {
 	// AccountId is a required field
 	AccountId *string `min:"12" type:"string" required:"true"`
 
-	// An integer to represent how many entries should a pagianted response contains.
-	// Maxium is set to 100.
+	// An integer to represent how many entries a paginated response contains. Maximum
+	// is set to 100.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// A generic String.
@@ -2220,8 +2215,8 @@ type DescribeNotificationsForBudgetInput struct {
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
 
-	// An integer to represent how many entries should a pagianted response contains.
-	// Maxium is set to 100.
+	// An integer to represent how many entries a paginated response contains. Maximum
+	// is set to 100.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// A generic String.
@@ -2331,8 +2326,8 @@ type DescribeSubscribersForNotificationInput struct {
 	// BudgetName is a required field
 	BudgetName *string `type:"string" required:"true"`
 
-	// An integer to represent how many entries should a pagianted response contains.
-	// Maxium is set to 100.
+	// An integer to represent how many entries a paginated response contains. Maximum
+	// is set to 100.
 	MaxResults *int64 `min:"1" type:"integer"`
 
 	// A generic String.
@@ -2464,11 +2459,13 @@ type Notification struct {
 	// NotificationType is a required field
 	NotificationType *string `type:"string" required:"true" enum:"NotificationType"`
 
-	// The threshold of the a notification. It should be a number between 0 and
-	// 100.
+	// The threshold of a notification. It should be a number between 0 and 1,000,000,000.
 	//
 	// Threshold is a required field
 	Threshold *float64 `min:"0.1" type:"double" required:"true"`
+
+	// The type of threshold for a notification. It can be PERCENTAGE or ABSOLUTE_VALUE.
+	ThresholdType *string `type:"string" enum:"ThresholdType"`
 }
 
 // String returns the string representation
@@ -2518,6 +2515,12 @@ func (s *Notification) SetNotificationType(v string) *Notification {
 // SetThreshold sets the Threshold field's value.
 func (s *Notification) SetThreshold(v float64) *Notification {
 	s.Threshold = &v
+	return s
+}
+
+// SetThresholdType sets the ThresholdType field's value.
+func (s *Notification) SetThresholdType(v string) *Notification {
+	s.ThresholdType = &v
 	return s
 }
 
@@ -2594,8 +2597,8 @@ func (s *NotificationWithSubscribers) SetSubscribers(v []*Subscriber) *Notificat
 	return s
 }
 
-// A structure represent either a cost spend or usage spend. Contains an amount
-// and a unit.
+// A structure that represents either a cost spend or usage spend. Contains
+// an amount and a unit.
 type Spend struct {
 	_ struct{} `type:"structure"`
 
@@ -2705,7 +2708,7 @@ func (s *Subscriber) SetSubscriptionType(v string) *Subscriber {
 	return s
 }
 
-// A time period indicated the start date and end date of a budget.
+// A time period indicating the start date and end date of a budget.
 type TimePeriod struct {
 	_ struct{} `type:"structure"`
 
@@ -3117,6 +3120,15 @@ const (
 
 	// SubscriptionTypeEmail is a SubscriptionType enum value
 	SubscriptionTypeEmail = "EMAIL"
+)
+
+// The type of threshold for a notification. It can be PERCENTAGE or ABSOLUTE_VALUE.
+const (
+	// ThresholdTypePercentage is a ThresholdType enum value
+	ThresholdTypePercentage = "PERCENTAGE"
+
+	// ThresholdTypeAbsoluteValue is a ThresholdType enum value
+	ThresholdTypeAbsoluteValue = "ABSOLUTE_VALUE"
 )
 
 // The time unit of the budget. e.g. MONTHLY, QUARTERLY, etc.

@@ -133,7 +133,10 @@ var consts = map[string]string{
 // locales is taken from
 // https://html.spec.whatwg.org/multipage/syntax.html#encoding-sniffing-algorithm.
 var locales = []struct{ tag, name string }{
-	{"und", "windows-1252"}, // The default value.
+	// The default value. Explicitly state latin to benefit from the exact
+	// script option, while still making 1252 the default encoding for languages
+	// written in Latin script.
+	{"und_Latn", "windows-1252"},
 	{"ar", "windows-1256"},
 	{"ba", "windows-1251"},
 	{"be", "windows-1251"},

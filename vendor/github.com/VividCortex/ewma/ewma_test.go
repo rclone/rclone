@@ -3,7 +3,12 @@ package ewma
 // Copyright (c) 2013 VividCortex, Inc. All rights reserved.
 // Please see the LICENSE file for applicable license terms.
 
-import "testing"
+import (
+	"math"
+	"testing"
+)
+
+const testMargin = 0.00000001
 
 var samples = [100]float64{
 	4599, 5711, 4746, 4621, 5037, 4218, 4925, 4281, 5207, 5203, 5594, 5149,
@@ -17,12 +22,16 @@ var samples = [100]float64{
 	3197, 5139, 6101, 5279,
 }
 
+func withinMargin(a, b float64) bool {
+	return math.Abs(a-b) <= testMargin
+}
+
 func TestSimpleEWMA(t *testing.T) {
 	var e SimpleEWMA
 	for _, f := range samples {
 		e.Add(f)
 	}
-	if e.Value() != 4734.500946466118 {
+	if !withinMargin(e.Value(), 4734.500946466118) {
 		t.Errorf("e.Value() is %v, wanted %v", e.Value(), 4734.500946466118)
 	}
 	e.Set(1.0)
@@ -36,7 +45,7 @@ func TestVariableEWMA(t *testing.T) {
 	for _, f := range samples {
 		e.Add(f)
 	}
-	if e.Value() != 4734.500946466118 {
+	if !withinMargin(e.Value(), 4734.500946466118) {
 		t.Errorf("e.Value() is %v, wanted %v", e.Value(), 4734.500946466118)
 	}
 	e.Set(1.0)
@@ -50,7 +59,7 @@ func TestVariableEWMA2(t *testing.T) {
 	for _, f := range samples {
 		e.Add(f)
 	}
-	if e.Value() != 5015.397367486725 {
+	if !withinMargin(e.Value(), 5015.397367486725) {
 		t.Errorf("e.Value() is %v, wanted %v", e.Value(), 5015.397367486725)
 	}
 }

@@ -1,5 +1,0 @@
-vendors:
-- path: github.com/russross/blackfriday
-  rev: 93622da34e54fb6529bfb7c57e710f37a8d9cbd8
-- path: github.com/shurcooL/sanitized_anchor_name
-  rev: 10ef21a441db47d8b13ebcc5fd2310f636973c77

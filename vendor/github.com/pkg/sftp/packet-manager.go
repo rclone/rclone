@@ -23,13 +23,13 @@ type packetManager struct {
 	working   *sync.WaitGroup
 }
 
-func newPktMgr(sender packetSender) packetManager {
-	s := packetManager{
-		requests:  make(chan requestPacket, sftpServerWorkerCount),
-		responses: make(chan responsePacket, sftpServerWorkerCount),
+func newPktMgr(sender packetSender) *packetManager {
+	s := &packetManager{
+		requests:  make(chan requestPacket, SftpServerWorkerCount),
+		responses: make(chan responsePacket, SftpServerWorkerCount),
 		fini:      make(chan struct{}),
-		incoming:  make([]uint32, 0, sftpServerWorkerCount),
-		outgoing:  make([]responsePacket, 0, sftpServerWorkerCount),
+		incoming:  make([]uint32, 0, SftpServerWorkerCount),
+		outgoing:  make([]responsePacket, 0, SftpServerWorkerCount),
 		sender:    sender,
 		working:   &sync.WaitGroup{},
 	}
@@ -39,19 +39,19 @@ func newPktMgr(sender packetSender) packetManager {
 
 // register incoming packets to be handled
 // send id of 0 for packets without id
-func (s packetManager) incomingPacket(pkt requestPacket) {
+func (s *packetManager) incomingPacket(pkt requestPacket) {
 	s.working.Add(1)
-	s.requests <- pkt // buffer == sftpServerWorkerCount
+	s.requests <- pkt // buffer == SftpServerWorkerCount
 }
 
 // register outgoing packets as being ready
-func (s packetManager) readyPacket(pkt responsePacket) {
+func (s *packetManager) readyPacket(pkt responsePacket) {
 	s.responses <- pkt
 	s.working.Done()
 }
 
 // shut down packetManager controller
-func (s packetManager) close() {
+func (s *packetManager) close() {
 	// pause until current packets are processed
 	s.working.Wait()
 	close(s.fini)
@@ -63,15 +63,15 @@ func (s packetManager) close() {
 // transfers.
 func (s *packetManager) workerChan(runWorker func(requestChan)) requestChan {
 
-	rwChan := make(chan requestPacket, sftpServerWorkerCount)
-	for i := 0; i < sftpServerWorkerCount; i++ {
+	rwChan := make(chan requestPacket, SftpServerWorkerCount)
+	for i := 0; i < SftpServerWorkerCount; i++ {
 		runWorker(rwChan)
 	}
 
 	cmdChan := make(chan requestPacket)
 	runWorker(cmdChan)
 
-	pktChan := make(chan requestPacket, sftpServerWorkerCount)
+	pktChan := make(chan requestPacket, SftpServerWorkerCount)
 	go func() {
 		// start with cmdChan
 		curChan := cmdChan
@@ -147,10 +147,10 @@ func (s *packetManager) maybeSendPackets() {
 	}
 }
 
-func outfilter(o []responsePacket) []uint32 {
-	res := make([]uint32, 0, len(o))
-	for _, v := range o {
-		res = append(res, v.id())
-	}
-	return res
-}
+//func outfilter(o []responsePacket) []uint32 {
+//	res := make([]uint32, 0, len(o))
+//	for _, v := range o {
+//		res = append(res, v.id())
+//	}
+//	return res
+//}

@@ -3,8 +3,6 @@ package dynamodbattribute
 import (
 	"reflect"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
 )
 
 type testUnionValues struct {
@@ -77,9 +75,13 @@ func TestUnionStructFields(t *testing.T) {
 		fields := unionStructFields(v.Type(), MarshalOptions{SupportJSONTags: true})
 		for j, f := range fields {
 			expected := c.expect[j]
-			assert.Equal(t, expected.Name, f.Name, "case %d, field %d", i, j)
+			if e, a := expected.Name, f.Name; e != a {
+				t.Errorf("%d:%d expect %v, got %v", i, j, e, f)
+			}
 			actual := v.FieldByIndex(f.Index).Interface()
-			assert.EqualValues(t, expected.Value, actual, "case %d, field %d", i, j)
+			if e, a := expected.Value, actual; !reflect.DeepEqual(e, a) {
+				t.Errorf("%d:%d expect %v, got %v", i, j, e, f)
+			}
 		}
 	}
 }
@@ -102,9 +104,13 @@ func TestFieldByName(t *testing.T) {
 
 	for _, c := range cases {
 		f, ok := fieldByName(fields, c.Name)
-		assert.Equal(t, c.Found, ok)
+		if e, a := c.Found, ok; e != a {
+			t.Errorf("expect %v, got %v", e, a)
+		}
 		if ok {
-			assert.Equal(t, c.FieldName, f.Name)
+			if e, a := c.FieldName, f.Name; e != a {
+				t.Errorf("expect %v, got %v", e, a)
+			}
 		}
 	}
 }

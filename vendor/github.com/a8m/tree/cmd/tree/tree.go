@@ -4,8 +4,9 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"github.com/a8m/tree"
 	"os"
+
+	"github.com/a8m/tree"
 )
 
 var (
@@ -166,12 +167,8 @@ func main() {
 	}
 	for _, dir := range dirs {
 		inf := tree.New(dir)
-		if d, f := inf.Visit(opts); f != 0 {
-			if d > 0 {
-				d -= 1
-			}
-			nd, nf = nd+d, nf+f
-		}
+		d, f := inf.Visit(opts)
+		nd, nf = nd+d, nf+f
 		inf.Print(opts)
 	}
 	// Print footer report

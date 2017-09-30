@@ -8,23 +8,110 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
+const opCreateApp = "CreateApp"
+
+// CreateAppRequest generates a "aws/request.Request" representing the
+// client's request for the CreateApp operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See CreateApp for more information on using the CreateApp
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the CreateAppRequest method.
+//    req, resp := client.CreateAppRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateApp
+func (c *Pinpoint) CreateAppRequest(input *CreateAppInput) (req *request.Request, output *CreateAppOutput) {
+	op := &request.Operation{
+		Name:       opCreateApp,
+		HTTPMethod: "POST",
+		HTTPPath:   "/v1/apps",
+	}
+
+	if input == nil {
+		input = &CreateAppInput{}
+	}
+
+	output = &CreateAppOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// CreateApp API operation for Amazon Pinpoint.
+//
+// Creates or updates an app.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation CreateApp for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateApp
+func (c *Pinpoint) CreateApp(input *CreateAppInput) (*CreateAppOutput, error) {
+	req, out := c.CreateAppRequest(input)
+	return out, req.Send()
+}
+
+// CreateAppWithContext is the same as CreateApp with the addition of
+// the ability to pass a context and additional request options.
+//
+// See CreateApp for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) CreateAppWithContext(ctx aws.Context, input *CreateAppInput, opts ...request.Option) (*CreateAppOutput, error) {
+	req, out := c.CreateAppRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opCreateCampaign = "CreateCampaign"
 
 // CreateCampaignRequest generates a "aws/request.Request" representing the
 // client's request for the CreateCampaign operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateCampaign for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateCampaign method directly
-// instead.
+// See CreateCampaign for more information on using the CreateCampaign
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateCampaignRequest method.
 //    req, resp := client.CreateCampaignRequest(params)
@@ -33,6 +120,8 @@ const opCreateCampaign = "CreateCampaign"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateCampaign
 func (c *Pinpoint) CreateCampaignRequest(input *CreateCampaignInput) (req *request.Request, output *CreateCampaignOutput) {
 	op := &request.Operation{
 		Name:       opCreateCampaign,
@@ -73,6 +162,7 @@ func (c *Pinpoint) CreateCampaignRequest(input *CreateCampaignInput) (req *reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateCampaign
 func (c *Pinpoint) CreateCampaign(input *CreateCampaignInput) (*CreateCampaignOutput, error) {
 	req, out := c.CreateCampaignRequest(input)
 	return out, req.Send()
@@ -98,19 +188,18 @@ const opCreateImportJob = "CreateImportJob"
 
 // CreateImportJobRequest generates a "aws/request.Request" representing the
 // client's request for the CreateImportJob operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateImportJob for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateImportJob method directly
-// instead.
+// See CreateImportJob for more information on using the CreateImportJob
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateImportJobRequest method.
 //    req, resp := client.CreateImportJobRequest(params)
@@ -119,6 +208,8 @@ const opCreateImportJob = "CreateImportJob"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateImportJob
 func (c *Pinpoint) CreateImportJobRequest(input *CreateImportJobInput) (req *request.Request, output *CreateImportJobOutput) {
 	op := &request.Operation{
 		Name:       opCreateImportJob,
@@ -159,6 +250,7 @@ func (c *Pinpoint) CreateImportJobRequest(input *CreateImportJobInput) (req *req
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateImportJob
 func (c *Pinpoint) CreateImportJob(input *CreateImportJobInput) (*CreateImportJobOutput, error) {
 	req, out := c.CreateImportJobRequest(input)
 	return out, req.Send()
@@ -184,19 +276,18 @@ const opCreateSegment = "CreateSegment"
 
 // CreateSegmentRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSegment operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateSegment for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateSegment method directly
-// instead.
+// See CreateSegment for more information on using the CreateSegment
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateSegmentRequest method.
 //    req, resp := client.CreateSegmentRequest(params)
@@ -205,6 +296,8 @@ const opCreateSegment = "CreateSegment"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateSegment
 func (c *Pinpoint) CreateSegmentRequest(input *CreateSegmentInput) (req *request.Request, output *CreateSegmentOutput) {
 	op := &request.Operation{
 		Name:       opCreateSegment,
@@ -245,6 +338,7 @@ func (c *Pinpoint) CreateSegmentRequest(input *CreateSegmentInput) (req *request
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateSegment
 func (c *Pinpoint) CreateSegment(input *CreateSegmentInput) (*CreateSegmentOutput, error) {
 	req, out := c.CreateSegmentRequest(input)
 	return out, req.Send()
@@ -266,23 +360,110 @@ func (c *Pinpoint) CreateSegmentWithContext(ctx aws.Context, input *CreateSegmen
 	return out, req.Send()
 }
 
+const opDeleteAdmChannel = "DeleteAdmChannel"
+
+// DeleteAdmChannelRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteAdmChannel operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteAdmChannel for more information on using the DeleteAdmChannel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteAdmChannelRequest method.
+//    req, resp := client.DeleteAdmChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteAdmChannel
+func (c *Pinpoint) DeleteAdmChannelRequest(input *DeleteAdmChannelInput) (req *request.Request, output *DeleteAdmChannelOutput) {
+	op := &request.Operation{
+		Name:       opDeleteAdmChannel,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/v1/apps/{application-id}/channels/adm",
+	}
+
+	if input == nil {
+		input = &DeleteAdmChannelInput{}
+	}
+
+	output = &DeleteAdmChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteAdmChannel API operation for Amazon Pinpoint.
+//
+// Delete an ADM channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation DeleteAdmChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteAdmChannel
+func (c *Pinpoint) DeleteAdmChannel(input *DeleteAdmChannelInput) (*DeleteAdmChannelOutput, error) {
+	req, out := c.DeleteAdmChannelRequest(input)
+	return out, req.Send()
+}
+
+// DeleteAdmChannelWithContext is the same as DeleteAdmChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteAdmChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) DeleteAdmChannelWithContext(ctx aws.Context, input *DeleteAdmChannelInput, opts ...request.Option) (*DeleteAdmChannelOutput, error) {
+	req, out := c.DeleteAdmChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteApnsChannel = "DeleteApnsChannel"
 
 // DeleteApnsChannelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApnsChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteApnsChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteApnsChannel method directly
-// instead.
+// See DeleteApnsChannel for more information on using the DeleteApnsChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteApnsChannelRequest method.
 //    req, resp := client.DeleteApnsChannelRequest(params)
@@ -291,6 +472,8 @@ const opDeleteApnsChannel = "DeleteApnsChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsChannel
 func (c *Pinpoint) DeleteApnsChannelRequest(input *DeleteApnsChannelInput) (req *request.Request, output *DeleteApnsChannelOutput) {
 	op := &request.Operation{
 		Name:       opDeleteApnsChannel,
@@ -331,6 +514,7 @@ func (c *Pinpoint) DeleteApnsChannelRequest(input *DeleteApnsChannelInput) (req 
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsChannel
 func (c *Pinpoint) DeleteApnsChannel(input *DeleteApnsChannelInput) (*DeleteApnsChannelOutput, error) {
 	req, out := c.DeleteApnsChannelRequest(input)
 	return out, req.Send()
@@ -356,19 +540,18 @@ const opDeleteApnsSandboxChannel = "DeleteApnsSandboxChannel"
 
 // DeleteApnsSandboxChannelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteApnsSandboxChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteApnsSandboxChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteApnsSandboxChannel method directly
-// instead.
+// See DeleteApnsSandboxChannel for more information on using the DeleteApnsSandboxChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteApnsSandboxChannelRequest method.
 //    req, resp := client.DeleteApnsSandboxChannelRequest(params)
@@ -377,6 +560,8 @@ const opDeleteApnsSandboxChannel = "DeleteApnsSandboxChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsSandboxChannel
 func (c *Pinpoint) DeleteApnsSandboxChannelRequest(input *DeleteApnsSandboxChannelInput) (req *request.Request, output *DeleteApnsSandboxChannelOutput) {
 	op := &request.Operation{
 		Name:       opDeleteApnsSandboxChannel,
@@ -417,6 +602,7 @@ func (c *Pinpoint) DeleteApnsSandboxChannelRequest(input *DeleteApnsSandboxChann
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsSandboxChannel
 func (c *Pinpoint) DeleteApnsSandboxChannel(input *DeleteApnsSandboxChannelInput) (*DeleteApnsSandboxChannelOutput, error) {
 	req, out := c.DeleteApnsSandboxChannelRequest(input)
 	return out, req.Send()
@@ -438,23 +624,198 @@ func (c *Pinpoint) DeleteApnsSandboxChannelWithContext(ctx aws.Context, input *D
 	return out, req.Send()
 }
 
+const opDeleteApp = "DeleteApp"
+
+// DeleteAppRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteApp operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteApp for more information on using the DeleteApp
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteAppRequest method.
+//    req, resp := client.DeleteAppRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApp
+func (c *Pinpoint) DeleteAppRequest(input *DeleteAppInput) (req *request.Request, output *DeleteAppOutput) {
+	op := &request.Operation{
+		Name:       opDeleteApp,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/v1/apps/{application-id}",
+	}
+
+	if input == nil {
+		input = &DeleteAppInput{}
+	}
+
+	output = &DeleteAppOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteApp API operation for Amazon Pinpoint.
+//
+// Deletes an app.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation DeleteApp for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApp
+func (c *Pinpoint) DeleteApp(input *DeleteAppInput) (*DeleteAppOutput, error) {
+	req, out := c.DeleteAppRequest(input)
+	return out, req.Send()
+}
+
+// DeleteAppWithContext is the same as DeleteApp with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteApp for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) DeleteAppWithContext(ctx aws.Context, input *DeleteAppInput, opts ...request.Option) (*DeleteAppOutput, error) {
+	req, out := c.DeleteAppRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteBaiduChannel = "DeleteBaiduChannel"
+
+// DeleteBaiduChannelRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteBaiduChannel operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteBaiduChannel for more information on using the DeleteBaiduChannel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteBaiduChannelRequest method.
+//    req, resp := client.DeleteBaiduChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteBaiduChannel
+func (c *Pinpoint) DeleteBaiduChannelRequest(input *DeleteBaiduChannelInput) (req *request.Request, output *DeleteBaiduChannelOutput) {
+	op := &request.Operation{
+		Name:       opDeleteBaiduChannel,
+		HTTPMethod: "DELETE",
+		HTTPPath:   "/v1/apps/{application-id}/channels/baidu",
+	}
+
+	if input == nil {
+		input = &DeleteBaiduChannelInput{}
+	}
+
+	output = &DeleteBaiduChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteBaiduChannel API operation for Amazon Pinpoint.
+//
+// Delete a BAIDU GCM channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation DeleteBaiduChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteBaiduChannel
+func (c *Pinpoint) DeleteBaiduChannel(input *DeleteBaiduChannelInput) (*DeleteBaiduChannelOutput, error) {
+	req, out := c.DeleteBaiduChannelRequest(input)
+	return out, req.Send()
+}
+
+// DeleteBaiduChannelWithContext is the same as DeleteBaiduChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteBaiduChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) DeleteBaiduChannelWithContext(ctx aws.Context, input *DeleteBaiduChannelInput, opts ...request.Option) (*DeleteBaiduChannelOutput, error) {
+	req, out := c.DeleteBaiduChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opDeleteCampaign = "DeleteCampaign"
 
 // DeleteCampaignRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteCampaign operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteCampaign for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteCampaign method directly
-// instead.
+// See DeleteCampaign for more information on using the DeleteCampaign
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteCampaignRequest method.
 //    req, resp := client.DeleteCampaignRequest(params)
@@ -463,6 +824,8 @@ const opDeleteCampaign = "DeleteCampaign"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteCampaign
 func (c *Pinpoint) DeleteCampaignRequest(input *DeleteCampaignInput) (req *request.Request, output *DeleteCampaignOutput) {
 	op := &request.Operation{
 		Name:       opDeleteCampaign,
@@ -503,6 +866,7 @@ func (c *Pinpoint) DeleteCampaignRequest(input *DeleteCampaignInput) (req *reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteCampaign
 func (c *Pinpoint) DeleteCampaign(input *DeleteCampaignInput) (*DeleteCampaignOutput, error) {
 	req, out := c.DeleteCampaignRequest(input)
 	return out, req.Send()
@@ -528,19 +892,18 @@ const opDeleteEmailChannel = "DeleteEmailChannel"
 
 // DeleteEmailChannelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEmailChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteEmailChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteEmailChannel method directly
-// instead.
+// See DeleteEmailChannel for more information on using the DeleteEmailChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteEmailChannelRequest method.
 //    req, resp := client.DeleteEmailChannelRequest(params)
@@ -549,6 +912,8 @@ const opDeleteEmailChannel = "DeleteEmailChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEmailChannel
 func (c *Pinpoint) DeleteEmailChannelRequest(input *DeleteEmailChannelInput) (req *request.Request, output *DeleteEmailChannelOutput) {
 	op := &request.Operation{
 		Name:       opDeleteEmailChannel,
@@ -589,6 +954,7 @@ func (c *Pinpoint) DeleteEmailChannelRequest(input *DeleteEmailChannelInput) (re
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEmailChannel
 func (c *Pinpoint) DeleteEmailChannel(input *DeleteEmailChannelInput) (*DeleteEmailChannelOutput, error) {
 	req, out := c.DeleteEmailChannelRequest(input)
 	return out, req.Send()
@@ -614,19 +980,18 @@ const opDeleteEventStream = "DeleteEventStream"
 
 // DeleteEventStreamRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteEventStream operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteEventStream for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteEventStream method directly
-// instead.
+// See DeleteEventStream for more information on using the DeleteEventStream
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteEventStreamRequest method.
 //    req, resp := client.DeleteEventStreamRequest(params)
@@ -635,6 +1000,8 @@ const opDeleteEventStream = "DeleteEventStream"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEventStream
 func (c *Pinpoint) DeleteEventStreamRequest(input *DeleteEventStreamInput) (req *request.Request, output *DeleteEventStreamOutput) {
 	op := &request.Operation{
 		Name:       opDeleteEventStream,
@@ -675,6 +1042,7 @@ func (c *Pinpoint) DeleteEventStreamRequest(input *DeleteEventStreamInput) (req 
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEventStream
 func (c *Pinpoint) DeleteEventStream(input *DeleteEventStreamInput) (*DeleteEventStreamOutput, error) {
 	req, out := c.DeleteEventStreamRequest(input)
 	return out, req.Send()
@@ -700,19 +1068,18 @@ const opDeleteGcmChannel = "DeleteGcmChannel"
 
 // DeleteGcmChannelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteGcmChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteGcmChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteGcmChannel method directly
-// instead.
+// See DeleteGcmChannel for more information on using the DeleteGcmChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteGcmChannelRequest method.
 //    req, resp := client.DeleteGcmChannelRequest(params)
@@ -721,6 +1088,8 @@ const opDeleteGcmChannel = "DeleteGcmChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteGcmChannel
 func (c *Pinpoint) DeleteGcmChannelRequest(input *DeleteGcmChannelInput) (req *request.Request, output *DeleteGcmChannelOutput) {
 	op := &request.Operation{
 		Name:       opDeleteGcmChannel,
@@ -761,6 +1130,7 @@ func (c *Pinpoint) DeleteGcmChannelRequest(input *DeleteGcmChannelInput) (req *r
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteGcmChannel
 func (c *Pinpoint) DeleteGcmChannel(input *DeleteGcmChannelInput) (*DeleteGcmChannelOutput, error) {
 	req, out := c.DeleteGcmChannelRequest(input)
 	return out, req.Send()
@@ -786,19 +1156,18 @@ const opDeleteSegment = "DeleteSegment"
 
 // DeleteSegmentRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSegment operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteSegment for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteSegment method directly
-// instead.
+// See DeleteSegment for more information on using the DeleteSegment
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteSegmentRequest method.
 //    req, resp := client.DeleteSegmentRequest(params)
@@ -807,6 +1176,8 @@ const opDeleteSegment = "DeleteSegment"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSegment
 func (c *Pinpoint) DeleteSegmentRequest(input *DeleteSegmentInput) (req *request.Request, output *DeleteSegmentOutput) {
 	op := &request.Operation{
 		Name:       opDeleteSegment,
@@ -847,6 +1218,7 @@ func (c *Pinpoint) DeleteSegmentRequest(input *DeleteSegmentInput) (req *request
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSegment
 func (c *Pinpoint) DeleteSegment(input *DeleteSegmentInput) (*DeleteSegmentOutput, error) {
 	req, out := c.DeleteSegmentRequest(input)
 	return out, req.Send()
@@ -872,19 +1244,18 @@ const opDeleteSmsChannel = "DeleteSmsChannel"
 
 // DeleteSmsChannelRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSmsChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteSmsChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteSmsChannel method directly
-// instead.
+// See DeleteSmsChannel for more information on using the DeleteSmsChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteSmsChannelRequest method.
 //    req, resp := client.DeleteSmsChannelRequest(params)
@@ -893,6 +1264,8 @@ const opDeleteSmsChannel = "DeleteSmsChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSmsChannel
 func (c *Pinpoint) DeleteSmsChannelRequest(input *DeleteSmsChannelInput) (req *request.Request, output *DeleteSmsChannelOutput) {
 	op := &request.Operation{
 		Name:       opDeleteSmsChannel,
@@ -933,6 +1306,7 @@ func (c *Pinpoint) DeleteSmsChannelRequest(input *DeleteSmsChannelInput) (req *r
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSmsChannel
 func (c *Pinpoint) DeleteSmsChannel(input *DeleteSmsChannelInput) (*DeleteSmsChannelOutput, error) {
 	req, out := c.DeleteSmsChannelRequest(input)
 	return out, req.Send()
@@ -954,23 +1328,110 @@ func (c *Pinpoint) DeleteSmsChannelWithContext(ctx aws.Context, input *DeleteSms
 	return out, req.Send()
 }
 
+const opGetAdmChannel = "GetAdmChannel"
+
+// GetAdmChannelRequest generates a "aws/request.Request" representing the
+// client's request for the GetAdmChannel operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetAdmChannel for more information on using the GetAdmChannel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetAdmChannelRequest method.
+//    req, resp := client.GetAdmChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAdmChannel
+func (c *Pinpoint) GetAdmChannelRequest(input *GetAdmChannelInput) (req *request.Request, output *GetAdmChannelOutput) {
+	op := &request.Operation{
+		Name:       opGetAdmChannel,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v1/apps/{application-id}/channels/adm",
+	}
+
+	if input == nil {
+		input = &GetAdmChannelInput{}
+	}
+
+	output = &GetAdmChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetAdmChannel API operation for Amazon Pinpoint.
+//
+// Get an ADM channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation GetAdmChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAdmChannel
+func (c *Pinpoint) GetAdmChannel(input *GetAdmChannelInput) (*GetAdmChannelOutput, error) {
+	req, out := c.GetAdmChannelRequest(input)
+	return out, req.Send()
+}
+
+// GetAdmChannelWithContext is the same as GetAdmChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetAdmChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) GetAdmChannelWithContext(ctx aws.Context, input *GetAdmChannelInput, opts ...request.Option) (*GetAdmChannelOutput, error) {
+	req, out := c.GetAdmChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetApnsChannel = "GetApnsChannel"
 
 // GetApnsChannelRequest generates a "aws/request.Request" representing the
 // client's request for the GetApnsChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetApnsChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetApnsChannel method directly
-// instead.
+// See GetApnsChannel for more information on using the GetApnsChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetApnsChannelRequest method.
 //    req, resp := client.GetApnsChannelRequest(params)
@@ -979,6 +1440,8 @@ const opGetApnsChannel = "GetApnsChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsChannel
 func (c *Pinpoint) GetApnsChannelRequest(input *GetApnsChannelInput) (req *request.Request, output *GetApnsChannelOutput) {
 	op := &request.Operation{
 		Name:       opGetApnsChannel,
@@ -1019,6 +1482,7 @@ func (c *Pinpoint) GetApnsChannelRequest(input *GetApnsChannelInput) (req *reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsChannel
 func (c *Pinpoint) GetApnsChannel(input *GetApnsChannelInput) (*GetApnsChannelOutput, error) {
 	req, out := c.GetApnsChannelRequest(input)
 	return out, req.Send()
@@ -1044,19 +1508,18 @@ const opGetApnsSandboxChannel = "GetApnsSandboxChannel"
 
 // GetApnsSandboxChannelRequest generates a "aws/request.Request" representing the
 // client's request for the GetApnsSandboxChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetApnsSandboxChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetApnsSandboxChannel method directly
-// instead.
+// See GetApnsSandboxChannel for more information on using the GetApnsSandboxChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetApnsSandboxChannelRequest method.
 //    req, resp := client.GetApnsSandboxChannelRequest(params)
@@ -1065,6 +1528,8 @@ const opGetApnsSandboxChannel = "GetApnsSandboxChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsSandboxChannel
 func (c *Pinpoint) GetApnsSandboxChannelRequest(input *GetApnsSandboxChannelInput) (req *request.Request, output *GetApnsSandboxChannelOutput) {
 	op := &request.Operation{
 		Name:       opGetApnsSandboxChannel,
@@ -1105,6 +1570,7 @@ func (c *Pinpoint) GetApnsSandboxChannelRequest(input *GetApnsSandboxChannelInpu
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsSandboxChannel
 func (c *Pinpoint) GetApnsSandboxChannel(input *GetApnsSandboxChannelInput) (*GetApnsSandboxChannelOutput, error) {
 	req, out := c.GetApnsSandboxChannelRequest(input)
 	return out, req.Send()
@@ -1126,23 +1592,110 @@ func (c *Pinpoint) GetApnsSandboxChannelWithContext(ctx aws.Context, input *GetA
 	return out, req.Send()
 }
 
+const opGetApp = "GetApp"
+
+// GetAppRequest generates a "aws/request.Request" representing the
+// client's request for the GetApp operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetApp for more information on using the GetApp
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetAppRequest method.
+//    req, resp := client.GetAppRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApp
+func (c *Pinpoint) GetAppRequest(input *GetAppInput) (req *request.Request, output *GetAppOutput) {
+	op := &request.Operation{
+		Name:       opGetApp,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v1/apps/{application-id}",
+	}
+
+	if input == nil {
+		input = &GetAppInput{}
+	}
+
+	output = &GetAppOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetApp API operation for Amazon Pinpoint.
+//
+// Returns information about an app.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation GetApp for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApp
+func (c *Pinpoint) GetApp(input *GetAppInput) (*GetAppOutput, error) {
+	req, out := c.GetAppRequest(input)
+	return out, req.Send()
+}
+
+// GetAppWithContext is the same as GetApp with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetApp for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) GetAppWithContext(ctx aws.Context, input *GetAppInput, opts ...request.Option) (*GetAppOutput, error) {
+	req, out := c.GetAppRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetApplicationSettings = "GetApplicationSettings"
 
 // GetApplicationSettingsRequest generates a "aws/request.Request" representing the
 // client's request for the GetApplicationSettings operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetApplicationSettings for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetApplicationSettings method directly
-// instead.
+// See GetApplicationSettings for more information on using the GetApplicationSettings
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetApplicationSettingsRequest method.
 //    req, resp := client.GetApplicationSettingsRequest(params)
@@ -1151,6 +1704,8 @@ const opGetApplicationSettings = "GetApplicationSettings"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApplicationSettings
 func (c *Pinpoint) GetApplicationSettingsRequest(input *GetApplicationSettingsInput) (req *request.Request, output *GetApplicationSettingsOutput) {
 	op := &request.Operation{
 		Name:       opGetApplicationSettings,
@@ -1191,6 +1746,7 @@ func (c *Pinpoint) GetApplicationSettingsRequest(input *GetApplicationSettingsIn
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApplicationSettings
 func (c *Pinpoint) GetApplicationSettings(input *GetApplicationSettingsInput) (*GetApplicationSettingsOutput, error) {
 	req, out := c.GetApplicationSettingsRequest(input)
 	return out, req.Send()
@@ -1212,23 +1768,198 @@ func (c *Pinpoint) GetApplicationSettingsWithContext(ctx aws.Context, input *Get
 	return out, req.Send()
 }
 
+const opGetApps = "GetApps"
+
+// GetAppsRequest generates a "aws/request.Request" representing the
+// client's request for the GetApps operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetApps for more information on using the GetApps
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetAppsRequest method.
+//    req, resp := client.GetAppsRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApps
+func (c *Pinpoint) GetAppsRequest(input *GetAppsInput) (req *request.Request, output *GetAppsOutput) {
+	op := &request.Operation{
+		Name:       opGetApps,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v1/apps",
+	}
+
+	if input == nil {
+		input = &GetAppsInput{}
+	}
+
+	output = &GetAppsOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetApps API operation for Amazon Pinpoint.
+//
+// Returns information about your apps.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation GetApps for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApps
+func (c *Pinpoint) GetApps(input *GetAppsInput) (*GetAppsOutput, error) {
+	req, out := c.GetAppsRequest(input)
+	return out, req.Send()
+}
+
+// GetAppsWithContext is the same as GetApps with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetApps for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) GetAppsWithContext(ctx aws.Context, input *GetAppsInput, opts ...request.Option) (*GetAppsOutput, error) {
+	req, out := c.GetAppsRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opGetBaiduChannel = "GetBaiduChannel"
+
+// GetBaiduChannelRequest generates a "aws/request.Request" representing the
+// client's request for the GetBaiduChannel operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See GetBaiduChannel for more information on using the GetBaiduChannel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the GetBaiduChannelRequest method.
+//    req, resp := client.GetBaiduChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetBaiduChannel
+func (c *Pinpoint) GetBaiduChannelRequest(input *GetBaiduChannelInput) (req *request.Request, output *GetBaiduChannelOutput) {
+	op := &request.Operation{
+		Name:       opGetBaiduChannel,
+		HTTPMethod: "GET",
+		HTTPPath:   "/v1/apps/{application-id}/channels/baidu",
+	}
+
+	if input == nil {
+		input = &GetBaiduChannelInput{}
+	}
+
+	output = &GetBaiduChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// GetBaiduChannel API operation for Amazon Pinpoint.
+//
+// Get a BAIDU GCM channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation GetBaiduChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetBaiduChannel
+func (c *Pinpoint) GetBaiduChannel(input *GetBaiduChannelInput) (*GetBaiduChannelOutput, error) {
+	req, out := c.GetBaiduChannelRequest(input)
+	return out, req.Send()
+}
+
+// GetBaiduChannelWithContext is the same as GetBaiduChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See GetBaiduChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) GetBaiduChannelWithContext(ctx aws.Context, input *GetBaiduChannelInput, opts ...request.Option) (*GetBaiduChannelOutput, error) {
+	req, out := c.GetBaiduChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opGetCampaign = "GetCampaign"
 
 // GetCampaignRequest generates a "aws/request.Request" representing the
 // client's request for the GetCampaign operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetCampaign for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetCampaign method directly
-// instead.
+// See GetCampaign for more information on using the GetCampaign
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetCampaignRequest method.
 //    req, resp := client.GetCampaignRequest(params)
@@ -1237,6 +1968,8 @@ const opGetCampaign = "GetCampaign"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaign
 func (c *Pinpoint) GetCampaignRequest(input *GetCampaignInput) (req *request.Request, output *GetCampaignOutput) {
 	op := &request.Operation{
 		Name:       opGetCampaign,
@@ -1277,6 +2010,7 @@ func (c *Pinpoint) GetCampaignRequest(input *GetCampaignInput) (req *request.Req
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaign
 func (c *Pinpoint) GetCampaign(input *GetCampaignInput) (*GetCampaignOutput, error) {
 	req, out := c.GetCampaignRequest(input)
 	return out, req.Send()
@@ -1302,19 +2036,18 @@ const opGetCampaignActivities = "GetCampaignActivities"
 
 // GetCampaignActivitiesRequest generates a "aws/request.Request" representing the
 // client's request for the GetCampaignActivities operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetCampaignActivities for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetCampaignActivities method directly
-// instead.
+// See GetCampaignActivities for more information on using the GetCampaignActivities
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetCampaignActivitiesRequest method.
 //    req, resp := client.GetCampaignActivitiesRequest(params)
@@ -1323,6 +2056,8 @@ const opGetCampaignActivities = "GetCampaignActivities"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignActivities
 func (c *Pinpoint) GetCampaignActivitiesRequest(input *GetCampaignActivitiesInput) (req *request.Request, output *GetCampaignActivitiesOutput) {
 	op := &request.Operation{
 		Name:       opGetCampaignActivities,
@@ -1363,6 +2098,7 @@ func (c *Pinpoint) GetCampaignActivitiesRequest(input *GetCampaignActivitiesInpu
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignActivities
 func (c *Pinpoint) GetCampaignActivities(input *GetCampaignActivitiesInput) (*GetCampaignActivitiesOutput, error) {
 	req, out := c.GetCampaignActivitiesRequest(input)
 	return out, req.Send()
@@ -1388,19 +2124,18 @@ const opGetCampaignVersion = "GetCampaignVersion"
 
 // GetCampaignVersionRequest generates a "aws/request.Request" representing the
 // client's request for the GetCampaignVersion operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetCampaignVersion for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetCampaignVersion method directly
-// instead.
+// See GetCampaignVersion for more information on using the GetCampaignVersion
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetCampaignVersionRequest method.
 //    req, resp := client.GetCampaignVersionRequest(params)
@@ -1409,6 +2144,8 @@ const opGetCampaignVersion = "GetCampaignVersion"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersion
 func (c *Pinpoint) GetCampaignVersionRequest(input *GetCampaignVersionInput) (req *request.Request, output *GetCampaignVersionOutput) {
 	op := &request.Operation{
 		Name:       opGetCampaignVersion,
@@ -1449,6 +2186,7 @@ func (c *Pinpoint) GetCampaignVersionRequest(input *GetCampaignVersionInput) (re
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersion
 func (c *Pinpoint) GetCampaignVersion(input *GetCampaignVersionInput) (*GetCampaignVersionOutput, error) {
 	req, out := c.GetCampaignVersionRequest(input)
 	return out, req.Send()
@@ -1474,19 +2212,18 @@ const opGetCampaignVersions = "GetCampaignVersions"
 
 // GetCampaignVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the GetCampaignVersions operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetCampaignVersions for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetCampaignVersions method directly
-// instead.
+// See GetCampaignVersions for more information on using the GetCampaignVersions
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetCampaignVersionsRequest method.
 //    req, resp := client.GetCampaignVersionsRequest(params)
@@ -1495,6 +2232,8 @@ const opGetCampaignVersions = "GetCampaignVersions"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersions
 func (c *Pinpoint) GetCampaignVersionsRequest(input *GetCampaignVersionsInput) (req *request.Request, output *GetCampaignVersionsOutput) {
 	op := &request.Operation{
 		Name:       opGetCampaignVersions,
@@ -1535,6 +2274,7 @@ func (c *Pinpoint) GetCampaignVersionsRequest(input *GetCampaignVersionsInput) (
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersions
 func (c *Pinpoint) GetCampaignVersions(input *GetCampaignVersionsInput) (*GetCampaignVersionsOutput, error) {
 	req, out := c.GetCampaignVersionsRequest(input)
 	return out, req.Send()
@@ -1560,19 +2300,18 @@ const opGetCampaigns = "GetCampaigns"
 
 // GetCampaignsRequest generates a "aws/request.Request" representing the
 // client's request for the GetCampaigns operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetCampaigns for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetCampaigns method directly
-// instead.
+// See GetCampaigns for more information on using the GetCampaigns
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetCampaignsRequest method.
 //    req, resp := client.GetCampaignsRequest(params)
@@ -1581,6 +2320,8 @@ const opGetCampaigns = "GetCampaigns"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaigns
 func (c *Pinpoint) GetCampaignsRequest(input *GetCampaignsInput) (req *request.Request, output *GetCampaignsOutput) {
 	op := &request.Operation{
 		Name:       opGetCampaigns,
@@ -1621,6 +2362,7 @@ func (c *Pinpoint) GetCampaignsRequest(input *GetCampaignsInput) (req *request.R
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaigns
 func (c *Pinpoint) GetCampaigns(input *GetCampaignsInput) (*GetCampaignsOutput, error) {
 	req, out := c.GetCampaignsRequest(input)
 	return out, req.Send()
@@ -1646,19 +2388,18 @@ const opGetEmailChannel = "GetEmailChannel"
 
 // GetEmailChannelRequest generates a "aws/request.Request" representing the
 // client's request for the GetEmailChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetEmailChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetEmailChannel method directly
-// instead.
+// See GetEmailChannel for more information on using the GetEmailChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetEmailChannelRequest method.
 //    req, resp := client.GetEmailChannelRequest(params)
@@ -1667,6 +2408,8 @@ const opGetEmailChannel = "GetEmailChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEmailChannel
 func (c *Pinpoint) GetEmailChannelRequest(input *GetEmailChannelInput) (req *request.Request, output *GetEmailChannelOutput) {
 	op := &request.Operation{
 		Name:       opGetEmailChannel,
@@ -1707,6 +2450,7 @@ func (c *Pinpoint) GetEmailChannelRequest(input *GetEmailChannelInput) (req *req
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEmailChannel
 func (c *Pinpoint) GetEmailChannel(input *GetEmailChannelInput) (*GetEmailChannelOutput, error) {
 	req, out := c.GetEmailChannelRequest(input)
 	return out, req.Send()
@@ -1732,19 +2476,18 @@ const opGetEndpoint = "GetEndpoint"
 
 // GetEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the GetEndpoint operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetEndpoint for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetEndpoint method directly
-// instead.
+// See GetEndpoint for more information on using the GetEndpoint
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetEndpointRequest method.
 //    req, resp := client.GetEndpointRequest(params)
@@ -1753,6 +2496,8 @@ const opGetEndpoint = "GetEndpoint"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEndpoint
 func (c *Pinpoint) GetEndpointRequest(input *GetEndpointInput) (req *request.Request, output *GetEndpointOutput) {
 	op := &request.Operation{
 		Name:       opGetEndpoint,
@@ -1793,6 +2538,7 @@ func (c *Pinpoint) GetEndpointRequest(input *GetEndpointInput) (req *request.Req
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEndpoint
 func (c *Pinpoint) GetEndpoint(input *GetEndpointInput) (*GetEndpointOutput, error) {
 	req, out := c.GetEndpointRequest(input)
 	return out, req.Send()
@@ -1818,19 +2564,18 @@ const opGetEventStream = "GetEventStream"
 
 // GetEventStreamRequest generates a "aws/request.Request" representing the
 // client's request for the GetEventStream operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetEventStream for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetEventStream method directly
-// instead.
+// See GetEventStream for more information on using the GetEventStream
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetEventStreamRequest method.
 //    req, resp := client.GetEventStreamRequest(params)
@@ -1839,6 +2584,8 @@ const opGetEventStream = "GetEventStream"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEventStream
 func (c *Pinpoint) GetEventStreamRequest(input *GetEventStreamInput) (req *request.Request, output *GetEventStreamOutput) {
 	op := &request.Operation{
 		Name:       opGetEventStream,
@@ -1879,6 +2626,7 @@ func (c *Pinpoint) GetEventStreamRequest(input *GetEventStreamInput) (req *reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEventStream
 func (c *Pinpoint) GetEventStream(input *GetEventStreamInput) (*GetEventStreamOutput, error) {
 	req, out := c.GetEventStreamRequest(input)
 	return out, req.Send()
@@ -1904,19 +2652,18 @@ const opGetGcmChannel = "GetGcmChannel"
 
 // GetGcmChannelRequest generates a "aws/request.Request" representing the
 // client's request for the GetGcmChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetGcmChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetGcmChannel method directly
-// instead.
+// See GetGcmChannel for more information on using the GetGcmChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetGcmChannelRequest method.
 //    req, resp := client.GetGcmChannelRequest(params)
@@ -1925,6 +2672,8 @@ const opGetGcmChannel = "GetGcmChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetGcmChannel
 func (c *Pinpoint) GetGcmChannelRequest(input *GetGcmChannelInput) (req *request.Request, output *GetGcmChannelOutput) {
 	op := &request.Operation{
 		Name:       opGetGcmChannel,
@@ -1965,6 +2714,7 @@ func (c *Pinpoint) GetGcmChannelRequest(input *GetGcmChannelInput) (req *request
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetGcmChannel
 func (c *Pinpoint) GetGcmChannel(input *GetGcmChannelInput) (*GetGcmChannelOutput, error) {
 	req, out := c.GetGcmChannelRequest(input)
 	return out, req.Send()
@@ -1990,19 +2740,18 @@ const opGetImportJob = "GetImportJob"
 
 // GetImportJobRequest generates a "aws/request.Request" representing the
 // client's request for the GetImportJob operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetImportJob for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetImportJob method directly
-// instead.
+// See GetImportJob for more information on using the GetImportJob
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetImportJobRequest method.
 //    req, resp := client.GetImportJobRequest(params)
@@ -2011,6 +2760,8 @@ const opGetImportJob = "GetImportJob"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJob
 func (c *Pinpoint) GetImportJobRequest(input *GetImportJobInput) (req *request.Request, output *GetImportJobOutput) {
 	op := &request.Operation{
 		Name:       opGetImportJob,
@@ -2051,6 +2802,7 @@ func (c *Pinpoint) GetImportJobRequest(input *GetImportJobInput) (req *request.R
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJob
 func (c *Pinpoint) GetImportJob(input *GetImportJobInput) (*GetImportJobOutput, error) {
 	req, out := c.GetImportJobRequest(input)
 	return out, req.Send()
@@ -2076,19 +2828,18 @@ const opGetImportJobs = "GetImportJobs"
 
 // GetImportJobsRequest generates a "aws/request.Request" representing the
 // client's request for the GetImportJobs operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetImportJobs for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetImportJobs method directly
-// instead.
+// See GetImportJobs for more information on using the GetImportJobs
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetImportJobsRequest method.
 //    req, resp := client.GetImportJobsRequest(params)
@@ -2097,6 +2848,8 @@ const opGetImportJobs = "GetImportJobs"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJobs
 func (c *Pinpoint) GetImportJobsRequest(input *GetImportJobsInput) (req *request.Request, output *GetImportJobsOutput) {
 	op := &request.Operation{
 		Name:       opGetImportJobs,
@@ -2137,6 +2890,7 @@ func (c *Pinpoint) GetImportJobsRequest(input *GetImportJobsInput) (req *request
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJobs
 func (c *Pinpoint) GetImportJobs(input *GetImportJobsInput) (*GetImportJobsOutput, error) {
 	req, out := c.GetImportJobsRequest(input)
 	return out, req.Send()
@@ -2162,19 +2916,18 @@ const opGetSegment = "GetSegment"
 
 // GetSegmentRequest generates a "aws/request.Request" representing the
 // client's request for the GetSegment operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetSegment for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetSegment method directly
-// instead.
+// See GetSegment for more information on using the GetSegment
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetSegmentRequest method.
 //    req, resp := client.GetSegmentRequest(params)
@@ -2183,6 +2936,8 @@ const opGetSegment = "GetSegment"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegment
 func (c *Pinpoint) GetSegmentRequest(input *GetSegmentInput) (req *request.Request, output *GetSegmentOutput) {
 	op := &request.Operation{
 		Name:       opGetSegment,
@@ -2223,6 +2978,7 @@ func (c *Pinpoint) GetSegmentRequest(input *GetSegmentInput) (req *request.Reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegment
 func (c *Pinpoint) GetSegment(input *GetSegmentInput) (*GetSegmentOutput, error) {
 	req, out := c.GetSegmentRequest(input)
 	return out, req.Send()
@@ -2248,19 +3004,18 @@ const opGetSegmentImportJobs = "GetSegmentImportJobs"
 
 // GetSegmentImportJobsRequest generates a "aws/request.Request" representing the
 // client's request for the GetSegmentImportJobs operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetSegmentImportJobs for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetSegmentImportJobs method directly
-// instead.
+// See GetSegmentImportJobs for more information on using the GetSegmentImportJobs
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetSegmentImportJobsRequest method.
 //    req, resp := client.GetSegmentImportJobsRequest(params)
@@ -2269,6 +3024,8 @@ const opGetSegmentImportJobs = "GetSegmentImportJobs"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentImportJobs
 func (c *Pinpoint) GetSegmentImportJobsRequest(input *GetSegmentImportJobsInput) (req *request.Request, output *GetSegmentImportJobsOutput) {
 	op := &request.Operation{
 		Name:       opGetSegmentImportJobs,
@@ -2309,6 +3066,7 @@ func (c *Pinpoint) GetSegmentImportJobsRequest(input *GetSegmentImportJobsInput)
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentImportJobs
 func (c *Pinpoint) GetSegmentImportJobs(input *GetSegmentImportJobsInput) (*GetSegmentImportJobsOutput, error) {
 	req, out := c.GetSegmentImportJobsRequest(input)
 	return out, req.Send()
@@ -2334,19 +3092,18 @@ const opGetSegmentVersion = "GetSegmentVersion"
 
 // GetSegmentVersionRequest generates a "aws/request.Request" representing the
 // client's request for the GetSegmentVersion operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetSegmentVersion for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetSegmentVersion method directly
-// instead.
+// See GetSegmentVersion for more information on using the GetSegmentVersion
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetSegmentVersionRequest method.
 //    req, resp := client.GetSegmentVersionRequest(params)
@@ -2355,6 +3112,8 @@ const opGetSegmentVersion = "GetSegmentVersion"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersion
 func (c *Pinpoint) GetSegmentVersionRequest(input *GetSegmentVersionInput) (req *request.Request, output *GetSegmentVersionOutput) {
 	op := &request.Operation{
 		Name:       opGetSegmentVersion,
@@ -2395,6 +3154,7 @@ func (c *Pinpoint) GetSegmentVersionRequest(input *GetSegmentVersionInput) (req 
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersion
 func (c *Pinpoint) GetSegmentVersion(input *GetSegmentVersionInput) (*GetSegmentVersionOutput, error) {
 	req, out := c.GetSegmentVersionRequest(input)
 	return out, req.Send()
@@ -2420,19 +3180,18 @@ const opGetSegmentVersions = "GetSegmentVersions"
 
 // GetSegmentVersionsRequest generates a "aws/request.Request" representing the
 // client's request for the GetSegmentVersions operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetSegmentVersions for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetSegmentVersions method directly
-// instead.
+// See GetSegmentVersions for more information on using the GetSegmentVersions
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetSegmentVersionsRequest method.
 //    req, resp := client.GetSegmentVersionsRequest(params)
@@ -2441,6 +3200,8 @@ const opGetSegmentVersions = "GetSegmentVersions"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersions
 func (c *Pinpoint) GetSegmentVersionsRequest(input *GetSegmentVersionsInput) (req *request.Request, output *GetSegmentVersionsOutput) {
 	op := &request.Operation{
 		Name:       opGetSegmentVersions,
@@ -2481,6 +3242,7 @@ func (c *Pinpoint) GetSegmentVersionsRequest(input *GetSegmentVersionsInput) (re
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersions
 func (c *Pinpoint) GetSegmentVersions(input *GetSegmentVersionsInput) (*GetSegmentVersionsOutput, error) {
 	req, out := c.GetSegmentVersionsRequest(input)
 	return out, req.Send()
@@ -2506,19 +3268,18 @@ const opGetSegments = "GetSegments"
 
 // GetSegmentsRequest generates a "aws/request.Request" representing the
 // client's request for the GetSegments operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetSegments for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetSegments method directly
-// instead.
+// See GetSegments for more information on using the GetSegments
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetSegmentsRequest method.
 //    req, resp := client.GetSegmentsRequest(params)
@@ -2527,6 +3288,8 @@ const opGetSegments = "GetSegments"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegments
 func (c *Pinpoint) GetSegmentsRequest(input *GetSegmentsInput) (req *request.Request, output *GetSegmentsOutput) {
 	op := &request.Operation{
 		Name:       opGetSegments,
@@ -2567,6 +3330,7 @@ func (c *Pinpoint) GetSegmentsRequest(input *GetSegmentsInput) (req *request.Req
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegments
 func (c *Pinpoint) GetSegments(input *GetSegmentsInput) (*GetSegmentsOutput, error) {
 	req, out := c.GetSegmentsRequest(input)
 	return out, req.Send()
@@ -2592,19 +3356,18 @@ const opGetSmsChannel = "GetSmsChannel"
 
 // GetSmsChannelRequest generates a "aws/request.Request" representing the
 // client's request for the GetSmsChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetSmsChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetSmsChannel method directly
-// instead.
+// See GetSmsChannel for more information on using the GetSmsChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetSmsChannelRequest method.
 //    req, resp := client.GetSmsChannelRequest(params)
@@ -2613,6 +3376,8 @@ const opGetSmsChannel = "GetSmsChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSmsChannel
 func (c *Pinpoint) GetSmsChannelRequest(input *GetSmsChannelInput) (req *request.Request, output *GetSmsChannelOutput) {
 	op := &request.Operation{
 		Name:       opGetSmsChannel,
@@ -2653,6 +3418,7 @@ func (c *Pinpoint) GetSmsChannelRequest(input *GetSmsChannelInput) (req *request
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSmsChannel
 func (c *Pinpoint) GetSmsChannel(input *GetSmsChannelInput) (*GetSmsChannelOutput, error) {
 	req, out := c.GetSmsChannelRequest(input)
 	return out, req.Send()
@@ -2678,19 +3444,18 @@ const opPutEventStream = "PutEventStream"
 
 // PutEventStreamRequest generates a "aws/request.Request" representing the
 // client's request for the PutEventStream operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutEventStream for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutEventStream method directly
-// instead.
+// See PutEventStream for more information on using the PutEventStream
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutEventStreamRequest method.
 //    req, resp := client.PutEventStreamRequest(params)
@@ -2699,6 +3464,8 @@ const opPutEventStream = "PutEventStream"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/PutEventStream
 func (c *Pinpoint) PutEventStreamRequest(input *PutEventStreamInput) (req *request.Request, output *PutEventStreamOutput) {
 	op := &request.Operation{
 		Name:       opPutEventStream,
@@ -2739,6 +3506,7 @@ func (c *Pinpoint) PutEventStreamRequest(input *PutEventStreamInput) (req *reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/PutEventStream
 func (c *Pinpoint) PutEventStream(input *PutEventStreamInput) (*PutEventStreamOutput, error) {
 	req, out := c.PutEventStreamRequest(input)
 	return out, req.Send()
@@ -2764,19 +3532,18 @@ const opSendMessages = "SendMessages"
 
 // SendMessagesRequest generates a "aws/request.Request" representing the
 // client's request for the SendMessages operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See SendMessages for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the SendMessages method directly
-// instead.
+// See SendMessages for more information on using the SendMessages
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the SendMessagesRequest method.
 //    req, resp := client.SendMessagesRequest(params)
@@ -2785,6 +3552,8 @@ const opSendMessages = "SendMessages"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendMessages
 func (c *Pinpoint) SendMessagesRequest(input *SendMessagesInput) (req *request.Request, output *SendMessagesOutput) {
 	op := &request.Operation{
 		Name:       opSendMessages,
@@ -2825,6 +3594,7 @@ func (c *Pinpoint) SendMessagesRequest(input *SendMessagesInput) (req *request.R
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendMessages
 func (c *Pinpoint) SendMessages(input *SendMessagesInput) (*SendMessagesOutput, error) {
 	req, out := c.SendMessagesRequest(input)
 	return out, req.Send()
@@ -2846,23 +3616,198 @@ func (c *Pinpoint) SendMessagesWithContext(ctx aws.Context, input *SendMessagesI
 	return out, req.Send()
 }
 
+const opSendUsersMessages = "SendUsersMessages"
+
+// SendUsersMessagesRequest generates a "aws/request.Request" representing the
+// client's request for the SendUsersMessages operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See SendUsersMessages for more information on using the SendUsersMessages
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the SendUsersMessagesRequest method.
+//    req, resp := client.SendUsersMessagesRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendUsersMessages
+func (c *Pinpoint) SendUsersMessagesRequest(input *SendUsersMessagesInput) (req *request.Request, output *SendUsersMessagesOutput) {
+	op := &request.Operation{
+		Name:       opSendUsersMessages,
+		HTTPMethod: "POST",
+		HTTPPath:   "/v1/apps/{application-id}/users-messages",
+	}
+
+	if input == nil {
+		input = &SendUsersMessagesInput{}
+	}
+
+	output = &SendUsersMessagesOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// SendUsersMessages API operation for Amazon Pinpoint.
+//
+// Send a batch of messages to users
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation SendUsersMessages for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendUsersMessages
+func (c *Pinpoint) SendUsersMessages(input *SendUsersMessagesInput) (*SendUsersMessagesOutput, error) {
+	req, out := c.SendUsersMessagesRequest(input)
+	return out, req.Send()
+}
+
+// SendUsersMessagesWithContext is the same as SendUsersMessages with the addition of
+// the ability to pass a context and additional request options.
+//
+// See SendUsersMessages for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) SendUsersMessagesWithContext(ctx aws.Context, input *SendUsersMessagesInput, opts ...request.Option) (*SendUsersMessagesOutput, error) {
+	req, out := c.SendUsersMessagesRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUpdateAdmChannel = "UpdateAdmChannel"
+
+// UpdateAdmChannelRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateAdmChannel operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateAdmChannel for more information on using the UpdateAdmChannel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateAdmChannelRequest method.
+//    req, resp := client.UpdateAdmChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateAdmChannel
+func (c *Pinpoint) UpdateAdmChannelRequest(input *UpdateAdmChannelInput) (req *request.Request, output *UpdateAdmChannelOutput) {
+	op := &request.Operation{
+		Name:       opUpdateAdmChannel,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/v1/apps/{application-id}/channels/adm",
+	}
+
+	if input == nil {
+		input = &UpdateAdmChannelInput{}
+	}
+
+	output = &UpdateAdmChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateAdmChannel API operation for Amazon Pinpoint.
+//
+// Update an ADM channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation UpdateAdmChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateAdmChannel
+func (c *Pinpoint) UpdateAdmChannel(input *UpdateAdmChannelInput) (*UpdateAdmChannelOutput, error) {
+	req, out := c.UpdateAdmChannelRequest(input)
+	return out, req.Send()
+}
+
+// UpdateAdmChannelWithContext is the same as UpdateAdmChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateAdmChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) UpdateAdmChannelWithContext(ctx aws.Context, input *UpdateAdmChannelInput, opts ...request.Option) (*UpdateAdmChannelOutput, error) {
+	req, out := c.UpdateAdmChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateApnsChannel = "UpdateApnsChannel"
 
 // UpdateApnsChannelRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApnsChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateApnsChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateApnsChannel method directly
-// instead.
+// See UpdateApnsChannel for more information on using the UpdateApnsChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateApnsChannelRequest method.
 //    req, resp := client.UpdateApnsChannelRequest(params)
@@ -2871,6 +3816,8 @@ const opUpdateApnsChannel = "UpdateApnsChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsChannel
 func (c *Pinpoint) UpdateApnsChannelRequest(input *UpdateApnsChannelInput) (req *request.Request, output *UpdateApnsChannelOutput) {
 	op := &request.Operation{
 		Name:       opUpdateApnsChannel,
@@ -2911,6 +3858,7 @@ func (c *Pinpoint) UpdateApnsChannelRequest(input *UpdateApnsChannelInput) (req 
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsChannel
 func (c *Pinpoint) UpdateApnsChannel(input *UpdateApnsChannelInput) (*UpdateApnsChannelOutput, error) {
 	req, out := c.UpdateApnsChannelRequest(input)
 	return out, req.Send()
@@ -2936,19 +3884,18 @@ const opUpdateApnsSandboxChannel = "UpdateApnsSandboxChannel"
 
 // UpdateApnsSandboxChannelRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApnsSandboxChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateApnsSandboxChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateApnsSandboxChannel method directly
-// instead.
+// See UpdateApnsSandboxChannel for more information on using the UpdateApnsSandboxChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateApnsSandboxChannelRequest method.
 //    req, resp := client.UpdateApnsSandboxChannelRequest(params)
@@ -2957,6 +3904,8 @@ const opUpdateApnsSandboxChannel = "UpdateApnsSandboxChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsSandboxChannel
 func (c *Pinpoint) UpdateApnsSandboxChannelRequest(input *UpdateApnsSandboxChannelInput) (req *request.Request, output *UpdateApnsSandboxChannelOutput) {
 	op := &request.Operation{
 		Name:       opUpdateApnsSandboxChannel,
@@ -2997,6 +3946,7 @@ func (c *Pinpoint) UpdateApnsSandboxChannelRequest(input *UpdateApnsSandboxChann
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsSandboxChannel
 func (c *Pinpoint) UpdateApnsSandboxChannel(input *UpdateApnsSandboxChannelInput) (*UpdateApnsSandboxChannelOutput, error) {
 	req, out := c.UpdateApnsSandboxChannelRequest(input)
 	return out, req.Send()
@@ -3022,19 +3972,18 @@ const opUpdateApplicationSettings = "UpdateApplicationSettings"
 
 // UpdateApplicationSettingsRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateApplicationSettings operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateApplicationSettings for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateApplicationSettings method directly
-// instead.
+// See UpdateApplicationSettings for more information on using the UpdateApplicationSettings
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateApplicationSettingsRequest method.
 //    req, resp := client.UpdateApplicationSettingsRequest(params)
@@ -3043,6 +3992,8 @@ const opUpdateApplicationSettings = "UpdateApplicationSettings"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApplicationSettings
 func (c *Pinpoint) UpdateApplicationSettingsRequest(input *UpdateApplicationSettingsInput) (req *request.Request, output *UpdateApplicationSettingsOutput) {
 	op := &request.Operation{
 		Name:       opUpdateApplicationSettings,
@@ -3083,6 +4034,7 @@ func (c *Pinpoint) UpdateApplicationSettingsRequest(input *UpdateApplicationSett
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApplicationSettings
 func (c *Pinpoint) UpdateApplicationSettings(input *UpdateApplicationSettingsInput) (*UpdateApplicationSettingsOutput, error) {
 	req, out := c.UpdateApplicationSettingsRequest(input)
 	return out, req.Send()
@@ -3104,23 +4056,110 @@ func (c *Pinpoint) UpdateApplicationSettingsWithContext(ctx aws.Context, input *
 	return out, req.Send()
 }
 
+const opUpdateBaiduChannel = "UpdateBaiduChannel"
+
+// UpdateBaiduChannelRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateBaiduChannel operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateBaiduChannel for more information on using the UpdateBaiduChannel
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateBaiduChannelRequest method.
+//    req, resp := client.UpdateBaiduChannelRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateBaiduChannel
+func (c *Pinpoint) UpdateBaiduChannelRequest(input *UpdateBaiduChannelInput) (req *request.Request, output *UpdateBaiduChannelOutput) {
+	op := &request.Operation{
+		Name:       opUpdateBaiduChannel,
+		HTTPMethod: "PUT",
+		HTTPPath:   "/v1/apps/{application-id}/channels/baidu",
+	}
+
+	if input == nil {
+		input = &UpdateBaiduChannelInput{}
+	}
+
+	output = &UpdateBaiduChannelOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateBaiduChannel API operation for Amazon Pinpoint.
+//
+// Update a BAIDU GCM channel
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Pinpoint's
+// API operation UpdateBaiduChannel for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeBadRequestException "BadRequestException"
+//
+//   * ErrCodeInternalServerErrorException "InternalServerErrorException"
+//
+//   * ErrCodeForbiddenException "ForbiddenException"
+//
+//   * ErrCodeNotFoundException "NotFoundException"
+//
+//   * ErrCodeMethodNotAllowedException "MethodNotAllowedException"
+//
+//   * ErrCodeTooManyRequestsException "TooManyRequestsException"
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateBaiduChannel
+func (c *Pinpoint) UpdateBaiduChannel(input *UpdateBaiduChannelInput) (*UpdateBaiduChannelOutput, error) {
+	req, out := c.UpdateBaiduChannelRequest(input)
+	return out, req.Send()
+}
+
+// UpdateBaiduChannelWithContext is the same as UpdateBaiduChannel with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateBaiduChannel for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *Pinpoint) UpdateBaiduChannelWithContext(ctx aws.Context, input *UpdateBaiduChannelInput, opts ...request.Option) (*UpdateBaiduChannelOutput, error) {
+	req, out := c.UpdateBaiduChannelRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateCampaign = "UpdateCampaign"
 
 // UpdateCampaignRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateCampaign operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateCampaign for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateCampaign method directly
-// instead.
+// See UpdateCampaign for more information on using the UpdateCampaign
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateCampaignRequest method.
 //    req, resp := client.UpdateCampaignRequest(params)
@@ -3129,6 +4168,8 @@ const opUpdateCampaign = "UpdateCampaign"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateCampaign
 func (c *Pinpoint) UpdateCampaignRequest(input *UpdateCampaignInput) (req *request.Request, output *UpdateCampaignOutput) {
 	op := &request.Operation{
 		Name:       opUpdateCampaign,
@@ -3169,6 +4210,7 @@ func (c *Pinpoint) UpdateCampaignRequest(input *UpdateCampaignInput) (req *reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateCampaign
 func (c *Pinpoint) UpdateCampaign(input *UpdateCampaignInput) (*UpdateCampaignOutput, error) {
 	req, out := c.UpdateCampaignRequest(input)
 	return out, req.Send()
@@ -3194,19 +4236,18 @@ const opUpdateEmailChannel = "UpdateEmailChannel"
 
 // UpdateEmailChannelRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateEmailChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateEmailChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateEmailChannel method directly
-// instead.
+// See UpdateEmailChannel for more information on using the UpdateEmailChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateEmailChannelRequest method.
 //    req, resp := client.UpdateEmailChannelRequest(params)
@@ -3215,6 +4256,8 @@ const opUpdateEmailChannel = "UpdateEmailChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEmailChannel
 func (c *Pinpoint) UpdateEmailChannelRequest(input *UpdateEmailChannelInput) (req *request.Request, output *UpdateEmailChannelOutput) {
 	op := &request.Operation{
 		Name:       opUpdateEmailChannel,
@@ -3255,6 +4298,7 @@ func (c *Pinpoint) UpdateEmailChannelRequest(input *UpdateEmailChannelInput) (re
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEmailChannel
 func (c *Pinpoint) UpdateEmailChannel(input *UpdateEmailChannelInput) (*UpdateEmailChannelOutput, error) {
 	req, out := c.UpdateEmailChannelRequest(input)
 	return out, req.Send()
@@ -3280,19 +4324,18 @@ const opUpdateEndpoint = "UpdateEndpoint"
 
 // UpdateEndpointRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateEndpoint operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateEndpoint for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateEndpoint method directly
-// instead.
+// See UpdateEndpoint for more information on using the UpdateEndpoint
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateEndpointRequest method.
 //    req, resp := client.UpdateEndpointRequest(params)
@@ -3301,6 +4344,8 @@ const opUpdateEndpoint = "UpdateEndpoint"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpoint
 func (c *Pinpoint) UpdateEndpointRequest(input *UpdateEndpointInput) (req *request.Request, output *UpdateEndpointOutput) {
 	op := &request.Operation{
 		Name:       opUpdateEndpoint,
@@ -3341,6 +4386,7 @@ func (c *Pinpoint) UpdateEndpointRequest(input *UpdateEndpointInput) (req *reque
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpoint
 func (c *Pinpoint) UpdateEndpoint(input *UpdateEndpointInput) (*UpdateEndpointOutput, error) {
 	req, out := c.UpdateEndpointRequest(input)
 	return out, req.Send()
@@ -3366,19 +4412,18 @@ const opUpdateEndpointsBatch = "UpdateEndpointsBatch"
 
 // UpdateEndpointsBatchRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateEndpointsBatch operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateEndpointsBatch for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateEndpointsBatch method directly
-// instead.
+// See UpdateEndpointsBatch for more information on using the UpdateEndpointsBatch
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateEndpointsBatchRequest method.
 //    req, resp := client.UpdateEndpointsBatchRequest(params)
@@ -3387,6 +4432,8 @@ const opUpdateEndpointsBatch = "UpdateEndpointsBatch"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpointsBatch
 func (c *Pinpoint) UpdateEndpointsBatchRequest(input *UpdateEndpointsBatchInput) (req *request.Request, output *UpdateEndpointsBatchOutput) {
 	op := &request.Operation{
 		Name:       opUpdateEndpointsBatch,
@@ -3427,6 +4474,7 @@ func (c *Pinpoint) UpdateEndpointsBatchRequest(input *UpdateEndpointsBatchInput)
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpointsBatch
 func (c *Pinpoint) UpdateEndpointsBatch(input *UpdateEndpointsBatchInput) (*UpdateEndpointsBatchOutput, error) {
 	req, out := c.UpdateEndpointsBatchRequest(input)
 	return out, req.Send()
@@ -3452,19 +4500,18 @@ const opUpdateGcmChannel = "UpdateGcmChannel"
 
 // UpdateGcmChannelRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateGcmChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateGcmChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateGcmChannel method directly
-// instead.
+// See UpdateGcmChannel for more information on using the UpdateGcmChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateGcmChannelRequest method.
 //    req, resp := client.UpdateGcmChannelRequest(params)
@@ -3473,6 +4520,8 @@ const opUpdateGcmChannel = "UpdateGcmChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateGcmChannel
 func (c *Pinpoint) UpdateGcmChannelRequest(input *UpdateGcmChannelInput) (req *request.Request, output *UpdateGcmChannelOutput) {
 	op := &request.Operation{
 		Name:       opUpdateGcmChannel,
@@ -3513,6 +4562,7 @@ func (c *Pinpoint) UpdateGcmChannelRequest(input *UpdateGcmChannelInput) (req *r
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateGcmChannel
 func (c *Pinpoint) UpdateGcmChannel(input *UpdateGcmChannelInput) (*UpdateGcmChannelOutput, error) {
 	req, out := c.UpdateGcmChannelRequest(input)
 	return out, req.Send()
@@ -3538,19 +4588,18 @@ const opUpdateSegment = "UpdateSegment"
 
 // UpdateSegmentRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSegment operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateSegment for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateSegment method directly
-// instead.
+// See UpdateSegment for more information on using the UpdateSegment
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateSegmentRequest method.
 //    req, resp := client.UpdateSegmentRequest(params)
@@ -3559,6 +4608,8 @@ const opUpdateSegment = "UpdateSegment"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSegment
 func (c *Pinpoint) UpdateSegmentRequest(input *UpdateSegmentInput) (req *request.Request, output *UpdateSegmentOutput) {
 	op := &request.Operation{
 		Name:       opUpdateSegment,
@@ -3599,6 +4650,7 @@ func (c *Pinpoint) UpdateSegmentRequest(input *UpdateSegmentInput) (req *request
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSegment
 func (c *Pinpoint) UpdateSegment(input *UpdateSegmentInput) (*UpdateSegmentOutput, error) {
 	req, out := c.UpdateSegmentRequest(input)
 	return out, req.Send()
@@ -3624,19 +4676,18 @@ const opUpdateSmsChannel = "UpdateSmsChannel"
 
 // UpdateSmsChannelRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSmsChannel operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateSmsChannel for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateSmsChannel method directly
-// instead.
+// See UpdateSmsChannel for more information on using the UpdateSmsChannel
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateSmsChannelRequest method.
 //    req, resp := client.UpdateSmsChannelRequest(params)
@@ -3645,6 +4696,8 @@ const opUpdateSmsChannel = "UpdateSmsChannel"
 //    if err == nil { // resp is now filled
 //        fmt.Println(resp)
 //    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSmsChannel
 func (c *Pinpoint) UpdateSmsChannelRequest(input *UpdateSmsChannelInput) (req *request.Request, output *UpdateSmsChannelOutput) {
 	op := &request.Operation{
 		Name:       opUpdateSmsChannel,
@@ -3685,6 +4738,7 @@ func (c *Pinpoint) UpdateSmsChannelRequest(input *UpdateSmsChannelInput) (req *r
 //
 //   * ErrCodeTooManyRequestsException "TooManyRequestsException"
 //
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSmsChannel
 func (c *Pinpoint) UpdateSmsChannel(input *UpdateSmsChannelInput) (*UpdateSmsChannelOutput, error) {
 	req, out := c.UpdateSmsChannelRequest(input)
 	return out, req.Send()
@@ -3706,18 +4760,360 @@ func (c *Pinpoint) UpdateSmsChannelWithContext(ctx aws.Context, input *UpdateSms
 	return out, req.Send()
 }
 
+// Amazon Device Messaging channel definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ADMChannelRequest
+type ADMChannelRequest struct {
+	_ struct{} `type:"structure"`
+
+	// Client ID as gotten from Amazon
+	ClientId *string `type:"string"`
+
+	// Client secret as gotten from Amazon
+	ClientSecret *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+}
+
+// String returns the string representation
+func (s ADMChannelRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ADMChannelRequest) GoString() string {
+	return s.String()
+}
+
+// SetClientId sets the ClientId field's value.
+func (s *ADMChannelRequest) SetClientId(v string) *ADMChannelRequest {
+	s.ClientId = &v
+	return s
+}
+
+// SetClientSecret sets the ClientSecret field's value.
+func (s *ADMChannelRequest) SetClientSecret(v string) *ADMChannelRequest {
+	s.ClientSecret = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *ADMChannelRequest) SetEnabled(v bool) *ADMChannelRequest {
+	s.Enabled = &v
+	return s
+}
+
+// Amazon Device Messaging channel definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ADMChannelResponse
+type ADMChannelResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Application id
+	ApplicationId *string `type:"string"`
+
+	// When was this segment created
+	CreationDate *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Channel ID. Not used, only for backwards compatibility.
+	Id *string `type:"string"`
+
+	// Is this channel archived
+	IsArchived *bool `type:"boolean"`
+
+	// Who last updated this entry
+	LastModifiedBy *string `type:"string"`
+
+	// Last date this was updated
+	LastModifiedDate *string `type:"string"`
+
+	// Platform type. Will be "ADM"
+	Platform *string `type:"string"`
+
+	// Version of channel
+	Version *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s ADMChannelResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ADMChannelResponse) GoString() string {
+	return s.String()
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *ADMChannelResponse) SetApplicationId(v string) *ADMChannelResponse {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetCreationDate sets the CreationDate field's value.
+func (s *ADMChannelResponse) SetCreationDate(v string) *ADMChannelResponse {
+	s.CreationDate = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *ADMChannelResponse) SetEnabled(v bool) *ADMChannelResponse {
+	s.Enabled = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *ADMChannelResponse) SetId(v string) *ADMChannelResponse {
+	s.Id = &v
+	return s
+}
+
+// SetIsArchived sets the IsArchived field's value.
+func (s *ADMChannelResponse) SetIsArchived(v bool) *ADMChannelResponse {
+	s.IsArchived = &v
+	return s
+}
+
+// SetLastModifiedBy sets the LastModifiedBy field's value.
+func (s *ADMChannelResponse) SetLastModifiedBy(v string) *ADMChannelResponse {
+	s.LastModifiedBy = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *ADMChannelResponse) SetLastModifiedDate(v string) *ADMChannelResponse {
+	s.LastModifiedDate = &v
+	return s
+}
+
+// SetPlatform sets the Platform field's value.
+func (s *ADMChannelResponse) SetPlatform(v string) *ADMChannelResponse {
+	s.Platform = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *ADMChannelResponse) SetVersion(v int64) *ADMChannelResponse {
+	s.Version = &v
+	return s
+}
+
+// ADM Message.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ADMMessage
+type ADMMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The action that occurs if the user taps a push notification delivered by
+	// the campaign: OPEN_APP - Your app launches, or it becomes the foreground
+	// app if it has been sent to the background. This is the default action. DEEP_LINK
+	// - Uses deep linking features in iOS and Android to open your app and display
+	// a designated user interface within the app. URL - The default mobile browser
+	// on the user's device launches and opens a web page at the URL you specify.
+	// Possible values include: OPEN_APP | DEEP_LINK | URL
+	Action *string `type:"string" enum:"Action"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	// Optional. Arbitrary string used to indicate multiple messages are logically
+	// the same and that ADM is allowed to drop previously enqueued messages in
+	// favor of this one.
+	ConsolidationKey *string `type:"string"`
+
+	Data map[string]*string `type:"map"`
+
+	// Optional. Number of seconds ADM should retain the message if the device is
+	// offline
+	ExpiresAfter *string `type:"string"`
+
+	// The icon image name of the asset saved in your application.
+	IconReference *string `type:"string"`
+
+	// The URL that points to an image used as the large icon to the notification
+	// content view.
+	ImageIconUrl *string `type:"string"`
+
+	// The URL that points to an image used in the push notification.
+	ImageUrl *string `type:"string"`
+
+	// The data payload used for a silent push. This payload is added to the notifications'
+	// data.pinpoint.jsonBody' object
+	JsonData *string `type:"string"`
+
+	// Optional. Base-64-encoded MD5 checksum of the data parameter. Used to verify
+	// data integrity
+	MD5 *string `type:"string"`
+
+	// The Raw JSON formatted string to be used as the payload. This value overrides
+	// the message.
+	RawContent *string `type:"string"`
+
+	// Indicates if the message should display on the users device. Silent pushes
+	// can be used for Remote Configuration and Phone Home use cases.
+	SilentPush *bool `type:"boolean"`
+
+	// The URL that points to an image used as the small icon for the notification
+	// which will be used to represent the notification in the status bar and content
+	// view
+	SmallImageIconUrl *string `type:"string"`
+
+	// Indicates a sound to play when the device receives the notification. Supports
+	// default, or the filename of a sound resource bundled in the app. Android
+	// sound files must reside in /res/raw/
+	Sound *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// The message title that displays above the message on the user's device.
+	Title *string `type:"string"`
+
+	// The URL to open in the user's mobile browser. Used if the value for Action
+	// is URL.
+	Url *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ADMMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ADMMessage) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *ADMMessage) SetAction(v string) *ADMMessage {
+	s.Action = &v
+	return s
+}
+
+// SetBody sets the Body field's value.
+func (s *ADMMessage) SetBody(v string) *ADMMessage {
+	s.Body = &v
+	return s
+}
+
+// SetConsolidationKey sets the ConsolidationKey field's value.
+func (s *ADMMessage) SetConsolidationKey(v string) *ADMMessage {
+	s.ConsolidationKey = &v
+	return s
+}
+
+// SetData sets the Data field's value.
+func (s *ADMMessage) SetData(v map[string]*string) *ADMMessage {
+	s.Data = v
+	return s
+}
+
+// SetExpiresAfter sets the ExpiresAfter field's value.
+func (s *ADMMessage) SetExpiresAfter(v string) *ADMMessage {
+	s.ExpiresAfter = &v
+	return s
+}
+
+// SetIconReference sets the IconReference field's value.
+func (s *ADMMessage) SetIconReference(v string) *ADMMessage {
+	s.IconReference = &v
+	return s
+}
+
+// SetImageIconUrl sets the ImageIconUrl field's value.
+func (s *ADMMessage) SetImageIconUrl(v string) *ADMMessage {
+	s.ImageIconUrl = &v
+	return s
+}
+
+// SetImageUrl sets the ImageUrl field's value.
+func (s *ADMMessage) SetImageUrl(v string) *ADMMessage {
+	s.ImageUrl = &v
+	return s
+}
+
+// SetJsonData sets the JsonData field's value.
+func (s *ADMMessage) SetJsonData(v string) *ADMMessage {
+	s.JsonData = &v
+	return s
+}
+
+// SetMD5 sets the MD5 field's value.
+func (s *ADMMessage) SetMD5(v string) *ADMMessage {
+	s.MD5 = &v
+	return s
+}
+
+// SetRawContent sets the RawContent field's value.
+func (s *ADMMessage) SetRawContent(v string) *ADMMessage {
+	s.RawContent = &v
+	return s
+}
+
+// SetSilentPush sets the SilentPush field's value.
+func (s *ADMMessage) SetSilentPush(v bool) *ADMMessage {
+	s.SilentPush = &v
+	return s
+}
+
+// SetSmallImageIconUrl sets the SmallImageIconUrl field's value.
+func (s *ADMMessage) SetSmallImageIconUrl(v string) *ADMMessage {
+	s.SmallImageIconUrl = &v
+	return s
+}
+
+// SetSound sets the Sound field's value.
+func (s *ADMMessage) SetSound(v string) *ADMMessage {
+	s.Sound = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *ADMMessage) SetSubstitutions(v map[string][]*string) *ADMMessage {
+	s.Substitutions = v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *ADMMessage) SetTitle(v string) *ADMMessage {
+	s.Title = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *ADMMessage) SetUrl(v string) *ADMMessage {
+	s.Url = &v
+	return s
+}
+
 // Apple Push Notification Service channel definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/APNSChannelRequest
 type APNSChannelRequest struct {
 	_ struct{} `type:"structure"`
 
+	// The bundle id used for APNs Tokens.
+	BundleId *string `type:"string"`
+
 	// The distribution certificate from Apple.
 	Certificate *string `type:"string"`
+
+	// The default authentication method used for APNs.
+	DefaultAuthenticationMethod *string `type:"string"`
 
 	// If the channel is enabled for sending messages.
 	Enabled *bool `type:"boolean"`
 
 	// The certificate private key.
 	PrivateKey *string `type:"string"`
+
+	// The team id used for APNs Tokens.
+	TeamId *string `type:"string"`
+
+	// The token key used for APNs Tokens.
+	TokenKey *string `type:"string"`
+
+	// The token key used for APNs Tokens.
+	TokenKeyId *string `type:"string"`
 }
 
 // String returns the string representation
@@ -3730,9 +5126,21 @@ func (s APNSChannelRequest) GoString() string {
 	return s.String()
 }
 
+// SetBundleId sets the BundleId field's value.
+func (s *APNSChannelRequest) SetBundleId(v string) *APNSChannelRequest {
+	s.BundleId = &v
+	return s
+}
+
 // SetCertificate sets the Certificate field's value.
 func (s *APNSChannelRequest) SetCertificate(v string) *APNSChannelRequest {
 	s.Certificate = &v
+	return s
+}
+
+// SetDefaultAuthenticationMethod sets the DefaultAuthenticationMethod field's value.
+func (s *APNSChannelRequest) SetDefaultAuthenticationMethod(v string) *APNSChannelRequest {
+	s.DefaultAuthenticationMethod = &v
 	return s
 }
 
@@ -3748,7 +5156,26 @@ func (s *APNSChannelRequest) SetPrivateKey(v string) *APNSChannelRequest {
 	return s
 }
 
+// SetTeamId sets the TeamId field's value.
+func (s *APNSChannelRequest) SetTeamId(v string) *APNSChannelRequest {
+	s.TeamId = &v
+	return s
+}
+
+// SetTokenKey sets the TokenKey field's value.
+func (s *APNSChannelRequest) SetTokenKey(v string) *APNSChannelRequest {
+	s.TokenKey = &v
+	return s
+}
+
+// SetTokenKeyId sets the TokenKeyId field's value.
+func (s *APNSChannelRequest) SetTokenKeyId(v string) *APNSChannelRequest {
+	s.TokenKeyId = &v
+	return s
+}
+
 // Apple Distribution Push Notification Service channel definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/APNSChannelResponse
 type APNSChannelResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -3761,7 +5188,7 @@ type APNSChannelResponse struct {
 	// If the channel is enabled for sending messages.
 	Enabled *bool `type:"boolean"`
 
-	// Channel ID. Not used, only for backwards compatibility.
+	// Channel ID. Not used. Present only for backwards compatibility.
 	Id *string `type:"string"`
 
 	// Is this channel archived
@@ -3845,6 +5272,7 @@ func (s *APNSChannelResponse) SetVersion(v int64) *APNSChannelResponse {
 }
 
 // APNS Message.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/APNSMessage
 type APNSMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -3872,8 +5300,15 @@ type APNSMessage struct {
 
 	Data map[string]*string `type:"map"`
 
+	// The data payload used for a silent push. This payload is added to the notifications'
+	// data.pinpoint.jsonBody' object
+	JsonData *string `type:"string"`
+
 	// The URL that points to a video used in the push notification.
 	MediaUrl *string `type:"string"`
+
+	// The preferred authentication method, either "CERTIFICATE" or "TOKEN"
+	PreferredAuthenticationMethod *string `type:"string"`
 
 	// The Raw JSON formatted string to be used as the payload. This value overrides
 	// the message.
@@ -3944,9 +5379,21 @@ func (s *APNSMessage) SetData(v map[string]*string) *APNSMessage {
 	return s
 }
 
+// SetJsonData sets the JsonData field's value.
+func (s *APNSMessage) SetJsonData(v string) *APNSMessage {
+	s.JsonData = &v
+	return s
+}
+
 // SetMediaUrl sets the MediaUrl field's value.
 func (s *APNSMessage) SetMediaUrl(v string) *APNSMessage {
 	s.MediaUrl = &v
+	return s
+}
+
+// SetPreferredAuthenticationMethod sets the PreferredAuthenticationMethod field's value.
+func (s *APNSMessage) SetPreferredAuthenticationMethod(v string) *APNSMessage {
+	s.PreferredAuthenticationMethod = &v
 	return s
 }
 
@@ -3993,17 +5440,33 @@ func (s *APNSMessage) SetUrl(v string) *APNSMessage {
 }
 
 // Apple Development Push Notification Service channel definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/APNSSandboxChannelRequest
 type APNSSandboxChannelRequest struct {
 	_ struct{} `type:"structure"`
 
+	// The bundle id used for APNs Tokens.
+	BundleId *string `type:"string"`
+
 	// The distribution certificate from Apple.
 	Certificate *string `type:"string"`
+
+	// The default authentication method used for APNs.
+	DefaultAuthenticationMethod *string `type:"string"`
 
 	// If the channel is enabled for sending messages.
 	Enabled *bool `type:"boolean"`
 
 	// The certificate private key.
 	PrivateKey *string `type:"string"`
+
+	// The team id used for APNs Tokens.
+	TeamId *string `type:"string"`
+
+	// The token key used for APNs Tokens.
+	TokenKey *string `type:"string"`
+
+	// The token key used for APNs Tokens.
+	TokenKeyId *string `type:"string"`
 }
 
 // String returns the string representation
@@ -4016,9 +5479,21 @@ func (s APNSSandboxChannelRequest) GoString() string {
 	return s.String()
 }
 
+// SetBundleId sets the BundleId field's value.
+func (s *APNSSandboxChannelRequest) SetBundleId(v string) *APNSSandboxChannelRequest {
+	s.BundleId = &v
+	return s
+}
+
 // SetCertificate sets the Certificate field's value.
 func (s *APNSSandboxChannelRequest) SetCertificate(v string) *APNSSandboxChannelRequest {
 	s.Certificate = &v
+	return s
+}
+
+// SetDefaultAuthenticationMethod sets the DefaultAuthenticationMethod field's value.
+func (s *APNSSandboxChannelRequest) SetDefaultAuthenticationMethod(v string) *APNSSandboxChannelRequest {
+	s.DefaultAuthenticationMethod = &v
 	return s
 }
 
@@ -4034,7 +5509,26 @@ func (s *APNSSandboxChannelRequest) SetPrivateKey(v string) *APNSSandboxChannelR
 	return s
 }
 
+// SetTeamId sets the TeamId field's value.
+func (s *APNSSandboxChannelRequest) SetTeamId(v string) *APNSSandboxChannelRequest {
+	s.TeamId = &v
+	return s
+}
+
+// SetTokenKey sets the TokenKey field's value.
+func (s *APNSSandboxChannelRequest) SetTokenKey(v string) *APNSSandboxChannelRequest {
+	s.TokenKey = &v
+	return s
+}
+
+// SetTokenKeyId sets the TokenKeyId field's value.
+func (s *APNSSandboxChannelRequest) SetTokenKeyId(v string) *APNSSandboxChannelRequest {
+	s.TokenKeyId = &v
+	return s
+}
+
 // Apple Development Push Notification Service channel definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/APNSSandboxChannelResponse
 type APNSSandboxChannelResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -4059,7 +5553,7 @@ type APNSSandboxChannelResponse struct {
 	// Last date this was updated
 	LastModifiedDate *string `type:"string"`
 
-	// The platform type. Will be APNS.
+	// The platform type. Will be APNS_SANDBOX.
 	Platform *string `type:"string"`
 
 	// Version of channel
@@ -4131,6 +5625,7 @@ func (s *APNSSandboxChannelResponse) SetVersion(v int64) *APNSSandboxChannelResp
 }
 
 // Activities for campaign.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ActivitiesResponse
 type ActivitiesResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -4155,6 +5650,7 @@ func (s *ActivitiesResponse) SetItem(v []*ActivityResponse) *ActivitiesResponse 
 }
 
 // Activity definition
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ActivityResponse
 type ActivityResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -4290,13 +5786,14 @@ func (s *ActivityResponse) SetTreatmentId(v string) *ActivityResponse {
 }
 
 // Address configuration.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/AddressConfiguration
 type AddressConfiguration struct {
 	_ struct{} `type:"structure"`
 
 	// Body override. If specified will override default body.
 	BodyOverride *string `type:"string"`
 
-	// Type of channel of this address
+	// The channel type.Valid values: GCM | APNS | SMS | EMAIL
 	ChannelType *string `type:"string" enum:"ChannelType"`
 
 	Context map[string]*string `type:"map"`
@@ -4357,7 +5854,42 @@ func (s *AddressConfiguration) SetTitleOverride(v string) *AddressConfiguration 
 	return s
 }
 
+// Application Response.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ApplicationResponse
+type ApplicationResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The unique application ID.
+	Id *string `type:"string"`
+
+	// The display name of the application.
+	Name *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ApplicationResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ApplicationResponse) GoString() string {
+	return s.String()
+}
+
+// SetId sets the Id field's value.
+func (s *ApplicationResponse) SetId(v string) *ApplicationResponse {
+	s.Id = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *ApplicationResponse) SetName(v string) *ApplicationResponse {
+	s.Name = &v
+	return s
+}
+
 // Application settings.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ApplicationSettingsResource
 type ApplicationSettingsResource struct {
 	_ struct{} `type:"structure"`
 
@@ -4412,7 +5944,43 @@ func (s *ApplicationSettingsResource) SetQuietTime(v *QuietTime) *ApplicationSet
 	return s
 }
 
+// Get Applications Result.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ApplicationsResponse
+type ApplicationsResponse struct {
+	_ struct{} `type:"structure"`
+
+	// List of applications returned in this page.
+	Item []*ApplicationResponse `type:"list"`
+
+	// The string that you use in a subsequent request to get the next page of results
+	// in a paginated response.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s ApplicationsResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ApplicationsResponse) GoString() string {
+	return s.String()
+}
+
+// SetItem sets the Item field's value.
+func (s *ApplicationsResponse) SetItem(v []*ApplicationResponse) *ApplicationsResponse {
+	s.Item = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ApplicationsResponse) SetNextToken(v string) *ApplicationsResponse {
+	s.NextToken = &v
+	return s
+}
+
 // Custom attibute dimension
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/AttributeDimension
 type AttributeDimension struct {
 	_ struct{} `type:"structure"`
 
@@ -4446,12 +6014,321 @@ func (s *AttributeDimension) SetValues(v []*string) *AttributeDimension {
 	return s
 }
 
+// Baidu Cloud Push credentials
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/BaiduChannelRequest
+type BaiduChannelRequest struct {
+	_ struct{} `type:"structure"`
+
+	// Platform credential API key from Baidu.
+	ApiKey *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Platform credential Secret key from Baidu.
+	SecretKey *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BaiduChannelRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BaiduChannelRequest) GoString() string {
+	return s.String()
+}
+
+// SetApiKey sets the ApiKey field's value.
+func (s *BaiduChannelRequest) SetApiKey(v string) *BaiduChannelRequest {
+	s.ApiKey = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *BaiduChannelRequest) SetEnabled(v bool) *BaiduChannelRequest {
+	s.Enabled = &v
+	return s
+}
+
+// SetSecretKey sets the SecretKey field's value.
+func (s *BaiduChannelRequest) SetSecretKey(v string) *BaiduChannelRequest {
+	s.SecretKey = &v
+	return s
+}
+
+// Baidu Cloud Messaging channel definition
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/BaiduChannelResponse
+type BaiduChannelResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Application id
+	ApplicationId *string `type:"string"`
+
+	// When was this segment created
+	CreationDate *string `type:"string"`
+
+	// The Baidu API key from Baidu.
+	Credential *string `type:"string"`
+
+	// If the channel is enabled for sending messages.
+	Enabled *bool `type:"boolean"`
+
+	// Channel ID. Not used, only for backwards compatibility.
+	Id *string `type:"string"`
+
+	// Is this channel archived
+	IsArchived *bool `type:"boolean"`
+
+	// Who made the last change
+	LastModifiedBy *string `type:"string"`
+
+	// Last date this was updated
+	LastModifiedDate *string `type:"string"`
+
+	// The platform type. Will be BAIDU
+	Platform *string `type:"string"`
+
+	// Version of channel
+	Version *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s BaiduChannelResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BaiduChannelResponse) GoString() string {
+	return s.String()
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *BaiduChannelResponse) SetApplicationId(v string) *BaiduChannelResponse {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetCreationDate sets the CreationDate field's value.
+func (s *BaiduChannelResponse) SetCreationDate(v string) *BaiduChannelResponse {
+	s.CreationDate = &v
+	return s
+}
+
+// SetCredential sets the Credential field's value.
+func (s *BaiduChannelResponse) SetCredential(v string) *BaiduChannelResponse {
+	s.Credential = &v
+	return s
+}
+
+// SetEnabled sets the Enabled field's value.
+func (s *BaiduChannelResponse) SetEnabled(v bool) *BaiduChannelResponse {
+	s.Enabled = &v
+	return s
+}
+
+// SetId sets the Id field's value.
+func (s *BaiduChannelResponse) SetId(v string) *BaiduChannelResponse {
+	s.Id = &v
+	return s
+}
+
+// SetIsArchived sets the IsArchived field's value.
+func (s *BaiduChannelResponse) SetIsArchived(v bool) *BaiduChannelResponse {
+	s.IsArchived = &v
+	return s
+}
+
+// SetLastModifiedBy sets the LastModifiedBy field's value.
+func (s *BaiduChannelResponse) SetLastModifiedBy(v string) *BaiduChannelResponse {
+	s.LastModifiedBy = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *BaiduChannelResponse) SetLastModifiedDate(v string) *BaiduChannelResponse {
+	s.LastModifiedDate = &v
+	return s
+}
+
+// SetPlatform sets the Platform field's value.
+func (s *BaiduChannelResponse) SetPlatform(v string) *BaiduChannelResponse {
+	s.Platform = &v
+	return s
+}
+
+// SetVersion sets the Version field's value.
+func (s *BaiduChannelResponse) SetVersion(v int64) *BaiduChannelResponse {
+	s.Version = &v
+	return s
+}
+
+// Baidu Message.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/BaiduMessage
+type BaiduMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The action that occurs if the user taps a push notification delivered by
+	// the campaign: OPEN_APP - Your app launches, or it becomes the foreground
+	// app if it has been sent to the background. This is the default action. DEEP_LINK
+	// - Uses deep linking features in iOS and Android to open your app and display
+	// a designated user interface within the app. URL - The default mobile browser
+	// on the user's device launches and opens a web page at the URL you specify.
+	// Possible values include: OPEN_APP | DEEP_LINK | URL
+	Action *string `type:"string" enum:"Action"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	Data map[string]*string `type:"map"`
+
+	// The icon image name of the asset saved in your application.
+	IconReference *string `type:"string"`
+
+	// The URL that points to an image used as the large icon to the notification
+	// content view.
+	ImageIconUrl *string `type:"string"`
+
+	// The URL that points to an image used in the push notification.
+	ImageUrl *string `type:"string"`
+
+	// The data payload used for a silent push. This payload is added to the notifications'
+	// data.pinpoint.jsonBody' object
+	JsonData *string `type:"string"`
+
+	// The Raw JSON formatted string to be used as the payload. This value overrides
+	// the message.
+	RawContent *string `type:"string"`
+
+	// Indicates if the message should display on the users device. Silent pushes
+	// can be used for Remote Configuration and Phone Home use cases.
+	SilentPush *bool `type:"boolean"`
+
+	// The URL that points to an image used as the small icon for the notification
+	// which will be used to represent the notification in the status bar and content
+	// view
+	SmallImageIconUrl *string `type:"string"`
+
+	// Indicates a sound to play when the device receives the notification. Supports
+	// default, or the filename of a sound resource bundled in the app. Android
+	// sound files must reside in /res/raw/
+	Sound *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// The message title that displays above the message on the user's device.
+	Title *string `type:"string"`
+
+	// The URL to open in the user's mobile browser. Used if the value for Action
+	// is URL.
+	Url *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BaiduMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BaiduMessage) GoString() string {
+	return s.String()
+}
+
+// SetAction sets the Action field's value.
+func (s *BaiduMessage) SetAction(v string) *BaiduMessage {
+	s.Action = &v
+	return s
+}
+
+// SetBody sets the Body field's value.
+func (s *BaiduMessage) SetBody(v string) *BaiduMessage {
+	s.Body = &v
+	return s
+}
+
+// SetData sets the Data field's value.
+func (s *BaiduMessage) SetData(v map[string]*string) *BaiduMessage {
+	s.Data = v
+	return s
+}
+
+// SetIconReference sets the IconReference field's value.
+func (s *BaiduMessage) SetIconReference(v string) *BaiduMessage {
+	s.IconReference = &v
+	return s
+}
+
+// SetImageIconUrl sets the ImageIconUrl field's value.
+func (s *BaiduMessage) SetImageIconUrl(v string) *BaiduMessage {
+	s.ImageIconUrl = &v
+	return s
+}
+
+// SetImageUrl sets the ImageUrl field's value.
+func (s *BaiduMessage) SetImageUrl(v string) *BaiduMessage {
+	s.ImageUrl = &v
+	return s
+}
+
+// SetJsonData sets the JsonData field's value.
+func (s *BaiduMessage) SetJsonData(v string) *BaiduMessage {
+	s.JsonData = &v
+	return s
+}
+
+// SetRawContent sets the RawContent field's value.
+func (s *BaiduMessage) SetRawContent(v string) *BaiduMessage {
+	s.RawContent = &v
+	return s
+}
+
+// SetSilentPush sets the SilentPush field's value.
+func (s *BaiduMessage) SetSilentPush(v bool) *BaiduMessage {
+	s.SilentPush = &v
+	return s
+}
+
+// SetSmallImageIconUrl sets the SmallImageIconUrl field's value.
+func (s *BaiduMessage) SetSmallImageIconUrl(v string) *BaiduMessage {
+	s.SmallImageIconUrl = &v
+	return s
+}
+
+// SetSound sets the Sound field's value.
+func (s *BaiduMessage) SetSound(v string) *BaiduMessage {
+	s.Sound = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *BaiduMessage) SetSubstitutions(v map[string][]*string) *BaiduMessage {
+	s.Substitutions = v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *BaiduMessage) SetTitle(v string) *BaiduMessage {
+	s.Title = &v
+	return s
+}
+
+// SetUrl sets the Url field's value.
+func (s *BaiduMessage) SetUrl(v string) *BaiduMessage {
+	s.Url = &v
+	return s
+}
+
 // The email message configuration.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CampaignEmailMessage
 type CampaignEmailMessage struct {
 	_ struct{} `type:"structure"`
 
 	// The email text body.
 	Body *string `type:"string"`
+
+	// The email address used to send the email from. Defaults to use FromAddress
+	// specified in the Email Channel.
+	FromAddress *string `type:"string"`
 
 	// The email html body.
 	HtmlBody *string `type:"string"`
@@ -4476,6 +6353,12 @@ func (s *CampaignEmailMessage) SetBody(v string) *CampaignEmailMessage {
 	return s
 }
 
+// SetFromAddress sets the FromAddress field's value.
+func (s *CampaignEmailMessage) SetFromAddress(v string) *CampaignEmailMessage {
+	s.FromAddress = &v
+	return s
+}
+
 // SetHtmlBody sets the HtmlBody field's value.
 func (s *CampaignEmailMessage) SetHtmlBody(v string) *CampaignEmailMessage {
 	s.HtmlBody = &v
@@ -4490,11 +6373,20 @@ func (s *CampaignEmailMessage) SetTitle(v string) *CampaignEmailMessage {
 
 // Campaign Limits are used to limit the number of messages that can be sent
 // to a user.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CampaignLimits
 type CampaignLimits struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum number of messages that the campaign can send daily.
 	Daily *int64 `type:"integer"`
+
+	// The maximum duration of a campaign from the scheduled start. Must be a minimum
+	// of 60 seconds.
+	MaximumDuration *int64 `type:"integer"`
+
+	// The maximum number of messages per second that the campaign will send. This
+	// is a best effort maximum cap and can go as high as 20000 and as low as 50
+	MessagesPerSecond *int64 `type:"integer"`
 
 	// The maximum total number of messages that the campaign can send.
 	Total *int64 `type:"integer"`
@@ -4516,6 +6408,18 @@ func (s *CampaignLimits) SetDaily(v int64) *CampaignLimits {
 	return s
 }
 
+// SetMaximumDuration sets the MaximumDuration field's value.
+func (s *CampaignLimits) SetMaximumDuration(v int64) *CampaignLimits {
+	s.MaximumDuration = &v
+	return s
+}
+
+// SetMessagesPerSecond sets the MessagesPerSecond field's value.
+func (s *CampaignLimits) SetMessagesPerSecond(v int64) *CampaignLimits {
+	s.MessagesPerSecond = &v
+	return s
+}
+
 // SetTotal sets the Total field's value.
 func (s *CampaignLimits) SetTotal(v int64) *CampaignLimits {
 	s.Total = &v
@@ -4523,6 +6427,7 @@ func (s *CampaignLimits) SetTotal(v int64) *CampaignLimits {
 }
 
 // Campaign definition
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CampaignResponse
 type CampaignResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -4713,6 +6618,7 @@ func (s *CampaignResponse) SetVersion(v int64) *CampaignResponse {
 }
 
 // SMS message configuration.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CampaignSmsMessage
 type CampaignSmsMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -4755,6 +6661,7 @@ func (s *CampaignSmsMessage) SetSenderId(v string) *CampaignSmsMessage {
 }
 
 // State of the Campaign
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CampaignState
 type CampaignState struct {
 	_ struct{} `type:"structure"`
 
@@ -4781,6 +6688,7 @@ func (s *CampaignState) SetCampaignStatus(v string) *CampaignState {
 }
 
 // List of available campaigns.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CampaignsResponse
 type CampaignsResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -4814,6 +6722,97 @@ func (s *CampaignsResponse) SetNextToken(v string) *CampaignsResponse {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateAppRequest
+type CreateAppInput struct {
+	_ struct{} `type:"structure" payload:"CreateApplicationRequest"`
+
+	// Application Request.
+	//
+	// CreateApplicationRequest is a required field
+	CreateApplicationRequest *CreateApplicationRequest `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateAppInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateAppInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *CreateAppInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "CreateAppInput"}
+	if s.CreateApplicationRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("CreateApplicationRequest"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCreateApplicationRequest sets the CreateApplicationRequest field's value.
+func (s *CreateAppInput) SetCreateApplicationRequest(v *CreateApplicationRequest) *CreateAppInput {
+	s.CreateApplicationRequest = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateAppResponse
+type CreateAppOutput struct {
+	_ struct{} `type:"structure" payload:"ApplicationResponse"`
+
+	// Application Response.
+	//
+	// ApplicationResponse is a required field
+	ApplicationResponse *ApplicationResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s CreateAppOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateAppOutput) GoString() string {
+	return s.String()
+}
+
+// SetApplicationResponse sets the ApplicationResponse field's value.
+func (s *CreateAppOutput) SetApplicationResponse(v *ApplicationResponse) *CreateAppOutput {
+	s.ApplicationResponse = v
+	return s
+}
+
+// Application Request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateApplicationRequest
+type CreateApplicationRequest struct {
+	_ struct{} `type:"structure"`
+
+	// The display name of the application. Used in the Amazon Pinpoint console.
+	Name *string `type:"string"`
+}
+
+// String returns the string representation
+func (s CreateApplicationRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s CreateApplicationRequest) GoString() string {
+	return s.String()
+}
+
+// SetName sets the Name field's value.
+func (s *CreateApplicationRequest) SetName(v string) *CreateApplicationRequest {
+	s.Name = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateCampaignRequest
 type CreateCampaignInput struct {
 	_ struct{} `type:"structure" payload:"WriteCampaignRequest"`
 
@@ -4864,6 +6863,7 @@ func (s *CreateCampaignInput) SetWriteCampaignRequest(v *WriteCampaignRequest) *
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateCampaignResponse
 type CreateCampaignOutput struct {
 	_ struct{} `type:"structure" payload:"CampaignResponse"`
 
@@ -4889,6 +6889,7 @@ func (s *CreateCampaignOutput) SetCampaignResponse(v *CampaignResponse) *CreateC
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateImportJobRequest
 type CreateImportJobInput struct {
 	_ struct{} `type:"structure" payload:"ImportJobRequest"`
 
@@ -4937,6 +6938,7 @@ func (s *CreateImportJobInput) SetImportJobRequest(v *ImportJobRequest) *CreateI
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateImportJobResponse
 type CreateImportJobOutput struct {
 	_ struct{} `type:"structure" payload:"ImportJobResponse"`
 
@@ -4960,6 +6962,7 @@ func (s *CreateImportJobOutput) SetImportJobResponse(v *ImportJobResponse) *Crea
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateSegmentRequest
 type CreateSegmentInput struct {
 	_ struct{} `type:"structure" payload:"WriteSegmentRequest"`
 
@@ -5010,6 +7013,7 @@ func (s *CreateSegmentInput) SetWriteSegmentRequest(v *WriteSegmentRequest) *Cre
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/CreateSegmentResponse
 type CreateSegmentOutput struct {
 	_ struct{} `type:"structure" payload:"SegmentResponse"`
 
@@ -5036,6 +7040,7 @@ func (s *CreateSegmentOutput) SetSegmentResponse(v *SegmentResponse) *CreateSegm
 }
 
 // Default Message across push notification, email, and sms.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DefaultMessage
 type DefaultMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -5068,6 +7073,7 @@ func (s *DefaultMessage) SetSubstitutions(v map[string][]*string) *DefaultMessag
 }
 
 // Default Push Notification Message.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DefaultPushNotificationMessage
 type DefaultPushNotificationMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -5084,6 +7090,10 @@ type DefaultPushNotificationMessage struct {
 	Body *string `type:"string"`
 
 	Data map[string]*string `type:"map"`
+
+	// The data payload used for a silent push. This payload is added to the notifications'
+	// data.pinpoint.jsonBody' object
+	JsonData *string `type:"string"`
 
 	// Indicates if the message should display on the users device. Silent pushes
 	// can be used for Remote Configuration and Phone Home use cases.
@@ -5127,6 +7137,12 @@ func (s *DefaultPushNotificationMessage) SetData(v map[string]*string) *DefaultP
 	return s
 }
 
+// SetJsonData sets the JsonData field's value.
+func (s *DefaultPushNotificationMessage) SetJsonData(v string) *DefaultPushNotificationMessage {
+	s.JsonData = &v
+	return s
+}
+
 // SetSilentPush sets the SilentPush field's value.
 func (s *DefaultPushNotificationMessage) SetSilentPush(v bool) *DefaultPushNotificationMessage {
 	s.SilentPush = &v
@@ -5151,6 +7167,70 @@ func (s *DefaultPushNotificationMessage) SetUrl(v string) *DefaultPushNotificati
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteAdmChannelRequest
+type DeleteAdmChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteAdmChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteAdmChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteAdmChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteAdmChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *DeleteAdmChannelInput) SetApplicationId(v string) *DeleteAdmChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteAdmChannelResponse
+type DeleteAdmChannelOutput struct {
+	_ struct{} `type:"structure" payload:"ADMChannelResponse"`
+
+	// Amazon Device Messaging channel definition.
+	//
+	// ADMChannelResponse is a required field
+	ADMChannelResponse *ADMChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteAdmChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteAdmChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetADMChannelResponse sets the ADMChannelResponse field's value.
+func (s *DeleteAdmChannelOutput) SetADMChannelResponse(v *ADMChannelResponse) *DeleteAdmChannelOutput {
+	s.ADMChannelResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsChannelRequest
 type DeleteApnsChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5187,6 +7267,7 @@ func (s *DeleteApnsChannelInput) SetApplicationId(v string) *DeleteApnsChannelIn
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsChannelResponse
 type DeleteApnsChannelOutput struct {
 	_ struct{} `type:"structure" payload:"APNSChannelResponse"`
 
@@ -5212,6 +7293,7 @@ func (s *DeleteApnsChannelOutput) SetAPNSChannelResponse(v *APNSChannelResponse)
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsSandboxChannelRequest
 type DeleteApnsSandboxChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5248,6 +7330,7 @@ func (s *DeleteApnsSandboxChannelInput) SetApplicationId(v string) *DeleteApnsSa
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteApnsSandboxChannelResponse
 type DeleteApnsSandboxChannelOutput struct {
 	_ struct{} `type:"structure" payload:"APNSSandboxChannelResponse"`
 
@@ -5273,6 +7356,133 @@ func (s *DeleteApnsSandboxChannelOutput) SetAPNSSandboxChannelResponse(v *APNSSa
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteAppRequest
+type DeleteAppInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteAppInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteAppInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteAppInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteAppInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *DeleteAppInput) SetApplicationId(v string) *DeleteAppInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteAppResponse
+type DeleteAppOutput struct {
+	_ struct{} `type:"structure" payload:"ApplicationResponse"`
+
+	// Application Response.
+	//
+	// ApplicationResponse is a required field
+	ApplicationResponse *ApplicationResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteAppOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteAppOutput) GoString() string {
+	return s.String()
+}
+
+// SetApplicationResponse sets the ApplicationResponse field's value.
+func (s *DeleteAppOutput) SetApplicationResponse(v *ApplicationResponse) *DeleteAppOutput {
+	s.ApplicationResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteBaiduChannelRequest
+type DeleteBaiduChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteBaiduChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBaiduChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteBaiduChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteBaiduChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *DeleteBaiduChannelInput) SetApplicationId(v string) *DeleteBaiduChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteBaiduChannelResponse
+type DeleteBaiduChannelOutput struct {
+	_ struct{} `type:"structure" payload:"BaiduChannelResponse"`
+
+	// Baidu Cloud Messaging channel definition
+	//
+	// BaiduChannelResponse is a required field
+	BaiduChannelResponse *BaiduChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteBaiduChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteBaiduChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetBaiduChannelResponse sets the BaiduChannelResponse field's value.
+func (s *DeleteBaiduChannelOutput) SetBaiduChannelResponse(v *BaiduChannelResponse) *DeleteBaiduChannelOutput {
+	s.BaiduChannelResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteCampaignRequest
 type DeleteCampaignInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5321,6 +7531,7 @@ func (s *DeleteCampaignInput) SetCampaignId(v string) *DeleteCampaignInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteCampaignResponse
 type DeleteCampaignOutput struct {
 	_ struct{} `type:"structure" payload:"CampaignResponse"`
 
@@ -5346,6 +7557,7 @@ func (s *DeleteCampaignOutput) SetCampaignResponse(v *CampaignResponse) *DeleteC
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEmailChannelRequest
 type DeleteEmailChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5382,6 +7594,7 @@ func (s *DeleteEmailChannelInput) SetApplicationId(v string) *DeleteEmailChannel
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEmailChannelResponse
 type DeleteEmailChannelOutput struct {
 	_ struct{} `type:"structure" payload:"EmailChannelResponse"`
 
@@ -5407,11 +7620,10 @@ func (s *DeleteEmailChannelOutput) SetEmailChannelResponse(v *EmailChannelRespon
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEventStreamRequest
 type DeleteEventStreamInput struct {
 	_ struct{} `type:"structure"`
 
-	// Application Id.
-	//
 	// ApplicationId is a required field
 	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
 }
@@ -5445,6 +7657,7 @@ func (s *DeleteEventStreamInput) SetApplicationId(v string) *DeleteEventStreamIn
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteEventStreamResponse
 type DeleteEventStreamOutput struct {
 	_ struct{} `type:"structure" payload:"EventStream"`
 
@@ -5470,6 +7683,7 @@ func (s *DeleteEventStreamOutput) SetEventStream(v *EventStream) *DeleteEventStr
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteGcmChannelRequest
 type DeleteGcmChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5506,6 +7720,7 @@ func (s *DeleteGcmChannelInput) SetApplicationId(v string) *DeleteGcmChannelInpu
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteGcmChannelResponse
 type DeleteGcmChannelOutput struct {
 	_ struct{} `type:"structure" payload:"GCMChannelResponse"`
 
@@ -5531,6 +7746,7 @@ func (s *DeleteGcmChannelOutput) SetGCMChannelResponse(v *GCMChannelResponse) *D
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSegmentRequest
 type DeleteSegmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5579,6 +7795,7 @@ func (s *DeleteSegmentInput) SetSegmentId(v string) *DeleteSegmentInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSegmentResponse
 type DeleteSegmentOutput struct {
 	_ struct{} `type:"structure" payload:"SegmentResponse"`
 
@@ -5604,6 +7821,7 @@ func (s *DeleteSegmentOutput) SetSegmentResponse(v *SegmentResponse) *DeleteSegm
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSmsChannelRequest
 type DeleteSmsChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5640,6 +7858,7 @@ func (s *DeleteSmsChannelInput) SetApplicationId(v string) *DeleteSmsChannelInpu
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DeleteSmsChannelResponse
 type DeleteSmsChannelOutput struct {
 	_ struct{} `type:"structure" payload:"SMSChannelResponse"`
 
@@ -5666,17 +7885,28 @@ func (s *DeleteSmsChannelOutput) SetSMSChannelResponse(v *SMSChannelResponse) *D
 }
 
 // The message configuration.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/DirectMessageConfiguration
 type DirectMessageConfiguration struct {
 	_ struct{} `type:"structure"`
 
+	// The message to ADM channels. Overrides the default push notification message.
+	ADMMessage *ADMMessage `type:"structure"`
+
 	// The message to APNS channels. Overrides the default push notification message.
 	APNSMessage *APNSMessage `type:"structure"`
+
+	// The message to Baidu GCM channels. Overrides the default push notification
+	// message.
+	BaiduMessage *BaiduMessage `type:"structure"`
 
 	// The default message for all channels.
 	DefaultMessage *DefaultMessage `type:"structure"`
 
 	// The default push notification message for all push channels.
 	DefaultPushNotificationMessage *DefaultPushNotificationMessage `type:"structure"`
+
+	// The message to Email channels. Overrides the default message.
+	EmailMessage *EmailMessage `type:"structure"`
 
 	// The message to GCM channels. Overrides the default push notification message.
 	GCMMessage *GCMMessage `type:"structure"`
@@ -5695,9 +7925,21 @@ func (s DirectMessageConfiguration) GoString() string {
 	return s.String()
 }
 
+// SetADMMessage sets the ADMMessage field's value.
+func (s *DirectMessageConfiguration) SetADMMessage(v *ADMMessage) *DirectMessageConfiguration {
+	s.ADMMessage = v
+	return s
+}
+
 // SetAPNSMessage sets the APNSMessage field's value.
 func (s *DirectMessageConfiguration) SetAPNSMessage(v *APNSMessage) *DirectMessageConfiguration {
 	s.APNSMessage = v
+	return s
+}
+
+// SetBaiduMessage sets the BaiduMessage field's value.
+func (s *DirectMessageConfiguration) SetBaiduMessage(v *BaiduMessage) *DirectMessageConfiguration {
+	s.BaiduMessage = v
 	return s
 }
 
@@ -5710,6 +7952,12 @@ func (s *DirectMessageConfiguration) SetDefaultMessage(v *DefaultMessage) *Direc
 // SetDefaultPushNotificationMessage sets the DefaultPushNotificationMessage field's value.
 func (s *DirectMessageConfiguration) SetDefaultPushNotificationMessage(v *DefaultPushNotificationMessage) *DirectMessageConfiguration {
 	s.DefaultPushNotificationMessage = v
+	return s
+}
+
+// SetEmailMessage sets the EmailMessage field's value.
+func (s *DirectMessageConfiguration) SetEmailMessage(v *EmailMessage) *DirectMessageConfiguration {
+	s.EmailMessage = v
 	return s
 }
 
@@ -5726,6 +7974,7 @@ func (s *DirectMessageConfiguration) SetSMSMessage(v *SMSMessage) *DirectMessage
 }
 
 // Email Channel Request
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EmailChannelRequest
 type EmailChannelRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -5778,10 +8027,11 @@ func (s *EmailChannelRequest) SetRoleArn(v string) *EmailChannelRequest {
 }
 
 // Email Channel Response.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EmailChannelResponse
 type EmailChannelResponse struct {
 	_ struct{} `type:"structure"`
 
-	// Application id
+	// The unique ID of the application to which the email channel belongs.
 	ApplicationId *string `type:"string"`
 
 	// The date that the settings were last updated in ISO 8601 format.
@@ -5901,7 +8151,78 @@ func (s *EmailChannelResponse) SetVersion(v int64) *EmailChannelResponse {
 	return s
 }
 
+// Email Message.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EmailMessage
+type EmailMessage struct {
+	_ struct{} `type:"structure"`
+
+	// The message body of the notification, the email body or the text message.
+	Body *string `type:"string"`
+
+	// The email address used to send the email from. Defaults to use FromAddress
+	// specified in the Email Channel.
+	FromAddress *string `type:"string"`
+
+	// The HTML part of the email.
+	HtmlBody *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// The ARN of the template to use for the email.
+	TemplateArn *string `type:"string"`
+
+	// The subject of the email.
+	Title *string `type:"string"`
+}
+
+// String returns the string representation
+func (s EmailMessage) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EmailMessage) GoString() string {
+	return s.String()
+}
+
+// SetBody sets the Body field's value.
+func (s *EmailMessage) SetBody(v string) *EmailMessage {
+	s.Body = &v
+	return s
+}
+
+// SetFromAddress sets the FromAddress field's value.
+func (s *EmailMessage) SetFromAddress(v string) *EmailMessage {
+	s.FromAddress = &v
+	return s
+}
+
+// SetHtmlBody sets the HtmlBody field's value.
+func (s *EmailMessage) SetHtmlBody(v string) *EmailMessage {
+	s.HtmlBody = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *EmailMessage) SetSubstitutions(v map[string][]*string) *EmailMessage {
+	s.Substitutions = v
+	return s
+}
+
+// SetTemplateArn sets the TemplateArn field's value.
+func (s *EmailMessage) SetTemplateArn(v string) *EmailMessage {
+	s.TemplateArn = &v
+	return s
+}
+
+// SetTitle sets the Title field's value.
+func (s *EmailMessage) SetTitle(v string) *EmailMessage {
+	s.Title = &v
+	return s
+}
+
 // Endpoint update request
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointBatchItem
 type EndpointBatchItem struct {
 	_ struct{} `type:"structure"`
 
@@ -5911,7 +8232,7 @@ type EndpointBatchItem struct {
 
 	Attributes map[string][]*string `type:"map"`
 
-	// The channel type.Valid values: APNS, GCM
+	// The channel type.Valid values: GCM | APNS | SMS | EMAIL
 	ChannelType *string `type:"string" enum:"ChannelType"`
 
 	// The endpoint demographic attributes.
@@ -5933,8 +8254,8 @@ type EndpointBatchItem struct {
 	Metrics map[string]*float64 `type:"map"`
 
 	// Indicates whether a user has opted out of receiving messages with one of
-	// the following values:ALL – User receives all messages.NONE – User receives
-	// no messages.
+	// the following values:ALL - User has opted out of all messages.NONE - Users
+	// has not opted out and receives all messages.
 	OptOut *string `type:"string"`
 
 	// The unique ID for the most recent request to update the endpoint.
@@ -6027,6 +8348,7 @@ func (s *EndpointBatchItem) SetUser(v *EndpointUser) *EndpointBatchItem {
 }
 
 // Endpoint batch update request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointBatchRequest
 type EndpointBatchRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -6051,6 +8373,7 @@ func (s *EndpointBatchRequest) SetItem(v []*EndpointBatchItem) *EndpointBatchReq
 }
 
 // Endpoint demographic data
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointDemographic
 type EndpointDemographic struct {
 	_ struct{} `type:"structure"`
 
@@ -6139,6 +8462,7 @@ func (s *EndpointDemographic) SetTimezone(v string) *EndpointDemographic {
 }
 
 // Endpoint location data
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointLocation
 type EndpointLocation struct {
 	_ struct{} `type:"structure"`
 
@@ -6210,7 +8534,69 @@ func (s *EndpointLocation) SetRegion(v string) *EndpointLocation {
 	return s
 }
 
+// The result from sending a message to an endpoint.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointMessageResult
+type EndpointMessageResult struct {
+	_ struct{} `type:"structure"`
+
+	// Address that endpoint message was delivered to.
+	Address *string `type:"string"`
+
+	// Delivery status of message.
+	DeliveryStatus *string `type:"string" enum:"DeliveryStatus"`
+
+	// Downstream service status code.
+	StatusCode *int64 `type:"integer"`
+
+	// Status message for message delivery.
+	StatusMessage *string `type:"string"`
+
+	// If token was updated as part of delivery. (This is GCM Specific)
+	UpdatedToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s EndpointMessageResult) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EndpointMessageResult) GoString() string {
+	return s.String()
+}
+
+// SetAddress sets the Address field's value.
+func (s *EndpointMessageResult) SetAddress(v string) *EndpointMessageResult {
+	s.Address = &v
+	return s
+}
+
+// SetDeliveryStatus sets the DeliveryStatus field's value.
+func (s *EndpointMessageResult) SetDeliveryStatus(v string) *EndpointMessageResult {
+	s.DeliveryStatus = &v
+	return s
+}
+
+// SetStatusCode sets the StatusCode field's value.
+func (s *EndpointMessageResult) SetStatusCode(v int64) *EndpointMessageResult {
+	s.StatusCode = &v
+	return s
+}
+
+// SetStatusMessage sets the StatusMessage field's value.
+func (s *EndpointMessageResult) SetStatusMessage(v string) *EndpointMessageResult {
+	s.StatusMessage = &v
+	return s
+}
+
+// SetUpdatedToken sets the UpdatedToken field's value.
+func (s *EndpointMessageResult) SetUpdatedToken(v string) *EndpointMessageResult {
+	s.UpdatedToken = &v
+	return s
+}
+
 // Endpoint update request
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointRequest
 type EndpointRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -6220,7 +8606,7 @@ type EndpointRequest struct {
 
 	Attributes map[string][]*string `type:"map"`
 
-	// The channel type.Valid values: APNS, GCM
+	// The channel type.Valid values: GCM | APNS | SMS | EMAIL
 	ChannelType *string `type:"string" enum:"ChannelType"`
 
 	// The endpoint demographic attributes.
@@ -6239,8 +8625,8 @@ type EndpointRequest struct {
 	Metrics map[string]*float64 `type:"map"`
 
 	// Indicates whether a user has opted out of receiving messages with one of
-	// the following values:ALL – User receives all messages.NONE – User receives
-	// no messages.
+	// the following values:ALL - User has opted out of all messages.NONE - Users
+	// has not opted out and receives all messages.
 	OptOut *string `type:"string"`
 
 	// The unique ID for the most recent request to update the endpoint.
@@ -6327,6 +8713,7 @@ func (s *EndpointRequest) SetUser(v *EndpointUser) *EndpointRequest {
 }
 
 // Endpoint response
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointResponse
 type EndpointResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -6339,7 +8726,7 @@ type EndpointResponse struct {
 
 	Attributes map[string][]*string `type:"map"`
 
-	// The channel type.Valid values: APNS, GCM
+	// The channel type.Valid values: GCM | APNS | SMS | EMAIL
 	ChannelType *string `type:"string" enum:"ChannelType"`
 
 	// A number from 0 - 99 that represents the cohort the endpoint is assigned
@@ -6372,13 +8759,14 @@ type EndpointResponse struct {
 	Metrics map[string]*float64 `type:"map"`
 
 	// Indicates whether a user has opted out of receiving messages with one of
-	// the following values:ALL – User receives all messages.NONE – User receives
-	// no messages.
+	// the following values:ALL - User has opted out of all messages.NONE - Users
+	// has not opted out and receives all messages.
 	OptOut *string `type:"string"`
 
 	// The unique ID for the most recent request to update the endpoint.
 	RequestId *string `type:"string"`
 
+	// The ShardId of endpoint.
 	ShardId *string `type:"string"`
 
 	// Custom user-specific attributes that your app reports to Amazon Pinpoint.
@@ -6491,7 +8879,68 @@ func (s *EndpointResponse) SetUser(v *EndpointUser) *EndpointResponse {
 	return s
 }
 
+// Endpoint send configuration.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointSendConfiguration
+type EndpointSendConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// Body override. If specified will override default body.
+	BodyOverride *string `type:"string"`
+
+	Context map[string]*string `type:"map"`
+
+	// The Raw JSON formatted string to be used as the payload. This value overrides
+	// the message.
+	RawContent *string `type:"string"`
+
+	Substitutions map[string][]*string `type:"map"`
+
+	// Title override. If specified will override default title if applicable.
+	TitleOverride *string `type:"string"`
+}
+
+// String returns the string representation
+func (s EndpointSendConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s EndpointSendConfiguration) GoString() string {
+	return s.String()
+}
+
+// SetBodyOverride sets the BodyOverride field's value.
+func (s *EndpointSendConfiguration) SetBodyOverride(v string) *EndpointSendConfiguration {
+	s.BodyOverride = &v
+	return s
+}
+
+// SetContext sets the Context field's value.
+func (s *EndpointSendConfiguration) SetContext(v map[string]*string) *EndpointSendConfiguration {
+	s.Context = v
+	return s
+}
+
+// SetRawContent sets the RawContent field's value.
+func (s *EndpointSendConfiguration) SetRawContent(v string) *EndpointSendConfiguration {
+	s.RawContent = &v
+	return s
+}
+
+// SetSubstitutions sets the Substitutions field's value.
+func (s *EndpointSendConfiguration) SetSubstitutions(v map[string][]*string) *EndpointSendConfiguration {
+	s.Substitutions = v
+	return s
+}
+
+// SetTitleOverride sets the TitleOverride field's value.
+func (s *EndpointSendConfiguration) SetTitleOverride(v string) *EndpointSendConfiguration {
+	s.TitleOverride = &v
+	return s
+}
+
 // Endpoint user specific custom userAttributes
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EndpointUser
 type EndpointUser struct {
 	_ struct{} `type:"structure"`
 
@@ -6524,6 +8973,7 @@ func (s *EndpointUser) SetUserId(v string) *EndpointUser {
 }
 
 // Model for an event publishing subscription export.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/EventStream
 type EventStream struct {
 	_ struct{} `type:"structure"`
 
@@ -6597,6 +9047,7 @@ func (s *EventStream) SetRoleArn(v string) *EventStream {
 }
 
 // Google Cloud Messaging credentials
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GCMChannelRequest
 type GCMChannelRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -6630,6 +9081,7 @@ func (s *GCMChannelRequest) SetEnabled(v bool) *GCMChannelRequest {
 }
 
 // Google Cloud Messaging channel definition
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GCMChannelResponse
 type GCMChannelResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -6645,7 +9097,7 @@ type GCMChannelResponse struct {
 	// If the channel is enabled for sending messages.
 	Enabled *bool `type:"boolean"`
 
-	// Channel ID. Not used, only for backwards compatibility.
+	// Channel ID. Not used. Present only for backwards compatibility.
 	Id *string `type:"string"`
 
 	// Is this channel archived
@@ -6735,6 +9187,7 @@ func (s *GCMChannelResponse) SetVersion(v int64) *GCMChannelResponse {
 }
 
 // GCM Message.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GCMMessage
 type GCMMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -6767,6 +9220,10 @@ type GCMMessage struct {
 
 	// The URL that points to an image used in the push notification.
 	ImageUrl *string `type:"string"`
+
+	// The data payload used for a silent push. This payload is added to the notifications'
+	// data.pinpoint.jsonBody' object
+	JsonData *string `type:"string"`
 
 	// The Raw JSON formatted string to be used as the payload. This value overrides
 	// the message.
@@ -6852,6 +9309,12 @@ func (s *GCMMessage) SetImageUrl(v string) *GCMMessage {
 	return s
 }
 
+// SetJsonData sets the JsonData field's value.
+func (s *GCMMessage) SetJsonData(v string) *GCMMessage {
+	s.JsonData = &v
+	return s
+}
+
 // SetRawContent sets the RawContent field's value.
 func (s *GCMMessage) SetRawContent(v string) *GCMMessage {
 	s.RawContent = &v
@@ -6900,6 +9363,70 @@ func (s *GCMMessage) SetUrl(v string) *GCMMessage {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAdmChannelRequest
+type GetAdmChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetAdmChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAdmChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetAdmChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetAdmChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *GetAdmChannelInput) SetApplicationId(v string) *GetAdmChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAdmChannelResponse
+type GetAdmChannelOutput struct {
+	_ struct{} `type:"structure" payload:"ADMChannelResponse"`
+
+	// Amazon Device Messaging channel definition.
+	//
+	// ADMChannelResponse is a required field
+	ADMChannelResponse *ADMChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetAdmChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAdmChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetADMChannelResponse sets the ADMChannelResponse field's value.
+func (s *GetAdmChannelOutput) SetADMChannelResponse(v *ADMChannelResponse) *GetAdmChannelOutput {
+	s.ADMChannelResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsChannelRequest
 type GetApnsChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6936,6 +9463,7 @@ func (s *GetApnsChannelInput) SetApplicationId(v string) *GetApnsChannelInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsChannelResponse
 type GetApnsChannelOutput struct {
 	_ struct{} `type:"structure" payload:"APNSChannelResponse"`
 
@@ -6961,6 +9489,7 @@ func (s *GetApnsChannelOutput) SetAPNSChannelResponse(v *APNSChannelResponse) *G
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsSandboxChannelRequest
 type GetApnsSandboxChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6997,6 +9526,7 @@ func (s *GetApnsSandboxChannelInput) SetApplicationId(v string) *GetApnsSandboxC
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApnsSandboxChannelResponse
 type GetApnsSandboxChannelOutput struct {
 	_ struct{} `type:"structure" payload:"APNSSandboxChannelResponse"`
 
@@ -7022,6 +9552,70 @@ func (s *GetApnsSandboxChannelOutput) SetAPNSSandboxChannelResponse(v *APNSSandb
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAppRequest
+type GetAppInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetAppInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAppInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetAppInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetAppInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *GetAppInput) SetApplicationId(v string) *GetAppInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAppResponse
+type GetAppOutput struct {
+	_ struct{} `type:"structure" payload:"ApplicationResponse"`
+
+	// Application Response.
+	//
+	// ApplicationResponse is a required field
+	ApplicationResponse *ApplicationResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetAppOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAppOutput) GoString() string {
+	return s.String()
+}
+
+// SetApplicationResponse sets the ApplicationResponse field's value.
+func (s *GetAppOutput) SetApplicationResponse(v *ApplicationResponse) *GetAppOutput {
+	s.ApplicationResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApplicationSettingsRequest
 type GetApplicationSettingsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7058,6 +9652,7 @@ func (s *GetApplicationSettingsInput) SetApplicationId(v string) *GetApplication
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetApplicationSettingsResponse
 type GetApplicationSettingsOutput struct {
 	_ struct{} `type:"structure" payload:"ApplicationSettingsResource"`
 
@@ -7083,6 +9678,127 @@ func (s *GetApplicationSettingsOutput) SetApplicationSettingsResource(v *Applica
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAppsRequest
+type GetAppsInput struct {
+	_ struct{} `type:"structure"`
+
+	PageSize *string `location:"querystring" locationName:"page-size" type:"string"`
+
+	Token *string `location:"querystring" locationName:"token" type:"string"`
+}
+
+// String returns the string representation
+func (s GetAppsInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAppsInput) GoString() string {
+	return s.String()
+}
+
+// SetPageSize sets the PageSize field's value.
+func (s *GetAppsInput) SetPageSize(v string) *GetAppsInput {
+	s.PageSize = &v
+	return s
+}
+
+// SetToken sets the Token field's value.
+func (s *GetAppsInput) SetToken(v string) *GetAppsInput {
+	s.Token = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetAppsResponse
+type GetAppsOutput struct {
+	_ struct{} `type:"structure" payload:"ApplicationsResponse"`
+
+	// Get Applications Result.
+	//
+	// ApplicationsResponse is a required field
+	ApplicationsResponse *ApplicationsResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetAppsOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetAppsOutput) GoString() string {
+	return s.String()
+}
+
+// SetApplicationsResponse sets the ApplicationsResponse field's value.
+func (s *GetAppsOutput) SetApplicationsResponse(v *ApplicationsResponse) *GetAppsOutput {
+	s.ApplicationsResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetBaiduChannelRequest
+type GetBaiduChannelInput struct {
+	_ struct{} `type:"structure"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s GetBaiduChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBaiduChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetBaiduChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetBaiduChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *GetBaiduChannelInput) SetApplicationId(v string) *GetBaiduChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetBaiduChannelResponse
+type GetBaiduChannelOutput struct {
+	_ struct{} `type:"structure" payload:"BaiduChannelResponse"`
+
+	// Baidu Cloud Messaging channel definition
+	//
+	// BaiduChannelResponse is a required field
+	BaiduChannelResponse *BaiduChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s GetBaiduChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s GetBaiduChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetBaiduChannelResponse sets the BaiduChannelResponse field's value.
+func (s *GetBaiduChannelOutput) SetBaiduChannelResponse(v *BaiduChannelResponse) *GetBaiduChannelOutput {
+	s.BaiduChannelResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignActivitiesRequest
 type GetCampaignActivitiesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7147,6 +9863,7 @@ func (s *GetCampaignActivitiesInput) SetToken(v string) *GetCampaignActivitiesIn
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignActivitiesResponse
 type GetCampaignActivitiesOutput struct {
 	_ struct{} `type:"structure" payload:"ActivitiesResponse"`
 
@@ -7172,6 +9889,7 @@ func (s *GetCampaignActivitiesOutput) SetActivitiesResponse(v *ActivitiesRespons
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignRequest
 type GetCampaignInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7220,6 +9938,7 @@ func (s *GetCampaignInput) SetCampaignId(v string) *GetCampaignInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignResponse
 type GetCampaignOutput struct {
 	_ struct{} `type:"structure" payload:"CampaignResponse"`
 
@@ -7245,6 +9964,7 @@ func (s *GetCampaignOutput) SetCampaignResponse(v *CampaignResponse) *GetCampaig
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersionRequest
 type GetCampaignVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7305,6 +10025,7 @@ func (s *GetCampaignVersionInput) SetVersion(v string) *GetCampaignVersionInput 
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersionResponse
 type GetCampaignVersionOutput struct {
 	_ struct{} `type:"structure" payload:"CampaignResponse"`
 
@@ -7330,6 +10051,7 @@ func (s *GetCampaignVersionOutput) SetCampaignResponse(v *CampaignResponse) *Get
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersionsRequest
 type GetCampaignVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7394,6 +10116,7 @@ func (s *GetCampaignVersionsInput) SetToken(v string) *GetCampaignVersionsInput 
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignVersionsResponse
 type GetCampaignVersionsOutput struct {
 	_ struct{} `type:"structure" payload:"CampaignsResponse"`
 
@@ -7419,6 +10142,7 @@ func (s *GetCampaignVersionsOutput) SetCampaignsResponse(v *CampaignsResponse) *
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignsRequest
 type GetCampaignsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7471,6 +10195,7 @@ func (s *GetCampaignsInput) SetToken(v string) *GetCampaignsInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetCampaignsResponse
 type GetCampaignsOutput struct {
 	_ struct{} `type:"structure" payload:"CampaignsResponse"`
 
@@ -7496,6 +10221,7 @@ func (s *GetCampaignsOutput) SetCampaignsResponse(v *CampaignsResponse) *GetCamp
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEmailChannelRequest
 type GetEmailChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7532,6 +10258,7 @@ func (s *GetEmailChannelInput) SetApplicationId(v string) *GetEmailChannelInput 
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEmailChannelResponse
 type GetEmailChannelOutput struct {
 	_ struct{} `type:"structure" payload:"EmailChannelResponse"`
 
@@ -7557,6 +10284,7 @@ func (s *GetEmailChannelOutput) SetEmailChannelResponse(v *EmailChannelResponse)
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEndpointRequest
 type GetEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7605,6 +10333,7 @@ func (s *GetEndpointInput) SetEndpointId(v string) *GetEndpointInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEndpointResponse
 type GetEndpointOutput struct {
 	_ struct{} `type:"structure" payload:"EndpointResponse"`
 
@@ -7630,11 +10359,10 @@ func (s *GetEndpointOutput) SetEndpointResponse(v *EndpointResponse) *GetEndpoin
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEventStreamRequest
 type GetEventStreamInput struct {
 	_ struct{} `type:"structure"`
 
-	// Application Id.
-	//
 	// ApplicationId is a required field
 	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
 }
@@ -7668,6 +10396,7 @@ func (s *GetEventStreamInput) SetApplicationId(v string) *GetEventStreamInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetEventStreamResponse
 type GetEventStreamOutput struct {
 	_ struct{} `type:"structure" payload:"EventStream"`
 
@@ -7693,6 +10422,7 @@ func (s *GetEventStreamOutput) SetEventStream(v *EventStream) *GetEventStreamOut
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetGcmChannelRequest
 type GetGcmChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7729,6 +10459,7 @@ func (s *GetGcmChannelInput) SetApplicationId(v string) *GetGcmChannelInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetGcmChannelResponse
 type GetGcmChannelOutput struct {
 	_ struct{} `type:"structure" payload:"GCMChannelResponse"`
 
@@ -7754,6 +10485,7 @@ func (s *GetGcmChannelOutput) SetGCMChannelResponse(v *GCMChannelResponse) *GetG
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJobRequest
 type GetImportJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7802,6 +10534,7 @@ func (s *GetImportJobInput) SetJobId(v string) *GetImportJobInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJobResponse
 type GetImportJobOutput struct {
 	_ struct{} `type:"structure" payload:"ImportJobResponse"`
 
@@ -7825,6 +10558,7 @@ func (s *GetImportJobOutput) SetImportJobResponse(v *ImportJobResponse) *GetImpo
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJobsRequest
 type GetImportJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7877,6 +10611,7 @@ func (s *GetImportJobsInput) SetToken(v string) *GetImportJobsInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetImportJobsResponse
 type GetImportJobsOutput struct {
 	_ struct{} `type:"structure" payload:"ImportJobsResponse"`
 
@@ -7902,6 +10637,7 @@ func (s *GetImportJobsOutput) SetImportJobsResponse(v *ImportJobsResponse) *GetI
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentImportJobsRequest
 type GetSegmentImportJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7966,6 +10702,7 @@ func (s *GetSegmentImportJobsInput) SetToken(v string) *GetSegmentImportJobsInpu
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentImportJobsResponse
 type GetSegmentImportJobsOutput struct {
 	_ struct{} `type:"structure" payload:"ImportJobsResponse"`
 
@@ -7991,6 +10728,7 @@ func (s *GetSegmentImportJobsOutput) SetImportJobsResponse(v *ImportJobsResponse
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentRequest
 type GetSegmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8039,6 +10777,7 @@ func (s *GetSegmentInput) SetSegmentId(v string) *GetSegmentInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentResponse
 type GetSegmentOutput struct {
 	_ struct{} `type:"structure" payload:"SegmentResponse"`
 
@@ -8064,6 +10803,7 @@ func (s *GetSegmentOutput) SetSegmentResponse(v *SegmentResponse) *GetSegmentOut
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersionRequest
 type GetSegmentVersionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8124,6 +10864,7 @@ func (s *GetSegmentVersionInput) SetVersion(v string) *GetSegmentVersionInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersionResponse
 type GetSegmentVersionOutput struct {
 	_ struct{} `type:"structure" payload:"SegmentResponse"`
 
@@ -8149,6 +10890,7 @@ func (s *GetSegmentVersionOutput) SetSegmentResponse(v *SegmentResponse) *GetSeg
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersionsRequest
 type GetSegmentVersionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8213,6 +10955,7 @@ func (s *GetSegmentVersionsInput) SetToken(v string) *GetSegmentVersionsInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentVersionsResponse
 type GetSegmentVersionsOutput struct {
 	_ struct{} `type:"structure" payload:"SegmentsResponse"`
 
@@ -8238,6 +10981,7 @@ func (s *GetSegmentVersionsOutput) SetSegmentsResponse(v *SegmentsResponse) *Get
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentsRequest
 type GetSegmentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8290,6 +11034,7 @@ func (s *GetSegmentsInput) SetToken(v string) *GetSegmentsInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSegmentsResponse
 type GetSegmentsOutput struct {
 	_ struct{} `type:"structure" payload:"SegmentsResponse"`
 
@@ -8315,6 +11060,7 @@ func (s *GetSegmentsOutput) SetSegmentsResponse(v *SegmentsResponse) *GetSegment
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSmsChannelRequest
 type GetSmsChannelInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8351,6 +11097,7 @@ func (s *GetSmsChannelInput) SetApplicationId(v string) *GetSmsChannelInput {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/GetSmsChannelResponse
 type GetSmsChannelOutput struct {
 	_ struct{} `type:"structure" payload:"SMSChannelResponse"`
 
@@ -8376,6 +11123,7 @@ func (s *GetSmsChannelOutput) SetSMSChannelResponse(v *SMSChannelResponse) *GetS
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ImportJobRequest
 type ImportJobRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -8471,6 +11219,7 @@ func (s *ImportJobRequest) SetSegmentName(v string) *ImportJobRequest {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ImportJobResource
 type ImportJobResource struct {
 	_ struct{} `type:"structure"`
 
@@ -8566,6 +11315,7 @@ func (s *ImportJobResource) SetSegmentName(v string) *ImportJobResource {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ImportJobResponse
 type ImportJobResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -8702,6 +11452,7 @@ func (s *ImportJobResponse) SetType(v string) *ImportJobResponse {
 }
 
 // Import job list.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/ImportJobsResponse
 type ImportJobsResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -8735,6 +11486,7 @@ func (s *ImportJobsResponse) SetNextToken(v string) *ImportJobsResponse {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/Message
 type Message struct {
 	_ struct{} `type:"structure"`
 
@@ -8765,6 +11517,10 @@ type Message struct {
 
 	// The URL that points to the media resource, for example a .mp4 or .gif file.
 	MediaUrl *string `type:"string"`
+
+	// The Raw JSON formatted string to be used as the payload. This value overrides
+	// the message.
+	RawContent *string `type:"string"`
 
 	// Indicates if the message should display on the users device.Silent pushes
 	// can be used for Remote Configuration and Phone Home use cases.
@@ -8830,6 +11586,12 @@ func (s *Message) SetMediaUrl(v string) *Message {
 	return s
 }
 
+// SetRawContent sets the RawContent field's value.
+func (s *Message) SetRawContent(v string) *Message {
+	s.RawContent = &v
+	return s
+}
+
 // SetSilentPush sets the SilentPush field's value.
 func (s *Message) SetSilentPush(v bool) *Message {
 	s.SilentPush = &v
@@ -8849,6 +11611,7 @@ func (s *Message) SetUrl(v string) *Message {
 }
 
 // Simple message object.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/MessageBody
 type MessageBody struct {
 	_ struct{} `type:"structure"`
 
@@ -8882,6 +11645,7 @@ func (s *MessageBody) SetRequestID(v string) *MessageBody {
 }
 
 // Message configuration for a campaign.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/MessageConfiguration
 type MessageConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -8944,6 +11708,7 @@ func (s *MessageConfiguration) SetSMSMessage(v *CampaignSmsMessage) *MessageConf
 }
 
 // Send message request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/MessageRequest
 type MessageRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -8951,10 +11716,19 @@ type MessageRequest struct {
 	// phone number or push token) and the Address Configuration as the value.
 	Addresses map[string]*AddressConfiguration `type:"map"`
 
+	Campaign map[string]*string `type:"map"`
+
 	Context map[string]*string `type:"map"`
+
+	// A map of destination addresses, with the address as the key(Email address,
+	// phone number or push token) and the Address Configuration as the value.
+	Endpoints map[string]*EndpointSendConfiguration `type:"map"`
 
 	// Message configuration.
 	MessageConfiguration *DirectMessageConfiguration `type:"structure"`
+
+	// Original request Id for which this message is delivered.
+	RequestId *string `type:"string"`
 }
 
 // String returns the string representation
@@ -8973,9 +11747,21 @@ func (s *MessageRequest) SetAddresses(v map[string]*AddressConfiguration) *Messa
 	return s
 }
 
+// SetCampaign sets the Campaign field's value.
+func (s *MessageRequest) SetCampaign(v map[string]*string) *MessageRequest {
+	s.Campaign = v
+	return s
+}
+
 // SetContext sets the Context field's value.
 func (s *MessageRequest) SetContext(v map[string]*string) *MessageRequest {
 	s.Context = v
+	return s
+}
+
+// SetEndpoints sets the Endpoints field's value.
+func (s *MessageRequest) SetEndpoints(v map[string]*EndpointSendConfiguration) *MessageRequest {
+	s.Endpoints = v
 	return s
 }
 
@@ -8985,12 +11771,23 @@ func (s *MessageRequest) SetMessageConfiguration(v *DirectMessageConfiguration) 
 	return s
 }
 
+// SetRequestId sets the RequestId field's value.
+func (s *MessageRequest) SetRequestId(v string) *MessageRequest {
+	s.RequestId = &v
+	return s
+}
+
 // Send message response.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/MessageResponse
 type MessageResponse struct {
 	_ struct{} `type:"structure"`
 
 	// Application id of the message.
 	ApplicationId *string `type:"string"`
+
+	// A map containing a multi part response for each address, with the endpointId
+	// as the key and the result as the value.
+	EndpointResult map[string]*EndpointMessageResult `type:"map"`
 
 	// Original request Id for which this message was delivered.
 	RequestId *string `type:"string"`
@@ -9017,6 +11814,12 @@ func (s *MessageResponse) SetApplicationId(v string) *MessageResponse {
 	return s
 }
 
+// SetEndpointResult sets the EndpointResult field's value.
+func (s *MessageResponse) SetEndpointResult(v map[string]*EndpointMessageResult) *MessageResponse {
+	s.EndpointResult = v
+	return s
+}
+
 // SetRequestId sets the RequestId field's value.
 func (s *MessageResponse) SetRequestId(v string) *MessageResponse {
 	s.RequestId = &v
@@ -9030,6 +11833,7 @@ func (s *MessageResponse) SetResult(v map[string]*MessageResult) *MessageRespons
 }
 
 // The result from sending a message to an address.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/MessageResult
 type MessageResult struct {
 	_ struct{} `type:"structure"`
 
@@ -9080,15 +11884,14 @@ func (s *MessageResult) SetUpdatedToken(v string) *MessageResult {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/PutEventStreamRequest
 type PutEventStreamInput struct {
 	_ struct{} `type:"structure" payload:"WriteEventStream"`
 
-	// Application Id.
-	//
 	// ApplicationId is a required field
 	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
 
-	// Write event stream wrapper.
+	// Request to save an EventStream.
 	//
 	// WriteEventStream is a required field
 	WriteEventStream *WriteEventStream `type:"structure" required:"true"`
@@ -9132,6 +11935,7 @@ func (s *PutEventStreamInput) SetWriteEventStream(v *WriteEventStream) *PutEvent
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/PutEventStreamResponse
 type PutEventStreamOutput struct {
 	_ struct{} `type:"structure" payload:"EventStream"`
 
@@ -9158,6 +11962,7 @@ func (s *PutEventStreamOutput) SetEventStream(v *EventStream) *PutEventStreamOut
 }
 
 // Quiet Time
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/QuietTime
 type QuietTime struct {
 	_ struct{} `type:"structure"`
 
@@ -9191,6 +11996,7 @@ func (s *QuietTime) SetStart(v string) *QuietTime {
 }
 
 // Define how a segment based on recency of use.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/RecencyDimension
 type RecencyDimension struct {
 	_ struct{} `type:"structure"`
 
@@ -9227,6 +12033,7 @@ func (s *RecencyDimension) SetRecencyType(v string) *RecencyDimension {
 }
 
 // SMS Channel Request
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SMSChannelRequest
 type SMSChannelRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -9235,6 +12042,9 @@ type SMSChannelRequest struct {
 
 	// Sender identifier of your messages.
 	SenderId *string `type:"string"`
+
+	// ShortCode registered with phone provider.
+	ShortCode *string `type:"string"`
 }
 
 // String returns the string representation
@@ -9259,11 +12069,18 @@ func (s *SMSChannelRequest) SetSenderId(v string) *SMSChannelRequest {
 	return s
 }
 
+// SetShortCode sets the ShortCode field's value.
+func (s *SMSChannelRequest) SetShortCode(v string) *SMSChannelRequest {
+	s.ShortCode = &v
+	return s
+}
+
 // SMS Channel Response.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SMSChannelResponse
 type SMSChannelResponse struct {
 	_ struct{} `type:"structure"`
 
-	// Application id
+	// The unique ID of the application to which the SMS channel belongs.
 	ApplicationId *string `type:"string"`
 
 	// The date that the settings were last updated in ISO 8601 format.
@@ -9374,6 +12191,7 @@ func (s *SMSChannelResponse) SetVersion(v int64) *SMSChannelResponse {
 }
 
 // SMS Message.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SMSMessage
 type SMSMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -9424,6 +12242,7 @@ func (s *SMSMessage) SetSubstitutions(v map[string][]*string) *SMSMessage {
 }
 
 // Shcedule that defines when a campaign is run.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/Schedule
 type Schedule struct {
 	_ struct{} `type:"structure"`
 
@@ -9496,6 +12315,7 @@ func (s *Schedule) SetTimezone(v string) *Schedule {
 }
 
 // Segment behavior dimensions
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SegmentBehaviors
 type SegmentBehaviors struct {
 	_ struct{} `type:"structure"`
 
@@ -9520,6 +12340,7 @@ func (s *SegmentBehaviors) SetRecency(v *RecencyDimension) *SegmentBehaviors {
 }
 
 // Segment demographic dimensions
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SegmentDemographics
 type SegmentDemographics struct {
 	_ struct{} `type:"structure"`
 
@@ -9589,6 +12410,7 @@ func (s *SegmentDemographics) SetPlatform(v *SetDimension) *SegmentDemographics 
 }
 
 // Segment dimensions
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SegmentDimensions
 type SegmentDimensions struct {
 	_ struct{} `type:"structure"`
 
@@ -9649,6 +12471,7 @@ func (s *SegmentDimensions) SetUserAttributes(v map[string]*AttributeDimension) 
 }
 
 // Segment import definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SegmentImportResource
 type SegmentImportResource struct {
 	_ struct{} `type:"structure"`
 
@@ -9721,6 +12544,7 @@ func (s *SegmentImportResource) SetSize(v int64) *SegmentImportResource {
 }
 
 // Segment location dimensions
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SegmentLocation
 type SegmentLocation struct {
 	_ struct{} `type:"structure"`
 
@@ -9745,6 +12569,7 @@ func (s *SegmentLocation) SetCountry(v *SetDimension) *SegmentLocation {
 }
 
 // Segment definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SegmentResponse
 type SegmentResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -9847,6 +12672,7 @@ func (s *SegmentResponse) SetVersion(v int64) *SegmentResponse {
 }
 
 // Segments in your account.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SegmentsResponse
 type SegmentsResponse struct {
 	_ struct{} `type:"structure"`
 
@@ -9880,6 +12706,7 @@ func (s *SegmentsResponse) SetNextToken(v string) *SegmentsResponse {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendMessagesRequest
 type SendMessagesInput struct {
 	_ struct{} `type:"structure" payload:"MessageRequest"`
 
@@ -9930,6 +12757,7 @@ func (s *SendMessagesInput) SetMessageRequest(v *MessageRequest) *SendMessagesIn
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendMessagesResponse
 type SendMessagesOutput struct {
 	_ struct{} `type:"structure" payload:"MessageResponse"`
 
@@ -9955,7 +12783,180 @@ func (s *SendMessagesOutput) SetMessageResponse(v *MessageResponse) *SendMessage
 	return s
 }
 
+// Send message request.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendUsersMessageRequest
+type SendUsersMessageRequest struct {
+	_ struct{} `type:"structure"`
+
+	Context map[string]*string `type:"map"`
+
+	// Message configuration.
+	MessageConfiguration *DirectMessageConfiguration `type:"structure"`
+
+	// Original request Id for which this message is delivered.
+	RequestId *string `type:"string"`
+
+	// A map of destination endpoints, with the EndpointId as the key Endpoint Message
+	// Configuration as the value.
+	Users map[string]*EndpointSendConfiguration `type:"map"`
+}
+
+// String returns the string representation
+func (s SendUsersMessageRequest) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SendUsersMessageRequest) GoString() string {
+	return s.String()
+}
+
+// SetContext sets the Context field's value.
+func (s *SendUsersMessageRequest) SetContext(v map[string]*string) *SendUsersMessageRequest {
+	s.Context = v
+	return s
+}
+
+// SetMessageConfiguration sets the MessageConfiguration field's value.
+func (s *SendUsersMessageRequest) SetMessageConfiguration(v *DirectMessageConfiguration) *SendUsersMessageRequest {
+	s.MessageConfiguration = v
+	return s
+}
+
+// SetRequestId sets the RequestId field's value.
+func (s *SendUsersMessageRequest) SetRequestId(v string) *SendUsersMessageRequest {
+	s.RequestId = &v
+	return s
+}
+
+// SetUsers sets the Users field's value.
+func (s *SendUsersMessageRequest) SetUsers(v map[string]*EndpointSendConfiguration) *SendUsersMessageRequest {
+	s.Users = v
+	return s
+}
+
+// User send message response.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendUsersMessageResponse
+type SendUsersMessageResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Application id of the message.
+	ApplicationId *string `type:"string"`
+
+	// Original request Id for which this message was delivered.
+	RequestId *string `type:"string"`
+
+	// A map containing of UserId to Map of EndpointId to Endpoint Message Result.
+	Result map[string]map[string]*EndpointMessageResult `type:"map"`
+}
+
+// String returns the string representation
+func (s SendUsersMessageResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SendUsersMessageResponse) GoString() string {
+	return s.String()
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *SendUsersMessageResponse) SetApplicationId(v string) *SendUsersMessageResponse {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetRequestId sets the RequestId field's value.
+func (s *SendUsersMessageResponse) SetRequestId(v string) *SendUsersMessageResponse {
+	s.RequestId = &v
+	return s
+}
+
+// SetResult sets the Result field's value.
+func (s *SendUsersMessageResponse) SetResult(v map[string]map[string]*EndpointMessageResult) *SendUsersMessageResponse {
+	s.Result = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendUsersMessagesRequest
+type SendUsersMessagesInput struct {
+	_ struct{} `type:"structure" payload:"SendUsersMessageRequest"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+
+	// Send message request.
+	//
+	// SendUsersMessageRequest is a required field
+	SendUsersMessageRequest *SendUsersMessageRequest `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s SendUsersMessagesInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SendUsersMessagesInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SendUsersMessagesInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SendUsersMessagesInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+	if s.SendUsersMessageRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("SendUsersMessageRequest"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *SendUsersMessagesInput) SetApplicationId(v string) *SendUsersMessagesInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetSendUsersMessageRequest sets the SendUsersMessageRequest field's value.
+func (s *SendUsersMessagesInput) SetSendUsersMessageRequest(v *SendUsersMessageRequest) *SendUsersMessagesInput {
+	s.SendUsersMessageRequest = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SendUsersMessagesResponse
+type SendUsersMessagesOutput struct {
+	_ struct{} `type:"structure" payload:"SendUsersMessageResponse"`
+
+	// User send message response.
+	//
+	// SendUsersMessageResponse is a required field
+	SendUsersMessageResponse *SendUsersMessageResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s SendUsersMessagesOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SendUsersMessagesOutput) GoString() string {
+	return s.String()
+}
+
+// SetSendUsersMessageResponse sets the SendUsersMessageResponse field's value.
+func (s *SendUsersMessagesOutput) SetSendUsersMessageResponse(v *SendUsersMessageResponse) *SendUsersMessagesOutput {
+	s.SendUsersMessageResponse = v
+	return s
+}
+
 // Dimension specification of a segment.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/SetDimension
 type SetDimension struct {
 	_ struct{} `type:"structure"`
 
@@ -9990,6 +12991,7 @@ func (s *SetDimension) SetValues(v []*string) *SetDimension {
 }
 
 // Treatment resource
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/TreatmentResource
 type TreatmentResource struct {
 	_ struct{} `type:"structure"`
 
@@ -10067,6 +13069,84 @@ func (s *TreatmentResource) SetTreatmentName(v string) *TreatmentResource {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateAdmChannelRequest
+type UpdateAdmChannelInput struct {
+	_ struct{} `type:"structure" payload:"ADMChannelRequest"`
+
+	// Amazon Device Messaging channel definition.
+	//
+	// ADMChannelRequest is a required field
+	ADMChannelRequest *ADMChannelRequest `type:"structure" required:"true"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateAdmChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateAdmChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateAdmChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateAdmChannelInput"}
+	if s.ADMChannelRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("ADMChannelRequest"))
+	}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetADMChannelRequest sets the ADMChannelRequest field's value.
+func (s *UpdateAdmChannelInput) SetADMChannelRequest(v *ADMChannelRequest) *UpdateAdmChannelInput {
+	s.ADMChannelRequest = v
+	return s
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *UpdateAdmChannelInput) SetApplicationId(v string) *UpdateAdmChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateAdmChannelResponse
+type UpdateAdmChannelOutput struct {
+	_ struct{} `type:"structure" payload:"ADMChannelResponse"`
+
+	// Amazon Device Messaging channel definition.
+	//
+	// ADMChannelResponse is a required field
+	ADMChannelResponse *ADMChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateAdmChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateAdmChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetADMChannelResponse sets the ADMChannelResponse field's value.
+func (s *UpdateAdmChannelOutput) SetADMChannelResponse(v *ADMChannelResponse) *UpdateAdmChannelOutput {
+	s.ADMChannelResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsChannelRequest
 type UpdateApnsChannelInput struct {
 	_ struct{} `type:"structure" payload:"APNSChannelRequest"`
 
@@ -10117,6 +13197,7 @@ func (s *UpdateApnsChannelInput) SetApplicationId(v string) *UpdateApnsChannelIn
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsChannelResponse
 type UpdateApnsChannelOutput struct {
 	_ struct{} `type:"structure" payload:"APNSChannelResponse"`
 
@@ -10142,6 +13223,7 @@ func (s *UpdateApnsChannelOutput) SetAPNSChannelResponse(v *APNSChannelResponse)
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsSandboxChannelRequest
 type UpdateApnsSandboxChannelInput struct {
 	_ struct{} `type:"structure" payload:"APNSSandboxChannelRequest"`
 
@@ -10192,6 +13274,7 @@ func (s *UpdateApnsSandboxChannelInput) SetApplicationId(v string) *UpdateApnsSa
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApnsSandboxChannelResponse
 type UpdateApnsSandboxChannelOutput struct {
 	_ struct{} `type:"structure" payload:"APNSSandboxChannelResponse"`
 
@@ -10217,6 +13300,7 @@ func (s *UpdateApnsSandboxChannelOutput) SetAPNSSandboxChannelResponse(v *APNSSa
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApplicationSettingsRequest
 type UpdateApplicationSettingsInput struct {
 	_ struct{} `type:"structure" payload:"WriteApplicationSettingsRequest"`
 
@@ -10267,6 +13351,7 @@ func (s *UpdateApplicationSettingsInput) SetWriteApplicationSettingsRequest(v *W
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateApplicationSettingsResponse
 type UpdateApplicationSettingsOutput struct {
 	_ struct{} `type:"structure" payload:"ApplicationSettingsResource"`
 
@@ -10292,6 +13377,84 @@ func (s *UpdateApplicationSettingsOutput) SetApplicationSettingsResource(v *Appl
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateBaiduChannelRequest
+type UpdateBaiduChannelInput struct {
+	_ struct{} `type:"structure" payload:"BaiduChannelRequest"`
+
+	// ApplicationId is a required field
+	ApplicationId *string `location:"uri" locationName:"application-id" type:"string" required:"true"`
+
+	// Baidu Cloud Push credentials
+	//
+	// BaiduChannelRequest is a required field
+	BaiduChannelRequest *BaiduChannelRequest `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateBaiduChannelInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateBaiduChannelInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateBaiduChannelInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateBaiduChannelInput"}
+	if s.ApplicationId == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationId"))
+	}
+	if s.BaiduChannelRequest == nil {
+		invalidParams.Add(request.NewErrParamRequired("BaiduChannelRequest"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationId sets the ApplicationId field's value.
+func (s *UpdateBaiduChannelInput) SetApplicationId(v string) *UpdateBaiduChannelInput {
+	s.ApplicationId = &v
+	return s
+}
+
+// SetBaiduChannelRequest sets the BaiduChannelRequest field's value.
+func (s *UpdateBaiduChannelInput) SetBaiduChannelRequest(v *BaiduChannelRequest) *UpdateBaiduChannelInput {
+	s.BaiduChannelRequest = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateBaiduChannelResponse
+type UpdateBaiduChannelOutput struct {
+	_ struct{} `type:"structure" payload:"BaiduChannelResponse"`
+
+	// Baidu Cloud Messaging channel definition
+	//
+	// BaiduChannelResponse is a required field
+	BaiduChannelResponse *BaiduChannelResponse `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateBaiduChannelOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateBaiduChannelOutput) GoString() string {
+	return s.String()
+}
+
+// SetBaiduChannelResponse sets the BaiduChannelResponse field's value.
+func (s *UpdateBaiduChannelOutput) SetBaiduChannelResponse(v *BaiduChannelResponse) *UpdateBaiduChannelOutput {
+	s.BaiduChannelResponse = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateCampaignRequest
 type UpdateCampaignInput struct {
 	_ struct{} `type:"structure" payload:"WriteCampaignRequest"`
 
@@ -10354,6 +13517,7 @@ func (s *UpdateCampaignInput) SetWriteCampaignRequest(v *WriteCampaignRequest) *
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateCampaignResponse
 type UpdateCampaignOutput struct {
 	_ struct{} `type:"structure" payload:"CampaignResponse"`
 
@@ -10379,6 +13543,7 @@ func (s *UpdateCampaignOutput) SetCampaignResponse(v *CampaignResponse) *UpdateC
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEmailChannelRequest
 type UpdateEmailChannelInput struct {
 	_ struct{} `type:"structure" payload:"EmailChannelRequest"`
 
@@ -10429,6 +13594,7 @@ func (s *UpdateEmailChannelInput) SetEmailChannelRequest(v *EmailChannelRequest)
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEmailChannelResponse
 type UpdateEmailChannelOutput struct {
 	_ struct{} `type:"structure" payload:"EmailChannelResponse"`
 
@@ -10454,6 +13620,7 @@ func (s *UpdateEmailChannelOutput) SetEmailChannelResponse(v *EmailChannelRespon
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpointRequest
 type UpdateEndpointInput struct {
 	_ struct{} `type:"structure" payload:"EndpointRequest"`
 
@@ -10516,6 +13683,7 @@ func (s *UpdateEndpointInput) SetEndpointRequest(v *EndpointRequest) *UpdateEndp
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpointResponse
 type UpdateEndpointOutput struct {
 	_ struct{} `type:"structure" payload:"MessageBody"`
 
@@ -10541,6 +13709,7 @@ func (s *UpdateEndpointOutput) SetMessageBody(v *MessageBody) *UpdateEndpointOut
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpointsBatchRequest
 type UpdateEndpointsBatchInput struct {
 	_ struct{} `type:"structure" payload:"EndpointBatchRequest"`
 
@@ -10591,6 +13760,7 @@ func (s *UpdateEndpointsBatchInput) SetEndpointBatchRequest(v *EndpointBatchRequ
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateEndpointsBatchResponse
 type UpdateEndpointsBatchOutput struct {
 	_ struct{} `type:"structure" payload:"MessageBody"`
 
@@ -10616,6 +13786,7 @@ func (s *UpdateEndpointsBatchOutput) SetMessageBody(v *MessageBody) *UpdateEndpo
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateGcmChannelRequest
 type UpdateGcmChannelInput struct {
 	_ struct{} `type:"structure" payload:"GCMChannelRequest"`
 
@@ -10666,6 +13837,7 @@ func (s *UpdateGcmChannelInput) SetGCMChannelRequest(v *GCMChannelRequest) *Upda
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateGcmChannelResponse
 type UpdateGcmChannelOutput struct {
 	_ struct{} `type:"structure" payload:"GCMChannelResponse"`
 
@@ -10691,6 +13863,7 @@ func (s *UpdateGcmChannelOutput) SetGCMChannelResponse(v *GCMChannelResponse) *U
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSegmentRequest
 type UpdateSegmentInput struct {
 	_ struct{} `type:"structure" payload:"WriteSegmentRequest"`
 
@@ -10753,6 +13926,7 @@ func (s *UpdateSegmentInput) SetWriteSegmentRequest(v *WriteSegmentRequest) *Upd
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSegmentResponse
 type UpdateSegmentOutput struct {
 	_ struct{} `type:"structure" payload:"SegmentResponse"`
 
@@ -10778,6 +13952,7 @@ func (s *UpdateSegmentOutput) SetSegmentResponse(v *SegmentResponse) *UpdateSegm
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSmsChannelRequest
 type UpdateSmsChannelInput struct {
 	_ struct{} `type:"structure" payload:"SMSChannelRequest"`
 
@@ -10828,6 +14003,7 @@ func (s *UpdateSmsChannelInput) SetSMSChannelRequest(v *SMSChannelRequest) *Upda
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/UpdateSmsChannelResponse
 type UpdateSmsChannelOutput struct {
 	_ struct{} `type:"structure" payload:"SMSChannelResponse"`
 
@@ -10854,6 +14030,7 @@ func (s *UpdateSmsChannelOutput) SetSMSChannelResponse(v *SMSChannelResponse) *U
 }
 
 // Creating application setting request
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/WriteApplicationSettingsRequest
 type WriteApplicationSettingsRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -10891,6 +14068,7 @@ func (s *WriteApplicationSettingsRequest) SetQuietTime(v *QuietTime) *WriteAppli
 }
 
 // Used to create a campaign.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/WriteCampaignRequest
 type WriteCampaignRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -10925,6 +14103,9 @@ type WriteCampaignRequest struct {
 
 	// The version of the segment to which the campaign sends messages.
 	SegmentVersion *int64 `type:"integer"`
+
+	// Whether or not to enable trace logging for the campaign. Undocumented
+	Trace *bool `type:"boolean"`
 
 	// A custom description for the treatment.
 	TreatmentDescription *string `type:"string"`
@@ -11003,6 +14184,12 @@ func (s *WriteCampaignRequest) SetSegmentVersion(v int64) *WriteCampaignRequest 
 	return s
 }
 
+// SetTrace sets the Trace field's value.
+func (s *WriteCampaignRequest) SetTrace(v bool) *WriteCampaignRequest {
+	s.Trace = &v
+	return s
+}
+
 // SetTreatmentDescription sets the TreatmentDescription field's value.
 func (s *WriteCampaignRequest) SetTreatmentDescription(v string) *WriteCampaignRequest {
 	s.TreatmentDescription = &v
@@ -11016,6 +14203,7 @@ func (s *WriteCampaignRequest) SetTreatmentName(v string) *WriteCampaignRequest 
 }
 
 // Request to save an EventStream.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/WriteEventStream
 type WriteEventStream struct {
 	_ struct{} `type:"structure"`
 
@@ -11023,6 +14211,10 @@ type WriteEventStream struct {
 	// stream to which you want to publish events. Firehose ARN: arn:aws:firehose:REGION:ACCOUNT_ID:deliverystream/STREAM_NAME
 	// Kinesis ARN: arn:aws:kinesis:REGION:ACCOUNT_ID:stream/STREAM_NAME
 	DestinationStreamArn *string `type:"string"`
+
+	// The external ID assigned the IAM role that authorizes Amazon Pinpoint to
+	// publish to the stream.
+	ExternalId *string `type:"string"`
 
 	// The IAM role that authorizes Amazon Pinpoint to publish events to the stream
 	// in your account.
@@ -11045,6 +14237,12 @@ func (s *WriteEventStream) SetDestinationStreamArn(v string) *WriteEventStream {
 	return s
 }
 
+// SetExternalId sets the ExternalId field's value.
+func (s *WriteEventStream) SetExternalId(v string) *WriteEventStream {
+	s.ExternalId = &v
+	return s
+}
+
 // SetRoleArn sets the RoleArn field's value.
 func (s *WriteEventStream) SetRoleArn(v string) *WriteEventStream {
 	s.RoleArn = &v
@@ -11052,6 +14250,7 @@ func (s *WriteEventStream) SetRoleArn(v string) *WriteEventStream {
 }
 
 // Segment definition.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/WriteSegmentRequest
 type WriteSegmentRequest struct {
 	_ struct{} `type:"structure"`
 
@@ -11085,6 +14284,7 @@ func (s *WriteSegmentRequest) SetName(v string) *WriteSegmentRequest {
 }
 
 // Used to create a campaign treatment.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/pinpoint-2016-12-01/WriteTreatmentResource
 type WriteTreatmentResource struct {
 	_ struct{} `type:"structure"`
 
@@ -11198,6 +14398,9 @@ const (
 
 	// ChannelTypeEmail is a ChannelType enum value
 	ChannelTypeEmail = "EMAIL"
+
+	// ChannelTypeBaidu is a ChannelType enum value
+	ChannelTypeBaidu = "BAIDU"
 )
 
 const (
@@ -11212,6 +14415,15 @@ const (
 
 	// DeliveryStatusPermanentFailure is a DeliveryStatus enum value
 	DeliveryStatusPermanentFailure = "PERMANENT_FAILURE"
+
+	// DeliveryStatusUnknownFailure is a DeliveryStatus enum value
+	DeliveryStatusUnknownFailure = "UNKNOWN_FAILURE"
+
+	// DeliveryStatusOptOut is a DeliveryStatus enum value
+	DeliveryStatusOptOut = "OPT_OUT"
+
+	// DeliveryStatusDuplicate is a DeliveryStatus enum value
+	DeliveryStatusDuplicate = "DUPLICATE"
 )
 
 const (

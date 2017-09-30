@@ -15,7 +15,7 @@ dependencies is always a good idea, but it is doubly important if you're consumi
 - Go get the SDK:
 
 ```
-$ go get -u github.com/Azure/azure-sdk-for-go
+$ go get -u github.com/Azure/azure-sdk-for-go/...
 ```
 
 > **IMPORTANT:** We highly suggest vendoring Azure SDK for Go as a dependency. For vendoring dependencies, Azure SDK

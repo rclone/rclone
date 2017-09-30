@@ -11,7 +11,7 @@ import (
 
 // WaitUntilClusterRunning uses the Amazon EMR API operation
 // DescribeCluster to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EMR) WaitUntilClusterRunning(input *DescribeClusterInput) error {
 	return c.WaitUntilClusterRunningWithContext(aws.BackgroundContext(), input)
@@ -77,7 +77,7 @@ func (c *EMR) WaitUntilClusterRunningWithContext(ctx aws.Context, input *Describ
 
 // WaitUntilClusterTerminated uses the Amazon EMR API operation
 // DescribeCluster to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EMR) WaitUntilClusterTerminated(input *DescribeClusterInput) error {
 	return c.WaitUntilClusterTerminatedWithContext(aws.BackgroundContext(), input)
@@ -128,7 +128,7 @@ func (c *EMR) WaitUntilClusterTerminatedWithContext(ctx aws.Context, input *Desc
 
 // WaitUntilStepComplete uses the Amazon EMR API operation
 // DescribeStep to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *EMR) WaitUntilStepComplete(input *DescribeStepInput) error {
 	return c.WaitUntilStepCompleteWithContext(aws.BackgroundContext(), input)

@@ -73,7 +73,7 @@
       }
     },
     "CalculatedSpend": {
-      "base": "A structure holds the actual and forecasted spend for a budget.",
+      "base": "A structure that holds the actual and forecasted spend for a budget.",
       "refs": {
         "Budget$CalculatedSpend": null
       }
@@ -85,7 +85,7 @@
       }
     },
     "CostFilters": {
-      "base": "A map represents the cost filters applied to the budget.",
+      "base": "A map that represents the cost filters applied to the budget.",
       "refs": {
         "Budget$CostFilters": null
       }
@@ -262,7 +262,7 @@
       }
     },
     "MaxResults": {
-      "base": "An integer to represent how many entries should a pagianted response contains. Maxium is set to 100.",
+      "base": "An integer to represent how many entries a paginated response contains. Maximum is set to 100.",
       "refs": {
         "DescribeBudgetsRequest$MaxResults": null,
         "DescribeNotificationsForBudgetRequest$MaxResults": null,
@@ -290,7 +290,7 @@
       }
     },
     "NotificationThreshold": {
-      "base": "The threshold of the a notification. It should be a number between 0 and 100.",
+      "base": "The threshold of a notification. It should be a number between 0 and 1,000,000,000.",
       "refs": {
         "Notification$Threshold": null
       }
@@ -326,7 +326,7 @@
       }
     },
     "Spend": {
-      "base": "A structure represent either a cost spend or usage spend. Contains an amount and a unit.",
+      "base": "A structure that represents either a cost spend or usage spend. Contains an amount and a unit.",
       "refs": {
         "Budget$BudgetLimit": null,
         "CalculatedSpend$ActualSpend": null,
@@ -357,8 +357,14 @@
         "Subscriber$SubscriptionType": null
       }
     },
+    "ThresholdType": {
+      "base": "The type of threshold for a notification. It can be PERCENTAGE or ABSOLUTE_VALUE.",
+      "refs": {
+        "Notification$ThresholdType": null
+      }
+    },
     "TimePeriod": {
-      "base": "A time period indicated the start date and end date of a budget.",
+      "base": "A time period indicating the start date and end date of a budget.",
       "refs": {
         "Budget$TimePeriod": null
       }

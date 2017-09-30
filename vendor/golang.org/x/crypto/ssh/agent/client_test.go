@@ -19,8 +19,8 @@ import (
 	"golang.org/x/crypto/ssh"
 )
 
-// startAgent executes ssh-agent, and returns a Agent interface to it.
-func startAgent(t *testing.T) (client Agent, socket string, cleanup func()) {
+// startOpenSSHAgent executes ssh-agent, and returns an Agent interface to it.
+func startOpenSSHAgent(t *testing.T) (client Agent, socket string, cleanup func()) {
 	if testing.Short() {
 		// ssh-agent is not always available, and the key
 		// types supported vary by platform.
@@ -79,16 +79,32 @@ func startAgent(t *testing.T) (client Agent, socket string, cleanup func()) {
 	}
 }
 
-func testAgent(t *testing.T, key interface{}, cert *ssh.Certificate, lifetimeSecs uint32) {
-	agent, _, cleanup := startAgent(t)
+// startKeyringAgent uses Keyring to simulate a ssh-agent Server and returns a client.
+func startKeyringAgent(t *testing.T) (client Agent, cleanup func()) {
+	c1, c2, err := netPipe()
+	if err != nil {
+		t.Fatalf("netPipe: %v", err)
+	}
+	go ServeAgent(NewKeyring(), c2)
+
+	return NewClient(c1), func() {
+		c1.Close()
+		c2.Close()
+	}
+}
+
+func testOpenSSHAgent(t *testing.T, key interface{}, cert *ssh.Certificate, lifetimeSecs uint32) {
+	agent, _, cleanup := startOpenSSHAgent(t)
 	defer cleanup()
 
 	testAgentInterface(t, agent, key, cert, lifetimeSecs)
 }
 
-func testKeyring(t *testing.T, key interface{}, cert *ssh.Certificate, lifetimeSecs uint32) {
-	a := NewKeyring()
-	testAgentInterface(t, a, key, cert, lifetimeSecs)
+func testKeyringAgent(t *testing.T, key interface{}, cert *ssh.Certificate, lifetimeSecs uint32) {
+	agent, cleanup := startKeyringAgent(t)
+	defer cleanup()
+
+	testAgentInterface(t, agent, key, cert, lifetimeSecs)
 }
 
 func testAgentInterface(t *testing.T, agent Agent, key interface{}, cert *ssh.Certificate, lifetimeSecs uint32) {
@@ -159,8 +175,8 @@ func testAgentInterface(t *testing.T, agent Agent, key interface{}, cert *ssh.Ce
 
 func TestAgent(t *testing.T) {
 	for _, keyType := range []string{"rsa", "dsa", "ecdsa", "ed25519"} {
-		testAgent(t, testPrivateKeys[keyType], nil, 0)
-		testKeyring(t, testPrivateKeys[keyType], nil, 1)
+		testOpenSSHAgent(t, testPrivateKeys[keyType], nil, 0)
+		testKeyringAgent(t, testPrivateKeys[keyType], nil, 0)
 	}
 }
 
@@ -172,8 +188,8 @@ func TestCert(t *testing.T) {
 	}
 	cert.SignCert(rand.Reader, testSigners["ecdsa"])
 
-	testAgent(t, testPrivateKeys["rsa"], cert, 0)
-	testKeyring(t, testPrivateKeys["rsa"], cert, 1)
+	testOpenSSHAgent(t, testPrivateKeys["rsa"], cert, 0)
+	testKeyringAgent(t, testPrivateKeys["rsa"], cert, 0)
 }
 
 // netPipe is analogous to net.Pipe, but it uses a real net.Conn, and
@@ -203,7 +219,7 @@ func netPipe() (net.Conn, net.Conn, error) {
 }
 
 func TestAuth(t *testing.T) {
-	agent, _, cleanup := startAgent(t)
+	agent, _, cleanup := startOpenSSHAgent(t)
 	defer cleanup()
 
 	a, b, err := netPipe()
@@ -247,8 +263,14 @@ func TestAuth(t *testing.T) {
 	conn.Close()
 }
 
-func TestLockClient(t *testing.T) {
-	agent, _, cleanup := startAgent(t)
+func TestLockOpenSSHAgent(t *testing.T) {
+	agent, _, cleanup := startOpenSSHAgent(t)
+	defer cleanup()
+	testLockAgent(agent, t)
+}
+
+func TestLockKeyringAgent(t *testing.T) {
+	agent, cleanup := startKeyringAgent(t)
 	defer cleanup()
 	testLockAgent(agent, t)
 }
@@ -308,10 +330,19 @@ func testLockAgent(agent Agent, t *testing.T) {
 	}
 }
 
-func TestAgentLifetime(t *testing.T) {
-	agent, _, cleanup := startAgent(t)
+func testOpenSSHAgentLifetime(t *testing.T) {
+	agent, _, cleanup := startOpenSSHAgent(t)
 	defer cleanup()
+	testAgentLifetime(t, agent)
+}
 
+func testKeyringAgentLifetime(t *testing.T) {
+	agent, cleanup := startKeyringAgent(t)
+	defer cleanup()
+	testAgentLifetime(t, agent)
+}
+
+func testAgentLifetime(t *testing.T, agent Agent) {
 	for _, keyType := range []string{"rsa", "dsa", "ecdsa"} {
 		// Add private keys to the agent.
 		err := agent.Add(AddedKey{

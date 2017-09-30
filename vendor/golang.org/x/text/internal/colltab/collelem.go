@@ -87,7 +87,7 @@ func (ce Elem) ctype() ceType {
 //   - t* is the tertiary collation value
 // 100ttttt cccccccc pppppppp pppppppp
 //   - t* is the tertiar collation value
-//   - c* is the cannonical combining class
+//   - c* is the canonical combining class
 //   - p* is the primary collation value
 // Collation elements with a secondary value are of the form
 // 1010cccc ccccssss ssssssss tttttttt, where

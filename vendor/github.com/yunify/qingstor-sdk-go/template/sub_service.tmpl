@@ -23,6 +23,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/yunify/qingstor-sdk-go/config"
@@ -34,6 +35,7 @@ import (
 var _ fmt.State
 var _ io.Reader
 var _ http.Header
+var _ strings.Reader
 var _ time.Time
 var _ config.Config
 
@@ -48,6 +50,11 @@ var _ config.Config
 	func (s *Service) {{$subService.ID | camelCase}}(
 		{{- template "SubServiceInitParams" passThrough $subService.Properties true -}}
 		) (*{{$subService.ID | camelCase}}, error) {
+		{{- range $_, $property := $subService.Properties.Properties -}}
+			{{if eq $property.ID "zone"}}
+				{{$property.ID}} = strings.ToLower({{$property.ID}})
+			{{end}}
+		{{- end -}}
 		properties := &Properties{
 			{{range $_, $property := $subService.Properties.Properties -}}
 				{{$property.ID | upperFirst}}: &{{$property.ID}},

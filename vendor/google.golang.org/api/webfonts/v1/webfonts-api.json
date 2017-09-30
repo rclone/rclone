@@ -20,7 +20,7 @@
  "basePath": "/webfonts/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "webfonts/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/webfonts/v1",
  "parameters": {
   "alt": {
    "type": "string",

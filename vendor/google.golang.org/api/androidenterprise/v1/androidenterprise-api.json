@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/Eo4yAE5hsqiZm3AyzEBz2cSs7e4\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/eOnhI7vohdeU44iGbzR45SHL-EI\"",
  "discoveryVersion": "v1",
  "id": "androidenterprise:v1",
  "name": "androidenterprise",
  "canonicalName": "Android Enterprise",
  "version": "v1",
- "revision": "20170531",
+ "revision": "20170911",
  "title": "Google Play EMM API",
  "description": "Manages the deployment of apps to Android for Work users.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/androidenterprise/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "androidenterprise/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/androidenterprise/v1",
  "parameters": {
   "alt": {
    "type": "string",
@@ -124,6 +124,22 @@
      "items": {
       "type": "string"
      }
+    }
+   }
+  },
+  "AndroidDevicePolicyConfig": {
+   "id": "AndroidDevicePolicyConfig",
+   "type": "object",
+   "description": "The Android Device Policy configuration of an enterprise.",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Identifies what kind of resource this is. Value: the fixed string \"androidenterprise#androidDevicePolicyConfig\".",
+     "default": "androidenterprise#androidDevicePolicyConfig"
+    },
+    "state": {
+     "type": "string",
+     "description": "The state of Android Device Policy. \"enabled\" indicates that Android Device Policy is enabled for the enterprise and the EMM is allowed to manage devices with Android Device Policy, while \"disabled\" means that it cannot."
     }
    }
   },
@@ -477,7 +493,7 @@
   "GroupLicense": {
    "id": "GroupLicense",
    "type": "object",
-   "description": "A group license object indicates a product that an enterprise admin has approved for use in the enterprise. The product may be free or paid. For free products, a group license object is created in these cases: if the enterprise admin approves a product in Google Play, if the product is added to a collection, or if an entitlement for the product is created for a user via the API. For paid products, a group license object is only created as part of the first bulk purchase of that product in Google Play by the enterprise admin.\n\nThe API can be used to query group licenses; the available information includes the total number of licenses purchased (for paid products) and the total number of licenses that have been provisioned, that is, the total number of user entitlements in existence for the product.\n\nGroup license objects are never deleted. If, for example, a free app is added to a collection and then removed, the group license will remain, allowing the enterprise admin to keep track of any remaining entitlements. An enterprise admin may indicate they are no longer interested in the group license by marking it as unapproved in Google Play.",
+   "description": "Group license objects allow you to keep track of licenses (called entitlements) for both free and paid apps. For a free app, a group license is created when an enterprise admin first approves the product in Google Play or when the first entitlement for the product is created for a user via the API. For a paid app, a group license object is only created when an enterprise admin purchases the product in Google Play for the first time.\n\nUse the API to query group licenses. A Grouplicenses resource includes the total number of licenses purchased (paid apps only) and the total number of licenses currently in use. Iyn other words, the total number of Entitlements that exist for the product.\n\nOnly one group license object is created per product and group license objects are never deleted. If a product is unapproved, its group license remains. This allows enterprise admins to keep track of any remaining entitlements for the product.",
    "properties": {
     "acquisitionKind": {
      "type": "string",
@@ -917,7 +933,7 @@
    "properties": {
     "appVersion": {
      "type": "array",
-     "description": "App versions currently available for this product. The returned list contains only public versions. Alpha and beta versions are not included.",
+     "description": "App versions currently available for this product.",
      "items": {
       "$ref": "AppVersion"
      }
@@ -954,6 +970,10 @@
     "requiresContainerApp": {
      "type": "boolean",
      "description": "Deprecated."
+    },
+    "signingCertificate": {
+     "$ref": "ProductSigningCertificate",
+     "description": "The certificate used to sign this product."
     },
     "smallIconUrl": {
      "type": "string",
@@ -1056,7 +1076,21 @@
     },
     "productSetBehavior": {
      "type": "string",
-     "description": "The interpretation of this product set. \"unknown\" should never be sent and is ignored if received. \"whitelist\" means that the user is entitled to access the product set. \"includeAll\" means that all products are accessible, including products that are approved, products with revoked approval, and products that have never been approved. \"allApproved\" means that the user is entitled to access all products that are approved for the enterprise. If the value is \"allApproved\" or \"includeAll\", the productId field is ignored. If no value is provided, it is interpreted as \"whitelist\" for backwards compatibility."
+     "description": "The interpretation of this product set. \"unknown\" should never be sent and is ignored if received. \"whitelist\" means that the user is entitled to access the product set. \"includeAll\" means that all products are accessible, including products that are approved, products with revoked approval, and products that have never been approved. \"allApproved\" means that the user is entitled to access all products that are approved for the enterprise. If the value is \"allApproved\" or \"includeAll\", the productId field is ignored. If no value is provided, it is interpreted as \"whitelist\" for backwards compatibility. Further \"allApproved\" or \"includeAll\" does not enable automatic visibility of \"alpha\" or \"beta\" tracks for Android app. Use ProductVisibility to enable \"alpha\" or \"beta\" tracks per user."
+    }
+   }
+  },
+  "ProductSigningCertificate": {
+   "id": "ProductSigningCertificate",
+   "type": "object",
+   "properties": {
+    "certificateHashSha1": {
+     "type": "string",
+     "description": "The base64 urlsafe encoded SHA1 hash of the certificate. (This field is deprecated in favor of SHA2-256. It should not be used and may be removed at any time.)"
+    },
+    "certificateHashSha256": {
+     "type": "string",
+     "description": "The base64 urlsafe encoded SHA2-256 hash of the certificate."
     }
    }
   },
@@ -1722,6 +1756,29 @@
       "https://www.googleapis.com/auth/androidenterprise"
      ]
     },
+    "getAndroidDevicePolicyConfig": {
+     "id": "androidenterprise.enterprises.getAndroidDevicePolicyConfig",
+     "path": "enterprises/{enterpriseId}/androidDevicePolicyConfig",
+     "httpMethod": "GET",
+     "description": "Returns the Android Device Policy config resource.",
+     "parameters": {
+      "enterpriseId": {
+       "type": "string",
+       "description": "The ID of the enterprise.",
+       "required": true,
+       "location": "path"
+      }
+     },
+     "parameterOrder": [
+      "enterpriseId"
+     ],
+     "response": {
+      "$ref": "AndroidDevicePolicyConfig"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/androidenterprise"
+     ]
+    },
     "getServiceAccount": {
      "id": "androidenterprise.enterprises.getServiceAccount",
      "path": "enterprises/{enterpriseId}/serviceAccount",
@@ -1861,7 +1918,7 @@
      "id": "androidenterprise.enterprises.sendTestPushNotification",
      "path": "enterprises/{enterpriseId}/sendTestPushNotification",
      "httpMethod": "POST",
-     "description": "Sends a test push notification to validate the EMM integration with the Google Cloud Pub/Sub service for this enterprise.",
+     "description": "Sends a test notification to validate the EMM integration with the Google Cloud Pub/Sub service for this enterprise.",
      "parameters": {
       "enterpriseId": {
        "type": "string",
@@ -1901,6 +1958,32 @@
      },
      "response": {
       "$ref": "EnterpriseAccount"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/androidenterprise"
+     ]
+    },
+    "setAndroidDevicePolicyConfig": {
+     "id": "androidenterprise.enterprises.setAndroidDevicePolicyConfig",
+     "path": "enterprises/{enterpriseId}/androidDevicePolicyConfig",
+     "httpMethod": "PUT",
+     "description": "Sets the Android Device Policy config resource. EMM may use this method to enable or disable Android Device Policy support for the specified enterprise. To learn more about managing devices and apps with Android Device Policy, see the Android Management API.",
+     "parameters": {
+      "enterpriseId": {
+       "type": "string",
+       "description": "The ID of the enterprise.",
+       "required": true,
+       "location": "path"
+      }
+     },
+     "parameterOrder": [
+      "enterpriseId"
+     ],
+     "request": {
+      "$ref": "AndroidDevicePolicyConfig"
+     },
+     "response": {
+      "$ref": "AndroidDevicePolicyConfig"
      },
      "scopes": [
       "https://www.googleapis.com/auth/androidenterprise"

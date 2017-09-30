@@ -17,19 +17,18 @@ const opAddFacetToObject = "AddFacetToObject"
 
 // AddFacetToObjectRequest generates a "aws/request.Request" representing the
 // client's request for the AddFacetToObject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AddFacetToObject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AddFacetToObject method directly
-// instead.
+// See AddFacetToObject for more information on using the AddFacetToObject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AddFacetToObjectRequest method.
 //    req, resp := client.AddFacetToObjectRequest(params)
@@ -132,19 +131,18 @@ const opApplySchema = "ApplySchema"
 
 // ApplySchemaRequest generates a "aws/request.Request" representing the
 // client's request for the ApplySchema operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ApplySchema for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ApplySchema method directly
-// instead.
+// See ApplySchema for more information on using the ApplySchema
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ApplySchemaRequest method.
 //    req, resp := client.ApplySchemaRequest(params)
@@ -246,19 +244,18 @@ const opAttachObject = "AttachObject"
 
 // AttachObjectRequest generates a "aws/request.Request" representing the
 // client's request for the AttachObject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AttachObject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AttachObject method directly
-// instead.
+// See AttachObject for more information on using the AttachObject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AttachObjectRequest method.
 //    req, resp := client.AttachObjectRequest(params)
@@ -379,19 +376,18 @@ const opAttachPolicy = "AttachPolicy"
 
 // AttachPolicyRequest generates a "aws/request.Request" representing the
 // client's request for the AttachPolicy operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AttachPolicy for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AttachPolicy method directly
-// instead.
+// See AttachPolicy for more information on using the AttachPolicy
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AttachPolicyRequest method.
 //    req, resp := client.AttachPolicyRequest(params)
@@ -497,19 +493,18 @@ const opAttachToIndex = "AttachToIndex"
 
 // AttachToIndexRequest generates a "aws/request.Request" representing the
 // client's request for the AttachToIndex operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AttachToIndex for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AttachToIndex method directly
-// instead.
+// See AttachToIndex for more information on using the AttachToIndex
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AttachToIndexRequest method.
 //    req, resp := client.AttachToIndexRequest(params)
@@ -619,19 +614,18 @@ const opAttachTypedLink = "AttachTypedLink"
 
 // AttachTypedLinkRequest generates a "aws/request.Request" representing the
 // client's request for the AttachTypedLink operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AttachTypedLink for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AttachTypedLink method directly
-// instead.
+// See AttachTypedLink for more information on using the AttachTypedLink
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AttachTypedLinkRequest method.
 //    req, resp := client.AttachTypedLinkRequest(params)
@@ -699,6 +693,9 @@ func (c *CloudDirectory) AttachTypedLinkRequest(input *AttachTypedLinkInput) (re
 //   * ErrCodeAccessDeniedException "AccessDeniedException"
 //   Access denied. Check your permissions.
 //
+//   * ErrCodeDirectoryNotEnabledException "DirectoryNotEnabledException"
+//   An operation can only operate on a directory that is not enabled.
+//
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The specified resource could not be found.
 //
@@ -741,19 +738,18 @@ const opBatchRead = "BatchRead"
 
 // BatchReadRequest generates a "aws/request.Request" representing the
 // client's request for the BatchRead operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See BatchRead for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the BatchRead method directly
-// instead.
+// See BatchRead for more information on using the BatchRead
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the BatchReadRequest method.
 //    req, resp := client.BatchReadRequest(params)
@@ -849,19 +845,18 @@ const opBatchWrite = "BatchWrite"
 
 // BatchWriteRequest generates a "aws/request.Request" representing the
 // client's request for the BatchWrite operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See BatchWrite for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the BatchWrite method directly
-// instead.
+// See BatchWrite for more information on using the BatchWrite
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the BatchWriteRequest method.
 //    req, resp := client.BatchWriteRequest(params)
@@ -961,19 +956,18 @@ const opCreateDirectory = "CreateDirectory"
 
 // CreateDirectoryRequest generates a "aws/request.Request" representing the
 // client's request for the CreateDirectory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateDirectory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateDirectory method directly
-// instead.
+// See CreateDirectory for more information on using the CreateDirectory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateDirectoryRequest method.
 //    req, resp := client.CreateDirectoryRequest(params)
@@ -1077,19 +1071,18 @@ const opCreateFacet = "CreateFacet"
 
 // CreateFacetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateFacet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateFacet for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateFacet method directly
-// instead.
+// See CreateFacet for more information on using the CreateFacet
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateFacetRequest method.
 //    req, resp := client.CreateFacetRequest(params)
@@ -1196,19 +1189,18 @@ const opCreateIndex = "CreateIndex"
 
 // CreateIndexRequest generates a "aws/request.Request" representing the
 // client's request for the CreateIndex operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateIndex for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateIndex method directly
-// instead.
+// See CreateIndex for more information on using the CreateIndex
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateIndexRequest method.
 //    req, resp := client.CreateIndexRequest(params)
@@ -1319,19 +1311,18 @@ const opCreateObject = "CreateObject"
 
 // CreateObjectRequest generates a "aws/request.Request" representing the
 // client's request for the CreateObject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateObject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateObject method directly
-// instead.
+// See CreateObject for more information on using the CreateObject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateObjectRequest method.
 //    req, resp := client.CreateObjectRequest(params)
@@ -1447,19 +1438,18 @@ const opCreateSchema = "CreateSchema"
 
 // CreateSchemaRequest generates a "aws/request.Request" representing the
 // client's request for the CreateSchema operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateSchema for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateSchema method directly
-// instead.
+// See CreateSchema for more information on using the CreateSchema
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateSchemaRequest method.
 //    req, resp := client.CreateSchemaRequest(params)
@@ -1571,19 +1561,18 @@ const opCreateTypedLinkFacet = "CreateTypedLinkFacet"
 
 // CreateTypedLinkFacetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTypedLinkFacet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateTypedLinkFacet for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateTypedLinkFacet method directly
-// instead.
+// See CreateTypedLinkFacet for more information on using the CreateTypedLinkFacet
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateTypedLinkFacetRequest method.
 //    req, resp := client.CreateTypedLinkFacetRequest(params)
@@ -1689,19 +1678,18 @@ const opDeleteDirectory = "DeleteDirectory"
 
 // DeleteDirectoryRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDirectory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteDirectory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteDirectory method directly
-// instead.
+// See DeleteDirectory for more information on using the DeleteDirectory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteDirectoryRequest method.
 //    req, resp := client.DeleteDirectoryRequest(params)
@@ -1805,19 +1793,18 @@ const opDeleteFacet = "DeleteFacet"
 
 // DeleteFacetRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteFacet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteFacet for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteFacet method directly
-// instead.
+// See DeleteFacet for more information on using the DeleteFacet
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteFacetRequest method.
 //    req, resp := client.DeleteFacetRequest(params)
@@ -1921,19 +1908,18 @@ const opDeleteObject = "DeleteObject"
 
 // DeleteObjectRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteObject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteObject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteObject method directly
-// instead.
+// See DeleteObject for more information on using the DeleteObject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteObjectRequest method.
 //    req, resp := client.DeleteObjectRequest(params)
@@ -2037,19 +2023,18 @@ const opDeleteSchema = "DeleteSchema"
 
 // DeleteSchemaRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteSchema operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteSchema for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteSchema method directly
-// instead.
+// See DeleteSchema for more information on using the DeleteSchema
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteSchemaRequest method.
 //    req, resp := client.DeleteSchemaRequest(params)
@@ -2150,19 +2135,18 @@ const opDeleteTypedLinkFacet = "DeleteTypedLinkFacet"
 
 // DeleteTypedLinkFacetRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTypedLinkFacet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteTypedLinkFacet for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteTypedLinkFacet method directly
-// instead.
+// See DeleteTypedLinkFacet for more information on using the DeleteTypedLinkFacet
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteTypedLinkFacetRequest method.
 //    req, resp := client.DeleteTypedLinkFacetRequest(params)
@@ -2261,19 +2245,18 @@ const opDetachFromIndex = "DetachFromIndex"
 
 // DetachFromIndexRequest generates a "aws/request.Request" representing the
 // client's request for the DetachFromIndex operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DetachFromIndex for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DetachFromIndex method directly
-// instead.
+// See DetachFromIndex for more information on using the DetachFromIndex
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DetachFromIndexRequest method.
 //    req, resp := client.DetachFromIndexRequest(params)
@@ -2378,19 +2361,18 @@ const opDetachObject = "DetachObject"
 
 // DetachObjectRequest generates a "aws/request.Request" representing the
 // client's request for the DetachObject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DetachObject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DetachObject method directly
-// instead.
+// See DetachObject for more information on using the DetachObject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DetachObjectRequest method.
 //    req, resp := client.DetachObjectRequest(params)
@@ -2490,19 +2472,18 @@ const opDetachPolicy = "DetachPolicy"
 
 // DetachPolicyRequest generates a "aws/request.Request" representing the
 // client's request for the DetachPolicy operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DetachPolicy for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DetachPolicy method directly
-// instead.
+// See DetachPolicy for more information on using the DetachPolicy
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DetachPolicyRequest method.
 //    req, resp := client.DetachPolicyRequest(params)
@@ -2607,19 +2588,18 @@ const opDetachTypedLink = "DetachTypedLink"
 
 // DetachTypedLinkRequest generates a "aws/request.Request" representing the
 // client's request for the DetachTypedLink operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DetachTypedLink for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DetachTypedLink method directly
-// instead.
+// See DetachTypedLink for more information on using the DetachTypedLink
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DetachTypedLinkRequest method.
 //    req, resp := client.DetachTypedLinkRequest(params)
@@ -2689,6 +2669,9 @@ func (c *CloudDirectory) DetachTypedLinkRequest(input *DetachTypedLinkInput) (re
 //   * ErrCodeAccessDeniedException "AccessDeniedException"
 //   Access denied. Check your permissions.
 //
+//   * ErrCodeDirectoryNotEnabledException "DirectoryNotEnabledException"
+//   An operation can only operate on a directory that is not enabled.
+//
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The specified resource could not be found.
 //
@@ -2722,19 +2705,18 @@ const opDisableDirectory = "DisableDirectory"
 
 // DisableDirectoryRequest generates a "aws/request.Request" representing the
 // client's request for the DisableDirectory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DisableDirectory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DisableDirectory method directly
-// instead.
+// See DisableDirectory for more information on using the DisableDirectory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DisableDirectoryRequest method.
 //    req, resp := client.DisableDirectoryRequest(params)
@@ -2836,19 +2818,18 @@ const opEnableDirectory = "EnableDirectory"
 
 // EnableDirectoryRequest generates a "aws/request.Request" representing the
 // client's request for the EnableDirectory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See EnableDirectory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the EnableDirectory method directly
-// instead.
+// See EnableDirectory for more information on using the EnableDirectory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the EnableDirectoryRequest method.
 //    req, resp := client.EnableDirectoryRequest(params)
@@ -2949,19 +2930,18 @@ const opGetDirectory = "GetDirectory"
 
 // GetDirectoryRequest generates a "aws/request.Request" representing the
 // client's request for the GetDirectory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetDirectory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetDirectory method directly
-// instead.
+// See GetDirectory for more information on using the GetDirectory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetDirectoryRequest method.
 //    req, resp := client.GetDirectoryRequest(params)
@@ -3054,19 +3034,18 @@ const opGetFacet = "GetFacet"
 
 // GetFacetRequest generates a "aws/request.Request" representing the
 // client's request for the GetFacet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetFacet for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetFacet method directly
-// instead.
+// See GetFacet for more information on using the GetFacet
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetFacetRequest method.
 //    req, resp := client.GetFacetRequest(params)
@@ -3167,19 +3146,18 @@ const opGetObjectInformation = "GetObjectInformation"
 
 // GetObjectInformationRequest generates a "aws/request.Request" representing the
 // client's request for the GetObjectInformation operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetObjectInformation for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetObjectInformation method directly
-// instead.
+// See GetObjectInformation for more information on using the GetObjectInformation
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetObjectInformationRequest method.
 //    req, resp := client.GetObjectInformationRequest(params)
@@ -3278,19 +3256,18 @@ const opGetSchemaAsJson = "GetSchemaAsJson"
 
 // GetSchemaAsJsonRequest generates a "aws/request.Request" representing the
 // client's request for the GetSchemaAsJson operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetSchemaAsJson for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetSchemaAsJson method directly
-// instead.
+// See GetSchemaAsJson for more information on using the GetSchemaAsJson
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetSchemaAsJsonRequest method.
 //    req, resp := client.GetSchemaAsJsonRequest(params)
@@ -3391,19 +3368,18 @@ const opGetTypedLinkFacetInformation = "GetTypedLinkFacetInformation"
 
 // GetTypedLinkFacetInformationRequest generates a "aws/request.Request" representing the
 // client's request for the GetTypedLinkFacetInformation operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetTypedLinkFacetInformation for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetTypedLinkFacetInformation method directly
-// instead.
+// See GetTypedLinkFacetInformation for more information on using the GetTypedLinkFacetInformation
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetTypedLinkFacetInformationRequest method.
 //    req, resp := client.GetTypedLinkFacetInformationRequest(params)
@@ -3506,19 +3482,18 @@ const opListAppliedSchemaArns = "ListAppliedSchemaArns"
 
 // ListAppliedSchemaArnsRequest generates a "aws/request.Request" representing the
 // client's request for the ListAppliedSchemaArns operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListAppliedSchemaArns for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListAppliedSchemaArns method directly
-// instead.
+// See ListAppliedSchemaArns for more information on using the ListAppliedSchemaArns
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListAppliedSchemaArnsRequest method.
 //    req, resp := client.ListAppliedSchemaArnsRequest(params)
@@ -3673,19 +3648,18 @@ const opListAttachedIndices = "ListAttachedIndices"
 
 // ListAttachedIndicesRequest generates a "aws/request.Request" representing the
 // client's request for the ListAttachedIndices operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListAttachedIndices for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListAttachedIndices method directly
-// instead.
+// See ListAttachedIndices for more information on using the ListAttachedIndices
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListAttachedIndicesRequest method.
 //    req, resp := client.ListAttachedIndicesRequest(params)
@@ -3840,19 +3814,18 @@ const opListDevelopmentSchemaArns = "ListDevelopmentSchemaArns"
 
 // ListDevelopmentSchemaArnsRequest generates a "aws/request.Request" representing the
 // client's request for the ListDevelopmentSchemaArns operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListDevelopmentSchemaArns for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListDevelopmentSchemaArns method directly
-// instead.
+// See ListDevelopmentSchemaArns for more information on using the ListDevelopmentSchemaArns
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListDevelopmentSchemaArnsRequest method.
 //    req, resp := client.ListDevelopmentSchemaArnsRequest(params)
@@ -4007,19 +3980,18 @@ const opListDirectories = "ListDirectories"
 
 // ListDirectoriesRequest generates a "aws/request.Request" representing the
 // client's request for the ListDirectories operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListDirectories for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListDirectories method directly
-// instead.
+// See ListDirectories for more information on using the ListDirectories
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListDirectoriesRequest method.
 //    req, resp := client.ListDirectoriesRequest(params)
@@ -4171,19 +4143,18 @@ const opListFacetAttributes = "ListFacetAttributes"
 
 // ListFacetAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the ListFacetAttributes operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListFacetAttributes for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListFacetAttributes method directly
-// instead.
+// See ListFacetAttributes for more information on using the ListFacetAttributes
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListFacetAttributesRequest method.
 //    req, resp := client.ListFacetAttributesRequest(params)
@@ -4341,19 +4312,18 @@ const opListFacetNames = "ListFacetNames"
 
 // ListFacetNamesRequest generates a "aws/request.Request" representing the
 // client's request for the ListFacetNames operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListFacetNames for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListFacetNames method directly
-// instead.
+// See ListFacetNames for more information on using the ListFacetNames
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListFacetNamesRequest method.
 //    req, resp := client.ListFacetNamesRequest(params)
@@ -4508,19 +4478,18 @@ const opListIncomingTypedLinks = "ListIncomingTypedLinks"
 
 // ListIncomingTypedLinksRequest generates a "aws/request.Request" representing the
 // client's request for the ListIncomingTypedLinks operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListIncomingTypedLinks for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListIncomingTypedLinks method directly
-// instead.
+// See ListIncomingTypedLinks for more information on using the ListIncomingTypedLinks
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListIncomingTypedLinksRequest method.
 //    req, resp := client.ListIncomingTypedLinksRequest(params)
@@ -4589,6 +4558,9 @@ func (c *CloudDirectory) ListIncomingTypedLinksRequest(input *ListIncomingTypedL
 //   * ErrCodeAccessDeniedException "AccessDeniedException"
 //   Access denied. Check your permissions.
 //
+//   * ErrCodeDirectoryNotEnabledException "DirectoryNotEnabledException"
+//   An operation can only operate on a directory that is not enabled.
+//
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The specified resource could not be found.
 //
@@ -4625,19 +4597,18 @@ const opListIndex = "ListIndex"
 
 // ListIndexRequest generates a "aws/request.Request" representing the
 // client's request for the ListIndex operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListIndex for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListIndex method directly
-// instead.
+// See ListIndex for more information on using the ListIndex
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListIndexRequest method.
 //    req, resp := client.ListIndexRequest(params)
@@ -4795,19 +4766,18 @@ const opListObjectAttributes = "ListObjectAttributes"
 
 // ListObjectAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the ListObjectAttributes operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListObjectAttributes for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListObjectAttributes method directly
-// instead.
+// See ListObjectAttributes for more information on using the ListObjectAttributes
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListObjectAttributesRequest method.
 //    req, resp := client.ListObjectAttributesRequest(params)
@@ -4972,19 +4942,18 @@ const opListObjectChildren = "ListObjectChildren"
 
 // ListObjectChildrenRequest generates a "aws/request.Request" representing the
 // client's request for the ListObjectChildren operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListObjectChildren for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListObjectChildren method directly
-// instead.
+// See ListObjectChildren for more information on using the ListObjectChildren
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListObjectChildrenRequest method.
 //    req, resp := client.ListObjectChildrenRequest(params)
@@ -5150,19 +5119,18 @@ const opListObjectParentPaths = "ListObjectParentPaths"
 
 // ListObjectParentPathsRequest generates a "aws/request.Request" representing the
 // client's request for the ListObjectParentPaths operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListObjectParentPaths for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListObjectParentPaths method directly
-// instead.
+// See ListObjectParentPaths for more information on using the ListObjectParentPaths
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListObjectParentPathsRequest method.
 //    req, resp := client.ListObjectParentPathsRequest(params)
@@ -5330,19 +5298,18 @@ const opListObjectParents = "ListObjectParents"
 
 // ListObjectParentsRequest generates a "aws/request.Request" representing the
 // client's request for the ListObjectParents operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListObjectParents for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListObjectParents method directly
-// instead.
+// See ListObjectParents for more information on using the ListObjectParents
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListObjectParentsRequest method.
 //    req, resp := client.ListObjectParentsRequest(params)
@@ -5507,19 +5474,18 @@ const opListObjectPolicies = "ListObjectPolicies"
 
 // ListObjectPoliciesRequest generates a "aws/request.Request" representing the
 // client's request for the ListObjectPolicies operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListObjectPolicies for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListObjectPolicies method directly
-// instead.
+// See ListObjectPolicies for more information on using the ListObjectPolicies
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListObjectPoliciesRequest method.
 //    req, resp := client.ListObjectPoliciesRequest(params)
@@ -5677,19 +5643,18 @@ const opListOutgoingTypedLinks = "ListOutgoingTypedLinks"
 
 // ListOutgoingTypedLinksRequest generates a "aws/request.Request" representing the
 // client's request for the ListOutgoingTypedLinks operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListOutgoingTypedLinks for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListOutgoingTypedLinks method directly
-// instead.
+// See ListOutgoingTypedLinks for more information on using the ListOutgoingTypedLinks
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListOutgoingTypedLinksRequest method.
 //    req, resp := client.ListOutgoingTypedLinksRequest(params)
@@ -5758,6 +5723,9 @@ func (c *CloudDirectory) ListOutgoingTypedLinksRequest(input *ListOutgoingTypedL
 //   * ErrCodeAccessDeniedException "AccessDeniedException"
 //   Access denied. Check your permissions.
 //
+//   * ErrCodeDirectoryNotEnabledException "DirectoryNotEnabledException"
+//   An operation can only operate on a directory that is not enabled.
+//
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The specified resource could not be found.
 //
@@ -5794,19 +5762,18 @@ const opListPolicyAttachments = "ListPolicyAttachments"
 
 // ListPolicyAttachmentsRequest generates a "aws/request.Request" representing the
 // client's request for the ListPolicyAttachments operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListPolicyAttachments for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListPolicyAttachments method directly
-// instead.
+// See ListPolicyAttachments for more information on using the ListPolicyAttachments
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListPolicyAttachmentsRequest method.
 //    req, resp := client.ListPolicyAttachmentsRequest(params)
@@ -5970,19 +5937,18 @@ const opListPublishedSchemaArns = "ListPublishedSchemaArns"
 
 // ListPublishedSchemaArnsRequest generates a "aws/request.Request" representing the
 // client's request for the ListPublishedSchemaArns operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListPublishedSchemaArns for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListPublishedSchemaArns method directly
-// instead.
+// See ListPublishedSchemaArns for more information on using the ListPublishedSchemaArns
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListPublishedSchemaArnsRequest method.
 //    req, resp := client.ListPublishedSchemaArnsRequest(params)
@@ -6137,19 +6103,18 @@ const opListTagsForResource = "ListTagsForResource"
 
 // ListTagsForResourceRequest generates a "aws/request.Request" representing the
 // client's request for the ListTagsForResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListTagsForResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListTagsForResource method directly
-// instead.
+// See ListTagsForResource for more information on using the ListTagsForResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListTagsForResourceRequest method.
 //    req, resp := client.ListTagsForResourceRequest(params)
@@ -6308,19 +6273,18 @@ const opListTypedLinkFacetAttributes = "ListTypedLinkFacetAttributes"
 
 // ListTypedLinkFacetAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the ListTypedLinkFacetAttributes operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListTypedLinkFacetAttributes for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListTypedLinkFacetAttributes method directly
-// instead.
+// See ListTypedLinkFacetAttributes for more information on using the ListTypedLinkFacetAttributes
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListTypedLinkFacetAttributesRequest method.
 //    req, resp := client.ListTypedLinkFacetAttributesRequest(params)
@@ -6479,19 +6443,18 @@ const opListTypedLinkFacetNames = "ListTypedLinkFacetNames"
 
 // ListTypedLinkFacetNamesRequest generates a "aws/request.Request" representing the
 // client's request for the ListTypedLinkFacetNames operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListTypedLinkFacetNames for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListTypedLinkFacetNames method directly
-// instead.
+// See ListTypedLinkFacetNames for more information on using the ListTypedLinkFacetNames
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListTypedLinkFacetNamesRequest method.
 //    req, resp := client.ListTypedLinkFacetNamesRequest(params)
@@ -6647,19 +6610,18 @@ const opLookupPolicy = "LookupPolicy"
 
 // LookupPolicyRequest generates a "aws/request.Request" representing the
 // client's request for the LookupPolicy operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See LookupPolicy for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the LookupPolicy method directly
-// instead.
+// See LookupPolicy for more information on using the LookupPolicy
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the LookupPolicyRequest method.
 //    req, resp := client.LookupPolicyRequest(params)
@@ -6826,19 +6788,18 @@ const opPublishSchema = "PublishSchema"
 
 // PublishSchemaRequest generates a "aws/request.Request" representing the
 // client's request for the PublishSchema operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PublishSchema for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PublishSchema method directly
-// instead.
+// See PublishSchema for more information on using the PublishSchema
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PublishSchemaRequest method.
 //    req, resp := client.PublishSchemaRequest(params)
@@ -6940,19 +6901,18 @@ const opPutSchemaFromJson = "PutSchemaFromJson"
 
 // PutSchemaFromJsonRequest generates a "aws/request.Request" representing the
 // client's request for the PutSchemaFromJson operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutSchemaFromJson for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutSchemaFromJson method directly
-// instead.
+// See PutSchemaFromJson for more information on using the PutSchemaFromJson
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutSchemaFromJsonRequest method.
 //    req, resp := client.PutSchemaFromJsonRequest(params)
@@ -7053,19 +7013,18 @@ const opRemoveFacetFromObject = "RemoveFacetFromObject"
 
 // RemoveFacetFromObjectRequest generates a "aws/request.Request" representing the
 // client's request for the RemoveFacetFromObject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See RemoveFacetFromObject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the RemoveFacetFromObject method directly
-// instead.
+// See RemoveFacetFromObject for more information on using the RemoveFacetFromObject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the RemoveFacetFromObjectRequest method.
 //    req, resp := client.RemoveFacetFromObjectRequest(params)
@@ -7168,19 +7127,18 @@ const opTagResource = "TagResource"
 
 // TagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the TagResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See TagResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the TagResource method directly
-// instead.
+// See TagResource for more information on using the TagResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the TagResourceRequest method.
 //    req, resp := client.TagResourceRequest(params)
@@ -7281,19 +7239,18 @@ const opUntagResource = "UntagResource"
 
 // UntagResourceRequest generates a "aws/request.Request" representing the
 // client's request for the UntagResource operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UntagResource for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UntagResource method directly
-// instead.
+// See UntagResource for more information on using the UntagResource
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UntagResourceRequest method.
 //    req, resp := client.UntagResourceRequest(params)
@@ -7394,19 +7351,18 @@ const opUpdateFacet = "UpdateFacet"
 
 // UpdateFacetRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateFacet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateFacet for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateFacet method directly
-// instead.
+// See UpdateFacet for more information on using the UpdateFacet
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateFacetRequest method.
 //    req, resp := client.UpdateFacetRequest(params)
@@ -7517,19 +7473,18 @@ const opUpdateObjectAttributes = "UpdateObjectAttributes"
 
 // UpdateObjectAttributesRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateObjectAttributes operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateObjectAttributes for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateObjectAttributes method directly
-// instead.
+// See UpdateObjectAttributes for more information on using the UpdateObjectAttributes
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateObjectAttributesRequest method.
 //    req, resp := client.UpdateObjectAttributesRequest(params)
@@ -7632,19 +7587,18 @@ const opUpdateSchema = "UpdateSchema"
 
 // UpdateSchemaRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateSchema operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateSchema for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateSchema method directly
-// instead.
+// See UpdateSchema for more information on using the UpdateSchema
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateSchemaRequest method.
 //    req, resp := client.UpdateSchemaRequest(params)
@@ -7741,19 +7695,18 @@ const opUpdateTypedLinkFacet = "UpdateTypedLinkFacet"
 
 // UpdateTypedLinkFacetRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTypedLinkFacet operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateTypedLinkFacet for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateTypedLinkFacet method directly
-// instead.
+// See UpdateTypedLinkFacet for more information on using the UpdateTypedLinkFacet
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateTypedLinkFacetRequest method.
 //    req, resp := client.UpdateTypedLinkFacetRequest(params)
@@ -8856,6 +8809,403 @@ func (s *BatchAttachObjectResponse) SetAttachedObjectIdentifier(v string) *Batch
 	return s
 }
 
+// Attaches a policy object to a regular object inside a BatchRead operation. For
+// more information, see AttachPolicy and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchAttachPolicy
+type BatchAttachPolicy struct {
+	_ struct{} `type:"structure"`
+
+	// The reference that identifies the object to which the policy will be attached.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+
+	// The reference that is associated with the policy object.
+	//
+	// PolicyReference is a required field
+	PolicyReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchAttachPolicy) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchAttachPolicy) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchAttachPolicy) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchAttachPolicy"}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+	if s.PolicyReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchAttachPolicy) SetObjectReference(v *ObjectReference) *BatchAttachPolicy {
+	s.ObjectReference = v
+	return s
+}
+
+// SetPolicyReference sets the PolicyReference field's value.
+func (s *BatchAttachPolicy) SetPolicyReference(v *ObjectReference) *BatchAttachPolicy {
+	s.PolicyReference = v
+	return s
+}
+
+// Represents the output of an AttachPolicy response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchAttachPolicyResponse
+type BatchAttachPolicyResponse struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s BatchAttachPolicyResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchAttachPolicyResponse) GoString() string {
+	return s.String()
+}
+
+// Attaches the specified object to the specified index inside a BatchRead operation.
+// For more information, see AttachToIndex and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchAttachToIndex
+type BatchAttachToIndex struct {
+	_ struct{} `type:"structure"`
+
+	// A reference to the index that you are attaching the object to.
+	//
+	// IndexReference is a required field
+	IndexReference *ObjectReference `type:"structure" required:"true"`
+
+	// A reference to the object that you are attaching to the index.
+	//
+	// TargetReference is a required field
+	TargetReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchAttachToIndex) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchAttachToIndex) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchAttachToIndex) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchAttachToIndex"}
+	if s.IndexReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("IndexReference"))
+	}
+	if s.TargetReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIndexReference sets the IndexReference field's value.
+func (s *BatchAttachToIndex) SetIndexReference(v *ObjectReference) *BatchAttachToIndex {
+	s.IndexReference = v
+	return s
+}
+
+// SetTargetReference sets the TargetReference field's value.
+func (s *BatchAttachToIndex) SetTargetReference(v *ObjectReference) *BatchAttachToIndex {
+	s.TargetReference = v
+	return s
+}
+
+// Represents the output of a AttachToIndex response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchAttachToIndexResponse
+type BatchAttachToIndexResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The ObjectIdentifier of the object that was attached to the index.
+	AttachedObjectIdentifier *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BatchAttachToIndexResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchAttachToIndexResponse) GoString() string {
+	return s.String()
+}
+
+// SetAttachedObjectIdentifier sets the AttachedObjectIdentifier field's value.
+func (s *BatchAttachToIndexResponse) SetAttachedObjectIdentifier(v string) *BatchAttachToIndexResponse {
+	s.AttachedObjectIdentifier = &v
+	return s
+}
+
+// Attaches a typed link to a specified source and target object inside a BatchRead
+// operation. For more information, see AttachTypedLink and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchAttachTypedLink
+type BatchAttachTypedLink struct {
+	_ struct{} `type:"structure"`
+
+	// A set of attributes that are associated with the typed link.
+	//
+	// Attributes is a required field
+	Attributes []*AttributeNameAndValue `type:"list" required:"true"`
+
+	// Identifies the source object that the typed link will attach to.
+	//
+	// SourceObjectReference is a required field
+	SourceObjectReference *ObjectReference `type:"structure" required:"true"`
+
+	// Identifies the target object that the typed link will attach to.
+	//
+	// TargetObjectReference is a required field
+	TargetObjectReference *ObjectReference `type:"structure" required:"true"`
+
+	// Identifies the typed link facet that is associated with the typed link.
+	//
+	// TypedLinkFacet is a required field
+	TypedLinkFacet *TypedLinkSchemaAndFacetName `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchAttachTypedLink) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchAttachTypedLink) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchAttachTypedLink) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchAttachTypedLink"}
+	if s.Attributes == nil {
+		invalidParams.Add(request.NewErrParamRequired("Attributes"))
+	}
+	if s.SourceObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("SourceObjectReference"))
+	}
+	if s.TargetObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetObjectReference"))
+	}
+	if s.TypedLinkFacet == nil {
+		invalidParams.Add(request.NewErrParamRequired("TypedLinkFacet"))
+	}
+	if s.Attributes != nil {
+		for i, v := range s.Attributes {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "Attributes", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.TypedLinkFacet != nil {
+		if err := s.TypedLinkFacet.Validate(); err != nil {
+			invalidParams.AddNested("TypedLinkFacet", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetAttributes sets the Attributes field's value.
+func (s *BatchAttachTypedLink) SetAttributes(v []*AttributeNameAndValue) *BatchAttachTypedLink {
+	s.Attributes = v
+	return s
+}
+
+// SetSourceObjectReference sets the SourceObjectReference field's value.
+func (s *BatchAttachTypedLink) SetSourceObjectReference(v *ObjectReference) *BatchAttachTypedLink {
+	s.SourceObjectReference = v
+	return s
+}
+
+// SetTargetObjectReference sets the TargetObjectReference field's value.
+func (s *BatchAttachTypedLink) SetTargetObjectReference(v *ObjectReference) *BatchAttachTypedLink {
+	s.TargetObjectReference = v
+	return s
+}
+
+// SetTypedLinkFacet sets the TypedLinkFacet field's value.
+func (s *BatchAttachTypedLink) SetTypedLinkFacet(v *TypedLinkSchemaAndFacetName) *BatchAttachTypedLink {
+	s.TypedLinkFacet = v
+	return s
+}
+
+// Represents the output of a AttachTypedLink response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchAttachTypedLinkResponse
+type BatchAttachTypedLinkResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Returns a typed link specifier as output.
+	TypedLinkSpecifier *TypedLinkSpecifier `type:"structure"`
+}
+
+// String returns the string representation
+func (s BatchAttachTypedLinkResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchAttachTypedLinkResponse) GoString() string {
+	return s.String()
+}
+
+// SetTypedLinkSpecifier sets the TypedLinkSpecifier field's value.
+func (s *BatchAttachTypedLinkResponse) SetTypedLinkSpecifier(v *TypedLinkSpecifier) *BatchAttachTypedLinkResponse {
+	s.TypedLinkSpecifier = v
+	return s
+}
+
+// Creates an index object inside of a BatchRead operation. For more information,
+// see CreateIndex and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchCreateIndex
+type BatchCreateIndex struct {
+	_ struct{} `type:"structure"`
+
+	// The batch reference name. See Batches (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_advanced.html#batches)
+	// for more information.
+	BatchReferenceName *string `type:"string"`
+
+	// Indicates whether the attribute that is being indexed has unique values or
+	// not.
+	//
+	// IsUnique is a required field
+	IsUnique *bool `type:"boolean" required:"true"`
+
+	// The name of the link between the parent object and the index object.
+	LinkName *string `min:"1" type:"string"`
+
+	// Specifies the attributes that should be indexed on. Currently only a single
+	// attribute is supported.
+	//
+	// OrderedIndexedAttributeList is a required field
+	OrderedIndexedAttributeList []*AttributeKey `type:"list" required:"true"`
+
+	// A reference to the parent object that contains the index object.
+	ParentReference *ObjectReference `type:"structure"`
+}
+
+// String returns the string representation
+func (s BatchCreateIndex) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchCreateIndex) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchCreateIndex) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchCreateIndex"}
+	if s.IsUnique == nil {
+		invalidParams.Add(request.NewErrParamRequired("IsUnique"))
+	}
+	if s.LinkName != nil && len(*s.LinkName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("LinkName", 1))
+	}
+	if s.OrderedIndexedAttributeList == nil {
+		invalidParams.Add(request.NewErrParamRequired("OrderedIndexedAttributeList"))
+	}
+	if s.OrderedIndexedAttributeList != nil {
+		for i, v := range s.OrderedIndexedAttributeList {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "OrderedIndexedAttributeList", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBatchReferenceName sets the BatchReferenceName field's value.
+func (s *BatchCreateIndex) SetBatchReferenceName(v string) *BatchCreateIndex {
+	s.BatchReferenceName = &v
+	return s
+}
+
+// SetIsUnique sets the IsUnique field's value.
+func (s *BatchCreateIndex) SetIsUnique(v bool) *BatchCreateIndex {
+	s.IsUnique = &v
+	return s
+}
+
+// SetLinkName sets the LinkName field's value.
+func (s *BatchCreateIndex) SetLinkName(v string) *BatchCreateIndex {
+	s.LinkName = &v
+	return s
+}
+
+// SetOrderedIndexedAttributeList sets the OrderedIndexedAttributeList field's value.
+func (s *BatchCreateIndex) SetOrderedIndexedAttributeList(v []*AttributeKey) *BatchCreateIndex {
+	s.OrderedIndexedAttributeList = v
+	return s
+}
+
+// SetParentReference sets the ParentReference field's value.
+func (s *BatchCreateIndex) SetParentReference(v *ObjectReference) *BatchCreateIndex {
+	s.ParentReference = v
+	return s
+}
+
+// Represents the output of a CreateIndex response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchCreateIndexResponse
+type BatchCreateIndexResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The ObjectIdentifier of the index created by this operation.
+	ObjectIdentifier *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BatchCreateIndexResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchCreateIndexResponse) GoString() string {
+	return s.String()
+}
+
+// SetObjectIdentifier sets the ObjectIdentifier field's value.
+func (s *BatchCreateIndexResponse) SetObjectIdentifier(v string) *BatchCreateIndexResponse {
+	s.ObjectIdentifier = &v
+	return s
+}
+
 // Represents the output of a CreateObject operation.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchCreateObject
 type BatchCreateObject struct {
@@ -9059,6 +9409,86 @@ func (s BatchDeleteObjectResponse) GoString() string {
 	return s.String()
 }
 
+// Detaches the specified object from the specified index inside a BatchRead
+// operation. For more information, see DetachFromIndex and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchDetachFromIndex
+type BatchDetachFromIndex struct {
+	_ struct{} `type:"structure"`
+
+	// A reference to the index object.
+	//
+	// IndexReference is a required field
+	IndexReference *ObjectReference `type:"structure" required:"true"`
+
+	// A reference to the object being detached from the index.
+	//
+	// TargetReference is a required field
+	TargetReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchDetachFromIndex) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDetachFromIndex) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchDetachFromIndex) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchDetachFromIndex"}
+	if s.IndexReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("IndexReference"))
+	}
+	if s.TargetReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIndexReference sets the IndexReference field's value.
+func (s *BatchDetachFromIndex) SetIndexReference(v *ObjectReference) *BatchDetachFromIndex {
+	s.IndexReference = v
+	return s
+}
+
+// SetTargetReference sets the TargetReference field's value.
+func (s *BatchDetachFromIndex) SetTargetReference(v *ObjectReference) *BatchDetachFromIndex {
+	s.TargetReference = v
+	return s
+}
+
+// Represents the output of a DetachFromIndex response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchDetachFromIndexResponse
+type BatchDetachFromIndexResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The ObjectIdentifier of the object that was detached from the index.
+	DetachedObjectIdentifier *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BatchDetachFromIndexResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDetachFromIndexResponse) GoString() string {
+	return s.String()
+}
+
+// SetDetachedObjectIdentifier sets the DetachedObjectIdentifier field's value.
+func (s *BatchDetachFromIndexResponse) SetDetachedObjectIdentifier(v string) *BatchDetachFromIndexResponse {
+	s.DetachedObjectIdentifier = &v
+	return s
+}
+
 // Represents the output of a DetachObject operation.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchDetachObject
 type BatchDetachObject struct {
@@ -9153,6 +9583,559 @@ func (s BatchDetachObjectResponse) GoString() string {
 // SetDetachedObjectIdentifier sets the DetachedObjectIdentifier field's value.
 func (s *BatchDetachObjectResponse) SetDetachedObjectIdentifier(v string) *BatchDetachObjectResponse {
 	s.DetachedObjectIdentifier = &v
+	return s
+}
+
+// Detaches the specified policy from the specified directory inside a BatchRead
+// operation. For more information, see DetachPolicy and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchDetachPolicy
+type BatchDetachPolicy struct {
+	_ struct{} `type:"structure"`
+
+	// Reference that identifies the object whose policy object will be detached.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+
+	// Reference that identifies the policy object.
+	//
+	// PolicyReference is a required field
+	PolicyReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchDetachPolicy) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDetachPolicy) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchDetachPolicy) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchDetachPolicy"}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+	if s.PolicyReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchDetachPolicy) SetObjectReference(v *ObjectReference) *BatchDetachPolicy {
+	s.ObjectReference = v
+	return s
+}
+
+// SetPolicyReference sets the PolicyReference field's value.
+func (s *BatchDetachPolicy) SetPolicyReference(v *ObjectReference) *BatchDetachPolicy {
+	s.PolicyReference = v
+	return s
+}
+
+// Represents the output of a DetachPolicy response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchDetachPolicyResponse
+type BatchDetachPolicyResponse struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s BatchDetachPolicyResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDetachPolicyResponse) GoString() string {
+	return s.String()
+}
+
+// Detaches a typed link from a specified source and target object inside a
+// BatchRead operation. For more information, see DetachTypedLink and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchDetachTypedLink
+type BatchDetachTypedLink struct {
+	_ struct{} `type:"structure"`
+
+	// Used to accept a typed link specifier as input.
+	//
+	// TypedLinkSpecifier is a required field
+	TypedLinkSpecifier *TypedLinkSpecifier `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchDetachTypedLink) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDetachTypedLink) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchDetachTypedLink) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchDetachTypedLink"}
+	if s.TypedLinkSpecifier == nil {
+		invalidParams.Add(request.NewErrParamRequired("TypedLinkSpecifier"))
+	}
+	if s.TypedLinkSpecifier != nil {
+		if err := s.TypedLinkSpecifier.Validate(); err != nil {
+			invalidParams.AddNested("TypedLinkSpecifier", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetTypedLinkSpecifier sets the TypedLinkSpecifier field's value.
+func (s *BatchDetachTypedLink) SetTypedLinkSpecifier(v *TypedLinkSpecifier) *BatchDetachTypedLink {
+	s.TypedLinkSpecifier = v
+	return s
+}
+
+// Represents the output of a DetachTypedLink response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchDetachTypedLinkResponse
+type BatchDetachTypedLinkResponse struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s BatchDetachTypedLinkResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchDetachTypedLinkResponse) GoString() string {
+	return s.String()
+}
+
+// Retrieves metadata about an object inside a BatchRead operation. For more
+// information, see GetObjectInformation and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchGetObjectInformation
+type BatchGetObjectInformation struct {
+	_ struct{} `type:"structure"`
+
+	// A reference to the object.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchGetObjectInformation) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchGetObjectInformation) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchGetObjectInformation) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchGetObjectInformation"}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchGetObjectInformation) SetObjectReference(v *ObjectReference) *BatchGetObjectInformation {
+	s.ObjectReference = v
+	return s
+}
+
+// Represents the output of a GetObjectInformation response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchGetObjectInformationResponse
+type BatchGetObjectInformationResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The ObjectIdentifier of the specified object.
+	ObjectIdentifier *string `type:"string"`
+
+	// The facets attached to the specified object.
+	SchemaFacets []*SchemaFacet `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchGetObjectInformationResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchGetObjectInformationResponse) GoString() string {
+	return s.String()
+}
+
+// SetObjectIdentifier sets the ObjectIdentifier field's value.
+func (s *BatchGetObjectInformationResponse) SetObjectIdentifier(v string) *BatchGetObjectInformationResponse {
+	s.ObjectIdentifier = &v
+	return s
+}
+
+// SetSchemaFacets sets the SchemaFacets field's value.
+func (s *BatchGetObjectInformationResponse) SetSchemaFacets(v []*SchemaFacet) *BatchGetObjectInformationResponse {
+	s.SchemaFacets = v
+	return s
+}
+
+// Lists indices attached to an object inside a BatchRead operation. For more
+// information, see ListAttachedIndices and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListAttachedIndices
+type BatchListAttachedIndices struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// A reference to the object that has indices attached.
+	//
+	// TargetReference is a required field
+	TargetReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchListAttachedIndices) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListAttachedIndices) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchListAttachedIndices) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchListAttachedIndices"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.TargetReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("TargetReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchListAttachedIndices) SetMaxResults(v int64) *BatchListAttachedIndices {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListAttachedIndices) SetNextToken(v string) *BatchListAttachedIndices {
+	s.NextToken = &v
+	return s
+}
+
+// SetTargetReference sets the TargetReference field's value.
+func (s *BatchListAttachedIndices) SetTargetReference(v *ObjectReference) *BatchListAttachedIndices {
+	s.TargetReference = v
+	return s
+}
+
+// Represents the output of a ListAttachedIndices response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListAttachedIndicesResponse
+type BatchListAttachedIndicesResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The indices attached to the specified object.
+	IndexAttachments []*IndexAttachment `type:"list"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BatchListAttachedIndicesResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListAttachedIndicesResponse) GoString() string {
+	return s.String()
+}
+
+// SetIndexAttachments sets the IndexAttachments field's value.
+func (s *BatchListAttachedIndicesResponse) SetIndexAttachments(v []*IndexAttachment) *BatchListAttachedIndicesResponse {
+	s.IndexAttachments = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListAttachedIndicesResponse) SetNextToken(v string) *BatchListAttachedIndicesResponse {
+	s.NextToken = &v
+	return s
+}
+
+// Returns a paginated list of all the incoming TypedLinkSpecifier information
+// for an object inside a BatchRead operation. For more information, see ListIncomingTypedLinks
+// and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListIncomingTypedLinks
+type BatchListIncomingTypedLinks struct {
+	_ struct{} `type:"structure"`
+
+	// Provides range filters for multiple attributes. When providing ranges to
+	// typed link selection, any inexact ranges must be specified at the end. Any
+	// attributes that do not have a range specified are presumed to match the entire
+	// range.
+	FilterAttributeRanges []*TypedLinkAttributeRange `type:"list"`
+
+	// Filters are interpreted in the order of the attributes on the typed link
+	// facet, not the order in which they are supplied to any API calls.
+	FilterTypedLink *TypedLinkSchemaAndFacetName `type:"structure"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// The reference that identifies the object whose attributes will be listed.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchListIncomingTypedLinks) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListIncomingTypedLinks) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchListIncomingTypedLinks) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchListIncomingTypedLinks"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+	if s.FilterAttributeRanges != nil {
+		for i, v := range s.FilterAttributeRanges {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "FilterAttributeRanges", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.FilterTypedLink != nil {
+		if err := s.FilterTypedLink.Validate(); err != nil {
+			invalidParams.AddNested("FilterTypedLink", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilterAttributeRanges sets the FilterAttributeRanges field's value.
+func (s *BatchListIncomingTypedLinks) SetFilterAttributeRanges(v []*TypedLinkAttributeRange) *BatchListIncomingTypedLinks {
+	s.FilterAttributeRanges = v
+	return s
+}
+
+// SetFilterTypedLink sets the FilterTypedLink field's value.
+func (s *BatchListIncomingTypedLinks) SetFilterTypedLink(v *TypedLinkSchemaAndFacetName) *BatchListIncomingTypedLinks {
+	s.FilterTypedLink = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchListIncomingTypedLinks) SetMaxResults(v int64) *BatchListIncomingTypedLinks {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListIncomingTypedLinks) SetNextToken(v string) *BatchListIncomingTypedLinks {
+	s.NextToken = &v
+	return s
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchListIncomingTypedLinks) SetObjectReference(v *ObjectReference) *BatchListIncomingTypedLinks {
+	s.ObjectReference = v
+	return s
+}
+
+// Represents the output of a ListIncomingTypedLinks response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListIncomingTypedLinksResponse
+type BatchListIncomingTypedLinksResponse struct {
+	_ struct{} `type:"structure"`
+
+	// Returns one or more typed link specifiers as output.
+	LinkSpecifiers []*TypedLinkSpecifier `type:"list"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BatchListIncomingTypedLinksResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListIncomingTypedLinksResponse) GoString() string {
+	return s.String()
+}
+
+// SetLinkSpecifiers sets the LinkSpecifiers field's value.
+func (s *BatchListIncomingTypedLinksResponse) SetLinkSpecifiers(v []*TypedLinkSpecifier) *BatchListIncomingTypedLinksResponse {
+	s.LinkSpecifiers = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListIncomingTypedLinksResponse) SetNextToken(v string) *BatchListIncomingTypedLinksResponse {
+	s.NextToken = &v
+	return s
+}
+
+// Lists objects attached to the specified index inside a BatchRead operation.
+// For more information, see ListIndex and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListIndex
+type BatchListIndex struct {
+	_ struct{} `type:"structure"`
+
+	// The reference to the index to list.
+	//
+	// IndexReference is a required field
+	IndexReference *ObjectReference `type:"structure" required:"true"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// Specifies the ranges of indexed values that you want to query.
+	RangesOnIndexedValues []*ObjectAttributeRange `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchListIndex) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListIndex) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchListIndex) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchListIndex"}
+	if s.IndexReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("IndexReference"))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.RangesOnIndexedValues != nil {
+		for i, v := range s.RangesOnIndexedValues {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "RangesOnIndexedValues", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetIndexReference sets the IndexReference field's value.
+func (s *BatchListIndex) SetIndexReference(v *ObjectReference) *BatchListIndex {
+	s.IndexReference = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchListIndex) SetMaxResults(v int64) *BatchListIndex {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListIndex) SetNextToken(v string) *BatchListIndex {
+	s.NextToken = &v
+	return s
+}
+
+// SetRangesOnIndexedValues sets the RangesOnIndexedValues field's value.
+func (s *BatchListIndex) SetRangesOnIndexedValues(v []*ObjectAttributeRange) *BatchListIndex {
+	s.RangesOnIndexedValues = v
+	return s
+}
+
+// Represents the output of a ListIndex response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListIndexResponse
+type BatchListIndexResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The objects and indexed values attached to the index.
+	IndexAttachments []*IndexAttachment `type:"list"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BatchListIndexResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListIndexResponse) GoString() string {
+	return s.String()
+}
+
+// SetIndexAttachments sets the IndexAttachments field's value.
+func (s *BatchListIndexResponse) SetIndexAttachments(v []*IndexAttachment) *BatchListIndexResponse {
+	s.IndexAttachments = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListIndexResponse) SetNextToken(v string) *BatchListIndexResponse {
+	s.NextToken = &v
 	return s
 }
 
@@ -9365,6 +10348,528 @@ func (s *BatchListObjectChildrenResponse) SetNextToken(v string) *BatchListObjec
 	return s
 }
 
+// Retrieves all available parent paths for any object type such as node, leaf
+// node, policy node, and index node objects inside a BatchRead operation. For
+// more information, see ListObjectParentPaths and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListObjectParentPaths
+type BatchListObjectParentPaths struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// The reference that identifies the object whose attributes will be listed.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchListObjectParentPaths) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListObjectParentPaths) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchListObjectParentPaths) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchListObjectParentPaths"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchListObjectParentPaths) SetMaxResults(v int64) *BatchListObjectParentPaths {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListObjectParentPaths) SetNextToken(v string) *BatchListObjectParentPaths {
+	s.NextToken = &v
+	return s
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchListObjectParentPaths) SetObjectReference(v *ObjectReference) *BatchListObjectParentPaths {
+	s.ObjectReference = v
+	return s
+}
+
+// Represents the output of a ListObjectParentPaths response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListObjectParentPathsResponse
+type BatchListObjectParentPathsResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// Returns the path to the ObjectIdentifiers that are associated with the directory.
+	PathToObjectIdentifiersList []*PathToObjectIdentifiers `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchListObjectParentPathsResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListObjectParentPathsResponse) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListObjectParentPathsResponse) SetNextToken(v string) *BatchListObjectParentPathsResponse {
+	s.NextToken = &v
+	return s
+}
+
+// SetPathToObjectIdentifiersList sets the PathToObjectIdentifiersList field's value.
+func (s *BatchListObjectParentPathsResponse) SetPathToObjectIdentifiersList(v []*PathToObjectIdentifiers) *BatchListObjectParentPathsResponse {
+	s.PathToObjectIdentifiersList = v
+	return s
+}
+
+// Returns policies attached to an object in pagination fashion inside a BatchRead
+// operation. For more information, see ListObjectPolicies and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListObjectPolicies
+type BatchListObjectPolicies struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// The reference that identifies the object whose attributes will be listed.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchListObjectPolicies) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListObjectPolicies) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchListObjectPolicies) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchListObjectPolicies"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchListObjectPolicies) SetMaxResults(v int64) *BatchListObjectPolicies {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListObjectPolicies) SetNextToken(v string) *BatchListObjectPolicies {
+	s.NextToken = &v
+	return s
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchListObjectPolicies) SetObjectReference(v *ObjectReference) *BatchListObjectPolicies {
+	s.ObjectReference = v
+	return s
+}
+
+// Represents the output of a ListObjectPolicies response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListObjectPoliciesResponse
+type BatchListObjectPoliciesResponse struct {
+	_ struct{} `type:"structure"`
+
+	// A list of policy ObjectIdentifiers, that are attached to the object.
+	AttachedPolicyIds []*string `type:"list"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+}
+
+// String returns the string representation
+func (s BatchListObjectPoliciesResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListObjectPoliciesResponse) GoString() string {
+	return s.String()
+}
+
+// SetAttachedPolicyIds sets the AttachedPolicyIds field's value.
+func (s *BatchListObjectPoliciesResponse) SetAttachedPolicyIds(v []*string) *BatchListObjectPoliciesResponse {
+	s.AttachedPolicyIds = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListObjectPoliciesResponse) SetNextToken(v string) *BatchListObjectPoliciesResponse {
+	s.NextToken = &v
+	return s
+}
+
+// Returns a paginated list of all the outgoing TypedLinkSpecifier information
+// for an object inside a BatchRead operation. For more information, see ListOutgoingTypedLinks
+// and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListOutgoingTypedLinks
+type BatchListOutgoingTypedLinks struct {
+	_ struct{} `type:"structure"`
+
+	// Provides range filters for multiple attributes. When providing ranges to
+	// typed link selection, any inexact ranges must be specified at the end. Any
+	// attributes that do not have a range specified are presumed to match the entire
+	// range.
+	FilterAttributeRanges []*TypedLinkAttributeRange `type:"list"`
+
+	// Filters are interpreted in the order of the attributes defined on the typed
+	// link facet, not the order they are supplied to any API calls.
+	FilterTypedLink *TypedLinkSchemaAndFacetName `type:"structure"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// The reference that identifies the object whose attributes will be listed.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchListOutgoingTypedLinks) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListOutgoingTypedLinks) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchListOutgoingTypedLinks) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchListOutgoingTypedLinks"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+	if s.FilterAttributeRanges != nil {
+		for i, v := range s.FilterAttributeRanges {
+			if v == nil {
+				continue
+			}
+			if err := v.Validate(); err != nil {
+				invalidParams.AddNested(fmt.Sprintf("%s[%v]", "FilterAttributeRanges", i), err.(request.ErrInvalidParams))
+			}
+		}
+	}
+	if s.FilterTypedLink != nil {
+		if err := s.FilterTypedLink.Validate(); err != nil {
+			invalidParams.AddNested("FilterTypedLink", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetFilterAttributeRanges sets the FilterAttributeRanges field's value.
+func (s *BatchListOutgoingTypedLinks) SetFilterAttributeRanges(v []*TypedLinkAttributeRange) *BatchListOutgoingTypedLinks {
+	s.FilterAttributeRanges = v
+	return s
+}
+
+// SetFilterTypedLink sets the FilterTypedLink field's value.
+func (s *BatchListOutgoingTypedLinks) SetFilterTypedLink(v *TypedLinkSchemaAndFacetName) *BatchListOutgoingTypedLinks {
+	s.FilterTypedLink = v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchListOutgoingTypedLinks) SetMaxResults(v int64) *BatchListOutgoingTypedLinks {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListOutgoingTypedLinks) SetNextToken(v string) *BatchListOutgoingTypedLinks {
+	s.NextToken = &v
+	return s
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchListOutgoingTypedLinks) SetObjectReference(v *ObjectReference) *BatchListOutgoingTypedLinks {
+	s.ObjectReference = v
+	return s
+}
+
+// Represents the output of a ListOutgoingTypedLinks response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListOutgoingTypedLinksResponse
+type BatchListOutgoingTypedLinksResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// Returns a typed link specifier as output.
+	TypedLinkSpecifiers []*TypedLinkSpecifier `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchListOutgoingTypedLinksResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListOutgoingTypedLinksResponse) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListOutgoingTypedLinksResponse) SetNextToken(v string) *BatchListOutgoingTypedLinksResponse {
+	s.NextToken = &v
+	return s
+}
+
+// SetTypedLinkSpecifiers sets the TypedLinkSpecifiers field's value.
+func (s *BatchListOutgoingTypedLinksResponse) SetTypedLinkSpecifiers(v []*TypedLinkSpecifier) *BatchListOutgoingTypedLinksResponse {
+	s.TypedLinkSpecifiers = v
+	return s
+}
+
+// Returns all of the ObjectIdentifiers to which a given policy is attached
+// inside a BatchRead operation. For more information, see ListPolicyAttachments
+// and BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListPolicyAttachments
+type BatchListPolicyAttachments struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// The reference that identifies the policy object.
+	//
+	// PolicyReference is a required field
+	PolicyReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchListPolicyAttachments) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListPolicyAttachments) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchListPolicyAttachments) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchListPolicyAttachments"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.PolicyReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("PolicyReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchListPolicyAttachments) SetMaxResults(v int64) *BatchListPolicyAttachments {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListPolicyAttachments) SetNextToken(v string) *BatchListPolicyAttachments {
+	s.NextToken = &v
+	return s
+}
+
+// SetPolicyReference sets the PolicyReference field's value.
+func (s *BatchListPolicyAttachments) SetPolicyReference(v *ObjectReference) *BatchListPolicyAttachments {
+	s.PolicyReference = v
+	return s
+}
+
+// Represents the output of a ListPolicyAttachments response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchListPolicyAttachmentsResponse
+type BatchListPolicyAttachmentsResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// A list of ObjectIdentifiers to which the policy is attached.
+	ObjectIdentifiers []*string `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchListPolicyAttachmentsResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchListPolicyAttachmentsResponse) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchListPolicyAttachmentsResponse) SetNextToken(v string) *BatchListPolicyAttachmentsResponse {
+	s.NextToken = &v
+	return s
+}
+
+// SetObjectIdentifiers sets the ObjectIdentifiers field's value.
+func (s *BatchListPolicyAttachmentsResponse) SetObjectIdentifiers(v []*string) *BatchListPolicyAttachmentsResponse {
+	s.ObjectIdentifiers = v
+	return s
+}
+
+// Lists all policies from the root of the Directory to the object specified
+// inside a BatchRead operation. For more information, see LookupPolicy and
+// BatchReadRequest$Operations.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchLookupPolicy
+type BatchLookupPolicy struct {
+	_ struct{} `type:"structure"`
+
+	// The maximum number of results to retrieve.
+	MaxResults *int64 `min:"1" type:"integer"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// Reference that identifies the object whose policies will be looked up.
+	//
+	// ObjectReference is a required field
+	ObjectReference *ObjectReference `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s BatchLookupPolicy) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchLookupPolicy) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *BatchLookupPolicy) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "BatchLookupPolicy"}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.ObjectReference == nil {
+		invalidParams.Add(request.NewErrParamRequired("ObjectReference"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *BatchLookupPolicy) SetMaxResults(v int64) *BatchLookupPolicy {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchLookupPolicy) SetNextToken(v string) *BatchLookupPolicy {
+	s.NextToken = &v
+	return s
+}
+
+// SetObjectReference sets the ObjectReference field's value.
+func (s *BatchLookupPolicy) SetObjectReference(v *ObjectReference) *BatchLookupPolicy {
+	s.ObjectReference = v
+	return s
+}
+
+// Represents the output of a LookupPolicy response operation.
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchLookupPolicyResponse
+type BatchLookupPolicyResponse struct {
+	_ struct{} `type:"structure"`
+
+	// The pagination token.
+	NextToken *string `type:"string"`
+
+	// Provides list of path to policies. Policies contain PolicyId, ObjectIdentifier,
+	// and PolicyType. For more information, see Policies (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#policies).
+	PolicyToPathList []*PolicyToPath `type:"list"`
+}
+
+// String returns the string representation
+func (s BatchLookupPolicyResponse) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s BatchLookupPolicyResponse) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *BatchLookupPolicyResponse) SetNextToken(v string) *BatchLookupPolicyResponse {
+	s.NextToken = &v
+	return s
+}
+
+// SetPolicyToPathList sets the PolicyToPathList field's value.
+func (s *BatchLookupPolicyResponse) SetPolicyToPathList(v []*PolicyToPath) *BatchLookupPolicyResponse {
+	s.PolicyToPathList = v
+	return s
+}
+
 // The batch read exception structure, which contains the exception type and
 // message.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/clouddirectory-2016-05-10/BatchReadException
@@ -9479,12 +10984,51 @@ func (s *BatchReadInput) SetOperations(v []*BatchReadOperation) *BatchReadInput 
 type BatchReadOperation struct {
 	_ struct{} `type:"structure"`
 
+	// Retrieves metadata about an object.
+	GetObjectInformation *BatchGetObjectInformation `type:"structure"`
+
+	// Lists indices attached to an object.
+	ListAttachedIndices *BatchListAttachedIndices `type:"structure"`
+
+	// Returns a paginated list of all the incoming TypedLinkSpecifier information
+	// for an object. It also supports filtering by typed link facet and identity
+	// attributes. For more information, see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	ListIncomingTypedLinks *BatchListIncomingTypedLinks `type:"structure"`
+
+	// Lists objects attached to the specified index.
+	ListIndex *BatchListIndex `type:"structure"`
+
 	// Lists all attributes that are associated with an object.
 	ListObjectAttributes *BatchListObjectAttributes `type:"structure"`
 
 	// Returns a paginated list of child objects that are associated with a given
 	// object.
 	ListObjectChildren *BatchListObjectChildren `type:"structure"`
+
+	// Retrieves all available parent paths for any object type such as node, leaf
+	// node, policy node, and index node objects. For more information about objects,
+	// see Directory Structure (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#dirstructure).
+	ListObjectParentPaths *BatchListObjectParentPaths `type:"structure"`
+
+	// Returns policies attached to an object in pagination fashion.
+	ListObjectPolicies *BatchListObjectPolicies `type:"structure"`
+
+	// Returns a paginated list of all the outgoing TypedLinkSpecifier information
+	// for an object. It also supports filtering by typed link facet and identity
+	// attributes. For more information, see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	ListOutgoingTypedLinks *BatchListOutgoingTypedLinks `type:"structure"`
+
+	// Returns all of the ObjectIdentifiers to which a given policy is attached.
+	ListPolicyAttachments *BatchListPolicyAttachments `type:"structure"`
+
+	// Lists all policies from the root of the Directory to the object specified.
+	// If there are no policies present, an empty list is returned. If policies
+	// are present, and if some objects don't have the policies attached, it returns
+	// the ObjectIdentifier for such objects. If policies are present, it returns
+	// ObjectIdentifier, policyId, and policyType. Paths that don't lead to the
+	// root from the target object are ignored. For more information, see Policies
+	// (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#policies).
+	LookupPolicy *BatchLookupPolicy `type:"structure"`
 }
 
 // String returns the string representation
@@ -9500,6 +11044,26 @@ func (s BatchReadOperation) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *BatchReadOperation) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "BatchReadOperation"}
+	if s.GetObjectInformation != nil {
+		if err := s.GetObjectInformation.Validate(); err != nil {
+			invalidParams.AddNested("GetObjectInformation", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ListAttachedIndices != nil {
+		if err := s.ListAttachedIndices.Validate(); err != nil {
+			invalidParams.AddNested("ListAttachedIndices", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ListIncomingTypedLinks != nil {
+		if err := s.ListIncomingTypedLinks.Validate(); err != nil {
+			invalidParams.AddNested("ListIncomingTypedLinks", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ListIndex != nil {
+		if err := s.ListIndex.Validate(); err != nil {
+			invalidParams.AddNested("ListIndex", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.ListObjectAttributes != nil {
 		if err := s.ListObjectAttributes.Validate(); err != nil {
 			invalidParams.AddNested("ListObjectAttributes", err.(request.ErrInvalidParams))
@@ -9510,11 +11074,60 @@ func (s *BatchReadOperation) Validate() error {
 			invalidParams.AddNested("ListObjectChildren", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.ListObjectParentPaths != nil {
+		if err := s.ListObjectParentPaths.Validate(); err != nil {
+			invalidParams.AddNested("ListObjectParentPaths", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ListObjectPolicies != nil {
+		if err := s.ListObjectPolicies.Validate(); err != nil {
+			invalidParams.AddNested("ListObjectPolicies", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ListOutgoingTypedLinks != nil {
+		if err := s.ListOutgoingTypedLinks.Validate(); err != nil {
+			invalidParams.AddNested("ListOutgoingTypedLinks", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.ListPolicyAttachments != nil {
+		if err := s.ListPolicyAttachments.Validate(); err != nil {
+			invalidParams.AddNested("ListPolicyAttachments", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.LookupPolicy != nil {
+		if err := s.LookupPolicy.Validate(); err != nil {
+			invalidParams.AddNested("LookupPolicy", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetGetObjectInformation sets the GetObjectInformation field's value.
+func (s *BatchReadOperation) SetGetObjectInformation(v *BatchGetObjectInformation) *BatchReadOperation {
+	s.GetObjectInformation = v
+	return s
+}
+
+// SetListAttachedIndices sets the ListAttachedIndices field's value.
+func (s *BatchReadOperation) SetListAttachedIndices(v *BatchListAttachedIndices) *BatchReadOperation {
+	s.ListAttachedIndices = v
+	return s
+}
+
+// SetListIncomingTypedLinks sets the ListIncomingTypedLinks field's value.
+func (s *BatchReadOperation) SetListIncomingTypedLinks(v *BatchListIncomingTypedLinks) *BatchReadOperation {
+	s.ListIncomingTypedLinks = v
+	return s
+}
+
+// SetListIndex sets the ListIndex field's value.
+func (s *BatchReadOperation) SetListIndex(v *BatchListIndex) *BatchReadOperation {
+	s.ListIndex = v
+	return s
 }
 
 // SetListObjectAttributes sets the ListObjectAttributes field's value.
@@ -9526,6 +11139,36 @@ func (s *BatchReadOperation) SetListObjectAttributes(v *BatchListObjectAttribute
 // SetListObjectChildren sets the ListObjectChildren field's value.
 func (s *BatchReadOperation) SetListObjectChildren(v *BatchListObjectChildren) *BatchReadOperation {
 	s.ListObjectChildren = v
+	return s
+}
+
+// SetListObjectParentPaths sets the ListObjectParentPaths field's value.
+func (s *BatchReadOperation) SetListObjectParentPaths(v *BatchListObjectParentPaths) *BatchReadOperation {
+	s.ListObjectParentPaths = v
+	return s
+}
+
+// SetListObjectPolicies sets the ListObjectPolicies field's value.
+func (s *BatchReadOperation) SetListObjectPolicies(v *BatchListObjectPolicies) *BatchReadOperation {
+	s.ListObjectPolicies = v
+	return s
+}
+
+// SetListOutgoingTypedLinks sets the ListOutgoingTypedLinks field's value.
+func (s *BatchReadOperation) SetListOutgoingTypedLinks(v *BatchListOutgoingTypedLinks) *BatchReadOperation {
+	s.ListOutgoingTypedLinks = v
+	return s
+}
+
+// SetListPolicyAttachments sets the ListPolicyAttachments field's value.
+func (s *BatchReadOperation) SetListPolicyAttachments(v *BatchListPolicyAttachments) *BatchReadOperation {
+	s.ListPolicyAttachments = v
+	return s
+}
+
+// SetLookupPolicy sets the LookupPolicy field's value.
+func (s *BatchReadOperation) SetLookupPolicy(v *BatchLookupPolicy) *BatchReadOperation {
+	s.LookupPolicy = v
 	return s
 }
 
@@ -9592,12 +11235,51 @@ func (s *BatchReadOutput) SetResponses(v []*BatchReadOperationResponse) *BatchRe
 type BatchReadSuccessfulResponse struct {
 	_ struct{} `type:"structure"`
 
+	// Retrieves metadata about an object.
+	GetObjectInformation *BatchGetObjectInformationResponse `type:"structure"`
+
+	// Lists indices attached to an object.
+	ListAttachedIndices *BatchListAttachedIndicesResponse `type:"structure"`
+
+	// Returns a paginated list of all the incoming TypedLinkSpecifier information
+	// for an object. It also supports filtering by typed link facet and identity
+	// attributes. For more information, see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	ListIncomingTypedLinks *BatchListIncomingTypedLinksResponse `type:"structure"`
+
+	// Lists objects attached to the specified index.
+	ListIndex *BatchListIndexResponse `type:"structure"`
+
 	// Lists all attributes that are associated with an object.
 	ListObjectAttributes *BatchListObjectAttributesResponse `type:"structure"`
 
 	// Returns a paginated list of child objects that are associated with a given
 	// object.
 	ListObjectChildren *BatchListObjectChildrenResponse `type:"structure"`
+
+	// Retrieves all available parent paths for any object type such as node, leaf
+	// node, policy node, and index node objects. For more information about objects,
+	// see Directory Structure (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#dirstructure).
+	ListObjectParentPaths *BatchListObjectParentPathsResponse `type:"structure"`
+
+	// Returns policies attached to an object in pagination fashion.
+	ListObjectPolicies *BatchListObjectPoliciesResponse `type:"structure"`
+
+	// Returns a paginated list of all the outgoing TypedLinkSpecifier information
+	// for an object. It also supports filtering by typed link facet and identity
+	// attributes. For more information, see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	ListOutgoingTypedLinks *BatchListOutgoingTypedLinksResponse `type:"structure"`
+
+	// Returns all of the ObjectIdentifiers to which a given policy is attached.
+	ListPolicyAttachments *BatchListPolicyAttachmentsResponse `type:"structure"`
+
+	// Lists all policies from the root of the Directory to the object specified.
+	// If there are no policies present, an empty list is returned. If policies
+	// are present, and if some objects don't have the policies attached, it returns
+	// the ObjectIdentifier for such objects. If policies are present, it returns
+	// ObjectIdentifier, policyId, and policyType. Paths that don't lead to the
+	// root from the target object are ignored. For more information, see Policies
+	// (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_key_concepts.html#policies).
+	LookupPolicy *BatchLookupPolicyResponse `type:"structure"`
 }
 
 // String returns the string representation
@@ -9610,6 +11292,30 @@ func (s BatchReadSuccessfulResponse) GoString() string {
 	return s.String()
 }
 
+// SetGetObjectInformation sets the GetObjectInformation field's value.
+func (s *BatchReadSuccessfulResponse) SetGetObjectInformation(v *BatchGetObjectInformationResponse) *BatchReadSuccessfulResponse {
+	s.GetObjectInformation = v
+	return s
+}
+
+// SetListAttachedIndices sets the ListAttachedIndices field's value.
+func (s *BatchReadSuccessfulResponse) SetListAttachedIndices(v *BatchListAttachedIndicesResponse) *BatchReadSuccessfulResponse {
+	s.ListAttachedIndices = v
+	return s
+}
+
+// SetListIncomingTypedLinks sets the ListIncomingTypedLinks field's value.
+func (s *BatchReadSuccessfulResponse) SetListIncomingTypedLinks(v *BatchListIncomingTypedLinksResponse) *BatchReadSuccessfulResponse {
+	s.ListIncomingTypedLinks = v
+	return s
+}
+
+// SetListIndex sets the ListIndex field's value.
+func (s *BatchReadSuccessfulResponse) SetListIndex(v *BatchListIndexResponse) *BatchReadSuccessfulResponse {
+	s.ListIndex = v
+	return s
+}
+
 // SetListObjectAttributes sets the ListObjectAttributes field's value.
 func (s *BatchReadSuccessfulResponse) SetListObjectAttributes(v *BatchListObjectAttributesResponse) *BatchReadSuccessfulResponse {
 	s.ListObjectAttributes = v
@@ -9619,6 +11325,36 @@ func (s *BatchReadSuccessfulResponse) SetListObjectAttributes(v *BatchListObject
 // SetListObjectChildren sets the ListObjectChildren field's value.
 func (s *BatchReadSuccessfulResponse) SetListObjectChildren(v *BatchListObjectChildrenResponse) *BatchReadSuccessfulResponse {
 	s.ListObjectChildren = v
+	return s
+}
+
+// SetListObjectParentPaths sets the ListObjectParentPaths field's value.
+func (s *BatchReadSuccessfulResponse) SetListObjectParentPaths(v *BatchListObjectParentPathsResponse) *BatchReadSuccessfulResponse {
+	s.ListObjectParentPaths = v
+	return s
+}
+
+// SetListObjectPolicies sets the ListObjectPolicies field's value.
+func (s *BatchReadSuccessfulResponse) SetListObjectPolicies(v *BatchListObjectPoliciesResponse) *BatchReadSuccessfulResponse {
+	s.ListObjectPolicies = v
+	return s
+}
+
+// SetListOutgoingTypedLinks sets the ListOutgoingTypedLinks field's value.
+func (s *BatchReadSuccessfulResponse) SetListOutgoingTypedLinks(v *BatchListOutgoingTypedLinksResponse) *BatchReadSuccessfulResponse {
+	s.ListOutgoingTypedLinks = v
+	return s
+}
+
+// SetListPolicyAttachments sets the ListPolicyAttachments field's value.
+func (s *BatchReadSuccessfulResponse) SetListPolicyAttachments(v *BatchListPolicyAttachmentsResponse) *BatchReadSuccessfulResponse {
+	s.ListPolicyAttachments = v
+	return s
+}
+
+// SetLookupPolicy sets the LookupPolicy field's value.
+func (s *BatchReadSuccessfulResponse) SetLookupPolicy(v *BatchLookupPolicyResponse) *BatchReadSuccessfulResponse {
+	s.LookupPolicy = v
 	return s
 }
 
@@ -9861,14 +11597,39 @@ type BatchWriteOperation struct {
 	// Attaches an object to a Directory.
 	AttachObject *BatchAttachObject `type:"structure"`
 
+	// Attaches a policy object to a regular object. An object can have a limited
+	// number of attached policies.
+	AttachPolicy *BatchAttachPolicy `type:"structure"`
+
+	// Attaches the specified object to the specified index.
+	AttachToIndex *BatchAttachToIndex `type:"structure"`
+
+	// Attaches a typed link to a specified source and target object. For more information,
+	// see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	AttachTypedLink *BatchAttachTypedLink `type:"structure"`
+
+	// Creates an index object. See Indexing (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_indexing.html)
+	// for more information.
+	CreateIndex *BatchCreateIndex `type:"structure"`
+
 	// Creates an object.
 	CreateObject *BatchCreateObject `type:"structure"`
 
 	// Deletes an object in a Directory.
 	DeleteObject *BatchDeleteObject `type:"structure"`
 
+	// Detaches the specified object from the specified index.
+	DetachFromIndex *BatchDetachFromIndex `type:"structure"`
+
 	// Detaches an object from a Directory.
 	DetachObject *BatchDetachObject `type:"structure"`
+
+	// Detaches a policy from a Directory.
+	DetachPolicy *BatchDetachPolicy `type:"structure"`
+
+	// Detaches a typed link from a specified source and target object. For more
+	// information, see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	DetachTypedLink *BatchDetachTypedLink `type:"structure"`
 
 	// A batch operation that removes a facet from an object.
 	RemoveFacetFromObject *BatchRemoveFacetFromObject `type:"structure"`
@@ -9900,6 +11661,26 @@ func (s *BatchWriteOperation) Validate() error {
 			invalidParams.AddNested("AttachObject", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.AttachPolicy != nil {
+		if err := s.AttachPolicy.Validate(); err != nil {
+			invalidParams.AddNested("AttachPolicy", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.AttachToIndex != nil {
+		if err := s.AttachToIndex.Validate(); err != nil {
+			invalidParams.AddNested("AttachToIndex", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.AttachTypedLink != nil {
+		if err := s.AttachTypedLink.Validate(); err != nil {
+			invalidParams.AddNested("AttachTypedLink", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.CreateIndex != nil {
+		if err := s.CreateIndex.Validate(); err != nil {
+			invalidParams.AddNested("CreateIndex", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.CreateObject != nil {
 		if err := s.CreateObject.Validate(); err != nil {
 			invalidParams.AddNested("CreateObject", err.(request.ErrInvalidParams))
@@ -9910,9 +11691,24 @@ func (s *BatchWriteOperation) Validate() error {
 			invalidParams.AddNested("DeleteObject", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.DetachFromIndex != nil {
+		if err := s.DetachFromIndex.Validate(); err != nil {
+			invalidParams.AddNested("DetachFromIndex", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.DetachObject != nil {
 		if err := s.DetachObject.Validate(); err != nil {
 			invalidParams.AddNested("DetachObject", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DetachPolicy != nil {
+		if err := s.DetachPolicy.Validate(); err != nil {
+			invalidParams.AddNested("DetachPolicy", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.DetachTypedLink != nil {
+		if err := s.DetachTypedLink.Validate(); err != nil {
+			invalidParams.AddNested("DetachTypedLink", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.RemoveFacetFromObject != nil {
@@ -9944,6 +11740,30 @@ func (s *BatchWriteOperation) SetAttachObject(v *BatchAttachObject) *BatchWriteO
 	return s
 }
 
+// SetAttachPolicy sets the AttachPolicy field's value.
+func (s *BatchWriteOperation) SetAttachPolicy(v *BatchAttachPolicy) *BatchWriteOperation {
+	s.AttachPolicy = v
+	return s
+}
+
+// SetAttachToIndex sets the AttachToIndex field's value.
+func (s *BatchWriteOperation) SetAttachToIndex(v *BatchAttachToIndex) *BatchWriteOperation {
+	s.AttachToIndex = v
+	return s
+}
+
+// SetAttachTypedLink sets the AttachTypedLink field's value.
+func (s *BatchWriteOperation) SetAttachTypedLink(v *BatchAttachTypedLink) *BatchWriteOperation {
+	s.AttachTypedLink = v
+	return s
+}
+
+// SetCreateIndex sets the CreateIndex field's value.
+func (s *BatchWriteOperation) SetCreateIndex(v *BatchCreateIndex) *BatchWriteOperation {
+	s.CreateIndex = v
+	return s
+}
+
 // SetCreateObject sets the CreateObject field's value.
 func (s *BatchWriteOperation) SetCreateObject(v *BatchCreateObject) *BatchWriteOperation {
 	s.CreateObject = v
@@ -9956,9 +11776,27 @@ func (s *BatchWriteOperation) SetDeleteObject(v *BatchDeleteObject) *BatchWriteO
 	return s
 }
 
+// SetDetachFromIndex sets the DetachFromIndex field's value.
+func (s *BatchWriteOperation) SetDetachFromIndex(v *BatchDetachFromIndex) *BatchWriteOperation {
+	s.DetachFromIndex = v
+	return s
+}
+
 // SetDetachObject sets the DetachObject field's value.
 func (s *BatchWriteOperation) SetDetachObject(v *BatchDetachObject) *BatchWriteOperation {
 	s.DetachObject = v
+	return s
+}
+
+// SetDetachPolicy sets the DetachPolicy field's value.
+func (s *BatchWriteOperation) SetDetachPolicy(v *BatchDetachPolicy) *BatchWriteOperation {
+	s.DetachPolicy = v
+	return s
+}
+
+// SetDetachTypedLink sets the DetachTypedLink field's value.
+func (s *BatchWriteOperation) SetDetachTypedLink(v *BatchDetachTypedLink) *BatchWriteOperation {
+	s.DetachTypedLink = v
 	return s
 }
 
@@ -9985,14 +11823,39 @@ type BatchWriteOperationResponse struct {
 	// Attaches an object to a Directory.
 	AttachObject *BatchAttachObjectResponse `type:"structure"`
 
+	// Attaches a policy object to a regular object. An object can have a limited
+	// number of attached policies.
+	AttachPolicy *BatchAttachPolicyResponse `type:"structure"`
+
+	// Attaches the specified object to the specified index.
+	AttachToIndex *BatchAttachToIndexResponse `type:"structure"`
+
+	// Attaches a typed link to a specified source and target object. For more information,
+	// see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	AttachTypedLink *BatchAttachTypedLinkResponse `type:"structure"`
+
+	// Creates an index object. See Indexing (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/cd_indexing.html)
+	// for more information.
+	CreateIndex *BatchCreateIndexResponse `type:"structure"`
+
 	// Creates an object in a Directory.
 	CreateObject *BatchCreateObjectResponse `type:"structure"`
 
 	// Deletes an object in a Directory.
 	DeleteObject *BatchDeleteObjectResponse `type:"structure"`
 
+	// Detaches the specified object from the specified index.
+	DetachFromIndex *BatchDetachFromIndexResponse `type:"structure"`
+
 	// Detaches an object from a Directory.
 	DetachObject *BatchDetachObjectResponse `type:"structure"`
+
+	// Detaches a policy from a Directory.
+	DetachPolicy *BatchDetachPolicyResponse `type:"structure"`
+
+	// Detaches a typed link from a specified source and target object. For more
+	// information, see Typed link (http://docs.aws.amazon.com/directoryservice/latest/admin-guide/objectsandlinks.html#typedlink).
+	DetachTypedLink *BatchDetachTypedLinkResponse `type:"structure"`
 
 	// The result of a batch remove facet from object operation.
 	RemoveFacetFromObject *BatchRemoveFacetFromObjectResponse `type:"structure"`
@@ -10023,6 +11886,30 @@ func (s *BatchWriteOperationResponse) SetAttachObject(v *BatchAttachObjectRespon
 	return s
 }
 
+// SetAttachPolicy sets the AttachPolicy field's value.
+func (s *BatchWriteOperationResponse) SetAttachPolicy(v *BatchAttachPolicyResponse) *BatchWriteOperationResponse {
+	s.AttachPolicy = v
+	return s
+}
+
+// SetAttachToIndex sets the AttachToIndex field's value.
+func (s *BatchWriteOperationResponse) SetAttachToIndex(v *BatchAttachToIndexResponse) *BatchWriteOperationResponse {
+	s.AttachToIndex = v
+	return s
+}
+
+// SetAttachTypedLink sets the AttachTypedLink field's value.
+func (s *BatchWriteOperationResponse) SetAttachTypedLink(v *BatchAttachTypedLinkResponse) *BatchWriteOperationResponse {
+	s.AttachTypedLink = v
+	return s
+}
+
+// SetCreateIndex sets the CreateIndex field's value.
+func (s *BatchWriteOperationResponse) SetCreateIndex(v *BatchCreateIndexResponse) *BatchWriteOperationResponse {
+	s.CreateIndex = v
+	return s
+}
+
 // SetCreateObject sets the CreateObject field's value.
 func (s *BatchWriteOperationResponse) SetCreateObject(v *BatchCreateObjectResponse) *BatchWriteOperationResponse {
 	s.CreateObject = v
@@ -10035,9 +11922,27 @@ func (s *BatchWriteOperationResponse) SetDeleteObject(v *BatchDeleteObjectRespon
 	return s
 }
 
+// SetDetachFromIndex sets the DetachFromIndex field's value.
+func (s *BatchWriteOperationResponse) SetDetachFromIndex(v *BatchDetachFromIndexResponse) *BatchWriteOperationResponse {
+	s.DetachFromIndex = v
+	return s
+}
+
 // SetDetachObject sets the DetachObject field's value.
 func (s *BatchWriteOperationResponse) SetDetachObject(v *BatchDetachObjectResponse) *BatchWriteOperationResponse {
 	s.DetachObject = v
+	return s
+}
+
+// SetDetachPolicy sets the DetachPolicy field's value.
+func (s *BatchWriteOperationResponse) SetDetachPolicy(v *BatchDetachPolicyResponse) *BatchWriteOperationResponse {
+	s.DetachPolicy = v
+	return s
+}
+
+// SetDetachTypedLink sets the DetachTypedLink field's value.
+func (s *BatchWriteOperationResponse) SetDetachTypedLink(v *BatchDetachTypedLinkResponse) *BatchWriteOperationResponse {
+	s.DetachTypedLink = v
 	return s
 }
 
@@ -12419,7 +14324,7 @@ type ListAttachedIndicesInput struct {
 	// The pagination token.
 	NextToken *string `type:"string"`
 
-	// A reference to the object to that has indices attached.
+	// A reference to the object that has indices attached.
 	//
 	// TargetReference is a required field
 	TargetReference *ObjectReference `type:"structure" required:"true"`
@@ -15588,7 +17493,7 @@ type TypedLinkFacet struct {
 
 	// The set of attributes that distinguish links made from this facet from each
 	// other, in the order of significance. Listing typed links can filter on the
-	// values of these attributes. See ListOutgoingTypedLinks and ListIncomingTypeLinks
+	// values of these attributes. See ListOutgoingTypedLinks and ListIncomingTypedLinks
 	// for details.
 	//
 	// IdentityAttributeOrder is a required field
@@ -16362,6 +18267,27 @@ const (
 
 	// BatchReadExceptionTypeNotNodeException is a BatchReadExceptionType enum value
 	BatchReadExceptionTypeNotNodeException = "NotNodeException"
+
+	// BatchReadExceptionTypeFacetValidationException is a BatchReadExceptionType enum value
+	BatchReadExceptionTypeFacetValidationException = "FacetValidationException"
+
+	// BatchReadExceptionTypeCannotListParentOfRootException is a BatchReadExceptionType enum value
+	BatchReadExceptionTypeCannotListParentOfRootException = "CannotListParentOfRootException"
+
+	// BatchReadExceptionTypeNotIndexException is a BatchReadExceptionType enum value
+	BatchReadExceptionTypeNotIndexException = "NotIndexException"
+
+	// BatchReadExceptionTypeNotPolicyException is a BatchReadExceptionType enum value
+	BatchReadExceptionTypeNotPolicyException = "NotPolicyException"
+
+	// BatchReadExceptionTypeDirectoryNotEnabledException is a BatchReadExceptionType enum value
+	BatchReadExceptionTypeDirectoryNotEnabledException = "DirectoryNotEnabledException"
+
+	// BatchReadExceptionTypeLimitExceededException is a BatchReadExceptionType enum value
+	BatchReadExceptionTypeLimitExceededException = "LimitExceededException"
+
+	// BatchReadExceptionTypeInternalServiceException is a BatchReadExceptionType enum value
+	BatchReadExceptionTypeInternalServiceException = "InternalServiceException"
 )
 
 const (
@@ -16391,6 +18317,30 @@ const (
 
 	// BatchWriteExceptionTypeAccessDeniedException is a BatchWriteExceptionType enum value
 	BatchWriteExceptionTypeAccessDeniedException = "AccessDeniedException"
+
+	// BatchWriteExceptionTypeInvalidAttachmentException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeInvalidAttachmentException = "InvalidAttachmentException"
+
+	// BatchWriteExceptionTypeNotIndexException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeNotIndexException = "NotIndexException"
+
+	// BatchWriteExceptionTypeIndexedAttributeMissingException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeIndexedAttributeMissingException = "IndexedAttributeMissingException"
+
+	// BatchWriteExceptionTypeObjectAlreadyDetachedException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeObjectAlreadyDetachedException = "ObjectAlreadyDetachedException"
+
+	// BatchWriteExceptionTypeNotPolicyException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeNotPolicyException = "NotPolicyException"
+
+	// BatchWriteExceptionTypeDirectoryNotEnabledException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeDirectoryNotEnabledException = "DirectoryNotEnabledException"
+
+	// BatchWriteExceptionTypeLimitExceededException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeLimitExceededException = "LimitExceededException"
+
+	// BatchWriteExceptionTypeUnsupportedIndexTypeException is a BatchWriteExceptionType enum value
+	BatchWriteExceptionTypeUnsupportedIndexTypeException = "UnsupportedIndexTypeException"
 )
 
 const (

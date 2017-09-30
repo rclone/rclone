@@ -260,6 +260,11 @@ type Attributes struct {
 	// see https://support.google.com/manufacturers/answer/6124116#price.
 	SuggestedRetailPrice *Price `json:"suggestedRetailPrice,omitempty"`
 
+	// TargetAccountId: The target account id. Should only be used in the
+	// accounts of the data
+	// partners.
+	TargetAccountId int64 `json:"targetAccountId,omitempty,string"`
+
 	// Theme: The theme of the product. For more information,
 	// see
 	// https://support.google.com/manufacturers/answer/6124116#theme.
@@ -907,11 +912,13 @@ type AccountsProductsGetCall struct {
 // product
 // issues.
 //
-// A recently updated product takes some time to be processed before
-// any
-// changes are visible. While some issues may be available once the
-// product
-// has been processed, other issues may take days to appear.
+// A recently updated product takes around 15 minutes to process.
+// Changes are
+// only visible after it has been processed. While some issues may
+// be
+// available once the product has been processed, other issues may take
+// days
+// to appear.
 func (r *AccountsProductsService) Get(parent string, name string) *AccountsProductsGetCall {
 	c := &AccountsProductsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -1014,7 +1021,7 @@ func (c *AccountsProductsGetCall) Do(opts ...googleapi.CallOption) (*Product, er
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets the product from a Manufacturer Center account, including product\nissues.\n\nA recently updated product takes some time to be processed before any\nchanges are visible. While some issues may be available once the product\nhas been processed, other issues may take days to appear.",
+	//   "description": "Gets the product from a Manufacturer Center account, including product\nissues.\n\nA recently updated product takes around 15 minutes to process. Changes are\nonly visible after it has been processed. While some issues may be\navailable once the product has been processed, other issues may take days\nto appear.",
 	//   "flatPath": "v1/accounts/{accountsId}/products/{productsId}",
 	//   "httpMethod": "GET",
 	//   "id": "manufacturers.accounts.products.get",

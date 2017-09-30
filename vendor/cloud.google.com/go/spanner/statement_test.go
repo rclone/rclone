@@ -17,8 +17,12 @@ limitations under the License.
 package spanner
 
 import (
+	"math"
 	"reflect"
 	"testing"
+	"time"
+
+	"cloud.google.com/go/civil"
 
 	"github.com/golang/protobuf/proto"
 	proto3 "github.com/golang/protobuf/ptypes/struct"
@@ -39,22 +43,101 @@ func TestBindParams(t *testing.T) {
 		},
 		ParamTypes: map[string]*sppb.Type{"var": nil},
 	}
+	var (
+		t1, _ = time.Parse(time.RFC3339Nano, "2016-11-15T15:04:05.999999999Z")
+		// Boundaries
+		t2, _ = time.Parse(time.RFC3339Nano, "0001-01-01T00:00:00.000000000Z")
+		t3, _ = time.Parse(time.RFC3339Nano, "9999-12-31T23:59:59.999999999Z")
+		d1, _ = civil.ParseDate("2016-11-15")
+		// Boundaries
+		d2, _ = civil.ParseDate("0001-01-01")
+		d3, _ = civil.ParseDate("9999-12-31")
+	)
 	for i, test := range []struct {
 		val       interface{}
 		wantField *proto3.Value
 		wantType  *sppb.Type
 	}{
-		{"abc", stringProto("abc"), stringType()},
-		{int64(1), intProto(1), intType()},
+		// bool
+		{true, boolProto(true), boolType()},
+		{NullBool{true, true}, boolProto(true), boolType()},
+		{NullBool{true, false}, nullProto(), boolType()},
+		{[]bool(nil), nullProto(), listType(boolType())},
+		{[]bool{}, listProto(), listType(boolType())},
+		{[]bool{true, false}, listProto(boolProto(true), boolProto(false)), listType(boolType())},
+		{[]NullBool(nil), nullProto(), listType(boolType())},
+		{[]NullBool{}, listProto(), listType(boolType())},
+		{[]NullBool{{true, true}, {}}, listProto(boolProto(true), nullProto()), listType(boolType())},
+		// int
 		{int(1), intProto(1), intType()},
 		{[]int(nil), nullProto(), listType(intType())},
 		{[]int{}, listProto(), listType(intType())},
+		{[]int{1, 2}, listProto(intProto(1), intProto(2)), listType(intType())},
+		// int64
+		{int64(1), intProto(1), intType()},
+		{NullInt64{5, true}, intProto(5), intType()},
+		{NullInt64{5, false}, nullProto(), intType()},
+		{[]int64(nil), nullProto(), listType(intType())},
+		{[]int64{}, listProto(), listType(intType())},
+		{[]int64{1, 2}, listProto(intProto(1), intProto(2)), listType(intType())},
+		{[]NullInt64(nil), nullProto(), listType(intType())},
+		{[]NullInt64{}, listProto(), listType(intType())},
+		{[]NullInt64{{1, true}, {}}, listProto(intProto(1), nullProto()), listType(intType())},
+		// float64
+		{0.0, floatProto(0.0), floatType()},
+		{math.Inf(1), floatProto(math.Inf(1)), floatType()},
+		{math.Inf(-1), floatProto(math.Inf(-1)), floatType()},
+		{math.NaN(), floatProto(math.NaN()), floatType()},
+		{NullFloat64{2.71, true}, floatProto(2.71), floatType()},
+		{NullFloat64{1.41, false}, nullProto(), floatType()},
+		{[]float64(nil), nullProto(), listType(floatType())},
+		{[]float64{}, listProto(), listType(floatType())},
+		{[]float64{2.72, math.Inf(1)}, listProto(floatProto(2.72), floatProto(math.Inf(1))), listType(floatType())},
+		{[]NullFloat64(nil), nullProto(), listType(floatType())},
+		{[]NullFloat64{}, listProto(), listType(floatType())},
+		{[]NullFloat64{{2.72, true}, {}}, listProto(floatProto(2.72), nullProto()), listType(floatType())},
+		// string
+		{"", stringProto(""), stringType()},
+		{"foo", stringProto("foo"), stringType()},
+		{NullString{"bar", true}, stringProto("bar"), stringType()},
+		{NullString{"bar", false}, nullProto(), stringType()},
+		{[]string(nil), nullProto(), listType(stringType())},
+		{[]string{}, listProto(), listType(stringType())},
+		{[]string{"foo", "bar"}, listProto(stringProto("foo"), stringProto("bar")), listType(stringType())},
+		{[]NullString(nil), nullProto(), listType(stringType())},
+		{[]NullString{}, listProto(), listType(stringType())},
+		{[]NullString{{"foo", true}, {}}, listProto(stringProto("foo"), nullProto()), listType(stringType())},
+		// bytes
+		{[]byte{}, bytesProto([]byte{}), bytesType()},
+		{[]byte{1, 2, 3}, bytesProto([]byte{1, 2, 3}), bytesType()},
+		{[]byte(nil), nullProto(), bytesType()},
+		{[][]byte(nil), nullProto(), listType(bytesType())},
+		{[][]byte{}, listProto(), listType(bytesType())},
+		{[][]byte{[]byte{1}, []byte(nil)}, listProto(bytesProto([]byte{1}), nullProto()), listType(bytesType())},
+		// date
+		{d1, dateProto(d1), dateType()},
+		{NullDate{civil.Date{}, false}, nullProto(), dateType()},
+		{[]civil.Date(nil), nullProto(), listType(dateType())},
+		{[]civil.Date{}, listProto(), listType(dateType())},
+		{[]civil.Date{d1, d2, d3}, listProto(dateProto(d1), dateProto(d2), dateProto(d3)), listType(dateType())},
+		{[]NullDate{NullDate{d2, true}, NullDate{}}, listProto(dateProto(d2), nullProto()), listType(dateType())},
+		// timestamp
+		{t1, timeProto(t1), timeType()},
+		{NullTime{}, nullProto(), timeType()},
+		{[]time.Time(nil), nullProto(), listType(timeType())},
+		{[]time.Time{}, listProto(), listType(timeType())},
+		{[]time.Time{t1, t2, t3}, listProto(timeProto(t1), timeProto(t2), timeProto(t3)), listType(timeType())},
+		{[]NullTime{NullTime{t2, true}, NullTime{}}, listProto(timeProto(t2), nullProto()), listType(timeType())},
 	} {
 		st.Params["var"] = test.val
 		want.Params.Fields["var"] = test.wantField
 		want.ParamTypes["var"] = test.wantType
 		got := &sppb.ExecuteSqlRequest{}
 		if err := st.bindParams(got); err != nil || !proto.Equal(got, want) {
+			// handle NaN
+			if test.wantType.Code == floatType().Code && proto.MarshalTextString(got) == proto.MarshalTextString(want) {
+				continue
+			}
 			t.Errorf("#%d: bind result: \n(%v, %v)\nwant\n(%v, %v)\n", i, got, err, want, nil)
 		}
 	}

@@ -229,7 +229,10 @@
         {"shape":"InvalidAutoRollbackConfigException"},
         {"shape":"InvalidLoadBalancerInfoException"},
         {"shape":"InvalidDeploymentStyleException"},
-        {"shape":"InvalidBlueGreenDeploymentConfigurationException"}
+        {"shape":"InvalidBlueGreenDeploymentConfigurationException"},
+        {"shape":"InvalidEC2TagCombinationException"},
+        {"shape":"InvalidOnPremisesTagCombinationException"},
+        {"shape":"TagSetListLimitExceededException"}
       ]
     },
     "DeleteApplication":{
@@ -646,7 +649,10 @@
         {"shape":"InvalidAutoRollbackConfigException"},
         {"shape":"InvalidLoadBalancerInfoException"},
         {"shape":"InvalidDeploymentStyleException"},
-        {"shape":"InvalidBlueGreenDeploymentConfigurationException"}
+        {"shape":"InvalidBlueGreenDeploymentConfigurationException"},
+        {"shape":"InvalidEC2TagCombinationException"},
+        {"shape":"InvalidOnPremisesTagCombinationException"},
+        {"shape":"TagSetListLimitExceededException"}
       ]
     }
   },
@@ -929,7 +935,10 @@
     },
     "CreateDeploymentConfigInput":{
       "type":"structure",
-      "required":["deploymentConfigName"],
+      "required":[
+        "deploymentConfigName",
+        "minimumHealthyHosts"
+      ],
       "members":{
         "deploymentConfigName":{"shape":"DeploymentConfigName"},
         "minimumHealthyHosts":{"shape":"MinimumHealthyHosts"}
@@ -961,7 +970,9 @@
         "autoRollbackConfiguration":{"shape":"AutoRollbackConfiguration"},
         "deploymentStyle":{"shape":"DeploymentStyle"},
         "blueGreenDeploymentConfiguration":{"shape":"BlueGreenDeploymentConfiguration"},
-        "loadBalancerInfo":{"shape":"LoadBalancerInfo"}
+        "loadBalancerInfo":{"shape":"LoadBalancerInfo"},
+        "ec2TagSet":{"shape":"EC2TagSet"},
+        "onPremisesTagSet":{"shape":"OnPremisesTagSet"}
       }
     },
     "CreateDeploymentGroupOutput":{
@@ -1124,7 +1135,9 @@
         "blueGreenDeploymentConfiguration":{"shape":"BlueGreenDeploymentConfiguration"},
         "loadBalancerInfo":{"shape":"LoadBalancerInfo"},
         "lastSuccessfulDeployment":{"shape":"LastDeploymentInfo"},
-        "lastAttemptedDeployment":{"shape":"LastDeploymentInfo"}
+        "lastAttemptedDeployment":{"shape":"LastDeploymentInfo"},
+        "ec2TagSet":{"shape":"EC2TagSet"},
+        "onPremisesTagSet":{"shape":"OnPremisesTagSet"}
       }
     },
     "DeploymentGroupInfoList":{
@@ -1320,6 +1333,16 @@
         "VALUE_ONLY",
         "KEY_AND_VALUE"
       ]
+    },
+    "EC2TagSet":{
+      "type":"structure",
+      "members":{
+        "ec2TagSetList":{"shape":"EC2TagSetList"}
+      }
+    },
+    "EC2TagSetList":{
+      "type":"list",
+      "member":{"shape":"EC2TagFilterList"}
     },
     "ELBInfo":{
       "type":"structure",
@@ -1735,6 +1758,12 @@
       },
       "exception":true
     },
+    "InvalidEC2TagCombinationException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "InvalidEC2TagException":{
       "type":"structure",
       "members":{
@@ -1796,6 +1825,12 @@
       "exception":true
     },
     "InvalidNextTokenException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidOnPremisesTagCombinationException":{
       "type":"structure",
       "members":{
       },
@@ -2056,7 +2091,8 @@
     "LoadBalancerInfo":{
       "type":"structure",
       "members":{
-        "elbInfoList":{"shape":"ELBInfoList"}
+        "elbInfoList":{"shape":"ELBInfoList"},
+        "targetGroupInfoList":{"shape":"TargetGroupInfoList"}
       }
     },
     "LogTail":{"type":"string"},
@@ -2084,6 +2120,16 @@
     },
     "NextToken":{"type":"string"},
     "NullableBoolean":{"type":"boolean"},
+    "OnPremisesTagSet":{
+      "type":"structure",
+      "members":{
+        "onPremisesTagSetList":{"shape":"OnPremisesTagSetList"}
+      }
+    },
+    "OnPremisesTagSetList":{
+      "type":"list",
+      "member":{"shape":"TagFilterList"}
+    },
     "RegisterApplicationRevisionInput":{
       "type":"structure",
       "required":[
@@ -2278,11 +2324,29 @@
       },
       "exception":true
     },
+    "TagSetListLimitExceededException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "TargetGroupInfo":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"TargetGroupName"}
+      }
+    },
+    "TargetGroupInfoList":{
+      "type":"list",
+      "member":{"shape":"TargetGroupInfo"}
+    },
+    "TargetGroupName":{"type":"string"},
     "TargetInstances":{
       "type":"structure",
       "members":{
         "tagFilters":{"shape":"EC2TagFilterList"},
-        "autoScalingGroups":{"shape":"AutoScalingGroupNameList"}
+        "autoScalingGroups":{"shape":"AutoScalingGroupNameList"},
+        "ec2TagSet":{"shape":"EC2TagSet"}
       }
     },
     "TimeRange":{
@@ -2365,7 +2429,9 @@
         "autoRollbackConfiguration":{"shape":"AutoRollbackConfiguration"},
         "deploymentStyle":{"shape":"DeploymentStyle"},
         "blueGreenDeploymentConfiguration":{"shape":"BlueGreenDeploymentConfiguration"},
-        "loadBalancerInfo":{"shape":"LoadBalancerInfo"}
+        "loadBalancerInfo":{"shape":"LoadBalancerInfo"},
+        "ec2TagSet":{"shape":"EC2TagSet"},
+        "onPremisesTagSet":{"shape":"OnPremisesTagSet"}
       }
     },
     "UpdateDeploymentGroupOutput":{

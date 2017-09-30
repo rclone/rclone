@@ -305,6 +305,24 @@ func ExampleSubscriberClient_CreateSnapshot() {
 	_ = resp
 }
 
+func ExampleSubscriberClient_UpdateSnapshot() {
+	ctx := context.Background()
+	c, err := pubsub.NewSubscriberClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &pubsubpb.UpdateSnapshotRequest{
+	// TODO: Fill request struct fields.
+	}
+	resp, err := c.UpdateSnapshot(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
 func ExampleSubscriberClient_DeleteSnapshot() {
 	ctx := context.Background()
 	c, err := pubsub.NewSubscriberClient(ctx)

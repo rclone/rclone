@@ -898,7 +898,8 @@
         "MASTER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED",
         "MEMBER_ACCOUNT_PAYMENT_INSTRUMENT_REQUIRED",
         "ACCOUNT_CREATION_RATE_LIMIT_EXCEEDED",
-        "MASTER_ACCOUNT_ADDRESS_DOES_NOT_MATCH_MARKETPLACE"
+        "MASTER_ACCOUNT_ADDRESS_DOES_NOT_MATCH_MARKETPLACE",
+        "MASTER_ACCOUNT_MISSING_CONTACT_INFO"
       ]
     },
     "CreateAccountFailureReason":{
@@ -1309,6 +1310,10 @@
     },
     "HandshakeParty":{
       "type":"structure",
+      "required":[
+        "Id",
+        "Type"
+      ],
       "members":{
         "Id":{"shape":"HandshakePartyId"},
         "Type":{"shape":"HandshakePartyType"}

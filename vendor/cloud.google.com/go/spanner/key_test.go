@@ -209,32 +209,32 @@ func TestKeyRange(t *testing.T) {
 		{
 			kr: KeyRange{Key{"A"}, Key{"D"}, OpenOpen},
 			wantProto: &sppb.KeyRange{
-				&sppb.KeyRange_StartOpen{listValueProto(stringProto("A"))},
-				&sppb.KeyRange_EndOpen{listValueProto(stringProto("D"))},
+				StartKeyType: &sppb.KeyRange_StartOpen{StartOpen: listValueProto(stringProto("A"))},
+				EndKeyType:   &sppb.KeyRange_EndOpen{EndOpen: listValueProto(stringProto("D"))},
 			},
 			wantStr: `(("A"),("D"))`,
 		},
 		{
 			kr: KeyRange{Key{1}, Key{10}, OpenClosed},
 			wantProto: &sppb.KeyRange{
-				&sppb.KeyRange_StartOpen{listValueProto(stringProto("1"))},
-				&sppb.KeyRange_EndClosed{listValueProto(stringProto("10"))},
+				StartKeyType: &sppb.KeyRange_StartOpen{StartOpen: listValueProto(stringProto("1"))},
+				EndKeyType:   &sppb.KeyRange_EndClosed{EndClosed: listValueProto(stringProto("10"))},
 			},
 			wantStr: "((1),(10)]",
 		},
 		{
 			kr: KeyRange{Key{1.5, 2.1, 0.2}, Key{1.9, 0.7}, ClosedOpen},
 			wantProto: &sppb.KeyRange{
-				&sppb.KeyRange_StartClosed{listValueProto(floatProto(1.5), floatProto(2.1), floatProto(0.2))},
-				&sppb.KeyRange_EndOpen{listValueProto(floatProto(1.9), floatProto(0.7))},
+				StartKeyType: &sppb.KeyRange_StartClosed{StartClosed: listValueProto(floatProto(1.5), floatProto(2.1), floatProto(0.2))},
+				EndKeyType:   &sppb.KeyRange_EndOpen{EndOpen: listValueProto(floatProto(1.9), floatProto(0.7))},
 			},
 			wantStr: "[(1.5,2.1,0.2),(1.9,0.7))",
 		},
 		{
 			kr: KeyRange{Key{NullInt64{1, true}}, Key{10}, ClosedClosed},
 			wantProto: &sppb.KeyRange{
-				&sppb.KeyRange_StartClosed{listValueProto(stringProto("1"))},
-				&sppb.KeyRange_EndClosed{listValueProto(stringProto("10"))},
+				StartKeyType: &sppb.KeyRange_StartClosed{StartClosed: listValueProto(stringProto("1"))},
+				EndKeyType:   &sppb.KeyRange_EndClosed{EndClosed: listValueProto(stringProto("10"))},
 			},
 			wantStr: "[(1),(10)]",
 		},
@@ -296,8 +296,8 @@ func TestKeySets(t *testing.T) {
 			KeyRange{Key{1}, Key{2}, ClosedOpen},
 			&sppb.KeySet{Ranges: []*sppb.KeyRange{
 				&sppb.KeyRange{
-					&sppb.KeyRange_StartClosed{listValueProto(int1)},
-					&sppb.KeyRange_EndOpen{listValueProto(int2)},
+					StartKeyType: &sppb.KeyRange_StartClosed{StartClosed: listValueProto(int1)},
+					EndKeyType:   &sppb.KeyRange_EndOpen{EndOpen: listValueProto(int2)},
 				},
 			}},
 		},
@@ -305,8 +305,8 @@ func TestKeySets(t *testing.T) {
 			Key{2}.AsPrefix(),
 			&sppb.KeySet{Ranges: []*sppb.KeyRange{
 				&sppb.KeyRange{
-					&sppb.KeyRange_StartClosed{listValueProto(int2)},
-					&sppb.KeyRange_EndClosed{listValueProto(int2)},
+					StartKeyType: &sppb.KeyRange_StartClosed{StartClosed: listValueProto(int2)},
+					EndKeyType:   &sppb.KeyRange_EndClosed{EndClosed: listValueProto(int2)},
 				},
 			}},
 		},
@@ -318,12 +318,12 @@ func TestKeySets(t *testing.T) {
 			&sppb.KeySet{
 				Ranges: []*sppb.KeyRange{
 					&sppb.KeyRange{
-						&sppb.KeyRange_StartClosed{listValueProto(int1)},
-						&sppb.KeyRange_EndClosed{listValueProto(int2)},
+						StartKeyType: &sppb.KeyRange_StartClosed{StartClosed: listValueProto(int1)},
+						EndKeyType:   &sppb.KeyRange_EndClosed{EndClosed: listValueProto(int2)},
 					},
 					&sppb.KeyRange{
-						&sppb.KeyRange_StartOpen{listValueProto(int3)},
-						&sppb.KeyRange_EndClosed{listValueProto(int4)},
+						StartKeyType: &sppb.KeyRange_StartOpen{StartOpen: listValueProto(int3)},
+						EndKeyType:   &sppb.KeyRange_EndClosed{EndClosed: listValueProto(int4)},
 					},
 				},
 			},
@@ -342,12 +342,12 @@ func TestKeySets(t *testing.T) {
 				},
 				Ranges: []*sppb.KeyRange{
 					&sppb.KeyRange{
-						&sppb.KeyRange_StartClosed{listValueProto(int2)},
-						&sppb.KeyRange_EndClosed{listValueProto(int3)},
+						StartKeyType: &sppb.KeyRange_StartClosed{StartClosed: listValueProto(int2)},
+						EndKeyType:   &sppb.KeyRange_EndClosed{EndClosed: listValueProto(int3)},
 					},
 					&sppb.KeyRange{
-						&sppb.KeyRange_StartOpen{listValueProto(int4)},
-						&sppb.KeyRange_EndClosed{listValueProto(intProto(5))},
+						StartKeyType: &sppb.KeyRange_StartOpen{StartOpen: listValueProto(int4)},
+						EndKeyType:   &sppb.KeyRange_EndClosed{EndClosed: listValueProto(intProto(5))},
 					},
 				},
 			},

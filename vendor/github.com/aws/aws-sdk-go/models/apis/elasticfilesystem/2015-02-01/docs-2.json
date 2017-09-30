@@ -110,6 +110,13 @@
       "refs": {
       }
     },
+    "Encrypted": {
+      "base": null,
+      "refs": {
+        "CreateFileSystemRequest$Encrypted": "<p>A boolean value that, if true, creates an encrypted file system. When creating an encrypted file system, you have the option of specifying a <a>CreateFileSystemRequest$KmsKeyId</a> for an existing AWS Key Management Service (AWS KMS) customer master key (CMK). If you don't specify a CMK, then the default CMK for Amazon EFS, <code>/aws/elasticfilesystem</code>, is used to protect the encrypted file system. </p>",
+        "FileSystemDescription$Encrypted": "<p>A boolean value that, if true, indicates that the file system is encrypted.</p>"
+      }
+    },
     "ErrorCode": {
       "base": null,
       "refs": {
@@ -240,6 +247,13 @@
     "IpAddressInUse": {
       "base": "<p>Returned if the request specified an <code>IpAddress</code> that is already in use in the subnet.</p>",
       "refs": {
+      }
+    },
+    "KmsKeyId": {
+      "base": null,
+      "refs": {
+        "CreateFileSystemRequest$KmsKeyId": "<p>The id of the AWS KMS CMK that will be used to protect the encrypted file system. This parameter is only required if you want to use a non-default CMK. If this parameter is not specified, the default CMK for Amazon EFS is used. This id can be in one of the following formats:</p> <ul> <li> <p>Key ID - A unique identifier of the key. For example, <code>1234abcd-12ab-34cd-56ef-1234567890ab</code>.</p> </li> <li> <p>ARN - An Amazon Resource Name for the key. For example, <code>arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab</code>.</p> </li> <li> <p>Key alias - A previously created display name for a key. For example, <code>alias/projectKey1</code>.</p> </li> <li> <p>Key alias ARN - An Amazon Resource Name for a key alias. For example, <code>arn:aws:kms:us-west-2:444455556666:alias/projectKey1</code>.</p> </li> </ul> <p>Note that if the KmsKeyId is specified, the <a>CreateFileSystemRequest$Encrypted</a> parameter must be set to true.</p>",
+        "FileSystemDescription$KmsKeyId": "<p>The id of an AWS Key Management Service (AWS KMS) customer master key (CMK) that was used to protect the encrypted file system.</p>"
       }
     },
     "LifeCycleState": {
@@ -414,7 +428,7 @@
       }
     },
     "UnsupportedAvailabilityZone": {
-      "base": "<p></p>",
+      "base": "<p/>",
       "refs": {
       }
     }

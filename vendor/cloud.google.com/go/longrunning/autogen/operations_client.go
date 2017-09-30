@@ -93,7 +93,7 @@ type OperationsClient struct {
 // interface to receive the real response asynchronously by polling the
 // operation resource, or pass the operation resource to another API (such as
 // Google Cloud Pub/Sub API) to receive the response.  Any API service that
-// returns long-running operations should implement the `Operations` interface
+// returns long-running operations should implement the Operations interface
 // so developers can have a consistent client experience.
 func NewOperationsClient(ctx context.Context, opts ...option.ClientOption) (*OperationsClient, error) {
 	conn, err := transport.DialGRPC(ctx, append(defaultOperationsClientOptions(), opts...)...)
@@ -149,10 +149,10 @@ func (c *OperationsClient) GetOperation(ctx context.Context, req *longrunningpb.
 }
 
 // ListOperations lists operations that match the specified filter in the request. If the
-// server doesn't support this method, it returns `UNIMPLEMENTED`.
+// server doesn't support this method, it returns UNIMPLEMENTED.
 //
-// NOTE: the `name` binding below allows API services to override the binding
-// to use different resource name schemes, such as `users/*/operations`.
+// NOTE: the name binding below allows API services to override the binding
+// to use different resource name schemes, such as users/*/operations.
 func (c *OperationsClient) ListOperations(ctx context.Context, req *longrunningpb.ListOperationsRequest, opts ...gax.CallOption) *OperationIterator {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
 	opts = append(c.CallOptions.ListOperations[0:len(c.CallOptions.ListOperations):len(c.CallOptions.ListOperations)], opts...)
@@ -190,13 +190,13 @@ func (c *OperationsClient) ListOperations(ctx context.Context, req *longrunningp
 // CancelOperation starts asynchronous cancellation on a long-running operation.  The server
 // makes a best effort to cancel the operation, but success is not
 // guaranteed.  If the server doesn't support this method, it returns
-// `google.rpc.Code.UNIMPLEMENTED`.  Clients can use
+// google.rpc.Code.UNIMPLEMENTED.  Clients can use
 // [Operations.GetOperation][google.longrunning.Operations.GetOperation] or
 // other methods to check whether the cancellation succeeded or whether the
 // operation completed despite cancellation. On successful cancellation,
 // the operation is not deleted; instead, it becomes an operation with
 // an [Operation.error][google.longrunning.Operation.error] value with a [google.rpc.Status.code][google.rpc.Status.code] of 1,
-// corresponding to `Code.CANCELLED`.
+// corresponding to Code.CANCELLED.
 func (c *OperationsClient) CancelOperation(ctx context.Context, req *longrunningpb.CancelOperationRequest, opts ...gax.CallOption) error {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
 	opts = append(c.CallOptions.CancelOperation[0:len(c.CallOptions.CancelOperation):len(c.CallOptions.CancelOperation)], opts...)
@@ -211,7 +211,7 @@ func (c *OperationsClient) CancelOperation(ctx context.Context, req *longrunning
 // DeleteOperation deletes a long-running operation. This method indicates that the client is
 // no longer interested in the operation result. It does not cancel the
 // operation. If the server doesn't support this method, it returns
-// `google.rpc.Code.UNIMPLEMENTED`.
+// google.rpc.Code.UNIMPLEMENTED.
 func (c *OperationsClient) DeleteOperation(ctx context.Context, req *longrunningpb.DeleteOperationRequest, opts ...gax.CallOption) error {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
 	opts = append(c.CallOptions.DeleteOperation[0:len(c.CallOptions.DeleteOperation):len(c.CallOptions.DeleteOperation)], opts...)

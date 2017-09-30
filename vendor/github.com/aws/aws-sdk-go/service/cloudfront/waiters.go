@@ -11,7 +11,7 @@ import (
 
 // WaitUntilDistributionDeployed uses the CloudFront API operation
 // GetDistribution to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFront) WaitUntilDistributionDeployed(input *GetDistributionInput) error {
 	return c.WaitUntilDistributionDeployedWithContext(aws.BackgroundContext(), input)
@@ -57,7 +57,7 @@ func (c *CloudFront) WaitUntilDistributionDeployedWithContext(ctx aws.Context, i
 
 // WaitUntilInvalidationCompleted uses the CloudFront API operation
 // GetInvalidation to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFront) WaitUntilInvalidationCompleted(input *GetInvalidationInput) error {
 	return c.WaitUntilInvalidationCompletedWithContext(aws.BackgroundContext(), input)
@@ -103,7 +103,7 @@ func (c *CloudFront) WaitUntilInvalidationCompletedWithContext(ctx aws.Context, 
 
 // WaitUntilStreamingDistributionDeployed uses the CloudFront API operation
 // GetStreamingDistribution to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *CloudFront) WaitUntilStreamingDistributionDeployed(input *GetStreamingDistributionInput) error {
 	return c.WaitUntilStreamingDistributionDeployedWithContext(aws.BackgroundContext(), input)

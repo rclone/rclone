@@ -14,19 +14,18 @@ const opCancelJob = "CancelJob"
 
 // CancelJobRequest generates a "aws/request.Request" representing the
 // client's request for the CancelJob operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CancelJob for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CancelJob method directly
-// instead.
+// See CancelJob for more information on using the CancelJob
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CancelJobRequest method.
 //    req, resp := client.CancelJobRequest(params)
@@ -103,19 +102,18 @@ const opCreateComputeEnvironment = "CreateComputeEnvironment"
 
 // CreateComputeEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the CreateComputeEnvironment operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateComputeEnvironment for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateComputeEnvironment method directly
-// instead.
+// See CreateComputeEnvironment for more information on using the CreateComputeEnvironment
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateComputeEnvironmentRequest method.
 //    req, resp := client.CreateComputeEnvironmentRequest(params)
@@ -149,11 +147,11 @@ func (c *Batch) CreateComputeEnvironmentRequest(input *CreateComputeEnvironmentI
 //
 // In a managed compute environment, AWS Batch manages the compute resources
 // within the environment, based on the compute resources that you specify.
-// Instances launched into a managed compute environment use the latest Amazon
-// ECS-optimized AMI. You can choose to use Amazon EC2 On-Demand instances in
-// your managed compute environment, or you can use Amazon EC2 Spot instances
-// that only launch when the Spot bid price is below a specified percentage
-// of the On-Demand price.
+// Instances launched into a managed compute environment use a recent, approved
+// version of the Amazon ECS-optimized AMI. You can choose to use Amazon EC2
+// On-Demand instances in your managed compute environment, or you can use Amazon
+// EC2 Spot instances that only launch when the Spot bid price is below a specified
+// percentage of the On-Demand price.
 //
 // In an unmanaged compute environment, you can manage your own compute resources.
 // This provides more compute resource configuration options, such as using
@@ -209,19 +207,18 @@ const opCreateJobQueue = "CreateJobQueue"
 
 // CreateJobQueueRequest generates a "aws/request.Request" representing the
 // client's request for the CreateJobQueue operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateJobQueue for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateJobQueue method directly
-// instead.
+// See CreateJobQueue for more information on using the CreateJobQueue
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateJobQueueRequest method.
 //    req, resp := client.CreateJobQueueRequest(params)
@@ -302,19 +299,18 @@ const opDeleteComputeEnvironment = "DeleteComputeEnvironment"
 
 // DeleteComputeEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteComputeEnvironment operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteComputeEnvironment for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteComputeEnvironment method directly
-// instead.
+// See DeleteComputeEnvironment for more information on using the DeleteComputeEnvironment
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteComputeEnvironmentRequest method.
 //    req, resp := client.DeleteComputeEnvironmentRequest(params)
@@ -391,19 +387,18 @@ const opDeleteJobQueue = "DeleteJobQueue"
 
 // DeleteJobQueueRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteJobQueue operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteJobQueue for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteJobQueue method directly
-// instead.
+// See DeleteJobQueue for more information on using the DeleteJobQueue
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteJobQueueRequest method.
 //    req, resp := client.DeleteJobQueueRequest(params)
@@ -433,8 +428,8 @@ func (c *Batch) DeleteJobQueueRequest(input *DeleteJobQueueInput) (req *request.
 // DeleteJobQueue API operation for AWS Batch.
 //
 // Deletes the specified job queue. You must first disable submissions for a
-// queue with the UpdateJobQueue operation and terminate any jobs that have
-// not completed with the TerminateJob.
+// queue with the UpdateJobQueue operation. All jobs in the queue are terminated
+// when you delete a job queue.
 //
 // It is not necessary to disassociate compute environments from a queue before
 // submitting a DeleteJobQueue request.
@@ -481,19 +476,18 @@ const opDeregisterJobDefinition = "DeregisterJobDefinition"
 
 // DeregisterJobDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the DeregisterJobDefinition operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeregisterJobDefinition for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeregisterJobDefinition method directly
-// instead.
+// See DeregisterJobDefinition for more information on using the DeregisterJobDefinition
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeregisterJobDefinitionRequest method.
 //    req, resp := client.DeregisterJobDefinitionRequest(params)
@@ -566,19 +560,18 @@ const opDescribeComputeEnvironments = "DescribeComputeEnvironments"
 
 // DescribeComputeEnvironmentsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeComputeEnvironments operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeComputeEnvironments for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeComputeEnvironments method directly
-// instead.
+// See DescribeComputeEnvironments for more information on using the DescribeComputeEnvironments
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeComputeEnvironmentsRequest method.
 //    req, resp := client.DescribeComputeEnvironmentsRequest(params)
@@ -655,19 +648,18 @@ const opDescribeJobDefinitions = "DescribeJobDefinitions"
 
 // DescribeJobDefinitionsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeJobDefinitions operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeJobDefinitions for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeJobDefinitions method directly
-// instead.
+// See DescribeJobDefinitions for more information on using the DescribeJobDefinitions
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeJobDefinitionsRequest method.
 //    req, resp := client.DescribeJobDefinitionsRequest(params)
@@ -741,19 +733,18 @@ const opDescribeJobQueues = "DescribeJobQueues"
 
 // DescribeJobQueuesRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeJobQueues operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeJobQueues for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeJobQueues method directly
-// instead.
+// See DescribeJobQueues for more information on using the DescribeJobQueues
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeJobQueuesRequest method.
 //    req, resp := client.DescribeJobQueuesRequest(params)
@@ -826,19 +817,18 @@ const opDescribeJobs = "DescribeJobs"
 
 // DescribeJobsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeJobs operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeJobs for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeJobs method directly
-// instead.
+// See DescribeJobs for more information on using the DescribeJobs
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeJobsRequest method.
 //    req, resp := client.DescribeJobsRequest(params)
@@ -911,19 +901,18 @@ const opListJobs = "ListJobs"
 
 // ListJobsRequest generates a "aws/request.Request" representing the
 // client's request for the ListJobs operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListJobs for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListJobs method directly
-// instead.
+// See ListJobs for more information on using the ListJobs
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListJobsRequest method.
 //    req, resp := client.ListJobsRequest(params)
@@ -953,7 +942,8 @@ func (c *Batch) ListJobsRequest(input *ListJobsInput) (req *request.Request, out
 // ListJobs API operation for AWS Batch.
 //
 // Returns a list of task jobs for a specified job queue. You can filter the
-// results by job status with the jobStatus parameter.
+// results by job status with the jobStatus parameter. If you do not specify
+// a status, only RUNNING jobs are returned.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -997,19 +987,18 @@ const opRegisterJobDefinition = "RegisterJobDefinition"
 
 // RegisterJobDefinitionRequest generates a "aws/request.Request" representing the
 // client's request for the RegisterJobDefinition operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See RegisterJobDefinition for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the RegisterJobDefinition method directly
-// instead.
+// See RegisterJobDefinition for more information on using the RegisterJobDefinition
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the RegisterJobDefinitionRequest method.
 //    req, resp := client.RegisterJobDefinitionRequest(params)
@@ -1082,19 +1071,18 @@ const opSubmitJob = "SubmitJob"
 
 // SubmitJobRequest generates a "aws/request.Request" representing the
 // client's request for the SubmitJob operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See SubmitJob for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the SubmitJob method directly
-// instead.
+// See SubmitJob for more information on using the SubmitJob
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the SubmitJobRequest method.
 //    req, resp := client.SubmitJobRequest(params)
@@ -1168,19 +1156,18 @@ const opTerminateJob = "TerminateJob"
 
 // TerminateJobRequest generates a "aws/request.Request" representing the
 // client's request for the TerminateJob operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See TerminateJob for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the TerminateJob method directly
-// instead.
+// See TerminateJob for more information on using the TerminateJob
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the TerminateJobRequest method.
 //    req, resp := client.TerminateJobRequest(params)
@@ -1255,19 +1242,18 @@ const opUpdateComputeEnvironment = "UpdateComputeEnvironment"
 
 // UpdateComputeEnvironmentRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateComputeEnvironment operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateComputeEnvironment for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateComputeEnvironment method directly
-// instead.
+// See UpdateComputeEnvironment for more information on using the UpdateComputeEnvironment
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateComputeEnvironmentRequest method.
 //    req, resp := client.UpdateComputeEnvironmentRequest(params)
@@ -1340,19 +1326,18 @@ const opUpdateJobQueue = "UpdateJobQueue"
 
 // UpdateJobQueueRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateJobQueue operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateJobQueue for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateJobQueue method directly
-// instead.
+// See UpdateJobQueue for more information on using the UpdateJobQueue
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateJobQueueRequest method.
 //    req, resp := client.UpdateJobQueueRequest(params)
@@ -1433,6 +1418,11 @@ type AttemptContainerDetail struct {
 	// The exit code for the job attempt. A non-zero exit code is considered a failure.
 	ExitCode *int64 `locationName:"exitCode" type:"integer"`
 
+	// The name of the CloudWatch Logs log stream associated with the container.
+	// The log group for AWS Batch jobs is /aws/batch/job. Each container attempt
+	// receives a log stream name when they reach the RUNNING status.
+	LogStreamName *string `locationName:"logStreamName" type:"string"`
+
 	// A short (255 max characters) human-readable string to provide additional
 	// details about a running or stopped container.
 	Reason *string `locationName:"reason" type:"string"`
@@ -1461,6 +1451,12 @@ func (s *AttemptContainerDetail) SetContainerInstanceArn(v string) *AttemptConta
 // SetExitCode sets the ExitCode field's value.
 func (s *AttemptContainerDetail) SetExitCode(v int64) *AttemptContainerDetail {
 	s.ExitCode = &v
+	return s
+}
+
+// SetLogStreamName sets the LogStreamName field's value.
+func (s *AttemptContainerDetail) SetLogStreamName(v string) *AttemptContainerDetail {
+	s.LogStreamName = &v
 	return s
 }
 
@@ -1787,8 +1783,11 @@ type ComputeResource struct {
 	// environment.
 	ImageId *string `locationName:"imageId" type:"string"`
 
-	// The Amazon ECS instance role applied to Amazon EC2 instances in a compute
-	// environment.
+	// The Amazon ECS instance profile applied to Amazon EC2 instances in a compute
+	// environment. You can specify the short name or full Amazon Resource Name
+	// (ARN) of an instance profile. For example, ecsInstanceRole or arn:aws:iam::<aws_account_id>:instance-profile/ecsInstanceRole.
+	// For more information, see Amazon ECS Instance Role (http://docs.aws.amazon.com/batch/latest/userguide/instance_IAM_role.html)
+	// in the AWS Batch User Guide.
 	//
 	// InstanceRole is a required field
 	InstanceRole *string `locationName:"instanceRole" type:"string" required:"true"`
@@ -2020,6 +2019,11 @@ type ContainerDetail struct {
 	// The Amazon Resource Name (ARN) associated with the job upon execution.
 	JobRoleArn *string `locationName:"jobRoleArn" type:"string"`
 
+	// The name of the CloudWatch Logs log stream associated with the container.
+	// The log group for AWS Batch jobs is /aws/batch/job. Each container attempt
+	// receives a log stream name when they reach the RUNNING status.
+	LogStreamName *string `locationName:"logStreamName" type:"string"`
+
 	// The number of MiB of memory reserved for the job.
 	Memory *int64 `locationName:"memory" type:"integer"`
 
@@ -2098,6 +2102,12 @@ func (s *ContainerDetail) SetImage(v string) *ContainerDetail {
 // SetJobRoleArn sets the JobRoleArn field's value.
 func (s *ContainerDetail) SetJobRoleArn(v string) *ContainerDetail {
 	s.JobRoleArn = &v
+	return s
+}
+
+// SetLogStreamName sets the LogStreamName field's value.
+func (s *ContainerDetail) SetLogStreamName(v string) *ContainerDetail {
+	s.LogStreamName = &v
 	return s
 }
 
@@ -2275,6 +2285,7 @@ type ContainerProperties struct {
 	// parameter maps to Memory in the Create a container (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container)
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/)
 	// and the --memory option to docker run (https://docs.docker.com/engine/reference/run/).
+	// You must specify at least 4 MiB of memory for a job.
 	//
 	// Memory is a required field
 	Memory *int64 `locationName:"memory" type:"integer" required:"true"`
@@ -2315,7 +2326,8 @@ type ContainerProperties struct {
 	// in the Create a container (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container)
 	// section of the Docker Remote API (https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/)
 	// and the --cpu-shares option to docker run (https://docs.docker.com/engine/reference/run/).
-	// Each vCPU is equivalent to 1,024 CPU shares.
+	// Each vCPU is equivalent to 1,024 CPU shares. You must specify at least 1
+	// vCPU.
 	//
 	// Vcpus is a required field
 	Vcpus *int64 `locationName:"vcpus" type:"integer" required:"true"`
@@ -2452,6 +2464,16 @@ type CreateComputeEnvironmentInput struct {
 	// The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch
 	// to make calls to other AWS services on your behalf.
 	//
+	// If your specified role has a path other than /, then you must either specify
+	// the full role ARN (this is recommended) or prefix the role name with the
+	// path.
+	//
+	// Depending on how you created your AWS Batch service role, its ARN may contain
+	// the service-role path prefix. When you only specify the name of the service
+	// role, AWS Batch assumes that your ARN does not use the service-role path
+	// prefix. Because of this, we recommend that you specify the full ARN of your
+	// service role when you create compute environments.
+	//
 	// ServiceRole is a required field
 	ServiceRole *string `locationName:"serviceRole" type:"string" required:"true"`
 
@@ -2581,11 +2603,11 @@ type CreateJobQueueInput struct {
 	// JobQueueName is a required field
 	JobQueueName *string `locationName:"jobQueueName" type:"string" required:"true"`
 
-	// The priority of the job queue. Job queues with a higher priority (or a lower
+	// The priority of the job queue. Job queues with a higher priority (or a higher
 	// integer value for the priority parameter) are evaluated first when associated
-	// with same compute environment. Priority is determined in ascending order,
-	// for example, a job queue with a priority value of 1 is given scheduling preference
-	// over a job queue with a priority value of 10.
+	// with same compute environment. Priority is determined in descending order,
+	// for example, a job queue with a priority value of 10 is given scheduling
+	// preference over a job queue with a priority value of 1.
 	//
 	// Priority is a required field
 	Priority *int64 `locationName:"priority" type:"integer" required:"true"`
@@ -3713,7 +3735,8 @@ type ListJobsInput struct {
 	// JobQueue is a required field
 	JobQueue *string `locationName:"jobQueue" type:"string" required:"true"`
 
-	// The job status with which to filter jobs in the specified queue.
+	// The job status with which to filter jobs in the specified queue. If you do
+	// not specify a status, only RUNNING jobs are returned.
 	JobStatus *string `locationName:"jobStatus" type:"string" enum:"JobStatus"`
 
 	// The maximum number of results returned by ListJobs in paginated output. When
@@ -3873,7 +3896,8 @@ type RegisterJobDefinitionInput struct {
 	// parameter is required if the type parameter is container.
 	ContainerProperties *ContainerProperties `locationName:"containerProperties" type:"structure"`
 
-	// The name of the job definition to register.
+	// The name of the job definition to register. Up to 128 letters (uppercase
+	// and lowercase), numbers, hyphens, and underscores are allowed.
 	//
 	// JobDefinitionName is a required field
 	JobDefinitionName *string `locationName:"jobDefinitionName" type:"string" required:"true"`
@@ -4044,7 +4068,7 @@ type SubmitJobInput struct {
 	ContainerOverrides *ContainerOverrides `locationName:"containerOverrides" type:"structure"`
 
 	// A list of job IDs on which this job depends. A job can depend upon a maximum
-	// of 100 jobs.
+	// of 20 jobs.
 	DependsOn []*JobDependency `locationName:"dependsOn" type:"list"`
 
 	// The job definition used by this job. This value can be either a name:revision
@@ -4053,9 +4077,9 @@ type SubmitJobInput struct {
 	// JobDefinition is a required field
 	JobDefinition *string `locationName:"jobDefinition" type:"string" required:"true"`
 
-	// The name of the job. A name must be 1 to 128 characters in length.
-	//
-	// Pattern: ^[a-zA-Z0-9_]+$
+	// The name of the job. The first character must be alphanumeric, and up to
+	// 128 letters (uppercase and lowercase), numbers, hyphens, and underscores
+	// are allowed.
 	//
 	// JobName is a required field
 	JobName *string `locationName:"jobName" type:"string" required:"true"`
@@ -4338,8 +4362,18 @@ type UpdateComputeEnvironmentInput struct {
 	// for a managed compute environment.
 	ComputeResources *ComputeResourceUpdate `locationName:"computeResources" type:"structure"`
 
-	// The name or full Amazon Resource Name (ARN) of the IAM role that allows AWS
-	// Batch to make calls to ECS, Auto Scaling, and EC2 on your behalf.
+	// The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch
+	// to make calls to other AWS services on your behalf.
+	//
+	// If your specified role has a path other than /, then you must either specify
+	// the full role ARN (this is recommended) or prefix the role name with the
+	// path.
+	//
+	// Depending on how you created your AWS Batch service role, its ARN may contain
+	// the service-role path prefix. When you only specify the name of the service
+	// role, AWS Batch assumes that your ARN does not use the service-role path
+	// prefix. Because of this, we recommend that you specify the full ARN of your
+	// service role when you create compute environments.
 	ServiceRole *string `locationName:"serviceRole" type:"string"`
 
 	// The state of the compute environment. Compute environments in the ENABLED
@@ -4442,11 +4476,11 @@ type UpdateJobQueueInput struct {
 	// JobQueue is a required field
 	JobQueue *string `locationName:"jobQueue" type:"string" required:"true"`
 
-	// The priority of the job queue. Job queues with a higher priority (or a lower
+	// The priority of the job queue. Job queues with a higher priority (or a higher
 	// integer value for the priority parameter) are evaluated first when associated
-	// with same compute environment. Priority is determined in ascending order,
-	// for example, a job queue with a priority value of 1 is given scheduling preference
-	// over a job queue with a priority value of 10.
+	// with same compute environment. Priority is determined in descending order,
+	// for example, a job queue with a priority value of 10 is given scheduling
+	// preference over a job queue with a priority value of 1.
 	Priority *int64 `locationName:"priority" type:"integer"`
 
 	// Describes the queue's ability to accept new jobs.

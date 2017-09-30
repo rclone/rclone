@@ -20,7 +20,7 @@
  "basePath": "/fusiontables/v2/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "fusiontables/v2/",
- "batchPath": "batch",
+ "batchPath": "batch/fusiontables/v2",
  "parameters": {
   "alt": {
    "type": "string",

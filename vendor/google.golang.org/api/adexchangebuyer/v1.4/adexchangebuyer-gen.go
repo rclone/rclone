@@ -3361,7 +3361,8 @@ func (s *Proposal) MarshalJSON() ([]byte, error) {
 }
 
 type PublisherProfileApiProto struct {
-	// AccountId: The account id of the seller.
+	// AccountId: Deprecated: use the seller.account_id. The account id of
+	// the seller.
 	AccountId string `json:"accountId,omitempty"`
 
 	// Audience: Publisher provided info on its audience.

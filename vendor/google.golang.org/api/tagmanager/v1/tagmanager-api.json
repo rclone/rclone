@@ -21,7 +21,7 @@
  "basePath": "/tagmanager/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "tagmanager/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/tagmanager/v1",
  "parameters": {
   "alt": {
    "type": "string",

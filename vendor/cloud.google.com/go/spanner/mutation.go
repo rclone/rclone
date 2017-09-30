@@ -126,7 +126,7 @@ type Mutation struct {
 	// op is the operation type of the mutation.
 	// See documentation for spanner.op for more details.
 	op op
-	// Table is the name of the taget table to be modified.
+	// Table is the name of the target table to be modified.
 	table string
 	// keySet is a set of primary keys that names the rows
 	// in a delete operation.

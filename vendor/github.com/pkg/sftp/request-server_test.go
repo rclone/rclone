@@ -315,6 +315,7 @@ func TestRequestReadlink(t *testing.T) {
 
 func TestRequestReaddir(t *testing.T) {
 	p := clientRequestServerPair(t)
+	MaxFilelist = 22 // make not divisible by our test amount (100)
 	defer p.Close()
 	for i := 0; i < 100; i++ {
 		fname := fmt.Sprintf("/foo_%02d", i)
@@ -326,4 +327,21 @@ func TestRequestReaddir(t *testing.T) {
 	assert.Len(t, di, 100)
 	names := []string{di[18].Name(), di[81].Name()}
 	assert.Equal(t, []string{"foo_18", "foo_81"}, names)
+}
+
+func TestCleanPath(t *testing.T) {
+	assert.Equal(t, "/", cleanPath("/"))
+	assert.Equal(t, "/", cleanPath("//"))
+	assert.Equal(t, "/a", cleanPath("/a/"))
+	assert.Equal(t, "/a", cleanPath("a/"))
+	assert.Equal(t, "/a/b/c", cleanPath("/a//b//c/"))
+
+	// filepath.ToSlash does not touch \ as char on unix systems, so os.PathSeparator is used for windows compatible tests
+	bslash := string(os.PathSeparator)
+	assert.Equal(t, "/", cleanPath(bslash))
+	assert.Equal(t, "/", cleanPath(bslash+bslash))
+	assert.Equal(t, "/a", cleanPath(bslash+"a"+bslash))
+	assert.Equal(t, "/a", cleanPath("a"+bslash))
+	assert.Equal(t, "/a/b/c", cleanPath(bslash+"a"+bslash+bslash+"b"+bslash+bslash+"c"+bslash))
+
 }

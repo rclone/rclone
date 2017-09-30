@@ -1077,6 +1077,17 @@ func TestObjectOpenLength(t *testing.T) {
 	}
 }
 
+func TestObjectOpenNotModified(t *testing.T) {
+	c, rollback := makeConnectionWithObject(t)
+	defer rollback()
+	_, _, err := c.ObjectOpen(CONTAINER, OBJECT, true, swift.Headers{
+		"If-None-Match": CONTENT_MD5,
+	})
+	if err != swift.NotModified {
+		t.Fatal(err)
+	}
+}
+
 func TestObjectOpenSeek(t *testing.T) {
 	c, rollback := makeConnectionWithObject(t)
 	defer rollback()

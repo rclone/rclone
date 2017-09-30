@@ -5,40 +5,30 @@
 package cryptobyte
 
 import (
-	"encoding/asn1"
+	encoding_asn1 "encoding/asn1"
 	"fmt"
 	"math/big"
 	"reflect"
 	"time"
+
+	"golang.org/x/crypto/cryptobyte/asn1"
 )
 
 // This file contains ASN.1-related methods for String and Builder.
-
-// Tag represents an ASN.1 tag number and class (together also referred to as
-// identifier octets). Methods in this package only support the low-tag-number
-// form, i.e. a single identifier octet with bits 7-8 encoding the class and
-// bits 1-6 encoding the tag number.
-type Tag uint8
-
-// Contructed returns t with the context-specific class bit set.
-func (t Tag) ContextSpecific() Tag { return t | 0x80 }
-
-// Contructed returns t with the constructed class bit set.
-func (t Tag) Constructed() Tag { return t | 0x20 }
 
 // Builder
 
 // AddASN1Int64 appends a DER-encoded ASN.1 INTEGER.
 func (b *Builder) AddASN1Int64(v int64) {
-	b.addASN1Signed(asn1.TagInteger, v)
+	b.addASN1Signed(asn1.INTEGER, v)
 }
 
 // AddASN1Enum appends a DER-encoded ASN.1 ENUMERATION.
 func (b *Builder) AddASN1Enum(v int64) {
-	b.addASN1Signed(asn1.TagEnum, v)
+	b.addASN1Signed(asn1.ENUM, v)
 }
 
-func (b *Builder) addASN1Signed(tag Tag, v int64) {
+func (b *Builder) addASN1Signed(tag asn1.Tag, v int64) {
 	b.AddASN1(tag, func(c *Builder) {
 		length := 1
 		for i := v; i >= 0x80 || i < -0x80; i >>= 8 {
@@ -54,7 +44,7 @@ func (b *Builder) addASN1Signed(tag Tag, v int64) {
 
 // AddASN1Uint64 appends a DER-encoded ASN.1 INTEGER.
 func (b *Builder) AddASN1Uint64(v uint64) {
-	b.AddASN1(asn1.TagInteger, func(c *Builder) {
+	b.AddASN1(asn1.INTEGER, func(c *Builder) {
 		length := 1
 		for i := v; i >= 0x80; i >>= 8 {
 			length++
@@ -73,7 +63,7 @@ func (b *Builder) AddASN1BigInt(n *big.Int) {
 		return
 	}
 
-	b.AddASN1(asn1.TagInteger, func(c *Builder) {
+	b.AddASN1(asn1.INTEGER, func(c *Builder) {
 		if n.Sign() < 0 {
 			// A negative number has to be converted to two's-complement form. So we
 			// invert and subtract 1. If the most-significant-bit isn't set then
@@ -103,7 +93,7 @@ func (b *Builder) AddASN1BigInt(n *big.Int) {
 
 // AddASN1OctetString appends a DER-encoded ASN.1 OCTET STRING.
 func (b *Builder) AddASN1OctetString(bytes []byte) {
-	b.AddASN1(asn1.TagOctetString, func(c *Builder) {
+	b.AddASN1(asn1.OCTET_STRING, func(c *Builder) {
 		c.AddBytes(bytes)
 	})
 }
@@ -116,27 +106,97 @@ func (b *Builder) AddASN1GeneralizedTime(t time.Time) {
 		b.err = fmt.Errorf("cryptobyte: cannot represent %v as a GeneralizedTime", t)
 		return
 	}
-	b.AddASN1(asn1.TagGeneralizedTime, func(c *Builder) {
+	b.AddASN1(asn1.GeneralizedTime, func(c *Builder) {
 		c.AddBytes([]byte(t.Format(generalizedTimeFormatStr)))
 	})
 }
 
-// AddASN1BitString appends a DER-encoded ASN.1 BIT STRING.
-func (b *Builder) AddASN1BitString(s asn1.BitString) {
-	// TODO(martinkr): Implement.
-	b.MarshalASN1(s)
+// AddASN1BitString appends a DER-encoded ASN.1 BIT STRING. This does not
+// support BIT STRINGs that are not a whole number of bytes.
+func (b *Builder) AddASN1BitString(data []byte) {
+	b.AddASN1(asn1.BIT_STRING, func(b *Builder) {
+		b.AddUint8(0)
+		b.AddBytes(data)
+	})
 }
 
-// MarshalASN1 calls asn1.Marshal on its input and appends the result if
+func (b *Builder) addBase128Int(n int64) {
+	var length int
+	if n == 0 {
+		length = 1
+	} else {
+		for i := n; i > 0; i >>= 7 {
+			length++
+		}
+	}
+
+	for i := length - 1; i >= 0; i-- {
+		o := byte(n >> uint(i*7))
+		o &= 0x7f
+		if i != 0 {
+			o |= 0x80
+		}
+
+		b.add(o)
+	}
+}
+
+func isValidOID(oid encoding_asn1.ObjectIdentifier) bool {
+	if len(oid) < 2 {
+		return false
+	}
+
+	if oid[0] > 2 || (oid[0] <= 1 && oid[1] >= 40) {
+		return false
+	}
+
+	for _, v := range oid {
+		if v < 0 {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (b *Builder) AddASN1ObjectIdentifier(oid encoding_asn1.ObjectIdentifier) {
+	b.AddASN1(asn1.OBJECT_IDENTIFIER, func(b *Builder) {
+		if !isValidOID(oid) {
+			b.err = fmt.Errorf("cryptobyte: invalid OID: %v", oid)
+			return
+		}
+
+		b.addBase128Int(int64(oid[0])*40 + int64(oid[1]))
+		for _, v := range oid[2:] {
+			b.addBase128Int(int64(v))
+		}
+	})
+}
+
+func (b *Builder) AddASN1Boolean(v bool) {
+	b.AddASN1(asn1.BOOLEAN, func(b *Builder) {
+		if v {
+			b.AddUint8(0xff)
+		} else {
+			b.AddUint8(0)
+		}
+	})
+}
+
+func (b *Builder) AddASN1NULL() {
+	b.add(uint8(asn1.NULL), 0)
+}
+
+// MarshalASN1 calls encoding_asn1.Marshal on its input and appends the result if
 // successful or records an error if one occurred.
 func (b *Builder) MarshalASN1(v interface{}) {
 	// NOTE(martinkr): This is somewhat of a hack to allow propagation of
-	// asn1.Marshal errors into Builder.err. N.B. if you call MarshalASN1 with a
+	// encoding_asn1.Marshal errors into Builder.err. N.B. if you call MarshalASN1 with a
 	// value embedded into a struct, its tag information is lost.
 	if b.err != nil {
 		return
 	}
-	bytes, err := asn1.Marshal(v)
+	bytes, err := encoding_asn1.Marshal(v)
 	if err != nil {
 		b.err = err
 		return
@@ -148,7 +208,7 @@ func (b *Builder) MarshalASN1(v interface{}) {
 // Tags greater than 30 are not supported and result in an error (i.e.
 // low-tag-number form only). The child builder passed to the
 // BuilderContinuation can be used to build the content of the ASN.1 object.
-func (b *Builder) AddASN1(tag Tag, f BuilderContinuation) {
+func (b *Builder) AddASN1(tag asn1.Tag, f BuilderContinuation) {
 	if b.err != nil {
 		return
 	}
@@ -163,6 +223,24 @@ func (b *Builder) AddASN1(tag Tag, f BuilderContinuation) {
 }
 
 // String
+
+func (s *String) ReadASN1Boolean(out *bool) bool {
+	var bytes String
+	if !s.ReadASN1(&bytes, asn1.INTEGER) || len(bytes) != 1 {
+		return false
+	}
+
+	switch bytes[0] {
+	case 0:
+		*out = false
+	case 0xff:
+		*out = true
+	default:
+		return false
+	}
+
+	return true
+}
 
 var bigIntType = reflect.TypeOf((*big.Int)(nil)).Elem()
 
@@ -215,7 +293,7 @@ var bigOne = big.NewInt(1)
 
 func (s *String) readASN1BigInt(out *big.Int) bool {
 	var bytes String
-	if !s.ReadASN1(&bytes, asn1.TagInteger) || !checkASN1Integer(bytes) {
+	if !s.ReadASN1(&bytes, asn1.INTEGER) || !checkASN1Integer(bytes) {
 		return false
 	}
 	if bytes[0]&0x80 == 0x80 {
@@ -235,7 +313,7 @@ func (s *String) readASN1BigInt(out *big.Int) bool {
 
 func (s *String) readASN1Int64(out *int64) bool {
 	var bytes String
-	if !s.ReadASN1(&bytes, asn1.TagInteger) || !checkASN1Integer(bytes) || !asn1Signed(out, bytes) {
+	if !s.ReadASN1(&bytes, asn1.INTEGER) || !checkASN1Integer(bytes) || !asn1Signed(out, bytes) {
 		return false
 	}
 	return true
@@ -258,7 +336,7 @@ func asn1Signed(out *int64, n []byte) bool {
 
 func (s *String) readASN1Uint64(out *uint64) bool {
 	var bytes String
-	if !s.ReadASN1(&bytes, asn1.TagInteger) || !checkASN1Integer(bytes) || !asn1Unsigned(out, bytes) {
+	if !s.ReadASN1(&bytes, asn1.INTEGER) || !checkASN1Integer(bytes) || !asn1Unsigned(out, bytes) {
 		return false
 	}
 	return true
@@ -286,7 +364,7 @@ func asn1Unsigned(out *uint64, n []byte) bool {
 func (s *String) ReadASN1Enum(out *int) bool {
 	var bytes String
 	var i int64
-	if !s.ReadASN1(&bytes, asn1.TagEnum) || !checkASN1Integer(bytes) || !asn1Signed(&i, bytes) {
+	if !s.ReadASN1(&bytes, asn1.ENUM) || !checkASN1Integer(bytes) || !asn1Signed(&i, bytes) {
 		return false
 	}
 	if int64(int(i)) != i {
@@ -315,9 +393,9 @@ func (s *String) readBase128Int(out *int) bool {
 
 // ReadASN1ObjectIdentifier decodes an ASN.1 OBJECT IDENTIFIER into out and
 // advances. It returns true on success and false on error.
-func (s *String) ReadASN1ObjectIdentifier(out *asn1.ObjectIdentifier) bool {
+func (s *String) ReadASN1ObjectIdentifier(out *encoding_asn1.ObjectIdentifier) bool {
 	var bytes String
-	if !s.ReadASN1(&bytes, asn1.TagOID) || len(bytes) == 0 {
+	if !s.ReadASN1(&bytes, asn1.OBJECT_IDENTIFIER) || len(bytes) == 0 {
 		return false
 	}
 
@@ -356,7 +434,7 @@ func (s *String) ReadASN1ObjectIdentifier(out *asn1.ObjectIdentifier) bool {
 // advances. It returns true on success and false on error.
 func (s *String) ReadASN1GeneralizedTime(out *time.Time) bool {
 	var bytes String
-	if !s.ReadASN1(&bytes, asn1.TagGeneralizedTime) {
+	if !s.ReadASN1(&bytes, asn1.GeneralizedTime) {
 		return false
 	}
 	t := string(bytes)
@@ -373,9 +451,9 @@ func (s *String) ReadASN1GeneralizedTime(out *time.Time) bool {
 
 // ReadASN1BitString decodes an ASN.1 BIT STRING into out and advances. It
 // returns true on success and false on error.
-func (s *String) ReadASN1BitString(out *asn1.BitString) bool {
+func (s *String) ReadASN1BitString(out *encoding_asn1.BitString) bool {
 	var bytes String
-	if !s.ReadASN1(&bytes, asn1.TagBitString) || len(bytes) == 0 {
+	if !s.ReadASN1(&bytes, asn1.BIT_STRING) || len(bytes) == 0 {
 		return false
 	}
 
@@ -392,10 +470,27 @@ func (s *String) ReadASN1BitString(out *asn1.BitString) bool {
 	return true
 }
 
+// ReadASN1BitString decodes an ASN.1 BIT STRING into out and advances. It is
+// an error if the BIT STRING is not a whole number of bytes. This function
+// returns true on success and false on error.
+func (s *String) ReadASN1BitStringAsBytes(out *[]byte) bool {
+	var bytes String
+	if !s.ReadASN1(&bytes, asn1.BIT_STRING) || len(bytes) == 0 {
+		return false
+	}
+
+	paddingBits := uint8(bytes[0])
+	if paddingBits != 0 {
+		return false
+	}
+	*out = bytes[1:]
+	return true
+}
+
 // ReadASN1Bytes reads the contents of a DER-encoded ASN.1 element (not including
 // tag and length bytes) into out, and advances. The element must match the
 // given tag. It returns true on success and false on error.
-func (s *String) ReadASN1Bytes(out *[]byte, tag Tag) bool {
+func (s *String) ReadASN1Bytes(out *[]byte, tag asn1.Tag) bool {
 	return s.ReadASN1((*String)(out), tag)
 }
 
@@ -404,8 +499,8 @@ func (s *String) ReadASN1Bytes(out *[]byte, tag Tag) bool {
 // given tag. It returns true on success and false on error.
 //
 // Tags greater than 30 are not supported (i.e. low-tag-number format only).
-func (s *String) ReadASN1(out *String, tag Tag) bool {
-	var t Tag
+func (s *String) ReadASN1(out *String, tag asn1.Tag) bool {
+	var t asn1.Tag
 	if !s.ReadAnyASN1(out, &t) || t != tag {
 		return false
 	}
@@ -417,8 +512,8 @@ func (s *String) ReadASN1(out *String, tag Tag) bool {
 // given tag. It returns true on success and false on error.
 //
 // Tags greater than 30 are not supported (i.e. low-tag-number format only).
-func (s *String) ReadASN1Element(out *String, tag Tag) bool {
-	var t Tag
+func (s *String) ReadASN1Element(out *String, tag asn1.Tag) bool {
+	var t asn1.Tag
 	if !s.ReadAnyASN1Element(out, &t) || t != tag {
 		return false
 	}
@@ -430,7 +525,7 @@ func (s *String) ReadASN1Element(out *String, tag Tag) bool {
 // returns true on success and false on error.
 //
 // Tags greater than 30 are not supported (i.e. low-tag-number format only).
-func (s *String) ReadAnyASN1(out *String, outTag *Tag) bool {
+func (s *String) ReadAnyASN1(out *String, outTag *asn1.Tag) bool {
 	return s.readASN1(out, outTag, true /* skip header */)
 }
 
@@ -439,24 +534,30 @@ func (s *String) ReadAnyASN1(out *String, outTag *Tag) bool {
 // advances. It returns true on success and false on error.
 //
 // Tags greater than 30 are not supported (i.e. low-tag-number format only).
-func (s *String) ReadAnyASN1Element(out *String, outTag *Tag) bool {
+func (s *String) ReadAnyASN1Element(out *String, outTag *asn1.Tag) bool {
 	return s.readASN1(out, outTag, false /* include header */)
 }
 
 // PeekASN1Tag returns true if the next ASN.1 value on the string starts with
 // the given tag.
-func (s String) PeekASN1Tag(tag Tag) bool {
+func (s String) PeekASN1Tag(tag asn1.Tag) bool {
 	if len(s) == 0 {
 		return false
 	}
-	return Tag(s[0]) == tag
+	return asn1.Tag(s[0]) == tag
 }
 
-// ReadOptionalASN1 attempts to read the contents of a DER-encoded ASN.Element
-// (not including tag and length bytes) tagged with the given tag into out. It
-// stores whether an element with the tag was found in outPresent, unless
-// outPresent is nil. It returns true on success and false on error.
-func (s *String) ReadOptionalASN1(out *String, outPresent *bool, tag Tag) bool {
+// SkipASN1 reads and discards an ASN.1 element with the given tag.
+func (s *String) SkipASN1(tag asn1.Tag) bool {
+	var unused String
+	return s.ReadASN1(&unused, tag)
+}
+
+// ReadOptionalASN1 attempts to read the contents of a DER-encoded ASN.1
+// element (not including tag and length bytes) tagged with the given tag into
+// out. It stores whether an element with the tag was found in outPresent,
+// unless outPresent is nil. It returns true on success and false on error.
+func (s *String) ReadOptionalASN1(out *String, outPresent *bool, tag asn1.Tag) bool {
 	present := s.PeekASN1Tag(tag)
 	if outPresent != nil {
 		*outPresent = present
@@ -467,12 +568,22 @@ func (s *String) ReadOptionalASN1(out *String, outPresent *bool, tag Tag) bool {
 	return true
 }
 
+// SkipOptionalASN1 advances s over an ASN.1 element with the given tag, or
+// else leaves s unchanged.
+func (s *String) SkipOptionalASN1(tag asn1.Tag) bool {
+	if !s.PeekASN1Tag(tag) {
+		return true
+	}
+	var unused String
+	return s.ReadASN1(&unused, tag)
+}
+
 // ReadOptionalASN1Integer attempts to read an optional ASN.1 INTEGER
 // explicitly tagged with tag into out and advances. If no element with a
 // matching tag is present, it writes defaultValue into out instead. If out
 // does not point to an integer or to a big.Int, it panics. It returns true on
 // success and false on error.
-func (s *String) ReadOptionalASN1Integer(out interface{}, tag Tag, defaultValue interface{}) bool {
+func (s *String) ReadOptionalASN1Integer(out interface{}, tag asn1.Tag, defaultValue interface{}) bool {
 	if reflect.TypeOf(out).Kind() != reflect.Ptr {
 		panic("out is not a pointer")
 	}
@@ -510,7 +621,7 @@ func (s *String) ReadOptionalASN1Integer(out interface{}, tag Tag, defaultValue 
 // explicitly tagged with tag into out and advances. If no element with a
 // matching tag is present, it writes defaultValue into out instead. It returns
 // true on success and false on error.
-func (s *String) ReadOptionalASN1OctetString(out *[]byte, outPresent *bool, tag Tag) bool {
+func (s *String) ReadOptionalASN1OctetString(out *[]byte, outPresent *bool, tag asn1.Tag) bool {
 	var present bool
 	var child String
 	if !s.ReadOptionalASN1(&child, &present, tag) {
@@ -521,7 +632,7 @@ func (s *String) ReadOptionalASN1OctetString(out *[]byte, outPresent *bool, tag 
 	}
 	if present {
 		var oct String
-		if !child.ReadASN1(&oct, asn1.TagOctetString) || !child.Empty() {
+		if !child.ReadASN1(&oct, asn1.OCTET_STRING) || !child.Empty() {
 			return false
 		}
 		*out = oct
@@ -531,7 +642,24 @@ func (s *String) ReadOptionalASN1OctetString(out *[]byte, outPresent *bool, tag 
 	return true
 }
 
-func (s *String) readASN1(out *String, outTag *Tag, skipHeader bool) bool {
+// ReadOptionalASN1Boolean sets *out to the value of the next ASN.1 BOOLEAN or,
+// if the next bytes are not an ASN.1 BOOLEAN, to the value of defaultValue.
+func (s *String) ReadOptionalASN1Boolean(out *bool, defaultValue bool) bool {
+	var present bool
+	var child String
+	if !s.ReadOptionalASN1(&child, &present, asn1.BOOLEAN) {
+		return false
+	}
+
+	if !present {
+		*out = defaultValue
+		return true
+	}
+
+	return s.ReadASN1Boolean(out)
+}
+
+func (s *String) readASN1(out *String, outTag *asn1.Tag, skipHeader bool) bool {
 	if len(*s) < 2 {
 		return false
 	}
@@ -547,7 +675,7 @@ func (s *String) readASN1(out *String, outTag *Tag, skipHeader bool) bool {
 	}
 
 	if outTag != nil {
-		*outTag = Tag(tag)
+		*outTag = asn1.Tag(tag)
 	}
 
 	// ITU-T X.690 section 8.1.3

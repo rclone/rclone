@@ -1,10 +1,106 @@
 # CHANGELOG
 
-## `v10.1.0-beta`
+## `v11.0.0-beta`
+
 ### ARM
 
 | api                                 | version            | note                                |
 |:------------------------------------|:-------------------|:------------------------------------|
+| arm/analysisservices                | 2017-08-01-beta    | update                              |
+| arm/batch                           | 2017-05-01         | update                              |
+| arm/cdn                             | 2017-04-02         | update                              |
+| arm/cognitiveservices               | 2017-04-18         | update                              |
+| arm/compute                         | multiple           | update                              |
+| arm/containerregistry               | 2017-10-01         | update                              |
+| arm/customerinsights                | 2017-04-26         | update                              |
+| arm/eventgrid                       | 2017-09-15-preview | update                              |
+| arm/eventhub                        | 2017-04-01         | update                              |
+| arm/graphrbac                       | 1.6                | update                              |
+| arm/iothub                          | 2017-07-01         | update                              |
+| arm/keyvault                        | 2016-10-01         | update                              |
+| arm/marketplaceordering             | 2015-06-01         | new                                 |
+| arm/opertionalinsights              | multiple           | update                              |
+| arm/operationsmanagement            | 2015-11-01-preview | new                                 |
+| arm/recoveryservices                | multiple           | update                              |
+| arm/recoveryservicesbackup          | multiple           | update                              |
+| arm/redis                           | 2017-02-01         | update                              |
+| arm/relay                           | 2017-04-01         | update                              |
+| arm/resourcehealth                  | 017-07-01          | update                              |
+| arm/resources/resources             | 2017-05-10         | update                              |
+| arm/servicebus                      | 2017-04-01         | update                              |
+| arm/storage                         | 2017-06-01         | update                              |
+| arm/streamanalytics                 | 2016-03-01         | update                              |
+| arm/trafficmanager                  | 2017-09-01-preview | update                              |
+| arm/visualstudio                    | 2014-04-01-preview | update                              |
+
+### Data plane
+
+| dataplane/cognitiveservices/face          | 1.0          | new                                 |
+| dataplane/cognitiveservices/textanalytics | v2.0         | new                                 |
+
+### Storage
+
+- Support for queue SAS.
+- Refactored GetSASURI blob operation to be more complete.
+- Added a SAS client for some operations (`container.Exists()`, and `container.ListBlobs()`)
+
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: 0c2a12b50d8598f68d6715b507f7dd53e163407e
+- [AutoRest Go Generator](https://github.com/Azure/autorest.go) commit: 678110f012c7cde6528a1e61d125bdc7ea636b7f
+
+## `v10.3.1-beta`
+- Added Apache notice file.
+
+### ARM
+- Fixed package name on some `version.go` files.
+
+### Storage
+- Fixed bug related to SAS URI generation and storage emulator support.
+
+### Generated code notes
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: ad55af74f3f0e2b390a4306532528168ba742fef
+- [AutoRest Go extension](https://github.com/Azure/autorest.go) commit: 28a531c59c82cf67bc90c87095c1d34a936461b4
+
+## `v10.3.0-beta`
+### ARM
+
+| api                                 | version            | note                                |
+|:------------------------------------|:-------------------|:------------------------------------|
+| arm/containerinstance               | 2017-08-01-preview | new                                 |
+| arm/eventgrid                       | 2017-06-15-preview | new                                 |
+
+### ASM
+- Marked as in mainteinance mode.
+- Added Go 1.7 build tags.
+
+### Storage
+- Support for Go 1.7 and Go 1.6 (except table batch operation tests).
+
+### Generated code notes
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: ad55af74f3f0e2b390a4306532528168ba742fef
+- [AutoRest](https://github.com/Azure/autorest) commit: cfb296f153f948f85afab637f7212fcfdc4a8bbb
+
+## `v10.2.1-beta`
+- Fixes polymorphic structs in `mysql` and `postgresql` packages.
+
+## `v10.2.0-beta`
+### ARM
+
+| api                                 | version            | note                                |
+|:------------------------------------|:-------------------|:------------------------------------|
+| arm/cosmos-db                       | 2015-04-08         | new                                 |
+| arm/mysql                           | 2017-04-30-preview | new                                 |
+| arm/postgresql                      | 2017-04-30-preview | new                                 |
+
+### Storage
+- Bug fixes.
+
+### Generated code notes
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: 485ded7560c6309efb2f795ec6e46b7436dc6fdb
+- [AutoRest](https://github.com/Azure/autorest) commit: c180952b850e677a8624655abeaded307d95cae3
+
+## `v10.1.0-beta`
+### ARM
+
 | arm/recoveryservicessiterecovery    | 2016-08-10         | new                                 |
 | arm/managedapplications             | 2016-09-01-preview | new                                 |
 | arm/storsimple8000series            | 2017-06-01         | new                                 |

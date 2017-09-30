@@ -2,9 +2,10 @@ sudo: false
 
 language: go
 
-go: 
-  - 1.7
+go:
   - 1.8
+  - 1.7
+  - 1.6
 
 install:
   - go get -u github.com/golang/lint/golint

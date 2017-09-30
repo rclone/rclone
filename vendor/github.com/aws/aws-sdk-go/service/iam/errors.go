@@ -144,8 +144,15 @@ const (
 	// "PolicyEvaluation".
 	//
 	// The request failed because a provided policy could not be successfully evaluated.
-	// An additional detail message indicates the source of the failure.
+	// An additional detailed message indicates the source of the failure.
 	ErrCodePolicyEvaluationException = "PolicyEvaluation"
+
+	// ErrCodePolicyNotAttachableException for service response error code
+	// "PolicyNotAttachable".
+	//
+	// The request failed because AWS service role policies can only be attached
+	// to the service-linked role for that service.
+	ErrCodePolicyNotAttachableException = "PolicyNotAttachable"
 
 	// ErrCodeServiceFailureException for service response error code
 	// "ServiceFailure".

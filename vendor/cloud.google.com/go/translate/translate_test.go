@@ -21,7 +21,6 @@ import (
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -127,7 +126,7 @@ func TestTranslateURL(t *testing.T) {
 		}
 		got := ft.req.URL.Query()
 		test.want.Add("alt", "json")
-		if !reflect.DeepEqual(got, test.want) {
+		if !testutil.Equal(got, test.want) {
 			t.Errorf("Translate(%s, %v, %+v):\ngot  %s\nwant %s",
 				test.target, test.inputs, test.opts, got, test.want)
 		}

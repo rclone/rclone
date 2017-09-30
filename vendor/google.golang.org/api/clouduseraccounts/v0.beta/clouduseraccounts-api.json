@@ -21,7 +21,7 @@
  "basePath": "/clouduseraccounts/beta/projects/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "clouduseraccounts/beta/projects/",
- "batchPath": "batch",
+ "batchPath": "batch/clouduseraccounts/beta",
  "parameters": {
   "alt": {
    "type": "string",

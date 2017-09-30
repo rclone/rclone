@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"reflect"
 	"regexp"
 	"strings"
 	"sync"
@@ -457,7 +456,7 @@ func TestNewSpan(t *testing.T) {
 		s.SpanId = 0
 		s.StartTime = ""
 	}
-	if !reflect.DeepEqual(patch, expected) {
+	if !testutil.Equal(patch, expected) {
 		got, _ := json.Marshal(patch)
 		want, _ := json.Marshal(expected)
 		t.Errorf("PatchTraces request: got %s want %s", got, want)
@@ -620,7 +619,7 @@ func testTrace(t *testing.T, synchronous bool, fromRequest bool) {
 		s.SpanId = 0
 		s.StartTime = ""
 	}
-	if !reflect.DeepEqual(patch, expected) {
+	if !testutil.Equal(patch, expected) {
 		got, _ := json.Marshal(patch)
 		want, _ := json.Marshal(expected)
 		t.Errorf("PatchTraces request: got %s \n\n want %s", got, want)

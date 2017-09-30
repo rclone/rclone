@@ -11,7 +11,7 @@ import (
 
 // WaitUntilTableExists uses the DynamoDB API operation
 // DescribeTable to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *DynamoDB) WaitUntilTableExists(input *DescribeTableInput) error {
 	return c.WaitUntilTableExistsWithContext(aws.BackgroundContext(), input)
@@ -62,7 +62,7 @@ func (c *DynamoDB) WaitUntilTableExistsWithContext(ctx aws.Context, input *Descr
 
 // WaitUntilTableNotExists uses the DynamoDB API operation
 // DescribeTable to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *DynamoDB) WaitUntilTableNotExists(input *DescribeTableInput) error {
 	return c.WaitUntilTableNotExistsWithContext(aws.BackgroundContext(), input)

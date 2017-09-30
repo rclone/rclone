@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/lbeqa-NGWRK_GCsjSxcBWyd83Mo\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/QmLvLWNsI9BfMK5wWeN2hMPf260\"",
  "discoveryVersion": "v1",
  "id": "content:v2sandbox",
  "name": "content",
  "canonicalName": "Shopping Content",
  "version": "v2sandbox",
- "revision": "20170531",
+ "revision": "20170928",
  "title": "Content API for Shopping",
  "description": "Manages product items, inventory, and Merchant Center accounts for Google Shopping.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/content/v2sandbox/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "content/v2sandbox/",
- "batchPath": "batch",
+ "batchPath": "batch/content/v2sandbox",
  "parameters": {
   "alt": {
    "type": "string",
@@ -181,7 +181,7 @@
     },
     "promotions": {
      "type": "array",
-     "description": "The details of the merchant provided promotions applied to the order. More details about the program are  here.",
+     "description": "The details of the merchant provided promotions applied to the order. More details about the program are here.",
      "items": {
       "$ref": "OrderPromotion"
      }
@@ -331,6 +331,10 @@
      "items": {
       "$ref": "OrderCancellation"
      }
+    },
+    "channelType": {
+     "type": "string",
+     "description": "The channel type of the order: \"purchaseOnGoogle\" or \"googleExpress\"."
     },
     "id": {
      "type": "string",
@@ -551,7 +555,7 @@
    "properties": {
     "carrier": {
      "type": "string",
-     "description": "The carrier for the shipping. Optional."
+     "description": "The carrier for the shipping. Optional. See shipments[].carrier for a list of acceptable values."
     },
     "maxDaysInTransit": {
      "type": "integer",
@@ -612,7 +616,7 @@
     },
     "type": {
      "type": "string",
-     "description": "The type of instrument (VISA, Mastercard, etc)."
+     "description": "The type of instrument.\n\nAcceptable values are:  \n- \"AMEX\" \n- \"DISCOVER\" \n- \"JCB\" \n- \"MASTERCARD\" \n- \"UNIONPAY\" \n- \"VISA\" \n- \"\""
     }
    }
   },
@@ -740,7 +744,7 @@
    "properties": {
     "carrier": {
      "type": "string",
-     "description": "The carrier handling the shipment."
+     "description": "The carrier handling the shipment.\n\nAcceptable values are:  \n- \"gsx\" \n- \"ups\" \n- \"united parcel service\" \n- \"usps\" \n- \"united states postal service\" \n- \"fedex\" \n- \"dhl\" \n- \"ecourier\" \n- \"cxt\" \n- \"google\" \n- \"on trac\" \n- \"ontrac\" \n- \"on-trac\" \n- \"on_trac\" \n- \"delvic\" \n- \"dynamex\" \n- \"lasership\" \n- \"smartpost\" \n- \"fedex smartpost\" \n- \"mpx\" \n- \"uds\" \n- \"united delivery service\""
     },
     "creationDate": {
      "type": "string",
@@ -1087,7 +1091,7 @@
    "properties": {
     "carrier": {
      "type": "string",
-     "description": "The carrier handling the shipment."
+     "description": "Deprecated. Please use shipmentInfo instead. The carrier handling the shipment. See shipments[].carrier in the  Orders resource representation for a list of acceptable values."
     },
     "lineItems": {
      "type": "array",
@@ -1098,7 +1102,37 @@
     },
     "shipmentId": {
      "type": "string",
-     "description": "The ID of the shipment."
+     "description": "Deprecated. Please use shipmentInfo instead. The ID of the shipment."
+    },
+    "shipmentInfos": {
+     "type": "array",
+     "description": "Shipment information. This field is repeated because a single line item can be shipped in several packages (and have several tracking IDs).",
+     "items": {
+      "$ref": "OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo"
+     }
+    },
+    "trackingId": {
+     "type": "string",
+     "description": "Deprecated. Please use shipmentInfo instead. The tracking id for the shipment."
+    }
+   }
+  },
+  "OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo": {
+   "id": "OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo",
+   "type": "object",
+   "properties": {
+    "carrier": {
+     "type": "string",
+     "description": "The carrier handling the shipment. See shipments[].carrier in the  Orders resource representation for a list of acceptable values."
+    },
+    "shipmentId": {
+     "type": "string",
+     "description": "The ID of the shipment.",
+     "annotations": {
+      "required": [
+       "content.orders.shiplineitems"
+      ]
+     }
     },
     "trackingId": {
      "type": "string",
@@ -1112,7 +1146,7 @@
    "properties": {
     "carrier": {
      "type": "string",
-     "description": "The carrier handling the shipment. Not updated if missing."
+     "description": "The carrier handling the shipment. Not updated if missing. See shipments[].carrier in the  Orders resource representation for a list of acceptable values."
     },
     "shipmentId": {
      "type": "string",
@@ -1310,7 +1344,7 @@
    "properties": {
     "carrier": {
      "type": "string",
-     "description": "The carrier handling the shipment."
+     "description": "Deprecated. Please use shipmentInfo instead. The carrier handling the shipment. See shipments[].carrier in the  Orders resource representation for a list of acceptable values."
     },
     "lineItems": {
      "type": "array",
@@ -1325,11 +1359,18 @@
     },
     "shipmentId": {
      "type": "string",
-     "description": "The ID of the shipment."
+     "description": "Deprecated. Please use shipmentInfo instead. The ID of the shipment."
+    },
+    "shipmentInfos": {
+     "type": "array",
+     "description": "Shipment information. This field is repeated because a single line item can be shipped in several packages (and have several tracking IDs).",
+     "items": {
+      "$ref": "OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo"
+     }
     },
     "trackingId": {
      "type": "string",
-     "description": "The tracking id for the shipment."
+     "description": "Deprecated. Please use shipmentInfo instead. The tracking id for the shipment."
     }
    }
   },
@@ -1383,7 +1424,7 @@
    "properties": {
     "carrier": {
      "type": "string",
-     "description": "The carrier handling the shipment. Not updated if missing."
+     "description": "The carrier handling the shipment. Not updated if missing. See shipments[].carrier in the  Orders resource representation for a list of acceptable values."
     },
     "operationId": {
      "type": "string",
@@ -1477,7 +1518,7 @@
     },
     "promotions": {
      "type": "array",
-     "description": "The details of the merchant provided promotions applied to the order. More details about the program are  here.",
+     "description": "The details of the merchant provided promotions applied to the order. More details about the program are here.",
      "items": {
       "$ref": "OrderPromotion"
      }

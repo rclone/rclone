@@ -7,8 +7,8 @@ const (
 	// ErrCodeConcurrentModification for service response error code
 	// "ConcurrentModification".
 	//
-	// Another user submitted a request to update the object at the same time that
-	// you did. Retry the request.
+	// Another user submitted a request to create, update, or delete the object
+	// at the same time that you did. Retry the request.
 	ErrCodeConcurrentModification = "ConcurrentModification"
 
 	// ErrCodeConflictingDomainExists for service response error code
@@ -129,6 +129,21 @@ const (
 	// 53 endpoint.
 	ErrCodeIncompatibleVersion = "IncompatibleVersion"
 
+	// ErrCodeInsufficientCloudWatchLogsResourcePolicy for service response error code
+	// "InsufficientCloudWatchLogsResourcePolicy".
+	//
+	// Amazon Route 53 doesn't have the permissions required to create log streams
+	// and send query logs to log streams. Possible causes include the following:
+	//
+	//    * There is no resource policy that specifies the log group ARN in the
+	//    value for Resource.
+	//
+	//    * The resource policy that includes the log group ARN in the value for
+	//    Resource doesn't have the necessary permissions.
+	//
+	//    * The resource policy hasn't finished propagating yet.
+	ErrCodeInsufficientCloudWatchLogsResourcePolicy = "InsufficientCloudWatchLogsResourcePolicy"
+
 	// ErrCodeInvalidArgument for service response error code
 	// "InvalidArgument".
 	//
@@ -156,6 +171,9 @@ const (
 
 	// ErrCodeInvalidPaginationToken for service response error code
 	// "InvalidPaginationToken".
+	//
+	// The value that you specified to get the second or subsequent page of results
+	// is invalid.
 	ErrCodeInvalidPaginationToken = "InvalidPaginationToken"
 
 	// ErrCodeInvalidTrafficPolicyDocument for service response error code
@@ -192,6 +210,12 @@ const (
 	// A change with the specified change ID does not exist.
 	ErrCodeNoSuchChange = "NoSuchChange"
 
+	// ErrCodeNoSuchCloudWatchLogsLogGroup for service response error code
+	// "NoSuchCloudWatchLogsLogGroup".
+	//
+	// There is no CloudWatch Logs log group with the specified ARN.
+	ErrCodeNoSuchCloudWatchLogsLogGroup = "NoSuchCloudWatchLogsLogGroup"
+
 	// ErrCodeNoSuchDelegationSet for service response error code
 	// "NoSuchDelegationSet".
 	//
@@ -216,6 +240,12 @@ const (
 	//
 	// No hosted zone exists with the ID that you specified.
 	ErrCodeNoSuchHostedZone = "NoSuchHostedZone"
+
+	// ErrCodeNoSuchQueryLoggingConfig for service response error code
+	// "NoSuchQueryLoggingConfig".
+	//
+	// There is no DNS query logging configuration with the specified ID.
+	ErrCodeNoSuchQueryLoggingConfig = "NoSuchQueryLoggingConfig"
 
 	// ErrCodeNoSuchTrafficPolicy for service response error code
 	// "NoSuchTrafficPolicy".
@@ -252,6 +282,13 @@ const (
 	// You're trying to associate a VPC with a public hosted zone. Amazon Route
 	// 53 doesn't support associating a VPC with a public hosted zone.
 	ErrCodePublicZoneVPCAssociation = "PublicZoneVPCAssociation"
+
+	// ErrCodeQueryLoggingConfigAlreadyExists for service response error code
+	// "QueryLoggingConfigAlreadyExists".
+	//
+	// You can create only one query logging configuration for a hosted zone, and
+	// a query logging configuration already exists for this hosted zone.
+	ErrCodeQueryLoggingConfigAlreadyExists = "QueryLoggingConfigAlreadyExists"
 
 	// ErrCodeThrottlingException for service response error code
 	// "ThrottlingException".
@@ -317,7 +354,7 @@ const (
 	// ErrCodeTrafficPolicyInstanceAlreadyExists for service response error code
 	// "TrafficPolicyInstanceAlreadyExists".
 	//
-	// Traffic policy instance with given Id already exists.
+	// There is already a traffic policy instance with the specified ID.
 	ErrCodeTrafficPolicyInstanceAlreadyExists = "TrafficPolicyInstanceAlreadyExists"
 
 	// ErrCodeVPCAssociationAuthorizationNotFound for service response error code

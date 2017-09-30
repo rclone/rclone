@@ -1597,12 +1597,7 @@ func (meth *Method) generateCode() {
 	}
 
 	if meth.supportsMediaUpload() {
-		// At most one of media_ and resumbableBuffer_ will be set.
-		pn(" media_     io.Reader")
-		pn(" mediaBuffer_ *gensupport.MediaBuffer")
-		pn(" mediaType_ string")
-		pn(" mediaSize_  int64 // mediaSize, if known.  Used only for calls to progressUpdater_.")
-		pn(" progressUpdater_  googleapi.ProgressUpdater")
+		pn(" mediaInfo_ *gensupport.MediaInfo")
 	}
 	pn(" ctx_ context.Context")
 	pn(" header_ http.Header")
@@ -1711,12 +1706,7 @@ func (meth *Method) generateCode() {
 				pn("  }")
 			}
 		}
-		pn(" opts := googleapi.ProcessMediaOptions(options)")
-		pn(" chunkSize := opts.ChunkSize")
-		pn(" if !opts.ForceEmptyContentType {")
-		pn("  r, c.mediaType_ = gensupport.DetermineContentType(r, opts.ContentType)")
-		pn(" }")
-		pn(" c.media_, c.mediaBuffer_ = gensupport.PrepareUpload(r, chunkSize)")
+		pn(" c.mediaInfo_ = gensupport.NewInfoFromMedia(r, options)")
 		pn(" return c")
 		pn("}")
 		comment = "ResumableMedia specifies the media to upload in chunks and can be canceled with ctx. " +
@@ -1729,11 +1719,7 @@ func (meth *Method) generateCode() {
 		p("\n%s", asComment("", comment))
 		pn("func (c *%s) ResumableMedia(ctx context.Context, r io.ReaderAt, size int64, mediaType string) *%s {", callName, callName)
 		pn(" c.ctx_ = ctx")
-		pn(" rdr := gensupport.ReaderAtToReader(r, size)")
-		pn(" rdr, c.mediaType_ = gensupport.DetermineContentType(rdr, mediaType)")
-		pn(" c.mediaBuffer_ = gensupport.NewMediaBuffer(rdr, googleapi.DefaultUploadChunkSize)")
-		pn(" c.media_ = nil")
-		pn(" c.mediaSize_ = size")
+		pn(" c.mediaInfo_ = gensupport.NewInfoFromResumableMedia(r, size, mediaType)")
 		pn(" return c")
 		pn("}")
 		comment = "ProgressUpdater provides a callback function that will be called after every chunk. " +
@@ -1741,7 +1727,7 @@ func (meth *Method) generateCode() {
 			"This should only be called when using ResumableMedia (as opposed to Media)."
 		p("\n%s", asComment("", comment))
 		pn("func (c *%s) ProgressUpdater(pu googleapi.ProgressUpdater) *%s {", callName, callName)
-		pn(`c.progressUpdater_ = pu`)
+		pn(`c.mediaInfo_.SetProgressUpdater(pu)`)
 		pn("return c")
 		pn("}")
 	}
@@ -1822,31 +1808,20 @@ func (meth *Method) generateCode() {
 
 	pn("urls := googleapi.ResolveRelative(c.s.BasePath, %q)", meth.m.Path)
 	if meth.supportsMediaUpload() {
-		pn("if c.media_ != nil || c.mediaBuffer_ != nil{")
+		pn("if c.mediaInfo_ != nil {")
 		// Hack guess, since we get a 404 otherwise:
 		//pn("urls = googleapi.ResolveRelative(%q, %q)", a.apiBaseURL(), meth.mediaUploadPath())
 		// Further hack.  Discovery doc is wrong?
 		pn("  urls = strings.Replace(urls, %q, %q, 1)", "https://www.googleapis.com/", "https://www.googleapis.com/upload/")
-		pn(`  protocol := "multipart"`)
-		pn("  if c.mediaBuffer_ != nil {")
-		pn(`   protocol = "resumable"`)
-		pn("  }")
-		pn(`  c.urlParams_.Set("uploadType", protocol)`)
+		pn(`  c.urlParams_.Set("uploadType", c.mediaInfo_.UploadType())`)
 		pn("}")
 
 		pn("if body == nil {")
 		pn(" body = new(bytes.Buffer)")
 		pn(` reqHeaders.Set("Content-Type", "application/json")`)
 		pn("}")
-		pn(`if c.media_ != nil {`)
-		pn(`  combined, ctype := gensupport.CombineBodyMedia(body, "application/json", c.media_, c.mediaType_)`)
-		pn("  defer combined.Close()")
-		pn(`  reqHeaders.Set("Content-Type", ctype)`)
-		pn("  body = combined")
-		pn("}")
-		pn(`if c.mediaBuffer_ != nil && c.mediaType_ != ""{`)
-		pn(` reqHeaders.Set("X-Upload-Content-Type", c.mediaType_)`)
-		pn("}")
+		pn("body, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)")
+		pn("defer cleanup()")
 	}
 	pn("urls += \"?\" + c.urlParams_.Encode()")
 	pn("req, _ := http.NewRequest(%q, urls, body)", httpMethod)
@@ -1915,20 +1890,10 @@ func (meth *Method) generateCode() {
 	pn("defer googleapi.CloseBody(res)")
 	pn("if err := googleapi.CheckResponse(res); err != nil { return %serr }", nilRet)
 	if meth.supportsMediaUpload() {
-		pn("if c.mediaBuffer_ != nil {")
-		pn(` loc := res.Header.Get("Location")`)
-		pn(" rx := &gensupport.ResumableUpload{")
-		pn("  Client:        c.s.client,")
-		pn("  UserAgent:     c.s.userAgent(),")
-		pn("  URI:           loc,")
-		pn("  Media:         c.mediaBuffer_,")
-		pn("  MediaType:     c.mediaType_,")
-		pn("  Callback:      func(curr int64){")
-		pn("   if c.progressUpdater_ != nil {")
-		pn("    c.progressUpdater_(curr, c.mediaSize_)")
-		pn("   }")
-		pn("  },")
-		pn(" }")
+		pn(`rx := c.mediaInfo_.ResumableUpload(res.Header.Get("Location"))`)
+		pn("if rx != nil {")
+		pn(" rx.Client = c.s.client")
+		pn(" rx.UserAgent = c.s.userAgent()")
 		pn(" ctx := c.ctx_")
 		pn(" if ctx == nil {")
 		// TODO(mcgreevy): Require context when calling Media, or Do.

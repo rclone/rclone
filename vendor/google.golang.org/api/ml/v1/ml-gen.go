@@ -265,9 +265,9 @@ func (s *GoogleCloudMlV1HyperparameterOutputHyperparameterMetric) UnmarshalJSON(
 	return nil
 }
 
-// GoogleCloudMlV1__AutomaticScaling: Options for automatically scaling
-// a model.
-type GoogleCloudMlV1__AutomaticScaling struct {
+// GoogleCloudMlV1__AutoScaling: Options for automatically scaling a
+// model.
+type GoogleCloudMlV1__AutoScaling struct {
 	// MinNodes: Optional. The minimum number of nodes to allocate for this
 	// model. These
 	// nodes are always up, starting from the time the model is deployed, so
@@ -316,8 +316,8 @@ type GoogleCloudMlV1__AutomaticScaling struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudMlV1__AutomaticScaling) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudMlV1__AutomaticScaling
+func (s *GoogleCloudMlV1__AutoScaling) MarshalJSON() ([]byte, error) {
+	type noMethod GoogleCloudMlV1__AutoScaling
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -373,7 +373,9 @@ func (s *GoogleCloudMlV1__GetConfigResponse) MarshalJSON() ([]byte, error) {
 // list
 // of HyperparameterOutput objects, one for each successful trial.
 type GoogleCloudMlV1__HyperparameterOutput struct {
-	// AllMetrics: All recorded object metrics for this trial.
+	// AllMetrics: All recorded object metrics for this trial. This field is
+	// not currently
+	// populated.
 	AllMetrics []*GoogleCloudMlV1HyperparameterOutputHyperparameterMetric `json:"allMetrics,omitempty"`
 
 	// FinalMetric: The final objective metric seen for this trial.
@@ -484,6 +486,8 @@ func (s *GoogleCloudMlV1__HyperparameterSpec) MarshalJSON() ([]byte, error) {
 }
 
 // GoogleCloudMlV1__Job: Represents a training or prediction job.
+//
+// Next ID: 16
 type GoogleCloudMlV1__Job struct {
 	// CreateTime: Output only. When the job was created.
 	CreateTime string `json:"createTime,omitempty"`
@@ -712,6 +716,8 @@ func (s *GoogleCloudMlV1__ManualScaling) MarshalJSON() ([]byte, error) {
 // model ready to receive prediction requests. The model itself is just
 // a
 // container.
+//
+// Next ID: 8
 type GoogleCloudMlV1__Model struct {
 	// DefaultVersion: Output only. The default version of the model. This
 	// version will be used to
@@ -783,6 +789,8 @@ func (s *GoogleCloudMlV1__Model) MarshalJSON() ([]byte, error) {
 
 // GoogleCloudMlV1__OperationMetadata: Represents the metadata of the
 // long-running operation.
+//
+// Next ID: 9
 type GoogleCloudMlV1__OperationMetadata struct {
 	// CreateTime: The time the operation was submitted.
 	CreateTime string `json:"createTime,omitempty"`
@@ -805,6 +813,8 @@ type GoogleCloudMlV1__OperationMetadata struct {
 	//   "CREATE_VERSION" - An operation to create a new version.
 	//   "DELETE_VERSION" - An operation to delete an existing version.
 	//   "DELETE_MODEL" - An operation to delete an existing model.
+	//   "UPDATE_MODEL" - An operation to update an existing model.
+	//   "UPDATE_VERSION" - An operation to update an existing version.
 	OperationType string `json:"operationType,omitempty"`
 
 	// StartTime: The time operation processing started.
@@ -1192,6 +1202,15 @@ func (s *GoogleCloudMlV1__PredictRequest) MarshalJSON() ([]byte, error) {
 // GoogleCloudMlV1__PredictionInput: Represents input parameters for a
 // prediction job.
 type GoogleCloudMlV1__PredictionInput struct {
+	// BatchSize: Optional. Number of records per batch, defaults to 64.
+	// The service will buffer batch_size number of records in memory
+	// before
+	// invoking one Tensorflow prediction call internally. So take the
+	// record
+	// size and memory available into consideration when setting this
+	// parameter.
+	BatchSize int64 `json:"batchSize,omitempty,string"`
+
 	// DataFormat: Required. The format of the input data files.
 	//
 	// Possible values:
@@ -1257,7 +1276,7 @@ type GoogleCloudMlV1__PredictionInput struct {
 	// DEL/versions/<var>[YOUR_VERSION]</var>"
 	VersionName string `json:"versionName,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "DataFormat") to
+	// ForceSendFields is a list of field names (e.g. "BatchSize") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1265,7 +1284,7 @@ type GoogleCloudMlV1__PredictionInput struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "DataFormat") to include in
+	// NullFields is a list of field names (e.g. "BatchSize") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -1471,8 +1490,10 @@ type GoogleCloudMlV1__TrainingInput struct {
 	//   "STANDARD_1" - Many workers and a few parameter servers.
 	//   "PREMIUM_1" - A large number of workers with many parameter
 	// servers.
-	//   "BASIC_GPU" - A single worker instance [with a
+	//   "BASIC_GPU" - A single worker instance [with
+	// a
 	// GPU](/ml-engine/docs/how-tos/using-gpus).
+	//   "BASIC_TPU" - A single worker instance with a [Cloud TPU](/tpu)
 	//   "CUSTOM" - The CUSTOM tier is not a set tier, but rather enables
 	// you to use your
 	// own cluster specification. When you use this tier, set values
@@ -1622,13 +1643,16 @@ func (s *GoogleCloudMlV1__TrainingOutput) UnmarshalJSON(data []byte) error {
 // calling
 // [projects.models.versions.list](/ml-engine/reference/rest/v1/p
 // rojects.models.versions/list).
+//
+// Next ID: 19
+// LINT.IfChange
 type GoogleCloudMlV1__Version struct {
-	// AutomaticScaling: Automatically scale the number of nodes used to
-	// serve the model in
+	// AutoScaling: Automatically scale the number of nodes used to serve
+	// the model in
 	// response to increases and decreases in traffic. Care should be
 	// taken to ramp up traffic according to the model's ability to scale
 	// or you will start seeing increases in latency and 429 response codes.
-	AutomaticScaling *GoogleCloudMlV1__AutomaticScaling `json:"automaticScaling,omitempty"`
+	AutoScaling *GoogleCloudMlV1__AutoScaling `json:"autoScaling,omitempty"`
 
 	// CreateTime: Output only. The time the version was created.
 	CreateTime string `json:"createTime,omitempty"`
@@ -1640,7 +1664,7 @@ type GoogleCloudMlV1__Version struct {
 	// model
 	// deployment](/ml-engine/docs/concepts/deployment-overview) for
 	// more
-	// informaiton.
+	// information.
 	//
 	// When passing Version
 	// to
@@ -1678,7 +1702,7 @@ type GoogleCloudMlV1__Version struct {
 
 	// ManualScaling: Manually select the number of nodes to use for serving
 	// the
-	// model. You should generally use `automatic_scaling` with an
+	// model. You should generally use `auto_scaling` with an
 	// appropriate
 	// `min_nodes` instead, but this option is available if you want
 	// more
@@ -1705,17 +1729,18 @@ type GoogleCloudMlV1__Version struct {
 	// Possible values:
 	//   "UNKNOWN" - The version state is unspecified.
 	//   "READY" - The version is ready for prediction.
-	//   "CREATING" - The version is still in the process of creation.
+	//   "CREATING" - The version is in the process of creation.
 	//   "FAILED" - The version failed to be created, possibly
 	// cancelled.
 	// `error_message` should contain the details of the failure.
+	//   "DELETING" - The version is in the process of deletion.
 	State string `json:"state,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "AutomaticScaling") to
+	// ForceSendFields is a list of field names (e.g. "AutoScaling") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1723,13 +1748,12 @@ type GoogleCloudMlV1__Version struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "AutomaticScaling") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g. "AutoScaling") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
@@ -1737,347 +1761,6 @@ func (s *GoogleCloudMlV1__Version) MarshalJSON() ([]byte, error) {
 	type noMethod GoogleCloudMlV1__Version
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleCloudMlV1beta1__AutomaticScaling: Options for automatically
-// scaling a model.
-type GoogleCloudMlV1beta1__AutomaticScaling struct {
-	// MinNodes: Optional. The minimum number of nodes to allocate for this
-	// model. These
-	// nodes are always up, starting from the time the model is deployed, so
-	// the
-	// cost of operating this model will be at least
-	// `rate` * `min_nodes` * number of hours since last billing
-	// cycle,
-	// where `rate` is the cost per node-hour as documented
-	// in
-	// [pricing](https://cloud.google.com/ml-engine/pricing#prediction_pri
-	// cing),
-	// even if no predictions are performed. There is additional cost for
-	// each
-	// prediction performed.
-	//
-	// Unlike manual scaling, if the load gets too heavy for the nodes
-	// that are up, the service will automatically add nodes to handle
-	// the
-	// increased load as well as scale back as traffic drops, always
-	// maintaining
-	// at least `min_nodes`. You will be charged for the time in which
-	// additional
-	// nodes are used.
-	//
-	// If not specified, `min_nodes` defaults to 0, in which case, when
-	// traffic
-	// to a model stops (and after a cool-down period), nodes will be shut
-	// down
-	// and no charges will be incurred until traffic to the model resumes.
-	MinNodes int64 `json:"minNodes,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "MinNodes") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "MinNodes") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleCloudMlV1beta1__AutomaticScaling) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudMlV1beta1__AutomaticScaling
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleCloudMlV1beta1__ManualScaling: Options for manually scaling a
-// model.
-type GoogleCloudMlV1beta1__ManualScaling struct {
-	// Nodes: The number of nodes to allocate for this model. These nodes
-	// are always up,
-	// starting from the time the model is deployed, so the cost of
-	// operating
-	// this model will be proportional to `nodes` * number of hours
-	// since
-	// last billing cycle.
-	Nodes int64 `json:"nodes,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Nodes") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Nodes") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleCloudMlV1beta1__ManualScaling) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudMlV1beta1__ManualScaling
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleCloudMlV1beta1__OperationMetadata: Represents the metadata of
-// the long-running operation.
-type GoogleCloudMlV1beta1__OperationMetadata struct {
-	// CreateTime: The time the operation was submitted.
-	CreateTime string `json:"createTime,omitempty"`
-
-	// EndTime: The time operation processing completed.
-	EndTime string `json:"endTime,omitempty"`
-
-	// IsCancellationRequested: Indicates whether a request to cancel this
-	// operation has been made.
-	IsCancellationRequested bool `json:"isCancellationRequested,omitempty"`
-
-	// ModelName: Contains the name of the model associated with the
-	// operation.
-	ModelName string `json:"modelName,omitempty"`
-
-	// OperationType: The operation type.
-	//
-	// Possible values:
-	//   "OPERATION_TYPE_UNSPECIFIED" - Unspecified operation type.
-	//   "CREATE_VERSION" - An operation to create a new version.
-	//   "DELETE_VERSION" - An operation to delete an existing version.
-	//   "DELETE_MODEL" - An operation to delete an existing model.
-	OperationType string `json:"operationType,omitempty"`
-
-	// StartTime: The time operation processing started.
-	StartTime string `json:"startTime,omitempty"`
-
-	// Version: Contains the version associated with the operation.
-	Version *GoogleCloudMlV1beta1__Version `json:"version,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "CreateTime") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "CreateTime") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleCloudMlV1beta1__OperationMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudMlV1beta1__OperationMetadata
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleCloudMlV1beta1__Version: Represents a version of the
-// model.
-//
-// Each version is a trained model deployed in the cloud, ready to
-// handle
-// prediction requests. A model can have multiple versions. You can
-// get
-// information about all of the versions of a given model by
-// calling
-// [projects.models.versions.list](/ml-engine/reference/rest/v1be
-// ta1/projects.models.versions/list).
-type GoogleCloudMlV1beta1__Version struct {
-	// AutomaticScaling: Automatically scale the number of nodes used to
-	// serve the model in
-	// response to increases and decreases in traffic. Care should be
-	// taken to ramp up traffic according to the model's ability to scale
-	// or you will start seeing increases in latency and 429 response codes.
-	AutomaticScaling *GoogleCloudMlV1beta1__AutomaticScaling `json:"automaticScaling,omitempty"`
-
-	// CreateTime: Output only. The time the version was created.
-	CreateTime string `json:"createTime,omitempty"`
-
-	// DeploymentUri: Required. The Google Cloud Storage location of the
-	// trained model used to
-	// create the version. See the
-	// [overview of
-	// model
-	// deployment](/ml-engine/docs/concepts/deployment-overview) for
-	// more
-	// informaiton.
-	//
-	// When passing Version
-	// to
-	// [projects.models.versions.create](/ml-engine/reference/rest/v1beta1
-	// /projects.models.versions/create)
-	// the model service uses the specified location as the source of the
-	// model.
-	// Once deployed, the model version is hosted by the prediction service,
-	// so
-	// this location is useful only as a historical record.
-	// The total number of model files can't exceed 1000.
-	DeploymentUri string `json:"deploymentUri,omitempty"`
-
-	// Description: Optional. The description specified for the version when
-	// it was created.
-	Description string `json:"description,omitempty"`
-
-	// ErrorMessage: Output only. The details of a failure or a
-	// cancellation.
-	ErrorMessage string `json:"errorMessage,omitempty"`
-
-	// IsDefault: Output only. If true, this version will be used to handle
-	// prediction
-	// requests that do not specify a version.
-	//
-	// You can change the default version by
-	// calling
-	// [projects.methods.versions.setDefault](/ml-engine/reference/re
-	// st/v1beta1/projects.models.versions/setDefault).
-	IsDefault bool `json:"isDefault,omitempty"`
-
-	// LastUseTime: Output only. The time the version was last used for
-	// prediction.
-	LastUseTime string `json:"lastUseTime,omitempty"`
-
-	// ManualScaling: Manually select the number of nodes to use for serving
-	// the
-	// model. You should generally use `automatic_scaling` with an
-	// appropriate
-	// `min_nodes` instead, but this option is available if you want
-	// predictable
-	// billing. Beware that latency and error rates will increase if
-	// the
-	// traffic exceeds that capability of the system to serve it based
-	// on
-	// the selected number of nodes.
-	ManualScaling *GoogleCloudMlV1beta1__ManualScaling `json:"manualScaling,omitempty"`
-
-	// Name: Required.The name specified for the version when it was
-	// created.
-	//
-	// The version name must be unique within the model it is created in.
-	Name string `json:"name,omitempty"`
-
-	// RuntimeVersion: Optional. The Google Cloud ML runtime version to use
-	// for this deployment.
-	// If not set, Google Cloud ML will choose a version.
-	RuntimeVersion string `json:"runtimeVersion,omitempty"`
-
-	// State: Output only. The state of a version.
-	//
-	// Possible values:
-	//   "UNKNOWN" - / The version state is unspecified.
-	//   "READY" - The version is ready for prediction.
-	//   "CREATING" - The version is still in the process of creation.
-	//   "FAILED" - The version failed to be created, possibly
-	// cancelled.
-	// `error_message` should contain the details of the failure.
-	State string `json:"state,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "AutomaticScaling") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "AutomaticScaling") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleCloudMlV1beta1__Version) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudMlV1beta1__Version
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleIamV1LogConfigCloudAuditOptions: Write a Cloud Audit log
-type GoogleIamV1LogConfigCloudAuditOptions struct {
-	// LogName: The log_name to populate in the Cloud Audit Record.
-	//
-	// Possible values:
-	//   "UNSPECIFIED_LOG_NAME" - Default. Should not be used.
-	//   "ADMIN_ACTIVITY" - Corresponds to
-	// "cloudaudit.googleapis.com/activity"
-	//   "DATA_ACCESS" - Corresponds to
-	// "cloudaudit.googleapis.com/data_access"
-	LogName string `json:"logName,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "LogName") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "LogName") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleIamV1LogConfigCloudAuditOptions) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleIamV1LogConfigCloudAuditOptions
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleIamV1LogConfigCounterOptions: Options for counters
-type GoogleIamV1LogConfigCounterOptions struct {
-	// Field: The field value to attribute.
-	Field string `json:"field,omitempty"`
-
-	// Metric: The metric to update.
-	Metric string `json:"metric,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Field") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Field") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleIamV1LogConfigCounterOptions) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleIamV1LogConfigCounterOptions
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleIamV1LogConfigDataAccessOptions: Write a Data Access (Gin) log
-type GoogleIamV1LogConfigDataAccessOptions struct {
 }
 
 // GoogleIamV1__AuditConfig: Specifies the audit configuration for a
@@ -2313,167 +1996,6 @@ func (s *GoogleIamV1__Binding) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// GoogleIamV1__Condition: A condition to be met.
-type GoogleIamV1__Condition struct {
-	// Iam: Trusted attributes supplied by the IAM system.
-	//
-	// Possible values:
-	//   "NO_ATTR" - Default non-attribute.
-	//   "AUTHORITY" - Either principal or (if present) authority selector.
-	//   "ATTRIBUTION" - The principal (even if an authority selector is
-	// present), which
-	// must only be used for attribution, not authorization.
-	//   "APPROVER" - An approver (distinct from the requester) that has
-	// authorized this
-	// request.
-	// When used with IN, the condition indicates that one of the
-	// approvers
-	// associated with the request matches the specified principal, or is
-	// a
-	// member of the specified group. Approvers can only grant
-	// additional
-	// access, and are thus only used in a strictly positive context
-	// (e.g. ALLOW/IN or DENY/NOT_IN).
-	//   "JUSTIFICATION_TYPE" - What types of justifications have been
-	// supplied with this request.
-	// String values should match enum names from
-	// tech.iam.JustificationType,
-	// e.g. "MANUAL_STRING". It is not permitted to grant access based
-	// on
-	// the *absence* of a justification, so justification conditions can
-	// only
-	// be used in a "positive" context (e.g., ALLOW/IN or
-	// DENY/NOT_IN).
-	//
-	// Multiple justifications, e.g., a Buganizer ID and a
-	// manually-entered
-	// reason, are normal and supported.
-	Iam string `json:"iam,omitempty"`
-
-	// Op: An operator to apply the subject with.
-	//
-	// Possible values:
-	//   "NO_OP" - Default no-op.
-	//   "EQUALS" - DEPRECATED. Use IN instead.
-	//   "NOT_EQUALS" - DEPRECATED. Use NOT_IN instead.
-	//   "IN" - The condition is true if the subject (or any element of it
-	// if it is
-	// a set) matches any of the supplied values.
-	//   "NOT_IN" - The condition is true if the subject (or every element
-	// of it if it is
-	// a set) matches none of the supplied values.
-	//   "DISCHARGED" - Subject is discharged
-	Op string `json:"op,omitempty"`
-
-	// Svc: Trusted attributes discharged by the service.
-	Svc string `json:"svc,omitempty"`
-
-	// Sys: Trusted attributes supplied by any service that owns resources
-	// and uses
-	// the IAM system for access control.
-	//
-	// Possible values:
-	//   "NO_ATTR" - Default non-attribute type
-	//   "REGION" - Region of the resource
-	//   "SERVICE" - Service name
-	//   "NAME" - Resource name
-	//   "IP" - IP address of the caller
-	Sys string `json:"sys,omitempty"`
-
-	// Value: DEPRECATED. Use 'values' instead.
-	Value string `json:"value,omitempty"`
-
-	// Values: The objects of the condition. This is mutually exclusive with
-	// 'value'.
-	Values []string `json:"values,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Iam") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Iam") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleIamV1__Condition) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleIamV1__Condition
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleIamV1__LogConfig: Specifies what kind of log the caller must
-// write
-// Increment a streamz counter with the specified metric and field
-// names.
-//
-// Metric names should start with a '/', generally be
-// lowercase-only,
-// and end in "_count". Field names should not contain an initial
-// slash.
-// The actual exported metric names will have "/iam/policy"
-// prepended.
-//
-// Field names correspond to IAM request parameters and field values
-// are
-// their respective values.
-//
-// At present the only supported field names are
-//    - "iam_principal", corresponding to IAMContext.principal;
-//    - "" (empty string), resulting in one aggretated counter with no
-// field.
-//
-// Examples:
-//   counter { metric: "/debug_access_count"  field: "iam_principal" }
-//   ==> increment counter /iam/policy/backend_debug_access_count
-//                         {iam_principal=[value of
-// IAMContext.principal]}
-//
-// At this time we do not support:
-// * multiple field names (though this may be supported in the future)
-// * decrementing the counter
-// * incrementing it by anything other than 1
-type GoogleIamV1__LogConfig struct {
-	// CloudAudit: Cloud audit options.
-	CloudAudit *GoogleIamV1LogConfigCloudAuditOptions `json:"cloudAudit,omitempty"`
-
-	// Counter: Counter options.
-	Counter *GoogleIamV1LogConfigCounterOptions `json:"counter,omitempty"`
-
-	// DataAccess: Data access options.
-	DataAccess *GoogleIamV1LogConfigDataAccessOptions `json:"dataAccess,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "CloudAudit") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "CloudAudit") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleIamV1__LogConfig) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleIamV1__LogConfig
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // GoogleIamV1__Policy: Defines an Identity and Access Management (IAM)
 // policy. It is used to
 // specify access control policies for Cloud Platform resources.
@@ -2541,20 +2063,6 @@ type GoogleIamV1__Policy struct {
 
 	IamOwned bool `json:"iamOwned,omitempty"`
 
-	// Rules: If more than one rule is specified, the rules are applied in
-	// the following
-	// manner:
-	// - All matching LOG rules are always applied.
-	// - If any DENY/DENY_WITH_LOG rule matches, permission is denied.
-	//   Logging will be applied if one or more matching rule requires
-	// logging.
-	// - Otherwise, if any ALLOW/ALLOW_WITH_LOG rule matches, permission is
-	//   granted.
-	//   Logging will be applied if one or more matching rule requires
-	// logging.
-	// - Otherwise, if no rule applies, permission is denied.
-	Rules []*GoogleIamV1__Rule `json:"rules,omitempty"`
-
 	// Version: Version of the `Policy`. The default version is 0.
 	Version int64 `json:"version,omitempty"`
 
@@ -2581,77 +2089,6 @@ type GoogleIamV1__Policy struct {
 
 func (s *GoogleIamV1__Policy) MarshalJSON() ([]byte, error) {
 	type noMethod GoogleIamV1__Policy
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// GoogleIamV1__Rule: A rule to be applied in a Policy.
-type GoogleIamV1__Rule struct {
-	// Action: Required
-	//
-	// Possible values:
-	//   "NO_ACTION" - Default no action.
-	//   "ALLOW" - Matching 'Entries' grant access.
-	//   "ALLOW_WITH_LOG" - Matching 'Entries' grant access and the caller
-	// promises to log
-	// the request per the returned log_configs.
-	//   "DENY" - Matching 'Entries' deny access.
-	//   "DENY_WITH_LOG" - Matching 'Entries' deny access and the caller
-	// promises to log
-	// the request per the returned log_configs.
-	//   "LOG" - Matching 'Entries' tell IAM.Check callers to generate logs.
-	Action string `json:"action,omitempty"`
-
-	// Conditions: Additional restrictions that must be met
-	Conditions []*GoogleIamV1__Condition `json:"conditions,omitempty"`
-
-	// Description: Human-readable description of the rule.
-	Description string `json:"description,omitempty"`
-
-	// In: If one or more 'in' clauses are specified, the rule matches
-	// if
-	// the PRINCIPAL/AUTHORITY_SELECTOR is in at least one of these entries.
-	In []string `json:"in,omitempty"`
-
-	// LogConfig: The config returned to callers of tech.iam.IAM.CheckPolicy
-	// for any entries
-	// that match the LOG action.
-	LogConfig []*GoogleIamV1__LogConfig `json:"logConfig,omitempty"`
-
-	// NotIn: If one or more 'not_in' clauses are specified, the rule
-	// matches
-	// if the PRINCIPAL/AUTHORITY_SELECTOR is in none of the entries.
-	// The format for in and not_in entries is the same as for members in
-	// a
-	// Binding (see google/iam/v1/policy.proto).
-	NotIn []string `json:"notIn,omitempty"`
-
-	// Permissions: A permission is a string of form '<service>.<resource
-	// type>.<verb>'
-	// (e.g., 'storage.buckets.list'). A value of '*' matches all
-	// permissions,
-	// and a verb part of '*' (e.g., 'storage.buckets.*') matches all verbs.
-	Permissions []string `json:"permissions,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Action") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Action") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleIamV1__Rule) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleIamV1__Rule
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -2812,8 +2249,8 @@ func (s *GoogleLongrunning__ListOperationsResponse) MarshalJSON() ([]byte, error
 type GoogleLongrunning__Operation struct {
 	// Done: If the value is `false`, it means the operation is still in
 	// progress.
-	// If true, the operation is completed, and either `error` or `response`
-	// is
+	// If `true`, the operation is completed, and either `error` or
+	// `response` is
 	// available.
 	Done bool `json:"done,omitempty"`
 
@@ -2983,9 +2420,9 @@ type GoogleRpc__Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details.  There will
-	// be a
-	// common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details.  There is a
+	// common set of
+	// message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
@@ -3764,6 +3201,148 @@ func (c *ProjectsJobsGetCall) Do(opts ...googleapi.CallOption) (*GoogleCloudMlV1
 
 }
 
+// method id "ml.projects.jobs.getIamPolicy":
+
+type ProjectsJobsGetIamPolicyCall struct {
+	s            *Service
+	resource     string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetIamPolicy: Gets the access control policy for a resource.
+// Returns an empty policy if the resource exists and does not have a
+// policy
+// set.
+func (r *ProjectsJobsService) GetIamPolicy(resource string) *ProjectsJobsGetIamPolicyCall {
+	c := &ProjectsJobsGetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobsGetIamPolicyCall) Fields(s ...googleapi.Field) *ProjectsJobsGetIamPolicyCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsJobsGetIamPolicyCall) IfNoneMatch(entityTag string) *ProjectsJobsGetIamPolicyCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobsGetIamPolicyCall) Context(ctx context.Context) *ProjectsJobsGetIamPolicyCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobsGetIamPolicyCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobsGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:getIamPolicy")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "ml.projects.jobs.getIamPolicy" call.
+// Exactly one of *GoogleIamV1__Policy or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *GoogleIamV1__Policy.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsJobsGetIamPolicyCall) Do(opts ...googleapi.CallOption) (*GoogleIamV1__Policy, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GoogleIamV1__Policy{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets the access control policy for a resource.\nReturns an empty policy if the resource exists and does not have a policy\nset.",
+	//   "flatPath": "v1/projects/{projectsId}/jobs/{jobsId}:getIamPolicy",
+	//   "httpMethod": "GET",
+	//   "id": "ml.projects.jobs.getIamPolicy",
+	//   "parameterOrder": [
+	//     "resource"
+	//   ],
+	//   "parameters": {
+	//     "resource": {
+	//       "description": "REQUIRED: The resource for which the policy is being requested.\nSee the operation documentation for the appropriate value for this field.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/jobs/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+resource}:getIamPolicy",
+	//   "response": {
+	//     "$ref": "GoogleIamV1__Policy"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "ml.projects.jobs.list":
 
 type ProjectsJobsListCall struct {
@@ -3969,6 +3548,289 @@ func (c *ProjectsJobsListCall) Pages(ctx context.Context, f func(*GoogleCloudMlV
 		}
 		c.PageToken(x.NextPageToken)
 	}
+}
+
+// method id "ml.projects.jobs.setIamPolicy":
+
+type ProjectsJobsSetIamPolicyCall struct {
+	s                                *Service
+	resource                         string
+	googleiamv1__setiampolicyrequest *GoogleIamV1__SetIamPolicyRequest
+	urlParams_                       gensupport.URLParams
+	ctx_                             context.Context
+	header_                          http.Header
+}
+
+// SetIamPolicy: Sets the access control policy on the specified
+// resource. Replaces any
+// existing policy.
+func (r *ProjectsJobsService) SetIamPolicy(resource string, googleiamv1__setiampolicyrequest *GoogleIamV1__SetIamPolicyRequest) *ProjectsJobsSetIamPolicyCall {
+	c := &ProjectsJobsSetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	c.googleiamv1__setiampolicyrequest = googleiamv1__setiampolicyrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobsSetIamPolicyCall) Fields(s ...googleapi.Field) *ProjectsJobsSetIamPolicyCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobsSetIamPolicyCall) Context(ctx context.Context) *ProjectsJobsSetIamPolicyCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobsSetIamPolicyCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobsSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googleiamv1__setiampolicyrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:setIamPolicy")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "ml.projects.jobs.setIamPolicy" call.
+// Exactly one of *GoogleIamV1__Policy or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *GoogleIamV1__Policy.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsJobsSetIamPolicyCall) Do(opts ...googleapi.CallOption) (*GoogleIamV1__Policy, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GoogleIamV1__Policy{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Sets the access control policy on the specified resource. Replaces any\nexisting policy.",
+	//   "flatPath": "v1/projects/{projectsId}/jobs/{jobsId}:setIamPolicy",
+	//   "httpMethod": "POST",
+	//   "id": "ml.projects.jobs.setIamPolicy",
+	//   "parameterOrder": [
+	//     "resource"
+	//   ],
+	//   "parameters": {
+	//     "resource": {
+	//       "description": "REQUIRED: The resource for which the policy is being specified.\nSee the operation documentation for the appropriate value for this field.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/jobs/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+resource}:setIamPolicy",
+	//   "request": {
+	//     "$ref": "GoogleIamV1__SetIamPolicyRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "GoogleIamV1__Policy"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "ml.projects.jobs.testIamPermissions":
+
+type ProjectsJobsTestIamPermissionsCall struct {
+	s                                      *Service
+	resource                               string
+	googleiamv1__testiampermissionsrequest *GoogleIamV1__TestIamPermissionsRequest
+	urlParams_                             gensupport.URLParams
+	ctx_                                   context.Context
+	header_                                http.Header
+}
+
+// TestIamPermissions: Returns permissions that a caller has on the
+// specified resource.
+// If the resource does not exist, this will return an empty set
+// of
+// permissions, not a NOT_FOUND error.
+//
+// Note: This operation is designed to be used for building
+// permission-aware
+// UIs and command-line tools, not for authorization checking. This
+// operation
+// may "fail open" without warning.
+func (r *ProjectsJobsService) TestIamPermissions(resource string, googleiamv1__testiampermissionsrequest *GoogleIamV1__TestIamPermissionsRequest) *ProjectsJobsTestIamPermissionsCall {
+	c := &ProjectsJobsTestIamPermissionsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	c.googleiamv1__testiampermissionsrequest = googleiamv1__testiampermissionsrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsJobsTestIamPermissionsCall) Fields(s ...googleapi.Field) *ProjectsJobsTestIamPermissionsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsJobsTestIamPermissionsCall) Context(ctx context.Context) *ProjectsJobsTestIamPermissionsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsJobsTestIamPermissionsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsJobsTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.googleiamv1__testiampermissionsrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:testIamPermissions")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "ml.projects.jobs.testIamPermissions" call.
+// Exactly one of *GoogleIamV1__TestIamPermissionsResponse or error will
+// be non-nil. Any non-2xx status code is an error. Response headers are
+// in either
+// *GoogleIamV1__TestIamPermissionsResponse.ServerResponse.Header or (if
+// a response was returned at all) in error.(*googleapi.Error).Header.
+// Use googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsJobsTestIamPermissionsCall) Do(opts ...googleapi.CallOption) (*GoogleIamV1__TestIamPermissionsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GoogleIamV1__TestIamPermissionsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Returns permissions that a caller has on the specified resource.\nIf the resource does not exist, this will return an empty set of\npermissions, not a NOT_FOUND error.\n\nNote: This operation is designed to be used for building permission-aware\nUIs and command-line tools, not for authorization checking. This operation\nmay \"fail open\" without warning.",
+	//   "flatPath": "v1/projects/{projectsId}/jobs/{jobsId}:testIamPermissions",
+	//   "httpMethod": "POST",
+	//   "id": "ml.projects.jobs.testIamPermissions",
+	//   "parameterOrder": [
+	//     "resource"
+	//   ],
+	//   "parameters": {
+	//     "resource": {
+	//       "description": "REQUIRED: The resource for which the policy detail is being requested.\nSee the operation documentation for the appropriate value for this field.",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/jobs/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+resource}:testIamPermissions",
+	//   "request": {
+	//     "$ref": "GoogleIamV1__TestIamPermissionsRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "GoogleIamV1__TestIamPermissionsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
 }
 
 // method id "ml.projects.models.create":
@@ -5768,7 +5630,7 @@ func (c *ProjectsModelsVersionsSetDefaultCall) Do(opts ...googleapi.CallOption) 
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "Required. The name of the version to make the default for the model. You\ncan get the names of all the versions of a model by calling\n[projects.models.versions.list](/ml-engine/reference/rest/v1/projects.models.versions/list).\n\nAuthorization: `ml.models.update` permission is required on the parent model.",
+	//       "description": "Required. The name of the version to make the default for the model. You\ncan get the names of all the versions of a model by calling\n[projects.models.versions.list](/ml-engine/reference/rest/v1/projects.models.versions/list).",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/models/[^/]+/versions/[^/]+$",
 	//       "required": true,

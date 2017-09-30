@@ -29,10 +29,6 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-var (
-	errorGroupGroupPathTemplate = gax.MustCompilePathTemplate("projects/{project}/groups/{group}")
-)
-
 // ErrorGroupCallOptions contains the retry settings for each method of ErrorGroupClient.
 type ErrorGroupCallOptions struct {
 	GetGroup    []gax.CallOption
@@ -122,14 +118,12 @@ func (c *ErrorGroupClient) SetGoogleClientInfo(keyval ...string) {
 
 // ErrorGroupGroupPath returns the path for the group resource.
 func ErrorGroupGroupPath(project, group string) string {
-	path, err := errorGroupGroupPathTemplate.Render(map[string]string{
-		"project": project,
-		"group":   group,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		"/groups/" +
+		group +
+		""
 }
 
 // GetGroup get the specified group.

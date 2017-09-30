@@ -554,7 +554,21 @@ type ListUpdateRequest struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "SOCIAL_ENGINEERING_INTERNAL" - Social engineering threat type for
+	// internal use.
+	//   "API_ABUSE" - API abuse threat type.
 	//   "MALICIOUS_BINARY" - Malicious binary threat type.
+	//   "CSD_WHITELIST" - Client side detection whitelist threat type.
+	//   "CSD_DOWNLOAD_WHITELIST" - Client side download detection whitelist
+	// threat type.
+	//   "CLIENT_INCIDENT" - Client incident threat type.
+	//   "CLIENT_INCIDENT_WHITELIST" - Whitelist used when detecting client
+	// incident threats.
+	// This enum was never launched and should be re-used for the next list.
+	//   "APK_MALWARE_OFFLINE" - List used for offline APK checks in PAM.
+	//   "SUBRESOURCE_FILTER" - Patterns to be used for activating the
+	// subresource filter. Interstitial
+	// will not be shown for patterns from this list.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Constraints") to
@@ -658,7 +672,21 @@ type ListUpdateResponse struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "SOCIAL_ENGINEERING_INTERNAL" - Social engineering threat type for
+	// internal use.
+	//   "API_ABUSE" - API abuse threat type.
 	//   "MALICIOUS_BINARY" - Malicious binary threat type.
+	//   "CSD_WHITELIST" - Client side detection whitelist threat type.
+	//   "CSD_DOWNLOAD_WHITELIST" - Client side download detection whitelist
+	// threat type.
+	//   "CLIENT_INCIDENT" - Client incident threat type.
+	//   "CLIENT_INCIDENT_WHITELIST" - Whitelist used when detecting client
+	// incident threats.
+	// This enum was never launched and should be re-used for the next list.
+	//   "APK_MALWARE_OFFLINE" - List used for offline APK checks in PAM.
+	//   "SUBRESOURCE_FILTER" - Patterns to be used for activating the
+	// subresource filter. Interstitial
+	// will not be shown for patterns from this list.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Additions") to
@@ -1017,7 +1045,21 @@ type ThreatInfo struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "SOCIAL_ENGINEERING_INTERNAL" - Social engineering threat type for
+	// internal use.
+	//   "API_ABUSE" - API abuse threat type.
 	//   "MALICIOUS_BINARY" - Malicious binary threat type.
+	//   "CSD_WHITELIST" - Client side detection whitelist threat type.
+	//   "CSD_DOWNLOAD_WHITELIST" - Client side download detection whitelist
+	// threat type.
+	//   "CLIENT_INCIDENT" - Client incident threat type.
+	//   "CLIENT_INCIDENT_WHITELIST" - Whitelist used when detecting client
+	// incident threats.
+	// This enum was never launched and should be re-used for the next list.
+	//   "APK_MALWARE_OFFLINE" - List used for offline APK checks in PAM.
+	//   "SUBRESOURCE_FILTER" - Patterns to be used for activating the
+	// subresource filter. Interstitial
+	// will not be shown for patterns from this list.
 	ThreatTypes []string `json:"threatTypes,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PlatformTypes") to
@@ -1085,7 +1127,21 @@ type ThreatListDescriptor struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "SOCIAL_ENGINEERING_INTERNAL" - Social engineering threat type for
+	// internal use.
+	//   "API_ABUSE" - API abuse threat type.
 	//   "MALICIOUS_BINARY" - Malicious binary threat type.
+	//   "CSD_WHITELIST" - Client side detection whitelist threat type.
+	//   "CSD_DOWNLOAD_WHITELIST" - Client side download detection whitelist
+	// threat type.
+	//   "CLIENT_INCIDENT" - Client incident threat type.
+	//   "CLIENT_INCIDENT_WHITELIST" - Whitelist used when detecting client
+	// incident threats.
+	// This enum was never launched and should be re-used for the next list.
+	//   "APK_MALWARE_OFFLINE" - List used for offline APK checks in PAM.
+	//   "SUBRESOURCE_FILTER" - Patterns to be used for activating the
+	// subresource filter. Interstitial
+	// will not be shown for patterns from this list.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "PlatformType") to
@@ -1161,7 +1217,21 @@ type ThreatMatch struct {
 	//   "UNWANTED_SOFTWARE" - Unwanted software threat type.
 	//   "POTENTIALLY_HARMFUL_APPLICATION" - Potentially harmful application
 	// threat type.
+	//   "SOCIAL_ENGINEERING_INTERNAL" - Social engineering threat type for
+	// internal use.
+	//   "API_ABUSE" - API abuse threat type.
 	//   "MALICIOUS_BINARY" - Malicious binary threat type.
+	//   "CSD_WHITELIST" - Client side detection whitelist threat type.
+	//   "CSD_DOWNLOAD_WHITELIST" - Client side download detection whitelist
+	// threat type.
+	//   "CLIENT_INCIDENT" - Client incident threat type.
+	//   "CLIENT_INCIDENT_WHITELIST" - Whitelist used when detecting client
+	// incident threats.
+	// This enum was never launched and should be re-used for the next list.
+	//   "APK_MALWARE_OFFLINE" - List used for offline APK checks in PAM.
+	//   "SUBRESOURCE_FILTER" - Patterns to be used for activating the
+	// subresource filter. Interstitial
+	// will not be shown for patterns from this list.
 	ThreatType string `json:"threatType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CacheDuration") to

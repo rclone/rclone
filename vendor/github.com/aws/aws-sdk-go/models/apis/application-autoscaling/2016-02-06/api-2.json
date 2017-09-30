@@ -261,6 +261,7 @@
         "NextToken":{"shape":"XmlString"}
       }
     },
+    "DisableScaleIn":{"type":"boolean"},
     "ErrorMessage":{"type":"string"},
     "FailedResourceAccessException":{
       "type":"structure",
@@ -582,7 +583,8 @@
         "PredefinedMetricSpecification":{"shape":"PredefinedMetricSpecification"},
         "CustomizedMetricSpecification":{"shape":"CustomizedMetricSpecification"},
         "ScaleOutCooldown":{"shape":"Cooldown"},
-        "ScaleInCooldown":{"shape":"Cooldown"}
+        "ScaleInCooldown":{"shape":"Cooldown"},
+        "DisableScaleIn":{"shape":"DisableScaleIn"}
       }
     },
     "TimestampType":{"type":"timestamp"},

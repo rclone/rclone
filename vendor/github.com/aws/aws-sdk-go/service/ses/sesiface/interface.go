@@ -21,7 +21,7 @@ import (
 //
 // The best way to use this interface is so the SDK's service client's calls
 // can be stubbed out for unit testing your code with the SDK without needing
-// to inject custom request handlers into the the SDK's request pipeline.
+// to inject custom request handlers into the SDK's request pipeline.
 //
 //    // myFunc uses an SDK service client to make a request to
 //    // Amazon Simple Email Service.
@@ -72,6 +72,10 @@ type SESAPI interface {
 	CreateConfigurationSetEventDestinationWithContext(aws.Context, *ses.CreateConfigurationSetEventDestinationInput, ...request.Option) (*ses.CreateConfigurationSetEventDestinationOutput, error)
 	CreateConfigurationSetEventDestinationRequest(*ses.CreateConfigurationSetEventDestinationInput) (*request.Request, *ses.CreateConfigurationSetEventDestinationOutput)
 
+	CreateConfigurationSetTrackingOptions(*ses.CreateConfigurationSetTrackingOptionsInput) (*ses.CreateConfigurationSetTrackingOptionsOutput, error)
+	CreateConfigurationSetTrackingOptionsWithContext(aws.Context, *ses.CreateConfigurationSetTrackingOptionsInput, ...request.Option) (*ses.CreateConfigurationSetTrackingOptionsOutput, error)
+	CreateConfigurationSetTrackingOptionsRequest(*ses.CreateConfigurationSetTrackingOptionsInput) (*request.Request, *ses.CreateConfigurationSetTrackingOptionsOutput)
+
 	CreateReceiptFilter(*ses.CreateReceiptFilterInput) (*ses.CreateReceiptFilterOutput, error)
 	CreateReceiptFilterWithContext(aws.Context, *ses.CreateReceiptFilterInput, ...request.Option) (*ses.CreateReceiptFilterOutput, error)
 	CreateReceiptFilterRequest(*ses.CreateReceiptFilterInput) (*request.Request, *ses.CreateReceiptFilterOutput)
@@ -91,6 +95,10 @@ type SESAPI interface {
 	DeleteConfigurationSetEventDestination(*ses.DeleteConfigurationSetEventDestinationInput) (*ses.DeleteConfigurationSetEventDestinationOutput, error)
 	DeleteConfigurationSetEventDestinationWithContext(aws.Context, *ses.DeleteConfigurationSetEventDestinationInput, ...request.Option) (*ses.DeleteConfigurationSetEventDestinationOutput, error)
 	DeleteConfigurationSetEventDestinationRequest(*ses.DeleteConfigurationSetEventDestinationInput) (*request.Request, *ses.DeleteConfigurationSetEventDestinationOutput)
+
+	DeleteConfigurationSetTrackingOptions(*ses.DeleteConfigurationSetTrackingOptionsInput) (*ses.DeleteConfigurationSetTrackingOptionsOutput, error)
+	DeleteConfigurationSetTrackingOptionsWithContext(aws.Context, *ses.DeleteConfigurationSetTrackingOptionsInput, ...request.Option) (*ses.DeleteConfigurationSetTrackingOptionsOutput, error)
+	DeleteConfigurationSetTrackingOptionsRequest(*ses.DeleteConfigurationSetTrackingOptionsInput) (*request.Request, *ses.DeleteConfigurationSetTrackingOptionsOutput)
 
 	DeleteIdentity(*ses.DeleteIdentityInput) (*ses.DeleteIdentityOutput, error)
 	DeleteIdentityWithContext(aws.Context, *ses.DeleteIdentityInput, ...request.Option) (*ses.DeleteIdentityOutput, error)
@@ -238,6 +246,10 @@ type SESAPI interface {
 	UpdateConfigurationSetEventDestination(*ses.UpdateConfigurationSetEventDestinationInput) (*ses.UpdateConfigurationSetEventDestinationOutput, error)
 	UpdateConfigurationSetEventDestinationWithContext(aws.Context, *ses.UpdateConfigurationSetEventDestinationInput, ...request.Option) (*ses.UpdateConfigurationSetEventDestinationOutput, error)
 	UpdateConfigurationSetEventDestinationRequest(*ses.UpdateConfigurationSetEventDestinationInput) (*request.Request, *ses.UpdateConfigurationSetEventDestinationOutput)
+
+	UpdateConfigurationSetTrackingOptions(*ses.UpdateConfigurationSetTrackingOptionsInput) (*ses.UpdateConfigurationSetTrackingOptionsOutput, error)
+	UpdateConfigurationSetTrackingOptionsWithContext(aws.Context, *ses.UpdateConfigurationSetTrackingOptionsInput, ...request.Option) (*ses.UpdateConfigurationSetTrackingOptionsOutput, error)
+	UpdateConfigurationSetTrackingOptionsRequest(*ses.UpdateConfigurationSetTrackingOptionsInput) (*request.Request, *ses.UpdateConfigurationSetTrackingOptionsOutput)
 
 	UpdateReceiptRule(*ses.UpdateReceiptRuleInput) (*ses.UpdateReceiptRuleOutput, error)
 	UpdateReceiptRuleWithContext(aws.Context, *ses.UpdateReceiptRuleInput, ...request.Option) (*ses.UpdateReceiptRuleOutput, error)

@@ -5,14 +5,11 @@ services:
 
 language: go
 go:
+  - 1.6
   - 1.7
-
-env:
-  matrix:
-    - GO_VERSION=1.8
-    - GO_VERSION=1.7
-    - GO_VERSION=1.6
-    - GO_VERSION=1.5
+  - 1.8
+  - 1.9
+  - master
 
 cache:
   directories:
@@ -32,14 +29,14 @@ before_install:
       mv linux-amd64 glide-v0.12.3;
     fi
   - pushd glide-v0.12.3 && sudo cp glide /usr/local/bin && popd
-  - if [[ ! -d "./snips-v0.1.0" ]]; then
-      wget https://github.com/yunify/snips/releases/download/v0.1.0/snips-v0.1.0-linux_amd64.tar.gz &&
-      mkdir snips-v0.1.0 &&
-      pushd snips-v0.1.0 &&
-      tar -vxzf ../snips-v0.1.0-linux_amd64.tar.gz &&
+  - if [[ ! -d "./snips-v0.2.8" ]]; then
+      wget https://github.com/yunify/snips/releases/download/v0.2.8/snips-v0.2.8-linux_amd64.tar.gz &&
+      mkdir snips-v0.2.8 &&
+      pushd snips-v0.2.8 &&
+      tar -vxzf ../snips-v0.2.8-linux_amd64.tar.gz &&
       popd;
     fi
-  - pushd snips-v0.1.0 && sudo cp snips /usr/local/bin && popd
+  - pushd snips-v0.2.8 && sudo cp snips /usr/local/bin && popd
   - popd
   - /usr/local/bin/make --version
   - /usr/local/bin/glide --version
@@ -47,6 +44,7 @@ before_install:
 install:
   - go get -u github.com/golang/lint/golint;
   - glide install
+  - git submodule init
 
 before_script:
   - /usr/local/bin/make update
@@ -55,4 +53,4 @@ before_script:
 script:
   - /usr/local/bin/make check
   - /usr/local/bin/make release
-  - /usr/local/bin/make test-runtime-go-${GO_VERSION}
+  - /usr/local/bin/make build test test-coverage

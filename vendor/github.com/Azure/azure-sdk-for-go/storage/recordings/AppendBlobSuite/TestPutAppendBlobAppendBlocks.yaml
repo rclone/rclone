@@ -7,12 +7,11 @@ interactions:
     form: {}
     headers:
       Authorization:
-      - SharedKey golangrocksonazure:beFu17HY2hWcGvLuGRs9+6f2pmSpZqAl87ViaqbejAU=
+      - SharedKey golangrocksonazure:pqcZ0tfSvSANHaDKvBG8VArIzT37Ayy8xrtm4hDh3IQ=
       User-Agent:
-      - Go/go1.9beta1 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31
-        blob
+      - Go/go1.8 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31 blob
       x-ms-date:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       x-ms-version:
       - 2016-05-31
     url: https://golangrocksonazure.blob.core.windows.net/cnt-45appendblobsuitetestputappe?restype=container
@@ -21,15 +20,15 @@ interactions:
     body: ""
     headers:
       Date:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Etag:
-      - '"0x8D4CFC7C890FE4B"'
+      - '"0x8D4FC96D98E16B5"'
       Last-Modified:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       X-Ms-Request-Id:
-      - 7d612dd4-0001-0009-1eb0-01ca46000000
+      - 7bf8dde3-001e-0009-077f-2e1837000000
       X-Ms-Version:
       - 2016-05-31
     status: 201 Created
@@ -39,14 +38,13 @@ interactions:
     form: {}
     headers:
       Authorization:
-      - SharedKey golangrocksonazure:GrbdWcG/3Szoi5jGHhIIvNcZd9XqIGo57Dspquiuadk=
+      - SharedKey golangrocksonazure:iOW5xKnE/mPUQJ8wJn+JfeKmrWNd6DgwVgbPZ/lK7X8=
       User-Agent:
-      - Go/go1.9beta1 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31
-        blob
+      - Go/go1.8 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31 blob
       x-ms-blob-type:
       - AppendBlob
       x-ms-date:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       x-ms-version:
       - 2016-05-31
     url: https://golangrocksonazure.blob.core.windows.net/cnt-45appendblobsuitetestputappe/blob/45appendblobsuitetestputappendblobappendblocks
@@ -55,17 +53,17 @@ interactions:
     body: ""
     headers:
       Date:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Etag:
-      - '"0x8D4CFC7C8EDB705"'
+      - '"0x8D4FC96D99869BE"'
       Last-Modified:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       X-Ms-Request-Id:
-      - 7d612dd6-0001-0009-1fb0-01ca46000000
+      - 7bf8de12-001e-0009-327f-2e1837000000
       X-Ms-Request-Server-Encrypted:
-      - "true"
+      - "false"
       X-Ms-Version:
       - 2016-05-31
     status: 201 Created
@@ -87,16 +85,15 @@ interactions:
     form: {}
     headers:
       Authorization:
-      - SharedKey golangrocksonazure:HjxCSD8uk4ABhtv57Bufa1NLF94i/3YWdYkS2IPQQbk=
+      - SharedKey golangrocksonazure:A5Y9DfvvoiRJvcz6/0cIssbxA1Ra/FowzUgrCfj3QLc=
       Content-Length:
       - "1024"
       User-Agent:
-      - Go/go1.9beta1 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31
-        blob
+      - Go/go1.8 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31 blob
       x-ms-blob-type:
       - AppendBlob
       x-ms-date:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       x-ms-version:
       - 2016-05-31
     url: https://golangrocksonazure.blob.core.windows.net/cnt-45appendblobsuitetestputappe/blob/45appendblobsuitetestputappendblobappendblocks?comp=appendblock
@@ -107,11 +104,11 @@ interactions:
       Content-Md5:
       - 0rZVY1m4cHz874drfCSd/w==
       Date:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Etag:
-      - '"0x8D4CFC7C8EF3DE7"'
+      - '"0x8D4FC96D9A6EB4D"'
       Last-Modified:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       X-Ms-Blob-Append-Offset:
@@ -119,9 +116,9 @@ interactions:
       X-Ms-Blob-Committed-Block-Count:
       - "1"
       X-Ms-Request-Id:
-      - 7d612dd8-0001-0009-21b0-01ca46000000
+      - 7bf8de2b-001e-0009-487f-2e1837000000
       X-Ms-Request-Server-Encrypted:
-      - "true"
+      - "false"
       X-Ms-Version:
       - 2016-05-31
     status: 201 Created
@@ -131,14 +128,13 @@ interactions:
     form: {}
     headers:
       Authorization:
-      - SharedKey golangrocksonazure:c7IaA0dgWHn2eBWJrCHwcxvHAWsUBgafE39LVT11yd8=
+      - SharedKey golangrocksonazure:w0LEs15qm+SmiWxsqt+cJ9NHjYUnpxIYoIQcC5JHsCE=
       Range:
       - bytes=0-1023
       User-Agent:
-      - Go/go1.9beta1 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31
-        blob
+      - Go/go1.8 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31 blob
       x-ms-date:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       x-ms-version:
       - 2016-05-31
     url: https://golangrocksonazure.blob.core.windows.net/cnt-45appendblobsuitetestputappe/blob/45appendblobsuitetestputappendblobappendblocks
@@ -167,11 +163,11 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Etag:
-      - '"0x8D4CFC7C8EF3DE7"'
+      - '"0x8D4FC96D9A6EB4D"'
       Last-Modified:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       X-Ms-Blob-Committed-Block-Count:
@@ -183,9 +179,9 @@ interactions:
       X-Ms-Lease-Status:
       - unlocked
       X-Ms-Request-Id:
-      - 7d612dd9-0001-0009-22b0-01ca46000000
+      - 7bf8de51-001e-0009-627f-2e1837000000
       X-Ms-Server-Encrypted:
-      - "true"
+      - "false"
       X-Ms-Version:
       - 2016-05-31
     status: 206 Partial Content
@@ -201,16 +197,17 @@ interactions:
     form: {}
     headers:
       Authorization:
-      - SharedKey golangrocksonazure:kqYe2AmOiFbK4TNd98nmpeiBvUeSvQoJ2Ir12V72dnQ=
+      - SharedKey golangrocksonazure:uk3Zxcf4nEQ5P2/aIggtvuSlJDeNjzzKSSSLMwOG/kY=
       Content-Length:
       - "512"
+      Content-MD5:
+      - 2Xr7q2sERdQmQ41hZ7sPvQ==
       User-Agent:
-      - Go/go1.9beta1 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31
-        blob
+      - Go/go1.8 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31 blob
       x-ms-blob-type:
       - AppendBlob
       x-ms-date:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       x-ms-version:
       - 2016-05-31
     url: https://golangrocksonazure.blob.core.windows.net/cnt-45appendblobsuitetestputappe/blob/45appendblobsuitetestputappendblobappendblocks?comp=appendblock
@@ -221,11 +218,11 @@ interactions:
       Content-Md5:
       - 2Xr7q2sERdQmQ41hZ7sPvQ==
       Date:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Etag:
-      - '"0x8D4CFC7C8F2249E"'
+      - '"0x8D4FC96D9B545C4"'
       Last-Modified:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       X-Ms-Blob-Append-Offset:
@@ -233,9 +230,9 @@ interactions:
       X-Ms-Blob-Committed-Block-Count:
       - "2"
       X-Ms-Request-Id:
-      - 7d612dda-0001-0009-23b0-01ca46000000
+      - 7bf8de57-001e-0009-677f-2e1837000000
       X-Ms-Request-Server-Encrypted:
-      - "true"
+      - "false"
       X-Ms-Version:
       - 2016-05-31
     status: 201 Created
@@ -245,14 +242,13 @@ interactions:
     form: {}
     headers:
       Authorization:
-      - SharedKey golangrocksonazure:LYdivrAnQs8j8vQr0Z7Loz0llJMiDZ8WCSQ+7g+caVw=
+      - SharedKey golangrocksonazure:ebyFYeB4Ggxei3Op3fjAty8VZ3H8LGGSWvMbCEhSo0U=
       Range:
       - bytes=0-1535
       User-Agent:
-      - Go/go1.9beta1 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31
-        blob
+      - Go/go1.8 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31 blob
       x-ms-date:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       x-ms-version:
       - 2016-05-31
     url: https://golangrocksonazure.blob.core.windows.net/cnt-45appendblobsuitetestputappe/blob/45appendblobsuitetestputappendblobappendblocks
@@ -288,11 +284,11 @@ interactions:
       Content-Type:
       - application/octet-stream
       Date:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Etag:
-      - '"0x8D4CFC7C8F2249E"'
+      - '"0x8D4FC96D9B545C4"'
       Last-Modified:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       X-Ms-Blob-Committed-Block-Count:
@@ -304,9 +300,9 @@ interactions:
       X-Ms-Lease-Status:
       - unlocked
       X-Ms-Request-Id:
-      - 7d612ddb-0001-0009-24b0-01ca46000000
+      - 7bf8de60-001e-0009-707f-2e1837000000
       X-Ms-Server-Encrypted:
-      - "true"
+      - "false"
       X-Ms-Version:
       - 2016-05-31
     status: 206 Partial Content
@@ -316,12 +312,11 @@ interactions:
     form: {}
     headers:
       Authorization:
-      - SharedKey golangrocksonazure:1+EQAh17h1Lea64FEJOjlXFBuLWk15xpVkaiVdIh+GA=
+      - SharedKey golangrocksonazure:PqIFy4EpV3Pu2cZbT7BA6PtfMIbIWL6v/TBw20v03kM=
       User-Agent:
-      - Go/go1.9beta1 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31
-        blob
+      - Go/go1.8 (amd64-windows) azure-storage-go/10.0.2 api-version/2016-05-31 blob
       x-ms-date:
-      - Thu, 20 Jul 2017 23:33:54 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       x-ms-version:
       - 2016-05-31
     url: https://golangrocksonazure.blob.core.windows.net/cnt-45appendblobsuitetestputappe?restype=container
@@ -330,11 +325,11 @@ interactions:
     body: ""
     headers:
       Date:
-      - Thu, 20 Jul 2017 23:33:53 GMT
+      - Sat, 16 Sep 2017 00:06:59 GMT
       Server:
       - Windows-Azure-Blob/1.0 Microsoft-HTTPAPI/2.0
       X-Ms-Request-Id:
-      - 7d612ddc-0001-0009-25b0-01ca46000000
+      - 7bf8de6c-001e-0009-7a7f-2e1837000000
       X-Ms-Version:
       - 2016-05-31
     status: 202 Accepted

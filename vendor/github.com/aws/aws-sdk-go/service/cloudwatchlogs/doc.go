@@ -4,30 +4,30 @@
 // requests to Amazon CloudWatch Logs.
 //
 // You can use Amazon CloudWatch Logs to monitor, store, and access your log
-// files from EC2 instances, Amazon CloudTrail, or other sources. You can then
-// retrieve the associated log data from CloudWatch Logs using the Amazon CloudWatch
-// console, the CloudWatch Logs commands in the AWS CLI, the CloudWatch Logs
-// API, or the CloudWatch Logs SDK.
+// files from Amazon EC2 instances, AWS CloudTrail, or other sources. You can
+// then retrieve the associated log data from CloudWatch Logs using the CloudWatch
+// console, CloudWatch Logs commands in the AWS CLI, CloudWatch Logs API, or
+// CloudWatch Logs SDK.
 //
 // You can use CloudWatch Logs to:
 //
-//    * Monitor Logs from Amazon EC2 Instances in Real-time: You can use CloudWatch
+//    * Monitor logs from EC2 instances in real-time: You can use CloudWatch
 //    Logs to monitor applications and systems using log data. For example,
 //    CloudWatch Logs can track the number of errors that occur in your application
 //    logs and send you a notification whenever the rate of errors exceeds a
-//    threshold you specify. CloudWatch Logs uses your log data for monitoring;
+//    threshold that you specify. CloudWatch Logs uses your log data for monitoring;
 //    so, no code changes are required. For example, you can monitor application
 //    logs for specific literal terms (such as "NullReferenceException") or
 //    count the number of occurrences of a literal term at a particular position
 //    in log data (such as "404" status codes in an Apache access log). When
 //    the term you are searching for is found, CloudWatch Logs reports the data
-//    to a Amazon CloudWatch metric that you specify.
+//    to a CloudWatch metric that you specify.
 //
-//    * Monitor Amazon CloudTrail Logged Events: You can create alarms in Amazon
-//    CloudWatch and receive notifications of particular API activity as captured
-//    by CloudTrail and use the notification to perform troubleshooting.
+//    * Monitor AWS CloudTrail logged events: You can create alarms in CloudWatch
+//    and receive notifications of particular API activity as captured by CloudTrail
+//    and use the notification to perform troubleshooting.
 //
-//    * Archive Log Data: You can use CloudWatch Logs to store your log data
+//    * Archive log data: You can use CloudWatch Logs to store your log data
 //    in highly durable storage. You can change the log retention setting so
 //    that any log events older than this setting are automatically deleted.
 //    The CloudWatch Logs agent makes it easy to quickly send both rotated and
@@ -41,69 +41,17 @@
 //
 // Using the Client
 //
-// To use the client for Amazon CloudWatch Logs you will first need
-// to create a new instance of it.
+// To Amazon CloudWatch Logs with the SDK use the New function to create
+// a new service client. With that client you can make API requests to the service.
+// These clients are safe to use concurrently.
 //
-// When creating a client for an AWS service you'll first need to have a Session
-// already created. The Session provides configuration that can be shared
-// between multiple service clients. Additional configuration can be applied to
-// the Session and service's client when they are constructed. The aws package's
-// Config type contains several fields such as Region for the AWS Region the
-// client should make API requests too. The optional Config value can be provided
-// as the variadic argument for Sessions and client creation.
-//
-// Once the service's client is created you can use it to make API requests the
-// AWS service. These clients are safe to use concurrently.
-//
-//   // Create a session to share configuration, and load external configuration.
-//   sess := session.Must(session.NewSession())
-//
-//   // Create the service's client with the session.
-//   svc := cloudwatchlogs.New(sess)
-//
-// See the SDK's documentation for more information on how to use service clients.
+// See the SDK's documentation for more information on how to use the SDK.
 // https://docs.aws.amazon.com/sdk-for-go/api/
 //
-// See aws package's Config type for more information on configuration options.
+// See aws.Config documentation for more information on configuring SDK clients.
 // https://docs.aws.amazon.com/sdk-for-go/api/aws/#Config
 //
 // See the Amazon CloudWatch Logs client CloudWatchLogs for more
-// information on creating the service's client.
+// information on creating client for this service.
 // https://docs.aws.amazon.com/sdk-for-go/api/service/cloudwatchlogs/#New
-//
-// Once the client is created you can make an API request to the service.
-// Each API method takes a input parameter, and returns the service response
-// and an error.
-//
-// The API method will document which error codes the service can be returned
-// by the operation if the service models the API operation's errors. These
-// errors will also be available as const strings prefixed with "ErrCode".
-//
-//   result, err := svc.CancelExportTask(params)
-//   if err != nil {
-//       // Cast err to awserr.Error to handle specific error codes.
-//       aerr, ok := err.(awserr.Error)
-//       if ok && aerr.Code() == <error code to check for> {
-//           // Specific error code handling
-//       }
-//       return err
-//   }
-//
-//   fmt.Println("CancelExportTask result:")
-//   fmt.Println(result)
-//
-// Using the Client with Context
-//
-// The service's client also provides methods to make API requests with a Context
-// value. This allows you to control the timeout, and cancellation of pending
-// requests. These methods also take request Option as variadic parameter to apply
-// additional configuration to the API request.
-//
-//   ctx := context.Background()
-//
-//   result, err := svc.CancelExportTaskWithContext(ctx, params)
-//
-// See the request package documentation for more information on using Context pattern
-// with the SDK.
-// https://docs.aws.amazon.com/sdk-for-go/api/aws/request/
 package cloudwatchlogs

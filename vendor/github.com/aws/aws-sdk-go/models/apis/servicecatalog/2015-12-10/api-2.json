@@ -70,6 +70,19 @@
         {"shape":"InvalidStateException"}
       ]
     },
+    "CopyProduct":{
+      "name":"CopyProduct",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CopyProductInput"},
+      "output":{"shape":"CopyProductOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidParametersException"}
+      ]
+    },
     "CreateConstraint":{
       "name":"CreateConstraint",
       "http":{
@@ -232,6 +245,18 @@
       },
       "input":{"shape":"DescribeConstraintInput"},
       "output":{"shape":"DescribeConstraintOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
+    "DescribeCopyProductStatus":{
+      "name":"DescribeCopyProductStatus",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeCopyProductStatusInput"},
+      "output":{"shape":"DescribeCopyProductStatusOutput"},
       "errors":[
         {"shape":"ResourceNotFoundException"}
       ]
@@ -825,6 +850,47 @@
       "max":1024,
       "min":1
     },
+    "CopyOption":{
+      "type":"string",
+      "enum":["CopyTags"]
+    },
+    "CopyOptions":{
+      "type":"list",
+      "member":{"shape":"CopyOption"}
+    },
+    "CopyProductInput":{
+      "type":"structure",
+      "required":[
+        "SourceProductArn",
+        "IdempotencyToken"
+      ],
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "SourceProductArn":{"shape":"ProductArn"},
+        "TargetProductId":{"shape":"Id"},
+        "TargetProductName":{"shape":"ProductViewName"},
+        "SourceProvisioningArtifactIdentifiers":{"shape":"SourceProvisioningArtifactProperties"},
+        "CopyOptions":{"shape":"CopyOptions"},
+        "IdempotencyToken":{
+          "shape":"IdempotencyToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "CopyProductOutput":{
+      "type":"structure",
+      "members":{
+        "CopyProductToken":{"shape":"Id"}
+      }
+    },
+    "CopyProductStatus":{
+      "type":"string",
+      "enum":[
+        "SUCCEEDED",
+        "IN_PROGRESS",
+        "FAILED"
+      ]
+    },
     "CreateConstraintInput":{
       "type":"structure",
       "required":[
@@ -1065,6 +1131,22 @@
         "ConstraintDetail":{"shape":"ConstraintDetail"},
         "ConstraintParameters":{"shape":"ConstraintParameters"},
         "Status":{"shape":"Status"}
+      }
+    },
+    "DescribeCopyProductStatusInput":{
+      "type":"structure",
+      "required":["CopyProductToken"],
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "CopyProductToken":{"shape":"Id"}
+      }
+    },
+    "DescribeCopyProductStatusOutput":{
+      "type":"structure",
+      "members":{
+        "CopyProductStatus":{"shape":"CopyProductStatus"},
+        "TargetProductId":{"shape":"Id"},
+        "StatusDetail":{"shape":"StatusDetail"}
       }
     },
     "DescribePortfolioInput":{
@@ -1601,6 +1683,12 @@
       "type":"list",
       "member":{"shape":"Principal"}
     },
+    "ProductArn":{
+      "type":"string",
+      "max":1224,
+      "min":1,
+      "pattern":"arn:[a-z0-9-\\.]{1,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[^/].{0,1023}"
+    },
     "ProductSource":{
       "type":"string",
       "enum":["ACCOUNT"]
@@ -1829,6 +1917,11 @@
         "Type":{"shape":"ProvisioningArtifactType"}
       }
     },
+    "ProvisioningArtifactPropertyName":{
+      "type":"string",
+      "enum":["Id"]
+    },
+    "ProvisioningArtifactPropertyValue":{"type":"string"},
     "ProvisioningArtifactSummaries":{
       "type":"list",
       "member":{"shape":"ProvisioningArtifactSummary"}
@@ -2061,6 +2154,15 @@
         "DESCENDING"
       ]
     },
+    "SourceProvisioningArtifactProperties":{
+      "type":"list",
+      "member":{"shape":"SourceProvisioningArtifactPropertiesMap"}
+    },
+    "SourceProvisioningArtifactPropertiesMap":{
+      "type":"map",
+      "key":{"shape":"ProvisioningArtifactPropertyName"},
+      "value":{"shape":"ProvisioningArtifactPropertyValue"}
+    },
     "Status":{
       "type":"string",
       "enum":[
@@ -2069,6 +2171,7 @@
         "FAILED"
       ]
     },
+    "StatusDetail":{"type":"string"},
     "SupportDescription":{"type":"string"},
     "SupportEmail":{"type":"string"},
     "SupportUrl":{"type":"string"},

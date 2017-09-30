@@ -40,7 +40,7 @@ func parseRFC3659ListLine(line string) (*Entry, error) {
 			return nil, errUnsupportedListLine
 		}
 
-		key := field[:i]
+		key := strings.ToLower(field[:i])
 		value := field[i+1:]
 
 		switch key {

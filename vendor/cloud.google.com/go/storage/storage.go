@@ -36,7 +36,7 @@ import (
 	"unicode/utf8"
 
 	"google.golang.org/api/option"
-	"google.golang.org/api/transport"
+	htransport "google.golang.org/api/transport/http"
 
 	"cloud.google.com/go/internal/optional"
 	"cloud.google.com/go/internal/version"
@@ -89,7 +89,7 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 		option.WithUserAgent(userAgent),
 	}
 	opts = append(o, opts...)
-	hc, ep, err := transport.NewHTTPClient(ctx, opts...)
+	hc, ep, err := htransport.NewClient(ctx, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("dialing: %v", err)
 	}
@@ -110,7 +110,10 @@ func NewClient(ctx context.Context, opts ...option.ClientOption) (*Client, error
 //
 // Close need not be called at program exit.
 func (c *Client) Close() error {
+	// Set fields to nil so that subsequent uses
+	// will panic.
 	c.hc = nil
+	c.raw = nil
 	return nil
 }
 
@@ -262,6 +265,7 @@ type ObjectHandle struct {
 	gen           int64 // a negative value indicates latest
 	conds         *Conditions
 	encryptionKey []byte // AES-256 key
+	userProject   string // for requester-pays buckets
 }
 
 // ACL provides access to the object's access control list.
@@ -314,6 +318,9 @@ func (o *ObjectHandle) Attrs(ctx context.Context) (*ObjectAttrs, error) {
 	if err := applyConds("Attrs", o.gen, o.conds, call); err != nil {
 		return nil, err
 	}
+	if o.userProject != "" {
+		call.UserProject(o.userProject)
+	}
 	if err := setEncryptionHeaders(call.Header(), o.encryptionKey, false); err != nil {
 		return nil, err
 	}
@@ -342,11 +349,17 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (
 	var forceSendFields, nullFields []string
 	if uattrs.ContentType != nil {
 		attrs.ContentType = optional.ToString(uattrs.ContentType)
-		forceSendFields = append(forceSendFields, "ContentType")
+		// For ContentType, sending the empty string is a no-op.
+		// Instead we send a null.
+		if attrs.ContentType == "" {
+			nullFields = append(nullFields, "ContentType")
+		} else {
+			forceSendFields = append(forceSendFields, "ContentType")
+		}
 	}
 	if uattrs.ContentLanguage != nil {
 		attrs.ContentLanguage = optional.ToString(uattrs.ContentLanguage)
-		// For ContentLanguage It's an error to send the empty string.
+		// For ContentLanguage it's an error to send the empty string.
 		// Instead we send a null.
 		if attrs.ContentLanguage == "" {
 			nullFields = append(nullFields, "ContentLanguage")
@@ -356,7 +369,7 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (
 	}
 	if uattrs.ContentEncoding != nil {
 		attrs.ContentEncoding = optional.ToString(uattrs.ContentEncoding)
-		forceSendFields = append(forceSendFields, "ContentType")
+		forceSendFields = append(forceSendFields, "ContentEncoding")
 	}
 	if uattrs.ContentDisposition != nil {
 		attrs.ContentDisposition = optional.ToString(uattrs.ContentDisposition)
@@ -387,6 +400,9 @@ func (o *ObjectHandle) Update(ctx context.Context, uattrs ObjectAttrsToUpdate) (
 	call := o.c.raw.Objects.Patch(o.bucket, o.object, rawObj).Projection("full").Context(ctx)
 	if err := applyConds("Update", o.gen, o.conds, call); err != nil {
 		return nil, err
+	}
+	if o.userProject != "" {
+		call.UserProject(o.userProject)
 	}
 	if err := setEncryptionHeaders(call.Header(), o.encryptionKey, false); err != nil {
 		return nil, err
@@ -434,6 +450,10 @@ func (o *ObjectHandle) Delete(ctx context.Context) error {
 	if err := applyConds("Delete", o.gen, o.conds, call); err != nil {
 		return err
 	}
+	if o.userProject != "" {
+		call.UserProject(o.userProject)
+	}
+	// Encryption doesn't apply to Delete.
 	setClientHeader(call.Header())
 	err := runWithRetry(ctx, func() error { return call.Do() })
 	switch e := err.(type) {
@@ -490,6 +510,9 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-", offset))
 	} else if length > 0 {
 		req.Header.Set("Range", fmt.Sprintf("bytes=%d-%d", offset, offset+length-1))
+	}
+	if o.userProject != "" {
+		req.Header.Set("X-Goog-User-Project", o.userProject)
 	}
 	if err := setEncryptionHeaders(req.Header, o.encryptionKey, false); err != nil {
 		return nil, err
@@ -553,12 +576,13 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 		crc, checkCRC = parseCRC32c(res)
 	}
 	return &Reader{
-		body:        body,
-		size:        size,
-		remain:      remain,
-		contentType: res.Header.Get("Content-Type"),
-		wantCRC:     crc,
-		checkCRC:    checkCRC,
+		body:         body,
+		size:         size,
+		remain:       remain,
+		contentType:  res.Header.Get("Content-Type"),
+		cacheControl: res.Header.Get("Cache-Control"),
+		wantCRC:      crc,
+		checkCRC:     checkCRC,
 	}, nil
 }
 
@@ -706,11 +730,16 @@ type ObjectAttrs struct {
 	// sent in the response headers.
 	ContentDisposition string
 
-	// MD5 is the MD5 hash of the object's content. This field is read-only.
+	// MD5 is the MD5 hash of the object's content. This field is read-only,
+	// except when used from a Writer. If set on a Writer, the uploaded
+	// data is rejected if its MD5 hash does not match this field.
 	MD5 []byte
 
 	// CRC32C is the CRC32 checksum of the object's content using
-	// the Castagnoli93 polynomial. This field is read-only.
+	// the Castagnoli93 polynomial. This field is read-only, except when
+	// used from a Writer. If set on a Writer and Writer.SendCRC32C
+	// is true, the uploaded data is rejected if its CRC32c hash does not
+	// match this field.
 	CRC32C uint32
 
 	// MediaLink is an URL to the object's content. This field is read-only.
@@ -798,26 +827,27 @@ func newObject(o *raw.Object) *ObjectAttrs {
 		sha256 = o.CustomerEncryption.KeySha256
 	}
 	return &ObjectAttrs{
-		Bucket:            o.Bucket,
-		Name:              o.Name,
-		ContentType:       o.ContentType,
-		ContentLanguage:   o.ContentLanguage,
-		CacheControl:      o.CacheControl,
-		ACL:               acl,
-		Owner:             owner,
-		ContentEncoding:   o.ContentEncoding,
-		Size:              int64(o.Size),
-		MD5:               md5,
-		CRC32C:            crc32c,
-		MediaLink:         o.MediaLink,
-		Metadata:          o.Metadata,
-		Generation:        o.Generation,
-		Metageneration:    o.Metageneration,
-		StorageClass:      o.StorageClass,
-		CustomerKeySHA256: sha256,
-		Created:           convertTime(o.TimeCreated),
-		Deleted:           convertTime(o.TimeDeleted),
-		Updated:           convertTime(o.Updated),
+		Bucket:             o.Bucket,
+		Name:               o.Name,
+		ContentType:        o.ContentType,
+		ContentLanguage:    o.ContentLanguage,
+		CacheControl:       o.CacheControl,
+		ACL:                acl,
+		Owner:              owner,
+		ContentEncoding:    o.ContentEncoding,
+		ContentDisposition: o.ContentDisposition,
+		Size:               int64(o.Size),
+		MD5:                md5,
+		CRC32C:             crc32c,
+		MediaLink:          o.MediaLink,
+		Metadata:           o.Metadata,
+		Generation:         o.Generation,
+		Metageneration:     o.Metageneration,
+		StorageClass:       o.StorageClass,
+		CustomerKeySHA256:  sha256,
+		Created:            convertTime(o.TimeCreated),
+		Deleted:            convertTime(o.TimeDeleted),
+		Updated:            convertTime(o.Updated),
 	}
 }
 

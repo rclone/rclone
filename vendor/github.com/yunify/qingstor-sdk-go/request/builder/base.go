@@ -39,7 +39,7 @@ import (
 type BaseBuilder struct {
 	parsedURL        string
 	parsedProperties *map[string]string
-	parsedParams     *map[string]string
+	parsedQuery      *map[string]string
 	parsedHeaders    *map[string]string
 	parsedBodyString string
 	parsedBody       io.Reader
@@ -76,7 +76,7 @@ func (b *BaseBuilder) build() (*http.Request, error) {
 }
 
 func (b *BaseBuilder) parse() (*BaseBuilder, error) {
-	err := b.parseRequestParamsAndHeaders()
+	err := b.parseRequestQueryAndHeaders()
 	if err != nil {
 		return b, err
 	}
@@ -96,15 +96,15 @@ func (b *BaseBuilder) parse() (*BaseBuilder, error) {
 	return b, nil
 }
 
-func (b *BaseBuilder) parseRequestParamsAndHeaders() error {
-	requestParams := map[string]string{}
+func (b *BaseBuilder) parseRequestQueryAndHeaders() error {
+	requestQuery := map[string]string{}
 	requestHeaders := map[string]string{}
 	maps := map[string](map[string]string){
-		"params":  requestParams,
+		"query":  requestQuery,
 		"headers": requestHeaders,
 	}
 
-	b.parsedParams = &requestParams
+	b.parsedQuery = &requestQuery
 	b.parsedHeaders = &requestHeaders
 
 	if !b.input.IsValid() {
@@ -280,7 +280,7 @@ func (b *BaseBuilder) setupHeaders(httpRequest *http.Request) error {
 			body.Seek(0, 0)
 			length = end - start
 		default:
-			return errors.New("Can not get Content-Length")
+			return errors.New("can not get Content-Length")
 		}
 		if length > 0 {
 			httpRequest.ContentLength = length

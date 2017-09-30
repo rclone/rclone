@@ -120,43 +120,53 @@ var testCases = [][]ruleTest{
 	}, {
 		in:  strEN,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strEN),
 	}, {
 		in:  strES,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strES),
 	}, {
 		in:  strET,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strET),
 	}, {
 		in:  strCS,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strCS),
 	}, {
 		in:  strNSM,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strNSM),
 	}, {
 		in:  strBN,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strBN),
 	}, {
 		in:  strB,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strB),
 	}, {
 		in:  strS,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strS),
 	}, {
 		in:  strWS,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strWS),
 	}, {
 		in:  strON,
 		dir: bidi.LeftToRight,
-		err: nil, // not an RTL string
+		err: ErrInvalid,
+		n:   len(strON),
 	}, {
 		in:  strEN + strR,
 		dir: bidi.RightToLeft,
@@ -506,8 +516,8 @@ var testCases = [][]ruleTest{
 	}, {
 		in:  strL + strB + strL,
 		dir: bidi.LeftToRight,
-		n:   len(strL + strAN + strL),
-		err: nil,
+		n:   len(strL + strB + strL),
+		err: ErrInvalid,
 	}, {
 		in:  strL + strB + strL + strR,
 		dir: bidi.RightToLeft,
@@ -517,7 +527,7 @@ var testCases = [][]ruleTest{
 		in:  strL + strS + strL,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strS + strL),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strS + strL + strR,
 		dir: bidi.RightToLeft,
@@ -527,7 +537,7 @@ var testCases = [][]ruleTest{
 		in:  strL + strWS + strL,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strWS + strL),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strWS + strL + strR,
 		dir: bidi.RightToLeft,
@@ -560,7 +570,7 @@ var testCases = [][]ruleTest{
 		in:  strL + strES,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strES),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strES + strR,
 		dir: bidi.RightToLeft,
@@ -570,7 +580,7 @@ var testCases = [][]ruleTest{
 		in:  strL + strCS,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strCS),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strCS + strR,
 		dir: bidi.RightToLeft,
@@ -580,7 +590,7 @@ var testCases = [][]ruleTest{
 		in:  strL + strET,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strET),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strET + strR,
 		dir: bidi.RightToLeft,
@@ -590,7 +600,7 @@ var testCases = [][]ruleTest{
 		in:  strL + strON,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strON),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strON + strR,
 		dir: bidi.RightToLeft,
@@ -600,7 +610,7 @@ var testCases = [][]ruleTest{
 		in:  strL + strBN,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strBN),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strBN + strR,
 		dir: bidi.RightToLeft,
@@ -625,31 +635,31 @@ var testCases = [][]ruleTest{
 		in:  strL + strB,
 		dir: bidi.LeftToRight,
 		n:   len(strL + strB),
-		err: nil,
+		err: ErrInvalid,
 	}, {
 		in:  strL + strB + strR,
 		dir: bidi.RightToLeft,
 		n:   len(strL + strB),
 		err: ErrInvalid,
 	}, {
-		in:  strL + strB,
+		in:  strL + strS,
 		dir: bidi.LeftToRight,
-		n:   len(strL + strB),
-		err: nil,
-	}, {
-		in:  strL + strB + strR,
-		dir: bidi.RightToLeft,
-		n:   len(strL + strB),
+		n:   len(strL + strS),
 		err: ErrInvalid,
 	}, {
-		in:  strL + strB,
-		dir: bidi.LeftToRight,
-		n:   len(strL + strB),
-		err: nil,
-	}, {
-		in:  strL + strB + strR,
+		in:  strL + strS + strR,
 		dir: bidi.RightToLeft,
-		n:   len(strL + strB),
+		n:   len(strL + strS),
+		err: ErrInvalid,
+	}, {
+		in:  strL + strWS,
+		dir: bidi.LeftToRight,
+		n:   len(strL + strWS),
+		err: ErrInvalid,
+	}, {
+		in:  strL + strWS + strR,
+		dir: bidi.RightToLeft,
+		n:   len(strL + strWS),
 		err: ErrInvalid,
 	}},
 
@@ -688,6 +698,11 @@ var testCases = [][]ruleTest{
 		nSrc:  5,
 		err0:  transform.ErrShortDst,
 	}, {
+		in:  "\U000102f7",
+		dir: bidi.LeftToRight,
+		n:   len("\U000102f7"),
+		err: ErrInvalid,
+	}, {
 		// Short destination splitting input rune
 		in:  "e\u0301",
 		dir: bidi.LeftToRight,
@@ -696,6 +711,17 @@ var testCases = [][]ruleTest{
 		szDst: 2,
 		nSrc:  1,
 		err0:  transform.ErrShortDst,
+	}, {
+		// Unicode 10.0.0 IDNA test string.
+		in:  "FAX\u2a77\U0001d186",
+		dir: bidi.LeftToRight,
+		n:   len("FAX\u2a77\U0001d186"),
+		err: ErrInvalid,
+	}, {
+		in:  "\x80\u0660",
+		dir: bidi.RightToLeft,
+		n:   0,
+		err: ErrInvalid,
 	}},
 }
 

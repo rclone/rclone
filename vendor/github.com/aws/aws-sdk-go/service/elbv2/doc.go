@@ -14,22 +14,28 @@
 // with health check settings to be used when checking the health status of
 // the targets.
 //
-// Elastic Load Balancing supports two types of load balancers: Classic Load
-// Balancers and Application Load Balancers. A Classic Load Balancer makes routing
-// and load balancing decisions either at the transport layer (TCP/SSL) or the
-// application layer (HTTP/HTTPS), and supports either EC2-Classic or a VPC.
+// Elastic Load Balancing supports the following types of load balancers: Application
+// Load Balancers, Network Load Balancers, and Classic Load Balancers.
+//
 // An Application Load Balancer makes routing and load balancing decisions at
-// the application layer (HTTP/HTTPS), supports path-based routing, and can
-// route requests to one or more ports on each EC2 instance or container instance
-// in your virtual private cloud (VPC). For more information, see the Elastic
+// the application layer (HTTP/HTTPS). A Network Load Balancer makes routing
+// and load balancing decisions at the transport layer (TCP). Both Application
+// Load Balancers and Network Load Balancers can route requests to one or more
+// ports on each EC2 instance or container instance in your virtual private
+// cloud (VPC).
+//
+// A Classic Load Balancer makes routing and load balancing decisions either
+// at the transport layer (TCP/SSL) or the application layer (HTTP/HTTPS), and
+// supports either EC2-Classic or a VPC. For more information, see the Elastic
 // Load Balancing User Guide (http://docs.aws.amazon.com/elasticloadbalancing/latest/userguide/).
 //
 // This reference covers the 2015-12-01 API, which supports Application Load
-// Balancers. The 2012-06-01 API supports Classic Load Balancers.
+// Balancers and Network Load Balancers. The 2012-06-01 API supports Classic
+// Load Balancers.
 //
 // To get started, complete the following tasks:
 //
-// Create an Application Load Balancer using CreateLoadBalancer.
+// Create a load balancer using CreateLoadBalancer.
 //
 // Create a target group using CreateTargetGroup.
 //
@@ -37,11 +43,8 @@
 //
 // Create one or more listeners for your load balancer using CreateListener.
 //
-// (Optional) Create one or more rules for content routing based on URL using
-// CreateRule.
-//
-// To delete an Application Load Balancer and its related resources, complete
-// the following tasks:
+// To delete a load balancer and its related resources, complete the following
+// tasks:
 //
 // Delete the load balancer using DeleteLoadBalancer.
 //
@@ -57,69 +60,17 @@
 //
 // Using the Client
 //
-// To use the client for Elastic Load Balancing you will first need
-// to create a new instance of it.
+// To Elastic Load Balancing with the SDK use the New function to create
+// a new service client. With that client you can make API requests to the service.
+// These clients are safe to use concurrently.
 //
-// When creating a client for an AWS service you'll first need to have a Session
-// already created. The Session provides configuration that can be shared
-// between multiple service clients. Additional configuration can be applied to
-// the Session and service's client when they are constructed. The aws package's
-// Config type contains several fields such as Region for the AWS Region the
-// client should make API requests too. The optional Config value can be provided
-// as the variadic argument for Sessions and client creation.
-//
-// Once the service's client is created you can use it to make API requests the
-// AWS service. These clients are safe to use concurrently.
-//
-//   // Create a session to share configuration, and load external configuration.
-//   sess := session.Must(session.NewSession())
-//
-//   // Create the service's client with the session.
-//   svc := elbv2.New(sess)
-//
-// See the SDK's documentation for more information on how to use service clients.
+// See the SDK's documentation for more information on how to use the SDK.
 // https://docs.aws.amazon.com/sdk-for-go/api/
 //
-// See aws package's Config type for more information on configuration options.
+// See aws.Config documentation for more information on configuring SDK clients.
 // https://docs.aws.amazon.com/sdk-for-go/api/aws/#Config
 //
 // See the Elastic Load Balancing client ELBV2 for more
-// information on creating the service's client.
+// information on creating client for this service.
 // https://docs.aws.amazon.com/sdk-for-go/api/service/elbv2/#New
-//
-// Once the client is created you can make an API request to the service.
-// Each API method takes a input parameter, and returns the service response
-// and an error.
-//
-// The API method will document which error codes the service can be returned
-// by the operation if the service models the API operation's errors. These
-// errors will also be available as const strings prefixed with "ErrCode".
-//
-//   result, err := svc.AddTags(params)
-//   if err != nil {
-//       // Cast err to awserr.Error to handle specific error codes.
-//       aerr, ok := err.(awserr.Error)
-//       if ok && aerr.Code() == <error code to check for> {
-//           // Specific error code handling
-//       }
-//       return err
-//   }
-//
-//   fmt.Println("AddTags result:")
-//   fmt.Println(result)
-//
-// Using the Client with Context
-//
-// The service's client also provides methods to make API requests with a Context
-// value. This allows you to control the timeout, and cancellation of pending
-// requests. These methods also take request Option as variadic parameter to apply
-// additional configuration to the API request.
-//
-//   ctx := context.Background()
-//
-//   result, err := svc.AddTagsWithContext(ctx, params)
-//
-// See the request package documentation for more information on using Context pattern
-// with the SDK.
-// https://docs.aws.amazon.com/sdk-for-go/api/aws/request/
 package elbv2

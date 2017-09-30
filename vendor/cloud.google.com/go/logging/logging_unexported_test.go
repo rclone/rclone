@@ -19,9 +19,10 @@ package logging
 import (
 	"net/http"
 	"net/url"
-	"reflect"
 	"testing"
 	"time"
+
+	"cloud.google.com/go/internal/testutil"
 
 	"github.com/golang/protobuf/proto"
 	durpb "github.com/golang/protobuf/ptypes/duration"
@@ -98,7 +99,7 @@ func TestLoggerCreation(t *testing.T) {
 		if got, want := gotLogger.commonResource, test.wantLogger.commonResource; !test.defaultResource && !proto.Equal(got, want) {
 			t.Errorf("%v: resource: got %v, want %v", test.options, got, want)
 		}
-		if got, want := gotLogger.commonLabels, test.wantLogger.commonLabels; !reflect.DeepEqual(got, want) {
+		if got, want := gotLogger.commonLabels, test.wantLogger.commonLabels; !testutil.Equal(got, want) {
 			t.Errorf("%v: commonLabels: got %v, want %v", test.options, got, want)
 		}
 		if got, want := gotLogger.bundler.DelayThreshold, test.wantBundler.DelayThreshold; got != want {

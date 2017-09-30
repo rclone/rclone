@@ -1,5 +1,19 @@
 package storage
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"bytes"
 	"encoding/xml"
@@ -310,6 +324,26 @@ func (s *StorageBlobSuite) TestSetBlobProperties(c *chk.C) {
 	c.Check(b.Properties.ContentMD5, chk.Equals, input.ContentMD5)
 	c.Check(b.Properties.ContentEncoding, chk.Equals, input.ContentEncoding)
 	c.Check(b.Properties.ContentLanguage, chk.Equals, input.ContentLanguage)
+}
+
+func (s *StorageBlobSuite) TestSetPageBlobProperties(c *chk.C) {
+	cli := getBlobClient(c)
+	rec := cli.client.appendRecorder(c)
+	defer rec.Stop()
+
+	cnt := cli.GetContainerReference(containerName(c))
+	b := cnt.GetBlobReference(blobName(c))
+	c.Assert(cnt.Create(nil), chk.IsNil)
+	defer cnt.Delete(nil)
+
+	size := int64(1024)
+	b.Properties.ContentLength = size
+	c.Assert(b.PutPageBlob(nil), chk.IsNil)
+
+	b.Properties.ContentLength = int64(512)
+	options := SetBlobPropertiesOptions{Timeout: 30}
+	err := b.SetProperties(&options)
+	c.Assert(err, chk.IsNil)
 }
 
 func (s *StorageBlobSuite) TestSnapshotBlob(c *chk.C) {

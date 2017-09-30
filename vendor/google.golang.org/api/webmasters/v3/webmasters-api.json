@@ -20,7 +20,7 @@
  "basePath": "/webmasters/v3/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "webmasters/v3/",
- "batchPath": "batch",
+ "batchPath": "batch/webmasters/v3",
  "parameters": {
   "alt": {
    "type": "string",

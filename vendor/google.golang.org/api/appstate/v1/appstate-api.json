@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/u4lihwP33J0GgUtvl1xqXUmPaak\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/ANNk7azl5zRYtDCCrlgSBbC8-4Y\"",
  "discoveryVersion": "v1",
  "id": "appstate:v1",
  "name": "appstate",
  "canonicalName": "App State",
  "version": "v1",
- "revision": "20170601",
+ "revision": "20170911",
  "title": "Google App State API",
  "description": "The Google App State API.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/appstate/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "appstate/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/appstate/v1",
  "parameters": {
   "alt": {
    "type": "string",

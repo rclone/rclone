@@ -11,7 +11,7 @@ import (
 
 // WaitUntilBatchPredictionAvailable uses the Amazon Machine Learning API operation
 // DescribeBatchPredictions to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *MachineLearning) WaitUntilBatchPredictionAvailable(input *DescribeBatchPredictionsInput) error {
 	return c.WaitUntilBatchPredictionAvailableWithContext(aws.BackgroundContext(), input)
@@ -62,7 +62,7 @@ func (c *MachineLearning) WaitUntilBatchPredictionAvailableWithContext(ctx aws.C
 
 // WaitUntilDataSourceAvailable uses the Amazon Machine Learning API operation
 // DescribeDataSources to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *MachineLearning) WaitUntilDataSourceAvailable(input *DescribeDataSourcesInput) error {
 	return c.WaitUntilDataSourceAvailableWithContext(aws.BackgroundContext(), input)
@@ -113,7 +113,7 @@ func (c *MachineLearning) WaitUntilDataSourceAvailableWithContext(ctx aws.Contex
 
 // WaitUntilEvaluationAvailable uses the Amazon Machine Learning API operation
 // DescribeEvaluations to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *MachineLearning) WaitUntilEvaluationAvailable(input *DescribeEvaluationsInput) error {
 	return c.WaitUntilEvaluationAvailableWithContext(aws.BackgroundContext(), input)
@@ -164,7 +164,7 @@ func (c *MachineLearning) WaitUntilEvaluationAvailableWithContext(ctx aws.Contex
 
 // WaitUntilMLModelAvailable uses the Amazon Machine Learning API operation
 // DescribeMLModels to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *MachineLearning) WaitUntilMLModelAvailable(input *DescribeMLModelsInput) error {
 	return c.WaitUntilMLModelAvailableWithContext(aws.BackgroundContext(), input)

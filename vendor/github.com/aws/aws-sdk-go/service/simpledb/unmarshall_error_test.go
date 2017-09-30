@@ -6,8 +6,6 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -45,9 +43,15 @@ func TestStatusCodeError(t *testing.T) {
 			DomainName: aws.String("test-domain"),
 		})
 
-		assert.Error(t, err)
-		assert.Equal(t, test.code, err.(awserr.Error).Code())
-		assert.Equal(t, test.message, err.(awserr.Error).Message())
+		if err == nil {
+			t.Fatalf("expect error, got nil")
+		}
+		if e, a := test.code, err.(awserr.Error).Code(); e != a {
+			t.Errorf("expect %v, got %v", e, a)
+		}
+		if e, a := test.message, err.(awserr.Error).Message(); e != a {
+			t.Errorf("expect %v, got %v", e, a)
+		}
 	}
 }
 
@@ -111,12 +115,22 @@ func TestResponseError(t *testing.T) {
 			DomainName: aws.String("test-domain"),
 		})
 
-		assert.Error(t, err)
-		assert.Equal(t, test.code, err.(awserr.Error).Code())
-		assert.Equal(t, test.message, err.(awserr.Error).Message())
+		if err == nil {
+			t.Fatalf("expect error, got none")
+		}
+		if e, a := test.code, err.(awserr.Error).Code(); e != a {
+			t.Errorf("expect %v, got %v", e, a)
+		}
+		if e, a := test.message, err.(awserr.Error).Message(); e != a {
+			t.Errorf("expect %v, got %v", e, a)
+		}
 		if len(test.errors) > 0 {
-			assert.Equal(t, test.requestID, err.(awserr.RequestFailure).RequestID())
-			assert.Equal(t, test.scode, err.(awserr.RequestFailure).StatusCode())
+			if e, a := test.requestID, err.(awserr.RequestFailure).RequestID(); e != a {
+				t.Errorf("expect %v, got %v", e, a)
+			}
+			if e, a := test.scode, err.(awserr.RequestFailure).StatusCode(); e != a {
+				t.Errorf("expect %v, got %v", e, a)
+			}
 		}
 	}
 }

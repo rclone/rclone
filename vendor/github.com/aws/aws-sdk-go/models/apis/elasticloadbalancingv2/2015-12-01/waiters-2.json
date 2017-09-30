@@ -59,6 +59,42 @@
           "state": "success"
         }
       ]
+    },
+    "TargetInService":{
+      "delay":15,
+      "maxAttempts":40,
+      "operation":"DescribeTargetHealth",
+      "acceptors":[
+        {
+          "argument":"TargetHealthDescriptions[].TargetHealth.State",
+          "expected":"healthy",
+          "matcher":"pathAll",
+          "state":"success"
+        },
+        {
+          "matcher": "error",
+          "expected": "InvalidInstance",
+          "state": "retry"
+        }
+      ]
+    },
+    "TargetDeregistered": {
+      "delay": 15,
+      "maxAttempts": 40,
+      "operation": "DescribeTargetHealth",
+      "acceptors": [
+        {
+          "matcher": "error",
+          "expected": "InvalidTarget",
+          "state": "success"
+        },
+        {
+          "argument":"TargetHealthDescriptions[].TargetHealth.State",
+          "expected":"unused",
+          "matcher":"pathAll",
+          "state":"success"
+        }
+      ]
     }
   }
 }

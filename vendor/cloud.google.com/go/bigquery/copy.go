@@ -21,8 +21,11 @@ import (
 
 // CopyConfig holds the configuration for a copy job.
 type CopyConfig struct {
-	// JobID is the ID to use for the copy job. If unset, a job ID will be automatically created.
+	// JobID is the ID to use for the job. If empty, a random job ID will be generated.
 	JobID string
+
+	// If AddJobIDSuffix is true, then a random string will be appended to JobID.
+	AddJobIDSuffix bool
 
 	// Srcs are the tables from which data will be copied.
 	Srcs []*Table
@@ -68,7 +71,9 @@ func (c *Copier) Run(ctx context.Context) (*Job, error) {
 	for _, t := range c.Srcs {
 		conf.SourceTables = append(conf.SourceTables, t.tableRefProto())
 	}
-	job := &bq.Job{Configuration: &bq.JobConfiguration{Copy: conf}}
-	setJobRef(job, c.JobID, c.c.projectID)
+	job := &bq.Job{
+		JobReference:  createJobRef(c.JobID, c.AddJobIDSuffix, c.c.projectID),
+		Configuration: &bq.JobConfiguration{Copy: conf},
+	}
 	return c.c.insertJob(ctx, &insertJobConf{job: job})
 }

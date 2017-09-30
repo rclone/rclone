@@ -117,7 +117,7 @@ func (auth *v3Auth) Request(c *Connection) (*http.Request, error) {
 
 	v3 := v3AuthRequest{}
 
-	if c.UserName == "" {
+	if c.UserName == "" && c.UserId == "" {
 		v3.Auth.Identity.Methods = []string{v3AuthMethodToken}
 		v3.Auth.Identity.Token = &v3AuthToken{Id: c.ApiKey}
 	} else {
@@ -125,6 +125,7 @@ func (auth *v3Auth) Request(c *Connection) (*http.Request, error) {
 		v3.Auth.Identity.Password = &v3AuthPassword{
 			User: v3User{
 				Name:     c.UserName,
+				Id:       c.UserId,
 				Password: c.ApiKey,
 			},
 		}

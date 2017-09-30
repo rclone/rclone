@@ -51,6 +51,21 @@
         {"shape":"ResourceNotFoundException"}
       ]
     },
+    "GetKinesisStream":{
+      "name":"GetKinesisStream",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetKinesisStreamInput"},
+      "output":{"shape":"GetKinesisStreamOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"InvalidStreamTypeException"}
+      ],
+      "internalonly":true
+    },
     "ListDeliveryStreams":{
       "name":"ListDeliveryStreams",
       "http":{
@@ -111,6 +126,7 @@
       "min":1,
       "pattern":"arn:.*"
     },
+    "AccessKeyId":{"type":"string"},
     "BooleanObject":{"type":"boolean"},
     "BucketARN":{
       "type":"string",
@@ -169,6 +185,8 @@
       "required":["DeliveryStreamName"],
       "members":{
         "DeliveryStreamName":{"shape":"DeliveryStreamName"},
+        "DeliveryStreamType":{"shape":"DeliveryStreamType"},
+        "KinesisStreamSourceConfiguration":{"shape":"KinesisStreamSourceConfiguration"},
         "S3DestinationConfiguration":{
           "shape":"S3DestinationConfiguration",
           "deprecated":true
@@ -206,6 +224,7 @@
       "members":{
       }
     },
+    "DeliveryStartTimestamp":{"type":"timestamp"},
     "DeliveryStreamARN":{
       "type":"string",
       "max":512,
@@ -218,6 +237,7 @@
         "DeliveryStreamName",
         "DeliveryStreamARN",
         "DeliveryStreamStatus",
+        "DeliveryStreamType",
         "VersionId",
         "Destinations",
         "HasMoreDestinations"
@@ -226,9 +246,11 @@
         "DeliveryStreamName":{"shape":"DeliveryStreamName"},
         "DeliveryStreamARN":{"shape":"DeliveryStreamARN"},
         "DeliveryStreamStatus":{"shape":"DeliveryStreamStatus"},
+        "DeliveryStreamType":{"shape":"DeliveryStreamType"},
         "VersionId":{"shape":"DeliveryStreamVersionId"},
         "CreateTimestamp":{"shape":"Timestamp"},
         "LastUpdateTimestamp":{"shape":"Timestamp"},
+        "Source":{"shape":"SourceDescription"},
         "Destinations":{"shape":"DestinationDescriptionList"},
         "HasMoreDestinations":{"shape":"BooleanObject"}
       }
@@ -249,6 +271,13 @@
         "CREATING",
         "DELETING",
         "ACTIVE"
+      ]
+    },
+    "DeliveryStreamType":{
+      "type":"string",
+      "enum":[
+        "DirectPut",
+        "KinesisStreamAsSource"
       ]
     },
     "DeliveryStreamVersionId":{
@@ -478,6 +507,21 @@
         "S3BackupUpdate":{"shape":"S3DestinationUpdate"}
       }
     },
+    "FirehoseSource":{"type":"string"},
+    "GetKinesisStreamInput":{
+      "type":"structure",
+      "required":["DeliveryStreamARN"],
+      "members":{
+        "DeliveryStreamARN":{"shape":"DeliveryStreamARN"}
+      }
+    },
+    "GetKinesisStreamOutput":{
+      "type":"structure",
+      "members":{
+        "KinesisStreamARN":{"shape":"KinesisStreamARN"},
+        "CredentialsForReadingKinesisStream":{"shape":"SessionCredentials"}
+      }
+    },
     "IntervalInSeconds":{
       "type":"integer",
       "max":900,
@@ -490,11 +534,44 @@
       },
       "exception":true
     },
+    "InvalidStreamTypeException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"},
+        "source":{"shape":"FirehoseSource"}
+      },
+      "exception":true
+    },
     "KMSEncryptionConfig":{
       "type":"structure",
       "required":["AWSKMSKeyARN"],
       "members":{
         "AWSKMSKeyARN":{"shape":"AWSKMSKeyARN"}
+      }
+    },
+    "KinesisStreamARN":{
+      "type":"string",
+      "max":512,
+      "min":1,
+      "pattern":"arn:.*"
+    },
+    "KinesisStreamSourceConfiguration":{
+      "type":"structure",
+      "required":[
+        "KinesisStreamARN",
+        "RoleARN"
+      ],
+      "members":{
+        "KinesisStreamARN":{"shape":"KinesisStreamARN"},
+        "RoleARN":{"shape":"RoleARN"}
+      }
+    },
+    "KinesisStreamSourceDescription":{
+      "type":"structure",
+      "members":{
+        "KinesisStreamARN":{"shape":"KinesisStreamARN"},
+        "RoleARN":{"shape":"RoleARN"},
+        "DeliveryStartTimestamp":{"shape":"DeliveryStartTimestamp"}
       }
     },
     "LimitExceededException":{
@@ -508,6 +585,7 @@
       "type":"structure",
       "members":{
         "Limit":{"shape":"ListDeliveryStreamsInputLimit"},
+        "DeliveryStreamType":{"shape":"DeliveryStreamType"},
         "ExclusiveStartDeliveryStreamName":{"shape":"DeliveryStreamName"}
       }
     },
@@ -818,6 +896,7 @@
         "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"}
       }
     },
+    "SecretAccessKey":{"type":"string"},
     "ServiceUnavailableException":{
       "type":"structure",
       "members":{
@@ -826,10 +905,32 @@
       "exception":true,
       "fault":true
     },
+    "SessionCredentials":{
+      "type":"structure",
+      "required":[
+        "AccessKeyId",
+        "SecretAccessKey",
+        "SessionToken",
+        "Expiration"
+      ],
+      "members":{
+        "AccessKeyId":{"shape":"AccessKeyId"},
+        "SecretAccessKey":{"shape":"SecretAccessKey"},
+        "SessionToken":{"shape":"SessionToken"},
+        "Expiration":{"shape":"Timestamp"}
+      }
+    },
+    "SessionToken":{"type":"string"},
     "SizeInMBs":{
       "type":"integer",
       "max":128,
       "min":1
+    },
+    "SourceDescription":{
+      "type":"structure",
+      "members":{
+        "KinesisStreamSourceDescription":{"shape":"KinesisStreamSourceDescription"}
+      }
     },
     "Timestamp":{"type":"timestamp"},
     "UpdateDestinationInput":{

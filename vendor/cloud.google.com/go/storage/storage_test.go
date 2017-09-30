@@ -24,12 +24,14 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
 
+	"cloud.google.com/go/internal/testutil"
+
 	"golang.org/x/net/context"
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	raw "google.golang.org/api/storage/v1"
@@ -620,7 +622,7 @@ func TestObjectCompose(t *testing.T) {
 		if err := json.Unmarshal(body, &req); err != nil {
 			t.Errorf("%s: json.Unmarshal %v (body %s)", tt.desc, err, body)
 		}
-		if !reflect.DeepEqual(req, tt.wantReq) {
+		if !testutil.Equal(req, tt.wantReq) {
 			// Print to JSON.
 			wantReq, _ := json.Marshal(tt.wantReq)
 			t.Errorf("%s: request body\ngot  %s\nwant %s", tt.desc, body, wantReq)
@@ -681,6 +683,88 @@ func TestCodecUint32(t *testing.T) {
 		}
 		if d != u {
 			t.Errorf("got %d, want input %d", d, u)
+		}
+	}
+}
+
+func TestBucketAttrs(t *testing.T) {
+	for _, c := range []struct {
+		attrs BucketAttrs
+		raw   raw.Bucket
+	}{{
+		attrs: BucketAttrs{
+			Lifecycle: Lifecycle{
+				Rules: []LifecycleRule{{
+					Action: LifecycleAction{
+						Type:         SetStorageClassAction,
+						StorageClass: "NEARLINE",
+					},
+					Condition: LifecycleCondition{
+						AgeInDays:             10,
+						Liveness:              Live,
+						CreatedBefore:         time.Date(2017, 1, 2, 3, 4, 5, 6, time.UTC),
+						MatchesStorageClasses: []string{"MULTI_REGIONAL", "REGIONAL", "STANDARD"},
+						NumNewerVersions:      3,
+					},
+				}, {
+					Action: LifecycleAction{
+						Type: DeleteAction,
+					},
+					Condition: LifecycleCondition{
+						AgeInDays:             30,
+						Liveness:              Live,
+						CreatedBefore:         time.Date(2017, 1, 2, 3, 4, 5, 6, time.UTC),
+						MatchesStorageClasses: []string{"NEARLINE"},
+						NumNewerVersions:      10,
+					},
+				}, {
+					Action: LifecycleAction{
+						Type: DeleteAction,
+					},
+					Condition: LifecycleCondition{
+						Liveness: Archived,
+					},
+				}},
+			},
+		},
+		raw: raw.Bucket{
+			Lifecycle: &raw.BucketLifecycle{
+				Rule: []*raw.BucketLifecycleRule{{
+					Action: &raw.BucketLifecycleRuleAction{
+						Type:         SetStorageClassAction,
+						StorageClass: "NEARLINE",
+					},
+					Condition: &raw.BucketLifecycleRuleCondition{
+						Age:                 10,
+						IsLive:              googleapi.Bool(true),
+						CreatedBefore:       "2017-01-02",
+						MatchesStorageClass: []string{"MULTI_REGIONAL", "REGIONAL", "STANDARD"},
+						NumNewerVersions:    3,
+					},
+				}, {
+					Action: &raw.BucketLifecycleRuleAction{
+						Type: DeleteAction,
+					},
+					Condition: &raw.BucketLifecycleRuleCondition{
+						Age:                 30,
+						IsLive:              googleapi.Bool(true),
+						CreatedBefore:       "2017-01-02",
+						MatchesStorageClass: []string{"NEARLINE"},
+						NumNewerVersions:    10,
+					},
+				}, {
+					Action: &raw.BucketLifecycleRuleAction{
+						Type: DeleteAction,
+					},
+					Condition: &raw.BucketLifecycleRuleCondition{
+						IsLive: googleapi.Bool(false),
+					},
+				}},
+			},
+		},
+	}} {
+		if got := c.attrs.toRawBucket(); !testutil.Equal(*got, c.raw) {
+			t.Errorf("toRawBucket: got %v, want %v", *got, c.raw)
 		}
 	}
 }

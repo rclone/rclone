@@ -34,7 +34,7 @@
 //         panic(fmt.Sprintf("failed to DynamoDB marshal Record, %v", err))
 //     }
 //
-//     _, err := r.svc.PutItem(&dynamodb.PutItemInput{
+//     _, err = svc.PutItem(&dynamodb.PutItemInput{
 //         TableName: aws.String(myTableName),
 //         Item:      av,
 //     })

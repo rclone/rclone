@@ -149,20 +149,23 @@ func TestLabelErrors(t *testing.T) {
 		// For backwards compatibility, the Punycode profile does not map runes.
 		{punyA, "\u3002b", "xn--b-83t", ""},
 		{punyA, "..b", "..b", ""},
-		// Only strip leading empty labels for certain profiles. Stripping
-		// leading empty labels here but not for "empty" punycode above seems
-		// inconsistent, but seems to be applied by both the conformance test
-		// and Chrome. So we turn it off by default, support it as an option,
-		// and enable it in profiles where it seems commonplace.
-		{lengthA, ".b", "b", ""},
-		{lengthA, "\u3002b", "b", ""},
-		{lengthA, "..b", "b", ""},
+
+		{lengthA, ".b", ".b", "A4"},
+		{lengthA, "\u3002b", ".b", "A4"},
+		{lengthA, "..b", "..b", "A4"},
 		{lengthA, "b..", "b..", ""},
 
+		// Sharpened Bidi rules for Unicode 10.0.0. Apply for ALL labels in ANY
+		// of the labels is RTL.
+		{lengthA, "\ufe05\u3002\u3002\U0002603e\u1ce0", "..xn--t6f5138v", "A4"},
+		{lengthA, "FAX\u2a77\U0001d186\u3002\U0001e942\U000e0181\u180c", "", "B6"},
+
 		{resolve, "a..b", "a..b", ""},
-		{resolve, ".b", "b", ""},
-		{resolve, "\u3002b", "b", ""},
-		{resolve, "..b", "b", ""},
+		// Note that leading dots are not stripped. This is to be consistent
+		// with the Punycode profile as well as the conformance test.
+		{resolve, ".b", ".b", ""},
+		{resolve, "\u3002b", ".b", ""},
+		{resolve, "..b", "..b", ""},
 		{resolve, "b..", "b..", ""},
 
 		// Raw punycode
@@ -296,4 +299,10 @@ func unescape(s string) string {
 		panic(err)
 	}
 	return s
+}
+
+func BenchmarkProfile(b *testing.B) {
+	for i := 0; i < b.N; i++ {
+		Lookup.ToASCII("www.yahoogle.com")
+	}
 }

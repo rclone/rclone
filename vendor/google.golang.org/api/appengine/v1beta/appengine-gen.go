@@ -320,7 +320,7 @@ func (s *ApiEndpointHandler) MarshalJSON() ([]byte, error) {
 }
 
 // Application: An Application resource contains the top-level
-// configuration of an App Engine application. Next tag: 19
+// configuration of an App Engine application. Next tag: 20
 type Application struct {
 	// AuthDomain: Google Apps authentication domain that controls which
 	// users can access this application.Defaults to open access for any
@@ -429,8 +429,8 @@ type AuthorizedCertificate struct {
 	// DomainMappingsCount: Aggregate count of the domain mappings with this
 	// certificate mapped. This count includes domain mappings on
 	// applications for which the user does not have VIEWER permissions.Only
-	// returned by GET requests when specifically requested by the view=FULL
-	// option.@OutputOnly
+	// returned by GET or LIST requests when specifically requested by the
+	// view=FULL_CERTIFICATE option.@OutputOnly
 	DomainMappingsCount int64 `json:"domainMappingsCount,omitempty"`
 
 	// DomainNames: Topmost applicable domains of this certificate. This
@@ -449,6 +449,13 @@ type AuthorizedCertificate struct {
 	// 12345.@OutputOnly
 	Id string `json:"id,omitempty"`
 
+	// ManagedCertificate: Only applicable if this certificate is managed by
+	// App Engine. Managed certificates are tied to the lifecycle of a
+	// DomainMapping and cannot be updated or deleted via the
+	// AuthorizedCertificates API. If this certificate is manually
+	// administered by the user, this field will be empty.@OutputOnly
+	ManagedCertificate *ManagedCertificate `json:"managedCertificate,omitempty"`
+
 	// Name: Full path to the AuthorizedCertificate resource in the API.
 	// Example: apps/myapp/authorizedCertificates/12345.@OutputOnly
 	Name string `json:"name,omitempty"`
@@ -459,8 +466,8 @@ type AuthorizedCertificate struct {
 	// list of mapped domain mappings if the user does not have VIEWER
 	// permissions on all of the applications that have this certificate
 	// mapped. See domain_mappings_count for a complete count.Only returned
-	// by GET requests when specifically requested by the view=FULL
-	// option.@OutputOnly
+	// by GET or LIST requests when specifically requested by the
+	// view=FULL_CERTIFICATE option.@OutputOnly
 	VisibleDomainMappings []string `json:"visibleDomainMappings,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1962,6 +1969,56 @@ func (s *LocationMetadata) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// ManagedCertificate: A certificate managed by App Engine.
+type ManagedCertificate struct {
+	// LastRenewalTime: Time at which the certificate was last renewed. The
+	// renewal process is fully managed. Certificate renewal will
+	// automatically occur before the certificate expires. Renewal errors
+	// can be tracked via ManagementStatus.@OutputOnly
+	LastRenewalTime string `json:"lastRenewalTime,omitempty"`
+
+	// Status: Status of certificate management. Refers to the most recent
+	// certificate acquisition or renewal attempt.@OutputOnly
+	//
+	// Possible values:
+	//   "MANAGEMENT_STATUS_UNSPECIFIED"
+	//   "OK" - Certificate was successfully obtained and inserted into the
+	// serving system.
+	//   "PENDING" - Certificate is under active attempts to acquire or
+	// renew.
+	//   "FAILED_RETRYING_NOT_VISIBLE" - Most recent renewal failed due to
+	// an invalid DNS setup and will be retried. Renewal attempts will
+	// continue to fail until the certificate domain's DNS configuration is
+	// fixed. The last successfully provisioned certificate may still be
+	// serving.
+	//   "FAILED_PERMANENT" - All renewal attempts have been exhausted,
+	// likely due to an invalid DNS setup.
+	Status string `json:"status,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LastRenewalTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LastRenewalTime") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ManagedCertificate) MarshalJSON() ([]byte, error) {
+	type noMethod ManagedCertificate
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ManualScaling: A service with manual scaling runs continuously,
 // allowing you to perform complex initialization and rely on the state
 // of its memory over time.
@@ -1995,16 +2052,19 @@ func (s *ManualScaling) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Network: Extra network settings. Only applicable for VM runtimes.
+// Network: Extra network settings. Only applicable for App Engine
+// flexible environment versions
 type Network struct {
 	// ForwardedPorts: List of ports, or port pairs, to forward from the
-	// virtual machine to the application container.
+	// virtual machine to the application container. Only applicable for App
+	// Engine flexible environment versions.
 	ForwardedPorts []string `json:"forwardedPorts,omitempty"`
 
-	// InstanceTag: Tag to apply to the VM instance during creation.
+	// InstanceTag: Tag to apply to the VM instance during creation. Only
+	// applicable for for App Engine flexible environment versions.
 	InstanceTag string `json:"instanceTag,omitempty"`
 
-	// Name: Google Cloud Platform network where the virtual machines are
+	// Name: Google Compute Engine network where the virtual machines are
 	// created. Specify the short name, not the resource path.Defaults to
 	// default.
 	Name string `json:"name,omitempty"`
@@ -2022,8 +2082,8 @@ type Network struct {
 	// If the network the VM instance is being created in is a custom Subnet
 	// Mode Network, then the subnetwork_name must be specified and the IP
 	// address is created from the IPCidrRange of the subnetwork.If
-	// specified, the subnetwork must exist in the same region as the Flex
-	// app.
+	// specified, the subnetwork must exist in the same region as the App
+	// Engine flexible environment application.
 	SubnetworkName string `json:"subnetworkName,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ForwardedPorts") to
@@ -2706,9 +2766,38 @@ func (s *Service) MarshalJSON() ([]byte, error) {
 // SslSettings: SSL configuration for a DomainMapping resource.
 type SslSettings struct {
 	// CertificateId: ID of the AuthorizedCertificate resource configuring
-	// SSL for the application. Clearing this field will remove SSL support.
-	// Example: 12345.
+	// SSL for the application. Clearing this field will remove SSL
+	// support.By default, a managed certificate is automatically created
+	// for every domain mapping. To omit SSL support or to configure SSL
+	// manually, specify SslManagementType.MANUAL on a CREATE or UPDATE
+	// request. You must be authorized to administer the
+	// AuthorizedCertificate resource to manually map it to a DomainMapping
+	// resource. Example: 12345.
 	CertificateId string `json:"certificateId,omitempty"`
+
+	// PendingManagedCertificateId: ID of the managed AuthorizedCertificate
+	// resource currently being provisioned, if applicable. Until the new
+	// managed certificate has been successfully provisioned, the previous
+	// SSL state will be preserved. Once the provisioning process completes,
+	// the certificate_id field will reflect the new managed certificate and
+	// this field will be left empty. To remove SSL support while there is
+	// still a pending managed certificate, clear the certificate_id field
+	// with an UpdateDomainMappingRequest.@OutputOnly
+	PendingManagedCertificateId string `json:"pendingManagedCertificateId,omitempty"`
+
+	// SslManagementType: SSL management type for this domain. If AUTOMATIC,
+	// a managed certificate is automatically provisioned. If MANUAL,
+	// certificate_id must be manually specified in order to configure SSL
+	// for this domain.
+	//
+	// Possible values:
+	//   "AUTOMATIC" - SSL support for this domain is configured
+	// automatically. The mapped SSL certificate will be automatically
+	// renewed.
+	//   "MANUAL" - SSL support for this domain is configured manually by
+	// the user. Either the domain has no SSL support or a user-obtained SSL
+	// certificate has been explictly mapped to this domain.
+	SslManagementType string `json:"sslManagementType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CertificateId") to
 	// unconditionally include in API requests. By default, fields with
@@ -2898,8 +2987,8 @@ type Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details. There will
-	// be a common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details. There is a
+	// common set of message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
@@ -3257,7 +3346,8 @@ type Version struct {
 	// apps/myapp/services/default/versions/v1.@OutputOnly
 	Name string `json:"name,omitempty"`
 
-	// Network: Extra network settings. Only applicable for VM runtimes.
+	// Network: Extra network settings. Only applicable for App Engine
+	// flexible environment versions.
 	Network *Network `json:"network,omitempty"`
 
 	// NobuildFilesRegex: Files that match this pattern will not be built
@@ -4448,6 +4538,17 @@ func (c *AppsAuthorizedCertificatesListCall) PageToken(pageToken string) *AppsAu
 	return c
 }
 
+// View sets the optional parameter "view": Controls the set of fields
+// returned in the LIST response.
+//
+// Possible values:
+//   "BASIC_CERTIFICATE"
+//   "FULL_CERTIFICATE"
+func (c *AppsAuthorizedCertificatesListCall) View(view string) *AppsAuthorizedCertificatesListCall {
+	c.urlParams_.Set("view", view)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -4565,6 +4666,15 @@ func (c *AppsAuthorizedCertificatesListCall) Do(opts ...googleapi.CallOption) (*
 	//     },
 	//     "pageToken": {
 	//       "description": "Continuation token for fetching the next page of results.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "view": {
+	//       "description": "Controls the set of fields returned in the LIST response.",
+	//       "enum": [
+	//         "BASIC_CERTIFICATE",
+	//         "FULL_CERTIFICATE"
+	//       ],
 	//       "location": "query",
 	//       "type": "string"
 	//     }
@@ -8717,6 +8827,27 @@ type AppsServicesVersionsPatchCall struct {
 // ta/apps.services.versions#Version.FIELDS.automatic_scaling):  For
 // Version resources that use automatic scaling and run in the App
 // Engine standard environment.
+// automatic_scaling.min_total_instances
+// (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1be
+// ta/apps.services.versions#Version.FIELDS.automatic_scaling):  For
+// Version resources that use automatic scaling and run in the App
+// Engine Flexible environment.
+// automatic_scaling.max_total_instances
+// (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1be
+// ta/apps.services.versions#Version.FIELDS.automatic_scaling):  For
+// Version resources that use automatic scaling and run in the App
+// Engine Flexible environment.
+// automatic_scaling.cool_down_period_sec
+// (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1be
+// ta/apps.services.versions#Version.FIELDS.automatic_scaling):  For
+// Version resources that use automatic scaling and run in the App
+// Engine Flexible
+// environment.
+// automatic_scaling.cpu_utilization.target_utilization
+// (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1be
+// ta/apps.services.versions#Version.FIELDS.automatic_scaling):  For
+// Version resources that use automatic scaling and run in the App
+// Engine Flexible environment.
 func (r *AppsServicesVersionsService) Patch(appsId string, servicesId string, versionsId string, version *Version) *AppsServicesVersionsPatchCall {
 	c := &AppsServicesVersionsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.appsId = appsId
@@ -8821,7 +8952,7 @@ func (c *AppsServicesVersionsPatchCall) Do(opts ...googleapi.CallOption) (*Opera
 	}
 	return ret, nil
 	// {
-	//   "description": "Updates the specified Version resource. You can specify the following fields depending on the App Engine environment and type of scaling that the version resource uses:\nserving_status (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.serving_status):  For Version resources that use basic scaling, manual scaling, or run in  the App Engine flexible environment.\ninstance_class (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.instance_class):  For Version resources that run in the App Engine standard environment.\nautomatic_scaling.min_idle_instances (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine standard environment.\nautomatic_scaling.max_idle_instances (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine standard environment.",
+	//   "description": "Updates the specified Version resource. You can specify the following fields depending on the App Engine environment and type of scaling that the version resource uses:\nserving_status (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.serving_status):  For Version resources that use basic scaling, manual scaling, or run in  the App Engine flexible environment.\ninstance_class (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.instance_class):  For Version resources that run in the App Engine standard environment.\nautomatic_scaling.min_idle_instances (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine standard environment.\nautomatic_scaling.max_idle_instances (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine standard environment.\nautomatic_scaling.min_total_instances (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine Flexible environment.\nautomatic_scaling.max_total_instances (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine Flexible environment.\nautomatic_scaling.cool_down_period_sec (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine Flexible environment.\nautomatic_scaling.cpu_utilization.target_utilization (https://cloud.google.com/appengine/docs/admin-api/reference/rest/v1beta/apps.services.versions#Version.FIELDS.automatic_scaling):  For Version resources that use automatic scaling and run in the App  Engine Flexible environment.",
 	//   "flatPath": "v1beta/apps/{appsId}/services/{servicesId}/versions/{versionsId}",
 	//   "httpMethod": "PATCH",
 	//   "id": "appengine.apps.services.versions.patch",

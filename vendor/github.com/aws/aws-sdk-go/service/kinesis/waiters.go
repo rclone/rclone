@@ -11,7 +11,7 @@ import (
 
 // WaitUntilStreamExists uses the Kinesis API operation
 // DescribeStream to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *Kinesis) WaitUntilStreamExists(input *DescribeStreamInput) error {
 	return c.WaitUntilStreamExistsWithContext(aws.BackgroundContext(), input)
@@ -57,7 +57,7 @@ func (c *Kinesis) WaitUntilStreamExistsWithContext(ctx aws.Context, input *Descr
 
 // WaitUntilStreamNotExists uses the Kinesis API operation
 // DescribeStream to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *Kinesis) WaitUntilStreamNotExists(input *DescribeStreamInput) error {
 	return c.WaitUntilStreamNotExistsWithContext(aws.BackgroundContext(), input)

@@ -18,12 +18,14 @@ import (
 	"encoding/base64"
 	"fmt"
 	"math"
-	"reflect"
 	"testing"
 	"time"
 
+	"github.com/google/go-cmp/cmp"
+
 	"cloud.google.com/go/civil"
 	"cloud.google.com/go/internal/pretty"
+	"cloud.google.com/go/internal/testutil"
 
 	bq "google.golang.org/api/bigquery/v2"
 )
@@ -50,7 +52,7 @@ func TestConvertBasicValues(t *testing.T) {
 		t.Fatalf("error converting: %v", err)
 	}
 	want := []Value{"a", int64(1), 1.2, true, []byte("foo")}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("converting basic values: got:\n%v\nwant:\n%v", got, want)
 	}
 }
@@ -92,7 +94,7 @@ func TestConvertNullValues(t *testing.T) {
 		t.Fatalf("error converting: %v", err)
 	}
 	want := []Value{nil}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("converting null values: got:\n%v\nwant:\n%v", got, want)
 	}
 }
@@ -123,7 +125,7 @@ func TestBasicRepetition(t *testing.T) {
 		t.Fatalf("error converting: %v", err)
 	}
 	want := []Value{[]Value{int64(1), int64(2), int64(3)}}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("converting basic repeated values: got:\n%v\nwant:\n%v", got, want)
 	}
 }
@@ -160,7 +162,7 @@ func TestNestedRecordContainingRepetition(t *testing.T) {
 		t.Fatalf("error converting: %v", err)
 	}
 	want := []Value{[]Value{[]Value{int64(1), int64(2), int64(3)}}}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("converting basic repeated values: got:\n%v\nwant:\n%v", got, want)
 	}
 }
@@ -234,7 +236,7 @@ func TestRepeatedRecordContainingRepetition(t *testing.T) {
 			},
 		},
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("converting repeated records with repeated values: got:\n%v\nwant:\n%v", got, want)
 	}
 }
@@ -330,7 +332,7 @@ func TestRepeatedRecordContainingRecord(t *testing.T) {
 			},
 		},
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("converting repeated records containing record : got:\n%v\nwant:\n%v", got, want)
 	}
 }
@@ -417,7 +419,7 @@ func TestValuesSaverConvertsToMap(t *testing.T) {
 			t.Errorf("Expected successful save; got: %v", err)
 		}
 		got := &insertionRow{insertID, data}
-		if !reflect.DeepEqual(got, tc.want) {
+		if !testutil.Equal(got, tc.want) {
 			t.Errorf("saving ValuesSaver:\ngot:\n%+v\nwant:\n%+v", got, tc.want)
 		}
 	}
@@ -458,7 +460,7 @@ func TestStructSaver(t *testing.T) {
 		if wantIID := "iid"; gotIID != wantIID {
 			t.Errorf("%s: InsertID: got %q, want %q", msg, gotIID, wantIID)
 		}
-		if !reflect.DeepEqual(got, want) {
+		if !testutil.Equal(got, want) {
 			t.Errorf("%s:\ngot\n%#v\nwant\n%#v", msg, got, want)
 		}
 	}
@@ -523,7 +525,7 @@ func TestConvertRows(t *testing.T) {
 	if err != nil {
 		t.Fatalf("got %v, want nil", err)
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("\ngot  %v\nwant %v", got, want)
 	}
 }
@@ -542,7 +544,7 @@ func TestValueList(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 
@@ -551,7 +553,7 @@ func TestValueList(t *testing.T) {
 	if err := vl.Load(want, schema); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("got %+v, want %+v", got, want)
 	}
 }
@@ -588,7 +590,7 @@ func TestValueMap(t *testing.T) {
 			map[string]Value{"x": 5, "y": 6},
 		},
 	}
-	if !reflect.DeepEqual(vm, valueMap(want)) {
+	if !testutil.Equal(vm, valueMap(want)) {
 		t.Errorf("got\n%+v\nwant\n%+v", vm, want)
 	}
 
@@ -669,7 +671,7 @@ func TestStructLoader(t *testing.T) {
 		Nested: nested{NestS: "nested", NestI: 17},
 		Tagged: "z",
 	}
-	if !reflect.DeepEqual(&ts1, want) {
+	if !testutil.Equal(&ts1, want, cmp.AllowUnexported(testStruct1{})) {
 		t.Errorf("got %+v, want %+v", pretty.Value(ts1), pretty.Value(*want))
 		d, _, err := pretty.Diff(*want, ts1)
 		if err == nil {
@@ -684,7 +686,7 @@ func TestStructLoader(t *testing.T) {
 		t.Fatal(err)
 	}
 	want2 := &nestedPtr{Nested: &nested{NestS: "nested", NestI: 17}}
-	if !reflect.DeepEqual(&np, want2) {
+	if !testutil.Equal(&np, want2) {
 		t.Errorf("got %+v, want %+v", pretty.Value(np), pretty.Value(*want2))
 	}
 
@@ -694,7 +696,7 @@ func TestStructLoader(t *testing.T) {
 	if err := load(&np, schema2, testValues); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(&np, want2) {
+	if !testutil.Equal(&np, want2) {
 		t.Errorf("got %+v, want %+v", pretty.Value(np), pretty.Value(*want2))
 	}
 	if np.Nested != nst {
@@ -739,7 +741,7 @@ func TestStructLoaderRepeated(t *testing.T) {
 		LongNums:  [...]int{1, 2, 3, 0, 0},
 		Nested:    []*nested{{"x", 1}, {"y", 2}},
 	}
-	if !reflect.DeepEqual(r1, want) {
+	if !testutil.Equal(r1, want) {
 		t.Errorf("got %+v, want %+v", pretty.Value(r1), pretty.Value(want))
 	}
 
@@ -750,7 +752,7 @@ func TestStructLoaderRepeated(t *testing.T) {
 	if err := load(&r2, repSchema, repValues); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(r2, want) {
+	if !testutil.Equal(r2, want) {
 		t.Errorf("got %+v, want %+v", pretty.Value(r2), pretty.Value(want))
 	}
 	if got, want := cap(r2.Nums), 5; got != want {
@@ -762,7 +764,7 @@ func TestStructLoaderRepeated(t *testing.T) {
 	if err := load(&r3, repSchema, repValues); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(r3, want) {
+	if !testutil.Equal(r3, want) {
 		t.Errorf("got %+v, want %+v", pretty.Value(r3), pretty.Value(want))
 	}
 	if got, want := cap(r3.Nums), 3; got != want {
@@ -801,7 +803,7 @@ func TestStructLoaderFieldOverlap(t *testing.T) {
 		t.Fatal(err)
 	}
 	want1 := S1{I: 7}
-	if !reflect.DeepEqual(s1, want1) {
+	if !testutil.Equal(s1, want1) {
 		t.Errorf("got %+v, want %+v", pretty.Value(s1), pretty.Value(want1))
 	}
 
@@ -813,7 +815,7 @@ func TestStructLoaderFieldOverlap(t *testing.T) {
 		t.Fatal(err)
 	}
 	want2 := S2{}
-	if !reflect.DeepEqual(s2, want2) {
+	if !testutil.Equal(s2, want2) {
 		t.Errorf("got %+v, want %+v", pretty.Value(s2), pretty.Value(want2))
 	}
 }

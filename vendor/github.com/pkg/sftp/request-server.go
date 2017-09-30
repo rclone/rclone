@@ -3,9 +3,9 @@ package sftp
 import (
 	"encoding"
 	"io"
-	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"sync"
 	"syscall"
 
@@ -21,14 +21,14 @@ type Handlers struct {
 	FileGet  FileReader
 	FilePut  FileWriter
 	FileCmd  FileCmder
-	FileInfo FileInfoer
+	FileList FileLister
 }
 
 // RequestServer abstracts the sftp protocol with an http request-like protocol
 type RequestServer struct {
 	*serverConn
 	Handlers        Handlers
-	pktMgr          packetManager
+	pktMgr          *packetManager
 	openRequests    map[string]Request
 	openRequestLock sync.RWMutex
 	handleCount     int
@@ -51,20 +51,22 @@ func NewRequestServer(rwc io.ReadWriteCloser, h Handlers) *RequestServer {
 	}
 }
 
-func (rs *RequestServer) nextRequest(r Request) string {
+// Note that we are explicitly saving the Request as a value.
+func (rs *RequestServer) nextRequest(r *Request) string {
 	rs.openRequestLock.Lock()
 	defer rs.openRequestLock.Unlock()
 	rs.handleCount++
 	handle := strconv.Itoa(rs.handleCount)
-	rs.openRequests[handle] = r
+	rs.openRequests[handle] = *r
 	return handle
 }
 
-func (rs *RequestServer) getRequest(handle string) (Request, bool) {
+// Returns pointer to new copy of Request object
+func (rs *RequestServer) getRequest(handle string) (*Request, bool) {
 	rs.openRequestLock.RLock()
 	defer rs.openRequestLock.RUnlock()
 	r, ok := rs.openRequests[handle]
-	return r, ok
+	return &r, ok
 }
 
 func (rs *RequestServer) closeRequest(handle string) {
@@ -130,7 +132,7 @@ func (rs *RequestServer) packetWorker(pktChan chan requestPacket) error {
 			rs.closeRequest(handle)
 			rpkt = statusFromError(pkt, nil)
 		case *sshFxpRealpathPacket:
-			rpkt = cleanPath(pkt)
+			rpkt = cleanPacketPath(pkt)
 		case isOpener:
 			handle := rs.nextRequest(requestFromPacket(pkt))
 			rpkt = sshFxpHandlePacket{pkt.id(), handle}
@@ -142,7 +144,7 @@ func (rs *RequestServer) packetWorker(pktChan chan requestPacket) error {
 			} else {
 				request = requestFromPacket(
 					&sshFxpStatPacket{ID: pkt.id(), Path: request.Filepath})
-				rpkt = rs.handle(request, pkt)
+				rpkt = request.call(rs.Handlers, pkt)
 			}
 		case *sshFxpFsetstatPacket:
 			handle := pkt.getHandle()
@@ -154,20 +156,23 @@ func (rs *RequestServer) packetWorker(pktChan chan requestPacket) error {
 					&sshFxpSetstatPacket{ID: pkt.id(), Path: request.Filepath,
 						Flags: pkt.Flags, Attrs: pkt.Attrs,
 					})
-				rpkt = rs.handle(request, pkt)
+				rpkt = request.call(rs.Handlers, pkt)
 			}
 		case hasHandle:
 			handle := pkt.getHandle()
 			request, ok := rs.getRequest(handle)
-			request.update(pkt)
-			if !ok {
+			uerr := request.updateMethod(pkt)
+			if !ok || uerr != nil {
+				if uerr == nil {
+					uerr = syscall.EBADF
+				}
 				rpkt = statusFromError(pkt, syscall.EBADF)
 			} else {
-				rpkt = rs.handle(request, pkt)
+				rpkt = request.call(rs.Handlers, pkt)
 			}
 		case hasPath:
 			request := requestFromPacket(pkt)
-			rpkt = rs.handle(request, pkt)
+			rpkt = request.call(rs.Handlers, pkt)
 		default:
 			return errors.Errorf("unexpected packet type %T", pkt)
 		}
@@ -180,31 +185,24 @@ func (rs *RequestServer) packetWorker(pktChan chan requestPacket) error {
 	return nil
 }
 
-func cleanPath(pkt *sshFxpRealpathPacket) responsePacket {
-	path := pkt.getPath()
-	if !filepath.IsAbs(path) {
-		path = "/" + path
-	} // all paths are absolute
-
-	cleaned_path := filepath.Clean(path)
+func cleanPacketPath(pkt *sshFxpRealpathPacket) responsePacket {
+	path := cleanPath(pkt.getPath())
 	return &sshFxpNamePacket{
 		ID: pkt.id(),
 		NameAttrs: []sshFxpNameAttr{{
-			Name:     cleaned_path,
-			LongName: cleaned_path,
+			Name:     path,
+			LongName: path,
 			Attrs:    emptyFileStat,
 		}},
 	}
 }
 
-func (rs *RequestServer) handle(request Request, pkt requestPacket) responsePacket {
-	// fmt.Println("Request Method: ", request.Method)
-	rpkt, err := request.handle(rs.Handlers)
-	if err != nil {
-		err = errorAdapter(err)
-		rpkt = statusFromError(pkt, err)
+func cleanPath(path string) string {
+	cleanSlashPath := filepath.ToSlash(filepath.Clean(path))
+	if !strings.HasPrefix(cleanSlashPath, "/") {
+		return "/" + cleanSlashPath
 	}
-	return rpkt
+	return cleanSlashPath
 }
 
 // Wrap underlying connection methods to use packetManager
@@ -219,13 +217,4 @@ func (rs *RequestServer) sendPacket(m encoding.BinaryMarshaler) error {
 
 func (rs *RequestServer) sendError(p ider, err error) error {
 	return rs.sendPacket(statusFromError(p, err))
-}
-
-// os.ErrNotExist should convert to ssh_FX_NO_SUCH_FILE, but is not recognized
-// by statusFromError. So we convert to syscall.ENOENT which it does.
-func errorAdapter(err error) error {
-	if err == os.ErrNotExist {
-		return syscall.ENOENT
-	}
-	return err
 }

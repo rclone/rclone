@@ -42,10 +42,11 @@ func main() {
 		ObjectFeatureContext(s)
 		ObjectMultipartFeatureContext(s)
 		ImageFeatureContext(s)
+		UploadFeatureContext(s)
 	}
 	options := godog.Options{
 		Format: "pretty",
-		Paths:  []string{"./features"},
+		Paths:  []string{"./features", "./local_features"},
 		Tags:   "",
 	}
 	status := godog.RunWithOptions("*", context, options)
@@ -108,6 +109,8 @@ type testConfig struct {
 
 	RetryWaitTime int `json:"retry_wait_time" yaml:"retry_wait_time"`
 	MaxRetries    int `json:"max_retries" yaml:"max_retries"`
+
+	Concurrency int `json:"concurrency"`
 }
 
 func loadTestConfig() {

@@ -196,7 +196,7 @@ type Order struct {
 	PlacedDate string `json:"placedDate,omitempty"`
 
 	// Promotions: The details of the merchant provided promotions applied
-	// to the order. More details about the program are  here.
+	// to the order. More details about the program are here.
 	Promotions []*OrderPromotion `json:"promotions,omitempty"`
 
 	// Refunds: Refunds for the order.
@@ -412,6 +412,10 @@ func (s *OrderDeliveryDetails) MarshalJSON() ([]byte, error) {
 type OrderLineItem struct {
 	// Cancellations: Cancellations of the line item.
 	Cancellations []*OrderCancellation `json:"cancellations,omitempty"`
+
+	// ChannelType: The channel type of the order: "purchaseOnGoogle" or
+	// "googleExpress".
+	ChannelType string `json:"channelType,omitempty"`
 
 	// Id: The id of the line item.
 	Id string `json:"id,omitempty"`
@@ -649,7 +653,8 @@ func (s *OrderLineItemShippingDetails) MarshalJSON() ([]byte, error) {
 }
 
 type OrderLineItemShippingDetailsMethod struct {
-	// Carrier: The carrier for the shipping. Optional.
+	// Carrier: The carrier for the shipping. Optional. See
+	// shipments[].carrier for a list of acceptable values.
 	Carrier string `json:"carrier,omitempty"`
 
 	// MaxDaysInTransit: Maximum transit time.
@@ -701,7 +706,16 @@ type OrderPaymentMethod struct {
 	// PhoneNumber: The billing phone number.
 	PhoneNumber string `json:"phoneNumber,omitempty"`
 
-	// Type: The type of instrument (VISA, Mastercard, etc).
+	// Type: The type of instrument.
+	//
+	// Acceptable values are:
+	// - "AMEX"
+	// - "DISCOVER"
+	// - "JCB"
+	// - "MASTERCARD"
+	// - "UNIONPAY"
+	// - "VISA"
+	// - ""
 	Type string `json:"type,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "BillingAddress") to
@@ -907,6 +921,30 @@ func (s *OrderReturn) MarshalJSON() ([]byte, error) {
 
 type OrderShipment struct {
 	// Carrier: The carrier handling the shipment.
+	//
+	// Acceptable values are:
+	// - "gsx"
+	// - "ups"
+	// - "united parcel service"
+	// - "usps"
+	// - "united states postal service"
+	// - "fedex"
+	// - "dhl"
+	// - "ecourier"
+	// - "cxt"
+	// - "google"
+	// - "on trac"
+	// - "ontrac"
+	// - "on-trac"
+	// - "on_trac"
+	// - "delvic"
+	// - "dynamex"
+	// - "lasership"
+	// - "smartpost"
+	// - "fedex smartpost"
+	// - "mpx"
+	// - "uds"
+	// - "united delivery service"
 	Carrier string `json:"carrier,omitempty"`
 
 	// CreationDate: Date on which the shipment has been created, in ISO
@@ -1530,16 +1568,25 @@ func (s *OrdersCustomBatchRequestEntryReturnLineItem) MarshalJSON() ([]byte, err
 }
 
 type OrdersCustomBatchRequestEntryShipLineItems struct {
-	// Carrier: The carrier handling the shipment.
+	// Carrier: Deprecated. Please use shipmentInfo instead. The carrier
+	// handling the shipment. See shipments[].carrier in the  Orders
+	// resource representation for a list of acceptable values.
 	Carrier string `json:"carrier,omitempty"`
 
 	// LineItems: Line items to ship.
 	LineItems []*OrderShipmentLineItemShipment `json:"lineItems,omitempty"`
 
-	// ShipmentId: The ID of the shipment.
+	// ShipmentId: Deprecated. Please use shipmentInfo instead. The ID of
+	// the shipment.
 	ShipmentId string `json:"shipmentId,omitempty"`
 
-	// TrackingId: The tracking id for the shipment.
+	// ShipmentInfos: Shipment information. This field is repeated because a
+	// single line item can be shipped in several packages (and have several
+	// tracking IDs).
+	ShipmentInfos []*OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo `json:"shipmentInfos,omitempty"`
+
+	// TrackingId: Deprecated. Please use shipmentInfo instead. The tracking
+	// id for the shipment.
 	TrackingId string `json:"trackingId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Carrier") to
@@ -1565,8 +1612,45 @@ func (s *OrdersCustomBatchRequestEntryShipLineItems) MarshalJSON() ([]byte, erro
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo struct {
+	// Carrier: The carrier handling the shipment. See shipments[].carrier
+	// in the  Orders resource representation for a list of acceptable
+	// values.
+	Carrier string `json:"carrier,omitempty"`
+
+	// ShipmentId: The ID of the shipment.
+	ShipmentId string `json:"shipmentId,omitempty"`
+
+	// TrackingId: The tracking id for the shipment.
+	TrackingId string `json:"trackingId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Carrier") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Carrier") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo) MarshalJSON() ([]byte, error) {
+	type noMethod OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 type OrdersCustomBatchRequestEntryUpdateShipment struct {
 	// Carrier: The carrier handling the shipment. Not updated if missing.
+	// See shipments[].carrier in the  Orders resource representation for a
+	// list of acceptable values.
 	Carrier string `json:"carrier,omitempty"`
 
 	// ShipmentId: The ID of the shipment.
@@ -1937,7 +2021,9 @@ func (s *OrdersReturnLineItemResponse) MarshalJSON() ([]byte, error) {
 }
 
 type OrdersShipLineItemsRequest struct {
-	// Carrier: The carrier handling the shipment.
+	// Carrier: Deprecated. Please use shipmentInfo instead. The carrier
+	// handling the shipment. See shipments[].carrier in the  Orders
+	// resource representation for a list of acceptable values.
 	Carrier string `json:"carrier,omitempty"`
 
 	// LineItems: Line items to ship.
@@ -1947,10 +2033,17 @@ type OrdersShipLineItemsRequest struct {
 	// for a given order.
 	OperationId string `json:"operationId,omitempty"`
 
-	// ShipmentId: The ID of the shipment.
+	// ShipmentId: Deprecated. Please use shipmentInfo instead. The ID of
+	// the shipment.
 	ShipmentId string `json:"shipmentId,omitempty"`
 
-	// TrackingId: The tracking id for the shipment.
+	// ShipmentInfos: Shipment information. This field is repeated because a
+	// single line item can be shipped in several packages (and have several
+	// tracking IDs).
+	ShipmentInfos []*OrdersCustomBatchRequestEntryShipLineItemsShipmentInfo `json:"shipmentInfos,omitempty"`
+
+	// TrackingId: Deprecated. Please use shipmentInfo instead. The tracking
+	// id for the shipment.
 	TrackingId string `json:"trackingId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Carrier") to
@@ -2083,6 +2176,8 @@ func (s *OrdersUpdateMerchantOrderIdResponse) MarshalJSON() ([]byte, error) {
 
 type OrdersUpdateShipmentRequest struct {
 	// Carrier: The carrier handling the shipment. Not updated if missing.
+	// See shipments[].carrier in the  Orders resource representation for a
+	// list of acceptable values.
 	Carrier string `json:"carrier,omitempty"`
 
 	// OperationId: The ID of the operation. Unique across all operations
@@ -2207,7 +2302,7 @@ type TestOrder struct {
 	PredefinedDeliveryAddress string `json:"predefinedDeliveryAddress,omitempty"`
 
 	// Promotions: The details of the merchant provided promotions applied
-	// to the order. More details about the program are  here.
+	// to the order. More details about the program are here.
 	Promotions []*OrderPromotion `json:"promotions,omitempty"`
 
 	// ShippingCost: The total cost of shipping for all items.

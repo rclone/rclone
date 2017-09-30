@@ -96,8 +96,8 @@ type ViolatingSitesService struct {
 	s *Service
 }
 
-// PlatformSummary: Summary of the ads rating of a site for a specific
-// platform.
+// PlatformSummary: Summary of the ad experience rating of a site for a
+// specific platform.
 type PlatformSummary struct {
 	// BetterAdsStatus: The status of the site reviewed for the Better Ads
 	// Standards.
@@ -108,14 +108,6 @@ type PlatformSummary struct {
 	//   "WARNING" - Warning.
 	//   "FAILING" - Failing.
 	BetterAdsStatus string `json:"betterAdsStatus,omitempty"`
-
-	// EgregiousStatus: The status of the site reviewed for egregious ads.
-	//
-	// Possible values:
-	//   "UNKNOWN" - Not reviewed.
-	//   "PASSING" - Passing.
-	//   "FAILING" - Failing.
-	EgregiousStatus string `json:"egregiousStatus,omitempty"`
 
 	// EnforcementTime: The date on which ad filtering begins.
 	EnforcementTime string `json:"enforcementTime,omitempty"`
@@ -254,7 +246,7 @@ type SitesGetCall struct {
 	header_      http.Header
 }
 
-// Get: Gets a summary of the ads rating of a site.
+// Get: Gets a summary of the ad experience rating of a site.
 func (r *SitesService) Get(name string) *SitesGetCall {
 	c := &SitesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -355,7 +347,7 @@ func (c *SitesGetCall) Do(opts ...googleapi.CallOption) (*SiteSummaryResponse, e
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets a summary of the ads rating of a site.",
+	//   "description": "Gets a summary of the ad experience rating of a site.",
 	//   "flatPath": "v1/sites/{sitesId}",
 	//   "httpMethod": "GET",
 	//   "id": "adexperiencereport.sites.get",
@@ -364,7 +356,7 @@ func (c *SitesGetCall) Do(opts ...googleapi.CallOption) (*SiteSummaryResponse, e
 	//   ],
 	//   "parameters": {
 	//     "name": {
-	//       "description": "The required site name. It should be a site property registered in Search\nConsole. The server will return an error of BAD_REQUEST if this field is\nnot filled in.",
+	//       "description": "The required site name. It should be the site property whose ad experiences\nmay have been reviewed, and it should be URL-encoded. For example,\nsites/https%3A%2F%2Fwww.google.com. The server will return an error of\nBAD_REQUEST if this field is not filled in. Note that if the site property\nis not yet verified in Search Console, the reportUrl field returned by the\nAPI will lead to the verification page, prompting the user to go through\nthat process before they can gain access to the Ad Experience Report.",
 	//       "location": "path",
 	//       "pattern": "^sites/[^/]+$",
 	//       "required": true,

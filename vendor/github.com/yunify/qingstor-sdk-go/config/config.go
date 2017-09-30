@@ -113,7 +113,7 @@ func (c *Config) Check() error {
 func (c *Config) LoadDefaultConfig() error {
 	_, err := yaml.Decode([]byte(DefaultConfigFileContent), c)
 	if err != nil {
-		logger.Error("Config parse error: " + err.Error())
+		logger.Errorf("Config parse error: " + err.Error())
 		return err
 	}
 
@@ -127,7 +127,7 @@ func (c *Config) LoadDefaultConfig() error {
 func (c *Config) LoadUserConfig() error {
 	_, err := os.Stat(GetUserConfigFilePath())
 	if err != nil {
-		logger.Warn("Installing default config file to \"" + GetUserConfigFilePath() + "\"")
+		logger.Warnf("Installing default config file to \"" + GetUserConfigFilePath() + "\"")
 		InstallDefaultUserConfig()
 	}
 
@@ -143,7 +143,7 @@ func (c *Config) LoadConfigFromFilePath(filepath string) error {
 
 	yamlString, err := ioutil.ReadFile(filepath)
 	if err != nil {
-		logger.Error("File not found: " + filepath)
+		logger.Errorf("File not found: " + filepath)
 		return err
 	}
 
@@ -157,7 +157,7 @@ func (c *Config) LoadConfigFromContent(content []byte) error {
 
 	_, err := yaml.Decode(content, c)
 	if err != nil {
-		logger.Error("Config parse error: " + err.Error())
+		logger.Errorf("Config parse error: " + err.Error())
 		return err
 	}
 

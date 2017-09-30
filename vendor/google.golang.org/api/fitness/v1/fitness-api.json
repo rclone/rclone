@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/ijeguRXyVpN9uEUSOI4kjLGOD9E\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/K1BxZmhfi_H1WlvW1SDsecgXAnE\"",
  "discoveryVersion": "v1",
  "id": "fitness:v1",
  "name": "fitness",
  "version": "v1",
- "revision": "20161128",
+ "revision": "20170922",
  "title": "Fitness",
  "description": "Stores and accesses user data in the fitness store from apps on any platform.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/fitness/v1/users/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "fitness/v1/users/",
- "batchPath": "batch",
+ "batchPath": "batch/fitness/v1",
  "parameters": {
   "alt": {
    "type": "string",
@@ -503,7 +503,7 @@
     },
     "dataStreamId": {
      "type": "string",
-     "description": "A unique identifier for the data stream produced by this data source. The identifier includes:\n\n \n- The physical device's manufacturer, model, and serial number (UID). \n- The application's package name or name. Package name is used when the data source was created by an Android application. The developer project number is used when the data source was created by a REST client. \n- The data source's type. \n- The data source's stream name.  Note that not all attributes of the data source are used as part of the stream identifier. In particular, the version of the hardware/the application isn't used. This allows us to preserve the same stream through version updates. This also means that two DataSource objects may represent the same data stream even if they're not equal.\n\nThe exact format of the data stream ID created by an Android application is: type:dataType.name:application.packageName:device.manufacturer:device.model:device.uid:dataStreamName \n\nThe exact format of the data stream ID created by a REST client is: type:dataType.name:developer project number:device.manufacturer:device.model:device.uid:dataStreamName \n\nWhen any of the optional fields that comprise of the data stream ID are blank, they will be omitted from the data stream ID. The minnimum viable data stream ID would be: type:dataType.name:developer project number\n\nFinally, the developer project number is obfuscated when read by any REST or Android client that did not create the data source. Only the data source creator will see the developer project number in clear and normal form.",
+     "description": "A unique identifier for the data stream produced by this data source. The identifier includes:\n\n \n- The physical device's manufacturer, model, and serial number (UID). \n- The application's package name or name. Package name is used when the data source was created by an Android application. The developer project number is used when the data source was created by a REST client. \n- The data source's type. \n- The data source's stream name.  Note that not all attributes of the data source are used as part of the stream identifier. In particular, the version of the hardware/the application isn't used. This allows us to preserve the same stream through version updates. This also means that two DataSource objects may represent the same data stream even if they're not equal.\n\nThe exact format of the data stream ID created by an Android application is: type:dataType.name:application.packageName:device.manufacturer:device.model:device.uid:dataStreamName \n\nThe exact format of the data stream ID created by a REST client is: type:dataType.name:developer project number:device.manufacturer:device.model:device.uid:dataStreamName \n\nWhen any of the optional fields that comprise of the data stream ID are blank, they will be omitted from the data stream ID. The minimum viable data stream ID would be: type:dataType.name:developer project number\n\nFinally, the developer project number is obfuscated when read by any REST or Android client that did not create the data source. Only the data source creator will see the developer project number in clear and normal form.",
      "annotations": {
       "required": [
        "fitness.users.dataSources.update"
@@ -760,6 +760,34 @@
        "fitness.users.dataSources.update"
       ]
      }
+    }
+   }
+  },
+  "ListDataPointChangesResponse": {
+   "id": "ListDataPointChangesResponse",
+   "type": "object",
+   "properties": {
+    "dataSourceId": {
+     "type": "string",
+     "description": "The data stream ID of the data source with data point changes."
+    },
+    "deletedDataPoint": {
+     "type": "array",
+     "description": "Deleted data points for the user. Note, for modifications this should be parsed before handling insertions.",
+     "items": {
+      "$ref": "DataPoint"
+     }
+    },
+    "insertedDataPoint": {
+     "type": "array",
+     "description": "Inserted data points for the user.",
+     "items": {
+      "$ref": "DataPoint"
+     }
+    },
+    "nextPageToken": {
+     "type": "string",
+     "description": "The continuation token, which is used to page through large result sets. Provide this value in a subsequent request to return the next page of results."
     }
    }
   },
@@ -1189,6 +1217,68 @@
       }
      },
      "resources": {
+      "dataPointChanges": {
+       "methods": {
+        "list": {
+         "id": "fitness.users.dataSources.dataPointChanges.list",
+         "path": "{userId}/dataSources/{dataSourceId}/dataPointChanges",
+         "httpMethod": "GET",
+         "description": "Queries for user's data point changes for a particular data source.",
+         "parameters": {
+          "dataSourceId": {
+           "type": "string",
+           "description": "The data stream ID of the data source that created the dataset.",
+           "required": true,
+           "location": "path"
+          },
+          "limit": {
+           "type": "integer",
+           "description": "If specified, no more than this many data point changes will be included in the response.",
+           "format": "int32",
+           "location": "query"
+          },
+          "pageToken": {
+           "type": "string",
+           "description": "The continuation token, which is used to page through large result sets. To get the next page of results, set this parameter to the value of nextPageToken from the previous response.",
+           "location": "query"
+          },
+          "userId": {
+           "type": "string",
+           "description": "List data points for the person identified. Use me to indicate the authenticated user. Only me is supported at this time.",
+           "required": true,
+           "location": "path"
+          }
+         },
+         "parameterOrder": [
+          "userId",
+          "dataSourceId"
+         ],
+         "response": {
+          "$ref": "ListDataPointChangesResponse"
+         },
+         "scopes": [
+          "https://www.googleapis.com/auth/fitness.activity.read",
+          "https://www.googleapis.com/auth/fitness.activity.write",
+          "https://www.googleapis.com/auth/fitness.blood_glucose.read",
+          "https://www.googleapis.com/auth/fitness.blood_glucose.write",
+          "https://www.googleapis.com/auth/fitness.blood_pressure.read",
+          "https://www.googleapis.com/auth/fitness.blood_pressure.write",
+          "https://www.googleapis.com/auth/fitness.body.read",
+          "https://www.googleapis.com/auth/fitness.body.write",
+          "https://www.googleapis.com/auth/fitness.body_temperature.read",
+          "https://www.googleapis.com/auth/fitness.body_temperature.write",
+          "https://www.googleapis.com/auth/fitness.location.read",
+          "https://www.googleapis.com/auth/fitness.location.write",
+          "https://www.googleapis.com/auth/fitness.nutrition.read",
+          "https://www.googleapis.com/auth/fitness.nutrition.write",
+          "https://www.googleapis.com/auth/fitness.oxygen_saturation.read",
+          "https://www.googleapis.com/auth/fitness.oxygen_saturation.write",
+          "https://www.googleapis.com/auth/fitness.reproductive_health.read",
+          "https://www.googleapis.com/auth/fitness.reproductive_health.write"
+         ]
+        }
+       }
+      },
       "datasets": {
        "methods": {
         "delete": {

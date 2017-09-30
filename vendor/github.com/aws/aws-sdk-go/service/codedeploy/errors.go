@@ -305,6 +305,13 @@ const (
 	// and "WITHOUT_TRAFFIC_CONTROL".
 	ErrCodeInvalidDeploymentStyleException = "InvalidDeploymentStyleException"
 
+	// ErrCodeInvalidEC2TagCombinationException for service response error code
+	// "InvalidEC2TagCombinationException".
+	//
+	// A call was submitted that specified both Ec2TagFilters and Ec2TagSet, but
+	// only one of these data types can be used in a single call.
+	ErrCodeInvalidEC2TagCombinationException = "InvalidEC2TagCombinationException"
+
 	// ErrCodeInvalidEC2TagException for service response error code
 	// "InvalidEC2TagException".
 	//
@@ -375,6 +382,13 @@ const (
 	//
 	// The next token was specified in an invalid format.
 	ErrCodeInvalidNextTokenException = "InvalidNextTokenException"
+
+	// ErrCodeInvalidOnPremisesTagCombinationException for service response error code
+	// "InvalidOnPremisesTagCombinationException".
+	//
+	// A call was submitted that specified both OnPremisesTagFilters and OnPremisesTagSet,
+	// but only one of these data types can be used in a single call.
+	ErrCodeInvalidOnPremisesTagCombinationException = "InvalidOnPremisesTagCombinationException"
 
 	// ErrCodeInvalidOperationException for service response error code
 	// "InvalidOperationException".
@@ -502,6 +516,13 @@ const (
 	//
 	// A tag was not specified.
 	ErrCodeTagRequiredException = "TagRequiredException"
+
+	// ErrCodeTagSetListLimitExceededException for service response error code
+	// "TagSetListLimitExceededException".
+	//
+	// The number of tag groups included in the tag set list exceeded the maximum
+	// allowed limit of 3.
+	ErrCodeTagSetListLimitExceededException = "TagSetListLimitExceededException"
 
 	// ErrCodeTriggerTargetsLimitExceededException for service response error code
 	// "TriggerTargetsLimitExceededException".

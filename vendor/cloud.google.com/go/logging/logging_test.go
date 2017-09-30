@@ -21,7 +21,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"reflect"
 	"strings"
 	"testing"
 	"time"
@@ -250,7 +249,7 @@ func compareEntry(got, want *logging.Entry) bool {
 	if !ltesting.PayloadEqual(got.Payload, want.Payload) {
 		return false
 	}
-	if !reflect.DeepEqual(got.Labels, want.Labels) {
+	if !testutil.Equal(got.Labels, want.Labels) {
 		return false
 	}
 

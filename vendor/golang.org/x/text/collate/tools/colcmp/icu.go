@@ -165,8 +165,8 @@ func (c *icuUTF8iter) Key(s Input) []byte {
 	return c.extendBuf(n)
 }
 
-// icuUTF8conv implementes the Collator interface.
-// This implentation first converts the give UTF8 string
+// icuUTF8conv implements the Collator interface.
+// This implementation first converts the give UTF8 string
 // to UTF16 and then calls the main ICU collation function.
 type icuUTF8conv struct {
 	icuCollator

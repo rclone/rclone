@@ -6,8 +6,6 @@ import (
 	"bytes"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
@@ -32,20 +30,30 @@ func TestCustomizations(t *testing.T) {
 		Body:      payloadBuf,
 	})
 	err := req.Build()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no err, got %v", err)
+	}
 
 	// Sets API version
-	assert.Equal(t, req.ClientInfo.APIVersion, req.HTTPRequest.Header.Get("x-amz-glacier-version"))
+	if e, a := req.ClientInfo.APIVersion, req.HTTPRequest.Header.Get("x-amz-glacier-version"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	// Sets Account ID
 	v, _ := awsutil.ValuesAtPath(req.Params, "AccountId")
-	assert.Equal(t, "-", *(v[0].(*string)))
+	if e, a := "-", *(v[0].(*string)); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	// Computes checksums
 	linear := "68aff0c5a91aa0491752bfb96e3fef33eb74953804f6a2f7b708d5bcefa8ff6b"
 	tree := "154e26c78fd74d0c2c9b3cc4644191619dc4f2cd539ae2a74d5fd07957a3ee6a"
-	assert.Equal(t, linear, req.HTTPRequest.Header.Get("x-amz-content-sha256"))
-	assert.Equal(t, tree, req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"))
+	if e, a := linear, req.HTTPRequest.Header.Get("x-amz-content-sha256"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := tree, req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestShortcircuitTreehash(t *testing.T) {
@@ -55,25 +63,37 @@ func TestShortcircuitTreehash(t *testing.T) {
 		Checksum:  aws.String("000"),
 	})
 	err := req.Build()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no err, got %v", err)
+	}
 
-	assert.Equal(t, "000", req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"))
+	if e, a := "000", req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestFillAccountIDWithNilStruct(t *testing.T) {
 	req, _ := svc.ListVaultsRequest(nil)
 	err := req.Build()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no err, got %v", err)
+	}
 
 	empty := "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 	// Sets Account ID
 	v, _ := awsutil.ValuesAtPath(req.Params, "AccountId")
-	assert.Equal(t, "-", *(v[0].(*string)))
+	if e, a := "-", *(v[0].(*string)); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	// Does not set tree hash
-	assert.Equal(t, empty, req.HTTPRequest.Header.Get("x-amz-content-sha256"))
-	assert.Equal(t, "", req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"))
+	if e, a := empty, req.HTTPRequest.Header.Get("x-amz-content-sha256"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "", req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestHashOnce(t *testing.T) {
@@ -84,7 +104,11 @@ func TestHashOnce(t *testing.T) {
 	req.HTTPRequest.Header.Set("X-Amz-Sha256-Tree-Hash", "0")
 
 	err := req.Build()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expect no err, got %v", err)
+	}
 
-	assert.Equal(t, "0", req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"))
+	if e, a := "0", req.HTTPRequest.Header.Get("x-amz-sha256-tree-hash"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }

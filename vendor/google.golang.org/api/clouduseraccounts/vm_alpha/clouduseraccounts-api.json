@@ -21,7 +21,7 @@
  "basePath": "/clouduseraccounts/vm_alpha/projects/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "clouduseraccounts/vm_alpha/projects/",
- "batchPath": "batch",
+ "batchPath": "batch/clouduseraccounts/vm_alpha",
  "parameters": {
   "alt": {
    "type": "string",

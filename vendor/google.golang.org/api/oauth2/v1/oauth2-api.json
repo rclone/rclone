@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/yA-nmrGtGyV39fzR7zooTCbGs10\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/PozAB5R3hMeaeI5NL5FrPjwfUdY\"",
  "discoveryVersion": "v1",
  "id": "oauth2:v1",
  "name": "oauth2",
  "version": "v1",
- "revision": "20170509",
+ "revision": "20170807",
  "title": "Google OAuth2 API",
  "description": "Obtains end-user authorization grants for use with other Google APIs.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "",
- "batchPath": "batch",
+ "batchPath": "batch/oauth2/v1",
  "parameters": {
   "alt": {
    "type": "string",

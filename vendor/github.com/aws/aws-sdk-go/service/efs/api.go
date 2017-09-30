@@ -17,19 +17,18 @@ const opCreateFileSystem = "CreateFileSystem"
 
 // CreateFileSystemRequest generates a "aws/request.Request" representing the
 // client's request for the CreateFileSystem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateFileSystem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateFileSystem method directly
-// instead.
+// See CreateFileSystem for more information on using the CreateFileSystem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateFileSystemRequest method.
 //    req, resp := client.CreateFileSystemRequest(params)
@@ -154,19 +153,18 @@ const opCreateMountTarget = "CreateMountTarget"
 
 // CreateMountTargetRequest generates a "aws/request.Request" representing the
 // client's request for the CreateMountTarget operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateMountTarget for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateMountTarget method directly
-// instead.
+// See CreateMountTarget for more information on using the CreateMountTarget
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateMountTargetRequest method.
 //    req, resp := client.CreateMountTargetRequest(params)
@@ -371,19 +369,18 @@ const opCreateTags = "CreateTags"
 
 // CreateTagsRequest generates a "aws/request.Request" representing the
 // client's request for the CreateTags operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateTags for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateTags method directly
-// instead.
+// See CreateTags for more information on using the CreateTags
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateTagsRequest method.
 //    req, resp := client.CreateTagsRequest(params)
@@ -467,19 +464,18 @@ const opDeleteFileSystem = "DeleteFileSystem"
 
 // DeleteFileSystemRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteFileSystem operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteFileSystem for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteFileSystem method directly
-// instead.
+// See DeleteFileSystem for more information on using the DeleteFileSystem
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteFileSystemRequest method.
 //    req, resp := client.DeleteFileSystemRequest(params)
@@ -575,19 +571,18 @@ const opDeleteMountTarget = "DeleteMountTarget"
 
 // DeleteMountTargetRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteMountTarget operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteMountTarget for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteMountTarget method directly
-// instead.
+// See DeleteMountTarget for more information on using the DeleteMountTarget
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteMountTargetRequest method.
 //    req, resp := client.DeleteMountTargetRequest(params)
@@ -693,19 +688,18 @@ const opDeleteTags = "DeleteTags"
 
 // DeleteTagsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteTags operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteTags for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteTags method directly
-// instead.
+// See DeleteTags for more information on using the DeleteTags
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteTagsRequest method.
 //    req, resp := client.DeleteTagsRequest(params)
@@ -790,19 +784,18 @@ const opDescribeFileSystems = "DescribeFileSystems"
 
 // DescribeFileSystemsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeFileSystems operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeFileSystems for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeFileSystems method directly
-// instead.
+// See DescribeFileSystems for more information on using the DescribeFileSystems
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeFileSystemsRequest method.
 //    req, resp := client.DescribeFileSystemsRequest(params)
@@ -903,19 +896,18 @@ const opDescribeMountTargetSecurityGroups = "DescribeMountTargetSecurityGroups"
 
 // DescribeMountTargetSecurityGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMountTargetSecurityGroups operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeMountTargetSecurityGroups for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeMountTargetSecurityGroups method directly
-// instead.
+// See DescribeMountTargetSecurityGroups for more information on using the DescribeMountTargetSecurityGroups
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeMountTargetSecurityGroupsRequest method.
 //    req, resp := client.DescribeMountTargetSecurityGroupsRequest(params)
@@ -1004,19 +996,18 @@ const opDescribeMountTargets = "DescribeMountTargets"
 
 // DescribeMountTargetsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeMountTargets operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeMountTargets for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeMountTargets method directly
-// instead.
+// See DescribeMountTargets for more information on using the DescribeMountTargets
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeMountTargetsRequest method.
 //    req, resp := client.DescribeMountTargetsRequest(params)
@@ -1102,19 +1093,18 @@ const opDescribeTags = "DescribeTags"
 
 // DescribeTagsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeTags operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeTags for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeTags method directly
-// instead.
+// See DescribeTags for more information on using the DescribeTags
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeTagsRequest method.
 //    req, resp := client.DescribeTagsRequest(params)
@@ -1195,19 +1185,18 @@ const opModifyMountTargetSecurityGroups = "ModifyMountTargetSecurityGroups"
 
 // ModifyMountTargetSecurityGroupsRequest generates a "aws/request.Request" representing the
 // client's request for the ModifyMountTargetSecurityGroups operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ModifyMountTargetSecurityGroups for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ModifyMountTargetSecurityGroups method directly
-// instead.
+// See ModifyMountTargetSecurityGroups for more information on using the ModifyMountTargetSecurityGroups
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ModifyMountTargetSecurityGroupsRequest method.
 //    req, resp := client.ModifyMountTargetSecurityGroupsRequest(params)
@@ -1317,6 +1306,32 @@ type CreateFileSystemInput struct {
 	// CreationToken is a required field
 	CreationToken *string `min:"1" type:"string" required:"true"`
 
+	// A boolean value that, if true, creates an encrypted file system. When creating
+	// an encrypted file system, you have the option of specifying a CreateFileSystemRequest$KmsKeyId
+	// for an existing AWS Key Management Service (AWS KMS) customer master key
+	// (CMK). If you don't specify a CMK, then the default CMK for Amazon EFS, /aws/elasticfilesystem,
+	// is used to protect the encrypted file system.
+	Encrypted *bool `type:"boolean"`
+
+	// The id of the AWS KMS CMK that will be used to protect the encrypted file
+	// system. This parameter is only required if you want to use a non-default
+	// CMK. If this parameter is not specified, the default CMK for Amazon EFS is
+	// used. This id can be in one of the following formats:
+	//
+	//    * Key ID - A unique identifier of the key. For example, 1234abcd-12ab-34cd-56ef-1234567890ab.
+	//
+	//    * ARN - An Amazon Resource Name for the key. For example, arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab.
+	//
+	//    * Key alias - A previously created display name for a key. For example,
+	//    alias/projectKey1.
+	//
+	//    * Key alias ARN - An Amazon Resource Name for a key alias. For example,
+	//    arn:aws:kms:us-west-2:444455556666:alias/projectKey1.
+	//
+	// Note that if the KmsKeyId is specified, the CreateFileSystemRequest$Encrypted
+	// parameter must be set to true.
+	KmsKeyId *string `min:"1" type:"string"`
+
 	// The PerformanceMode of the file system. We recommend generalPurpose performance
 	// mode for most file systems. File systems using the maxIO performance mode
 	// can scale to higher levels of aggregate throughput and operations per second
@@ -1344,6 +1359,9 @@ func (s *CreateFileSystemInput) Validate() error {
 	if s.CreationToken != nil && len(*s.CreationToken) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("CreationToken", 1))
 	}
+	if s.KmsKeyId != nil && len(*s.KmsKeyId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("KmsKeyId", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -1354,6 +1372,18 @@ func (s *CreateFileSystemInput) Validate() error {
 // SetCreationToken sets the CreationToken field's value.
 func (s *CreateFileSystemInput) SetCreationToken(v string) *CreateFileSystemInput {
 	s.CreationToken = &v
+	return s
+}
+
+// SetEncrypted sets the Encrypted field's value.
+func (s *CreateFileSystemInput) SetEncrypted(v bool) *CreateFileSystemInput {
+	s.Encrypted = &v
+	return s
+}
+
+// SetKmsKeyId sets the KmsKeyId field's value.
+func (s *CreateFileSystemInput) SetKmsKeyId(v string) *CreateFileSystemInput {
+	s.KmsKeyId = &v
 	return s
 }
 
@@ -2113,10 +2143,17 @@ type FileSystemDescription struct {
 	// CreationToken is a required field
 	CreationToken *string `min:"1" type:"string" required:"true"`
 
+	// A boolean value that, if true, indicates that the file system is encrypted.
+	Encrypted *bool `type:"boolean"`
+
 	// ID of the file system, assigned by Amazon EFS.
 	//
 	// FileSystemId is a required field
 	FileSystemId *string `type:"string" required:"true"`
+
+	// The id of an AWS Key Management Service (AWS KMS) customer master key (CMK)
+	// that was used to protect the encrypted file system.
+	KmsKeyId *string `min:"1" type:"string"`
 
 	// Lifecycle phase of the file system.
 	//
@@ -2181,9 +2218,21 @@ func (s *FileSystemDescription) SetCreationToken(v string) *FileSystemDescriptio
 	return s
 }
 
+// SetEncrypted sets the Encrypted field's value.
+func (s *FileSystemDescription) SetEncrypted(v bool) *FileSystemDescription {
+	s.Encrypted = &v
+	return s
+}
+
 // SetFileSystemId sets the FileSystemId field's value.
 func (s *FileSystemDescription) SetFileSystemId(v string) *FileSystemDescription {
 	s.FileSystemId = &v
+	return s
+}
+
+// SetKmsKeyId sets the KmsKeyId field's value.
+func (s *FileSystemDescription) SetKmsKeyId(v string) *FileSystemDescription {
+	s.KmsKeyId = &v
 	return s
 }
 

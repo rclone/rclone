@@ -367,6 +367,8 @@
           "NotificationAttributes": {
             "example.com": {
               "BounceTopic": "arn:aws:sns:us-east-1:EXAMPLE65304:ExampleTopic",
+              "ComplaintTopic": "arn:aws:sns:us-east-1:EXAMPLE65304:ExampleTopic",
+              "DeliveryTopic": "arn:aws:sns:us-east-1:EXAMPLE65304:ExampleTopic",
               "ForwardingEnabled": true,
               "HeadersInBounceNotificationsEnabled": false,
               "HeadersInComplaintNotificationsEnabled": false,

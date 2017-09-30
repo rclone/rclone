@@ -30,20 +30,21 @@ import (
 // Properties presents the service properties.
 type Properties struct {
 	{{- template "RenderProperties" passThrough $service.Properties "" "" -}}
-
-	{{range $_, $p := $objectSubService.Properties.Properties -}}
-		{{- if $p.Description -}}
-			// {{$p.Description}}
-		{{end -}}
-		{{if $p.Enum -}}
-			// {{camelCase $p.ID}}'s available values: {{commaConnected $p.Enum}}
-		{{end -}}
-		{{$p.ID | camelCase | upperFirst}}{{" " -}}
-		{{template "PropertyType" passThrough $p false}}{{" " -}}
-		`{{template "PropertyTagsDashConnected" $p}}`{{" " -}}
-		{{if $p.IsRequired -}}
-			// Required
-		{{- end}}
+	{{if $objectSubService -}}
+		{{range $_, $p := $objectSubService.Properties.Properties -}}
+			{{- if $p.Description -}}
+				// {{$p.Description}}
+			{{end -}}
+			{{if $p.Enum -}}
+				// {{camelCase $p.ID}}'s available values: {{commaConnected $p.Enum}}
+			{{end -}}
+			{{$p.ID | camelCase | upperFirst}}{{" " -}}
+			{{template "PropertyType" passThrough $p false}}{{" " -}}
+			`{{template "PropertyTagsDashConnected" $p}}`{{" " -}}
+			{{if $p.IsRequired -}}
+				// Required
+			{{- end}}
+		{{end}}
 	{{end}}
 }
 

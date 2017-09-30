@@ -22,6 +22,7 @@ import (
 	"bytes"
 	"errors"
 	"log"
+	"runtime"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -150,6 +151,7 @@ func (s *SubServer) Start(ctx context.Context, req *pb.StartRequest) (*pb.StartR
 	// Load test API doesn't define any way to stop right now.
 	go func() {
 		sub := c.Subscription(req.GetPubsubOptions().Subscription)
+		sub.ReceiveSettings.NumGoroutines = 10 * runtime.GOMAXPROCS(0)
 		err := sub.Receive(context.Background(), s.callback)
 		log.Fatal(err)
 	}()

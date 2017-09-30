@@ -17,8 +17,9 @@ package bigquery
 import (
 	"errors"
 	"fmt"
-	"reflect"
 	"testing"
+
+	"cloud.google.com/go/internal/testutil"
 
 	"golang.org/x/net/context"
 	"google.golang.org/api/iterator"
@@ -246,10 +247,10 @@ func TestIterator(t *testing.T) {
 		if err != tc.wantErr {
 			t.Fatalf("%s: got %v, want %v", tc.desc, err, tc.wantErr)
 		}
-		if (len(values) != 0 || len(tc.want) != 0) && !reflect.DeepEqual(values, tc.want) {
+		if (len(values) != 0 || len(tc.want) != 0) && !testutil.Equal(values, tc.want) {
 			t.Errorf("%s: values:\ngot: %v\nwant:%v", tc.desc, values, tc.want)
 		}
-		if (len(schema) != 0 || len(tc.wantSchema) != 0) && !reflect.DeepEqual(schema, tc.wantSchema) {
+		if (len(schema) != 0 || len(tc.wantSchema) != 0) && !testutil.Equal(schema, tc.wantSchema) {
 			t.Errorf("%s: iterator.Schema:\ngot: %v\nwant: %v", tc.desc, schema, tc.wantSchema)
 		}
 	}
@@ -339,7 +340,7 @@ func TestNextAfterFinished(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if (len(values) != 0 || len(tc.want) != 0) && !reflect.DeepEqual(values, tc.want) {
+		if (len(values) != 0 || len(tc.want) != 0) && !testutil.Equal(values, tc.want) {
 			t.Errorf("values: got:\n%v\nwant:\n%v", values, tc.want)
 		}
 		// Try calling Get again.

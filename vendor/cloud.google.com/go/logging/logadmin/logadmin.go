@@ -46,7 +46,9 @@ import (
 	logtypepb "google.golang.org/genproto/googleapis/logging/type"
 	logpb "google.golang.org/genproto/googleapis/logging/v2"
 	"google.golang.org/grpc/codes"
+
 	// Import the following so EntryIterator can unmarshal log protos.
+	_ "google.golang.org/genproto/googleapis/appengine/logging/v1"
 	_ "google.golang.org/genproto/googleapis/cloud/audit"
 )
 

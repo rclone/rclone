@@ -11,7 +11,7 @@ import (
 
 // WaitUntilFleetStarted uses the Amazon AppStream API operation
 // DescribeFleets to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *AppStream) WaitUntilFleetStarted(input *DescribeFleetsInput) error {
 	return c.WaitUntilFleetStartedWithContext(aws.BackgroundContext(), input)
@@ -33,17 +33,17 @@ func (c *AppStream) WaitUntilFleetStartedWithContext(ctx aws.Context, input *Des
 		Acceptors: []request.WaiterAcceptor{
 			{
 				State:   request.SuccessWaiterState,
-				Matcher: request.PathAllWaiterMatch, Argument: "fleets[].state",
+				Matcher: request.PathAllWaiterMatch, Argument: "Fleets[].State",
 				Expected: "ACTIVE",
 			},
 			{
 				State:   request.FailureWaiterState,
-				Matcher: request.PathAnyWaiterMatch, Argument: "fleets[].state",
+				Matcher: request.PathAnyWaiterMatch, Argument: "Fleets[].State",
 				Expected: "PENDING_DEACTIVATE",
 			},
 			{
 				State:   request.FailureWaiterState,
-				Matcher: request.PathAnyWaiterMatch, Argument: "fleets[].state",
+				Matcher: request.PathAnyWaiterMatch, Argument: "Fleets[].State",
 				Expected: "INACTIVE",
 			},
 		},
@@ -67,7 +67,7 @@ func (c *AppStream) WaitUntilFleetStartedWithContext(ctx aws.Context, input *Des
 
 // WaitUntilFleetStopped uses the Amazon AppStream API operation
 // DescribeFleets to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *AppStream) WaitUntilFleetStopped(input *DescribeFleetsInput) error {
 	return c.WaitUntilFleetStoppedWithContext(aws.BackgroundContext(), input)
@@ -89,17 +89,17 @@ func (c *AppStream) WaitUntilFleetStoppedWithContext(ctx aws.Context, input *Des
 		Acceptors: []request.WaiterAcceptor{
 			{
 				State:   request.SuccessWaiterState,
-				Matcher: request.PathAllWaiterMatch, Argument: "fleets[].state",
+				Matcher: request.PathAllWaiterMatch, Argument: "Fleets[].State",
 				Expected: "INACTIVE",
 			},
 			{
 				State:   request.FailureWaiterState,
-				Matcher: request.PathAnyWaiterMatch, Argument: "fleets[].state",
+				Matcher: request.PathAnyWaiterMatch, Argument: "Fleets[].State",
 				Expected: "PENDING_ACTIVATE",
 			},
 			{
 				State:   request.FailureWaiterState,
-				Matcher: request.PathAnyWaiterMatch, Argument: "fleets[].state",
+				Matcher: request.PathAnyWaiterMatch, Argument: "Fleets[].State",
 				Expected: "ACTIVE",
 			},
 		},

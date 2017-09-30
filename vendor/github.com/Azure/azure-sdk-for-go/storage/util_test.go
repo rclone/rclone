@@ -1,9 +1,24 @@
 package storage
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"bytes"
 	"encoding/hex"
 	"encoding/xml"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"net/url"
@@ -16,9 +31,21 @@ import (
 	chk "gopkg.in/check.v1"
 )
 
+var (
+	overwriteRec bool
+	pwd          string
+)
+
 func TestMain(m *testing.M) {
+	var err error
+	flag.BoolVar(&overwriteRec, "ow", false, "Regenerate recordings for testing")
+	pwd, err = os.Getwd()
+	if err != nil {
+		fmt.Fprintf(os.Stderr, "Unable to get current working directory: %v\n", err)
+		os.Exit(1)
+	}
 	exitStatus := m.Run()
-	err := fixRecordings()
+	err = fixRecordings()
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "After test run, fixing recordings failed with error: %v\n", err)
 		exitStatus = 1

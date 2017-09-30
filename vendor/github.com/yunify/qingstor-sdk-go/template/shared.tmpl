@@ -107,12 +107,12 @@
 	{{$isBucket := eq $service.Name "Bucket"}}
 	{{$isObject := eq $service.Name "Object"}}
 
-	{{$hasParams := gt (len $operation.Request.Params.Properties) 0}}
+	{{$hasQuery := gt (len $operation.Request.Query.Properties) 0}}
 	{{$hasHeaders := gt (len $operation.Request.Headers.Properties) 0}}
 	{{$hasElements := gt (len $operation.Request.Elements.Properties) 0}}
 	{{$hasStringBody := eq $operation.Request.Body.Type "string"}}
 	{{$hasBinaryBody := eq $operation.Request.Body.Type "binary"}}
-	{{$hasInput := or $hasParams $hasHeaders $hasElements $hasStringBody $hasBinaryBody}}
+	{{$hasInput := or $hasQuery $hasHeaders $hasElements $hasStringBody $hasBinaryBody}}
 
 	{{if $operation.Description -}}
 		{{if eq $belongs "Bucket" -}}
@@ -181,10 +181,10 @@
 				input = &{{$opID}}Input{}
 			}
 		{{end}}
-		{{$uri := $operation.Request.URI}}
-		{{$uri := replace $uri "{" "<" -1}}
-		{{$uri := replace $uri "}" ">" -1}}
-		{{$uri := dashConnected $uri}}
+		{{$path := $operation.Request.Path}}
+		{{$path := replace $path "{" "<" -1}}
+		{{$path := replace $path "}" ">" -1}}
+		{{$path := dashConnected $path}}
 
 		{{- if ne $belongs "Service"}}
 			properties := *s.Properties
@@ -200,21 +200,18 @@
 			{{- end}}
 			APIName:       "{{$operation.Name}}",
 			RequestMethod: "{{$operation.Request.Method}}",
-			RequestURI:    "{{$uri}}",
-			{{if $operation.Response.StatusCodes -}}
-				StatusCodes:   []int{
-					{{range $statusCodeNumber, $statusCode := $operation.Response.StatusCodes -}}
-						{{$statusCodeNumber}},
-						{{- if $statusCode.Description -}}
-							// {{$statusCode.Description}}
-						{{- end}}
+			RequestURI:    "{{$path}}",
+			StatusCodes: []int{
+				{{range $keyStatus, $valueStatus := $operation.Responses -}}
+					{{- if $valueStatus.StatusCode -}}
+						{{$valueStatus.StatusCode.Code}}, // {{$valueStatus.StatusCode.Description}}
+					{{else}}
+						200, // OK
 					{{end -}}
-				},
-			{{else}}
-				StatusCodes:   []int{
+				{{else}}
 					200, // OK
-				},
-			{{end -}}
+				{{end -}}
+			},
 		}
 
 		x := &{{$opID}}Output{}
@@ -229,9 +226,9 @@
 	{{if $hasInput}}
 		// {{$opID}}Input presents input for {{$opID}}.
 		type {{$opID}}Input struct {
-			{{- if $operation.Request.Params.Properties | len}}
-				{{$data := $operation.Request.Params -}}
-				{{template "RenderProperties" passThrough $data `location:"params"` $operation.Name}}
+			{{- if $operation.Request.Query.Properties | len}}
+				{{$data := $operation.Request.Query -}}
+				{{template "RenderProperties" passThrough $data `location:"query"` $operation.Name}}
 			{{end}}
 
 			{{- if $operation.Request.Headers.Properties | len}}
@@ -259,7 +256,7 @@
 
 		// Validate validates the input for {{$opID}}.
 		func (v *{{$opID}}Input) Validate() error {
-			{{template "ValidateCustomizedType" passThrough $operation.Request.Params $operation.Name}}
+			{{template "ValidateCustomizedType" passThrough $operation.Request.Query $operation.Name}}
 			{{template "ValidateCustomizedType" passThrough $operation.Request.Headers $operation.Name}}
 			{{template "ValidateCustomizedType" passThrough $operation.Request.Elements $operation.Name}}
 
@@ -272,27 +269,28 @@
 		StatusCode *int `location:"statusCode"`
 
 		RequestID *string `location:"requestID"`
+		{{range $keyStatus, $valueStatus := $operation.Responses -}}
+			{{if eq $valueStatus.Body.Type "string"}}
+				{{if $valueStatus.Body.Description -}}
+					// {{$valueStatus.Body.Description}}
+				{{- end}}
+				Body string `location:"body"`
+			{{else if eq $valueStatus.Body.Type "binary"}}
+				{{if $valueStatus.Body.Description -}}
+					// {{$valueStatus.Body.Description}}
+				{{- end}}
+				Body io.ReadCloser `location:"body"`
+			{{end}}
 
-		{{if eq $operation.Response.Body.Type "string"}}
-			{{if $operation.Response.Body.Description -}}
-				// {{$operation.Response.Body.Description}}
-			{{- end}}
-			Body string `location:"body"`
-		{{else if eq $operation.Response.Body.Type "binary"}}
-			{{if $operation.Response.Body.Description -}}
-				// {{$operation.Response.Body.Description}}
-			{{- end}}
-			Body io.ReadCloser `location:"body"`
-		{{end}}
+			{{if $valueStatus.Elements.Properties | len}}
+				{{$data := $valueStatus.Elements}}
+				{{template "RenderProperties" passThrough $data `location:"elements"` $operation.Name}}
+			{{end}}
 
-		{{if $operation.Response.Elements.Properties | len}}
-			{{$data := $operation.Response.Elements}}
-			{{template "RenderProperties" passThrough $data `location:"elements"` $operation.Name}}
-		{{end}}
-
-		{{if $operation.Response.Headers.Properties | len}}
-			{{$data := $operation.Response.Headers}}
-			{{template "RenderProperties" passThrough $data `location:"headers"` $operation.Name}}
+			{{if $valueStatus.Headers.Properties | len}}
+				{{$data := $valueStatus.Headers}}
+				{{template "RenderProperties" passThrough $data `location:"headers"` $operation.Name}}
+			{{end}}
 		{{end}}
 	}
 {{end}}

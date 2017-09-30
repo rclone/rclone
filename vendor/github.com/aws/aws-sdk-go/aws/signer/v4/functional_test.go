@@ -3,6 +3,8 @@ package v4_test
 import (
 	"net/http"
 	"net/url"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -10,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/stretchr/testify/assert"
 )
 
 var standaloneSignCases = []struct {
@@ -40,24 +41,43 @@ func TestPresignHandler(t *testing.T) {
 	req.Time = time.Unix(0, 0)
 	urlstr, err := req.Presign(5 * time.Minute)
 
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
 
 	expectedHost := "bucket.s3.mock-region.amazonaws.com"
 	expectedDate := "19700101T000000Z"
 	expectedHeaders := "content-disposition;host;x-amz-acl"
-	expectedSig := "2d76a414208c0eac2a23ef9c834db9635ecd5a0fbb447a00ad191f82d854f55b"
+	expectedSig := "a46583256431b09eb45ba4af2e6286d96a9835ed13721023dc8076dfdcb90fcb"
 	expectedCred := "AKID/19700101/mock-region/s3/aws4_request"
 
 	u, _ := url.Parse(urlstr)
 	urlQ := u.Query()
-	assert.Equal(t, expectedHost, u.Host)
-	assert.Equal(t, expectedSig, urlQ.Get("X-Amz-Signature"))
-	assert.Equal(t, expectedCred, urlQ.Get("X-Amz-Credential"))
-	assert.Equal(t, expectedHeaders, urlQ.Get("X-Amz-SignedHeaders"))
-	assert.Equal(t, expectedDate, urlQ.Get("X-Amz-Date"))
-	assert.Equal(t, "300", urlQ.Get("X-Amz-Expires"))
+	if e, a := expectedHost, u.Host; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedSig, urlQ.Get("X-Amz-Signature"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedCred, urlQ.Get("X-Amz-Credential"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedHeaders, urlQ.Get("X-Amz-SignedHeaders"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedDate, urlQ.Get("X-Amz-Date"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "300", urlQ.Get("X-Amz-Expires"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "UNSIGNED-PAYLOAD", urlQ.Get("X-Amz-Content-Sha256"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
-	assert.NotContains(t, urlstr, "+") // + encoded as %20
+	if e, a := "+", urlstr; strings.Contains(a, e) { // + encoded as %20
+		t.Errorf("expect %v not to be in %v", e, a)
+	}
 }
 
 func TestPresignRequest(t *testing.T) {
@@ -71,30 +91,50 @@ func TestPresignRequest(t *testing.T) {
 	req.Time = time.Unix(0, 0)
 	urlstr, headers, err := req.PresignRequest(5 * time.Minute)
 
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
 
 	expectedHost := "bucket.s3.mock-region.amazonaws.com"
 	expectedDate := "19700101T000000Z"
-	expectedHeaders := "content-disposition;host;x-amz-acl;x-amz-content-sha256"
-	expectedSig := "a5b2b500dfbf2eab5b4f55bec3e3752e04536ea1d5c047aa93bc9f1130a72cd2"
+	expectedHeaders := "content-disposition;host;x-amz-acl"
+	expectedSig := "a46583256431b09eb45ba4af2e6286d96a9835ed13721023dc8076dfdcb90fcb"
 	expectedCred := "AKID/19700101/mock-region/s3/aws4_request"
 	expectedHeaderMap := http.Header{
-		"x-amz-acl":            []string{"public-read"},
-		"content-disposition":  []string{"a+b c$d"},
-		"x-amz-content-sha256": []string{"UNSIGNED-PAYLOAD"},
+		"x-amz-acl":           []string{"public-read"},
+		"content-disposition": []string{"a+b c$d"},
 	}
 
 	u, _ := url.Parse(urlstr)
 	urlQ := u.Query()
-	assert.Equal(t, expectedHost, u.Host)
-	assert.Equal(t, expectedSig, urlQ.Get("X-Amz-Signature"))
-	assert.Equal(t, expectedCred, urlQ.Get("X-Amz-Credential"))
-	assert.Equal(t, expectedHeaders, urlQ.Get("X-Amz-SignedHeaders"))
-	assert.Equal(t, expectedDate, urlQ.Get("X-Amz-Date"))
-	assert.Equal(t, expectedHeaderMap, headers)
-	assert.Equal(t, "300", urlQ.Get("X-Amz-Expires"))
+	if e, a := expectedHost, u.Host; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedSig, urlQ.Get("X-Amz-Signature"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedCred, urlQ.Get("X-Amz-Credential"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedHeaders, urlQ.Get("X-Amz-SignedHeaders"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedDate, urlQ.Get("X-Amz-Date"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := expectedHeaderMap, headers; !reflect.DeepEqual(e, a) {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "300", urlQ.Get("X-Amz-Expires"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "UNSIGNED-PAYLOAD", urlQ.Get("X-Amz-Content-Sha256"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
-	assert.NotContains(t, urlstr, "+") // + encoded as %20
+	if e, a := "+", urlstr; strings.Contains(a, e) { // + encoded as %20
+		t.Errorf("expect %v not to be in %v", e, a)
+	}
 }
 
 func TestStandaloneSign_CustomURIEscape(t *testing.T) {
@@ -107,14 +147,20 @@ func TestStandaloneSign_CustomURIEscape(t *testing.T) {
 
 	host := "https://subdomain.us-east-1.es.amazonaws.com"
 	req, err := http.NewRequest("GET", host, nil)
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
 
 	req.URL.Path = `/log-*/_search`
 	req.URL.Opaque = "//subdomain.us-east-1.es.amazonaws.com/log-%2A/_search"
 
 	_, err = signer.Sign(req, nil, "es", "us-east-1", time.Unix(0, 0))
-	assert.NoError(t, err)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
 
 	actual := req.Header.Get("Authorization")
-	assert.Equal(t, expectSig, actual)
+	if e, a := expectSig, actual; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }

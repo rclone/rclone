@@ -408,10 +408,11 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.Uint() == 0
 	case reflect.Float32, reflect.Float64:
 		return v.Float() == 0
-	case reflectTime:
-		return v.Interface().(time.Time).IsZero()
 	case reflect.Interface, reflect.Ptr:
 		return v.IsNil()
+	case reflectTime:
+		t, ok := v.Interface().(time.Time)
+		return ok && t.IsZero()
 	}
 	return false
 }

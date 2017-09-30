@@ -18,10 +18,12 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"time"
 
 	"google.golang.org/api/iterator"
 	"google.golang.org/api/option"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/keepalive"
 
 	"golang.org/x/net/context"
 )
@@ -62,6 +64,14 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 		o = []option.ClientOption{
 			// Create multiple connections to increase throughput.
 			option.WithGRPCConnectionPool(runtime.GOMAXPROCS(0)),
+
+			// TODO(grpc/grpc-go#1388) using connection pool without WithBlock
+			// can cause RPCs to fail randomly. We can delete this after the issue is fixed.
+			option.WithGRPCDialOption(grpc.WithBlock()),
+
+			option.WithGRPCDialOption(grpc.WithKeepaliveParams(keepalive.ClientParameters{
+				Time: 5 * time.Minute,
+			})),
 		}
 	}
 	o = append(o, opts...)

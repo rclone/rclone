@@ -1,5 +1,19 @@
 package storage
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"encoding/xml"
 	"errors"
@@ -135,8 +149,7 @@ func (b *Blob) Exists() (bool, error) {
 }
 
 // GetURL gets the canonical URL to the blob with the specified name in the
-// specified container. If name is not specified, the canonical URL for the entire
-// container is obtained.
+// specified container.
 // This method does not create a publicly accessible URL if the blob or container
 // is private and this method does not check if the blob exists.
 func (b *Blob) GetURL() string {
@@ -182,6 +195,9 @@ func (br BlobRange) String() string {
 
 // Get returns a stream to read the blob. Caller must call both Read and Close()
 // to correctly close the underlying connection.
+//
+// See the GetRange method for use with a Range header.
+//
 // See https://docs.microsoft.com/en-us/rest/api/storageservices/fileservices/Get-Blob
 func (b *Blob) Get(options *GetBlobOptions) (io.ReadCloser, error) {
 	rangeOptions := GetBlobRangeOptions{
@@ -434,8 +450,8 @@ func (b *Blob) SetProperties(options *SetBlobPropertiesOptions) error {
 	uri := b.Container.bsc.client.getEndpoint(blobServiceName, b.buildPath(), params)
 
 	if b.Properties.BlobType == BlobTypePage {
-		headers = addToHeaders(headers, "x-ms-blob-content-length", fmt.Sprintf("byte %v", b.Properties.ContentLength))
-		if options != nil || options.SequenceNumberAction != nil {
+		headers = addToHeaders(headers, "x-ms-blob-content-length", fmt.Sprintf("%v", b.Properties.ContentLength))
+		if options != nil && options.SequenceNumberAction != nil {
 			headers = addToHeaders(headers, "x-ms-sequence-number-action", string(*options.SequenceNumberAction))
 			if *options.SequenceNumberAction != SequenceNumberActionIncrement {
 				headers = addToHeaders(headers, "x-ms-blob-sequence-number", fmt.Sprintf("%v", b.Properties.SequenceNumber))
@@ -623,4 +639,14 @@ func pathForResource(container, name string) string {
 		return fmt.Sprintf("/%s/%s", container, name)
 	}
 	return fmt.Sprintf("/%s", container)
+}
+
+func (b *Blob) respondCreation(resp *storageResponse, bt BlobType) error {
+	readAndCloseBody(resp.body)
+	err := checkRespCode(resp.statusCode, []int{http.StatusCreated})
+	if err != nil {
+		return err
+	}
+	b.Properties.BlobType = bt
+	return nil
 }

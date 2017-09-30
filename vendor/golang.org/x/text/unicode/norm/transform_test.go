@@ -41,7 +41,7 @@ func TestTransform(t *testing.T) {
 		{NFC, "qx", "", true, 1, transform.ErrShortDst},
 		{NFC, "a\u0300abc", "\u00e0a", true, 4, transform.ErrShortDst},
 
-		// We cannot write a segment if succesive runes could still change the result.
+		// We cannot write a segment if successive runes could still change the result.
 		{NFD, "ö", "", false, 3, transform.ErrShortSrc},
 		{NFC, "a\u0300", "", false, 4, transform.ErrShortSrc},
 		{NFD, "a\u0300", "", false, 4, transform.ErrShortSrc},
@@ -68,7 +68,7 @@ func TestTransform(t *testing.T) {
 			t.Errorf("%d: was %+q (%v); want %+q (%v)", i, out, err, tt.out, tt.err)
 		}
 		if want := tt.f.String(tt.in)[:nDst]; want != out {
-			t.Errorf("%d: incorect normalization: was %+q; want %+q", i, out, want)
+			t.Errorf("%d: incorrect normalization: was %+q; want %+q", i, out, want)
 		}
 	}
 }

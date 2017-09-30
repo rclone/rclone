@@ -202,6 +202,18 @@
       "refs": {
       }
     },
+    "CurrencyAmount": {
+      "base": "<p>A string representing a currency amount.</p>",
+      "refs": {
+        "BonusPayment$BonusAmount": null,
+        "CreateHITRequest$Reward": "<p> The amount of money the Requester will pay a Worker for successfully completing the HIT. </p>",
+        "CreateHITTypeRequest$Reward": "<p> The amount of money the Requester will pay a Worker for successfully completing the HIT. </p>",
+        "GetAccountBalanceResponse$AvailableBalance": null,
+        "GetAccountBalanceResponse$OnHoldBalance": null,
+        "HIT$Reward": null,
+        "SendBonusRequest$BonusAmount": "<p> The Bonus amount is a US Dollar amount specified using a string (for example, \"5\" represents $5.00 USD and \"101.42\" represents $101.42 USD). Do not include currency symbols or currency codes. </p>"
+      }
+    },
     "CustomerId": {
       "base": null,
       "refs": {
@@ -626,7 +638,7 @@
     "NotificationTransport": {
       "base": null,
       "refs": {
-        "NotificationSpecification$Transport": "<p> The method Amazon Mechanical Turk uses to send the notification. Valid Values: Email | SQS. </p>"
+        "NotificationSpecification$Transport": "<p> The method Amazon Mechanical Turk uses to send the notification. Valid Values: Email | SQS | SNS. </p>"
       }
     },
     "NotifyWorkersFailureCode": {
@@ -655,18 +667,6 @@
     "NotifyWorkersResponse": {
       "base": null,
       "refs": {
-      }
-    },
-    "NumericValue": {
-      "base": "<p>A string representing a numeric value.</p>",
-      "refs": {
-        "BonusPayment$BonusAmount": null,
-        "CreateHITRequest$Reward": "<p> The amount of money the Requester will pay a Worker for successfully completing the HIT. </p>",
-        "CreateHITTypeRequest$Reward": "<p> The amount of money the Requester will pay a Worker for successfully completing the HIT. </p>",
-        "GetAccountBalanceResponse$AvailableBalance": null,
-        "GetAccountBalanceResponse$OnHoldBalance": null,
-        "HIT$Reward": null,
-        "SendBonusRequest$BonusAmount": "<p> The Bonus amount is a US Dollar amount specified using a string (for example, \"5\" represents $5.00 USD and \"101.42\" represents $101.42 USD). Do not include currency symbols or currency codes. </p>"
       }
     },
     "PaginationToken": {
@@ -954,7 +954,7 @@
         "HITLayoutParameter$Name": "<p> The name of the parameter in the HITLayout. </p>",
         "HITLayoutParameter$Value": "<p>The value substituted for the parameter referenced in the HITLayout. </p>",
         "ListQualificationTypesRequest$Query": "<p> A text query against all of the searchable attributes of Qualification types. </p>",
-        "NotificationSpecification$Destination": "<p> The destination for notification messages. or email notifications (if Transport is Email), this is an email address. For Amazon Simple Queue Service (Amazon SQS) notifications (if Transport is SQS), this is the URL for your Amazon SQS queue. </p>",
+        "NotificationSpecification$Destination": "<p> The target for notification messages. The Destination’s format is determined by the specified Transport: </p> <ul> <li> <p>When Transport is Email, the Destination is your email address.</p> </li> <li> <p>When Transport is SQS, the Destination is your queue URL.</p> </li> <li> <p>When Transport is SNS, the Destination is the ARN of your topic.</p> </li> </ul>",
         "NotificationSpecification$Version": "<p>The version of the Notification API to use. Valid value is 2006-05-05.</p>",
         "NotifyWorkersFailureStatus$NotifyWorkersFailureMessage": "<p> A message detailing the reason the Worker could not be notified. </p>",
         "NotifyWorkersRequest$Subject": "<p>The subject line of the email message to send. Can include up to 200 characters.</p>",

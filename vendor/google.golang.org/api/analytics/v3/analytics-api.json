@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/kNCxeHzf8zHSdahaoD4fNF__mRA\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/DSG2TEF18bxTdYooKf_C2-FmmME\"",
  "discoveryVersion": "v1",
  "id": "analytics:v3",
  "name": "analytics",
  "version": "v3",
- "revision": "20170321",
+ "revision": "20170807",
  "title": "Google Analytics API",
  "description": "Views and manages your Google Analytics data.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/analytics/v3/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "analytics/v3/",
- "batchPath": "batch",
+ "batchPath": "batch/analytics/v3",
  "parameters": {
   "alt": {
    "type": "string",
@@ -505,6 +505,13 @@
       "type": "string"
      }
     },
+    "schema": {
+     "type": "array",
+     "description": "Collection of schema headers of the custom data source.",
+     "items": {
+      "type": "string"
+     }
+    },
     "selfLink": {
      "type": "string",
      "description": "Link for this Analytics custom data source."
@@ -519,7 +526,8 @@
      "format": "date-time"
     },
     "uploadType": {
-     "type": "string"
+     "type": "string",
+     "description": "Upload type of the custom data source."
     },
     "webPropertyId": {
      "type": "string",
@@ -2115,7 +2123,7 @@
     },
     "type": {
      "type": "string",
-     "description": "The type of the foreign account. For example `ADWORDS_LINKS`."
+     "description": "The type of the foreign account. For example, `ADWORDS_LINKS`, `DBM_LINKS`, `MCC_LINKS` or `OPTIMIZE`."
     },
     "webPropertyId": {
      "type": "string",
@@ -3253,6 +3261,11 @@
     "status": {
      "type": "string",
      "description": "Upload status. Possible values: PENDING, COMPLETED, FAILED, DELETING, DELETED."
+    },
+    "uploadTime": {
+     "type": "string",
+     "description": "Time this file is uploaded.",
+     "format": "date-time"
     }
    }
   },

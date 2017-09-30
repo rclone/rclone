@@ -20,7 +20,7 @@
  "basePath": "/taskqueue/v1beta2/projects/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "taskqueue/v1beta2/projects/",
- "batchPath": "batch",
+ "batchPath": "batch/taskqueue/v1beta2",
  "parameters": {
   "alt": {
    "type": "string",

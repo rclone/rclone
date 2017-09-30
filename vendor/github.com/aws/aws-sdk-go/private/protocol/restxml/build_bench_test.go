@@ -55,25 +55,11 @@ func BenchmarkRESTXMLBuild_Complex_CFCreateDistro(b *testing.B) {
 	})
 }
 
-func BenchmarkRESTXMLRequest_Complex_CFCreateDistro(b *testing.B) {
-	benchRESTXMLRequest(b, func() *request.Request {
-		req, _ := cloudfrontSvc.CreateDistributionRequest(cloudfrontCreateDistributionInput())
-		return req
-	})
-}
-
 func BenchmarkRESTXMLBuild_Simple_CFDeleteDistro(b *testing.B) {
 	params := cloudfrontDeleteDistributionInput()
 
 	benchRESTXMLBuild(b, func() *request.Request {
 		req, _ := cloudfrontSvc.DeleteDistributionRequest(params)
-		return req
-	})
-}
-
-func BenchmarkRESTXMLRequest_Simple_CFDeleteDistro(b *testing.B) {
-	benchRESTXMLRequest(b, func() *request.Request {
-		req, _ := cloudfrontSvc.DeleteDistributionRequest(cloudfrontDeleteDistributionInput())
 		return req
 	})
 }
@@ -87,18 +73,32 @@ func BenchmarkRESTXMLBuild_REST_S3HeadObject(b *testing.B) {
 	})
 }
 
-func BenchmarkRESTXMLRequest_REST_S3HeadObject(b *testing.B) {
-	benchRESTXMLRequest(b, func() *request.Request {
-		req, _ := s3Svc.HeadObjectRequest(s3HeadObjectInput())
-		return req
-	})
-}
-
 func BenchmarkRESTXMLBuild_XML_S3PutObjectAcl(b *testing.B) {
 	params := s3PutObjectAclInput()
 
 	benchRESTXMLBuild(b, func() *request.Request {
 		req, _ := s3Svc.PutObjectAclRequest(params)
+		return req
+	})
+}
+
+func BenchmarkRESTXMLRequest_Complex_CFCreateDistro(b *testing.B) {
+	benchRESTXMLRequest(b, func() *request.Request {
+		req, _ := cloudfrontSvc.CreateDistributionRequest(cloudfrontCreateDistributionInput())
+		return req
+	})
+}
+
+func BenchmarkRESTXMLRequest_Simple_CFDeleteDistro(b *testing.B) {
+	benchRESTXMLRequest(b, func() *request.Request {
+		req, _ := cloudfrontSvc.DeleteDistributionRequest(cloudfrontDeleteDistributionInput())
+		return req
+	})
+}
+
+func BenchmarkRESTXMLRequest_REST_S3HeadObject(b *testing.B) {
+	benchRESTXMLRequest(b, func() *request.Request {
+		req, _ := s3Svc.HeadObjectRequest(s3HeadObjectInput())
 		return req
 	})
 }

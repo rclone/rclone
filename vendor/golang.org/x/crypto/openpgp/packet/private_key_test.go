@@ -228,7 +228,7 @@ func TestECDSASignerPrivateKey(t *testing.T) {
 	priv := NewSignerPrivateKey(time.Now(), &ecdsaSigner{ecdsaPriv})
 
 	if priv.PubKeyAlgo != PubKeyAlgoECDSA {
-		t.Fatal("NewSignerPrivateKey should have made a ECSDA private key")
+		t.Fatal("NewSignerPrivateKey should have made an ECSDA private key")
 	}
 
 	sig := &Signature{

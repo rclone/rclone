@@ -16,6 +16,7 @@ package storage_test
 
 import (
 	"fmt"
+	"hash/crc32"
 	"io"
 	"io/ioutil"
 	"log"
@@ -321,6 +322,31 @@ func ExampleWriter_Write() {
 	wc.ACL = []storage.ACLRule{{storage.AllUsers, storage.RoleReader}}
 	if _, err := wc.Write([]byte("hello world")); err != nil {
 		// TODO: handle error.
+		// Note that Write may return nil in some error situations,
+		// so always check the error from Close.
+	}
+	if err := wc.Close(); err != nil {
+		// TODO: handle error.
+	}
+	fmt.Println("updated object:", wc.Attrs())
+}
+
+// To make sure the data you write is uncorrupted, use an MD5 or CRC32c
+// checksum. This example illustrates CRC32c.
+func ExampleWriter_Write_checksum() {
+	ctx := context.Background()
+	client, err := storage.NewClient(ctx)
+	if err != nil {
+		// TODO: handle error.
+	}
+	data := []byte("verify me")
+	wc := client.Bucket("bucketname").Object("filename1").NewWriter(ctx)
+	wc.CRC32C = crc32.Checksum(data, crc32.MakeTable(crc32.Castagnoli))
+	wc.SendCRC32C = true
+	if _, err := wc.Write([]byte("hello world")); err != nil {
+		// TODO: handle error.
+		// Note that Write may return nil in some error situations,
+		// so always check the error from Close.
 	}
 	if err := wc.Close(); err != nil {
 		// TODO: handle error.

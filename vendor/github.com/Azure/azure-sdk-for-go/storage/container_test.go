@@ -1,10 +1,26 @@
 package storage
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
+	"net/url"
 	"sort"
 	"strconv"
 	"time"
 
+	"github.com/Azure/go-autorest/autorest/azure"
 	chk "gopkg.in/check.v1"
 )
 
@@ -82,11 +98,63 @@ func (s *ContainerSuite) TestContainerExists(c *chk.C) {
 	c.Assert(err, chk.IsNil)
 	c.Assert(ok, chk.Equals, false)
 
-	// COntainer exists
+	// Container exists
 	cnt2 := cli.GetContainerReference(containerName(c, "2"))
-	c.Assert(cnt2.Create(nil), chk.IsNil)
+	err = cnt2.Create(nil)
 	defer cnt2.Delete(nil)
+	c.Assert(err, chk.IsNil)
 	ok, err = cnt2.Exists()
+	c.Assert(err, chk.IsNil)
+	c.Assert(ok, chk.Equals, true)
+
+	// Service SASURI test (funcs should fail, service SAS has not enough permissions)
+	sasuriOptions := ContainerSASOptions{}
+	sasuriOptions.Expiry = fixedTime
+	sasuriOptions.Read = true
+	sasuriOptions.Add = true
+	sasuriOptions.Create = true
+	sasuriOptions.Write = true
+	sasuriOptions.Delete = true
+	sasuriOptions.List = true
+
+	sasuriString1, err := cnt1.GetSASURI(sasuriOptions)
+	c.Assert(err, chk.IsNil)
+	sasuri1, err := url.Parse(sasuriString1)
+	c.Assert(err, chk.IsNil)
+	cntServiceSAS1, err := GetContainerReferenceFromSASURI(*sasuri1)
+	c.Assert(err, chk.IsNil)
+	cntServiceSAS1.Client().HTTPClient = cli.client.HTTPClient
+
+	ok, err = cntServiceSAS1.Exists()
+	c.Assert(err, chk.NotNil)
+	c.Assert(ok, chk.Equals, false)
+
+	sasuriString2, err := cnt2.GetSASURI(sasuriOptions)
+	c.Assert(err, chk.IsNil)
+	sasuri2, err := url.Parse(sasuriString2)
+	c.Assert(err, chk.IsNil)
+	cntServiceSAS2, err := GetContainerReferenceFromSASURI(*sasuri2)
+	c.Assert(err, chk.IsNil)
+	cntServiceSAS2.Client().HTTPClient = cli.client.HTTPClient
+
+	ok, err = cntServiceSAS2.Exists()
+	c.Assert(err, chk.NotNil)
+	c.Assert(ok, chk.Equals, false)
+
+	// Account SASURI test
+	token, err := cli.client.GetAccountSASToken(accountSASOptions)
+	c.Assert(err, chk.IsNil)
+	SAScli := NewAccountSASClient(cli.client.accountName, token, azure.PublicCloud).GetBlobService()
+
+	cntAccountSAS1 := SAScli.GetContainerReference(cnt1.Name)
+	cntAccountSAS1.Client().HTTPClient = cli.client.HTTPClient
+	ok, err = cntAccountSAS1.Exists()
+	c.Assert(err, chk.IsNil)
+	c.Assert(ok, chk.Equals, false)
+
+	cntAccountSAS2 := SAScli.GetContainerReference(cnt2.Name)
+	cntAccountSAS2.Client().HTTPClient = cli.client.HTTPClient
+	ok, err = cntAccountSAS2.Exists()
 	c.Assert(err, chk.IsNil)
 	c.Assert(ok, chk.Equals, true)
 }
@@ -157,8 +225,9 @@ func (s *ContainerSuite) TestListBlobsPagination(c *chk.C) {
 	defer rec.Stop()
 	cnt := cli.GetContainerReference(containerName(c))
 
-	c.Assert(cnt.Create(nil), chk.IsNil)
+	err := cnt.Create(nil)
 	defer cnt.Delete(nil)
+	c.Assert(err, chk.IsNil)
 
 	blobs := []string{}
 	const n = 5
@@ -171,6 +240,40 @@ func (s *ContainerSuite) TestListBlobsPagination(c *chk.C) {
 	}
 	sort.Strings(blobs)
 
+	listBlobsPagination(c, cnt, pageSize, blobs)
+
+	// Service SAS test
+	sasuriOptions := ContainerSASOptions{}
+	sasuriOptions.Expiry = fixedTime
+	sasuriOptions.Read = true
+	sasuriOptions.Add = true
+	sasuriOptions.Create = true
+	sasuriOptions.Write = true
+	sasuriOptions.Delete = true
+	sasuriOptions.List = true
+
+	sasuriString, err := cnt.GetSASURI(sasuriOptions)
+	c.Assert(err, chk.IsNil)
+	sasuri, err := url.Parse(sasuriString)
+	c.Assert(err, chk.IsNil)
+	cntServiceSAS, err := GetContainerReferenceFromSASURI(*sasuri)
+	c.Assert(err, chk.IsNil)
+	cntServiceSAS.Client().HTTPClient = cli.client.HTTPClient
+
+	listBlobsPagination(c, cntServiceSAS, pageSize, blobs)
+
+	// Account SAS test
+	token, err := cli.client.GetAccountSASToken(accountSASOptions)
+	c.Assert(err, chk.IsNil)
+	SAScli := NewAccountSASClient(cli.client.accountName, token, azure.PublicCloud).GetBlobService()
+
+	cntAccountSAS := SAScli.GetContainerReference(cnt.Name)
+	cntAccountSAS.Client().HTTPClient = cli.client.HTTPClient
+
+	listBlobsPagination(c, cntAccountSAS, pageSize, blobs)
+}
+
+func listBlobsPagination(c *chk.C, cnt *Container, pageSize uint, blobs []string) {
 	// Paginate
 	seen := []string{}
 	marker := ""

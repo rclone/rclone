@@ -87,8 +87,7 @@ func (c *Client) Sink(ctx context.Context, sinkID string) (*Sink, error) {
 	return fromLogSink(ls), nil
 }
 
-// UpdateSink updates an existing Sink, or creates a new one if the Sink doesn't exist.
-// Requires AdminScope.
+// UpdateSink updates an existing Sink. Requires AdminScope.
 func (c *Client) UpdateSink(ctx context.Context, sink *Sink) (*Sink, error) {
 	ls, err := c.sClient.UpdateSink(ctx, &logpb.UpdateSinkRequest{
 		SinkName: c.sinkPath(sink.ID),

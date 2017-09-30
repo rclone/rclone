@@ -19,8 +19,7 @@ Package spanner provides a client for reading and writing to Cloud Spanner
 databases. See the packages under admin for clients that operate on databases
 and instances.
 
-Note: This package is in alpha. Backwards-incompatible changes may occur
-without notice.
+Note: This package is in beta. Some backwards-incompatible changes may occur.
 
 See https://cloud.google.com/spanner/docs/getting-started/go/ for an introduction
 to Cloud Spanner and additional help on using this API.

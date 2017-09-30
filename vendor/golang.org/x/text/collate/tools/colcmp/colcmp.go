@@ -211,7 +211,7 @@ func (ts *Context) Print(a ...interface{}) {
 	fmt.Fprint(ts.out, a...)
 }
 
-// assertBuf sets up an io.Writer for ouput, if it doesn't already exist.
+// assertBuf sets up an io.Writer for output, if it doesn't already exist.
 // In debug and verbose mode, output is buffered so that the regular output
 // will not interfere with the additional output.  Otherwise, output is
 // written directly to stdout for a more responsive feel.

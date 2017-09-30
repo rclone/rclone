@@ -11,7 +11,7 @@ import (
 
 // WaitUntilServicesInactive uses the Amazon ECS API operation
 // DescribeServices to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ECS) WaitUntilServicesInactive(input *DescribeServicesInput) error {
 	return c.WaitUntilServicesInactiveWithContext(aws.BackgroundContext(), input)
@@ -62,7 +62,7 @@ func (c *ECS) WaitUntilServicesInactiveWithContext(ctx aws.Context, input *Descr
 
 // WaitUntilServicesStable uses the Amazon ECS API operation
 // DescribeServices to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ECS) WaitUntilServicesStable(input *DescribeServicesInput) error {
 	return c.WaitUntilServicesStableWithContext(aws.BackgroundContext(), input)
@@ -123,7 +123,7 @@ func (c *ECS) WaitUntilServicesStableWithContext(ctx aws.Context, input *Describ
 
 // WaitUntilTasksRunning uses the Amazon ECS API operation
 // DescribeTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ECS) WaitUntilTasksRunning(input *DescribeTasksInput) error {
 	return c.WaitUntilTasksRunningWithContext(aws.BackgroundContext(), input)
@@ -179,7 +179,7 @@ func (c *ECS) WaitUntilTasksRunningWithContext(ctx aws.Context, input *DescribeT
 
 // WaitUntilTasksStopped uses the Amazon ECS API operation
 // DescribeTasks to wait for a condition to be met before returning.
-// If the condition is not meet within the max attempt window an error will
+// If the condition is not met within the max attempt window, an error will
 // be returned.
 func (c *ECS) WaitUntilTasksStopped(input *DescribeTasksInput) error {
 	return c.WaitUntilTasksStoppedWithContext(aws.BackgroundContext(), input)

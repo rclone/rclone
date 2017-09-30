@@ -17,19 +17,18 @@ const opDeleteAlarms = "DeleteAlarms"
 
 // DeleteAlarmsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteAlarms operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteAlarms for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteAlarms method directly
-// instead.
+// See DeleteAlarms for more information on using the DeleteAlarms
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteAlarmsRequest method.
 //    req, resp := client.DeleteAlarmsRequest(params)
@@ -99,19 +98,18 @@ const opDeleteDashboards = "DeleteDashboards"
 
 // DeleteDashboardsRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteDashboards operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteDashboards for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteDashboards method directly
-// instead.
+// See DeleteDashboards for more information on using the DeleteDashboards
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteDashboardsRequest method.
 //    req, resp := client.DeleteDashboardsRequest(params)
@@ -186,19 +184,18 @@ const opDescribeAlarmHistory = "DescribeAlarmHistory"
 
 // DescribeAlarmHistoryRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAlarmHistory operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeAlarmHistory for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeAlarmHistory method directly
-// instead.
+// See DescribeAlarmHistory for more information on using the DescribeAlarmHistory
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeAlarmHistoryRequest method.
 //    req, resp := client.DescribeAlarmHistoryRequest(params)
@@ -326,19 +323,18 @@ const opDescribeAlarms = "DescribeAlarms"
 
 // DescribeAlarmsRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAlarms operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeAlarms for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeAlarms method directly
-// instead.
+// See DescribeAlarms for more information on using the DescribeAlarms
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeAlarmsRequest method.
 //    req, resp := client.DescribeAlarmsRequest(params)
@@ -464,19 +460,18 @@ const opDescribeAlarmsForMetric = "DescribeAlarmsForMetric"
 
 // DescribeAlarmsForMetricRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeAlarmsForMetric operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeAlarmsForMetric for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeAlarmsForMetric method directly
-// instead.
+// See DescribeAlarmsForMetric for more information on using the DescribeAlarmsForMetric
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeAlarmsForMetricRequest method.
 //    req, resp := client.DescribeAlarmsForMetricRequest(params)
@@ -540,19 +535,18 @@ const opDisableAlarmActions = "DisableAlarmActions"
 
 // DisableAlarmActionsRequest generates a "aws/request.Request" representing the
 // client's request for the DisableAlarmActions operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DisableAlarmActions for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DisableAlarmActions method directly
-// instead.
+// See DisableAlarmActions for more information on using the DisableAlarmActions
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DisableAlarmActionsRequest method.
 //    req, resp := client.DisableAlarmActionsRequest(params)
@@ -618,19 +612,18 @@ const opEnableAlarmActions = "EnableAlarmActions"
 
 // EnableAlarmActionsRequest generates a "aws/request.Request" representing the
 // client's request for the EnableAlarmActions operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See EnableAlarmActions for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the EnableAlarmActions method directly
-// instead.
+// See EnableAlarmActions for more information on using the EnableAlarmActions
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the EnableAlarmActionsRequest method.
 //    req, resp := client.EnableAlarmActionsRequest(params)
@@ -695,19 +688,18 @@ const opGetDashboard = "GetDashboard"
 
 // GetDashboardRequest generates a "aws/request.Request" representing the
 // client's request for the GetDashboard operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetDashboard for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetDashboard method directly
-// instead.
+// See GetDashboard for more information on using the GetDashboard
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetDashboardRequest method.
 //    req, resp := client.GetDashboardRequest(params)
@@ -785,19 +777,18 @@ const opGetMetricStatistics = "GetMetricStatistics"
 
 // GetMetricStatisticsRequest generates a "aws/request.Request" representing the
 // client's request for the GetMetricStatistics operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See GetMetricStatistics for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the GetMetricStatistics method directly
-// instead.
+// See GetMetricStatistics for more information on using the GetMetricStatistics
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the GetMetricStatisticsRequest method.
 //    req, resp := client.GetMetricStatisticsRequest(params)
@@ -828,26 +819,11 @@ func (c *CloudWatch) GetMetricStatisticsRequest(input *GetMetricStatisticsInput)
 //
 // Gets statistics for the specified metric.
 //
-// Amazon CloudWatch retains metric data as follows:
-//
-//    * Data points with a period of 60 seconds (1-minute) are available for
-//    15 days
-//
-//    * Data points with a period of 300 seconds (5-minute) are available for
-//    63 days
-//
-//    * Data points with a period of 3600 seconds (1 hour) are available for
-//    455 days (15 months)
-//
-// CloudWatch started retaining 5-minute and 1-hour metric data as of July 9,
-// 2016.
-//
 // The maximum number of data points returned from a single call is 1,440. If
 // you request more than 1,440 data points, CloudWatch returns an error. To
 // reduce the number of data points, you can narrow the specified time range
 // and make multiple requests across adjacent time ranges, or you can increase
-// the specified period. A period can be as short as one minute (60 seconds).
-// Data points are not returned in chronological order.
+// the specified period. Data points are not returned in chronological order.
 //
 // CloudWatch aggregates data points based on the length of the period that
 // you specify. For example, if you request statistics with a one-hour period,
@@ -863,8 +839,34 @@ func (c *CloudWatch) GetMetricStatisticsRequest(input *GetMetricStatisticsInput)
 //
 //    * The Min and the Max values of the statistic set are equal.
 //
-// For a list of metrics and dimensions supported by AWS services, see the Amazon
-// CloudWatch Metrics and Dimensions Reference (http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html)
+// Amazon CloudWatch retains metric data as follows:
+//
+//    * Data points with a period of less than 60 seconds are available for
+//    3 hours. These data points are high-resolution metrics and are available
+//    only for custom metrics that have been defined with a StorageResolution
+//    of 1.
+//
+//    * Data points with a period of 60 seconds (1-minute) are available for
+//    15 days.
+//
+//    * Data points with a period of 300 seconds (5-minute) are available for
+//    63 days.
+//
+//    * Data points with a period of 3600 seconds (1 hour) are available for
+//    455 days (15 months).
+//
+// Data points that are initially published with a shorter period are aggregated
+// together for long-term storage. For example, if you collect data using a
+// period of 1 minute, the data remains available for 15 days with 1-minute
+// resolution. After 15 days, this data is still available, but is aggregated
+// and retrievable only with a resolution of 5 minutes. After 63 days, the data
+// is further aggregated and is available with a resolution of 1 hour.
+//
+// CloudWatch started retaining 5-minute and 1-hour metric data as of July 9,
+// 2016.
+//
+// For information about metrics and dimensions supported by AWS services, see
+// the Amazon CloudWatch Metrics and Dimensions Reference (http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html)
 // in the Amazon CloudWatch User Guide.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
@@ -913,19 +915,18 @@ const opListDashboards = "ListDashboards"
 
 // ListDashboardsRequest generates a "aws/request.Request" representing the
 // client's request for the ListDashboards operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListDashboards for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListDashboards method directly
-// instead.
+// See ListDashboards for more information on using the ListDashboards
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListDashboardsRequest method.
 //    req, resp := client.ListDashboardsRequest(params)
@@ -998,19 +999,18 @@ const opListMetrics = "ListMetrics"
 
 // ListMetricsRequest generates a "aws/request.Request" representing the
 // client's request for the ListMetrics operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListMetrics for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListMetrics method directly
-// instead.
+// See ListMetrics for more information on using the ListMetrics
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListMetricsRequest method.
 //    req, resp := client.ListMetricsRequest(params)
@@ -1145,19 +1145,18 @@ const opPutDashboard = "PutDashboard"
 
 // PutDashboardRequest generates a "aws/request.Request" representing the
 // client's request for the PutDashboard operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutDashboard for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutDashboard method directly
-// instead.
+// See PutDashboard for more information on using the PutDashboard
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutDashboardRequest method.
 //    req, resp := client.PutDashboardRequest(params)
@@ -1193,9 +1192,18 @@ func (c *CloudWatch) PutDashboardRequest(input *PutDashboardInput) (req *request
 // You can have up to 500 dashboards per account. All dashboards in your account
 // are global, not region-specific.
 //
-// To copy an existing dashboard, use GetDashboard, and then use the data returned
-// within DashboardBody as the template for the new dashboard when you call
-// PutDashboard to create the copy.
+// A simple way to create a dashboard using PutDashboard is to copy an existing
+// dashboard. To copy an existing dashboard using the console, you can load
+// the dashboard and then use the View/edit source command in the Actions menu
+// to display the JSON block for that dashboard. Another way to copy a dashboard
+// is to use GetDashboard, and then use the data returned within DashboardBody
+// as the template for the new dashboard when you call PutDashboard.
+//
+// When you create a dashboard with PutDashboard, a good practice is to add
+// a text widget at the top of the dashboard with a message that the dashboard
+// was created by script and should not be changed in the console. This message
+// could also point console users to the location of the DashboardBody script
+// or the CloudFormation template used to create the dashboard.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1237,19 +1245,18 @@ const opPutMetricAlarm = "PutMetricAlarm"
 
 // PutMetricAlarmRequest generates a "aws/request.Request" representing the
 // client's request for the PutMetricAlarm operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutMetricAlarm for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutMetricAlarm method directly
-// instead.
+// See PutMetricAlarm for more information on using the PutMetricAlarm
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutMetricAlarmRequest method.
 //    req, resp := client.PutMetricAlarmRequest(params)
@@ -1358,19 +1365,18 @@ const opPutMetricData = "PutMetricData"
 
 // PutMetricDataRequest generates a "aws/request.Request" representing the
 // client's request for the PutMetricData operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See PutMetricData for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the PutMetricData method directly
-// instead.
+// See PutMetricData for more information on using the PutMetricData
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the PutMetricDataRequest method.
 //    req, resp := client.PutMetricDataRequest(params)
@@ -1477,19 +1483,18 @@ const opSetAlarmState = "SetAlarmState"
 
 // SetAlarmStateRequest generates a "aws/request.Request" representing the
 // client's request for the SetAlarmState operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See SetAlarmState for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the SetAlarmState method directly
-// instead.
+// See SetAlarmState for more information on using the SetAlarmState
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the SetAlarmStateRequest method.
 //    req, resp := client.SetAlarmStateRequest(params)
@@ -2611,12 +2616,19 @@ type GetMetricStatisticsInput struct {
 	// Namespace is a required field
 	Namespace *string `min:"1" type:"string" required:"true"`
 
-	// The granularity, in seconds, of the returned data points. A period can be
-	// as short as one minute (60 seconds) and must be a multiple of 60.
+	// The granularity, in seconds, of the returned data points. For metrics with
+	// regular resolution, a period can be as short as one minute (60 seconds) and
+	// must be a multiple of 60. For high-resolution metrics that are collected
+	// at intervals of less than one minute, the period can be 1, 5, 10, 30, 60,
+	// or any multiple of 60. High-resolution metrics are those metrics stored by
+	// a PutMetricData call that includes a StorageResolution of 1 second.
 	//
-	// If the StartTime parameter specifies a time stamp that is greater than 15
-	// days ago, you must specify the period as follows or no data points in that
+	// If the StartTime parameter specifies a time stamp that is greater than 3
+	// hours ago, you must specify the period as follows or no data points in that
 	// time range is returned:
+	//
+	//    * Start time between 3 hours and 15 days ago - Use a multiple of 60 seconds
+	//    (1 minute).
 	//
 	//    * Start time between 15 and 63 days ago - Use a multiple of 300 seconds
 	//    (5 minutes).
@@ -2643,6 +2655,14 @@ type GetMetricStatisticsInput struct {
 	//
 	//    * Start time greater than 63 days ago - Round down to the nearest 1-hour
 	//    clock interval. For example, 12:32:34 is rounded down to 12:00:00.
+	//
+	// If you set Period to 5, 10, or 30, the start time of your request is rounded
+	// down to the nearest time that corresponds to even 5-, 10-, or 30-second divisions
+	// of a minute. For example, if you make a query at (HH:mm:ss) 01:05:23 for
+	// the previous 10-second period, the start time of your request is rounded
+	// down and you receive data from 01:05:10 to 01:05:20. If you make a query
+	// at 15:07:17 for the previous 5 minutes of data, using a period of 5 seconds,
+	// you receive data timestamped between 15:02:15 and 15:07:15.
 	//
 	// StartTime is a required field
 	StartTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
@@ -3062,8 +3082,8 @@ type MetricAlarm struct {
 
 	// Used only for alarms based on percentiles. If ignore, the alarm state does
 	// not change during periods with too few data points to be statistically significant.
-	// If evaluate or this parameter is not used, the alarm will always be evaluated
-	// and possibly change state no matter how many data points are available.
+	// If evaluate or this parameter is not used, the alarm is always evaluated
+	// and possibly changes state no matter how many data points are available.
 	EvaluateLowSampleCountPercentile *string `min:"1" type:"string"`
 
 	// The number of periods over which data is compared to the specified threshold.
@@ -3289,6 +3309,15 @@ type MetricDatum struct {
 	// The statistical values for the metric.
 	StatisticValues *StatisticSet `type:"structure"`
 
+	// Valid values are 1 and 60. Setting this to 1 specifies this metric as a high-resolution
+	// metric, so that CloudWatch stores the metric with sub-minute resolution down
+	// to one second. Setting this to 60 specifies this metric as a regular-resolution
+	// metric, which CloudWatch stores at 1-minute resolution. Currently, high resolution
+	// is available only for custom metrics. For more information about high-resolution
+	// metrics, see High-Resolution Metrics (http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/publishingMetrics.html#high-resolution-metrics)
+	// in the Amazon CloudWatch User Guide.
+	//
+	// This field is optional, if you do not specify it the default of 60 is used.
 	StorageResolution *int64 `min:"1" type:"integer"`
 
 	// The time the metric data was received, expressed as the number of milliseconds
@@ -3407,7 +3436,7 @@ type PutDashboardInput struct {
 	// The name of the dashboard. If a dashboard with this name already exists,
 	// this call modifies that dashboard, replacing its current contents. Otherwise,
 	// a new dashboard is created. The maximum length is 255, and valid characters
-	// are A-Z, a-z, 0-9, ".", "-", and "_".
+	// are A-Z, a-z, 0-9, "-", and "_".
 	DashboardName *string `type:"string"`
 }
 
@@ -3513,7 +3542,7 @@ type PutMetricAlarmInput struct {
 
 	// The number of periods over which data is compared to the specified threshold.
 	// An alarm's total current evaluation period can be no longer than one day,
-	// so this number multiplied by Period must be 86,400 or less.
+	// so this number multiplied by Period cannot be more than 86,400 seconds.
 	//
 	// EvaluationPeriods is a required field
 	EvaluationPeriods *int64 `min:"1" type:"integer" required:"true"`
@@ -3555,9 +3584,21 @@ type PutMetricAlarmInput struct {
 	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
 	OKActions []*string `type:"list"`
 
-	// The period, in seconds, over which the specified statistic is applied. An
-	// alarm's total current evaluation period can be no longer than one day, so
-	// this number multiplied by EvaluationPeriods must be 86,400 or less.
+	// The period, in seconds, over which the specified statistic is applied. Valid
+	// values are 10, 30, and any multiple of 60.
+	//
+	// Be sure to specify 10 or 30 only for metrics that are stored by a PutMetricData
+	// call with a StorageResolution of 1. If you specify a Period of 10 or 30 for
+	// a metric that does not have sub-minute resolution, the alarm still attempts
+	// to gather data at the period rate that you specify. In this case, it does
+	// not receive data for the attempts that do not correspond to a one-minute
+	// data resolution, and the alarm may often lapse into INSUFFICENT_DATA status.
+	// Specifying 10 or 30 also sets this alarm as a high-resolution alarm, which
+	// has a higher charge than other alarms. For more information about pricing,
+	// see Amazon CloudWatch Pricing (https://aws.amazon.com/cloudwatch/pricing/).
+	//
+	// An alarm's total current evaluation period can be no longer than one day,
+	// so Period multiplied by EvaluationPeriods cannot be more than 86,400 seconds.
 	//
 	// Period is a required field
 	Period *int64 `min:"1" type:"integer" required:"true"`

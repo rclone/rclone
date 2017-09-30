@@ -576,7 +576,7 @@
     "DeploymentTimestamp": {
       "base": null,
       "refs": {
-        "Deployment$DeploymentTime": "<p>For in-progress deployments, the time that the deloyment started.</p> <p>For completed deployments, the time that the deployment ended.</p>"
+        "Deployment$DeploymentTime": "<p>For in-progress deployments, the time that the deployment started.</p> <p>For completed deployments, the time that the deployment ended.</p>"
       }
     },
     "DescribeApplicationVersionsMessage": {
@@ -699,6 +699,12 @@
         "EnvironmentDescription$EndpointURL": "<p>For load-balanced, autoscaling environments, the URL to the LoadBalancer. For single-instance environments, the IP address of the instance.</p>"
       }
     },
+    "EnvironmentArn": {
+      "base": null,
+      "refs": {
+        "EnvironmentDescription$EnvironmentArn": "<p>The environment's Amazon Resource Name (ARN), which can be used in other API reuqests that require an ARN.</p>"
+      }
+    },
     "EnvironmentDescription": {
       "base": "<p>Describes the properties of an environment.</p>",
       "refs": {
@@ -806,7 +812,7 @@
       "refs": {
         "AbortEnvironmentUpdateMessage$EnvironmentName": "<p>This specifies the name of the environment with the in-progress update that you want to cancel.</p>",
         "ConfigurationSettingsDescription$EnvironmentName": "<p> If not <code>null</code>, the name of the environment for this configuration set. </p>",
-        "CreateEnvironmentMessage$EnvironmentName": "<p>A unique name for the deployment environment. Used in the application URL.</p> <p>Constraint: Must be from 4 to 40 characters in length. The name can contain only letters, numbers, and hyphens. It cannot start or end with a hyphen. This name must be unique in your account. If the specified name already exists, AWS Elastic Beanstalk returns an <code>InvalidParameterValue</code> error. </p> <p>Default: If the CNAME parameter is not specified, the environment name becomes part of the CNAME, and therefore part of the visible URL for your application.</p>",
+        "CreateEnvironmentMessage$EnvironmentName": "<p>A unique name for the deployment environment. Used in the application URL.</p> <p>Constraint: Must be from 4 to 40 characters in length. The name can contain only letters, numbers, and hyphens. It cannot start or end with a hyphen. This name must be unique within a region in your account. If the specified name already exists in the region, AWS Elastic Beanstalk returns an <code>InvalidParameterValue</code> error. </p> <p>Default: If the CNAME parameter is not specified, the environment name becomes part of the CNAME, and therefore part of the visible URL for your application.</p>",
         "CreatePlatformVersionRequest$EnvironmentName": "<p>The name of the builder environment.</p>",
         "DeleteEnvironmentConfigurationMessage$EnvironmentName": "<p>The name of the environment to delete the draft configuration from.</p>",
         "DescribeConfigurationOptionsMessage$EnvironmentName": "<p>The name of the environment whose configuration options you want to describe.</p>",
@@ -1145,7 +1151,8 @@
     "MaxRecords": {
       "base": null,
       "refs": {
-        "DescribeApplicationVersionsMessage$MaxRecords": "<p>Specify a maximum number of application versions to paginate in the request.</p>",
+        "DescribeApplicationVersionsMessage$MaxRecords": "<p>For a paginated request. Specify a maximum number of application versions to include in each response.</p> <p>If no <code>MaxRecords</code> is specified, all available application versions are retrieved in a single response.</p>",
+        "DescribeEnvironmentsMessage$MaxRecords": "<p>For a paginated request. Specify a maximum number of environments to include in each response.</p> <p>If no <code>MaxRecords</code> is specified, all available environments are retrieved in a single response.</p>",
         "DescribeEventsMessage$MaxRecords": "<p>Specifies the maximum number of events that can be returned, beginning with the most recent event.</p>"
       }
     },
@@ -1283,16 +1290,16 @@
     "PlatformArn": {
       "base": null,
       "refs": {
-        "ConfigurationOptionsDescription$PlatformArn": "<p>The ARN of the custom platform.</p>",
-        "ConfigurationSettingsDescription$PlatformArn": "<p>The ARN of the custom platform.</p>",
+        "ConfigurationOptionsDescription$PlatformArn": "<p>The ARN of the platform.</p>",
+        "ConfigurationSettingsDescription$PlatformArn": "<p>The ARN of the platform.</p>",
         "CreateConfigurationTemplateMessage$PlatformArn": "<p>The ARN of the custome platform.</p>",
-        "CreateEnvironmentMessage$PlatformArn": "<p>The ARN of the custom platform.</p>",
+        "CreateEnvironmentMessage$PlatformArn": "<p>The ARN of the platform.</p>",
         "DeletePlatformVersionRequest$PlatformArn": "<p>The ARN of the version of the custom platform.</p>",
         "DescribeConfigurationOptionsMessage$PlatformArn": "<p>The ARN of the custom platform.</p>",
         "DescribeEventsMessage$PlatformArn": "<p>The ARN of the version of the custom platform.</p>",
         "DescribePlatformVersionRequest$PlatformArn": "<p>The ARN of the version of the platform.</p>",
-        "EnvironmentDescription$PlatformArn": "<p>The ARN of the custom platform.</p>",
-        "EventDescription$PlatformArn": "<p>The ARN of the custom platform.</p>",
+        "EnvironmentDescription$PlatformArn": "<p>The ARN of the platform.</p>",
+        "EventDescription$PlatformArn": "<p>The ARN of the platform.</p>",
         "PlatformDescription$PlatformArn": "<p>The ARN of the platform.</p>",
         "PlatformSummary$PlatformArn": "<p>The ARN of the platform.</p>",
         "UpdateEnvironmentMessage$PlatformArn": "<p>The ARN of the platform, if used.</p>"
@@ -1768,9 +1775,11 @@
     "Token": {
       "base": null,
       "refs": {
-        "ApplicationVersionDescriptionsMessage$NextToken": "<p>For a paginated request, the token that you can pass in a subsequent request to get the next page.</p>",
-        "DescribeApplicationVersionsMessage$NextToken": "<p>Specify a next token to retrieve the next page in a paginated request.</p>",
+        "ApplicationVersionDescriptionsMessage$NextToken": "<p>In a paginated request, the token that you can pass in a subsequent request to get the next response page.</p>",
+        "DescribeApplicationVersionsMessage$NextToken": "<p>For a paginated request. Specify a token from a previous response page to retrieve the next response page. All other parameter values must be identical to the ones specified in the initial request.</p> <p>If no <code>NextToken</code> is specified, the first page is retrieved.</p>",
+        "DescribeEnvironmentsMessage$NextToken": "<p>For a paginated request. Specify a token from a previous response page to retrieve the next response page. All other parameter values must be identical to the ones specified in the initial request.</p> <p>If no <code>NextToken</code> is specified, the first page is retrieved.</p>",
         "DescribeEventsMessage$NextToken": "<p>Pagination token. If specified, the events return the next batch of results.</p>",
+        "EnvironmentDescriptionsMessage$NextToken": "<p>In a paginated request, the token that you can pass in a subsequent request to get the next response page.</p>",
         "EventDescriptionsMessage$NextToken": "<p> If returned, this indicates that there are more results to obtain. Use this token in the next <a>DescribeEvents</a> call to get the next batch of events. </p>",
         "ListPlatformVersionsRequest$NextToken": "<p>The starting index into the remaining list of platforms. Use the <code>NextToken</code> value from a previous <code>ListPlatformVersion</code> call.</p>",
         "ListPlatformVersionsResult$NextToken": "<p>The starting index into the remaining list of platforms. if this value is not <code>null</code>, you can use it in a subsequent <code>ListPlatformVersion</code> call. </p>"

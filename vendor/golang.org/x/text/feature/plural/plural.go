@@ -13,6 +13,7 @@
 package plural
 
 import (
+	"golang.org/x/text/internal/number"
 	"golang.org/x/text/language"
 )
 
@@ -109,19 +110,23 @@ func getIntApprox(digits []byte, start, end, nMod, big int) (n int) {
 //      123        []byte{1, 2, 3}     3      0
 //      123.4      []byte{1, 2, 3, 4}  3      1
 //      123.40     []byte{1, 2, 3, 4}  3      2
-//      100000     []byte{1}           6......0
-//      100000.00  []byte{1}           6......3
+//      100000     []byte{1}           6      0
+//      100000.00  []byte{1}           6      3
 func (p *Rules) MatchDigits(t language.Tag, digits []byte, exp, scale int) Form {
 	index, _ := language.CompactIndex(t)
-	endN := len(digits) + exp
 
 	// Differentiate up to including mod 1000000 for the integer part.
-	n := getIntApprox(digits, 0, endN, 6, 1000000)
+	n := getIntApprox(digits, 0, exp, 6, 1000000)
 
 	// Differentiate up to including mod 100 for the fractional part.
-	f := getIntApprox(digits, endN, endN+scale, 2, 100)
+	f := getIntApprox(digits, exp, exp+scale, 2, 100)
 
 	return matchPlural(p, index, n, f, scale)
+}
+
+func (p *Rules) matchDisplayDigits(t language.Tag, d *number.Digits) (Form, int) {
+	n := getIntApprox(d.Digits, 0, int(d.Exp), 6, 1000000)
+	return p.MatchDigits(t, d.Digits, int(d.Exp), d.NumFracDigits()), n
 }
 
 func validForms(p *Rules, t language.Tag) (forms []Form) {
@@ -143,6 +148,25 @@ func validForms(p *Rules, t language.Tag) (forms []Form) {
 func (p *Rules) matchComponents(t language.Tag, n, f, scale int) Form {
 	index, _ := language.CompactIndex(t)
 	return matchPlural(p, index, n, f, scale)
+}
+
+// MatchPlural returns the plural form for the given language and plural
+// operands (as defined in
+// http://unicode.org/reports/tr35/tr35-numbers.html#Language_Plural_Rules):
+//  where
+//  	n  absolute value of the source number (integer and decimals)
+//  input
+//  	i  integer digits of n.
+//  	v  number of visible fraction digits in n, with trailing zeros.
+//  	w  number of visible fraction digits in n, without trailing zeros.
+//  	f  visible fractional digits in n, with trailing zeros (f = t * 10^(v-w))
+//  	t  visible fractional digits in n, without trailing zeros.
+//
+// If any of the operand values is too large to fit in an int, it is okay to
+// pass the value modulo 10,000,000.
+func (p *Rules) MatchPlural(lang language.Tag, i, v, w, f, t int) Form {
+	index, _ := language.CompactIndex(lang)
+	return matchPlural(p, index, i, f, v)
 }
 
 func matchPlural(p *Rules, index int, n, f, v int) Form {

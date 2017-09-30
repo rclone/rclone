@@ -25,7 +25,7 @@ import (
 	"cloud.google.com/go/internal/version"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
-	"google.golang.org/api/transport"
+	gtransport "google.golang.org/api/transport/grpc"
 	sppb "google.golang.org/genproto/googleapis/spanner/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -38,9 +38,9 @@ const (
 	// resourcePrefixHeader is the name of the metadata header used to indicate
 	// the resource being operated on.
 	resourcePrefixHeader = "google-cloud-resource-prefix"
-	// apiClientHeader is the name of the metadata header used to indicate client
+	// xGoogHeaderKey is the name of the metadata header used to indicate client
 	// information.
-	apiClientHeader = "x-goog-api-client"
+	xGoogHeaderKey = "x-goog-api-client"
 
 	// numChannels is the default value for NumChannels of client
 	numChannels = 4
@@ -55,8 +55,8 @@ const (
 )
 
 var (
-	validDBPattern  = regexp.MustCompile("^projects/[^/]+/instances/[^/]+/databases/[^/]+$")
-	clientUserAgent = fmt.Sprintf("gl-go/%s gccl/%s grpc/%s", version.Go(), version.Repo, grpc.Version)
+	validDBPattern = regexp.MustCompile("^projects/[^/]+/instances/[^/]+/databases/[^/]+$")
+	xGoogHeaderVal = fmt.Sprintf("gl-go/%s gccl/%s grpc/%s", version.Go(), version.Repo, grpc.Version)
 )
 
 func validDatabaseName(db string) error {
@@ -123,9 +123,9 @@ func NewClientWithConfig(ctx context.Context, database string, config ClientConf
 		database: database,
 		md: metadata.Pairs(
 			resourcePrefixHeader, database,
-			apiClientHeader, clientUserAgent),
+			xGoogHeaderKey, xGoogHeaderVal),
 	}
-	allOpts := []option.ClientOption{option.WithEndpoint(prodAddr), option.WithScopes(Scope), option.WithUserAgent(clientUserAgent), option.WithGRPCDialOption(grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100<<20), grpc.MaxCallRecvMsgSize(100<<20)))}
+	allOpts := []option.ClientOption{option.WithEndpoint(prodAddr), option.WithScopes(Scope), option.WithGRPCDialOption(grpc.WithDefaultCallOptions(grpc.MaxCallSendMsgSize(100<<20), grpc.MaxCallRecvMsgSize(100<<20)))}
 	allOpts = append(allOpts, opts...)
 	// Prepare gRPC channels.
 	if config.NumChannels == 0 {
@@ -138,8 +138,12 @@ func NewClientWithConfig(ctx context.Context, database string, config ClientConf
 	if config.MaxBurst == 0 {
 		config.MaxBurst = 10
 	}
+	// Default MaxSessionAge
+	if config.maxSessionAge == 0 {
+		config.maxSessionAge = time.Minute * 30
+	}
 	for i := 0; i < config.NumChannels; i++ {
-		conn, err := transport.DialGRPC(ctx, allOpts...)
+		conn, err := gtransport.Dial(ctx, allOpts...)
 		if err != nil {
 			return nil, errDial(i, err)
 		}

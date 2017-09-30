@@ -20,6 +20,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log"
 	"os"
 	"sync"
 
@@ -227,8 +228,9 @@ type Replayer struct {
 	initial []byte                                // initial state
 	log     func(format string, v ...interface{}) // for debugging
 
-	mu    sync.Mutex
-	calls []*call
+	mu      sync.Mutex
+	calls   []*call
+	streams []*stream
 }
 
 // A call represents a unary RPC, with a request and response (or error).
@@ -236,6 +238,16 @@ type call struct {
 	method   string
 	request  proto.Message
 	response message
+}
+
+// A stream represents a gRPC stream, with an initial create-stream call, followed by
+// zero or more sends and/or receives.
+type stream struct {
+	method      string
+	createIndex int
+	createErr   error // error from create call
+	sends       []message
+	recvs       []message
 }
 
 // NewReplayer creates a Replayer that reads from filename.
@@ -271,6 +283,7 @@ func (rep *Replayer) read(r io.Reader) error {
 	rep.initial = bytes
 
 	callsByIndex := map[int]*call{}
+	streamsByIndex := map[int]*stream{}
 	for i := 1; ; i++ {
 		e, err := readEntry(r)
 		if err != nil {
@@ -295,6 +308,26 @@ func (rep *Replayer) read(r io.Reader) error {
 			call.response = e.msg
 			rep.calls = append(rep.calls, call)
 
+		case pb.Entry_CREATE_STREAM:
+			s := &stream{method: e.method, createIndex: i}
+			s.createErr = e.msg.err
+			streamsByIndex[i] = s
+			rep.streams = append(rep.streams, s)
+
+		case pb.Entry_SEND:
+			s := streamsByIndex[e.refIndex]
+			if s == nil {
+				return fmt.Errorf("replayer: no stream for send #%d", i)
+			}
+			s.sends = append(s.sends, e.msg)
+
+		case pb.Entry_RECV:
+			s := streamsByIndex[e.refIndex]
+			if s == nil {
+				return fmt.Errorf("replayer: no stream for recv #%d", i)
+			}
+			s.recvs = append(s.recvs, e.msg)
+
 		default:
 			return fmt.Errorf("replayer: unknown kind %s", e.kind)
 		}
@@ -314,6 +347,7 @@ func (r *Replayer) DialOptions() []grpc.DialOption {
 		// fixes that.
 		grpc.WithBlock(),
 		grpc.WithUnaryInterceptor(r.interceptUnary),
+		grpc.WithStreamInterceptor(r.interceptStream),
 	}
 }
 
@@ -346,6 +380,64 @@ func (r *Replayer) interceptUnary(_ context.Context, method string, req, res int
 	return nil
 }
 
+func (r *Replayer) interceptStream(ctx context.Context, _ *grpc.StreamDesc, _ *grpc.ClientConn, method string, _ grpc.Streamer, _ ...grpc.CallOption) (grpc.ClientStream, error) {
+	r.log("create-stream %s", method)
+	str := r.extractStream(method)
+	if str == nil {
+		return nil, fmt.Errorf("replayer: stream not found for method %s", method)
+	}
+	if str.createErr != nil {
+		return nil, str.createErr
+	}
+	return &repClientStream{ctx: ctx, str: str}, nil
+}
+
+type repClientStream struct {
+	ctx context.Context
+	str *stream
+}
+
+func (rcs *repClientStream) Context() context.Context { return rcs.ctx }
+
+func (rcs *repClientStream) SendMsg(m interface{}) error {
+	if len(rcs.str.sends) == 0 {
+		return fmt.Errorf("replayer: no more sends for stream %s, created at index %d",
+			rcs.str.method, rcs.str.createIndex)
+	}
+	// TODO(jba): Do not assume that the sends happen in the same order on replay.
+	msg := rcs.str.sends[0]
+	rcs.str.sends = rcs.str.sends[1:]
+	return msg.err
+}
+
+func (rcs *repClientStream) RecvMsg(m interface{}) error {
+	if len(rcs.str.recvs) == 0 {
+		return fmt.Errorf("replayer: no more receives for stream %s, created at index %d",
+			rcs.str.method, rcs.str.createIndex)
+	}
+	msg := rcs.str.recvs[0]
+	rcs.str.recvs = rcs.str.recvs[1:]
+	if msg.err != nil {
+		return msg.err
+	}
+	proto.Merge(m.(proto.Message), msg.msg) // copy msg into m
+	return nil
+}
+
+func (rcs *repClientStream) Header() (metadata.MD, error) {
+	log.Printf("replay: stream metadata not supported")
+	return nil, nil
+}
+
+func (rcs *repClientStream) Trailer() metadata.MD {
+	log.Printf("replay: stream metadata not supported")
+	return nil
+}
+
+func (rcs *repClientStream) CloseSend() error {
+	return nil
+}
+
 // extractCall finds the first call in the list with the same method
 // and request. It returns nil if it can't find such a call.
 func (r *Replayer) extractCall(method string, req proto.Message) *call {
@@ -358,6 +450,21 @@ func (r *Replayer) extractCall(method string, req proto.Message) *call {
 		if method == call.method && proto.Equal(req, call.request) {
 			r.calls[i] = nil // nil out this call so we don't reuse it
 			return call
+		}
+	}
+	return nil
+}
+
+func (r *Replayer) extractStream(method string) *stream {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for i, stream := range r.streams {
+		if stream == nil {
+			continue
+		}
+		if method == stream.method {
+			r.streams[i] = nil
+			return stream
 		}
 	}
 	return nil

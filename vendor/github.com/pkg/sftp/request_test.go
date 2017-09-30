@@ -18,28 +18,25 @@ type testHandler struct {
 	err          error       // dummy error, should be file related
 }
 
-func (t *testHandler) Fileread(r Request) (io.ReaderAt, error) {
+func (t *testHandler) Fileread(r *Request) (io.ReaderAt, error) {
 	if t.err != nil {
 		return nil, t.err
 	}
 	return bytes.NewReader(t.filecontents), nil
 }
 
-func (t *testHandler) Filewrite(r Request) (io.WriterAt, error) {
+func (t *testHandler) Filewrite(r *Request) (io.WriterAt, error) {
 	if t.err != nil {
 		return nil, t.err
 	}
 	return io.WriterAt(t.output), nil
 }
 
-func (t *testHandler) Filecmd(r Request) error {
-	if t.err != nil {
-		return t.err
-	}
-	return nil
+func (t *testHandler) Filecmd(r *Request) error {
+	return t.err
 }
 
-func (t *testHandler) Fileinfo(r Request) ([]os.FileInfo, error) {
+func (t *testHandler) Filelist(r *Request) (ListerAt, error) {
 	if t.err != nil {
 		return nil, t.err
 	}
@@ -51,7 +48,7 @@ func (t *testHandler) Fileinfo(r Request) ([]os.FileInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	return []os.FileInfo{fi}, nil
+	return listerat([]os.FileInfo{fi}), nil
 }
 
 // make sure len(fakefile) == len(filecontents)
@@ -59,20 +56,14 @@ type fakefile [10]byte
 
 var filecontents = []byte("file-data.")
 
-func testRequest(method string) Request {
-	request := Request{
+func testRequest(method string) *Request {
+	request := &Request{
 		Filepath:  "./request_test.go",
 		Method:    method,
 		Attrs:     []byte("foo"),
 		Target:    "foo",
-		packets:   make(chan packet_data, sftpServerWorkerCount),
 		state:     &state{},
 		stateLock: &sync.RWMutex{},
-	}
-	for _, p := range []packet_data{
-		packet_data{id: 1, data: filecontents[:5], length: 5},
-		packet_data{id: 2, data: filecontents[5:], length: 5, offset: 5}} {
-		request.packets <- p
 	}
 	return request
 }
@@ -98,7 +89,7 @@ func newTestHandlers() Handlers {
 		FileGet:  handler,
 		FilePut:  handler,
 		FileCmd:  handler,
-		FileInfo: handler,
+		FileList: handler,
 	}
 }
 
@@ -120,15 +111,30 @@ func statusOk(t *testing.T, p interface{}) {
 	}
 }
 
+// fake/test packet
+type fakePacket struct {
+	myid   uint32
+	handle string
+}
+
+func (f fakePacket) id() uint32 {
+	return f.myid
+}
+
+func (f fakePacket) getHandle() string {
+	return f.handle
+}
+func (fakePacket) UnmarshalBinary(d []byte) error { return nil }
+
 func TestRequestGet(t *testing.T) {
 	handlers := newTestHandlers()
 	request := testRequest("Get")
 	// req.length is 5, so we test reads in 5 byte chunks
 	for i, txt := range []string{"file-", "data."} {
-		pkt, err := request.handle(handlers)
-		assert.Nil(t, err)
-		dpkt := pkt.(*sshFxpDataPacket)
-		assert.Equal(t, dpkt.id(), uint32(i+1))
+		pkt := &sshFxpReadPacket{uint32(i), "a", uint64(i * 5), 5}
+		rpkt := request.call(handlers, pkt)
+		dpkt := rpkt.(*sshFxpDataPacket)
+		assert.Equal(t, dpkt.id(), uint32(i))
 		assert.Equal(t, string(dpkt.Data), txt)
 	}
 }
@@ -136,26 +142,25 @@ func TestRequestGet(t *testing.T) {
 func TestRequestPut(t *testing.T) {
 	handlers := newTestHandlers()
 	request := testRequest("Put")
-	pkt, err := request.handle(handlers)
-	assert.Nil(t, err)
-	statusOk(t, pkt)
-	pkt, err = request.handle(handlers)
-	assert.Nil(t, err)
-	statusOk(t, pkt)
+	pkt := &sshFxpWritePacket{0, "a", 0, 5, []byte("file-")}
+	rpkt := request.call(handlers, pkt)
+	statusOk(t, rpkt)
+	pkt = &sshFxpWritePacket{1, "a", 5, 5, []byte("data.")}
+	rpkt = request.call(handlers, pkt)
+	statusOk(t, rpkt)
 	assert.Equal(t, "file-data.", handlers.getOutString())
 }
 
 func TestRequestCmdr(t *testing.T) {
 	handlers := newTestHandlers()
 	request := testRequest("Mkdir")
-	pkt, err := request.handle(handlers)
-	assert.Nil(t, err)
-	statusOk(t, pkt)
+	pkt := fakePacket{myid: 1}
+	rpkt := request.call(handlers, pkt)
+	statusOk(t, rpkt)
 
 	handlers.returnError()
-	pkt, err = request.handle(handlers)
-	assert.Nil(t, pkt)
-	assert.Equal(t, err, errTest)
+	rpkt = request.call(handlers, pkt)
+	assert.Equal(t, rpkt, statusFromError(rpkt, errTest))
 }
 
 func TestRequestInfoList(t *testing.T)     { testInfoMethod(t, "List") }
@@ -163,9 +168,9 @@ func TestRequestInfoReadlink(t *testing.T) { testInfoMethod(t, "Readlink") }
 func TestRequestInfoStat(t *testing.T) {
 	handlers := newTestHandlers()
 	request := testRequest("Stat")
-	pkt, err := request.handle(handlers)
-	assert.Nil(t, err)
-	spkt, ok := pkt.(*sshFxpStatResponse)
+	pkt := fakePacket{myid: 1}
+	rpkt := request.call(handlers, pkt)
+	spkt, ok := rpkt.(*sshFxpStatResponse)
 	assert.True(t, ok)
 	assert.Equal(t, spkt.info.Name(), "request_test.go")
 }
@@ -173,9 +178,9 @@ func TestRequestInfoStat(t *testing.T) {
 func testInfoMethod(t *testing.T, method string) {
 	handlers := newTestHandlers()
 	request := testRequest(method)
-	pkt, err := request.handle(handlers)
-	assert.Nil(t, err)
-	npkt, ok := pkt.(*sshFxpNamePacket)
+	pkt := fakePacket{myid: 1}
+	rpkt := request.call(handlers, pkt)
+	npkt, ok := rpkt.(*sshFxpNamePacket)
 	assert.True(t, ok)
 	assert.IsType(t, sshFxpNameAttr{}, npkt.NameAttrs[0])
 	assert.Equal(t, npkt.NameAttrs[0].Name, "request_test.go")

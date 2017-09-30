@@ -50,19 +50,19 @@ import (
 // Supported types and their corresponding Cloud Spanner column type(s) are:
 //
 //	*string(not NULL), *NullString - STRING
-//	*[]NullString - STRING ARRAY
+//	*[]string, *[]NullString - STRING ARRAY
 //	*[]byte - BYTES
 //	*[][]byte - BYTES ARRAY
 //	*int64(not NULL), *NullInt64 - INT64
-//	*[]NullInt64 - INT64 ARRAY
+//	*[]int64, *[]NullInt64 - INT64 ARRAY
 //	*bool(not NULL), *NullBool - BOOL
-//	*[]NullBool - BOOL ARRAY
+//	*[]bool, *[]NullBool - BOOL ARRAY
 //	*float64(not NULL), *NullFloat64 - FLOAT64
-//	*[]NullFloat64 - FLOAT64 ARRAY
+//	*[]float64, *[]NullFloat64 - FLOAT64 ARRAY
 //	*time.Time(not NULL), *NullTime - TIMESTAMP
-//	*[]NullTime - TIMESTAMP ARRAY
+//	*[]time.Time, *[]NullTime - TIMESTAMP ARRAY
 //	*Date(not NULL), *NullDate - DATE
-//	*[]NullDate - DATE ARRAY
+//	*[]civil.Date, *[]NullDate - DATE ARRAY
 //	*[]*some_go_struct, *[]NullRow - STRUCT ARRAY
 //	*GenericColumnValue - any Cloud Spanner type
 //

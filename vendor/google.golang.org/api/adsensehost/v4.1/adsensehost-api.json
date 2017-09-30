@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/GUIZYIY3cfuYjkhoORNXzoLuN-o\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/HzRIN4Gi3jUuNGWAsKKaxu4tH4k\"",
  "discoveryVersion": "v1",
  "id": "adsensehost:v4.1",
  "name": "adsensehost",
  "canonicalName": "AdSense Host",
  "version": "v4.1",
- "revision": "20170606",
+ "revision": "20170912",
  "title": "AdSense Host API",
  "description": "Generates performance reports, generates ad codes, and provides publisher management capabilities for AdSense Hosts.",
  "ownerDomain": "google.com",
@@ -24,7 +24,7 @@
  "basePath": "/adsensehost/v4.1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "adsensehost/v4.1/",
- "batchPath": "batch",
+ "batchPath": "batch/adsensehost/v4.1",
  "parameters": {
   "alt": {
    "type": "string",

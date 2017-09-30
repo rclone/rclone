@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/aOJoHLcG8sanKhT7niZhnljevtI\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/gYl0pTtcNnYGTXFkvxL5OL8Dc58\"",
  "discoveryVersion": "v1",
  "id": "gamesManagement:v1management",
  "name": "gamesManagement",
  "canonicalName": "Games Management",
  "version": "v1management",
- "revision": "20170601",
+ "revision": "20170911",
  "title": "Google Play Game Services Management API",
  "description": "The Management API for Google Play Game Services.",
  "ownerDomain": "google.com",
@@ -21,7 +21,7 @@
  "basePath": "/games/v1management/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "games/v1management/",
- "batchPath": "batch",
+ "batchPath": "batch/gamesManagement/v1management",
  "parameters": {
   "alt": {
    "type": "string",

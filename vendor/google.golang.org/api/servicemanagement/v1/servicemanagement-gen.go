@@ -173,20 +173,35 @@ func (s *Advice) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Api: Api is a light-weight descriptor for a protocol buffer service.
+// Api: Api is a light-weight descriptor for an API
+// Interface.
+//
+// Interfaces are also described as "protocol buffer services" in some
+// contexts,
+// such as by the "service" keyword in a .proto file, but they are
+// different
+// from API Services, which represent a concrete implementation of an
+// interface
+// as opposed to simply a description of methods and bindings. They are
+// also
+// sometimes simply referred to as "APIs" in other contexts, such as the
+// name of
+// this message itself. See
+// https://cloud.google.com/apis/design/glossary for
+// detailed terminology.
 type Api struct {
-	// Methods: The methods of this api, in unspecified order.
+	// Methods: The methods of this interface, in unspecified order.
 	Methods []*Method `json:"methods,omitempty"`
 
-	// Mixins: Included APIs. See Mixin.
+	// Mixins: Included interfaces. See Mixin.
 	Mixins []*Mixin `json:"mixins,omitempty"`
 
-	// Name: The fully qualified name of this api, including package
+	// Name: The fully qualified name of this interface, including package
 	// name
-	// followed by the api's simple name.
+	// followed by the interface's simple name.
 	Name string `json:"name,omitempty"`
 
-	// Options: Any metadata attached to the API.
+	// Options: Any metadata attached to the interface.
 	Options []*Option `json:"options,omitempty"`
 
 	// SourceContext: Source context for the protocol buffer service
@@ -201,16 +216,17 @@ type Api struct {
 	//   "SYNTAX_PROTO3" - Syntax `proto3`.
 	Syntax string `json:"syntax,omitempty"`
 
-	// Version: A version string for this api. If specified, must have the
-	// form
+	// Version: A version string for this interface. If specified, must have
+	// the form
 	// `major-version.minor-version`, as in `1.10`. If the minor version
-	// is omitted, it defaults to zero. If the entire version field
 	// is
-	// empty, the major version is derived from the package name,
-	// as
-	// outlined below. If the field is not empty, the version in the
-	// package name will be verified to be consistent with what is
-	// provided here.
+	// omitted, it defaults to zero. If the entire version field is empty,
+	// the
+	// major version is derived from the package name, as outlined below. If
+	// the
+	// field is not empty, the version in the package name will be verified
+	// to be
+	// consistent with what is provided here.
 	//
 	// The versioning schema uses [semantic
 	// versioning](http://semver.org) where the major version
@@ -222,11 +238,13 @@ type Api struct {
 	// carefully
 	// chosen based on the product plan.
 	//
-	// The major version is also reflected in the package name of the
-	// API, which must end in `v<major-version>`, as in
+	// The major version is also reflected in the package name of
+	// the
+	// interface, which must end in `v<major-version>`, as
+	// in
 	// `google.feature.v1`. For major versions 0 and 1, the suffix can
 	// be omitted. Zero major versions must only be used for
-	// experimental, none-GA apis.
+	// experimental, non-GA interfaces.
 	//
 	Version string `json:"version,omitempty"`
 
@@ -437,6 +455,11 @@ type AuthProvider struct {
 	//     audiences: bookstore_android.apps.googleusercontent.com,
 	//                bookstore_web.apps.googleusercontent.com
 	Audiences string `json:"audiences,omitempty"`
+
+	// AuthorizationUrl: Redirect URL if JWT token is required but no
+	// present or is expired.
+	// Implement authorizationUrl of securityDefinitions in OpenAPI spec.
+	AuthorizationUrl string `json:"authorizationUrl,omitempty"`
 
 	// Id: The unique identifier of the auth provider. It will be referred
 	// to by
@@ -753,8 +776,9 @@ type BackendRule struct {
 	Address string `json:"address,omitempty"`
 
 	// Deadline: The number of seconds to wait for a response from a
-	// request.  The
-	// default depends on the deployment context.
+	// request.  The default
+	// deadline for gRPC is infinite (no deadline) and HTTP requests is 5
+	// seconds.
 	Deadline float64 `json:"deadline,omitempty"`
 
 	// MinDeadline: Minimum deadline in seconds needed for this method.
@@ -804,6 +828,100 @@ func (s *BackendRule) UnmarshalJSON(data []byte) error {
 	s.Deadline = float64(s1.Deadline)
 	s.MinDeadline = float64(s1.MinDeadline)
 	return nil
+}
+
+// Billing: Billing related configuration of the service.
+//
+// The following example shows how to configure monitored resources and
+// metrics
+// for billing:
+//     monitored_resources:
+//     - type: library.googleapis.com/branch
+//       labels:
+//       - key: /city
+//         description: The city where the library branch is located
+// in.
+//       - key: /name
+//         description: The name of the branch.
+//     metrics:
+//     - name: library.googleapis.com/book/borrowed_count
+//       metric_kind: DELTA
+//       value_type: INT64
+//     billing:
+//       consumer_destinations:
+//       - monitored_resource: library.googleapis.com/branch
+//         metrics:
+//         - library.googleapis.com/book/borrowed_count
+type Billing struct {
+	// ConsumerDestinations: Billing configurations for sending metrics to
+	// the consumer project.
+	// There can be multiple consumer destinations per service, each one
+	// must have
+	// a different monitored resource type. A metric can be used in at
+	// most
+	// one consumer destination.
+	ConsumerDestinations []*BillingDestination `json:"consumerDestinations,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "ConsumerDestinations") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ConsumerDestinations") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Billing) MarshalJSON() ([]byte, error) {
+	type noMethod Billing
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// BillingDestination: Configuration of a specific billing destination
+// (Currently only support
+// bill against consumer project).
+type BillingDestination struct {
+	// Metrics: Names of the metrics to report to this billing
+	// destination.
+	// Each name must be defined in Service.metrics section.
+	Metrics []string `json:"metrics,omitempty"`
+
+	// MonitoredResource: The monitored resource type. The type must be
+	// defined in
+	// Service.monitored_resources section.
+	MonitoredResource string `json:"monitoredResource,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Metrics") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Metrics") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *BillingDestination) MarshalJSON() ([]byte, error) {
+	type noMethod BillingDestination
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Binding: Associates `members` with a `role`.
@@ -921,138 +1039,6 @@ func (s *ChangeReport) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// CloudAuditOptions: Write a Cloud Audit log
-type CloudAuditOptions struct {
-	// LogName: The log_name to populate in the Cloud Audit Record.
-	//
-	// Possible values:
-	//   "UNSPECIFIED_LOG_NAME" - Default. Should not be used.
-	//   "ADMIN_ACTIVITY" - Corresponds to
-	// "cloudaudit.googleapis.com/activity"
-	//   "DATA_ACCESS" - Corresponds to
-	// "cloudaudit.googleapis.com/data_access"
-	LogName string `json:"logName,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "LogName") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "LogName") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *CloudAuditOptions) MarshalJSON() ([]byte, error) {
-	type noMethod CloudAuditOptions
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// Condition: A condition to be met.
-type Condition struct {
-	// Iam: Trusted attributes supplied by the IAM system.
-	//
-	// Possible values:
-	//   "NO_ATTR" - Default non-attribute.
-	//   "AUTHORITY" - Either principal or (if present) authority selector.
-	//   "ATTRIBUTION" - The principal (even if an authority selector is
-	// present), which
-	// must only be used for attribution, not authorization.
-	//   "APPROVER" - An approver (distinct from the requester) that has
-	// authorized this
-	// request.
-	// When used with IN, the condition indicates that one of the
-	// approvers
-	// associated with the request matches the specified principal, or is
-	// a
-	// member of the specified group. Approvers can only grant
-	// additional
-	// access, and are thus only used in a strictly positive context
-	// (e.g. ALLOW/IN or DENY/NOT_IN).
-	//   "JUSTIFICATION_TYPE" - What types of justifications have been
-	// supplied with this request.
-	// String values should match enum names from
-	// tech.iam.JustificationType,
-	// e.g. "MANUAL_STRING". It is not permitted to grant access based
-	// on
-	// the *absence* of a justification, so justification conditions can
-	// only
-	// be used in a "positive" context (e.g., ALLOW/IN or
-	// DENY/NOT_IN).
-	//
-	// Multiple justifications, e.g., a Buganizer ID and a
-	// manually-entered
-	// reason, are normal and supported.
-	Iam string `json:"iam,omitempty"`
-
-	// Op: An operator to apply the subject with.
-	//
-	// Possible values:
-	//   "NO_OP" - Default no-op.
-	//   "EQUALS" - DEPRECATED. Use IN instead.
-	//   "NOT_EQUALS" - DEPRECATED. Use NOT_IN instead.
-	//   "IN" - The condition is true if the subject (or any element of it
-	// if it is
-	// a set) matches any of the supplied values.
-	//   "NOT_IN" - The condition is true if the subject (or every element
-	// of it if it is
-	// a set) matches none of the supplied values.
-	//   "DISCHARGED" - Subject is discharged
-	Op string `json:"op,omitempty"`
-
-	// Svc: Trusted attributes discharged by the service.
-	Svc string `json:"svc,omitempty"`
-
-	// Sys: Trusted attributes supplied by any service that owns resources
-	// and uses
-	// the IAM system for access control.
-	//
-	// Possible values:
-	//   "NO_ATTR" - Default non-attribute type
-	//   "REGION" - Region of the resource
-	//   "SERVICE" - Service name
-	//   "NAME" - Resource name
-	//   "IP" - IP address of the caller
-	Sys string `json:"sys,omitempty"`
-
-	// Value: DEPRECATED. Use 'values' instead.
-	Value string `json:"value,omitempty"`
-
-	// Values: The objects of the condition. This is mutually exclusive with
-	// 'value'.
-	Values []string `json:"values,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Iam") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Iam") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Condition) MarshalJSON() ([]byte, error) {
-	type noMethod Condition
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // ConfigChange: Output generated from semantically comparing two
 // versions of a service
 // configuration.
@@ -1163,6 +1149,15 @@ type ConfigFile struct {
 	// in a new file named out.pb.
 	//
 	// $protoc --include_imports --include_source_info test.proto -o out.pb
+	//   "PROTO_FILE" - Uncompiled Proto file. Used for storage and display
+	// purposes only,
+	// currently server-side compilation is not supported. Should match
+	// the
+	// inputs to 'protoc' command used to generated
+	// FILE_DESCRIPTOR_SET_PROTO. A
+	// file of this type can only be included if at least one file of
+	// type
+	// FILE_DESCRIPTOR_SET_PROTO is included.
 	FileType string `json:"fileType,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "FileContents") to
@@ -1380,37 +1375,6 @@ func (s *Control) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// CounterOptions: Options for counters
-type CounterOptions struct {
-	// Field: The field value to attribute.
-	Field string `json:"field,omitempty"`
-
-	// Metric: The metric to update.
-	Metric string `json:"metric,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Field") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Field") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *CounterOptions) MarshalJSON() ([]byte, error) {
-	type noMethod CounterOptions
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // CustomAuthRequirements: Configuration for a custom authentication
 // provider.
 type CustomAuthRequirements struct {
@@ -1557,10 +1521,6 @@ func (s *CustomHttpPattern) MarshalJSON() ([]byte, error) {
 	type noMethod CustomHttpPattern
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// DataAccessOptions: Write a Data Access (Gin) log
-type DataAccessOptions struct {
 }
 
 // DeleteServiceStrategy: Strategy used to delete a service. This
@@ -2241,12 +2201,27 @@ type FlowOperationMetadata struct {
 	// Must be equal to the "name" field for a FlowName enum.
 	FlowName string `json:"flowName,omitempty"`
 
+	// OperationType: Operation type which is a flow type and subtype info
+	// as that is missing in
+	// our datastore otherwise. This maps to the ordinal value of the
+	// enum:
+	// jcg/api/tenant/operations/OperationNamespace.java
+	OperationType int64 `json:"operationType,omitempty"`
+
 	// ResourceNames: The full name of the resources that this flow is
 	// directly associated with.
 	ResourceNames []string `json:"resourceNames,omitempty"`
 
 	// StartTime: The start time of the operation.
 	StartTime string `json:"startTime,omitempty"`
+
+	// Possible values:
+	//   "UNSPECIFIED_OP_SERVICE"
+	//   "SERVICE_MANAGEMENT"
+	//   "SERVICE_USAGE"
+	//   "SERVICE_CONSUMER_MANAGEMENT" - TenancyUnit, ServiceNetworking fall
+	// under this
+	Surface string `json:"surface,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CancelState") to
 	// unconditionally include in API requests. By default, fields with
@@ -2750,49 +2725,6 @@ type HttpRule struct {
 	// at the top-level of response message type.
 	ResponseBody string `json:"responseBody,omitempty"`
 
-	// RestCollection: Optional. The REST collection name is by default
-	// derived from the URL
-	// pattern. If specified, this field overrides the default collection
-	// name.
-	// Example:
-	//
-	//     rpc AddressesAggregatedList(AddressesAggregatedListRequest)
-	//         returns (AddressesAggregatedListResponse) {
-	//       option (google.api.http) = {
-	//         get: "/v1/projects/{project_id}/aggregated/addresses"
-	//         rest_collection: "projects.addresses"
-	//       };
-	//     }
-	//
-	// This method has the automatically derived collection
-	// name
-	// "projects.aggregated". Because, semantically, this rpc is actually
-	// an
-	// operation on the "projects.addresses" collection, the
-	// `rest_collection`
-	// field is configured to override the derived collection name.
-	RestCollection string `json:"restCollection,omitempty"`
-
-	// RestMethodName: Optional. The rest method name is by default derived
-	// from the URL
-	// pattern. If specified, this field overrides the default method
-	// name.
-	// Example:
-	//
-	//     rpc CreateResource(CreateResourceRequest)
-	//         returns (CreateResourceResponse) {
-	//       option (google.api.http) = {
-	//         post: "/v1/resources",
-	//         body: "resource",
-	//         rest_method_name: "insert"
-	//       };
-	//     }
-	//
-	// This method has the automatically derived rest method name "create",
-	// but
-	//  for backwards compatability with apiary, it is specified as insert.
-	RestMethodName string `json:"restMethodName,omitempty"`
-
 	// Selector: Selects methods to which this rule applies.
 	//
 	// Refer to selector for syntax details.
@@ -3002,69 +2934,6 @@ type ListServicesResponse struct {
 
 func (s *ListServicesResponse) MarshalJSON() ([]byte, error) {
 	type noMethod ListServicesResponse
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// LogConfig: Specifies what kind of log the caller must write
-// Increment a streamz counter with the specified metric and field
-// names.
-//
-// Metric names should start with a '/', generally be
-// lowercase-only,
-// and end in "_count". Field names should not contain an initial
-// slash.
-// The actual exported metric names will have "/iam/policy"
-// prepended.
-//
-// Field names correspond to IAM request parameters and field values
-// are
-// their respective values.
-//
-// At present the only supported field names are
-//    - "iam_principal", corresponding to IAMContext.principal;
-//    - "" (empty string), resulting in one aggretated counter with no
-// field.
-//
-// Examples:
-//   counter { metric: "/debug_access_count"  field: "iam_principal" }
-//   ==> increment counter /iam/policy/backend_debug_access_count
-//                         {iam_principal=[value of
-// IAMContext.principal]}
-//
-// At this time we do not support:
-// * multiple field names (though this may be supported in the future)
-// * decrementing the counter
-// * incrementing it by anything other than 1
-type LogConfig struct {
-	// CloudAudit: Cloud audit options.
-	CloudAudit *CloudAuditOptions `json:"cloudAudit,omitempty"`
-
-	// Counter: Counter options.
-	Counter *CounterOptions `json:"counter,omitempty"`
-
-	// DataAccess: Data access options.
-	DataAccess *DataAccessOptions `json:"dataAccess,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "CloudAudit") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "CloudAudit") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *LogConfig) MarshalJSON() ([]byte, error) {
-	type noMethod LogConfig
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -3411,7 +3280,7 @@ func (s *MediaUpload) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Method: Method represents a method of an api.
+// Method: Method represents a method of an API interface.
 type Method struct {
 	// Name: The simple name of this method.
 	Name string `json:"name,omitempty"`
@@ -3685,11 +3554,11 @@ func (s *MetricRule) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Mixin: Declares an API to be included in this API. The including API
-// must
-// redeclare all the methods from the included API, but
-// documentation
-// and options are inherited as follows:
+// Mixin: Declares an API Interface to be included in this interface.
+// The including
+// interface must redeclare all the methods from the included interface,
+// but
+// documentation and options are inherited as follows:
 //
 // - If after comment and whitespace stripping, the documentation
 //   string of the redeclared method is empty, it will be inherited
@@ -3701,8 +3570,8 @@ func (s *MetricRule) MarshalJSON() ([]byte, error) {
 //
 // - If an http annotation is inherited, the path pattern will be
 //   modified as follows. Any version prefix will be replaced by the
-//   version of the including API plus the root path if
-// specified.
+//   version of the including interface plus the root path if
+//   specified.
 //
 // Example of a simple mixin:
 //
@@ -3771,7 +3640,7 @@ func (s *MetricRule) MarshalJSON() ([]byte, error) {
 //       ...
 //     }
 type Mixin struct {
-	// Name: The fully qualified name of the API which is included.
+	// Name: The fully qualified name of the interface which is included.
 	Name string `json:"name,omitempty"`
 
 	// Root: If non-empty specifies a path under which inherited HTTP
@@ -4074,8 +3943,8 @@ func (s *OAuthRequirements) MarshalJSON() ([]byte, error) {
 type Operation struct {
 	// Done: If the value is `false`, it means the operation is still in
 	// progress.
-	// If true, the operation is completed, and either `error` or `response`
-	// is
+	// If `true`, the operation is completed, and either `error` or
+	// `response` is
 	// available.
 	Done bool `json:"done,omitempty"`
 
@@ -4356,20 +4225,6 @@ type Policy struct {
 	Etag string `json:"etag,omitempty"`
 
 	IamOwned bool `json:"iamOwned,omitempty"`
-
-	// Rules: If more than one rule is specified, the rules are applied in
-	// the following
-	// manner:
-	// - All matching LOG rules are always applied.
-	// - If any DENY/DENY_WITH_LOG rule matches, permission is denied.
-	//   Logging will be applied if one or more matching rule requires
-	// logging.
-	// - Otherwise, if any ALLOW/ALLOW_WITH_LOG rule matches, permission is
-	//   granted.
-	//   Logging will be applied if one or more matching rule requires
-	// logging.
-	// - Otherwise, if no rule applies, permission is denied.
-	Rules []*Rule `json:"rules,omitempty"`
 
 	// Version: Version of the `Policy`. The default version is 0.
 	Version int64 `json:"version,omitempty"`
@@ -4739,77 +4594,6 @@ func (s *Rollout) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// Rule: A rule to be applied in a Policy.
-type Rule struct {
-	// Action: Required
-	//
-	// Possible values:
-	//   "NO_ACTION" - Default no action.
-	//   "ALLOW" - Matching 'Entries' grant access.
-	//   "ALLOW_WITH_LOG" - Matching 'Entries' grant access and the caller
-	// promises to log
-	// the request per the returned log_configs.
-	//   "DENY" - Matching 'Entries' deny access.
-	//   "DENY_WITH_LOG" - Matching 'Entries' deny access and the caller
-	// promises to log
-	// the request per the returned log_configs.
-	//   "LOG" - Matching 'Entries' tell IAM.Check callers to generate logs.
-	Action string `json:"action,omitempty"`
-
-	// Conditions: Additional restrictions that must be met
-	Conditions []*Condition `json:"conditions,omitempty"`
-
-	// Description: Human-readable description of the rule.
-	Description string `json:"description,omitempty"`
-
-	// In: If one or more 'in' clauses are specified, the rule matches
-	// if
-	// the PRINCIPAL/AUTHORITY_SELECTOR is in at least one of these entries.
-	In []string `json:"in,omitempty"`
-
-	// LogConfig: The config returned to callers of tech.iam.IAM.CheckPolicy
-	// for any entries
-	// that match the LOG action.
-	LogConfig []*LogConfig `json:"logConfig,omitempty"`
-
-	// NotIn: If one or more 'not_in' clauses are specified, the rule
-	// matches
-	// if the PRINCIPAL/AUTHORITY_SELECTOR is in none of the entries.
-	// The format for in and not_in entries is the same as for members in
-	// a
-	// Binding (see google/iam/v1/policy.proto).
-	NotIn []string `json:"notIn,omitempty"`
-
-	// Permissions: A permission is a string of form '<service>.<resource
-	// type>.<verb>'
-	// (e.g., 'storage.buckets.list'). A value of '*' matches all
-	// permissions,
-	// and a verb part of '*' (e.g., 'storage.buckets.*') matches all verbs.
-	Permissions []string `json:"permissions,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Action") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Action") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *Rule) MarshalJSON() ([]byte, error) {
-	type noMethod Rule
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
 // Service: `Service` is the root object of Google service configuration
 // schema. It
 // describes basic information about a service, such as the name and
@@ -4856,13 +4640,16 @@ type Service struct {
 	// Backend: API backend configuration.
 	Backend *Backend `json:"backend,omitempty"`
 
-	// ConfigVersion: The version of the service configuration. The config
-	// version may
-	// influence interpretation of the configuration, for example,
-	// to
-	// determine defaults. This is documented together with
-	// applicable
-	// options. The current default for the config version itself is `3`.
+	// Billing: Billing configuration.
+	Billing *Billing `json:"billing,omitempty"`
+
+	// ConfigVersion: The semantic version of the service configuration. The
+	// config version
+	// affects the interpretation of the service configuration. For
+	// example,
+	// certain features are enabled by default for certain config
+	// versions.
+	// The latest config version is `3`.
 	ConfigVersion int64 `json:"configVersion,omitempty"`
 
 	// Context: Context configuration.
@@ -5190,9 +4977,9 @@ type Status struct {
 	// google.rpc.Code.
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details.  There will
-	// be a
-	// common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details.  There is a
+	// common set of
+	// message types for APIs to use.
 	Details []googleapi.RawMessage `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in

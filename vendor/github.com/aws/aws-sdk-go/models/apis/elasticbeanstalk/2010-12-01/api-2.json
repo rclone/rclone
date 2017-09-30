@@ -1225,7 +1225,9 @@
         "EnvironmentIds":{"shape":"EnvironmentIdList"},
         "EnvironmentNames":{"shape":"EnvironmentNamesList"},
         "IncludeDeleted":{"shape":"IncludeDeleted"},
-        "IncludedDeletedBackTo":{"shape":"IncludeDeletedBackTo"}
+        "IncludedDeletedBackTo":{"shape":"IncludeDeletedBackTo"},
+        "MaxRecords":{"shape":"MaxRecords"},
+        "NextToken":{"shape":"Token"}
       }
     },
     "DescribeEventsMessage":{
@@ -1287,6 +1289,7 @@
       "exception":true
     },
     "EndpointURL":{"type":"string"},
+    "EnvironmentArn":{"type":"string"},
     "EnvironmentDescription":{
       "type":"structure",
       "members":{
@@ -1308,7 +1311,8 @@
         "HealthStatus":{"shape":"EnvironmentHealthStatus"},
         "Resources":{"shape":"EnvironmentResourcesDescription"},
         "Tier":{"shape":"EnvironmentTier"},
-        "EnvironmentLinks":{"shape":"EnvironmentLinks"}
+        "EnvironmentLinks":{"shape":"EnvironmentLinks"},
+        "EnvironmentArn":{"shape":"EnvironmentArn"}
       }
     },
     "EnvironmentDescriptionsList":{
@@ -1318,7 +1322,8 @@
     "EnvironmentDescriptionsMessage":{
       "type":"structure",
       "members":{
-        "Environments":{"shape":"EnvironmentDescriptionsList"}
+        "Environments":{"shape":"EnvironmentDescriptionsList"},
+        "NextToken":{"shape":"Token"}
       }
     },
     "EnvironmentHealth":{

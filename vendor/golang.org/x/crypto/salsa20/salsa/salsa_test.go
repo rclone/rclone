@@ -33,3 +33,22 @@ func TestCore208(t *testing.T) {
 		t.Errorf("expected %x, got %x", out, in)
 	}
 }
+
+func TestOutOfBoundsWrite(t *testing.T) {
+	// encrypted "0123456789"
+	cipherText := []byte{170, 166, 196, 104, 175, 121, 68, 44, 174, 51}
+	var counter [16]byte
+	var key [32]byte
+	want := "abcdefghij"
+	plainText := []byte(want)
+	defer func() {
+		err := recover()
+		if err == nil {
+			t.Error("XORKeyStream expected to panic on len(dst) < len(src), but didn't")
+		}
+		if plainText[3] == '3' {
+			t.Errorf("XORKeyStream did out of bounds write, want %v, got %v", want, string(plainText))
+		}
+	}()
+	XORKeyStream(plainText[:3], cipherText, &counter, &key)
+}

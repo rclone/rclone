@@ -20,7 +20,7 @@
  "basePath": "/apps/licensing/v1/product/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "apps/licensing/v1/product/",
- "batchPath": "batch",
+ "batchPath": "batch/licensing/v1",
  "parameters": {
   "alt": {
    "type": "string",

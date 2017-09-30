@@ -98,7 +98,6 @@ var extraImports = []string{
 	"github.com/aws/aws-sdk-go/private/protocol",
 	"github.com/aws/aws-sdk-go/private/protocol/xml/xmlutil",
 	"github.com/aws/aws-sdk-go/private/util",
-	"github.com/stretchr/testify/assert",
 }
 
 func addImports(code string) string {
@@ -140,18 +139,25 @@ func Test{{ .OpName }}(t *testing.T) {
 
 	// build request
 	{{ .TestCase.TestSuite.API.ProtocolPackage }}.Build(req)
-	assert.NoError(t, req.Error)
+	if req.Error != nil {
+		t.Errorf("expect no error, got %v", req.Error)
+	}
 
 	{{ if ne .TestCase.InputTest.Body "" }}// assert body
-	assert.NotNil(t, r.Body)
+	if r.Body == nil {
+		t.Errorf("expect body not to be nil")
+	}
 	{{ .BodyAssertions }}{{ end }}
 
 	{{ if ne .TestCase.InputTest.URI "" }}// assert URL
 	awstesting.AssertURL(t, "https://test{{ .TestCase.InputTest.URI }}", r.URL.String()){{ end }}
 
 	// assert headers
-{{ range $k, $v := .TestCase.InputTest.Headers }}assert.Equal(t, "{{ $v }}", r.Header.Get("{{ $k }}"))
-{{ end }}
+	{{ range $k, $v := .TestCase.InputTest.Headers -}}
+		if e, a := "{{ $v }}", r.Header.Get("{{ $k }}"); e != a {
+			t.Errorf("expect %v to be %v", e, a)
+		}
+	{{ end }}
 }
 `))
 
@@ -184,23 +190,38 @@ func (t tplInputTestCaseData) BodyAssertions() string {
 			fmt.Fprintf(code, "awstesting.AssertXML(t, `%s`, util.Trim(string(body)), %s{})",
 				expectedBody, t.TestCase.Given.InputRef.ShapeName)
 		} else {
-			fmt.Fprintf(code, "assert.Equal(t, `%s`, util.Trim(string(body)))",
-				expectedBody)
+			code.WriteString(fmtAssertEqual(fmt.Sprintf("%q", expectedBody), "util.Trim(string(body))"))
 		}
 	case "json", "jsonrpc", "rest-json":
 		if strings.HasPrefix(expectedBody, "{") {
 			fmt.Fprintf(code, "awstesting.AssertJSON(t, `%s`, util.Trim(string(body)))",
 				expectedBody)
 		} else {
-			fmt.Fprintf(code, "assert.Equal(t, `%s`, util.Trim(string(body)))",
-				expectedBody)
+			code.WriteString(fmtAssertEqual(fmt.Sprintf("%q", expectedBody), "util.Trim(string(body))"))
 		}
 	default:
-		fmt.Fprintf(code, "assert.Equal(t, `%s`, util.Trim(string(body)))",
-			expectedBody)
+		code.WriteString(fmtAssertEqual(expectedBody, "util.Trim(string(body))"))
 	}
 
 	return code.String()
+}
+
+func fmtAssertEqual(e, a string) string {
+	const format = `if e, a := %s, %s; e != a {
+		t.Errorf("expect %%v, got %%v", e, a)
+	}
+	`
+
+	return fmt.Sprintf(format, e, a)
+}
+
+func fmtAssertNil(v string) string {
+	const format = `if e := %s; e != nil {
+		t.Errorf("expect nil, got %%v", e)
+	}
+	`
+
+	return fmt.Sprintf(format, v)
 }
 
 var tplOutputTestCase = template.Must(template.New("outputcase").Parse(`
@@ -218,10 +239,14 @@ func Test{{ .OpName }}(t *testing.T) {
 	// unmarshal response
 	{{ .TestCase.TestSuite.API.ProtocolPackage }}.UnmarshalMeta(req)
 	{{ .TestCase.TestSuite.API.ProtocolPackage }}.Unmarshal(req)
-	assert.NoError(t, req.Error)
+	if req.Error != nil {
+		t.Errorf("expect not error, got %v", req.Error)
+	}
 
 	// assert response
-	assert.NotNil(t, out) // ensure out variable is used
+	if out == nil {
+		t.Errorf("expect not to be nil")
+	}
 	{{ .Assertions }}
 }
 `))
@@ -454,16 +479,28 @@ func GenerateAssertions(out interface{}, shape *api.Shape, prefix string) string
 	default:
 		switch shape.Type {
 		case "timestamp":
-			return fmt.Sprintf("assert.Equal(t, time.Unix(%#v, 0).UTC().String(), %s.String())\n", out, prefix)
+			return fmtAssertEqual(
+				fmt.Sprintf("time.Unix(%#v, 0).UTC().String()", out),
+				fmt.Sprintf("%s.String()", prefix),
+			)
 		case "blob":
-			return fmt.Sprintf("assert.Equal(t, %#v, string(%s))\n", out, prefix)
+			return fmtAssertEqual(
+				fmt.Sprintf("%#v", out),
+				fmt.Sprintf("string(%s)", prefix),
+			)
 		case "integer", "long":
-			return fmt.Sprintf("assert.Equal(t, int64(%#v), *%s)\n", out, prefix)
+			return fmtAssertEqual(
+				fmt.Sprintf("int64(%#v)", out),
+				fmt.Sprintf("*%s", prefix),
+			)
 		default:
 			if !reflect.ValueOf(out).IsValid() {
-				return fmt.Sprintf("assert.Nil(t, %s)\n", prefix)
+				return fmtAssertNil(prefix)
 			}
-			return fmt.Sprintf("assert.Equal(t, %#v, *%s)\n", out, prefix)
+			return fmtAssertEqual(
+				fmt.Sprintf("%#v", out),
+				fmt.Sprintf("*%s", prefix),
+			)
 		}
 	}
 }

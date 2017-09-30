@@ -44,9 +44,12 @@ const (
 type HandlerOverrideFunc func(w http.ResponseWriter, r *http.Request, recorder *httptest.ResponseRecorder)
 
 type SwiftServer struct {
+	// `sync/atomic` expects the first word in an allocated struct to be 64-bit
+	// aligned on both ARM and x86-32.
+	// See https://golang.org/pkg/sync/atomic/#pkg-note-BUG for more details.
+	reqId int64
 	sync.RWMutex
 	t        *testing.T
-	reqId    int64
 	mu       sync.Mutex
 	Listener net.Listener
 	AuthURL  string
@@ -121,12 +124,15 @@ type object struct {
 }
 
 type container struct {
+	// `sync/atomic` expects the first word in an allocated struct to be 64-bit
+	// aligned on both ARM and x86-32.
+	// See https://golang.org/pkg/sync/atomic/#pkg-note-BUG for more details.
+	bytes int64
 	sync.RWMutex
 	metadata
 	name    string
 	ctime   time.Time
 	objects map[string]*object
-	bytes   int64
 }
 
 type segment struct {
@@ -539,8 +545,15 @@ func (objr objectResource) get(a *action) interface{} {
 		reader = bytes.NewReader(obj.data[start : end+1])
 	}
 
+	etagHex := hex.EncodeToString(etag)
+
+	if a.req.Header.Get("If-None-Match") == etagHex {
+		a.w.WriteHeader(http.StatusNotModified)
+		return nil
+	}
+
 	h.Set("Content-Length", fmt.Sprint(end-start+1))
-	h.Set("ETag", hex.EncodeToString(etag))
+	h.Set("ETag", etagHex)
 	h.Set("Last-Modified", obj.mtime.Format(http.TimeFormat))
 
 	if a.req.Method == "HEAD" {

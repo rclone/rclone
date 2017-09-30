@@ -276,6 +276,54 @@ func TestValidTerminalMode(t *testing.T) {
 	}
 }
 
+func TestWindowChange(t *testing.T) {
+	server := newServer(t)
+	defer server.Shutdown()
+	conn := server.Dial(clientConfig())
+	defer conn.Close()
+
+	session, err := conn.NewSession()
+	if err != nil {
+		t.Fatalf("session failed: %v", err)
+	}
+	defer session.Close()
+
+	stdout, err := session.StdoutPipe()
+	if err != nil {
+		t.Fatalf("unable to acquire stdout pipe: %s", err)
+	}
+
+	stdin, err := session.StdinPipe()
+	if err != nil {
+		t.Fatalf("unable to acquire stdin pipe: %s", err)
+	}
+
+	tm := ssh.TerminalModes{ssh.ECHO: 0}
+	if err = session.RequestPty("xterm", 80, 40, tm); err != nil {
+		t.Fatalf("req-pty failed: %s", err)
+	}
+
+	if err := session.WindowChange(100, 100); err != nil {
+		t.Fatalf("window-change failed: %s", err)
+	}
+
+	err = session.Shell()
+	if err != nil {
+		t.Fatalf("session failed: %s", err)
+	}
+
+	stdin.Write([]byte("stty size && exit\n"))
+
+	var buf bytes.Buffer
+	if _, err := io.Copy(&buf, stdout); err != nil {
+		t.Fatalf("reading failed: %s", err)
+	}
+
+	if sttyOutput := buf.String(); !strings.Contains(sttyOutput, "100 100") {
+		t.Fatalf("terminal WindowChange failure: expected \"100 100\" stty output, got %s", sttyOutput)
+	}
+}
+
 func TestCiphers(t *testing.T) {
 	var config ssh.Config
 	config.SetDefaults()

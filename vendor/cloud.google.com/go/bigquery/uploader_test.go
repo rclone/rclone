@@ -15,10 +15,12 @@
 package bigquery
 
 import (
-	"reflect"
 	"testing"
 
+	"github.com/google/go-cmp/cmp"
+
 	"cloud.google.com/go/internal/pretty"
+	"cloud.google.com/go/internal/testutil"
 
 	"golang.org/x/net/context"
 )
@@ -133,7 +135,7 @@ func TestInsertsData(t *testing.T) {
 				t.Errorf("expected successful Put of ValueSaver; got: %v", err)
 			}
 		}
-		if got, want := irr.rowBatches, tc.data; !reflect.DeepEqual(got, want) {
+		if got, want := irr.rowBatches, tc.data; !testutil.Equal(got, want) {
 			t.Errorf("got: %v, want: %v", got, want)
 		}
 	}
@@ -265,7 +267,7 @@ func TestValueSavers(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testutil.Equal(got, test.want, cmp.AllowUnexported(testSaver{})) {
 			t.Errorf("%+v: got %v, want %v", test.in, pretty.Value(got), pretty.Value(test.want))
 		}
 		// Make sure Save is successful.

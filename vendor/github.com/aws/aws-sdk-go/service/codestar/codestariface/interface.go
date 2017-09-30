@@ -21,7 +21,7 @@ import (
 //
 // The best way to use this interface is so the SDK's service client's calls
 // can be stubbed out for unit testing your code with the SDK without needing
-// to inject custom request handlers into the the SDK's request pipeline.
+// to inject custom request handlers into the SDK's request pipeline.
 //
 //    // myFunc uses an SDK service client to make a request to
 //    // AWS CodeStar.
@@ -100,6 +100,10 @@ type CodeStarAPI interface {
 	ListResourcesWithContext(aws.Context, *codestar.ListResourcesInput, ...request.Option) (*codestar.ListResourcesOutput, error)
 	ListResourcesRequest(*codestar.ListResourcesInput) (*request.Request, *codestar.ListResourcesOutput)
 
+	ListTagsForProject(*codestar.ListTagsForProjectInput) (*codestar.ListTagsForProjectOutput, error)
+	ListTagsForProjectWithContext(aws.Context, *codestar.ListTagsForProjectInput, ...request.Option) (*codestar.ListTagsForProjectOutput, error)
+	ListTagsForProjectRequest(*codestar.ListTagsForProjectInput) (*request.Request, *codestar.ListTagsForProjectOutput)
+
 	ListTeamMembers(*codestar.ListTeamMembersInput) (*codestar.ListTeamMembersOutput, error)
 	ListTeamMembersWithContext(aws.Context, *codestar.ListTeamMembersInput, ...request.Option) (*codestar.ListTeamMembersOutput, error)
 	ListTeamMembersRequest(*codestar.ListTeamMembersInput) (*request.Request, *codestar.ListTeamMembersOutput)
@@ -107,6 +111,14 @@ type CodeStarAPI interface {
 	ListUserProfiles(*codestar.ListUserProfilesInput) (*codestar.ListUserProfilesOutput, error)
 	ListUserProfilesWithContext(aws.Context, *codestar.ListUserProfilesInput, ...request.Option) (*codestar.ListUserProfilesOutput, error)
 	ListUserProfilesRequest(*codestar.ListUserProfilesInput) (*request.Request, *codestar.ListUserProfilesOutput)
+
+	TagProject(*codestar.TagProjectInput) (*codestar.TagProjectOutput, error)
+	TagProjectWithContext(aws.Context, *codestar.TagProjectInput, ...request.Option) (*codestar.TagProjectOutput, error)
+	TagProjectRequest(*codestar.TagProjectInput) (*request.Request, *codestar.TagProjectOutput)
+
+	UntagProject(*codestar.UntagProjectInput) (*codestar.UntagProjectOutput, error)
+	UntagProjectWithContext(aws.Context, *codestar.UntagProjectInput, ...request.Option) (*codestar.UntagProjectOutput, error)
+	UntagProjectRequest(*codestar.UntagProjectInput) (*request.Request, *codestar.UntagProjectOutput)
 
 	UpdateProject(*codestar.UpdateProjectInput) (*codestar.UpdateProjectOutput, error)
 	UpdateProjectWithContext(aws.Context, *codestar.UpdateProjectInput, ...request.Option) (*codestar.UpdateProjectOutput, error)

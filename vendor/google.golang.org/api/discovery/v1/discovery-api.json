@@ -1,6 +1,6 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/Pyg0A4J33Dq212hoe9BYpSm0dl4\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/K3nEDF6hixE8Pks2-9Ysn9j9prQ\"",
  "discoveryVersion": "v1",
  "id": "discovery:v1",
  "name": "discovery",
@@ -19,7 +19,7 @@
  "basePath": "/discovery/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "discovery/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/discovery/v1",
  "parameters": {
   "alt": {
    "type": "string",
@@ -319,8 +319,7 @@
     },
     "batchPath": {
      "type": "string",
-     "description": "The path for REST batch requests.",
-     "default": "batch"
+     "description": "The path for REST batch requests."
     },
     "canonicalName": {
      "type": "string",

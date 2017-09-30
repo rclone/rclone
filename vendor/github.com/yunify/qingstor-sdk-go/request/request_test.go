@@ -41,7 +41,7 @@ type SomeActionInput struct {
 	Date            *time.Time `json:"Date" name:"Date" format:"RFC 822" location:"headers"`
 	IfModifiedSince *time.Time `json:"If-Modified-Since" name:"If-Modified-Since" format:"RFC 822" location:"headers"`
 	Range           *string    `json:"Range" name:"Range" location:"headers"`
-	UploadID        *string    `json:"upload_id" name:"upload_id" location:"params"`
+	UploadID        *string    `json:"upload_id" name:"upload_id" location:"query"`
 	Count           *int       `json:"count" name:"count" location:"elements"`
 }
 

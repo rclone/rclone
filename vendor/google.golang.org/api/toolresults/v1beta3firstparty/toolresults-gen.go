@@ -95,6 +95,7 @@ type ProjectsHistoriesService struct {
 
 func NewProjectsHistoriesExecutionsService(s *Service) *ProjectsHistoriesExecutionsService {
 	rs := &ProjectsHistoriesExecutionsService{s: s}
+	rs.Clusters = NewProjectsHistoriesExecutionsClustersService(s)
 	rs.Steps = NewProjectsHistoriesExecutionsStepsService(s)
 	return rs
 }
@@ -102,7 +103,18 @@ func NewProjectsHistoriesExecutionsService(s *Service) *ProjectsHistoriesExecuti
 type ProjectsHistoriesExecutionsService struct {
 	s *Service
 
+	Clusters *ProjectsHistoriesExecutionsClustersService
+
 	Steps *ProjectsHistoriesExecutionsStepsService
+}
+
+func NewProjectsHistoriesExecutionsClustersService(s *Service) *ProjectsHistoriesExecutionsClustersService {
+	rs := &ProjectsHistoriesExecutionsClustersService{s: s}
+	return rs
+}
+
+type ProjectsHistoriesExecutionsClustersService struct {
+	s *Service
 }
 
 func NewProjectsHistoriesExecutionsStepsService(s *Service) *ProjectsHistoriesExecutionsStepsService {
@@ -160,6 +172,179 @@ func NewProjectsHistoriesExecutionsStepsThumbnailsService(s *Service) *ProjectsH
 
 type ProjectsHistoriesExecutionsStepsThumbnailsService struct {
 	s *Service
+}
+
+// AndroidAppInfo: Android app information.
+type AndroidAppInfo struct {
+	// Name: The name of the app. Optional
+	Name string `json:"name,omitempty"`
+
+	// PackageName: The package name of the app. Required.
+	PackageName string `json:"packageName,omitempty"`
+
+	// VersionCode: The internal version code of the app. Optional.
+	VersionCode string `json:"versionCode,omitempty"`
+
+	// VersionName: The version name of the app. Optional.
+	VersionName string `json:"versionName,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Name") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Name") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AndroidAppInfo) MarshalJSON() ([]byte, error) {
+	type noMethod AndroidAppInfo
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AndroidInstrumentationTest: A test of an Android application that can
+// control an Android component independently of its normal
+// lifecycle.
+//
+// See  for more information on types of Android tests.
+type AndroidInstrumentationTest struct {
+	// TestPackageId: The java package for the test to be executed. Required
+	TestPackageId string `json:"testPackageId,omitempty"`
+
+	// TestRunnerClass: The InstrumentationTestRunner class. Required
+	TestRunnerClass string `json:"testRunnerClass,omitempty"`
+
+	// TestTargets: Each target must be fully qualified with the package
+	// name or class name, in one of these formats: - "package package_name"
+	// - "class package_name.class_name" - "class
+	// package_name.class_name#method_name"
+	//
+	// If empty, all targets in the module will be run.
+	TestTargets []string `json:"testTargets,omitempty"`
+
+	// UseOrchestrator: The flag indicates whether Android Test Orchestrator
+	// will be used to run test or not. Test orchestrator is used if either:
+	// - orchestrator_option field is USE_ORCHESTRATOR, and test runner is
+	// compatible with orchestrator. Or - orchestrator_option field is
+	// unspecified or ORCHESTRATOR_OPTION_UNSPECIFIED, and test runner is
+	// compatible with orchestrator.
+	UseOrchestrator bool `json:"useOrchestrator,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "TestPackageId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "TestPackageId") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AndroidInstrumentationTest) MarshalJSON() ([]byte, error) {
+	type noMethod AndroidInstrumentationTest
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AndroidRoboTest: A test of an android application that explores the
+// application on a virtual or physical Android device, finding culprits
+// and crashes as it goes.
+type AndroidRoboTest struct {
+	// AppInitialActivity: The initial activity that should be used to start
+	// the app. Optional
+	AppInitialActivity string `json:"appInitialActivity,omitempty"`
+
+	// BootstrapPackageId: The java package for the bootstrap. Optional
+	BootstrapPackageId string `json:"bootstrapPackageId,omitempty"`
+
+	// BootstrapRunnerClass: The runner class for the bootstrap. Optional
+	BootstrapRunnerClass string `json:"bootstrapRunnerClass,omitempty"`
+
+	// MaxDepth: The max depth of the traversal stack Robo can explore.
+	// Optional
+	MaxDepth int64 `json:"maxDepth,omitempty"`
+
+	// MaxSteps: The max number of steps/actions Robo can execute. Default
+	// is no limit (0). Optional
+	MaxSteps int64 `json:"maxSteps,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AppInitialActivity")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AppInitialActivity") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AndroidRoboTest) MarshalJSON() ([]byte, error) {
+	type noMethod AndroidRoboTest
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AndroidTest: An Android mobile test specification.
+type AndroidTest struct {
+	// AndroidAppInfo: Infomation about the application under test.
+	AndroidAppInfo *AndroidAppInfo `json:"androidAppInfo,omitempty"`
+
+	// AndroidInstrumentationTest: An Android instrumentation test.
+	AndroidInstrumentationTest *AndroidInstrumentationTest `json:"androidInstrumentationTest,omitempty"`
+
+	// AndroidRoboTest: An Android robo test.
+	AndroidRoboTest *AndroidRoboTest `json:"androidRoboTest,omitempty"`
+
+	// TestTimeout: Max time a test is allowed to run before it is
+	// automatically cancelled.
+	TestTimeout *Duration `json:"testTimeout,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AndroidAppInfo") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AndroidAppInfo") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AndroidTest) MarshalJSON() ([]byte, error) {
+	type noMethod AndroidTest
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // Any: `Any` contains an arbitrary serialized protocol buffer message
@@ -262,6 +447,42 @@ type Any struct {
 
 func (s *Any) MarshalJSON() ([]byte, error) {
 	type noMethod Any
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type AppStartTime struct {
+	// FullyDrawnTime: Optional. The time from app start to reaching the
+	// developer-reported "fully drawn" time. This is only stored if the app
+	// includes a call to Activity.reportFullyDrawn(). See
+	// https://developer.android.com/topic/performance/launch-time.html#time-full
+	FullyDrawnTime *Duration `json:"fullyDrawnTime,omitempty"`
+
+	// InitialDisplayTime: The time from app start to the first displayed
+	// activity being drawn, as reported in Logcat. See
+	// https://developer.android.com/topic/performance/launch-time.html#time-initial
+	InitialDisplayTime *Duration `json:"initialDisplayTime,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "FullyDrawnTime") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FullyDrawnTime") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AppStartTime) MarshalJSON() ([]byte, error) {
+	type noMethod AppStartTime
 	raw := noMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -566,6 +787,12 @@ type Execution struct {
 	// create/update request: optional
 	Outcome *Outcome `json:"outcome,omitempty"`
 
+	// Specification: Lightweight information about execution request.
+	//
+	// - In response: present if set by create - In create: optional - In
+	// update: optional
+	Specification *Specification `json:"specification,omitempty"`
+
 	// State: The initial state is IN_PROGRESS.
 	//
 	// The only legal state transitions is from IN_PROGRESS to COMPLETE.
@@ -589,8 +816,8 @@ type Execution struct {
 	//   "unknownState"
 	State string `json:"state,omitempty"`
 
-	// TestExecutionMatrixId: TestExecution Matrix ID that the Test Service
-	// uses.
+	// TestExecutionMatrixId: TestExecution Matrix ID that the
+	// TestExecutionService uses.
 	//
 	// - In response: present if set by create - In create: optional - In
 	// update: never set
@@ -995,6 +1222,37 @@ func (s *ListPerfSamplesResponse) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type ListScreenshotClustersResponse struct {
+	// Clusters: The set of clustres associated with an execution Always set
+	Clusters []*ScreenshotCluster `json:"clusters,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Clusters") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Clusters") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ListScreenshotClustersResponse) MarshalJSON() ([]byte, error) {
+	type noMethod ListScreenshotClustersResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // ListStepThumbnailsResponse: A response containing the thumbnails in a
 // step.
 type ListStepThumbnailsResponse struct {
@@ -1219,6 +1477,8 @@ func (s *PerfEnvironment) MarshalJSON() ([]byte, error) {
 // PerfMetricsSummary: A summary of perf metrics collected and
 // performance environment info
 type PerfMetricsSummary struct {
+	AppStartTime *AppStartTime `json:"appStartTime,omitempty"`
+
 	// ExecutionId: A tool results execution ID.
 	ExecutionId string `json:"executionId,omitempty"`
 
@@ -1249,7 +1509,7 @@ type PerfMetricsSummary struct {
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "ExecutionId") to
+	// ForceSendFields is a list of field names (e.g. "AppStartTime") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1257,7 +1517,7 @@ type PerfMetricsSummary struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "ExecutionId") to include
+	// NullFields is a list of field names (e.g. "AppStartTime") to include
 	// in API requests with the JSON null value. By default, fields with
 	// empty values are omitted from API requests. However, any field with
 	// an empty value appearing in NullFields will be sent to the server as
@@ -1446,6 +1706,90 @@ func (s *PublishXunitXmlFilesRequest) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+type Screen struct {
+	// FileReference: File reference of the png file. Required.
+	FileReference string `json:"fileReference,omitempty"`
+
+	// Locale: Locale of the device that the screenshot was taken on.
+	// Required.
+	Locale string `json:"locale,omitempty"`
+
+	// Model: Model of the device that the screenshot was taken on.
+	// Required.
+	Model string `json:"model,omitempty"`
+
+	// Version: OS version of the device that the screenshot was taken on.
+	// Required.
+	Version string `json:"version,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "FileReference") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FileReference") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Screen) MarshalJSON() ([]byte, error) {
+	type noMethod Screen
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type ScreenshotCluster struct {
+	// Activity: A string that describes the activity of every screen in the
+	// cluster.
+	Activity string `json:"activity,omitempty"`
+
+	// ClusterId: A unique identifier for the cluster.
+	ClusterId string `json:"clusterId,omitempty"`
+
+	// KeyScreen: A singular screen that represents the cluster as a whole.
+	// This screen will act as the "cover" of the entire cluster. When users
+	// look at the clusters, only the key screen from each cluster will be
+	// shown. Which screen is the key screen is determined by the
+	// ClusteringAlgorithm
+	KeyScreen *Screen `json:"keyScreen,omitempty"`
+
+	// Screens: Full list of screens.
+	Screens []*Screen `json:"screens,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Activity") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Activity") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *ScreenshotCluster) MarshalJSON() ([]byte, error) {
+	type noMethod ScreenshotCluster
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 type SkippedDetail struct {
 	// IncompatibleAppVersion: If the App doesn't support the specific API
 	// level.
@@ -1484,14 +1828,12 @@ func (s *SkippedDetail) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// StackTrace: A stacktrace.
-type StackTrace struct {
-	// Exception: The stack trace message.
-	//
-	// Required
-	Exception string `json:"exception,omitempty"`
+// Specification: The details about how to run the execution.
+type Specification struct {
+	// AndroidTest: An Android mobile test execution specification.
+	AndroidTest *AndroidTest `json:"androidTest,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "Exception") to
+	// ForceSendFields is a list of field names (e.g. "AndroidTest") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -1499,7 +1841,43 @@ type StackTrace struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "Exception") to include in
+	// NullFields is a list of field names (e.g. "AndroidTest") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Specification) MarshalJSON() ([]byte, error) {
+	type noMethod Specification
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// StackTrace: A stacktrace.
+type StackTrace struct {
+	// ClusterId: Exception cluster ID
+	ClusterId string `json:"clusterId,omitempty"`
+
+	// Exception: The stack trace message.
+	//
+	// Required
+	Exception string `json:"exception,omitempty"`
+
+	// ReportId: Exception report ID
+	ReportId string `json:"reportId,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ClusterId") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ClusterId") to include in
 	// API requests with the JSON null value. By default, fields with empty
 	// values are omitted from API requests. However, any field with an
 	// empty value appearing in NullFields will be sent to the server as
@@ -1575,8 +1953,8 @@ type Status struct {
 	// [google.rpc.Code][].
 	Code int64 `json:"code,omitempty"`
 
-	// Details: A list of messages that carry the error details. There will
-	// be a common set of message types for APIs to use.
+	// Details: A list of messages that carry the error details. There is a
+	// common set of message types for APIs to use.
 	Details []*Any `json:"details,omitempty"`
 
 	// Message: A developer-facing error message, which should be in
@@ -2014,16 +2392,38 @@ func (s *TestExecutionStep) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// TestIssue: An abnormal event observed during the test execution.
+// TestIssue: An issue detected occurring during a test execution.
 type TestIssue struct {
-	// ErrorMessage: A brief human-readable message describing the abnormal
-	// event.
-	//
+	// ErrorMessage: A brief human-readable message describing the issue.
 	// Required.
 	ErrorMessage string `json:"errorMessage,omitempty"`
 
-	// StackTrace: Optional.
+	// Severity: Severity of issue. Required.
+	//
+	// Possible values:
+	//   "info"
+	//   "severe"
+	//   "unspecifiedSeverity"
+	//   "warning"
+	Severity string `json:"severity,omitempty"`
+
+	// StackTrace: Deprecated in favor of stack trace fields inside specific
+	// warnings.
 	StackTrace *StackTrace `json:"stackTrace,omitempty"`
+
+	// Type: Type of issue. Required.
+	//
+	// Possible values:
+	//   "anr"
+	//   "fatalException"
+	//   "nativeCrash"
+	//   "unspecifiedType"
+	Type string `json:"type,omitempty"`
+
+	// Warning: Warning message with additional details of the issue. Should
+	// always be a message from com.google.devtools.toolresults.v1.warnings
+	// Required.
+	Warning *Any `json:"warning,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ErrorMessage") to
 	// unconditionally include in API requests. By default, fields with
@@ -3981,6 +4381,332 @@ func (c *ProjectsHistoriesExecutionsPatchCall) Do(opts ...googleapi.CallOption) 
 
 }
 
+// method id "toolresults.projects.histories.executions.clusters.get":
+
+type ProjectsHistoriesExecutionsClustersGetCall struct {
+	s            *Service
+	projectId    string
+	historyId    string
+	executionId  string
+	clusterId    string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Retrieves a single screenshot cluster by its ID
+func (r *ProjectsHistoriesExecutionsClustersService) Get(projectId string, historyId string, executionId string, clusterId string) *ProjectsHistoriesExecutionsClustersGetCall {
+	c := &ProjectsHistoriesExecutionsClustersGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.projectId = projectId
+	c.historyId = historyId
+	c.executionId = executionId
+	c.clusterId = clusterId
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsHistoriesExecutionsClustersGetCall) Fields(s ...googleapi.Field) *ProjectsHistoriesExecutionsClustersGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsHistoriesExecutionsClustersGetCall) IfNoneMatch(entityTag string) *ProjectsHistoriesExecutionsClustersGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsHistoriesExecutionsClustersGetCall) Context(ctx context.Context) *ProjectsHistoriesExecutionsClustersGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsHistoriesExecutionsClustersGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsHistoriesExecutionsClustersGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{projectId}/histories/{historyId}/executions/{executionId}/clusters/{clusterId}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"projectId":   c.projectId,
+		"historyId":   c.historyId,
+		"executionId": c.executionId,
+		"clusterId":   c.clusterId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "toolresults.projects.histories.executions.clusters.get" call.
+// Exactly one of *ScreenshotCluster or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ScreenshotCluster.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsHistoriesExecutionsClustersGetCall) Do(opts ...googleapi.CallOption) (*ScreenshotCluster, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ScreenshotCluster{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieves a single screenshot cluster by its ID",
+	//   "httpMethod": "GET",
+	//   "id": "toolresults.projects.histories.executions.clusters.get",
+	//   "parameterOrder": [
+	//     "projectId",
+	//     "historyId",
+	//     "executionId",
+	//     "clusterId"
+	//   ],
+	//   "parameters": {
+	//     "clusterId": {
+	//       "description": "A Cluster id\n\nRequired.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "executionId": {
+	//       "description": "An Execution id.\n\nRequired.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "historyId": {
+	//       "description": "A History id.\n\nRequired.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "projectId": {
+	//       "description": "A Project id.\n\nRequired.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{projectId}/histories/{historyId}/executions/{executionId}/clusters/{clusterId}",
+	//   "response": {
+	//     "$ref": "ScreenshotCluster"
+	//   }
+	// }
+
+}
+
+// method id "toolresults.projects.histories.executions.clusters.list":
+
+type ProjectsHistoriesExecutionsClustersListCall struct {
+	s            *Service
+	projectId    string
+	historyId    string
+	executionId  string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists Screenshot Clusters
+//
+// Returns the list of screenshot clusters corresponding to an
+// execution. Screenshot clusters are created after the execution is
+// finished. Clusters are created from a set of screenshots. Between any
+// two screenshots, a matching score is calculated based off their
+// metadata that determines how similar they are. Screenshots are placed
+// in the cluster that has screens which have the highest matching
+// scores.
+func (r *ProjectsHistoriesExecutionsClustersService) List(projectId string, historyId string, executionId string) *ProjectsHistoriesExecutionsClustersListCall {
+	c := &ProjectsHistoriesExecutionsClustersListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.projectId = projectId
+	c.historyId = historyId
+	c.executionId = executionId
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsHistoriesExecutionsClustersListCall) Fields(s ...googleapi.Field) *ProjectsHistoriesExecutionsClustersListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsHistoriesExecutionsClustersListCall) IfNoneMatch(entityTag string) *ProjectsHistoriesExecutionsClustersListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsHistoriesExecutionsClustersListCall) Context(ctx context.Context) *ProjectsHistoriesExecutionsClustersListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsHistoriesExecutionsClustersListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsHistoriesExecutionsClustersListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "{projectId}/histories/{historyId}/executions/{executionId}/clusters")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"projectId":   c.projectId,
+		"historyId":   c.historyId,
+		"executionId": c.executionId,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "toolresults.projects.histories.executions.clusters.list" call.
+// Exactly one of *ListScreenshotClustersResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *ListScreenshotClustersResponse.ServerResponse.Header or (if a
+// response was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsHistoriesExecutionsClustersListCall) Do(opts ...googleapi.CallOption) (*ListScreenshotClustersResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListScreenshotClustersResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists Screenshot Clusters\n\nReturns the list of screenshot clusters corresponding to an execution. Screenshot clusters are created after the execution is finished. Clusters are created from a set of screenshots. Between any two screenshots, a matching score is calculated based off their metadata that determines how similar they are. Screenshots are placed in the cluster that has screens which have the highest matching scores.",
+	//   "httpMethod": "GET",
+	//   "id": "toolresults.projects.histories.executions.clusters.list",
+	//   "parameterOrder": [
+	//     "projectId",
+	//     "historyId",
+	//     "executionId"
+	//   ],
+	//   "parameters": {
+	//     "executionId": {
+	//       "description": "An Execution id.\n\nRequired.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "historyId": {
+	//       "description": "A History id.\n\nRequired.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "projectId": {
+	//       "description": "A Project id.\n\nRequired.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "{projectId}/histories/{historyId}/executions/{executionId}/clusters",
+	//   "response": {
+	//     "$ref": "ListScreenshotClustersResponse"
+	//   }
+	// }
+
+}
+
 // method id "toolresults.projects.histories.executions.steps.create":
 
 type ProjectsHistoriesExecutionsStepsCreateCall struct {
@@ -5074,10 +5800,10 @@ type ProjectsHistoriesExecutionsStepsPerfMetricsSummaryCreateCall struct {
 	header_            http.Header
 }
 
-// Create: Creates a PerfMetricsSummary resource.
+// Create: Creates a PerfMetricsSummary resource. Returns the existing
+// one if it has already been created.
 //
-// May return any of the following error code(s): - ALREADY_EXISTS - A
-// PerfMetricSummary already exists for the given Step - NOT_FOUND - The
+// May return any of the following error code(s): - NOT_FOUND - The
 // containing Step does not exist
 func (r *ProjectsHistoriesExecutionsStepsPerfMetricsSummaryService) Create(projectId string, historyId string, executionId string, stepId string, perfmetricssummary *PerfMetricsSummary) *ProjectsHistoriesExecutionsStepsPerfMetricsSummaryCreateCall {
 	c := &ProjectsHistoriesExecutionsStepsPerfMetricsSummaryCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -5178,7 +5904,7 @@ func (c *ProjectsHistoriesExecutionsStepsPerfMetricsSummaryCreateCall) Do(opts .
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a PerfMetricsSummary resource.\n\nMay return any of the following error code(s): - ALREADY_EXISTS - A PerfMetricSummary already exists for the given Step - NOT_FOUND - The containing Step does not exist",
+	//   "description": "Creates a PerfMetricsSummary resource. Returns the existing one if it has already been created.\n\nMay return any of the following error code(s): - NOT_FOUND - The containing Step does not exist",
 	//   "httpMethod": "POST",
 	//   "id": "toolresults.projects.histories.executions.steps.perfMetricsSummary.create",
 	//   "parameterOrder": [

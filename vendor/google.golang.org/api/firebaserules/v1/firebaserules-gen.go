@@ -285,6 +285,68 @@ func (s *FunctionMock) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// GetReleaseExecutableResponse: The response for
+// FirebaseRulesService.GetReleaseExecutable
+type GetReleaseExecutableResponse struct {
+	// Executable: Executable view of the `Ruleset` referenced by the
+	// `Release`.
+	Executable string `json:"executable,omitempty"`
+
+	// ExecutableVersion: The Rules runtime version of the executable.
+	//
+	// Possible values:
+	//   "RELEASE_EXECUTABLE_VERSION_UNSPECIFIED" - Executable format
+	// unspecified.
+	// Defaults to FIREBASE_RULES_EXECUTABLE_V1
+	//   "FIREBASE_RULES_EXECUTABLE_V1" - Firebase Rules syntax 'rules2'
+	// executable versions:
+	// Custom AST for use with Java clients.
+	//   "FIREBASE_RULES_EXECUTABLE_V2" - CEL-based executable for use with
+	// C++ clients.
+	ExecutableVersion string `json:"executableVersion,omitempty"`
+
+	// Language: `Language` used to generate the executable bytes.
+	//
+	// Possible values:
+	//   "LANGUAGE_UNSPECIFIED" - Language unspecified. Defaults to
+	// FIREBASE_RULES.
+	//   "FIREBASE_RULES" - Firebase Rules language.
+	//   "EVENT_FLOW_TRIGGERS" - Event Flow triggers.
+	Language string `json:"language,omitempty"`
+
+	// RulesetName: `Ruleset` name associated with the `Release` executable.
+	RulesetName string `json:"rulesetName,omitempty"`
+
+	// UpdateTime: Timestamp for the most recent `Release.update_time`.
+	UpdateTime string `json:"updateTime,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Executable") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Executable") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GetReleaseExecutableResponse) MarshalJSON() ([]byte, error) {
+	type noMethod GetReleaseExecutableResponse
+	raw := noMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Issue: Issues include warnings, errors, and deprecation notices.
 type Issue struct {
 	// Description: Short error description.
@@ -1486,6 +1548,171 @@ func (c *ProjectsReleasesGetCall) Do(opts ...googleapi.CallOption) (*Release, er
 	//   "path": "v1/{+name}",
 	//   "response": {
 	//     "$ref": "Release"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/firebase",
+	//     "https://www.googleapis.com/auth/firebase.readonly"
+	//   ]
+	// }
+
+}
+
+// method id "firebaserules.projects.releases.getExecutable":
+
+type ProjectsReleasesGetExecutableCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetExecutable: Get the `Release` executable to use when enforcing
+// rules.
+func (r *ProjectsReleasesService) GetExecutable(name string) *ProjectsReleasesGetExecutableCall {
+	c := &ProjectsReleasesGetExecutableCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// ExecutableVersion sets the optional parameter "executableVersion":
+// The requested runtime executable version.
+// Defaults to FIREBASE_RULES_EXECUTABLE_V1
+//
+// Possible values:
+//   "RELEASE_EXECUTABLE_VERSION_UNSPECIFIED"
+//   "FIREBASE_RULES_EXECUTABLE_V1"
+//   "FIREBASE_RULES_EXECUTABLE_V2"
+func (c *ProjectsReleasesGetExecutableCall) ExecutableVersion(executableVersion string) *ProjectsReleasesGetExecutableCall {
+	c.urlParams_.Set("executableVersion", executableVersion)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProjectsReleasesGetExecutableCall) Fields(s ...googleapi.Field) *ProjectsReleasesGetExecutableCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ProjectsReleasesGetExecutableCall) IfNoneMatch(entityTag string) *ProjectsReleasesGetExecutableCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProjectsReleasesGetExecutableCall) Context(ctx context.Context) *ProjectsReleasesGetExecutableCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProjectsReleasesGetExecutableCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProjectsReleasesGetExecutableCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}:getExecutable")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "firebaserules.projects.releases.getExecutable" call.
+// Exactly one of *GetReleaseExecutableResponse or error will be
+// non-nil. Any non-2xx status code is an error. Response headers are in
+// either *GetReleaseExecutableResponse.ServerResponse.Header or (if a
+// response was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProjectsReleasesGetExecutableCall) Do(opts ...googleapi.CallOption) (*GetReleaseExecutableResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &GetReleaseExecutableResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Get the `Release` executable to use when enforcing rules.",
+	//   "flatPath": "v1/projects/{projectsId}/releases/{releasesId}:getExecutable",
+	//   "httpMethod": "GET",
+	//   "id": "firebaserules.projects.releases.getExecutable",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "executableVersion": {
+	//       "description": "The requested runtime executable version.\nDefaults to FIREBASE_RULES_EXECUTABLE_V1",
+	//       "enum": [
+	//         "RELEASE_EXECUTABLE_VERSION_UNSPECIFIED",
+	//         "FIREBASE_RULES_EXECUTABLE_V1",
+	//         "FIREBASE_RULES_EXECUTABLE_V2"
+	//       ],
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "name": {
+	//       "description": "Resource name of the `Release`.\n\nFormat: `projects/{project_id}/releases/{release_id}`",
+	//       "location": "path",
+	//       "pattern": "^projects/[^/]+/releases/.+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}:getExecutable",
+	//   "response": {
+	//     "$ref": "GetReleaseExecutableResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/cloud-platform",

@@ -21,7 +21,7 @@
  "basePath": "/qpxExpress/v1/trips/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "qpxExpress/v1/trips/",
- "batchPath": "batch",
+ "batchPath": "batch/qpxExpress/v1",
  "parameters": {
   "alt": {
    "type": "string",

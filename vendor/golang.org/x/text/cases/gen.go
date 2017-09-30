@@ -596,7 +596,7 @@ func verifyProperties(chars []runeInfo) {
 				// decomposition is greater than U+00FF, the rune is always
 				// great and not a modifier.
 				if f := runes[0]; unicode.IsMark(f) || f > 0xFF && !unicode.Is(unicode.Greek, f) {
-					log.Fatalf("%U: expeced first rune of Greek decomposition to be letter, found %U", r, f)
+					log.Fatalf("%U: expected first rune of Greek decomposition to be letter, found %U", r, f)
 				}
 				// A.6.2: Any follow-up rune in a Greek decomposition is a
 				// modifier of which the first should be gobbled in
@@ -605,7 +605,7 @@ func verifyProperties(chars []runeInfo) {
 					switch m {
 					case 0x0313, 0x0314, 0x0301, 0x0300, 0x0306, 0x0342, 0x0308, 0x0304, 0x345:
 					default:
-						log.Fatalf("%U: modifier %U is outside of expeced Greek modifier set", r, m)
+						log.Fatalf("%U: modifier %U is outside of expected Greek modifier set", r, m)
 					}
 				}
 			}

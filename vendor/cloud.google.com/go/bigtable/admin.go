@@ -26,10 +26,12 @@ import (
 	lroauto "cloud.google.com/go/longrunning/autogen"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
-	"google.golang.org/api/transport"
+	gtransport "google.golang.org/api/transport/grpc"
 	btapb "google.golang.org/genproto/googleapis/bigtable/admin/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
+	"google.golang.org/grpc/codes"
 )
 
 const adminAddr = "bigtableadmin.googleapis.com:443"
@@ -52,7 +54,7 @@ func NewAdminClient(ctx context.Context, project, instance string, opts ...optio
 		return nil, err
 	}
 	o = append(o, opts...)
-	conn, err := transport.DialGRPC(ctx, o...)
+	conn, err := gtransport.Dial(ctx, o...)
 	if err != nil {
 		return nil, fmt.Errorf("dialing: %v", err)
 	}
@@ -92,17 +94,18 @@ func (ac *AdminClient) Tables(ctx context.Context) ([]string, error) {
 	return names, nil
 }
 
+// TableConf contains all of the information necessary to create a table with column families.
+type TableConf struct {
+	TableID   string
+	SplitKeys []string
+	// Families is a map from family name to GCPolicy
+	Families map[string]GCPolicy
+}
+
 // CreateTable creates a new table in the instance.
 // This method may return before the table's creation is complete.
 func (ac *AdminClient) CreateTable(ctx context.Context, table string) error {
-	ctx = mergeOutgoingMetadata(ctx, ac.md)
-	prefix := ac.instancePrefix()
-	req := &btapb.CreateTableRequest{
-		Parent:  prefix,
-		TableId: table,
-	}
-	_, err := ac.tClient.CreateTable(ctx, req)
-	return err
+	return ac.CreateTableFromConf(ctx, &TableConf{TableID: table})
 }
 
 // CreatePresplitTable creates a new table in the instance.
@@ -110,16 +113,29 @@ func (ac *AdminClient) CreateTable(ctx context.Context, table string) error {
 // Given two split keys, "s1" and "s2", three tablets will be created,
 // spanning the key ranges: [, s1), [s1, s2), [s2, ).
 // This method may return before the table's creation is complete.
-func (ac *AdminClient) CreatePresplitTable(ctx context.Context, table string, split_keys []string) error {
+func (ac *AdminClient) CreatePresplitTable(ctx context.Context, table string, splitKeys []string) error {
+	return ac.CreateTableFromConf(ctx, &TableConf{TableID: table, SplitKeys: splitKeys})
+}
+
+// CreateTableFromConf creates a new table in the instance from the given configuration.
+func (ac *AdminClient) CreateTableFromConf(ctx context.Context, conf *TableConf) error {
+	ctx = mergeOutgoingMetadata(ctx, ac.md)
 	var req_splits []*btapb.CreateTableRequest_Split
-	for _, split := range split_keys {
+	for _, split := range conf.SplitKeys {
 		req_splits = append(req_splits, &btapb.CreateTableRequest_Split{[]byte(split)})
 	}
-	ctx = mergeOutgoingMetadata(ctx, ac.md)
+	var tbl btapb.Table
+	if conf.Families != nil {
+		tbl.ColumnFamilies = make(map[string]*btapb.ColumnFamily)
+		for fam, policy := range conf.Families {
+			tbl.ColumnFamilies[fam] = &btapb.ColumnFamily{policy.proto()}
+		}
+	}
 	prefix := ac.instancePrefix()
 	req := &btapb.CreateTableRequest{
 		Parent:        prefix,
-		TableId:       table,
+		TableId:       conf.TableID,
+		Table:         &tbl,
 		InitialSplits: req_splits,
 	}
 	_, err := ac.tClient.CreateTable(ctx, req)
@@ -171,13 +187,13 @@ func (ac *AdminClient) DeleteColumnFamily(ctx context.Context, table, family str
 // TableInfo represents information about a table.
 type TableInfo struct {
 	// DEPRECATED - This field is deprecated. Please use FamilyInfos instead.
-	Families []string
+	Families    []string
 	FamilyInfos []FamilyInfo
 }
 
 // FamilyInfo represents information about a column family.
 type FamilyInfo struct {
-	Name string
+	Name     string
 	GCPolicy string
 }
 
@@ -251,7 +267,7 @@ func NewInstanceAdminClient(ctx context.Context, project string, opts ...option.
 		return nil, err
 	}
 	o = append(o, opts...)
-	conn, err := transport.DialGRPC(ctx, o...)
+	conn, err := gtransport.Dial(ctx, o...)
 	if err != nil {
 		return nil, fmt.Errorf("dialing: %v", err)
 	}
@@ -297,6 +313,14 @@ func (st StorageType) proto() btapb.StorageType {
 	return btapb.StorageType_SSD
 }
 
+// InstanceType is the type of the instance
+type InstanceType int32
+
+const (
+	PRODUCTION  InstanceType = InstanceType(btapb.Instance_PRODUCTION)
+	DEVELOPMENT              = InstanceType(btapb.Instance_DEVELOPMENT)
+)
+
 // InstanceInfo represents information about an instance
 type InstanceInfo struct {
 	Name        string // name of the instance
@@ -306,8 +330,10 @@ type InstanceInfo struct {
 // InstanceConf contains the information necessary to create an Instance
 type InstanceConf struct {
 	InstanceId, DisplayName, ClusterId, Zone string
-	NumNodes                                 int32
-	StorageType                              StorageType
+	// NumNodes must not be specified for DEVELOPMENT instance types
+	NumNodes     int32
+	StorageType  StorageType
+	InstanceType InstanceType
 }
 
 var instanceNameRegexp = regexp.MustCompile(`^projects/([^/]+)/instances/([a-z][-a-z0-9]*)$`)
@@ -319,7 +345,7 @@ func (iac *InstanceAdminClient) CreateInstance(ctx context.Context, conf *Instan
 	req := &btapb.CreateInstanceRequest{
 		Parent:     "projects/" + iac.project,
 		InstanceId: conf.InstanceId,
-		Instance:   &btapb.Instance{DisplayName: conf.DisplayName},
+		Instance:   &btapb.Instance{DisplayName: conf.DisplayName, Type: btapb.Instance_Type(conf.InstanceType)},
 		Clusters: map[string]*btapb.Cluster{
 			conf.ClusterId: {
 				ServeNodes:         conf.NumNodes,
@@ -354,6 +380,11 @@ func (iac *InstanceAdminClient) Instances(ctx context.Context) ([]*InstanceInfo,
 	res, err := iac.iClient.ListInstances(ctx, req)
 	if err != nil {
 		return nil, err
+	}
+	if len(res.FailedLocations) > 0 {
+		// We don't have a good way to return a partial result in the face of some zones being unavailable.
+		// Fail the entire request.
+		return nil, status.Errorf(codes.Unavailable, "Failed locations: %v", res.FailedLocations)
 	}
 
 	var is []*InstanceInfo

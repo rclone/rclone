@@ -1,8 +1,23 @@
 package storage
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"bytes"
 	"encoding/base64"
+	"io"
 	"io/ioutil"
 
 	chk "gopkg.in/check.v1"
@@ -131,4 +146,21 @@ func (s *BlockBlobSuite) TestPutEmptyBlockBlob(c *chk.C) {
 	err := b.GetProperties(nil)
 	c.Assert(err, chk.IsNil)
 	c.Assert(b.Properties.ContentLength, chk.Not(chk.Equals), 0)
+}
+
+func (s *BlockBlobSuite) TestPutBlockWithLengthUsingLimitReader(c *chk.C) {
+	cli := getBlobClient(c)
+	rec := cli.client.appendRecorder(c)
+	defer rec.Stop()
+
+	cnt := cli.GetContainerReference(containerName(c))
+	b := cnt.GetBlobReference(blobName(c))
+	c.Assert(cnt.Create(nil), chk.IsNil)
+	defer cnt.Delete(nil)
+
+	length := 512
+	data := content(length)
+
+	lr := io.LimitReader(bytes.NewReader(data), 256)
+	c.Assert(b.PutBlockWithLength("0000", 256, lr, nil), chk.IsNil)
 }

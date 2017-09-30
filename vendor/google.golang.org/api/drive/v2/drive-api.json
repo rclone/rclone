@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/GZBaoIT2JIa-WG47c56OJgYWjRw\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/DCrAVU-W3UzljIhuRMkT-kOc_P8\"",
  "discoveryVersion": "v1",
  "id": "drive:v2",
  "name": "drive",
  "version": "v2",
- "revision": "20170623",
+ "revision": "20170825",
  "title": "Drive API",
  "description": "Manages files in Drive including uploading, downloading, searching, detecting changes, and updating sharing permissions.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/drive/v2/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "drive/v2/",
- "batchPath": "batch",
+ "batchPath": "batch/drive/v2",
  "parameters": {
   "alt": {
    "type": "string",
@@ -1330,6 +1330,13 @@
      "description": "Collection of parent folders which contain this file.\nSetting this field will put the file in all of the provided folders. On insert, if no folders are provided, the file will be placed in the default root folder.",
      "items": {
       "$ref": "ParentReference"
+     }
+    },
+    "permissionIds": {
+     "type": "array",
+     "description": "List of permission IDs for users with access to this file.",
+     "items": {
+      "type": "string"
      }
     },
     "permissions": {
@@ -3255,7 +3262,7 @@
       },
       "orderBy": {
        "type": "string",
-       "description": "A comma-separated list of sort keys. Valid keys are 'createdDate', 'folder', 'lastViewedByMeDate', 'modifiedByMeDate', 'modifiedDate', 'quotaBytesUsed', 'recency', 'sharedWithMeDate', 'starred', and 'title'. Each key sorts ascending by default, but may be reversed with the 'desc' modifier. Example usage: ?orderBy=folder,modifiedDate desc,title. Please note that there is a current limitation for users with approximately one million files in which the requested sort order is ignored.",
+       "description": "A comma-separated list of sort keys. Valid keys are 'createdDate', 'folder', 'lastViewedByMeDate', 'modifiedByMeDate', 'modifiedDate', 'quotaBytesUsed', 'recency', 'sharedWithMeDate', 'starred', 'title', and 'title_natural'. Each key sorts ascending by default, but may be reversed with the 'desc' modifier. Example usage: ?orderBy=folder,modifiedDate desc,title. Please note that there is a current limitation for users with approximately one million files in which the requested sort order is ignored.",
        "location": "query"
       },
       "pageToken": {

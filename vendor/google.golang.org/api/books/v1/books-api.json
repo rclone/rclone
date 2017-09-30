@@ -20,7 +20,7 @@
  "basePath": "/books/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "books/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/books/v1",
  "parameters": {
   "alt": {
    "type": "string",

@@ -23,7 +23,7 @@ import (
 
 // Test validDatabaseName()
 func TestValidDatabaseName(t *testing.T) {
-	validDbUri := "projects/spanner-cloud-test/instances/foo/databases/foodb"
+	validDbURI := "projects/spanner-cloud-test/instances/foo/databases/foodb"
 	invalidDbUris := []string{
 		// Completely wrong DB URI.
 		"foobarDB",
@@ -32,12 +32,12 @@ func TestValidDatabaseName(t *testing.T) {
 		// No instance ID.
 		"projects/spanner-cloud-test/instances//databases/foodb",
 	}
-	if err := validDatabaseName(validDbUri); err != nil {
-		t.Errorf("validateDatabaseName(%q) = %v, want nil", validDbUri, err)
+	if err := validDatabaseName(validDbURI); err != nil {
+		t.Errorf("validateDatabaseName(%q) = %v, want nil", validDbURI, err)
 	}
 	for _, d := range invalidDbUris {
 		if err, wantErr := validDatabaseName(d), "should conform to pattern"; !strings.Contains(err.Error(), wantErr) {
-			t.Errorf("validateDatabaseName(%q) = %q, want error pattern %q", validDbUri, err, wantErr)
+			t.Errorf("validateDatabaseName(%q) = %q, want error pattern %q", validDbURI, err, wantErr)
 		}
 	}
 }

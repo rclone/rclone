@@ -33,21 +33,110 @@ make backwards-incompatible changes.
 
 ## News
 
-_March 17, 2017_
+_September 28, 2017_
 
-Breaking Pubsub changes.
-* Publish is now asynchronous
-([announcement](https://groups.google.com/d/topic/google-api-go-announce/aaqRDIQ3rvU/discussion)).
-* Subscription.Pull replaced by Subscription.Receive, which takes a callback ([announcement](https://groups.google.com/d/topic/google-api-go-announce/8pt6oetAdKc/discussion)).
-* Message.Done replaced with Message.Ack and Message.Nack.
+*v0.14.0*
 
-_February 14, 2017_
+- bigquery BREAKING CHANGES:
+  - Standard SQL is the default for queries and views.
+  - `Table.Create` takes `TableMetadata` as a second argument, instead of
+    options.
+  - `Dataset.Create` takes `DatasetMetadata` as a second argument.
+  - `DatasetMetadata` field `ID` renamed to `FullID`
+  - `TableMetadata` field `ID` renamed to `FullID`
 
-Release of a client library for Spanner. See
-the
-[blog post](https://cloudplatform.googleblog.com/2017/02/introducing-Cloud-Spanner-a-global-database-service-for-mission-critical-applications.html).
+- Other bigquery changes:
+  - The client will append a random suffix to a provided job ID if you set
+    `AddJobIDSuffix` to true in a job config.
+  - Listing jobs is supported.
+  - Better retry logic.
 
-Note that although the Spanner service is beta, the Go client library is alpha.
+- vision, language, speech: clients are now stable
+
+- monitoring: client is now beta
+
+- profiler:
+  - Rename InstanceName to Instance, ZoneName to Zone
+  - Auto-detect service name and version on AppEngine.
+
+_September 8, 2017_
+
+*v0.13.0*
+
+- bigquery: UseLegacySQL options for CreateTable and QueryConfig. Use these
+  options to continue using Legacy SQL after the client switches its default
+  to Standard SQL.
+
+- bigquery: Support for updating dataset labels.
+
+- bigquery: Set DatasetIterator.ProjectID to list datasets in a project other
+  than the client's. DatasetsInProject is no longer needed and is deprecated.
+
+- bigtable: Fail ListInstances when any zones fail.
+
+- spanner: support decoding of slices of basic types (e.g. []string, []int64,
+  etc.)
+
+- logging/logadmin: UpdateSink no longer creates a sink if it is missing
+  (actually a change to the underlying service, not the client)
+
+- profiler: Service and ServiceVersion replace Target in Config.
+
+_August 22, 2017_
+
+*v0.12.0*
+
+- pubsub: Subscription.Receive now uses streaming pull.
+
+- pubsub: add Client.TopicInProject to access topics in a different project
+  than the client.
+
+- errors: renamed errorreporting. The errors package will be removed shortly.
+
+- datastore: improved retry behavior.
+
+- bigquery: support updates to dataset metadata, with etags.
+
+- bigquery: add etag support to Table.Update (BREAKING: etag argument added).
+
+- bigquery: generate all job IDs on the client.
+
+- storage: support bucket lifecycle configurations.
+
+
+_July 31, 2017_
+
+*v0.11.0*
+
+- Clients for spanner, pubsub and video are now in beta.
+
+- New client for DLP.
+
+- spanner: performance and testing improvements.
+
+- storage: requester-pays buckets are supported.
+
+- storage, profiler, bigtable, bigquery: bug fixes and other minor improvements.
+
+- pubsub: bug fixes and other minor improvements
+
+_June 17, 2017_
+
+
+*v0.10.0*
+
+- pubsub: Subscription.ModifyPushConfig replaced with Subscription.Update.
+
+- pubsub: Subscription.Receive now runs concurrently for higher throughput.
+
+- vision: cloud.google.com/go/vision is deprecated. Use
+cloud.google.com/go/vision/apiv1 instead.
+
+- translation: now stable.
+
+- trace: several changes to the surface. See the link below.
+
+[Code changes required from v0.9.0.](https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/MIGRATION.md)
 
 
 [Older news](https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/old-news.md)
@@ -61,16 +150,16 @@ Google API                       | Status       | Package
 [Bigtable][cloud-bigtable]       | beta         | [`cloud.google.com/go/bigtable`][cloud-bigtable-ref]
 [BigQuery][cloud-bigquery]       | beta         | [`cloud.google.com/go/bigquery`][cloud-bigquery-ref]
 [Logging][cloud-logging]         | stable       | [`cloud.google.com/go/logging`][cloud-logging-ref]
-[Monitoring][cloud-monitoring]   | alpha        | [`cloud.google.com/go/monitoring/apiv3`][cloud-monitoring-ref]
-[Pub/Sub][cloud-pubsub]          | alpha        | [`cloud.google.com/go/pubsub`][cloud-pubsub-ref]
-[Vision][cloud-vision]           | beta         | [`cloud.google.com/go/vision/apiv1`][cloud-vision-ref]
-[Language][cloud-language]       | beta         | [`cloud.google.com/go/language/apiv1`][cloud-language-ref]
-[Speech][cloud-speech]           | beta         | [`cloud.google.com/go/speech/apiv1`][cloud-speech-ref]
-[Spanner][cloud-spanner]         | alpha        | [`cloud.google.com/go/spanner`][cloud-spanner-ref]
+[Monitoring][cloud-monitoring]   | beta         | [`cloud.google.com/go/monitoring/apiv3`][cloud-monitoring-ref]
+[Pub/Sub][cloud-pubsub]          | beta         | [`cloud.google.com/go/pubsub`][cloud-pubsub-ref]
+[Vision][cloud-vision]           | stable       | [`cloud.google.com/go/vision/apiv1`][cloud-vision-ref]
+[Language][cloud-language]       | stable       | [`cloud.google.com/go/language/apiv1`][cloud-language-ref]
+[Speech][cloud-speech]           | stable       | [`cloud.google.com/go/speech/apiv1`][cloud-speech-ref]
+[Spanner][cloud-spanner]         | beta         | [`cloud.google.com/go/spanner`][cloud-spanner-ref]
 [Translation][cloud-translation] | stable       | [`cloud.google.com/go/translate`][cloud-translation-ref]
 [Trace][cloud-trace]             | alpha        | [`cloud.google.com/go/trace`][cloud-trace-ref]
-[Video Intelligence][cloud-video]| alpha        | [`cloud.google.com/go/videointelligence/apiv1beta1`][cloud-video-ref]
-[ErrorReporting][cloud-errors]   | alpha        | [`cloud.google.com/go/errors`][cloud-errors-ref]
+[Video Intelligence][cloud-video]| beta         | [`cloud.google.com/go/videointelligence/apiv1beta1`][cloud-video-ref]
+[ErrorReporting][cloud-errors]   | alpha        | [`cloud.google.com/go/errorreporting`][cloud-errors-ref]
 
 
 > **Alpha status**: the API is still being actively developed. As a
@@ -437,6 +526,6 @@ for more information.
 [cloud-video-ref]: https://godoc.org/cloud.google.com/go/videointelligence/apiv1beta1
 
 [cloud-errors]: https://cloud.google.com/error-reporting/
-[cloud-errors-ref]: https://godoc.org/cloud.google.com/go/errors
+[cloud-errors-ref]: https://godoc.org/cloud.google.com/go/errorreporting
 
 [default-creds]: https://developers.google.com/identity/protocols/application-default-credentials

@@ -35,11 +35,6 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-var (
-	databaseAdminInstancePathTemplate = gax.MustCompilePathTemplate("projects/{project}/instances/{instance}")
-	databaseAdminDatabasePathTemplate = gax.MustCompilePathTemplate("projects/{project}/instances/{instance}/databases/{database}")
-)
-
 // DatabaseAdminCallOptions contains the retry settings for each method of DatabaseAdminClient.
 type DatabaseAdminCallOptions struct {
 	ListDatabases      []gax.CallOption
@@ -126,7 +121,7 @@ func NewDatabaseAdminClient(ctx context.Context, opts ...option.ClientOption) (*
 
 		databaseAdminClient: databasepb.NewDatabaseAdminClient(conn),
 	}
-	c.SetGoogleClientInfo()
+	c.setGoogleClientInfo()
 
 	c.LROClient, err = lroauto.NewOperationsClient(ctx, option.WithGRPCConn(conn))
 	if err != nil {
@@ -152,10 +147,10 @@ func (c *DatabaseAdminClient) Close() error {
 	return c.conn.Close()
 }
 
-// SetGoogleClientInfo sets the name and version of the application in
+// setGoogleClientInfo sets the name and version of the application in
 // the `x-goog-api-client` header passed on each request. Intended for
 // use by Google-written clients.
-func (c *DatabaseAdminClient) SetGoogleClientInfo(keyval ...string) {
+func (c *DatabaseAdminClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
@@ -163,27 +158,24 @@ func (c *DatabaseAdminClient) SetGoogleClientInfo(keyval ...string) {
 
 // DatabaseAdminInstancePath returns the path for the instance resource.
 func DatabaseAdminInstancePath(project, instance string) string {
-	path, err := databaseAdminInstancePathTemplate.Render(map[string]string{
-		"project":  project,
-		"instance": instance,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		"/instances/" +
+		instance +
+		""
 }
 
 // DatabaseAdminDatabasePath returns the path for the database resource.
 func DatabaseAdminDatabasePath(project, instance, database string) string {
-	path, err := databaseAdminDatabasePathTemplate.Render(map[string]string{
-		"project":  project,
-		"instance": instance,
-		"database": database,
-	})
-	if err != nil {
-		panic(err)
-	}
-	return path
+	return "" +
+		"projects/" +
+		project +
+		"/instances/" +
+		instance +
+		"/databases/" +
+		database +
+		""
 }
 
 // ListDatabases lists Cloud Spanner databases.
@@ -223,7 +215,7 @@ func (c *DatabaseAdminClient) ListDatabases(ctx context.Context, req *databasepb
 
 // CreateDatabase creates a new Cloud Spanner database and starts to prepare it for serving.
 // The returned [long-running operation][google.longrunning.Operation] will
-// have a name of the format `<database_name>/operations/<operation_id>` and
+// have a name of the format <database_name>/operations/<operation_id> and
 // can be used to track preparation of the database. The
 // [metadata][google.longrunning.Operation.metadata] field type is
 // [CreateDatabaseMetadata][google.spanner.admin.database.v1.CreateDatabaseMetadata]. The
@@ -265,7 +257,7 @@ func (c *DatabaseAdminClient) GetDatabase(ctx context.Context, req *databasepb.G
 // UpdateDatabaseDdl updates the schema of a Cloud Spanner database by
 // creating/altering/dropping tables, columns, indexes, etc. The returned
 // [long-running operation][google.longrunning.Operation] will have a name of
-// the format `<database_name>/operations/<operation_id>` and can be used to
+// the format <database_name>/operations/<operation_id> and can be used to
 // track execution of the schema change(s). The
 // [metadata][google.longrunning.Operation.metadata] field type is
 // [UpdateDatabaseDdlMetadata][google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata].  The operation has no response.
@@ -319,7 +311,7 @@ func (c *DatabaseAdminClient) GetDatabaseDdl(ctx context.Context, req *databasep
 // SetIamPolicy sets the access control policy on a database resource. Replaces any
 // existing policy.
 //
-// Authorization requires `spanner.databases.setIamPolicy` permission on
+// Authorization requires spanner.databases.setIamPolicy permission on
 // [resource][google.iam.v1.SetIamPolicyRequest.resource].
 func (c *DatabaseAdminClient) SetIamPolicy(ctx context.Context, req *iampb.SetIamPolicyRequest, opts ...gax.CallOption) (*iampb.Policy, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
@@ -339,7 +331,7 @@ func (c *DatabaseAdminClient) SetIamPolicy(ctx context.Context, req *iampb.SetIa
 // GetIamPolicy gets the access control policy for a database resource. Returns an empty
 // policy if a database exists but does not have a policy set.
 //
-// Authorization requires `spanner.databases.getIamPolicy` permission on
+// Authorization requires spanner.databases.getIamPolicy permission on
 // [resource][google.iam.v1.GetIamPolicyRequest.resource].
 func (c *DatabaseAdminClient) GetIamPolicy(ctx context.Context, req *iampb.GetIamPolicyRequest, opts ...gax.CallOption) (*iampb.Policy, error) {
 	ctx = insertXGoog(ctx, c.xGoogHeader)
@@ -359,7 +351,7 @@ func (c *DatabaseAdminClient) GetIamPolicy(ctx context.Context, req *iampb.GetIa
 // TestIamPermissions returns permissions that the caller has on the specified database resource.
 //
 // Attempting this RPC on a non-existent Cloud Spanner database will result in
-// a NOT_FOUND error if the user has `spanner.databases.list` permission on
+// a NOT_FOUND error if the user has spanner.databases.list permission on
 // the containing Cloud Spanner instance. Otherwise returns an empty set of
 // permissions.
 func (c *DatabaseAdminClient) TestIamPermissions(ctx context.Context, req *iampb.TestIamPermissionsRequest, opts ...gax.CallOption) (*iampb.TestIamPermissionsResponse, error) {
@@ -437,7 +429,7 @@ func (c *DatabaseAdminClient) CreateDatabaseOperation(name string) *CreateDataba
 // See documentation of Poll for error-handling information.
 func (op *CreateDatabaseOperation) Wait(ctx context.Context, opts ...gax.CallOption) (*databasepb.Database, error) {
 	var resp databasepb.Database
-	if err := op.lro.Wait(ctx, &resp, opts...); err != nil {
+	if err := op.lro.WaitWithInterval(ctx, &resp, 45000*time.Millisecond, opts...); err != nil {
 		return nil, err
 	}
 	return &resp, nil
@@ -505,7 +497,7 @@ func (c *DatabaseAdminClient) UpdateDatabaseDdlOperation(name string) *UpdateDat
 //
 // See documentation of Poll for error-handling information.
 func (op *UpdateDatabaseDdlOperation) Wait(ctx context.Context, opts ...gax.CallOption) error {
-	return op.lro.Wait(ctx, nil, opts...)
+	return op.lro.WaitWithInterval(ctx, nil, 45000*time.Millisecond, opts...)
 }
 
 // Poll fetches the latest state of the long-running operation.

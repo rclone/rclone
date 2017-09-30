@@ -23,7 +23,7 @@
  "basePath": "/apps/reseller/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "apps/reseller/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/reseller/v1",
  "parameters": {
   "alt": {
    "type": "string",

@@ -29,10 +29,16 @@ const grpcMetadataKey = "grpc-trace-bin"
 // GRPCClientInterceptor returns a grpc.UnaryClientInterceptor that traces all outgoing requests from a gRPC client.
 // The calling context should already have a *trace.Span; a child span will be
 // created for the outgoing gRPC call. If the calling context doesn't have a span,
-// the call will not be traced.
+// the call will not be traced. If the client is nil, then the interceptor just
+// passes through the request.
 //
 // The functionality in gRPC that this feature relies on is currently experimental.
 func (c *Client) GRPCClientInterceptor() grpc.UnaryClientInterceptor {
+	if c == nil {
+		return func(ctx context.Context, method string, req, reply interface{}, cc *grpc.ClientConn, invoker grpc.UnaryInvoker, opts ...grpc.CallOption) error {
+			return invoker(ctx, method, req, reply, cc, opts...)
+		}
+	}
 	return grpc.UnaryClientInterceptor(c.grpcUnaryInterceptor)
 }
 
@@ -75,8 +81,15 @@ func (c *Client) grpcUnaryInterceptor(ctx context.Context, method string, req, r
 //
 //	span := trace.FromContext(ctx)
 //
+// If the client is nil, then the interceptor just invokes the handler.
+//
 // The functionality in gRPC that this feature relies on is currently experimental.
 func (c *Client) GRPCServerInterceptor() grpc.UnaryServerInterceptor {
+	if c == nil {
+		return func(ctx context.Context, req interface{}, _ *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+			return handler(ctx, req)
+		}
+	}
 	return func(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (resp interface{}, err error) {
 		md, _ := metadata.FromIncomingContext(ctx)
 		var traceHeader string

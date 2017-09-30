@@ -349,7 +349,7 @@ func handleAuthResponse(c packetConn) (bool, []string, error) {
 // both CLI and GUI environments.
 type KeyboardInteractiveChallenge func(user, instruction string, questions []string, echos []bool) (answers []string, err error)
 
-// KeyboardInteractive returns a AuthMethod using a prompt/response
+// KeyboardInteractive returns an AuthMethod using a prompt/response
 // sequence controlled by the server.
 func KeyboardInteractive(challenge KeyboardInteractiveChallenge) AuthMethod {
 	return challenge

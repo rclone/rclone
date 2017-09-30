@@ -497,16 +497,16 @@ var langHeaders = [252]header{
 			"sianutulutimnetesoterenatetumtigretivtokelautsakhurklingontlingittal" +
 			"ixíntamashektonga nyasatok pisinturoyotarokotsakoniutsimshiantati mu" +
 			"sulmántumbukatuvalutasawaqtuvinianutamazight del Atles centraludmurt" +
-			"ugaríticuumbundurootvaivenecianuvepsiuflamencu occidentalfranconianu" +
-			" del Mainvóticuvorovunjowalserwolayttawaraywashowarlpirichinu wucalm" +
-			"ucomingrelianusogayaoyapésyangbenyembanheengatucantonészapotecasimbó" +
-			"licu Blisszeelandészenagatamazight estándar de Marruecoszuniensin co" +
-			"nteníu llingüísticuzazaárabe estándar modernualemán d’Austriaaltuale" +
-			"mán de Suizainglés d’Australiainglés de Canadáinglés de Gran Bretaña" +
-			"inglés d’Estaos Xuníosespañol d’América Llatinaespañol européuespaño" +
-			"l de Méxicufrancés de Canadáfrancés de Suizabaxu saxónflamencuportug" +
-			"ués del Brasilportugués européumoldavuserbo-croatasuaḥili del Conguc" +
-			"hinu simplificáuchinu tradicional",
+			"ugaríticuumbundullingua desconocidavaivenecianuvepsiuflamencu occide" +
+			"ntalfranconianu del Mainvóticuvorovunjowalserwolayttawaraywashowarlp" +
+			"irichinu wucalmucomingrelianusogayaoyapésyangbenyembanheengatucanton" +
+			"észapotecasimbólicu Blisszeelandészenagatamazight estándar de Marru" +
+			"ecoszuniensin conteníu llingüísticuzazaárabe estándar modernualemán " +
+			"d’Austriaaltualemán de Suizainglés d’Australiainglés de Canadáinglés" +
+			" de Gran Bretañainglés d’Estaos Xuníosespañol d’América Llatinaespañ" +
+			"ol européuespañol de Méxicufrancés de Canadáfrancés de Suizabaxu sax" +
+			"ónflamencuportugués del Brasilportugués européumoldavuserbo-croatas" +
+			"uaḥili del Conguchinu simplificáuchinu tradicional",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000e, 0x0018, 0x0021, 0x0025, 0x002e, 0x0037,
@@ -586,15 +586,15 @@ var langHeaders = [252]header{
 			0x1109, 0x1112, 0x1116, 0x111b, 0x111f, 0x1125, 0x112a, 0x112f,
 			0x1132, 0x1139, 0x1140, 0x1147, 0x114e, 0x1156, 0x115e, 0x1169,
 			0x1172, 0x1178, 0x117e, 0x1186, 0x118f, 0x119d, 0x11a4, 0x11aa,
-			0x11b1, 0x11ba, 0x11d5, 0x11db, 0x11e5, 0x11ec, 0x11f0, 0x11f3,
-			0x11fc, 0x1202, 0x1215, 0x1229, 0x1230, 0x1234, 0x1239, 0x123f,
-			0x1247, 0x124c, 0x1251, 0x1259, 0x1261, 0x1268, 0x1273, 0x1277,
+			0x11b1, 0x11ba, 0x11d5, 0x11db, 0x11e5, 0x11ec, 0x11ff, 0x1202,
+			0x120b, 0x1211, 0x1224, 0x1238, 0x123f, 0x1243, 0x1248, 0x124e,
+			0x1256, 0x125b, 0x1260, 0x1268, 0x1270, 0x1277, 0x1282, 0x1286,
 			// Entry 240 - 27F
-			0x127a, 0x1280, 0x1287, 0x128c, 0x1295, 0x129e, 0x12a6, 0x12b6,
-			0x12c0, 0x12c6, 0x12e6, 0x12ea, 0x1308, 0x130c, 0x1324, 0x1324,
-			0x1337, 0x134b, 0x1360, 0x1372, 0x138a, 0x13a4, 0x13c1, 0x13d2,
-			0x13e5, 0x13e5, 0x13f8, 0x1409, 0x1414, 0x141c, 0x1431, 0x1444,
-			0x144b, 0x1457, 0x146a, 0x147c, 0x148d,
+			0x1289, 0x128f, 0x1296, 0x129b, 0x12a4, 0x12ad, 0x12b5, 0x12c5,
+			0x12cf, 0x12d5, 0x12f5, 0x12f9, 0x1317, 0x131b, 0x1333, 0x1333,
+			0x1346, 0x135a, 0x136f, 0x1381, 0x1399, 0x13b3, 0x13d0, 0x13e1,
+			0x13f4, 0x13f4, 0x1407, 0x1418, 0x1423, 0x142b, 0x1440, 0x1453,
+			0x145a, 0x1466, 0x1479, 0x148b, 0x149c,
 		},
 	},
 	{ // az
@@ -635,13 +635,13 @@ var langHeaders = [252]header{
 			"ојраборо сеннитачелитшанҹәнуби самилуле самиинари самисколт самисон" +
 			"инкесранан тонгосаһосукумакоморсуријатимнетесотетумтигреклингонток " +
 			"писинтарокотумбукатувалутасавагтувинјанМәркәзи Атлас тамазиҹәсиудму" +
-			"ртумбундурутваивунјоваллесваламоварајкалмыксогајангбенјембакантонта" +
-			"мазизунидил мәзмуну јохдурзазамүасир стандарт әрәбАвстрија алманҹас" +
-			"ыИсвечрә јүксәк алманҹасыАвстралија инҝилисҹәсиКанада инҝилисҹәсиБр" +
-			"итанија инҝилисҹәсиАмерика инҝилисҹәсиЛатын Америкасы испанҹасыКаст" +
-			"илија испанҹасыМексика испанҹасыКанада франсызҹасыИсвечрә франсызҹа" +
-			"сыашағы саксонфламандБразилија португалҹасыПортугалија португалҹасы" +
-			"Конго суаһилиҹәсисадәләшмиш чинәнәнәви чин",
+			"ртумбундунамәлум дилваивунјоваллесваламоварајкалмыксогајангбенјемба" +
+			"кантонтамазизунидил мәзмуну јохдурзазамүасир стандарт әрәбАвстрија " +
+			"алманҹасыИсвечрә јүксәк алманҹасыАвстралија инҝилисҹәсиКанада инҝил" +
+			"исҹәсиБританија инҝилисҹәсиАмерика инҝилисҹәсиЛатын Америкасы испан" +
+			"ҹасыКастилија испанҹасыМексика испанҹасыКанада франсызҹасыИсвечрә ф" +
+			"рансызҹасыашағы саксонфламандБразилија португалҹасыПортугалија порт" +
+			"угалҹасыКонго суаһилиҹәсисадәләшмиш чинәнәнәви чин",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0008, 0x0012, 0x0012, 0x0024, 0x002c, 0x0036, 0x0042,
@@ -721,15 +721,15 @@ var langHeaders = [252]header{
 			0x1071, 0x1071, 0x1071, 0x107b, 0x1083, 0x1083, 0x108d, 0x1097,
 			0x1097, 0x1097, 0x1097, 0x10a5, 0x10a5, 0x10a5, 0x10a5, 0x10a5,
 			0x10b6, 0x10b6, 0x10c2, 0x10c2, 0x10c2, 0x10c2, 0x10d0, 0x10dc,
-			0x10ea, 0x10fa, 0x1128, 0x1134, 0x1134, 0x1142, 0x1148, 0x114e,
-			0x114e, 0x114e, 0x114e, 0x114e, 0x114e, 0x114e, 0x1158, 0x1164,
-			0x1170, 0x117a, 0x117a, 0x117a, 0x117a, 0x1186, 0x1186, 0x118e,
+			0x10ea, 0x10fa, 0x1128, 0x1134, 0x1134, 0x1142, 0x1157, 0x115d,
+			0x115d, 0x115d, 0x115d, 0x115d, 0x115d, 0x115d, 0x1167, 0x1173,
+			0x117f, 0x1189, 0x1189, 0x1189, 0x1189, 0x1195, 0x1195, 0x119d,
 			// Entry 240 - 27F
-			0x118e, 0x118e, 0x119c, 0x11a6, 0x11a6, 0x11b2, 0x11b2, 0x11b2,
-			0x11b2, 0x11b2, 0x11be, 0x11c6, 0x11e8, 0x11f0, 0x1216, 0x1216,
-			0x1239, 0x1267, 0x1292, 0x12b5, 0x12de, 0x1303, 0x1333, 0x1358,
-			0x1379, 0x1379, 0x139c, 0x13c1, 0x13d8, 0x13e6, 0x1411, 0x1440,
-			0x1440, 0x1440, 0x1461, 0x147c, 0x1491,
+			0x119d, 0x119d, 0x11ab, 0x11b5, 0x11b5, 0x11c1, 0x11c1, 0x11c1,
+			0x11c1, 0x11c1, 0x11cd, 0x11d5, 0x11f7, 0x11ff, 0x1225, 0x1225,
+			0x1248, 0x1276, 0x12a1, 0x12c4, 0x12ed, 0x1312, 0x1342, 0x1367,
+			0x1388, 0x1388, 0x13ab, 0x13d0, 0x13e7, 0x13f5, 0x1420, 0x144f,
+			0x144f, 0x144f, 0x1470, 0x148b, 0x14a0,
 		},
 	},
 	{ // bas
@@ -823,16 +823,16 @@ var langHeaders = [252]header{
 			"ітшанпаўднёвасаамскаялуле-саамскаяінары-саамскаяколта-саамскаясанін" +
 			"кесранан-тонгасахасукумашумерскаякаморскаясірыйскаятэмнэтэсотэтумты" +
 			"грэклінганток-пісінтарокатумбукатувалутасаўактувінскаяцэнтральнаатл" +
-			"аская тамазіхтудмурцкаяумбундукораньваівунджовальшскаяволайтаварайв" +
-			"арлпірыкалмыцкаясогаянгбэнйембакантонскі дыялект кітайскайсапатэкст" +
-			"андартная мараканская тамазіхтзуніняма моўнага матэрыялузазакісучас" +
-			"ная стандартная арабскаяаўстрыйская нямецкаяшвейцарская стандартная" +
-			" нямецкаяаўстралійская англійскаяканадская англійскаябрытанская англ" +
-			"ійскаяамерыканская англійскаялацінаамерыканская іспанскаяеўрапейска" +
-			"я іспанскаямексіканская іспанскаяканадская французскаяшвейцарская ф" +
-			"ранцузскаяніжнесаксонскаяфламандскаябразільская партугальскаяеўрапе" +
-			"йская партугальскаямалдаўская румынскаясербскахарвацкаякангалезская" +
-			" суахіліспрошчаная кітайскаятрадыцыйная кітайская",
+			"аская тамазіхтудмурцкаяумбундуневядомая моваваівунджовальшскаяволай" +
+			"таварайварлпірыкалмыцкаясогаянгбэнйембакантонскі дыялект кітайскайс" +
+			"апатэкстандартная мараканская тамазіхтзуніняма моўнага матэрыялузаз" +
+			"акісучасная стандартная арабскаяаўстрыйская нямецкаяшвейцарская ста" +
+			"ндартная нямецкаяаўстралійская англійскаяканадская англійскаябрытан" +
+			"ская англійскаяамерыканская англійскаялацінаамерыканская іспанскаяе" +
+			"ўрапейская іспанскаямексіканская іспанскаяканадская французскаяшвей" +
+			"царская французскаяніжнесаксонскаяфламандскаябразільская партугальс" +
+			"каяеўрапейская партугальскаямалдаўская румынскаясербскахарвацкаякан" +
+			"галезская суахіліспрошчаная кітайскаятрадыцыйная кітайская",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0010, 0x0022, 0x0022, 0x0034, 0x003c, 0x004e, 0x0062,
@@ -912,15 +912,15 @@ var langHeaders = [252]header{
 			0x17e3, 0x17e3, 0x17e3, 0x17ed, 0x17f5, 0x17f5, 0x17ff, 0x1809,
 			0x1809, 0x1809, 0x1809, 0x1817, 0x1817, 0x1817, 0x1817, 0x1817,
 			0x1828, 0x1828, 0x1834, 0x1834, 0x1834, 0x1834, 0x1842, 0x184e,
-			0x185c, 0x186e, 0x18a3, 0x18b5, 0x18b5, 0x18c3, 0x18cf, 0x18d5,
-			0x18d5, 0x18d5, 0x18d5, 0x18d5, 0x18d5, 0x18d5, 0x18e1, 0x18f3,
-			0x1901, 0x190b, 0x190b, 0x191b, 0x191b, 0x192d, 0x192d, 0x1935,
+			0x185c, 0x186e, 0x18a3, 0x18b5, 0x18b5, 0x18c3, 0x18de, 0x18e4,
+			0x18e4, 0x18e4, 0x18e4, 0x18e4, 0x18e4, 0x18e4, 0x18f0, 0x1902,
+			0x1910, 0x191a, 0x191a, 0x192a, 0x192a, 0x193c, 0x193c, 0x1944,
 			// Entry 240 - 27F
-			0x1935, 0x1935, 0x1941, 0x194b, 0x194b, 0x197f, 0x198d, 0x198d,
-			0x198d, 0x198d, 0x19cb, 0x19d3, 0x19fd, 0x1a09, 0x1a41, 0x1a41,
-			0x1a68, 0x1aa6, 0x1ad5, 0x1afc, 0x1b25, 0x1b52, 0x1b89, 0x1bb2,
-			0x1bdd, 0x1bdd, 0x1c06, 0x1c33, 0x1c51, 0x1c67, 0x1c98, 0x1cc9,
-			0x1cf0, 0x1d10, 0x1d37, 0x1d5e, 0x1d87,
+			0x1944, 0x1944, 0x1950, 0x195a, 0x195a, 0x198e, 0x199c, 0x199c,
+			0x199c, 0x199c, 0x19da, 0x19e2, 0x1a0c, 0x1a18, 0x1a50, 0x1a50,
+			0x1a77, 0x1ab5, 0x1ae4, 0x1b0b, 0x1b34, 0x1b61, 0x1b98, 0x1bc1,
+			0x1bec, 0x1bec, 0x1c15, 0x1c42, 0x1c60, 0x1c76, 0x1ca7, 0x1cd8,
+			0x1cff, 0x1d1f, 0x1d46, 0x1d6d, 0x1d96,
 		},
 	},
 	{ // bem
@@ -1400,12 +1400,12 @@ var langHeaders = [252]header{
 			"ीलुले सामीईनारी सामीस्कोल्ट् सामीसोनिंगकेसोगडीयनस्रनान् टॉंगोसेरेर" +
 			"सुकुमासुसुसुमेरिअनपारंपरीक सिरिआकसिरिआकतीमनेतेरेनोतेतुमटीग्रेटीव्ट" +
 			"ोकेलौक्लींगदनट्लिंगीततमाशेकन्यासा टॉंगातोक पिसीनत्सीमशीआन्टुँबुकाट" +
-			"ुवालुटुवीउड़मुर्तउगारितीउंबुंडुरुटवाईवोटीकवालामोवारयवाशोकालमीकयाओय" +
-			"ापीज़ज़ापोतेकब्लीस चिन्हज़ेनागाज़ुनीरिक्तज़ाज़ाजर्मन (ऑस्ट्रिया)उच" +
-			"्च स्तरिय स्वीस जर्मनअंग्रेज़ी (ऑस्ट्रेलिया का)अंग्रेज़ी (कनाडाई)अ" +
-			"ंग्रेजी (ब्रिटिश)अंग्रेज़ी (अमरिकी)लैटिन अमरिकी स्पैनिशईवेरियाई स्" +
-			"पैनिशफ्रांसीसी (कनाडाई)फ्रांसीसी (स्वीस)फ्लेमीमोल्डेवियन्सर्बो-क्र" +
-			"ोएशन्चीनी (सरलीकृत)चीनी (पारम्परिक)",
+			"ुवालुटुवीउड़मुर्तउगारितीउंबुंडुअज्ञात या अवैध भाषावाईवोटीकवालामोवा" +
+			"रयवाशोकालमीकयाओयापीज़ज़ापोतेकब्लीस चिन्हज़ेनागाज़ुनीरिक्तज़ाज़ाजर्" +
+			"मन (ऑस्ट्रिया)उच्च स्तरिय स्वीस जर्मनअंग्रेज़ी (ऑस्ट्रेलिया का)अंग" +
+			"्रेज़ी (कनाडाई)अंग्रेजी (ब्रिटिश)अंग्रेज़ी (अमरिकी)लैटिन अमरिकी स्" +
+			"पैनिशईवेरियाई स्पैनिशफ्रांसीसी (कनाडाई)फ्रांसीसी (स्वीस)फ्लेमीमोल्" +
+			"डेवियन्सर्बो-क्रोएशन्चीनी (सरलीकृत)चीनी (पारम्परिक)",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0000, 0x0021, 0x0036, 0x004b, 0x0054, 0x006f, 0x0084,
@@ -1485,15 +1485,15 @@ var langHeaders = [252]header{
 			0x208f, 0x208f, 0x208f, 0x209e, 0x209e, 0x20b0, 0x20bf, 0x20d1,
 			0x20dd, 0x20ef, 0x20ef, 0x2107, 0x211f, 0x211f, 0x2131, 0x2153,
 			0x216c, 0x216c, 0x216c, 0x216c, 0x218a, 0x218a, 0x219f, 0x21b1,
-			0x21b1, 0x21bd, 0x21bd, 0x21d5, 0x21ea, 0x21ff, 0x2208, 0x2211,
-			0x2211, 0x2211, 0x2211, 0x2211, 0x2220, 0x2220, 0x2220, 0x2220,
-			0x2232, 0x223e, 0x224a, 0x224a, 0x224a, 0x225c, 0x225c, 0x225c,
+			0x21b1, 0x21bd, 0x21bd, 0x21d5, 0x21ea, 0x21ff, 0x2232, 0x223b,
+			0x223b, 0x223b, 0x223b, 0x223b, 0x224a, 0x224a, 0x224a, 0x224a,
+			0x225c, 0x2268, 0x2274, 0x2274, 0x2274, 0x2286, 0x2286, 0x2286,
 			// Entry 240 - 27F
-			0x2265, 0x2277, 0x2277, 0x2277, 0x2277, 0x2277, 0x228f, 0x22ae,
-			0x22ae, 0x22c3, 0x22c3, 0x22d2, 0x22e1, 0x22f3, 0x22f3, 0x22f3,
-			0x2320, 0x235f, 0x23a5, 0x23d5, 0x2405, 0x2435, 0x246d, 0x249b,
-			0x249b, 0x249b, 0x24cb, 0x24f8, 0x24f8, 0x250a, 0x250a, 0x250a,
-			0x252b, 0x2553, 0x2553, 0x2577, 0x25a1,
+			0x228f, 0x22a1, 0x22a1, 0x22a1, 0x22a1, 0x22a1, 0x22b9, 0x22d8,
+			0x22d8, 0x22ed, 0x22ed, 0x22fc, 0x230b, 0x231d, 0x231d, 0x231d,
+			0x234a, 0x2389, 0x23cf, 0x23ff, 0x242f, 0x245f, 0x2497, 0x24c5,
+			0x24c5, 0x24c5, 0x24f5, 0x2522, 0x2522, 0x2534, 0x2534, 0x2534,
+			0x2555, 0x257d, 0x257d, 0x25a1, 0x25cb,
 		},
 	},
 	{ // bs
@@ -1552,12 +1552,12 @@ var langHeaders = [252]header{
 			"kesogdiensrananski tongoserersahosukumasususumerskikomorskiklasični " +
 			"sirijskisirijskitimnetesoterenotetumtigretivtokelauklingonskitlingit" +
 			"tamašeknjasa tongatok pisintarokotsimšiantumbukatuvalutasavaktuvinij" +
-			"skicentralnoatlaski tamazigtudmurtugaritskiumbundukorijenskivaivotsk" +
-			"ivunjovalservalamovarejvašovarlpirikalmiksogajaojapeškijangbenjembak" +
-			"antonskizapotečkiblis simbolizenagastandardni marokanski tamazigtzun" +
-			"ibez lingvističkog sadržajazazamoderni standardni arapskigornjonjema" +
-			"čki (Švicarska)donjosaksonskiflamanskimoldavskisrpskohrvatskikinesk" +
-			"i (pojednostavljeni)kineski (tradicionalni)",
+			"skicentralnoatlaski tamazigtudmurtugaritskiumbundunepoznati jezikvai" +
+			"votskivunjovalservalamovarejvašovarlpirikalmiksogajaojapeškijangbenj" +
+			"embakantonskizapotečkiblis simbolizenagastandardni marokanski tamazi" +
+			"gtzunibez lingvističkog sadržajazazamoderni standardni arapskigornjo" +
+			"njemački (Švicarska)donjosaksonskiflamanskimoldavskisrpskohrvatskiki" +
+			"neski (pojednostavljeni)kineski (tradicionalni)",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0007, 0x000e, 0x0018, 0x0020, 0x0024, 0x002c, 0x0035,
@@ -1637,15 +1637,15 @@ var langHeaders = [252]header{
 			0x0e87, 0x0e87, 0x0e87, 0x0e8c, 0x0e90, 0x0e96, 0x0e9b, 0x0ea0,
 			0x0ea3, 0x0eaa, 0x0eaa, 0x0eb4, 0x0ebb, 0x0ebb, 0x0ec3, 0x0ece,
 			0x0ed7, 0x0ed7, 0x0edd, 0x0edd, 0x0ee6, 0x0ee6, 0x0eed, 0x0ef3,
-			0x0efa, 0x0f04, 0x0f1d, 0x0f23, 0x0f2c, 0x0f33, 0x0f3d, 0x0f40,
-			0x0f40, 0x0f40, 0x0f40, 0x0f40, 0x0f46, 0x0f46, 0x0f4b, 0x0f51,
-			0x0f57, 0x0f5c, 0x0f61, 0x0f69, 0x0f69, 0x0f6f, 0x0f6f, 0x0f73,
+			0x0efa, 0x0f04, 0x0f1d, 0x0f23, 0x0f2c, 0x0f33, 0x0f42, 0x0f45,
+			0x0f45, 0x0f45, 0x0f45, 0x0f45, 0x0f4b, 0x0f4b, 0x0f50, 0x0f56,
+			0x0f5c, 0x0f61, 0x0f66, 0x0f6e, 0x0f6e, 0x0f74, 0x0f74, 0x0f78,
 			// Entry 240 - 27F
-			0x0f76, 0x0f7e, 0x0f85, 0x0f8a, 0x0f8a, 0x0f93, 0x0f9d, 0x0fa9,
-			0x0fa9, 0x0faf, 0x0fcd, 0x0fd1, 0x0fed, 0x0ff1, 0x100b, 0x100b,
-			0x100b, 0x1027, 0x1027, 0x1027, 0x1027, 0x1027, 0x1027, 0x1027,
-			0x1027, 0x1027, 0x1027, 0x1027, 0x1035, 0x103e, 0x103e, 0x103e,
-			0x1047, 0x1055, 0x1055, 0x106f, 0x1086,
+			0x0f7b, 0x0f83, 0x0f8a, 0x0f8f, 0x0f8f, 0x0f98, 0x0fa2, 0x0fae,
+			0x0fae, 0x0fb4, 0x0fd2, 0x0fd6, 0x0ff2, 0x0ff6, 0x1010, 0x1010,
+			0x1010, 0x102c, 0x102c, 0x102c, 0x102c, 0x102c, 0x102c, 0x102c,
+			0x102c, 0x102c, 0x102c, 0x102c, 0x103a, 0x1043, 0x1043, 0x1043,
+			0x104c, 0x105a, 0x105a, 0x1074, 0x108b,
 		},
 	},
 	{ // bs-Cyrl
@@ -1696,13 +1696,13 @@ var langHeaders = [252]header{
 			"нинкесоџијенскисранански тонгосерерсукумасусусумерскикоморскикласич" +
 			"ни сиријскисиријскитимнетеренотетумтигретивтокелауклингонскитлингит" +
 			"тамашекњаса тонгаток писинтсимшиантумбукатувалутувинијскиудмуртугар" +
-			"итскиумбундурутваивотскиваламоварајвашокалмикјаојапешкикантонскизап" +
-			"отечкиблисимболизенагазунибез лингвистичког садржајазазаАустријски " +
-			"немачкиШвајцарски високи немачкиАустралијски енглескиКанадски енгле" +
-			"скиБритански енглескиСАД енглескиЛатино-амерички шпанскиИберијски ш" +
-			"панскиКанадски францускиШвајцарски францускифламанскиБразилски порт" +
-			"угалскиИберијски португалскимолдавскисрпскохрватскикинески (поједно" +
-			"стављен)кинески (традиционални)",
+			"итскиумбундунепознат или неважећи језикваивотскиваламоварајвашокалм" +
+			"икјаојапешкикантонскизапотечкиблисимболизенагазунибез лингвистичког" +
+			" садржајазазаАустријски немачкиШвајцарски високи немачкиАустралијски" +
+			" енглескиКанадски енглескиБритански енглескиСАД енглескиЛатино-амери" +
+			"чки шпанскиИберијски шпанскиКанадски францускиШвајцарски францускиф" +
+			"ламанскиБразилски португалскиИберијски португалскимолдавскисрпскохр" +
+			"ватскикинески (поједностављен)кинески (традиционални)",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x000e, 0x0022, 0x0036, 0x004e, 0x0056, 0x0066, 0x0080,
@@ -1782,15 +1782,15 @@ var langHeaders = [252]header{
 			0x1797, 0x1797, 0x1797, 0x17a1, 0x17a1, 0x17ad, 0x17b7, 0x17c1,
 			0x17c7, 0x17d5, 0x17d5, 0x17e9, 0x17f7, 0x17f7, 0x1805, 0x1818,
 			0x1829, 0x1829, 0x1829, 0x1829, 0x1839, 0x1839, 0x1847, 0x1853,
-			0x1853, 0x1867, 0x1867, 0x1873, 0x1885, 0x1893, 0x1899, 0x189f,
-			0x189f, 0x189f, 0x189f, 0x189f, 0x18ab, 0x18ab, 0x18ab, 0x18ab,
-			0x18b7, 0x18c1, 0x18c9, 0x18c9, 0x18c9, 0x18d5, 0x18d5, 0x18d5,
+			0x1853, 0x1867, 0x1867, 0x1873, 0x1885, 0x1893, 0x18c6, 0x18cc,
+			0x18cc, 0x18cc, 0x18cc, 0x18cc, 0x18d8, 0x18d8, 0x18d8, 0x18d8,
+			0x18e4, 0x18ee, 0x18f6, 0x18f6, 0x18f6, 0x1902, 0x1902, 0x1902,
 			// Entry 240 - 27F
-			0x18db, 0x18e9, 0x18e9, 0x18e9, 0x18e9, 0x18fb, 0x190d, 0x1921,
-			0x1921, 0x192d, 0x192d, 0x1935, 0x1967, 0x196f, 0x196f, 0x196f,
-			0x1992, 0x19c2, 0x19eb, 0x1a0c, 0x1a2f, 0x1a46, 0x1a72, 0x1a93,
-			0x1a93, 0x1a93, 0x1ab6, 0x1add, 0x1add, 0x1aef, 0x1b18, 0x1b41,
-			0x1b53, 0x1b6f, 0x1b6f, 0x1b9c, 0x1bc7,
+			0x1908, 0x1916, 0x1916, 0x1916, 0x1916, 0x1928, 0x193a, 0x194e,
+			0x194e, 0x195a, 0x195a, 0x1962, 0x1994, 0x199c, 0x199c, 0x199c,
+			0x19bf, 0x19ef, 0x1a18, 0x1a39, 0x1a5c, 0x1a73, 0x1a9f, 0x1ac0,
+			0x1ac0, 0x1ac0, 0x1ae3, 0x1b0a, 0x1b0a, 0x1b1c, 0x1b45, 0x1b6e,
+			0x1b80, 0x1b9c, 0x1b9c, 0x1bc9, 0x1bf4,
 		},
 	},
 	{ // ca
@@ -1989,11 +1989,11 @@ var langHeaders = [252]header{
 			"ᏆᎳᎤᏩᏂᎾᎩᎵᎠᏂ ᏈᏥᏂᏡᏏᎠᏂᎩᏤᎳᏆᏄᏫᎳᎶᏙᎾᎦᏂᎶᎹᏉᎠᏬᎹᏂᎠᏂᏆᏌᏅᏓᏫᏌᎧᎾᏌᎹᏊᎷᏌᏂᏔᎵᎾᎦᎹᏇᏌᏁᎫᏏᏏᎵᎠ" +
 			"ᏂᏍᎦᏗᏏᏂᎦᏎᎾᎪᏱᎳᏈᎶ ᏎᏂᏔᏤᎵᎯᏘᏝᏂᏧᎦᎾᏮ ᏗᏜ ᏌᎻᎷᎴ ᏌᎻᎢᎾᎵ ᏌᎻᏍᎪᎵᏘ ᏌᎻᏐᏂᏂᎨᏏᎳᎾᏂ ᏙᏃᎪᏌᎰ" +
 			"ᏑᎫᎹᎪᎼᎵᎠᏂᏏᎵᎠᎩᏘᎹᏁᏖᏐᏖᏚᎼᏢᏓᏥᏟᎦᎾᏙᎩ ᏈᏏᏂᏔᎶᎪᏛᎹᏊᎧᏚᏩᎷᏔᏌᏩᎩᏚᏫᏂᎠᏂᎠᏰᏟ ᎡᎶᎯ ᏓᏟᎶᏍᏗᏓᏅ" +
-			"Ꭲ ᏔᎹᏏᏘᎤᏚᎷᏘᎤᎹᏊᏅᏚᎤᎾᏍᎦᎸᏩᏱᏭᎾᏦᏩᎵᏎᎵᏬᎳᏱᏔᏩᎴᎧᎳᎻᎧᏐᎦᏰᎾᎦᏇᏂᏰᎹᏋᎨᎾᏙᏂᏏᎠᏟᎶᏍᏗ ᎼᎶᎪ ᏔᎹ" +
-			"ᏏᏘᏑᏂᏝ ᎦᏬᏂᎯᏍᏗ ᎦᎸᏛᎢ ᏱᎩᏌᏌᎪᎯᏊ ᎢᎬᏥᎩ ᎠᏟᎶᏍᏗ ᎡᎳᏈᎠᏟᏯᏂ ᎠᏂᏓᏥᏍᏫᏏ ᎦᎸᎳᏗ ᎠᏂᏓᏥᎡᎳᏗᏜ" +
-			" ᎩᎵᏏᎨᎾᏓ ᎩᎵᏏᎩᎵᏏᏲ ᎩᎵᏏᎠᎹᏰᏟ ᎩᎵᏏᏔᏘᏂ ᎠᎹᏰᏟ ᏍᏆᏂᎠᏂᏍᏆᏂᏱ ᏍᏆᏂᏍᏆᏂᏱ ᏍᏆᏂᎨᎾᏓ ᎦᎸᏥᏍᏫᏏ " +
-			"ᎦᎸᏥᎡᎳᏗ ᏁᏛᎳᏂᏊᎵᏥᎥᎻ ᏛᏥᏆᏏᎵᎢ ᏉᏧᎦᎵᏉᏥᎦᎳ ᏉᏧᎦᎵᎹᎵᏙᏫᎠ ᏣᎹᏂᎠᏂᎧᏂᎪ ᏍᏩᎯᎵᎠᎯᏗᎨ ᏓᎶᏂᎨᎤ" +
-			"ᏦᏍᏗ ᏓᎶᏂᎨ",
+			"Ꭲ ᏔᎹᏏᏘᎤᏚᎷᏘᎤᎹᏊᏅᏚᏄᏬᎵᏍᏛᎾ ᎦᏬᏂᎯᏍᏗᏩᏱᏭᎾᏦᏩᎵᏎᎵᏬᎳᏱᏔᏩᎴᎧᎳᎻᎧᏐᎦᏰᎾᎦᏇᏂᏰᎹᏋᎨᎾᏙᏂᏏᎠᏟᎶᏍ" +
+			"Ꮧ ᎼᎶᎪ ᏔᎹᏏᏘᏑᏂᏝ ᎦᏬᏂᎯᏍᏗ ᎦᎸᏛᎢ ᏱᎩᏌᏌᎪᎯᏊ ᎢᎬᏥᎩ ᎠᏟᎶᏍᏗ ᎡᎳᏈᎠᏟᏯᏂ ᎠᏂᏓᏥᏍᏫᏏ ᎦᎸᎳᏗ " +
+			"ᎠᏂᏓᏥᎡᎳᏗᏜ ᎩᎵᏏᎨᎾᏓ ᎩᎵᏏᎩᎵᏏᏲ ᎩᎵᏏᎠᎹᏰᏟ ᎩᎵᏏᏔᏘᏂ ᎠᎹᏰᏟ ᏍᏆᏂᎠᏂᏍᏆᏂᏱ ᏍᏆᏂᏍᏆᏂᏱ ᏍᏆᏂᎨ" +
+			"ᎾᏓ ᎦᎸᏥᏍᏫᏏ ᎦᎸᏥᎡᎳᏗ ᏁᏛᎳᏂᏊᎵᏥᎥᎻ ᏛᏥᏆᏏᎵᎢ ᏉᏧᎦᎵᏉᏥᎦᎳ ᏉᏧᎦᎵᎹᎵᏙᏫᎠ ᏣᎹᏂᎠᏂᎧᏂᎪ ᏍᏩᎯᎵ" +
+			"ᎠᎯᏗᎨ ᏓᎶᏂᎨᎤᏦᏍᏗ ᏓᎶᏂᎨ",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0009, 0x0018, 0x0018, 0x002a, 0x0033, 0x0042, 0x0051,
@@ -2073,15 +2073,15 @@ var langHeaders = [252]header{
 			0x1022, 0x1022, 0x1022, 0x102b, 0x1031, 0x1031, 0x103a, 0x1043,
 			0x1043, 0x1043, 0x1043, 0x104c, 0x104c, 0x104c, 0x104c, 0x104c,
 			0x105c, 0x105c, 0x1065, 0x1065, 0x1065, 0x1065, 0x1071, 0x107a,
-			0x1086, 0x1095, 0x10ce, 0x10da, 0x10da, 0x10e9, 0x10f8, 0x10fe,
-			0x10fe, 0x10fe, 0x10fe, 0x10fe, 0x10fe, 0x10fe, 0x1107, 0x1113,
-			0x111f, 0x1125, 0x1125, 0x1125, 0x1125, 0x1131, 0x1131, 0x1137,
+			0x1086, 0x1095, 0x10ce, 0x10da, 0x10da, 0x10e9, 0x110e, 0x1114,
+			0x1114, 0x1114, 0x1114, 0x1114, 0x1114, 0x1114, 0x111d, 0x1129,
+			0x1135, 0x113b, 0x113b, 0x113b, 0x113b, 0x1147, 0x1147, 0x114d,
 			// Entry 240 - 27F
-			0x1137, 0x1137, 0x1146, 0x114f, 0x114f, 0x115e, 0x115e, 0x115e,
-			0x115e, 0x115e, 0x1184, 0x118a, 0x11b4, 0x11ba, 0x11ea, 0x11ea,
-			0x1203, 0x1226, 0x123c, 0x124f, 0x1265, 0x127b, 0x129b, 0x12b7,
-			0x12cd, 0x12cd, 0x12e0, 0x12f3, 0x1309, 0x131f, 0x1338, 0x1351,
-			0x1370, 0x1370, 0x1386, 0x139f, 0x13b8,
+			0x114d, 0x114d, 0x115c, 0x1165, 0x1165, 0x1174, 0x1174, 0x1174,
+			0x1174, 0x1174, 0x119a, 0x11a0, 0x11ca, 0x11d0, 0x1200, 0x1200,
+			0x1219, 0x123c, 0x1252, 0x1265, 0x127b, 0x1291, 0x12b1, 0x12cd,
+			0x12e3, 0x12e3, 0x12f6, 0x1309, 0x131f, 0x1335, 0x134e, 0x1367,
+			0x1386, 0x1386, 0x139c, 0x13b5, 0x13ce,
 		},
 	},
 	{ // ckb
@@ -2248,15 +2248,15 @@ var langHeaders = [252]header{
 			"meregComoregHen SyriegSyriegSilesiegTuluTimnegTesoTerenaTetumegTigre" +
 			"gTifegTocelawegTsakhuregKlingonLlingitTalyshegTamashecegTok PisinTar" +
 			"okoTsaconegTwmbwcaTwfalwegTasawaqTwfwniegTamaseit Canolbarth MorocoF" +
-			"otiacegWgaritegUmbunduY GwraiddFaiegFenisegFepsFflemeg GorllewinolFo" +
-			"tegFunjoWalseregWalamoWinarayegWashoWarlpiriCalmycegSogaIangbenIemba" +
-			"egCantoneegZapotecegBlisssymbolsZêlandegTamaseit SafonolZuniDim cynn" +
-			"wys ieithyddolZazäegArabeg Modern SafonolAserbaijaneg DeheuolAlmaene" +
-			"g AwstriaAlmaeneg Safonol y SwistirSaesneg AwstraliaSaesneg CanadaSa" +
-			"esneg PrydainSaesneg AmericaSbaeneg America LadinSbaeneg EwropSbaene" +
-			"g MecsicoFfrangeg CanadaFfrangeg y SwistirSacsoneg IselFflemegPortiw" +
-			"geeg BrasilPortiwgeeg EwropMoldofegSerbo-CroategSwahili’r CongoTsiei" +
-			"neeg SymledigTsieineeg Traddodiadol",
+			"otiacegWgaritegUmbunduIaith AnhysbysFaiegFenisegFepsFflemeg Gorllewi" +
+			"nolFotegFunjoWalseregWalamoWinarayegWashoWarlpiriCalmycegSogaIangben" +
+			"IembaegCantoneegZapotecegBlisssymbolsZêlandegTamaseit SafonolZuniDim" +
+			" cynnwys ieithyddolZazäegArabeg Modern SafonolAserbaijaneg DeheuolAl" +
+			"maeneg AwstriaAlmaeneg Safonol y SwistirSaesneg AwstraliaSaesneg Can" +
+			"adaSaesneg PrydainSaesneg AmericaSbaeneg America LadinSbaeneg EwropS" +
+			"baeneg MecsicoFfrangeg CanadaFfrangeg y SwistirSacsoneg IselFflemegP" +
+			"ortiwgeeg BrasilPortiwgeeg EwropMoldofegSerbo-CroategSwahili’r Congo" +
+			"Tsieineeg SymledigTsieineeg Traddodiadol",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0007, 0x000f, 0x0018, 0x0023, 0x0029, 0x0030, 0x0038,
@@ -2336,15 +2336,15 @@ var langHeaders = [252]header{
 			0x0e9a, 0x0ea2, 0x0ea6, 0x0eac, 0x0eb0, 0x0eb6, 0x0ebd, 0x0ec3,
 			0x0ec8, 0x0ed1, 0x0eda, 0x0ee1, 0x0ee8, 0x0ef0, 0x0efa, 0x0efa,
 			0x0f03, 0x0f03, 0x0f09, 0x0f11, 0x0f11, 0x0f11, 0x0f18, 0x0f20,
-			0x0f27, 0x0f2f, 0x0f49, 0x0f51, 0x0f59, 0x0f60, 0x0f69, 0x0f6e,
-			0x0f75, 0x0f79, 0x0f8c, 0x0f8c, 0x0f91, 0x0f91, 0x0f96, 0x0f9e,
-			0x0fa4, 0x0fad, 0x0fb2, 0x0fba, 0x0fba, 0x0fc2, 0x0fc2, 0x0fc6,
+			0x0f27, 0x0f2f, 0x0f49, 0x0f51, 0x0f59, 0x0f60, 0x0f6e, 0x0f73,
+			0x0f7a, 0x0f7e, 0x0f91, 0x0f91, 0x0f96, 0x0f96, 0x0f9b, 0x0fa3,
+			0x0fa9, 0x0fb2, 0x0fb7, 0x0fbf, 0x0fbf, 0x0fc7, 0x0fc7, 0x0fcb,
 			// Entry 240 - 27F
-			0x0fc6, 0x0fc6, 0x0fcd, 0x0fd4, 0x0fd4, 0x0fdd, 0x0fe6, 0x0ff2,
-			0x0ffb, 0x0ffb, 0x100b, 0x100f, 0x1025, 0x102c, 0x1041, 0x1055,
-			0x1065, 0x107f, 0x1090, 0x109e, 0x10ad, 0x10bc, 0x10d1, 0x10de,
-			0x10ed, 0x10ed, 0x10fc, 0x110e, 0x111b, 0x1122, 0x1133, 0x1143,
-			0x114b, 0x1158, 0x1169, 0x117b, 0x1191,
+			0x0fcb, 0x0fcb, 0x0fd2, 0x0fd9, 0x0fd9, 0x0fe2, 0x0feb, 0x0ff7,
+			0x1000, 0x1000, 0x1010, 0x1014, 0x102a, 0x1031, 0x1046, 0x105a,
+			0x106a, 0x1084, 0x1095, 0x10a3, 0x10b2, 0x10c1, 0x10d6, 0x10e3,
+			0x10f2, 0x10f2, 0x1101, 0x1113, 0x1120, 0x1127, 0x1138, 0x1148,
+			0x1150, 0x115d, 0x116e, 0x1180, 0x1196,
 		},
 	},
 	{ // da
@@ -5091,15 +5091,15 @@ var langHeaders = [252]header{
 			"oyraboro senniatachelhitashanerahegoaldeko samieralule samierainari-" +
 			"samieraskolt samierasoninkerasrananerasahoasukumerakomoreeraasiriera" +
 			"temneatesoeratetumatigreaklingoneratok pisinatarokoatumbukeratuvalue" +
-			"ratasawaqatuveraMaroko erdialdeko tamazightaudmurteraumbundueraerroa" +
-			"vaieravunjoawalsererawelaytasamererakalmykerasogerajangbenerayembaka" +
-			"ntoneratamazight estandarrazuñiaez dago eduki linguistikorikzazakiaa" +
-			"rabiera moderno estandarraAustriako alemanaaleman garaia (Suitza)Aus" +
-			"traliako ingelesaKanadako ingelesaBritainia Handiko ingelesaAEBko in" +
-			"gelesaLatinoamerikako espainieraespainiera (Europa)Mexikoko espainie" +
-			"raKanadako frantsesaSuitzako frantsesabehe-saxoieraflandrieraBrasilg" +
-			"o portugesaportugesa (Europa)moldavieraserbokroazieraKongoko swahili" +
-			"atxinera soilduatxinera tradizionala",
+			"ratasawaqatuveraMaroko erdialdeko tamazightaudmurteraumbunduerahizku" +
+			"ntza ezezagunavaieravunjoawalsererawelaytasamererakalmykerasogerajan" +
+			"gbenerayembakantoneratamazight estandarrazuñiaez dago eduki linguist" +
+			"ikorikzazakiaarabiera moderno estandarraAustriako alemanaaleman gara" +
+			"ia (Suitza)Australiako ingelesaKanadako ingelesaBritainia Handiko in" +
+			"gelesaAEBko ingelesaLatinoamerikako espainieraespainiera (Europa)Mex" +
+			"ikoko espainieraKanadako frantsesaSuitzako frantsesabehe-saxoierafla" +
+			"ndrieraBrasilgo portugesaportugesa (Europa)moldavieraserbokroazieraK" +
+			"ongoko swahiliatxinera soilduatxinera tradizionala",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0007, 0x0010, 0x0010, 0x001a, 0x0021, 0x0029, 0x0032,
@@ -5179,15 +5179,15 @@ var langHeaders = [252]header{
 			0x0c47, 0x0c47, 0x0c47, 0x0c4d, 0x0c54, 0x0c54, 0x0c5a, 0x0c60,
 			0x0c60, 0x0c60, 0x0c60, 0x0c6a, 0x0c6a, 0x0c6a, 0x0c6a, 0x0c6a,
 			0x0c74, 0x0c74, 0x0c7b, 0x0c7b, 0x0c7b, 0x0c7b, 0x0c84, 0x0c8d,
-			0x0c95, 0x0c9b, 0x0cb7, 0x0cc0, 0x0cc0, 0x0cca, 0x0ccf, 0x0cd5,
-			0x0cd5, 0x0cd5, 0x0cd5, 0x0cd5, 0x0cd5, 0x0cd5, 0x0cdb, 0x0ce4,
-			0x0ceb, 0x0cf3, 0x0cf3, 0x0cf3, 0x0cf3, 0x0cfc, 0x0cfc, 0x0d02,
+			0x0c95, 0x0c9b, 0x0cb7, 0x0cc0, 0x0cc0, 0x0cca, 0x0cdd, 0x0ce3,
+			0x0ce3, 0x0ce3, 0x0ce3, 0x0ce3, 0x0ce3, 0x0ce3, 0x0ce9, 0x0cf2,
+			0x0cf9, 0x0d01, 0x0d01, 0x0d01, 0x0d01, 0x0d0a, 0x0d0a, 0x0d10,
 			// Entry 240 - 27F
-			0x0d02, 0x0d02, 0x0d0c, 0x0d11, 0x0d11, 0x0d1a, 0x0d1a, 0x0d1a,
-			0x0d1a, 0x0d1a, 0x0d2e, 0x0d34, 0x0d50, 0x0d57, 0x0d72, 0x0d72,
-			0x0d83, 0x0d99, 0x0dad, 0x0dbe, 0x0dd8, 0x0de6, 0x0e00, 0x0e13,
-			0x0e26, 0x0e26, 0x0e38, 0x0e4a, 0x0e57, 0x0e61, 0x0e73, 0x0e85,
-			0x0e8f, 0x0e9d, 0x0ead, 0x0ebc, 0x0ed0,
+			0x0d10, 0x0d10, 0x0d1a, 0x0d1f, 0x0d1f, 0x0d28, 0x0d28, 0x0d28,
+			0x0d28, 0x0d28, 0x0d3c, 0x0d42, 0x0d5e, 0x0d65, 0x0d80, 0x0d80,
+			0x0d91, 0x0da7, 0x0dbb, 0x0dcc, 0x0de6, 0x0df4, 0x0e0e, 0x0e21,
+			0x0e34, 0x0e34, 0x0e46, 0x0e58, 0x0e65, 0x0e6f, 0x0e81, 0x0e93,
+			0x0e9d, 0x0eab, 0x0ebb, 0x0eca, 0x0ede,
 		},
 	},
 	{ // ewo
@@ -5379,12 +5379,12 @@ var langHeaders = [252]header{
 			"isilansktskotsktsuður kurdisktsenakoyraboro sennitachelhitshansuður " +
 			"sámisktlule sámisktinari samiskolt sámisktsoninkesranan tongosahosuk" +
 			"umakomorisktsyriactimnetesotetumtigreklingonskttok pisintarokotumbuk" +
-			"atuvalutasawaqtuvinianmiðatlasfjøll tamazightudmurtumbundurootvaivun" +
-			"jowalserwolayttawaraywarlpiriwu kinesisktkalmyksogayangbenyembakanto" +
-			"nesisktvanligt marokanskt tamazightzunieinki málsligt innihaldzazanú" +
-			"tíðar vanligt arabiskthøgt týskt (Sveis)lágt saksisktflamsktportugis" +
-			"kiskt (Brasilia)portugiskiskt (Evropa)moldavisktserbokroatisktkongo " +
-			"svahilieinkult kinesisktvanligt kinesiskt",
+			"atuvalutasawaqtuvinianmiðatlasfjøll tamazightudmurtumbunduókent málv" +
+			"aivunjowalserwolayttawaraywarlpiriwu kinesisktkalmyksogayangbenyemba" +
+			"kantonesisktvanligt marokanskt tamazightzunieinki málsligt innihaldz" +
+			"azanútíðar vanligt arabiskthøgt týskt (Sveis)lágt saksisktflamsktpor" +
+			"tugiskiskt (Brasilia)portugiskiskt (Evropa)moldavisktserbokroatisktk" +
+			"ongo svahilieinkult kinesisktvanligt kinesiskt",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000e, 0x000e, 0x0017, 0x001b, 0x0024, 0x002e,
@@ -5464,15 +5464,15 @@ var langHeaders = [252]header{
 			0x0ae1, 0x0ae1, 0x0ae1, 0x0ae6, 0x0aea, 0x0aea, 0x0aef, 0x0af4,
 			0x0af4, 0x0af4, 0x0af4, 0x0afe, 0x0afe, 0x0afe, 0x0afe, 0x0afe,
 			0x0b07, 0x0b07, 0x0b0d, 0x0b0d, 0x0b0d, 0x0b0d, 0x0b14, 0x0b1a,
-			0x0b21, 0x0b29, 0x0b42, 0x0b48, 0x0b48, 0x0b4f, 0x0b53, 0x0b56,
-			0x0b56, 0x0b56, 0x0b56, 0x0b56, 0x0b56, 0x0b56, 0x0b5b, 0x0b61,
-			0x0b69, 0x0b6e, 0x0b6e, 0x0b76, 0x0b82, 0x0b88, 0x0b88, 0x0b8c,
+			0x0b21, 0x0b29, 0x0b42, 0x0b48, 0x0b48, 0x0b4f, 0x0b5a, 0x0b5d,
+			0x0b5d, 0x0b5d, 0x0b5d, 0x0b5d, 0x0b5d, 0x0b5d, 0x0b62, 0x0b68,
+			0x0b70, 0x0b75, 0x0b75, 0x0b7d, 0x0b89, 0x0b8f, 0x0b8f, 0x0b93,
 			// Entry 240 - 27F
-			0x0b8c, 0x0b8c, 0x0b93, 0x0b98, 0x0b98, 0x0ba4, 0x0ba4, 0x0ba4,
-			0x0ba4, 0x0ba4, 0x0bc0, 0x0bc4, 0x0bdc, 0x0be0, 0x0bfb, 0x0bfb,
-			0x0bfb, 0x0c0f, 0x0c0f, 0x0c0f, 0x0c0f, 0x0c0f, 0x0c0f, 0x0c0f,
-			0x0c0f, 0x0c0f, 0x0c0f, 0x0c0f, 0x0c1d, 0x0c24, 0x0c3c, 0x0c52,
-			0x0c5c, 0x0c6a, 0x0c77, 0x0c88, 0x0c99,
+			0x0b93, 0x0b93, 0x0b9a, 0x0b9f, 0x0b9f, 0x0bab, 0x0bab, 0x0bab,
+			0x0bab, 0x0bab, 0x0bc7, 0x0bcb, 0x0be3, 0x0be7, 0x0c02, 0x0c02,
+			0x0c02, 0x0c16, 0x0c16, 0x0c16, 0x0c16, 0x0c16, 0x0c16, 0x0c16,
+			0x0c16, 0x0c16, 0x0c16, 0x0c16, 0x0c24, 0x0c2b, 0x0c43, 0x0c59,
+			0x0c63, 0x0c71, 0x0c7e, 0x0c8f, 0x0ca0,
 		},
 	},
 	{ // fr
@@ -5804,15 +5804,15 @@ var langHeaders = [252]header{
 			"nantongoSererSahoSukumaSoesoeSoemeryskShimaoreKlassiek SyryskSyryskT" +
 			"imneTesoTerenoTetunTigreTivTokelausKlingonTlingitTamashekNyasa Tonga" +
 			"Tok PisinTarokoTsimshianToemboekaTuvaluaanskTasawaqTuvinyskTamazight" +
-			" (Sintraal-Marokko)OedmoertsOegarityskUmbunduRootVaiVotyskVunjoWalse" +
-			"rWalamoWarayWashoKalmykSogaYaoYapeesYangbenYembaKantoneeskZapotecBli" +
-			"ssymbolenZenagaStandert Marokkaanske TamazightZuniGjin linguïstyske " +
-			"ynhâldZazaModern standert ArabyskEastenryks DútskSwitsersk Heechdúts" +
-			"kAustralysk IngelskKanadeesk IngelskBritsk IngelskAmerikaansk Ingels" +
-			"kLatynsk-Amerikaansk SpaanskEuropeesk SpaanskMeksikaansk SpaanskKana" +
-			"deesk FrânskSwitserse FrânskVlaamsBrazyljaansk PortugeesEuropees Por" +
-			"tugeesMoldavyskServokroatyskCongo SwahiliFerienfâldich SineeskTradis" +
-			"joneel Sineesk",
+			" (Sintraal-Marokko)OedmoertsOegarityskUmbunduOnbekende taalVaiVotysk" +
+			"VunjoWalserWalamoWarayWashoKalmykSogaYaoYapeesYangbenYembaKantoneesk" +
+			"ZapotecBlissymbolenZenagaStandert Marokkaanske TamazightZuniGjin lin" +
+			"guïstyske ynhâldZazaModern standert ArabyskEastenryks DútskSwitsersk" +
+			" HeechdútskAustralysk IngelskKanadeesk IngelskBritsk IngelskAmerikaa" +
+			"nsk IngelskLatynsk-Amerikaansk SpaanskEuropeesk SpaanskMeksikaansk S" +
+			"paanskKanadeesk FrânskSwitserse FrânskVlaamsBrazyljaansk PortugeesEu" +
+			"ropees PortugeesMoldavyskServokroatyskCongo SwahiliFerienfâldich Sin" +
+			"eeskTradisjoneel Sineesk",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000d, 0x0015, 0x001f, 0x0023, 0x002b, 0x0035,
@@ -5892,15 +5892,15 @@ var langHeaders = [252]header{
 			0x0d2c, 0x0d2c, 0x0d2c, 0x0d31, 0x0d35, 0x0d3b, 0x0d40, 0x0d45,
 			0x0d48, 0x0d50, 0x0d50, 0x0d57, 0x0d5e, 0x0d5e, 0x0d66, 0x0d71,
 			0x0d7a, 0x0d7a, 0x0d80, 0x0d80, 0x0d89, 0x0d89, 0x0d92, 0x0d9d,
-			0x0da4, 0x0dac, 0x0dc8, 0x0dd1, 0x0ddb, 0x0de2, 0x0de6, 0x0de9,
-			0x0de9, 0x0de9, 0x0de9, 0x0de9, 0x0def, 0x0def, 0x0df4, 0x0dfa,
-			0x0e00, 0x0e05, 0x0e0a, 0x0e0a, 0x0e0a, 0x0e10, 0x0e10, 0x0e14,
+			0x0da4, 0x0dac, 0x0dc8, 0x0dd1, 0x0ddb, 0x0de2, 0x0df0, 0x0df3,
+			0x0df3, 0x0df3, 0x0df3, 0x0df3, 0x0df9, 0x0df9, 0x0dfe, 0x0e04,
+			0x0e0a, 0x0e0f, 0x0e14, 0x0e14, 0x0e14, 0x0e1a, 0x0e1a, 0x0e1e,
 			// Entry 240 - 27F
-			0x0e17, 0x0e1d, 0x0e24, 0x0e29, 0x0e29, 0x0e33, 0x0e3a, 0x0e46,
-			0x0e46, 0x0e4c, 0x0e6b, 0x0e6f, 0x0e89, 0x0e8d, 0x0ea4, 0x0ea4,
-			0x0eb5, 0x0eca, 0x0edc, 0x0eed, 0x0efb, 0x0f0e, 0x0f29, 0x0f3a,
-			0x0f4d, 0x0f4d, 0x0f5e, 0x0f6f, 0x0f6f, 0x0f75, 0x0f8b, 0x0f9d,
-			0x0fa6, 0x0fb3, 0x0fc0, 0x0fd6, 0x0fea,
+			0x0e21, 0x0e27, 0x0e2e, 0x0e33, 0x0e33, 0x0e3d, 0x0e44, 0x0e50,
+			0x0e50, 0x0e56, 0x0e75, 0x0e79, 0x0e93, 0x0e97, 0x0eae, 0x0eae,
+			0x0ebf, 0x0ed4, 0x0ee6, 0x0ef7, 0x0f05, 0x0f18, 0x0f33, 0x0f44,
+			0x0f57, 0x0f57, 0x0f68, 0x0f79, 0x0f79, 0x0f7f, 0x0f95, 0x0fa7,
+			0x0fb0, 0x0fbd, 0x0fca, 0x0fe0, 0x0ff4,
 		},
 	},
 	{ // ga
@@ -6106,17 +6106,17 @@ var langHeaders = [252]header{
 			"sSuraidheac ChlasaigeachSuraidheacTuluTimneTesoTerênaTetumTigreTivTo" +
 			"kelauTsakhurKlingonTlingitTalyshTamashekNyasa TongaTok PisinTuroyoTa" +
 			"rokoTsimshianTatiTumbukaTubhaluTasawaqCànan TuvaTamazight an Atlais " +
-			"MheadhanaichUdmurtUmbunduRootVaiVepsFlannrais SiarachVõroVunjoGearma" +
-			"iltis WallisWolayttaWarayWashoWarlpiriWuKalmykSogaYaoCànan YapYangbe" +
-			"nYembaNheengatuCantonaisZapotecComharran BlissCànan ZeelandZenagaTam" +
-			"azight Stannardach MorocoZuñiSusbaint nach eil ’na chànanZazakiNuadh" +
-			"-Arabais StannardachGearmailtis na h-OstaireÀrd-Ghearmailtis na h-Ei" +
-			"lbheiseBeurla AstràiliaBeurla ChanadaBeurla BhreatainnBeurla na h-Ai" +
-			"meireagaSpàinntis na h-Aimeireaga LaidinneachSpàinntis EòrpachSpàinn" +
-			"tis MheagsagachFraingis ChanadaFraingis EilbheiseachSagsannais Ìochd" +
-			"arachFlannraisPortagailis BhraisileachPortagailis EòrpachMoldobhaisS" +
-			"èirb-ChròthaisisKiswahili na CongoSìnis ShimplichteSìnis Thradaisea" +
-			"nta",
+			"MheadhanaichUdmurtUmbunduCànan neo-aithnichteVaiVepsFlannrais Siarac" +
+			"hVõroVunjoGearmailtis WallisWolayttaWarayWashoWarlpiriWuKalmykSogaYa" +
+			"oCànan YapYangbenYembaNheengatuCantonaisZapotecComharran BlissCànan " +
+			"ZeelandZenagaTamazight Stannardach MorocoZuñiSusbaint nach eil ’na c" +
+			"hànanZazakiNuadh-Arabais StannardachGearmailtis na h-OstaireÀrd-Ghea" +
+			"rmailtis na h-EilbheiseBeurla AstràiliaBeurla ChanadaBeurla Bhreatai" +
+			"nnBeurla na h-AimeireagaSpàinntis na h-Aimeireaga LaidinneachSpàinnt" +
+			"is EòrpachSpàinntis MheagsagachFraingis ChanadaFraingis Eilbheiseach" +
+			"Sagsannais ÌochdarachFlannraisPortagailis BhraisileachPortagailis Eò" +
+			"rpachMoldobhaisSèirb-ChròthaisisKiswahili na CongoSìnis ShimplichteS" +
+			"ìnis Thradaiseanta",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000d, 0x0017, 0x0021, 0x0025, 0x002e, 0x0037,
@@ -6196,15 +6196,15 @@ var langHeaders = [252]header{
 			0x1191, 0x1191, 0x1195, 0x119a, 0x119e, 0x11a5, 0x11aa, 0x11af,
 			0x11b2, 0x11b9, 0x11c0, 0x11c7, 0x11ce, 0x11d4, 0x11dc, 0x11e7,
 			0x11f0, 0x11f6, 0x11fc, 0x11fc, 0x1205, 0x1209, 0x1210, 0x1217,
-			0x121e, 0x1229, 0x1249, 0x124f, 0x124f, 0x1256, 0x125a, 0x125d,
-			0x125d, 0x1261, 0x1272, 0x1272, 0x1272, 0x1277, 0x127c, 0x128e,
-			0x1296, 0x129b, 0x12a0, 0x12a8, 0x12aa, 0x12b0, 0x12b0, 0x12b4,
+			0x121e, 0x1229, 0x1249, 0x124f, 0x124f, 0x1256, 0x126b, 0x126e,
+			0x126e, 0x1272, 0x1283, 0x1283, 0x1283, 0x1288, 0x128d, 0x129f,
+			0x12a7, 0x12ac, 0x12b1, 0x12b9, 0x12bb, 0x12c1, 0x12c1, 0x12c5,
 			// Entry 240 - 27F
-			0x12b7, 0x12c1, 0x12c8, 0x12cd, 0x12d6, 0x12df, 0x12e6, 0x12f5,
-			0x1303, 0x1309, 0x1325, 0x132a, 0x1349, 0x134f, 0x1368, 0x1368,
-			0x1380, 0x13a0, 0x13b1, 0x13bf, 0x13d0, 0x13e6, 0x140c, 0x141f,
-			0x1435, 0x1435, 0x1445, 0x145a, 0x1470, 0x1479, 0x1491, 0x14a5,
-			0x14af, 0x14c2, 0x14d4, 0x14e6, 0x14fa,
+			0x12c8, 0x12d2, 0x12d9, 0x12de, 0x12e7, 0x12f0, 0x12f7, 0x1306,
+			0x1314, 0x131a, 0x1336, 0x133b, 0x135a, 0x1360, 0x1379, 0x1379,
+			0x1391, 0x13b1, 0x13c2, 0x13d0, 0x13e1, 0x13f7, 0x141d, 0x1430,
+			0x1446, 0x1446, 0x1456, 0x146b, 0x1481, 0x148a, 0x14a2, 0x14b6,
+			0x14c0, 0x14d3, 0x14e5, 0x14f7, 0x150b,
 		},
 	},
 	{ // gl
@@ -6247,14 +6247,14 @@ var langHeaders = [252]header{
 			"tachelhitshansaami meridionalsaami de Lulesaami de Inarisaami de Sko" +
 			"ltsoninkesranan tongosahosukumacomorianosiríacotimnetesotetuntigrékl" +
 			"ingontok pisintarokotumbukatuvaluanotasawaqtuvanianotamazight do Mar" +
-			"rocos Centraludmurtoumbunduraízvaivunjowalserwolayttawaray-waraywalr" +
-			"piricalmucosogayangbenyembacantonéstamazight de Marrocos estándarzun" +
-			"isen contido lingüísticozazakiárabe estándar modernoalemán austríaco" +
-			"alto alemán suízoinglés australianoinglés canadianoinglés británicoi" +
-			"nglés dos Estados Unidosespañol latinoamericanocastelánespañol de Mé" +
-			"xicofrancés canadianofrancés suízobaixo saxónflamencoportugués brasi" +
-			"leiroportugués europeomoldavoserbocroatasuahili congoléschinés simpl" +
-			"ificadochinés tradicional",
+			"rocos Centraludmurtoumbundulingua descoñecidavaivunjowalserwolayttaw" +
+			"aray-waraywalrpiricalmucosogayangbenyembacantonéstamazight de Marroc" +
+			"os estándarzunisen contido lingüísticozazakiárabe estándar modernoal" +
+			"emán austríacoalto alemán suízoinglés australianoinglés canadianoing" +
+			"lés británicoinglés dos Estados Unidosespañol latinoamericanocastelá" +
+			"nespañol de Méxicofrancés canadianofrancés suízobaixo saxónflamencop" +
+			"ortugués brasileiroportugués europeomoldavoserbocroatasuahili congol" +
+			"éschinés simplificadochinés tradicional",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000b, 0x000b, 0x0015, 0x001a, 0x0022, 0x002b,
@@ -6334,15 +6334,15 @@ var langHeaders = [252]header{
 			0x0a64, 0x0a64, 0x0a64, 0x0a69, 0x0a6d, 0x0a6d, 0x0a72, 0x0a78,
 			0x0a78, 0x0a78, 0x0a78, 0x0a7f, 0x0a7f, 0x0a7f, 0x0a7f, 0x0a7f,
 			0x0a88, 0x0a88, 0x0a8e, 0x0a8e, 0x0a8e, 0x0a8e, 0x0a95, 0x0a9e,
-			0x0aa5, 0x0aae, 0x0acb, 0x0ad2, 0x0ad2, 0x0ad9, 0x0ade, 0x0ae1,
-			0x0ae1, 0x0ae1, 0x0ae1, 0x0ae1, 0x0ae1, 0x0ae1, 0x0ae6, 0x0aec,
-			0x0af4, 0x0aff, 0x0aff, 0x0b07, 0x0b07, 0x0b0e, 0x0b0e, 0x0b12,
+			0x0aa5, 0x0aae, 0x0acb, 0x0ad2, 0x0ad2, 0x0ad9, 0x0aec, 0x0aef,
+			0x0aef, 0x0aef, 0x0aef, 0x0aef, 0x0aef, 0x0aef, 0x0af4, 0x0afa,
+			0x0b02, 0x0b0d, 0x0b0d, 0x0b15, 0x0b15, 0x0b1c, 0x0b1c, 0x0b20,
 			// Entry 240 - 27F
-			0x0b12, 0x0b12, 0x0b19, 0x0b1e, 0x0b1e, 0x0b27, 0x0b27, 0x0b27,
-			0x0b27, 0x0b27, 0x0b46, 0x0b4a, 0x0b63, 0x0b69, 0x0b81, 0x0b81,
-			0x0b93, 0x0ba6, 0x0bb9, 0x0bca, 0x0bdc, 0x0bf6, 0x0c0e, 0x0c17,
-			0x0c2a, 0x0c2a, 0x0c3c, 0x0c4b, 0x0c57, 0x0c5f, 0x0c74, 0x0c86,
-			0x0c8d, 0x0c98, 0x0ca9, 0x0cbd, 0x0cd0,
+			0x0b20, 0x0b20, 0x0b27, 0x0b2c, 0x0b2c, 0x0b35, 0x0b35, 0x0b35,
+			0x0b35, 0x0b35, 0x0b54, 0x0b58, 0x0b71, 0x0b77, 0x0b8f, 0x0b8f,
+			0x0ba1, 0x0bb4, 0x0bc7, 0x0bd8, 0x0bea, 0x0c04, 0x0c1c, 0x0c25,
+			0x0c38, 0x0c38, 0x0c4a, 0x0c59, 0x0c65, 0x0c6d, 0x0c82, 0x0c94,
+			0x0c9b, 0x0ca6, 0x0cb7, 0x0ccb, 0x0cde,
 		},
 	},
 	{ // gsw
@@ -6406,15 +6406,15 @@ var langHeaders = [252]header{
 			"tsyrischSyrischTemneTereno-SchpraachTetum-SchpraachTigreTiv-Schpraac" +
 			"hTokelauanischKlingonischTlingit-SchpraachTamaseqTsonga-SchpraachNeu" +
 			"melanesischTsimshian-SchpraachTumbuka-SchpraachElliceanischTuwinisch" +
-			"UdmurtischUgaritischMbundu-SchpraachRootVai-SchpraachWotischWalamo-S" +
-			"chpraachWarayWasho-SchpraachKalmückischYao-SchpraachYapesischZapotek" +
-			"ischBliss-SymboolZenagaZuni-SchpraachKän schpraachliche InhaltZazaÖs" +
-			"chtriichischs TüütschSchwiizer HochtüütschAuschtralischs ÄnglischKan" +
-			"adischs ÄnglischBritischs ÄnglischAmerikanischs ÄnglischLatiinamerik" +
-			"anischs SchpanischIbeerischs SchpanischKanadischs FranzösischSchwiiz" +
-			"er FranzösischFläämischBrasilianischs PortugiisischIberischs Portugi" +
-			"isischMoldawischSerbo-KroatischVeräifachts ChineesischTradizionells " +
-			"Chineesisch",
+			"UdmurtischUgaritischMbundu-SchpraachUnbeschtimmti SchpraachVai-Schpr" +
+			"aachWotischWalamo-SchpraachWarayWasho-SchpraachKalmückischYao-Schpra" +
+			"achYapesischZapotekischBliss-SymboolZenagaZuni-SchpraachKän schpraac" +
+			"hliche InhaltZazaÖschtriichischs TüütschSchwiizer HochtüütschAuschtr" +
+			"alischs ÄnglischKanadischs ÄnglischBritischs ÄnglischAmerikanischs Ä" +
+			"nglischLatiinamerikanischs SchpanischIbeerischs SchpanischKanadischs" +
+			" FranzösischSchwiizer FranzösischFläämischBrasilianischs Portugiisis" +
+			"chIberischs PortugiisischMoldawischSerbo-KroatischVeräifachts Chinee" +
+			"sischTradizionells Chineesisch",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000e, 0x0017, 0x0020, 0x0024, 0x002d, 0x0039,
@@ -6494,15 +6494,15 @@ var langHeaders = [252]header{
 			0x0f72, 0x0f72, 0x0f72, 0x0f77, 0x0f77, 0x0f87, 0x0f96, 0x0f9b,
 			0x0fa8, 0x0fb5, 0x0fb5, 0x0fc0, 0x0fd1, 0x0fd1, 0x0fd8, 0x0fe8,
 			0x0ff6, 0x0ff6, 0x0ff6, 0x0ff6, 0x1009, 0x1009, 0x101a, 0x1026,
-			0x1026, 0x102f, 0x102f, 0x1039, 0x1043, 0x1053, 0x1057, 0x1064,
-			0x1064, 0x1064, 0x1064, 0x1064, 0x106b, 0x106b, 0x106b, 0x106b,
-			0x107b, 0x1080, 0x108f, 0x108f, 0x108f, 0x109b, 0x109b, 0x109b,
+			0x1026, 0x102f, 0x102f, 0x1039, 0x1043, 0x1053, 0x106a, 0x1077,
+			0x1077, 0x1077, 0x1077, 0x1077, 0x107e, 0x107e, 0x107e, 0x107e,
+			0x108e, 0x1093, 0x10a2, 0x10a2, 0x10a2, 0x10ae, 0x10ae, 0x10ae,
 			// Entry 240 - 27F
-			0x10a8, 0x10b1, 0x10b1, 0x10b1, 0x10b1, 0x10b1, 0x10bc, 0x10c9,
-			0x10c9, 0x10cf, 0x10cf, 0x10dd, 0x10f7, 0x10fb, 0x10fb, 0x10fb,
-			0x1115, 0x112c, 0x1144, 0x1158, 0x116b, 0x1182, 0x11a0, 0x11b5,
-			0x11b5, 0x11b5, 0x11cc, 0x11e2, 0x11e2, 0x11ed, 0x1209, 0x1220,
-			0x122a, 0x1239, 0x1239, 0x1251, 0x126a,
+			0x10bb, 0x10c4, 0x10c4, 0x10c4, 0x10c4, 0x10c4, 0x10cf, 0x10dc,
+			0x10dc, 0x10e2, 0x10e2, 0x10f0, 0x110a, 0x110e, 0x110e, 0x110e,
+			0x1128, 0x113f, 0x1157, 0x116b, 0x117e, 0x1195, 0x11b3, 0x11c8,
+			0x11c8, 0x11c8, 0x11df, 0x11f5, 0x11f5, 0x1200, 0x121c, 0x1233,
+			0x123d, 0x124c, 0x124c, 0x1264, 0x127d,
 		},
 	},
 	{ // gu
@@ -7858,12 +7858,12 @@ var langHeaders = [252]header{
 			"سونِنکیےسوگڈِیَنسرٛانَن ٹونٛگوسیٚریرسُکُماسُسوٗسُمیریَنسیٖریٲییٹِمن" +
 			"یےٹیٚریٚنوٹیٹَمٹاےگریےتیٖوٹوکیٖلاوکِلِنگونٹِلِنگِتتاماشیکنیاسا ٹونٛ" +
 			"گاٹاک پِسِنژھِمشِیانتُمبُکاتُوالوٗتُویٖنیَناُدمُرتاُگارتِکیُمبُندوٗ" +
-			"روٗٹواےووتِکوالامووَریےواشوکالمِکیاویَپیٖززَپوتیٚکزیناگازوٗنیکانٛہہ" +
-			" تہِ لِسانیاتی مواد نہٕزازاآسٹرِیَن جٔرمَنسٕوِس ہاےجٔرمَنآسٹریلیَن ا" +
-			"َنٛگریٖزۍکینَڈِیٲیی اَنٛگریٖزۍبَرطانوی اَنٛگریٖزۍیوٗ ایٚس اَنٛگریٖز" +
-			"ۍلیٹٕن امریٖکی سپینِشلِبیریَن سپینِشکَنیڈیَن فریٚنچسٕوٕس فریٚنچفلیٚ" +
-			"مِشبرازیٖلی پُتَگیٖزلِبیریَن پُرتَگیٖزمولداوِیَنسیٚربو کروشِیَنسیٚو" +
-			"د چیٖنیرِوٲجی چیٖنی",
+			"اَنزٲنۍ یا نَہ لَگہٕہار زبانواےووتِکوالامووَریےواشوکالمِکیاویَپیٖزز" +
+			"َپوتیٚکزیناگازوٗنیکانٛہہ تہِ لِسانیاتی مواد نہٕزازاآسٹرِیَن جٔرمَنس" +
+			"ٕوِس ہاےجٔرمَنآسٹریلیَن اَنٛگریٖزۍکینَڈِیٲیی اَنٛگریٖزۍبَرطانوی اَن" +
+			"ٛگریٖزۍیوٗ ایٚس اَنٛگریٖزۍلیٹٕن امریٖکی سپینِشلِبیریَن سپینِشکَنیڈی" +
+			"َن فریٚنچسٕوٕس فریٚنچفلیٚمِشبرازیٖلی پُتَگیٖزلِبیریَن پُرتَگیٖزمولد" +
+			"اوِیَنسیٚربو کروشِیَنسیٚود چیٖنیرِوٲجی چیٖنی",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x000a, 0x001e, 0x002e, 0x0044, 0x004e, 0x005c, 0x006c,
@@ -7943,15 +7943,15 @@ var langHeaders = [252]header{
 			0x164b, 0x164b, 0x164b, 0x1657, 0x1657, 0x1667, 0x1671, 0x167f,
 			0x1687, 0x1697, 0x1697, 0x16a7, 0x16b7, 0x16b7, 0x16c5, 0x16dc,
 			0x16ed, 0x16ed, 0x16ed, 0x16ed, 0x16ff, 0x16ff, 0x170d, 0x171b,
-			0x171b, 0x172d, 0x172d, 0x173b, 0x174b, 0x175d, 0x1765, 0x176b,
-			0x176b, 0x176b, 0x176b, 0x176b, 0x1775, 0x1775, 0x1775, 0x1775,
-			0x1781, 0x178b, 0x1793, 0x1793, 0x1793, 0x179f, 0x179f, 0x179f,
+			0x171b, 0x172d, 0x172d, 0x173b, 0x174b, 0x175d, 0x1791, 0x1797,
+			0x1797, 0x1797, 0x1797, 0x1797, 0x17a1, 0x17a1, 0x17a1, 0x17a1,
+			0x17ad, 0x17b7, 0x17bf, 0x17bf, 0x17bf, 0x17cb, 0x17cb, 0x17cb,
 			// Entry 240 - 27F
-			0x17a5, 0x17b1, 0x17b1, 0x17b1, 0x17b1, 0x17b1, 0x17c1, 0x17c1,
-			0x17c1, 0x17cd, 0x17cd, 0x17d7, 0x180d, 0x1815, 0x1815, 0x1815,
-			0x1832, 0x184f, 0x1876, 0x189f, 0x18c4, 0x18e8, 0x190e, 0x192b,
-			0x192b, 0x192b, 0x1948, 0x195f, 0x195f, 0x196d, 0x198e, 0x19b1,
-			0x19c5, 0x19e2, 0x19e2, 0x19f7, 0x1a0e,
+			0x17d1, 0x17dd, 0x17dd, 0x17dd, 0x17dd, 0x17dd, 0x17ed, 0x17ed,
+			0x17ed, 0x17f9, 0x17f9, 0x1803, 0x1839, 0x1841, 0x1841, 0x1841,
+			0x185e, 0x187b, 0x18a2, 0x18cb, 0x18f0, 0x1914, 0x193a, 0x1957,
+			0x1957, 0x1957, 0x1974, 0x198b, 0x198b, 0x1999, 0x19ba, 0x19dd,
+			0x19f1, 0x1a0e, 0x1a0e, 0x1a23, 0x1a3a,
 		},
 	},
 	{ // ksb
@@ -8399,18 +8399,18 @@ var langHeaders = [252]header{
 			"iv-SproochTokelauaneschTsachureschKlingoneschTlingit-SproochTaleschT" +
 			"amaseqTsonga-SproochNeimelaneseschTuroyoSeediqTsakoneschTsimshian-Sp" +
 			"roochTateschTumbuka-SproochElliceaneschTasawaqTuwineschMëttlert-Atla" +
-			"s-TamazightUdmurteschUgariteschMbundu-SproochRootVai-SproochVenezesc" +
-			"hWepseschWestflämeschMainfränkeschWoteschVoroVunjoWalliserdäitschWal" +
-			"amo-SproochWarayWasho-SproochWu-ChineseschKalmückeschMingrelesch Spr" +
-			"oochSogaYao-SproochYapeseschYangbenYembaNheengatuKantoneseschZapotek" +
-			"eschBliss-SymbolerSeelänneschZenagaMarokkanescht Standard-TamazightZ" +
-			"uni-SproochKeng SproochinhalterZazaModernt HéicharabeschÉisträichesc" +
-			"ht DäitschSchwäizer HéichdäitschAustralescht EngleschKanadescht Engl" +
-			"eschBritescht EngleschAmerikanescht EngleschLatäinamerikanescht Spue" +
-			"neschEuropäescht SpueneschMexikanescht SpueneschKanadescht Franséisc" +
-			"hSchwäizer FranséischFlämeschBrasilianescht PortugiseschEuropäescht " +
-			"PortugiseschMoldaweschSerbo-KroateschKongo-SwahiliChinesesch (verein" +
-			"facht)Chinesesch (traditionell)",
+			"s-TamazightUdmurteschUgariteschMbundu-SproochOnbestëmmt SproochVai-S" +
+			"proochVenezeschWepseschWestflämeschMainfränkeschWoteschVoroVunjoWall" +
+			"iserdäitschWalamo-SproochWarayWasho-SproochWu-ChineseschKalmückeschM" +
+			"ingrelesch SproochSogaYao-SproochYapeseschYangbenYembaNheengatuKanto" +
+			"neseschZapotekeschBliss-SymbolerSeelänneschZenagaMarokkanescht Stand" +
+			"ard-TamazightZuni-SproochKeng SproochinhalterZazaModernt Héicharabes" +
+			"chÉisträichescht DäitschSchwäizer HéichdäitschAustralescht EngleschK" +
+			"anadescht EngleschBritescht EngleschAmerikanescht EngleschLatäinamer" +
+			"ikanescht SpueneschEuropäescht SpueneschMexikanescht SpueneschKanade" +
+			"scht FranséischSchwäizer FranséischFlämeschBrasilianescht Portugises" +
+			"chEuropäescht PortugiseschMoldaweschSerbo-KroateschKongo-SwahiliChin" +
+			"esesch (vereinfacht)Chinesesch (traditionell)",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000e, 0x0017, 0x0020, 0x0024, 0x002d, 0x0039,
@@ -8490,15 +8490,15 @@ var langHeaders = [252]header{
 			0x14be, 0x14c8, 0x14cc, 0x14d1, 0x14d5, 0x14e3, 0x14f0, 0x14f5,
 			0x1500, 0x150d, 0x1518, 0x1523, 0x1532, 0x1539, 0x1540, 0x154e,
 			0x155c, 0x1562, 0x1568, 0x1572, 0x1583, 0x158a, 0x1599, 0x15a5,
-			0x15ac, 0x15b5, 0x15ce, 0x15d8, 0x15e2, 0x15f0, 0x15f4, 0x15ff,
-			0x1608, 0x1610, 0x161d, 0x162b, 0x1632, 0x1636, 0x163b, 0x164b,
-			0x1659, 0x165e, 0x166b, 0x166b, 0x1678, 0x1684, 0x1697, 0x169b,
+			0x15ac, 0x15b5, 0x15ce, 0x15d8, 0x15e2, 0x15f0, 0x1603, 0x160e,
+			0x1617, 0x161f, 0x162c, 0x163a, 0x1641, 0x1645, 0x164a, 0x165a,
+			0x1668, 0x166d, 0x167a, 0x167a, 0x1687, 0x1693, 0x16a6, 0x16aa,
 			// Entry 240 - 27F
-			0x16a6, 0x16af, 0x16b6, 0x16bb, 0x16c4, 0x16d0, 0x16db, 0x16e9,
-			0x16f5, 0x16fb, 0x171b, 0x1727, 0x173b, 0x173f, 0x1755, 0x1755,
-			0x176e, 0x1787, 0x179c, 0x17af, 0x17c1, 0x17d7, 0x17f5, 0x180b,
-			0x1821, 0x1821, 0x1837, 0x184d, 0x184d, 0x1856, 0x1871, 0x188a,
-			0x1894, 0x18a3, 0x18b0, 0x18c8, 0x18e1,
+			0x16b5, 0x16be, 0x16c5, 0x16ca, 0x16d3, 0x16df, 0x16ea, 0x16f8,
+			0x1704, 0x170a, 0x172a, 0x1736, 0x174a, 0x174e, 0x1764, 0x1764,
+			0x177d, 0x1796, 0x17ab, 0x17be, 0x17d0, 0x17e6, 0x1804, 0x181a,
+			0x1830, 0x1830, 0x1846, 0x185c, 0x185c, 0x1865, 0x1880, 0x1899,
+			0x18a3, 0x18b2, 0x18bf, 0x18d7, 0x18f0,
 		},
 	},
 	{ // lg
@@ -9465,14 +9465,15 @@ var langHeaders = [252]header{
 			"an TongoSererSahoSukumaSusuSumerjanKomorjanSirjanTimneTesoTerenoTetu" +
 			"mTigreTivTokelauKlingonTlingitTamashekNyasa TongaTok PisinTarokoTsim" +
 			"shianTumbukaTuvaluTasawaqTuvinjanTamazight tal-Atlas ĊentraliUdmurtU" +
-			"garitikuUmbunduRootVaiVotikVunjoWalserWalamoWarayWashoKalmykSogaYaoY" +
-			"apeseYangbenYembaKantoniżZapotecZenagaTamazight Standard tal-MarokkZ" +
-			"uniBla kontenut lingwistikuZazaGħarbi Standard ModernĠermaniż Awstri" +
-			"jakĠermaniż ŻvizzeruIngliż AwstraljanIngliż KanadiżIngliż Brittaniku" +
-			"Ingliż AmerikanSpanjol Latin AmerikanSpanjol EwropewSpanjol tal-Mess" +
-			"ikuFranċiż KanadiżFranċiż ŻvizzeruSassonu KomuniFjammingPortugiż tal" +
-			"-BrażilPortugiż EwropewMoldovanSerbo-KroatSwahili tar-Repubblika Dem" +
-			"okratika tal-KongoĊiniż SimplifikatĊiniż Tradizzjonali",
+			"garitikuUmbunduLingwa Mhix MagħrufaVaiVotikVunjoWalserWalamoWarayWas" +
+			"hoKalmykSogaYaoYapeseYangbenYembaKantoniżZapotecZenagaTamazight Stan" +
+			"dard tal-MarokkZuniBla kontenut lingwistikuZazaGħarbi Standard Moder" +
+			"nĠermaniż AwstrijakĠermaniż ŻvizzeruIngliż AwstraljanIngliż KanadiżI" +
+			"ngliż BrittanikuIngliż AmerikanSpanjol Latin AmerikanSpanjol Ewropew" +
+			"Spanjol tal-MessikuFranċiż KanadiżFranċiż ŻvizzeruSassonu KomuniFjam" +
+			"mingPortugiż tal-BrażilPortugiż EwropewMoldovanSerbo-KroatSwahili ta" +
+			"r-Repubblika Demokratika tal-KongoĊiniż SimplifikatĊiniż Tradizzjona" +
+			"li",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000d, 0x0014, 0x001c, 0x0020, 0x0028, 0x0031,
@@ -9552,15 +9553,15 @@ var langHeaders = [252]header{
 			0x0d21, 0x0d21, 0x0d21, 0x0d26, 0x0d2a, 0x0d30, 0x0d35, 0x0d3a,
 			0x0d3d, 0x0d44, 0x0d44, 0x0d4b, 0x0d52, 0x0d52, 0x0d5a, 0x0d65,
 			0x0d6e, 0x0d6e, 0x0d74, 0x0d74, 0x0d7d, 0x0d7d, 0x0d84, 0x0d8a,
-			0x0d91, 0x0d99, 0x0db6, 0x0dbc, 0x0dc5, 0x0dcc, 0x0dd0, 0x0dd3,
-			0x0dd3, 0x0dd3, 0x0dd3, 0x0dd3, 0x0dd8, 0x0dd8, 0x0ddd, 0x0de3,
-			0x0de9, 0x0dee, 0x0df3, 0x0df3, 0x0df3, 0x0df9, 0x0df9, 0x0dfd,
+			0x0d91, 0x0d99, 0x0db6, 0x0dbc, 0x0dc5, 0x0dcc, 0x0de1, 0x0de4,
+			0x0de4, 0x0de4, 0x0de4, 0x0de4, 0x0de9, 0x0de9, 0x0dee, 0x0df4,
+			0x0dfa, 0x0dff, 0x0e04, 0x0e04, 0x0e04, 0x0e0a, 0x0e0a, 0x0e0e,
 			// Entry 240 - 27F
-			0x0e00, 0x0e06, 0x0e0d, 0x0e12, 0x0e12, 0x0e1b, 0x0e22, 0x0e22,
-			0x0e22, 0x0e28, 0x0e45, 0x0e49, 0x0e61, 0x0e65, 0x0e7c, 0x0e7c,
-			0x0e90, 0x0ea4, 0x0eb6, 0x0ec6, 0x0ed8, 0x0ee8, 0x0efe, 0x0f0d,
-			0x0f20, 0x0f20, 0x0f32, 0x0f45, 0x0f53, 0x0f5b, 0x0f70, 0x0f81,
-			0x0f89, 0x0f94, 0x0fc0, 0x0fd3, 0x0fe8,
+			0x0e11, 0x0e17, 0x0e1e, 0x0e23, 0x0e23, 0x0e2c, 0x0e33, 0x0e33,
+			0x0e33, 0x0e39, 0x0e56, 0x0e5a, 0x0e72, 0x0e76, 0x0e8d, 0x0e8d,
+			0x0ea1, 0x0eb5, 0x0ec7, 0x0ed7, 0x0ee9, 0x0ef9, 0x0f0f, 0x0f1e,
+			0x0f31, 0x0f31, 0x0f43, 0x0f56, 0x0f64, 0x0f6c, 0x0f81, 0x0f92,
+			0x0f9a, 0x0fa5, 0x0fd1, 0x0fe4, 0x0ff9,
 		},
 	},
 	{ // mua
@@ -9966,11 +9967,11 @@ var langHeaders = [252]header{
 			"ngoserersahosukumasususumeriskshimaoreklassisk syrisksyrisktemneteso" +
 			"terenotetumtigrétivitokelauklingontlingittamasjektonga (Nyasa)tok pi" +
 			"sintarokotsimshiantumbukatuvalutasawaqtuvinisksentral-tamazightudmur" +
-			"tugaritiskumbundurotvaivotiskvunjowalsertyskwolayttawaraywashokalmyk" +
-			"isksogayaoyapesiskyangbenyembakantonesiskzapotecblissymbolzenagastan" +
-			"dard marokkansk tamazightzuniutan språkleg innhaldzazamoderne standa" +
-			"rdarabiskbritisk engelsklågsaksiskflamskmoldaviskserbokroatiskforenk" +
-			"la kinesisktradisjonell kinesisk",
+			"tugaritiskumbunduukjent språkvaivotiskvunjowalsertyskwolayttawaraywa" +
+			"shokalmykisksogayaoyapesiskyangbenyembakantonesiskzapotecblissymbolz" +
+			"enagastandard marokkansk tamazightzuniutan språkleg innhaldzazamoder" +
+			"ne standardarabiskbritisk engelsklågsaksiskflamskmoldaviskserbokroat" +
+			"iskforenkla kinesisktradisjonell kinesisk",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x000d, 0x0015, 0x001e, 0x0022, 0x002a, 0x0032,
@@ -10050,15 +10051,15 @@ var langHeaders = [252]header{
 			0x0d19, 0x0d19, 0x0d19, 0x0d1e, 0x0d22, 0x0d28, 0x0d2d, 0x0d33,
 			0x0d37, 0x0d3e, 0x0d3e, 0x0d45, 0x0d4c, 0x0d4c, 0x0d54, 0x0d61,
 			0x0d6a, 0x0d6a, 0x0d70, 0x0d70, 0x0d79, 0x0d79, 0x0d80, 0x0d86,
-			0x0d8d, 0x0d95, 0x0da6, 0x0dac, 0x0db5, 0x0dbc, 0x0dbf, 0x0dc2,
-			0x0dc2, 0x0dc2, 0x0dc2, 0x0dc2, 0x0dc8, 0x0dc8, 0x0dcd, 0x0dd7,
-			0x0ddf, 0x0de4, 0x0de9, 0x0de9, 0x0de9, 0x0df2, 0x0df2, 0x0df6,
+			0x0d8d, 0x0d95, 0x0da6, 0x0dac, 0x0db5, 0x0dbc, 0x0dc9, 0x0dcc,
+			0x0dcc, 0x0dcc, 0x0dcc, 0x0dcc, 0x0dd2, 0x0dd2, 0x0dd7, 0x0de1,
+			0x0de9, 0x0dee, 0x0df3, 0x0df3, 0x0df3, 0x0dfc, 0x0dfc, 0x0e00,
 			// Entry 240 - 27F
-			0x0df9, 0x0e01, 0x0e08, 0x0e0d, 0x0e0d, 0x0e18, 0x0e1f, 0x0e29,
-			0x0e29, 0x0e2f, 0x0e4c, 0x0e50, 0x0e66, 0x0e6a, 0x0e81, 0x0e81,
-			0x0e81, 0x0e81, 0x0e81, 0x0e81, 0x0e90, 0x0e90, 0x0e90, 0x0e90,
-			0x0e90, 0x0e90, 0x0e90, 0x0e90, 0x0e9b, 0x0ea1, 0x0ea1, 0x0ea1,
-			0x0eaa, 0x0eb7, 0x0eb7, 0x0ec8, 0x0edd,
+			0x0e03, 0x0e0b, 0x0e12, 0x0e17, 0x0e17, 0x0e22, 0x0e29, 0x0e33,
+			0x0e33, 0x0e39, 0x0e56, 0x0e5a, 0x0e70, 0x0e74, 0x0e8b, 0x0e8b,
+			0x0e8b, 0x0e8b, 0x0e8b, 0x0e8b, 0x0e9a, 0x0e9a, 0x0e9a, 0x0e9a,
+			0x0e9a, 0x0e9a, 0x0e9a, 0x0e9a, 0x0ea5, 0x0eab, 0x0eab, 0x0eab,
+			0x0eb4, 0x0ec1, 0x0ec1, 0x0ed2, 0x0ee7,
 		},
 	},
 	{ // nnh
@@ -10465,13 +10466,13 @@ var langHeaders = [252]header{
 			" ସାମିସ୍କୋଲ୍ଟ ସାମୀସୋନିଙ୍କେସୋଗଡିଏନ୍ଶାରାନା ଟୋଙ୍ଗୋଶେରେର୍ସୁକୁମାଶୁଶୁସୁମେରି" +
 			"ଆନ୍କ୍ଲାସିକାଲ୍ ସିରିକ୍ସିରିକ୍ତିମନେତେରେନୋତେତୁମ୍ଟାଇଗ୍ରେତୀଭ୍ଟୋକେଲାଉକ୍ଲିଙ" +
 			"୍ଗନ୍ତ୍ଲିଙ୍ଗିଟ୍ତାମାଶେକ୍ନ୍ୟାସା ଟୋଙ୍ଗୋଟୋକ୍ ପିସିନ୍ତିସିମିସିଆନ୍ଟୁମ୍ବୁକାତ" +
-			"ୁଭାଲୁତୁଭିନିଆନ୍ଉଦମୂର୍ତ୍ତୟୁଗୋରଟିକ୍ଉମ୍ବୁଣ୍ଡୁମୂଳଭାଇଭୋଟିକ୍ୱାଲମୋୱାରୈୱାସୋ" +
-			"କାଲ୍ମୀକ୍ୟାଓୟାପୀସ୍ଜାପୋଟେକ୍ବ୍ଲିସିମ୍ବଲସ୍ଜେନାଗାଜୁନୀକୌଣସି ଲିଙ୍ଗୁଇଷ୍ଟ ସା" +
-			"ମଗ୍ରୀ ନାହିଁଜାଜାଅଷ୍ଟ୍ରିଆନ୍ ଜର୍ମାନସ୍ବିସ୍ ହାଇ ଜର୍ମାନ୍ଅଷ୍ଟ୍ରେଲିଆନ୍ ଇଁର" +
-			"ାଜୀକାନାଡିଆନ୍ ଇଁରାଜୀବ୍ରିଟିଶ୍ ଇଁରାଜୀୟୁ.ଏସ୍. ଇଁରାଜୀଲାଟିନ୍ ଆମେରିକାନ୍ ସ" +
-			"୍ପାନିଶ୍ଲେବେରିଆନ୍ ସ୍ପାନିଶ୍କାନାଡିଆନ୍ ଫ୍ରେଞ୍ଚସ୍ବିସ୍ ଫ୍ରେଞ୍ଚ୍ଫ୍ଲେମିଶ୍ବ" +
-			"୍ରାଜିଲିଆନ୍ ପର୍ତ୍ତୁଗୀଜ୍ଲେବେରିଆନ୍ ପର୍ତ୍ତୁଗୀଜ୍ମୋଲଡୋଭିଆନ୍ସର୍ବୋ-କ୍ରୋଆଟି" +
-			"ଆନ୍ସରଳିକରଣ ଚାଇନୀଜ୍ପାରମ୍ପରିକ ଚାଇନୀଜ୍",
+			"ୁଭାଲୁତୁଭିନିଆନ୍ଉଦମୂର୍ତ୍ତୟୁଗୋରଟିକ୍ଉମ୍ବୁଣ୍ଡୁଅଜଣା ଏବଂ ଅବୈଧ ଭାଷାଭାଇଭୋଟି" +
+			"କ୍ୱାଲମୋୱାରୈୱାସୋକାଲ୍ମୀକ୍ୟାଓୟାପୀସ୍ଜାପୋଟେକ୍ବ୍ଲିସିମ୍ବଲସ୍ଜେନାଗାଜୁନୀକୌଣସ" +
+			"ି ଲିଙ୍ଗୁଇଷ୍ଟ ସାମଗ୍ରୀ ନାହିଁଜାଜାଅଷ୍ଟ୍ରିଆନ୍ ଜର୍ମାନସ୍ବିସ୍ ହାଇ ଜର୍ମାନ୍ଅ" +
+			"ଷ୍ଟ୍ରେଲିଆନ୍ ଇଁରାଜୀକାନାଡିଆନ୍ ଇଁରାଜୀବ୍ରିଟିଶ୍ ଇଁରାଜୀୟୁ.ଏସ୍. ଇଁରାଜୀଲାଟ" +
+			"ିନ୍ ଆମେରିକାନ୍ ସ୍ପାନିଶ୍ଲେବେରିଆନ୍ ସ୍ପାନିଶ୍କାନାଡିଆନ୍ ଫ୍ରେଞ୍ଚସ୍ବିସ୍ ଫ୍" +
+			"ରେଞ୍ଚ୍ଫ୍ଲେମିଶ୍ବ୍ରାଜିଲିଆନ୍ ପର୍ତ୍ତୁଗୀଜ୍ଲେବେରିଆନ୍ ପର୍ତ୍ତୁଗୀଜ୍ମୋଲଡୋଭିଆ" +
+			"ନ୍ସର୍ବୋ-କ୍ରୋଆଟିଆନ୍ସରଳିକରଣ ଚାଇନୀଜ୍ପାରମ୍ପରିକ ଚାଇନୀଜ୍",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x000f, 0x002d, 0x0042, 0x0060, 0x006c, 0x0081, 0x0096,
@@ -10551,15 +10552,15 @@ var langHeaders = [252]header{
 			0x22c8, 0x22c8, 0x22c8, 0x22d7, 0x22d7, 0x22e9, 0x22fb, 0x2310,
 			0x231c, 0x2331, 0x2331, 0x234c, 0x236a, 0x236a, 0x2382, 0x23a7,
 			0x23c6, 0x23c6, 0x23c6, 0x23c6, 0x23e7, 0x23e7, 0x23ff, 0x2411,
-			0x2411, 0x242c, 0x242c, 0x2447, 0x2462, 0x247d, 0x2486, 0x248f,
-			0x248f, 0x248f, 0x248f, 0x248f, 0x24a1, 0x24a1, 0x24a1, 0x24a1,
-			0x24b0, 0x24bc, 0x24c8, 0x24c8, 0x24c8, 0x24e0, 0x24e0, 0x24e0,
+			0x2411, 0x242c, 0x242c, 0x2447, 0x2462, 0x247d, 0x24ad, 0x24b6,
+			0x24b6, 0x24b6, 0x24b6, 0x24b6, 0x24c8, 0x24c8, 0x24c8, 0x24c8,
+			0x24d7, 0x24e3, 0x24ef, 0x24ef, 0x24ef, 0x2507, 0x2507, 0x2507,
 			// Entry 240 - 27F
-			0x24e9, 0x24fb, 0x24fb, 0x24fb, 0x24fb, 0x24fb, 0x2513, 0x2537,
-			0x2537, 0x2549, 0x2549, 0x2555, 0x25a9, 0x25b5, 0x25b5, 0x25b5,
-			0x25e6, 0x2618, 0x264f, 0x267d, 0x26a8, 0x26cc, 0x2713, 0x2747,
-			0x2747, 0x2747, 0x2778, 0x27a3, 0x27a3, 0x27bb, 0x27fe, 0x283b,
-			0x2859, 0x2887, 0x2887, 0x28b2, 0x28e3,
+			0x2510, 0x2522, 0x2522, 0x2522, 0x2522, 0x2522, 0x253a, 0x255e,
+			0x255e, 0x2570, 0x2570, 0x257c, 0x25d0, 0x25dc, 0x25dc, 0x25dc,
+			0x260d, 0x263f, 0x2676, 0x26a4, 0x26cf, 0x26f3, 0x273a, 0x276e,
+			0x276e, 0x276e, 0x279f, 0x27ca, 0x27ca, 0x27e2, 0x2825, 0x2862,
+			0x2880, 0x28ae, 0x28ae, 0x28d9, 0x290a,
 		},
 	},
 	{ // os
@@ -12351,16 +12352,16 @@ var langHeaders = [252]header{
 			"hitshankielâmaadâsämikielâjuulevsämikielâanarâškielânuorttâlâškielâs" +
 			"oninkesranantongosahosukumakielâkomorikielâsyyriakielâtemnekielâates" +
 			"otetumtigrekielâklingonkielâtok pisintarokotumbukakielâtuvalukielâta" +
-			"sawaqtuvakielâKoskâatlas tamazightudmurtkielâumbunduruotâsvaikielâve" +
-			"psäkielâvunjowalliskielâwolaitakielâwaraykielâkalmukkielâsogayangben" +
-			"yembakantonkielâstandard tamazightzunikielâij kielâlâš siskáldâszaza" +
-			"kielâstandard arabiakielâNuorttâriijkâ saksakielâSveitsi pajesaksaki" +
-			"elâAustralia eŋgâlâskielâKanada eŋgâlâskielâBritannia eŋgâlâskielâAm" +
-			"erika eŋgâlâskielâLäättin-Amerika espanjakielâEspanja espanjakielâMe" +
-			"ksiko espanjakielâKanada ranskakielâSveitsi ranskakielâVuáládâhenâmi" +
-			"j saksakielâhollandkielâ (flaami)Brasilia portugalkielâPortugal port" +
-			"ugalkielâKongo swahilikielâoovtâkiärdánis kiinakielâärbivuáválâš kii" +
-			"nakielâ",
+			"sawaqtuvakielâKoskâatlas tamazightudmurtkielâumbundutubdâmettumis ki" +
+			"elâvaikielâvepsäkielâvunjowalliskielâwolaitakielâwaraykielâkalmukkie" +
+			"lâsogayangbenyembakantonkielâstandard tamazightzunikielâij kielâlâš " +
+			"siskáldâszazakielâstandard arabiakielâNuorttâriijkâ saksakielâSveits" +
+			"i pajesaksakielâAustralia eŋgâlâskielâKanada eŋgâlâskielâBritannia e" +
+			"ŋgâlâskielâAmerika eŋgâlâskielâLäättin-Amerika espanjakielâEspanja " +
+			"espanjakielâMeksiko espanjakielâKanada ranskakielâSveitsi ranskakiel" +
+			"âVuáládâhenâmij saksakielâhollandkielâ (flaami)Brasilia portugalkie" +
+			"lâPortugal portugalkielâKongo swahilikielâoovtâkiärdánis kiinakielâä" +
+			"rbivuáválâš kiinakielâ",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0004, 0x0011, 0x0011, 0x001a, 0x0024, 0x0030, 0x003e,
@@ -12440,15 +12441,15 @@ var langHeaders = [252]header{
 			0x0eb1, 0x0eb1, 0x0eb1, 0x0ebc, 0x0ec1, 0x0ec1, 0x0ec6, 0x0ed1,
 			0x0ed1, 0x0ed1, 0x0ed1, 0x0ede, 0x0ede, 0x0ede, 0x0ede, 0x0ede,
 			0x0ee7, 0x0ee7, 0x0eed, 0x0eed, 0x0eed, 0x0eed, 0x0efa, 0x0f06,
-			0x0f0d, 0x0f17, 0x0f2c, 0x0f38, 0x0f38, 0x0f3f, 0x0f46, 0x0f4f,
-			0x0f4f, 0x0f5b, 0x0f5b, 0x0f5b, 0x0f5b, 0x0f5b, 0x0f60, 0x0f6c,
-			0x0f79, 0x0f84, 0x0f84, 0x0f84, 0x0f84, 0x0f90, 0x0f90, 0x0f94,
+			0x0f0d, 0x0f17, 0x0f2c, 0x0f38, 0x0f38, 0x0f3f, 0x0f54, 0x0f5d,
+			0x0f5d, 0x0f69, 0x0f69, 0x0f69, 0x0f69, 0x0f69, 0x0f6e, 0x0f7a,
+			0x0f87, 0x0f92, 0x0f92, 0x0f92, 0x0f92, 0x0f9e, 0x0f9e, 0x0fa2,
 			// Entry 240 - 27F
-			0x0f94, 0x0f94, 0x0f9b, 0x0fa0, 0x0fa0, 0x0fac, 0x0fac, 0x0fac,
-			0x0fac, 0x0fac, 0x0fbe, 0x0fc8, 0x0fe2, 0x0fec, 0x1001, 0x1001,
-			0x101c, 0x1033, 0x104d, 0x1064, 0x107e, 0x1096, 0x10b5, 0x10ca,
-			0x10df, 0x10df, 0x10f2, 0x1106, 0x1124, 0x113a, 0x1151, 0x1168,
-			0x1168, 0x1168, 0x117b, 0x1198, 0x11b5,
+			0x0fa2, 0x0fa2, 0x0fa9, 0x0fae, 0x0fae, 0x0fba, 0x0fba, 0x0fba,
+			0x0fba, 0x0fba, 0x0fcc, 0x0fd6, 0x0ff0, 0x0ffa, 0x100f, 0x100f,
+			0x102a, 0x1041, 0x105b, 0x1072, 0x108c, 0x10a4, 0x10c3, 0x10d8,
+			0x10ed, 0x10ed, 0x1100, 0x1114, 0x1132, 0x1148, 0x115f, 0x1176,
+			0x1176, 0x1176, 0x1189, 0x11a6, 0x11c3,
 		},
 	},
 	{ // sn
@@ -13113,8 +13114,8 @@ var langHeaders = [252]header{
 			"a AljeriaKibuginiKigwichiinKihupaKiingushKilojbanKikachinKikoyra Chi" +
 			"iniKikakoKikomipermyakKikurukhKikumykKilambamakKimokshaKimikmakiKimo" +
 			"hokiKimossiKingiemboonKiinkoPijini ya NijeriaKikiicheKiarabu cha Cha" +
-			"diKitongo cha SrananKikomoroKisiriaKiudumurtiKirootKiwalserKiarabu c" +
-			"ha Dunia Kilichosanifishwa",
+			"diKitongo cha SrananKikomoroKisiriaKiudumurtiKiwalserKiarabu cha Dun" +
+			"ia Kilichosanifishwa",
 		[]uint16{ // 591 elements
 			// Entry 0 - 3F
 			0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0006, 0x0006, 0x0006,
@@ -13194,12 +13195,12 @@ var langHeaders = [252]header{
 			0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137,
 			0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137,
 			0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137, 0x0137,
-			0x0137, 0x0137, 0x0137, 0x0141, 0x0141, 0x0141, 0x0147, 0x0147,
-			0x0147, 0x0147, 0x0147, 0x0147, 0x0147, 0x0147, 0x0147, 0x014f,
-			0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x014f,
+			0x0137, 0x0137, 0x0137, 0x0141, 0x0141, 0x0141, 0x0141, 0x0141,
+			0x0141, 0x0141, 0x0141, 0x0141, 0x0141, 0x0141, 0x0141, 0x0149,
+			0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x0149,
 			// Entry 240 - 27F
-			0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x014f,
-			0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x014f, 0x0172,
+			0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x0149,
+			0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x0149, 0x016c,
 		},
 	},
 	{ // sw-KE
@@ -13208,8 +13209,8 @@ var langHeaders = [252]header{
 			"ia cha JuuKingushiKilojbaniKikachinKikoyra ChiiniKikakoKikomipermyak" +
 			"KikurukhKilambaKimokshaKimicmacKimohokiKiingiemboonKiin’koPijini ya " +
 			"NijeriascoKikoyraboro SenniKiarabu cha ChadiKiscran TongoKicomoroKis" +
-			"yriaLugha ya Central Atlas TamazightKiudumurtiKirootKiwalserTamazigh" +
-			"t Sanifu ya MorokoKiarabu cha Sasa Kilichosanifishwa",
+			"yriaLugha ya Central Atlas TamazightKiudumurtiKiwalserTamazight Sani" +
+			"fu ya MorokoKiarabu cha Sasa Kilichosanifishwa",
 		[]uint16{ // 591 elements
 			// Entry 0 - 3F
 			0x0000, 0x0000, 0x0000, 0x0000, 0x0000, 0x0005, 0x0005, 0x0005,
@@ -13289,12 +13290,12 @@ var langHeaders = [252]header{
 			0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e,
 			0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e,
 			0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e, 0x015e,
-			0x015e, 0x015e, 0x017e, 0x0188, 0x0188, 0x0188, 0x018e, 0x018e,
-			0x018e, 0x018e, 0x018e, 0x018e, 0x018e, 0x018e, 0x018e, 0x0196,
-			0x0196, 0x0196, 0x0196, 0x0196, 0x0196, 0x0196, 0x0196, 0x0196,
+			0x015e, 0x015e, 0x017e, 0x0188, 0x0188, 0x0188, 0x0188, 0x0188,
+			0x0188, 0x0188, 0x0188, 0x0188, 0x0188, 0x0188, 0x0188, 0x0190,
+			0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
 			// Entry 240 - 27F
-			0x0196, 0x0196, 0x0196, 0x0196, 0x0196, 0x0196, 0x0196, 0x0196,
-			0x0196, 0x0196, 0x01b0, 0x01b0, 0x01b0, 0x01b0, 0x01d2,
+			0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190, 0x0190,
+			0x0190, 0x0190, 0x01aa, 0x01aa, 0x01aa, 0x01aa, 0x01cc,
 		},
 	},
 	{ // ta
@@ -13626,22 +13627,22 @@ var langHeaders = [252]header{
 			"olea fakatalokolea fakasakōnialea fakatisīmisianilea fakatati-mosele" +
 			"milea fakatumepukalea fakatūvalulea fakatasauakilea fakatuvīnialea f" +
 			"akatamasaiti-ʻatilasi-lolotolea fakaʻutimulitilea fakaʻūkalitilea fa" +
-			"kaʻumipūnitulea fakaʻilonga-tefitolea fakavailea fakavenēsialea faka" +
-			"vepisilea fakavelamingi-hihifolea fakafalanikoni-lolotolea fakavotik" +
-			"ilea fakavōlolea fakavūnisolea fakaʻualiselilea fakaʻuolaitalea faka" +
-			"ʻualailea fakaʻuasiōlea fakaʻuālipililea fakasiaina-uūlea fakakalim" +
-			"ikilea fakamingilelialea fakasokalea fakaʻiaolea fakaʻiapilea fakaʻi" +
-			"angipenilea fakaʻiēmipalea fakaneʻēngatūlea fakakuangitongilea fakas" +
-			"apotekilea fakaʻilonga-pilisilea fakasēlanilea fakasenakalea fakatam" +
-			"asaiti-molokolea fakasuniʻikai ha lealea fakasāsālea fakaʻalepea (mā" +
-			"mani)lea fakasiamane-ʻaositulialea fakasiamane-hake-suisilanilea fak" +
-			"apālangi-ʻaositelēlialea fakapālangi-kānatalea fakapilitānialea faka" +
-			"pālangi-ʻamelikalea fakasipēnisi lātini-ʻamelikalea fakasipēnisi-‘iu" +
-			"lopelea fakasipēnisi-mekisikoulea fakafalanisē-kānatalea fakafalanis" +
-			"ē-suisilanilea fakasakisoni-hifolea fakahōlani-pelesiumelea fakapot" +
-			"ukali-palāsililea fakapotukali-ʻiulopelea fakamolitāvialea fakakuloi" +
-			"sia-sēpialea fakasuahili-kongikōlea fakasiaina-fakafaingofualea faka" +
-			"siaina-tukufakaholo",
+			"kaʻumipūnitulea taʻeʻiloalea fakavailea fakavenēsialea fakavepisilea" +
+			" fakavelamingi-hihifolea fakafalanikoni-lolotolea fakavotikilea faka" +
+			"vōlolea fakavūnisolea fakaʻualiselilea fakaʻuolaitalea fakaʻualailea" +
+			" fakaʻuasiōlea fakaʻuālipililea fakasiaina-uūlea fakakalimikilea fak" +
+			"amingilelialea fakasokalea fakaʻiaolea fakaʻiapilea fakaʻiangipenile" +
+			"a fakaʻiēmipalea fakaneʻēngatūlea fakakuangitongilea fakasapotekilea" +
+			" fakaʻilonga-pilisilea fakasēlanilea fakasenakalea fakatamasaiti-mol" +
+			"okolea fakasuniʻikai ha lealea fakasāsālea fakaʻalepea (māmani)lea f" +
+			"akasiamane-ʻaositulialea fakasiamane-hake-suisilanilea fakapālangi-ʻ" +
+			"aositelēlialea fakapālangi-kānatalea fakapilitānialea fakapālangi-ʻa" +
+			"melikalea fakasipēnisi lātini-ʻamelikalea fakasipēnisi-‘iulopelea fa" +
+			"kasipēnisi-mekisikoulea fakafalanisē-kānatalea fakafalanisē-suisilan" +
+			"ilea fakasakisoni-hifolea fakahōlani-pelesiumelea fakapotukali-palās" +
+			"ililea fakapotukali-ʻiulopelea fakamolitāvialea fakakuloisia-sēpiale" +
+			"a fakasuahili-kongikōlea fakasiaina-fakafaingofualea fakasiaina-tuku" +
+			"fakaholo",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0010, 0x0022, 0x0035, 0x0048, 0x0057, 0x0068, 0x0079,
@@ -13721,15 +13722,15 @@ var langHeaders = [252]header{
 			0x222e, 0x223d, 0x2249, 0x2258, 0x2264, 0x2272, 0x2280, 0x228f,
 			0x229b, 0x22aa, 0x22b9, 0x22ca, 0x22de, 0x22ec, 0x22fd, 0x2310,
 			0x2323, 0x2331, 0x233f, 0x234f, 0x2363, 0x2378, 0x2388, 0x2397,
-			0x23a7, 0x23b7, 0x23d9, 0x23ec, 0x23fe, 0x2412, 0x2429, 0x2434,
-			0x2444, 0x2452, 0x246a, 0x2483, 0x2491, 0x249e, 0x24ad, 0x24bf,
-			0x24d0, 0x24df, 0x24ef, 0x2502, 0x2514, 0x2524, 0x2536, 0x2542,
+			0x23a7, 0x23b7, 0x23d9, 0x23ec, 0x23fe, 0x2412, 0x2421, 0x242c,
+			0x243c, 0x244a, 0x2462, 0x247b, 0x2489, 0x2496, 0x24a5, 0x24b7,
+			0x24c8, 0x24d7, 0x24e7, 0x24fa, 0x250c, 0x251c, 0x252e, 0x253a,
 			// Entry 240 - 27F
-			0x254f, 0x255d, 0x2570, 0x2581, 0x2595, 0x25a8, 0x25b8, 0x25cf,
-			0x25de, 0x25ec, 0x2604, 0x2610, 0x261d, 0x262b, 0x2645, 0x2645,
-			0x2660, 0x267e, 0x269d, 0x26b5, 0x26c7, 0x26e1, 0x2704, 0x271f,
-			0x273a, 0x273a, 0x2753, 0x276e, 0x2783, 0x279c, 0x27b6, 0x27cf,
-			0x27e1, 0x27f8, 0x2810, 0x282c, 0x2847,
+			0x2547, 0x2555, 0x2568, 0x2579, 0x258d, 0x25a0, 0x25b0, 0x25c7,
+			0x25d6, 0x25e4, 0x25fc, 0x2608, 0x2615, 0x2623, 0x263d, 0x263d,
+			0x2658, 0x2676, 0x2695, 0x26ad, 0x26bf, 0x26d9, 0x26fc, 0x2717,
+			0x2732, 0x2732, 0x274b, 0x2766, 0x277b, 0x2794, 0x27ae, 0x27c7,
+			0x27d9, 0x27f0, 0x2808, 0x2824, 0x283f,
 		},
 	},
 	{ // tr
@@ -13980,15 +13981,15 @@ var langHeaders = [252]header{
 			"چەتېمنېچەتېسوچەتېرېناچەتېتۇمچەتىگرېچەتىۋچەتوكېلاۋچەكىلىنگونچەتىلىنگ" +
 			"ىتچەتاماشېكچەنياسا توڭانچەتوك-پىسىنچەتوروكوچەسىمشيانچەتۇمبۇكاچەتۇۋا" +
 			"لۇچەشىمالىي سوڭخايچەتوۋاچەمەركىزىي ئاتلاس تامازايتچەئۇدمۇرتچەئۇگارى" +
-			"تىكچەئۇمبۇندۇچەغول تىلۋايچەۋوتېچەۋۇنجوچەۋالسېرچەۋولايتاچەۋارايچەۋاش" +
-			"وچەقالماقچەسوگاچەياۋچەياپچەياڭبەنچەيېمباچەگۇاڭدوڭچەزاپوتېكچەبىلىس ب" +
-			"ەلگىلىرىزېناگاچەئۆلچەملىك ماراكەش تامازىتچەزۇنىچەتىل مەزمۇنى يوقزاز" +
-			"اچەھازىرقى زامان ئۆلچەملىك ئەرەبچەئاۋستىرىيە گېرمانچەشىۋىتسارىيە ئې" +
-			"گىزلىك گېرمانچەئاۋسترالىيە ئىنگلىزچەكانادا ئىنگلىزچەئەنگلىيە ئىنگلى" +
-			"زچەئامېرىكا ئىنگلىزچەلاتىن ئامېرىكا ئىسپانچەياۋروپا ئىسپانچەمېكسىكا" +
-			" ئىسپانچەكانادا فىرانسۇزچەشىۋىتسارىيە فىرانسۇزچەبىرازىلىيە پورتۇگالچ" +
-			"ەياۋروپا پورتۇگالچەسېرب-كرودىيەچەكونگو سىۋالىچەئاددىي خەنچەمۇرەككەپ" +
-			" خەنچە",
+			"تىكچەئۇمبۇندۇچەيوچۇن تىلۋايچەۋوتېچەۋۇنجوچەۋالسېرچەۋولايتاچەۋارايچەۋ" +
+			"اشوچەقالماقچەسوگاچەياۋچەياپچەياڭبەنچەيېمباچەگۇاڭدوڭچەزاپوتېكچەبىلىس" +
+			" بەلگىلىرىزېناگاچەئۆلچەملىك ماراكەش تامازىتچەزۇنىچەتىل مەزمۇنى يوقزا" +
+			"زاچەھازىرقى زامان ئۆلچەملىك ئەرەبچەئاۋستىرىيە گېرمانچەشىۋىتسارىيە ئ" +
+			"ېگىزلىك گېرمانچەئاۋسترالىيە ئىنگلىزچەكانادا ئىنگلىزچەئەنگلىيە ئىنگل" +
+			"ىزچەئامېرىكا ئىنگلىزچەلاتىن ئامېرىكا ئىسپانچەياۋروپا ئىسپانچەمېكسىك" +
+			"ا ئىسپانچەكانادا فىرانسۇزچەشىۋىتسارىيە فىرانسۇزچەبىرازىلىيە پورتۇگا" +
+			"لچەياۋروپا پورتۇگالچەسېرب-كرودىيەچەكونگو سىۋالىچەئاددىي خەنچەمۇرەكك" +
+			"ەپ خەنچە",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x000e, 0x001e, 0x0030, 0x0044, 0x0052, 0x0062, 0x0074,
@@ -14068,15 +14069,15 @@ var langHeaders = [252]header{
 			0x1e2d, 0x1e2d, 0x1e2d, 0x1e3b, 0x1e47, 0x1e57, 0x1e65, 0x1e73,
 			0x1e7d, 0x1e8f, 0x1e8f, 0x1ea3, 0x1eb7, 0x1eb7, 0x1ec9, 0x1ee2,
 			0x1ef7, 0x1ef7, 0x1f07, 0x1f07, 0x1f19, 0x1f19, 0x1f2b, 0x1f3b,
-			0x1f5a, 0x1f66, 0x1f98, 0x1faa, 0x1fc0, 0x1fd4, 0x1fe1, 0x1feb,
-			0x1feb, 0x1feb, 0x1feb, 0x1feb, 0x1ff7, 0x1ff7, 0x2005, 0x2015,
-			0x2027, 0x2035, 0x2041, 0x2041, 0x2041, 0x2051, 0x2051, 0x205d,
+			0x1f5a, 0x1f66, 0x1f98, 0x1faa, 0x1fc0, 0x1fd4, 0x1fe5, 0x1fef,
+			0x1fef, 0x1fef, 0x1fef, 0x1fef, 0x1ffb, 0x1ffb, 0x2009, 0x2019,
+			0x202b, 0x2039, 0x2045, 0x2045, 0x2045, 0x2055, 0x2055, 0x2061,
 			// Entry 240 - 27F
-			0x2067, 0x2071, 0x2081, 0x208f, 0x208f, 0x20a1, 0x20b3, 0x20d0,
-			0x20d0, 0x20e0, 0x2114, 0x2120, 0x213c, 0x2148, 0x2183, 0x2183,
-			0x21a8, 0x21e0, 0x2209, 0x2228, 0x224b, 0x226e, 0x229a, 0x22b9,
-			0x22d8, 0x22d8, 0x22f9, 0x2324, 0x2324, 0x2324, 0x234d, 0x2370,
-			0x2370, 0x238b, 0x23a6, 0x23bd, 0x23d8,
+			0x206b, 0x2075, 0x2085, 0x2093, 0x2093, 0x20a5, 0x20b7, 0x20d4,
+			0x20d4, 0x20e4, 0x2118, 0x2124, 0x2140, 0x214c, 0x2187, 0x2187,
+			0x21ac, 0x21e4, 0x220d, 0x222c, 0x224f, 0x2272, 0x229e, 0x22bd,
+			0x22dc, 0x22dc, 0x22fd, 0x2328, 0x2328, 0x2328, 0x2351, 0x2374,
+			0x2374, 0x238f, 0x23aa, 0x23c1, 0x23dc,
 		},
 	},
 	{ // uk
@@ -15190,10 +15191,10 @@ var langHeaders = [252]header{
 			"里文瑟爾卡普文東桑海文古愛爾蘭文薩莫吉希亞文希爾哈文撣文阿拉伯文（查德）希達摩文下西利西亞文塞拉亞文南薩米文魯勒薩米文伊納裡薩米文斯" +
 			"科特薩米文索尼基文索格底亞納文蘇拉南東墎文塞雷爾文薩霍文沙特菲士蘭文蘇庫馬文蘇蘇文蘇美文葛摩文古敘利亞文敘利亞文西利西亞文圖盧文提姆" +
 			"文特索文泰雷諾文泰頓文蒂格雷文提夫文托克勞文查庫爾文克林貢文特林基特文塔里什文塔馬奇克文東加文（尼亞薩）托比辛文圖羅尤文太魯閣文特薩" +
-			"克尼恩文欽西安文穆斯林塔特文圖姆布卡文吐瓦魯文北桑海文土凡文塔馬齊格特文沃蒂艾克文烏加列文姆本杜文根語言瓦伊文威尼斯文維普森文西佛蘭" +
-			"德文美茵-法蘭克尼亞文沃提克文佛羅文溫舊文瓦瑟文瓦拉莫文瓦瑞文瓦紹文沃皮瑞文吳語卡爾梅克文明格列爾文索加文瑤文雅浦文洋卞文耶姆巴文奈" +
-			"恩加圖文粵語薩波特克文布列斯符號西蘭文澤納加文標準摩洛哥塔馬塞特文祖尼文無語言內容扎扎文現代標準阿拉伯文高地德文（瑞士）低地薩克遜文" +
-			"佛蘭芒文摩爾多瓦文塞爾維亞克羅埃西亞文史瓦希里文（剛果）簡體中文繁體中文",
+			"克尼恩文欽西安文穆斯林塔特文圖姆布卡文吐瓦魯文北桑海文土凡文塔馬齊格特文沃蒂艾克文烏加列文姆本杜文未知語言瓦伊文威尼斯文維普森文西佛" +
+			"蘭德文美茵-法蘭克尼亞文沃提克文佛羅文溫舊文瓦瑟文瓦拉莫文瓦瑞文瓦紹文沃皮瑞文吳語卡爾梅克文明格列爾文索加文瑤文雅浦文洋卞文耶姆巴文" +
+			"奈恩加圖文粵語薩波特克文布列斯符號西蘭文澤納加文標準摩洛哥塔馬塞特文祖尼文無語言內容扎扎文現代標準阿拉伯文高地德文（瑞士）低地薩克遜" +
+			"文佛蘭芒文摩爾多瓦文塞爾維亞克羅埃西亞文史瓦希里文（剛果）簡體中文繁體中文",
 		[]uint16{ // 613 elements
 			// Entry 0 - 3F
 			0x0000, 0x0009, 0x0018, 0x0027, 0x0036, 0x003f, 0x004e, 0x005a,
@@ -15273,15 +15274,15 @@ var langHeaders = [252]header{
 			0x1a2e, 0x1a3d, 0x1a46, 0x1a4f, 0x1a58, 0x1a64, 0x1a6d, 0x1a79,
 			0x1a82, 0x1a8e, 0x1a9a, 0x1aa6, 0x1ab5, 0x1ac1, 0x1ad0, 0x1ae8,
 			0x1af4, 0x1b00, 0x1b0c, 0x1b1e, 0x1b2a, 0x1b3c, 0x1b4b, 0x1b57,
-			0x1b63, 0x1b6c, 0x1b7e, 0x1b8d, 0x1b99, 0x1ba5, 0x1bae, 0x1bb7,
-			0x1bc3, 0x1bcf, 0x1bde, 0x1bf7, 0x1c03, 0x1c0c, 0x1c15, 0x1c1e,
-			0x1c2a, 0x1c33, 0x1c3c, 0x1c48, 0x1c4e, 0x1c5d, 0x1c6c, 0x1c75,
+			0x1b63, 0x1b6c, 0x1b7e, 0x1b8d, 0x1b99, 0x1ba5, 0x1bb1, 0x1bba,
+			0x1bc6, 0x1bd2, 0x1be1, 0x1bfa, 0x1c06, 0x1c0f, 0x1c18, 0x1c21,
+			0x1c2d, 0x1c36, 0x1c3f, 0x1c4b, 0x1c51, 0x1c60, 0x1c6f, 0x1c78,
 			// Entry 240 - 27F
-			0x1c7b, 0x1c84, 0x1c8d, 0x1c99, 0x1ca8, 0x1cae, 0x1cbd, 0x1ccc,
-			0x1cd5, 0x1ce1, 0x1cff, 0x1d08, 0x1d17, 0x1d20, 0x1d38, 0x1d38,
-			0x1d38, 0x1d50, 0x1d50, 0x1d50, 0x1d50, 0x1d50, 0x1d50, 0x1d50,
-			0x1d50, 0x1d50, 0x1d50, 0x1d50, 0x1d62, 0x1d6e, 0x1d6e, 0x1d6e,
-			0x1d7d, 0x1d9b, 0x1db6, 0x1dc2, 0x1dce,
+			0x1c7e, 0x1c87, 0x1c90, 0x1c9c, 0x1cab, 0x1cb1, 0x1cc0, 0x1ccf,
+			0x1cd8, 0x1ce4, 0x1d02, 0x1d0b, 0x1d1a, 0x1d23, 0x1d3b, 0x1d3b,
+			0x1d3b, 0x1d53, 0x1d53, 0x1d53, 0x1d53, 0x1d53, 0x1d53, 0x1d53,
+			0x1d53, 0x1d53, 0x1d53, 0x1d53, 0x1d65, 0x1d71, 0x1d71, 0x1d71,
+			0x1d80, 0x1d9e, 0x1db9, 0x1dc5, 0x1dd1,
 		},
 	},
 	{ // zgh
@@ -15488,7 +15489,7 @@ var langHeaders = [252]header{
 	},
 }
 
-const afLangStr string = "" + // Size: 3015 bytes
+const afLangStr string = "" + // Size: 3038 bytes
 	"AfarAbkasiesAfrikaansAkanAmhariesAragoneesArabiesAssameesAvariesAymaraAz" +
 	"erbeidjansBaskirBelo-RussiesBulgaarsBislamaBambaraBengaalsTibettaansBret" +
 	"onsBosniesKatalaansTsjetsjenChamorroKorsikaansTsjeggiesKerkslawiesChuvas" +
@@ -15527,10 +15528,10 @@ const afLangStr string = "" + // Size: 3015 bytes
 	"sSenaKoyraboro SenniTachelhitShanSuid-SamiLule SamiInari SamiSkolt SamiS" +
 	"oninkeSranan TongoSahoSukumaComoraansSirieseTimneTesoTetoemTigreKlingonT" +
 	"ok PisinTarokoToemboekaTuvaluTasawaqTuvineesSentraal Atlas TamazightUdmu" +
-	"rtUmbunduRootVaiVunjoWalserWolayttaWarayWarlpiriKalmykSogaYangbenYembaKa" +
-	"ntoneesStandaard Marokkaanse TamazightZuniGeen linguistiese inhoudZazaMo" +
-	"derne Standaard ArabiesSwitserse hoog-DuitsSpaans (Suid-Amerika)Nedersak" +
-	"siesVlaamsMoldawiesSerwo-KroatiesSwahili (Kongo)"
+	"rtUmbunduOnbekende of ongeldige taalVaiVunjoWalserWolayttaWarayWarlpiriK" +
+	"almykSogaYangbenYembaKantoneesStandaard Marokkaanse TamazightZuniGeen li" +
+	"nguistiese inhoudZazaModerne Standaard ArabiesSwitserse hoog-DuitsSpaans" +
+	" (Suid-Amerika)NedersaksiesVlaamsMoldawiesSerwo-KroatiesSwahili (Kongo)"
 
 var afLangIdx = []uint16{ // 611 elements
 	// Entry 0 - 3F
@@ -15611,18 +15612,18 @@ var afLangIdx = []uint16{ // 611 elements
 	0x0a5b, 0x0a5b, 0x0a5b, 0x0a60, 0x0a64, 0x0a64, 0x0a6a, 0x0a6f,
 	0x0a6f, 0x0a6f, 0x0a6f, 0x0a76, 0x0a76, 0x0a76, 0x0a76, 0x0a76,
 	0x0a7f, 0x0a7f, 0x0a85, 0x0a85, 0x0a85, 0x0a85, 0x0a8e, 0x0a94,
-	0x0a9b, 0x0aa3, 0x0abb, 0x0ac1, 0x0ac1, 0x0ac8, 0x0acc, 0x0acf,
-	0x0acf, 0x0acf, 0x0acf, 0x0acf, 0x0acf, 0x0acf, 0x0ad4, 0x0ada,
-	0x0ae2, 0x0ae7, 0x0ae7, 0x0aef, 0x0aef, 0x0af5, 0x0af5, 0x0af9,
+	0x0a9b, 0x0aa3, 0x0abb, 0x0ac1, 0x0ac1, 0x0ac8, 0x0ae3, 0x0ae6,
+	0x0ae6, 0x0ae6, 0x0ae6, 0x0ae6, 0x0ae6, 0x0ae6, 0x0aeb, 0x0af1,
+	0x0af9, 0x0afe, 0x0afe, 0x0b06, 0x0b06, 0x0b0c, 0x0b0c, 0x0b10,
 	// Entry 240 - 27F
-	0x0af9, 0x0af9, 0x0b00, 0x0b05, 0x0b05, 0x0b0e, 0x0b0e, 0x0b0e,
-	0x0b0e, 0x0b0e, 0x0b2d, 0x0b31, 0x0b49, 0x0b4d, 0x0b66, 0x0b66,
-	0x0b66, 0x0b7a, 0x0b7a, 0x0b7a, 0x0b7a, 0x0b7a, 0x0b8f, 0x0b8f,
-	0x0b8f, 0x0b8f, 0x0b8f, 0x0b8f, 0x0b9b, 0x0ba1, 0x0ba1, 0x0ba1,
-	0x0baa, 0x0bb8, 0x0bc7,
+	0x0b10, 0x0b10, 0x0b17, 0x0b1c, 0x0b1c, 0x0b25, 0x0b25, 0x0b25,
+	0x0b25, 0x0b25, 0x0b44, 0x0b48, 0x0b60, 0x0b64, 0x0b7d, 0x0b7d,
+	0x0b7d, 0x0b91, 0x0b91, 0x0b91, 0x0b91, 0x0b91, 0x0ba6, 0x0ba6,
+	0x0ba6, 0x0ba6, 0x0ba6, 0x0ba6, 0x0bb2, 0x0bb8, 0x0bb8, 0x0bb8,
+	0x0bc1, 0x0bcf, 0x0bde,
 } // Size: 1246 bytes
 
-const amLangStr string = "" + // Size: 6791 bytes
+const amLangStr string = "" + // Size: 6810 bytes
 	"አፋርኛአብሐዚኛአቬስታንአፍሪካንኛአካንኛአማርኛአራጎንስዓረብኛአሳሜዛዊአቫሪክአያማርኛአዘርባጃንኛባስኪርኛቤላራሻኛቡልጋሪ" +
 	"ኛቢስላምኛባምባርኛቤንጋሊኛቲቤታንኛብሬቶንኛቦስኒያንኛካታላንኛችችንቻሞሮኮርሲካኛክሪቼክኛቸርች ስላቪክቹቫሽወልሽዴኒሽ" +
 	"ጀርመንዲቬህድዞንግኻኛኢዊግሪክኛእንግሊዝኛኤስፐራንቶስፓንሽኛኢስቶኒያንኛባስክኛፐርሺያኛፉላህፊኒሽፊጂኛፋሮኛፈረንሳይኛ" +
@@ -15651,12 +15652,12 @@ const amLangStr string = "" + // Size: 6791 bytes
 	"ያ ፒጂንፐሩሳንኛኪቼቺምቦራዞ ሃይላንድ ኩቹዋራፓኑኢራሮቶንጋሮምቦአሮማንያንርዋሳንዳዌሳክሃሳምቡሩሳንታሊንጋምባይሳንጉ" +
 	"ሲሲሊያንኛስኮትስደቡባዊ ኩርዲሽሴናኮይራቦሮ ሴኒታቼልሂትሻንቻዲያን ዓረብኛሲዳምኛደቡባዊ ሳሚሉሌ ሳሚኢናሪ ሳሚስኮል" +
 	"ት ሳሚሶኒንኬስራናን ቶንጎሳሆኛሱኩማኮሞሪያንክላሲክ ኔይራሲሪያክቲምኔቴሶቴተምትግረክሊንጎንኛቶክ ፒሲንታሮኮቱምቡካቱ" +
-	"ቫሉታሳዋቅቱቪንያንኛመካከለኛ አትላስ ታማዚግትኡድሙርትኡምቡንዱሩትቫይቩንጆዋልሰርወላይትኛዋራይዋርልፒሪዉ ቻይንኛካል" +
-	"ማይክሶጋያንግቤንኛየምባካንቶኒዝብሊስይምቦልስመደበኛ የሞሮኮ ታማዚግትዙኒቋንቋዊ ይዘት አይደለምዛዛዘመናዊ መደበኛ " +
-	"ዓረብኛየኦስትሪያ ጀርመንየስዊዝ ከፍተኛ ጀርመንኛየአውስትራሊያ እንግሊዝኛየካናዳ እንግሊዝኛየብሪቲሽ እንግሊዝኛየአ" +
-	"ሜሪካ እንግሊዝኛየላቲን አሜሪካ ስፓኒሽየአውሮፓ ስፓንሽኛየሜክሲኮ ስፓንሽኛየካናዳ ፈረንሳይኛየስዊዝ ፈረንሳይኛየታ" +
-	"ችኛው ሳክሰንፍሌሚሽየብራዚል ፖርቹጋልኛየአውሮፓ ፖርቹጋልኛሞልዳቪያንኛሰርቦ-ክሮኤሽያኛኮንጎ ስዋሂሊቀለል ያለ ቻይ" +
-	"ንኛባህላዊ ቻይንኛ"
+	"ቫሉታሳዋቅቱቪንያንኛመካከለኛ አትላስ ታማዚግትኡድሙርትኡምቡንዱያልታወቀ ቋንቋቫይቩንጆዋልሰርወላይትኛዋራይዋርልፒሪዉ" +
+	" ቻይንኛካልማይክሶጋያንግቤንኛየምባካንቶኒዝብሊስይምቦልስመደበኛ የሞሮኮ ታማዚግትዙኒቋንቋዊ ይዘት አይደለምዛዛዘመናዊ " +
+	"መደበኛ ዓረብኛየኦስትሪያ ጀርመንየስዊዝ ከፍተኛ ጀርመንኛየአውስትራሊያ እንግሊዝኛየካናዳ እንግሊዝኛየብሪቲሽ እንግ" +
+	"ሊዝኛየአሜሪካ እንግሊዝኛየላቲን አሜሪካ ስፓኒሽየአውሮፓ ስፓንሽኛየሜክሲኮ ስፓንሽኛየካናዳ ፈረንሳይኛየስዊዝ ፈረን" +
+	"ሳይኛየታችኛው ሳክሰንፍሌሚሽየብራዚል ፖርቹጋልኛየአውሮፓ ፖርቹጋልኛሞልዳቪያንኛሰርቦ-ክሮኤሽያኛኮንጎ ስዋሂሊቀለል " +
+	"ያለ ቻይንኛባህላዊ ቻይንኛ"
 
 var amLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -15737,18 +15738,18 @@ var amLangIdx = []uint16{ // 613 elements
 	0x162d, 0x162d, 0x162d, 0x1636, 0x163c, 0x163c, 0x1645, 0x164e,
 	0x164e, 0x164e, 0x164e, 0x1660, 0x1660, 0x1660, 0x1660, 0x1660,
 	0x1670, 0x1670, 0x1679, 0x1679, 0x1679, 0x1679, 0x1685, 0x168e,
-	0x169a, 0x16ac, 0x16d8, 0x16e7, 0x16e7, 0x16f6, 0x16fc, 0x1702,
-	0x1702, 0x1702, 0x1702, 0x1702, 0x1702, 0x1702, 0x170b, 0x1717,
-	0x1726, 0x172f, 0x172f, 0x173e, 0x174e, 0x175d, 0x175d, 0x1763,
+	0x169a, 0x16ac, 0x16d8, 0x16e7, 0x16e7, 0x16f6, 0x170f, 0x1715,
+	0x1715, 0x1715, 0x1715, 0x1715, 0x1715, 0x1715, 0x171e, 0x172a,
+	0x1739, 0x1742, 0x1742, 0x1751, 0x1761, 0x1770, 0x1770, 0x1776,
 	// Entry 240 - 27F
-	0x1763, 0x1763, 0x1775, 0x177e, 0x177e, 0x178d, 0x178d, 0x17a5,
-	0x17a5, 0x17a5, 0x17ce, 0x17d4, 0x17fa, 0x1800, 0x1826, 0x1826,
-	0x1845, 0x186e, 0x1899, 0x18b8, 0x18da, 0x18fc, 0x1922, 0x1941,
-	0x1960, 0x1960, 0x197f, 0x199e, 0x19ba, 0x19c6, 0x19e8, 0x1a0a,
-	0x1a1f, 0x1a3b, 0x1a51, 0x1a6e, 0x1a87,
+	0x1776, 0x1776, 0x1788, 0x1791, 0x1791, 0x17a0, 0x17a0, 0x17b8,
+	0x17b8, 0x17b8, 0x17e1, 0x17e7, 0x180d, 0x1813, 0x1839, 0x1839,
+	0x1858, 0x1881, 0x18ac, 0x18cb, 0x18ed, 0x190f, 0x1935, 0x1954,
+	0x1973, 0x1973, 0x1992, 0x19b1, 0x19cd, 0x19d9, 0x19fb, 0x1a1d,
+	0x1a32, 0x1a4e, 0x1a64, 0x1a81, 0x1a9a,
 } // Size: 1250 bytes
 
-const arLangStr string = "" + // Size: 10039 bytes
+const arLangStr string = "" + // Size: 10055 bytes
 	"الأفاريةالأبخازيةالأفستيةالأفريقانيةالأكانيةالأمهريةالأراغونيةالعربيةالأ" +
 	"ساميةالأواريةالأيماراالأذربيجانيةالباشكيريةالبيلاروسيةالبلغاريةالبيسلام" +
 	"يةالبامباراالبنغاليةالتبتيةالبريتونيةالبوسنيةالكتالانيةالشيشانيةالتشامو" +
@@ -15812,15 +15813,15 @@ const arLangStr string = "" + // Size: 10039 bytes
 	"سريانية تقليديةالسريانيةالتيمنتيسوالتيرينوالتيتمالتيغريةالتيفالتوكيلاوا" +
 	"لكلينجونالتلينغيتيةالتاماشيكتونجا - نياساالتوك بيسينلغة التاروكوالتسيمش" +
 	"يانالتامبوكاالتوفالوتاساواقالتوفيةالأمازيغية وسط الأطلسالأدمرتاليجاريتي" +
-	"كالأمبندوالجذرالفايالفوتيكالفونجوالوالسرالولاياتاالوارايالواشووارلبيريا" +
-	"لوو الصينيةالكالميكالسوغاالياواليابيزيانجبنيمباالكَنْتُونيةالزابوتيكرمو" +
-	"ز المعايير الأساسيةالزيناجاالتمازيغية المغربية القياسيةالزونيةبدون محتو" +
-	"ى لغويزازاالعربية الرسمية الحديثةالألمانية النمساويةالألمانية العليا ال" +
-	"سويسريةالإنجليزية الأستراليةالإنجليزية الكنديةالإنجليزية البريطانيةالإن" +
-	"جليزية الأمريكيةالإسبانية أمريكا اللاتينيةالإسبانية الأوروبيةالإسبانية " +
-	"المكسيكيةالفرنسية الكنديةالفرنسية السويسريةالسكسونية السفلىالفلمنكيةالب" +
-	"رتغالية البرازيليةالبرتغالية الأوروبيةالمولدوفيةصربية-كرواتيةالكونغو ال" +
-	"سواحليةالصينية المبسطةالصينية التقليدية"
+	"كالأمبندولغة غير معروفةالفايالفوتيكالفونجوالوالسرالولاياتاالوارايالواشو" +
+	"وارلبيريالوو الصينيةالكالميكالسوغاالياواليابيزيانجبنيمباالكَنْتُونيةالز" +
+	"ابوتيكرموز المعايير الأساسيةالزيناجاالتمازيغية المغربية القياسيةالزونية" +
+	"بدون محتوى لغويزازاالعربية الرسمية الحديثةالألمانية النمساويةالألمانية " +
+	"العليا السويسريةالإنجليزية الأستراليةالإنجليزية الكنديةالإنجليزية البري" +
+	"طانيةالإنجليزية الأمريكيةالإسبانية أمريكا اللاتينيةالإسبانية الأوروبيةا" +
+	"لإسبانية المكسيكيةالفرنسية الكنديةالفرنسية السويسريةالسكسونية السفلىالف" +
+	"لمنكيةالبرتغالية البرازيليةالبرتغالية الأوروبيةالمولدوفيةصربية-كرواتيةا" +
+	"لكونغو السواحليةالصينية المبسطةالصينية التقليدية"
 
 var arLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -15901,18 +15902,18 @@ var arLangIdx = []uint16{ // 613 elements
 	0x2123, 0x2123, 0x2123, 0x212f, 0x2137, 0x2147, 0x2153, 0x2163,
 	0x216d, 0x217f, 0x217f, 0x2191, 0x21a7, 0x21a7, 0x21b9, 0x21d0,
 	0x21e5, 0x21e5, 0x21fc, 0x21fc, 0x2210, 0x2210, 0x2222, 0x2232,
-	0x2240, 0x224e, 0x2276, 0x2284, 0x2298, 0x22a8, 0x22b2, 0x22bc,
-	0x22bc, 0x22bc, 0x22bc, 0x22bc, 0x22ca, 0x22ca, 0x22d8, 0x22e6,
-	0x22f8, 0x2306, 0x2312, 0x2322, 0x2339, 0x2349, 0x2349, 0x2355,
+	0x2240, 0x224e, 0x2276, 0x2284, 0x2298, 0x22a8, 0x22c2, 0x22cc,
+	0x22cc, 0x22cc, 0x22cc, 0x22cc, 0x22da, 0x22da, 0x22e8, 0x22f6,
+	0x2308, 0x2316, 0x2322, 0x2332, 0x2349, 0x2359, 0x2359, 0x2365,
 	// Entry 240 - 27F
-	0x235f, 0x236d, 0x2379, 0x2381, 0x2381, 0x2399, 0x23ab, 0x23d5,
-	0x23d5, 0x23e5, 0x241b, 0x2429, 0x2445, 0x244d, 0x2479, 0x2479,
-	0x249e, 0x24d0, 0x24f9, 0x251c, 0x2545, 0x256c, 0x259e, 0x25c3,
-	0x25e8, 0x25e8, 0x2607, 0x262a, 0x2649, 0x265b, 0x2684, 0x26ab,
-	0x26bf, 0x26d8, 0x26f9, 0x2716, 0x2737,
+	0x236f, 0x237d, 0x2389, 0x2391, 0x2391, 0x23a9, 0x23bb, 0x23e5,
+	0x23e5, 0x23f5, 0x242b, 0x2439, 0x2455, 0x245d, 0x2489, 0x2489,
+	0x24ae, 0x24e0, 0x2509, 0x252c, 0x2555, 0x257c, 0x25ae, 0x25d3,
+	0x25f8, 0x25f8, 0x2617, 0x263a, 0x2659, 0x266b, 0x2694, 0x26bb,
+	0x26cf, 0x26e8, 0x2709, 0x2726, 0x2747,
 } // Size: 1250 bytes
 
-const azLangStr string = "" + // Size: 3713 bytes
+const azLangStr string = "" + // Size: 3722 bytes
 	"afarabxazavestanafrikaansakanamhararaqonərəbassamavaraymaraazərbaycanbaş" +
 	"qırdbelarusbolqarbislamabambarabenqaltibetbretonbosniakkatalançeçençamor" +
 	"okorsikakriçexslavyançuvaşuelsdanimarkaalmanmaldivdzonqaeveyunaningilise" +
@@ -15954,14 +15955,15 @@ const azLangStr string = "" + // Size: 3713 bytes
 	"amocənubi samilule samiinari samiskolt samisoninkesoqdiyensranan tonqose" +
 	"rersahosukumasususumeryankomorsuriyatimnetesoterenotetumtiqretivtokelayk" +
 	"linqontlinqittamaşeknyasa tonqatok pisintarokosimşyantumbukatuvalutasava" +
-	"qtuvinyanMərkəzi Atlas tamazicəsiudmurtuqaritumbundurutvaivotikvunyovall" +
-	"esvalamovarayvaşovalpirivukalmıksoqayaoyapizyanqbenyembakantonzapotekbli" +
-	"simbolszenaqatamazizunidil məzmunu yoxdurzazamüasir standart ərəbcənubi " +
-	"azərbaycanAvstriya almancasıİsveçrə yüksək almancasıAvstraliya ingiliscə" +
-	"siKanada ingiliscəsiBritaniya ingiliscəsiAmerika ingiliscəsiLatın Amerik" +
-	"ası ispancasıKastiliya ispancasıMeksika ispancasıKanada fransızcasıİsveç" +
-	"rə fransızcasıaşağı saksonflamandBraziliya portuqalcasıPortuqaliya portu" +
-	"qalcasımoldavserb-xorvatKonqo suahilicəsisadələşmiş çinənənəvi çin"
+	"qtuvinyanMərkəzi Atlas tamazicəsiudmurtuqaritumbundunaməlum dilvaivotikv" +
+	"unyovallesvalamovarayvaşovalpirivukalmıksoqayaoyapizyanqbenyembakantonza" +
+	"potekblisimbolszenaqatamazizunidil məzmunu yoxdurzazamüasir standart ərə" +
+	"bcənubi azərbaycanAvstriya almancasıİsveçrə yüksək almancasıAvstraliya i" +
+	"ngiliscəsiKanada ingiliscəsiBritaniya ingiliscəsiAmerika ingiliscəsiLatı" +
+	"n Amerikası ispancasıKastiliya ispancasıMeksika ispancasıKanada fransızc" +
+	"asıİsveçrə fransızcasıaşağı saksonflamandBraziliya portuqalcasıPortuqali" +
+	"ya portuqalcasımoldavserb-xorvatKonqo suahilicəsisadələşmiş çinənənəvi ç" +
+	"in"
 
 var azLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -16042,18 +16044,18 @@ var azLangIdx = []uint16{ // 613 elements
 	0x0ba8, 0x0ba8, 0x0ba8, 0x0bad, 0x0bb1, 0x0bb7, 0x0bbc, 0x0bc1,
 	0x0bc4, 0x0bcb, 0x0bcb, 0x0bd2, 0x0bd9, 0x0bd9, 0x0be1, 0x0bec,
 	0x0bf5, 0x0bf5, 0x0bfb, 0x0bfb, 0x0c03, 0x0c03, 0x0c0a, 0x0c10,
-	0x0c17, 0x0c1f, 0x0c3a, 0x0c40, 0x0c46, 0x0c4d, 0x0c50, 0x0c53,
-	0x0c53, 0x0c53, 0x0c53, 0x0c53, 0x0c58, 0x0c58, 0x0c5d, 0x0c63,
-	0x0c69, 0x0c6e, 0x0c73, 0x0c7a, 0x0c7c, 0x0c83, 0x0c83, 0x0c87,
+	0x0c17, 0x0c1f, 0x0c3a, 0x0c40, 0x0c46, 0x0c4d, 0x0c59, 0x0c5c,
+	0x0c5c, 0x0c5c, 0x0c5c, 0x0c5c, 0x0c61, 0x0c61, 0x0c66, 0x0c6c,
+	0x0c72, 0x0c77, 0x0c7c, 0x0c83, 0x0c85, 0x0c8c, 0x0c8c, 0x0c90,
 	// Entry 240 - 27F
-	0x0c8a, 0x0c8f, 0x0c96, 0x0c9b, 0x0c9b, 0x0ca1, 0x0ca8, 0x0cb2,
-	0x0cb2, 0x0cb8, 0x0cbe, 0x0cc2, 0x0cd5, 0x0cd9, 0x0cf0, 0x0d03,
-	0x0d16, 0x0d34, 0x0d4b, 0x0d5e, 0x0d74, 0x0d88, 0x0da4, 0x0db8,
-	0x0dca, 0x0dca, 0x0dde, 0x0df6, 0x0e05, 0x0e0c, 0x0e23, 0x0e3c,
-	0x0e42, 0x0e4d, 0x0e5f, 0x0e72, 0x0e81,
+	0x0c93, 0x0c98, 0x0c9f, 0x0ca4, 0x0ca4, 0x0caa, 0x0cb1, 0x0cbb,
+	0x0cbb, 0x0cc1, 0x0cc7, 0x0ccb, 0x0cde, 0x0ce2, 0x0cf9, 0x0d0c,
+	0x0d1f, 0x0d3d, 0x0d54, 0x0d67, 0x0d7d, 0x0d91, 0x0dad, 0x0dc1,
+	0x0dd3, 0x0dd3, 0x0de7, 0x0dff, 0x0e0e, 0x0e15, 0x0e2c, 0x0e45,
+	0x0e4b, 0x0e56, 0x0e68, 0x0e7b, 0x0e8a,
 } // Size: 1250 bytes
 
-const bgLangStr string = "" + // Size: 7891 bytes
+const bgLangStr string = "" + // Size: 7905 bytes
 	"афарабхазкиавестскиафрикаансаканамхарскиарагонскиарабскиасамскиаварскиай" +
 	"мараазербайджанскибашкирскибеларускибългарскибисламабамбарабенгалскитиб" +
 	"етскибретонскибосненскикаталонскичеченскичаморокорсиканскикриичешкицърк" +
@@ -16105,11 +16107,12 @@ const bgLangStr string = "" + // Size: 7891 bytes
 	"кисранан тонгосерерсахосукумасусушумерскикоморскикласически сирийскисир" +
 	"ийскитемнетесотеренотетумтигретивтокелайскиклингонскитлингиттамашекниан" +
 	"са тонгаток писинтарокоцимшианскитумбукатувалуанскитасавактувинскицентр" +
-	"алноатласки тамазигтудмуртскиугаритскиумбундуроотваивотиквунджовалзерск" +
-	"и немскиваламоварайуашовалпирикалмиксогаяояпезеянгбенйембакантонскизапо" +
-	"текблис символизенагастандартен марокански тамазигтзунибез лингвистично" +
-	" съдържаниезазасъвременен стандартен арабскианглийски (САЩ)долносаксонск" +
-	"ифламандскимолдовскисърбохърватскиконгоански суахиликитайски (опростен)"
+	"алноатласки тамазигтудмуртскиугаритскиумбундунеопределенваивотиквунджов" +
+	"алзерски немскиваламоварайуашовалпирикалмиксогаяояпезеянгбенйембакантон" +
+	"скизапотекблис символизенагастандартен марокански тамазигтзунибез лингв" +
+	"истично съдържаниезазасъвременен стандартен арабскианглийски (САЩ)долно" +
+	"саксонскифламандскимолдовскисърбохърватскиконгоански суахиликитайски (о" +
+	"простен)"
 
 var bgLangIdx = []uint16{ // 612 elements
 	// Entry 0 - 3F
@@ -16190,18 +16193,18 @@ var bgLangIdx = []uint16{ // 612 elements
 	0x1b0b, 0x1b0b, 0x1b0b, 0x1b15, 0x1b1d, 0x1b29, 0x1b33, 0x1b3d,
 	0x1b43, 0x1b57, 0x1b57, 0x1b6b, 0x1b79, 0x1b79, 0x1b87, 0x1b9e,
 	0x1baf, 0x1baf, 0x1bbb, 0x1bbb, 0x1bcf, 0x1bcf, 0x1bdd, 0x1bf3,
-	0x1c01, 0x1c11, 0x1c42, 0x1c54, 0x1c66, 0x1c74, 0x1c7c, 0x1c82,
-	0x1c82, 0x1c82, 0x1c82, 0x1c82, 0x1c8c, 0x1c8c, 0x1c98, 0x1cb7,
-	0x1cc3, 0x1ccd, 0x1cd5, 0x1ce3, 0x1ce3, 0x1cef, 0x1cef, 0x1cf7,
+	0x1c01, 0x1c11, 0x1c42, 0x1c54, 0x1c66, 0x1c74, 0x1c8a, 0x1c90,
+	0x1c90, 0x1c90, 0x1c90, 0x1c90, 0x1c9a, 0x1c9a, 0x1ca6, 0x1cc5,
+	0x1cd1, 0x1cdb, 0x1ce3, 0x1cf1, 0x1cf1, 0x1cfd, 0x1cfd, 0x1d05,
 	// Entry 240 - 27F
-	0x1cfb, 0x1d05, 0x1d11, 0x1d1b, 0x1d1b, 0x1d2d, 0x1d3b, 0x1d52,
-	0x1d52, 0x1d5e, 0x1d98, 0x1da0, 0x1dd4, 0x1ddc, 0x1e14, 0x1e14,
-	0x1e14, 0x1e14, 0x1e14, 0x1e14, 0x1e14, 0x1e2f, 0x1e2f, 0x1e2f,
-	0x1e2f, 0x1e2f, 0x1e2f, 0x1e2f, 0x1e4b, 0x1e5f, 0x1e5f, 0x1e5f,
-	0x1e71, 0x1e8d, 0x1eb0, 0x1ed3,
+	0x1d09, 0x1d13, 0x1d1f, 0x1d29, 0x1d29, 0x1d3b, 0x1d49, 0x1d60,
+	0x1d60, 0x1d6c, 0x1da6, 0x1dae, 0x1de2, 0x1dea, 0x1e22, 0x1e22,
+	0x1e22, 0x1e22, 0x1e22, 0x1e22, 0x1e22, 0x1e3d, 0x1e3d, 0x1e3d,
+	0x1e3d, 0x1e3d, 0x1e3d, 0x1e3d, 0x1e59, 0x1e6d, 0x1e6d, 0x1e6d,
+	0x1e7f, 0x1e9b, 0x1ebe, 0x1ee1,
 } // Size: 1248 bytes
 
-const bnLangStr string = "" + // Size: 12336 bytes
+const bnLangStr string = "" + // Size: 12355 bytes
 	"আফারআবখাজিয়ানআবেস্তীয়আফ্রিকানআকানআমহারিকআর্গোনিজআরবীআসামিআভেরিকআয়মারা" +
 	"আজারবাইজানীবাশকিরবেলারুশিয়বুলগেরিয়বিসলামাবামবারাবাংলাতিব্বতিব্রেটনবস" +
 	"নীয়ানকাতালানচেচেনচামোরোকর্সিকানক্রিচেকচার্চ স্লাভিকচুবাসওয়েলশডেনিশজা" +
@@ -16254,15 +16257,15 @@ const bnLangStr string = "" + // Size: 12336 bytes
 	"সোগডিয়ানস্রানান টোঙ্গোসেরেরসাহোসুকুমাসুসুসুমেরীয়কমোরিয়ানপ্রাচীন সির" +
 	"িওসিরিয়াকটাইম্নেতেসোতেরেনোতেতুমটাইগ্রেটিভটোকেলাউক্লিঙ্গনত্লিঙ্গিটতামা" +
 	"শেকনায়াসা টোঙ্গাটোক পিসিনতারোকোসিমশিয়ানতুম্বুকাটুভালুতাসাওয়াকটুভিনি" +
-	"য়ানসেন্ট্রাল আটলাস তামাজিগাতউডমুর্টউগারিটিকউম্বুন্দুমূলভাইভোটিকভুঞ্জো" +
-	"ওয়ালসেরওয়ালামোওয়ারেওয়াশোওয়ার্লপিরিWu চীনাকাল্মইকসোগাইয়াওইয়াপেসে" +
-	"য়াঙ্গবেনয়েম্বাক্যানটোনীজজাপোটেকচিত্র ভাষাজেনাগাআদর্শ মরক্কোন তামাজিগ" +
-	"াতজুনিভাষাভিত্তিক বিষয়বস্তু নেইজাজাআধুনিক আদর্শ আরবীঅস্ট্রিয়ান জার্ম" +
-	"ানসুইস হাই জার্মানঅস্ট্রেলীয় ইংরেজিকানাডীয় ইংরেজিব্রিটিশ ইংরেজিআমেরি" +
-	"কার ইংরেজিল্যাটিন আমেরিকান স্প্যানিশইউরোপীয় স্প্যানিশম্যাক্সিকান স্প্" +
-	"যানিশকানাডীয় ফরাসিসুইস ফরাসিলো স্যাক্সনফ্লেমিশব্রাজিলের পর্তুগীজইউরোপ" +
-	"ের পর্তুগীজমলদাভিয়সার্বো-ক্রোয়েশিয়কঙ্গো সোয়াহিলিসরলীকৃত চীনাঐতিহ্য" +
-	"বাহি চীনা"
+	"য়ানসেন্ট্রাল আটলাস তামাজিগাতউডমুর্টউগারিটিকউম্বুন্দুঅজানা ভাষাভাইভোটি" +
+	"কভুঞ্জোওয়ালসেরওয়ালামোওয়ারেওয়াশোওয়ার্লপিরিWu চীনাকাল্মইকসোগাইয়াওই" +
+	"য়াপেসেয়াঙ্গবেনয়েম্বাক্যানটোনীজজাপোটেকচিত্র ভাষাজেনাগাআদর্শ মরক্কোন " +
+	"তামাজিগাতজুনিভাষাভিত্তিক বিষয়বস্তু নেইজাজাআধুনিক আদর্শ আরবীঅস্ট্রিয়া" +
+	"ন জার্মানসুইস হাই জার্মানঅস্ট্রেলীয় ইংরেজিকানাডীয় ইংরেজিব্রিটিশ ইংরে" +
+	"জিআমেরিকার ইংরেজিল্যাটিন আমেরিকান স্প্যানিশইউরোপীয় স্প্যানিশম্যাক্সিক" +
+	"ান স্প্যানিশকানাডীয় ফরাসিসুইস ফরাসিলো স্যাক্সনফ্লেমিশব্রাজিলের পর্তুগ" +
+	"ীজইউরোপের পর্তুগীজমলদাভিয়সার্বো-ক্রোয়েশিয়কঙ্গো সোয়াহিলিসরলীকৃত চীন" +
+	"াঐতিহ্যবাহি চীনা"
 
 var bnLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -16343,18 +16346,18 @@ var bnLangIdx = []uint16{ // 613 elements
 	0x2843, 0x2843, 0x2843, 0x2858, 0x2864, 0x2876, 0x2885, 0x289a,
 	0x28a3, 0x28b8, 0x28b8, 0x28d0, 0x28eb, 0x28eb, 0x2900, 0x2928,
 	0x2941, 0x2941, 0x2953, 0x2953, 0x296e, 0x296e, 0x2986, 0x2998,
-	0x29b3, 0x29d1, 0x2a18, 0x2a2d, 0x2a45, 0x2a60, 0x2a69, 0x2a72,
-	0x2a72, 0x2a72, 0x2a72, 0x2a72, 0x2a81, 0x2a81, 0x2a93, 0x2aab,
-	0x2ac3, 0x2ad5, 0x2ae7, 0x2b08, 0x2b17, 0x2b2c, 0x2b2c, 0x2b38,
+	0x29b3, 0x29d1, 0x2a18, 0x2a2d, 0x2a45, 0x2a60, 0x2a7c, 0x2a85,
+	0x2a85, 0x2a85, 0x2a85, 0x2a85, 0x2a94, 0x2a94, 0x2aa6, 0x2abe,
+	0x2ad6, 0x2ae8, 0x2afa, 0x2b1b, 0x2b2a, 0x2b3f, 0x2b3f, 0x2b4b,
 	// Entry 240 - 27F
-	0x2b47, 0x2b5f, 0x2b7a, 0x2b8f, 0x2b8f, 0x2bad, 0x2bc2, 0x2bde,
-	0x2bde, 0x2bf0, 0x2c31, 0x2c3d, 0x2c87, 0x2c93, 0x2cc2, 0x2cc2,
-	0x2cf9, 0x2d25, 0x2d59, 0x2d84, 0x2dac, 0x2dd7, 0x2e21, 0x2e55,
-	0x2e92, 0x2e92, 0x2eba, 0x2ed6, 0x2ef5, 0x2f0a, 0x2f3e, 0x2f6c,
-	0x2f84, 0x2fb8, 0x2fe3, 0x3005, 0x3030,
+	0x2b5a, 0x2b72, 0x2b8d, 0x2ba2, 0x2ba2, 0x2bc0, 0x2bd5, 0x2bf1,
+	0x2bf1, 0x2c03, 0x2c44, 0x2c50, 0x2c9a, 0x2ca6, 0x2cd5, 0x2cd5,
+	0x2d0c, 0x2d38, 0x2d6c, 0x2d97, 0x2dbf, 0x2dea, 0x2e34, 0x2e68,
+	0x2ea5, 0x2ea5, 0x2ecd, 0x2ee9, 0x2f08, 0x2f1d, 0x2f51, 0x2f7f,
+	0x2f97, 0x2fcb, 0x2ff6, 0x3018, 0x3043,
 } // Size: 1250 bytes
 
-const caLangStr string = "" + // Size: 4583 bytes
+const caLangStr string = "" + // Size: 4595 bytes
 	"àfarabkhazavèsticafrikaansàkanamhàricaragonèsàrabassamèsàvaraimaraazerba" +
 	"idjanèsbaixkirbielorúsbúlgarbislamabambarabengalítibetàbretóbosniàcatalà" +
 	"txetxèchamorrocorscreetxeceslau eclesiàstictxuvaixgal·lèsdanèsalemanydiv" +
@@ -16407,15 +16410,15 @@ const caLangStr string = "" + // Size: 4583 bytes
 	"i d’Inarisami skoltsoninkesogdiàsrananserersahosukumasusúsumericomoriàsi" +
 	"ríac clàssicsiríacsilesiàtemnetesoterenatetuntigretivtokelauèstsakhurkli" +
 	"ngoniàtlingittalixamazictongatok pisintarokotsimshiàtat meridionaltumbuk" +
-	"atuvaluàtasawaqtuviniàamazic del Marroc centraludmurtugaríticumbunduarre" +
-	"lvaivènetvepseflamenc occidentalvòticvunjowalserametowaraywashowarlpirix" +
-	"inès wucalmucmingreliàsogayaoyapeàyangbenyembacantonèszapotecasímbols Bl" +
-	"isszelandèszenagaamazic estàndard marroquízunisense contingut lingüístic" +
-	"zazaàrab estàndard modernalemany austríacalt alemany suísanglès australi" +
-	"àanglès canadencanglès britànicanglès americàespanyol hispanoamericàesp" +
-	"anyol europeuespanyol de Mèxicfrancès canadencfrancès suísbaix saxóflame" +
-	"ncportuguès del Brasilportuguès de Portugalmoldauserbocroatsuahili del C" +
-	"ongoxinès simplificatxinès tradicional"
+	"atuvaluàtasawaqtuviniàamazic del Marroc centraludmurtugaríticumbunduidio" +
+	"ma desconegutvaivènetvepseflamenc occidentalvòticvunjowalserametowaraywa" +
+	"showarlpirixinès wucalmucmingreliàsogayaoyapeàyangbenyembacantonèszapote" +
+	"casímbols Blisszelandèszenagaamazic estàndard marroquízunisense contingu" +
+	"t lingüísticzazaàrab estàndard modernalemany austríacalt alemany suísang" +
+	"lès australiàanglès canadencanglès britànicanglès americàespanyol hispan" +
+	"oamericàespanyol europeuespanyol de Mèxicfrancès canadencfrancès suísbai" +
+	"x saxóflamencportuguès del Brasilportuguès de Portugalmoldauserbocroatsu" +
+	"ahili del Congoxinès simplificatxinès tradicional"
 
 var caLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -16496,18 +16499,18 @@ var caLangIdx = []uint16{ // 613 elements
 	0x0edc, 0x0ee4, 0x0ee4, 0x0ee9, 0x0eed, 0x0ef3, 0x0ef8, 0x0efd,
 	0x0f00, 0x0f0a, 0x0f11, 0x0f1b, 0x0f22, 0x0f27, 0x0f2d, 0x0f32,
 	0x0f3b, 0x0f3b, 0x0f41, 0x0f41, 0x0f4a, 0x0f58, 0x0f5f, 0x0f67,
-	0x0f6e, 0x0f76, 0x0f8f, 0x0f95, 0x0f9e, 0x0fa5, 0x0faa, 0x0fad,
-	0x0fb3, 0x0fb8, 0x0fca, 0x0fca, 0x0fd0, 0x0fd0, 0x0fd5, 0x0fdb,
-	0x0fe0, 0x0fe5, 0x0fea, 0x0ff2, 0x0ffb, 0x1001, 0x100b, 0x100f,
+	0x0f6e, 0x0f76, 0x0f8f, 0x0f95, 0x0f9e, 0x0fa5, 0x0fb6, 0x0fb9,
+	0x0fbf, 0x0fc4, 0x0fd6, 0x0fd6, 0x0fdc, 0x0fdc, 0x0fe1, 0x0fe7,
+	0x0fec, 0x0ff1, 0x0ff6, 0x0ffe, 0x1007, 0x100d, 0x1017, 0x101b,
 	// Entry 240 - 27F
-	0x1012, 0x1018, 0x101f, 0x1024, 0x1024, 0x102d, 0x1035, 0x1043,
-	0x104c, 0x1052, 0x106d, 0x1071, 0x108d, 0x1091, 0x10a8, 0x10a8,
-	0x10b9, 0x10ca, 0x10dc, 0x10ec, 0x10fd, 0x110d, 0x1125, 0x1135,
-	0x1147, 0x1147, 0x1158, 0x1166, 0x1170, 0x1177, 0x118c, 0x11a2,
-	0x11a8, 0x11b2, 0x11c3, 0x11d5, 0x11e7,
+	0x101e, 0x1024, 0x102b, 0x1030, 0x1030, 0x1039, 0x1041, 0x104f,
+	0x1058, 0x105e, 0x1079, 0x107d, 0x1099, 0x109d, 0x10b4, 0x10b4,
+	0x10c5, 0x10d6, 0x10e8, 0x10f8, 0x1109, 0x1119, 0x1131, 0x1141,
+	0x1153, 0x1153, 0x1164, 0x1172, 0x117c, 0x1183, 0x1198, 0x11ae,
+	0x11b4, 0x11be, 0x11cf, 0x11e1, 0x11f3,
 } // Size: 1250 bytes
 
-const csLangStr string = "" + // Size: 7397 bytes
+const csLangStr string = "" + // Size: 7406 bytes
 	"afarštinaabcházštinaavestánštinaafrikánštinaakanštinaamharštinaaragonšti" +
 	"naarabštinaásámštinaavarštinaajmarštinaázerbájdžánštinabaškirštinaběloru" +
 	"štinabulharštinabislamštinabambarštinabengálštinatibetštinabretonštinab" +
@@ -16591,16 +16594,16 @@ const csLangStr string = "" + // Size: 7397 bytes
 	"tesoterenotetumštinatigrejštinativštinatokelauštinacachurštinaklingonšti" +
 	"natlingittalyštinatamašektonžština (nyasa)tok pisinturojštinatarokotsako" +
 	"nštinatsimšijské jazykytatštinatumbukštinatuvalštinatasawaqtuvinštinatam" +
-	"azight (střední Maroko)udmurtštinaugaritštinaumbundukořenvaibenátštinave" +
-	"pštinavlámština (západní)němčina (mohansko-franské dialekty)votštinavõru" +
-	"štinavunjoněmčina (walser)wolajtštinawarajštinawaštinawarlpiričínština " +
-	"(dialekty Wu)kalmyčtinamingrelštinasogštinajaoštinajapštinajangbenštinay" +
-	"embanheengatukantonštinazapotéčtinabliss systémzélandštinazenagatamazigh" +
-	"t (standardní marocký)zunijštinažádný jazykový obsahzazaarabština (moder" +
-	"ní standardní)němčina standardní (Švýcarsko)angličtina (Velká Británie)a" +
-	"ngličtina (USA)španělština (Evropa)dolnosaštinavlámštinaportugalština (E" +
-	"vropa)moldavštinasrbochorvatštinasvahilština (Kongo)čínština (zjednoduše" +
-	"ná)"
+	"azight (střední Maroko)udmurtštinaugaritštinaumbunduneznámý jazykvaibená" +
+	"tštinavepštinavlámština (západní)němčina (mohansko-franské dialekty)votš" +
+	"tinavõruštinavunjoněmčina (walser)wolajtštinawarajštinawaštinawarlpiričí" +
+	"nština (dialekty Wu)kalmyčtinamingrelštinasogštinajaoštinajapštinajangbe" +
+	"nštinayembanheengatukantonštinazapotéčtinabliss systémzélandštinazenagat" +
+	"amazight (standardní marocký)zunijštinažádný jazykový obsahzazaarabština" +
+	" (moderní standardní)němčina standardní (Švýcarsko)angličtina (Velká Bri" +
+	"tánie)angličtina (USA)španělština (Evropa)dolnosaštinavlámštinaportugalš" +
+	"tina (Evropa)moldavštinasrbochorvatštinasvahilština (Kongo)čínština (zje" +
+	"dnodušená)"
 
 var csLangIdx = []uint16{ // 612 elements
 	// Entry 0 - 3F
@@ -16681,18 +16684,18 @@ var csLangIdx = []uint16{ // 612 elements
 	0x1910, 0x191a, 0x1924, 0x1929, 0x192d, 0x1933, 0x193e, 0x194a,
 	0x1953, 0x1960, 0x196c, 0x1979, 0x1980, 0x198a, 0x1992, 0x19a5,
 	0x19ae, 0x19b9, 0x19bf, 0x19cb, 0x19de, 0x19e7, 0x19f3, 0x19fe,
-	0x1a05, 0x1a10, 0x1a2c, 0x1a38, 0x1a44, 0x1a4b, 0x1a51, 0x1a54,
-	0x1a60, 0x1a69, 0x1a80, 0x1aa6, 0x1aaf, 0x1aba, 0x1abf, 0x1ad1,
-	0x1add, 0x1ae8, 0x1af0, 0x1af8, 0x1b11, 0x1b1c, 0x1b29, 0x1b32,
+	0x1a05, 0x1a10, 0x1a2c, 0x1a38, 0x1a44, 0x1a4b, 0x1a5a, 0x1a5d,
+	0x1a69, 0x1a72, 0x1a89, 0x1aaf, 0x1ab8, 0x1ac3, 0x1ac8, 0x1ada,
+	0x1ae6, 0x1af1, 0x1af9, 0x1b01, 0x1b1a, 0x1b25, 0x1b32, 0x1b3b,
 	// Entry 240 - 27F
-	0x1b3b, 0x1b44, 0x1b51, 0x1b56, 0x1b5f, 0x1b6b, 0x1b78, 0x1b85,
-	0x1b92, 0x1b98, 0x1bb8, 0x1bc3, 0x1bdb, 0x1bdf, 0x1c00, 0x1c00,
-	0x1c00, 0x1c23, 0x1c23, 0x1c23, 0x1c41, 0x1c52, 0x1c52, 0x1c69,
-	0x1c69, 0x1c69, 0x1c69, 0x1c69, 0x1c76, 0x1c81, 0x1c81, 0x1c98,
-	0x1ca4, 0x1cb5, 0x1cc9, 0x1ce5,
+	0x1b44, 0x1b4d, 0x1b5a, 0x1b5f, 0x1b68, 0x1b74, 0x1b81, 0x1b8e,
+	0x1b9b, 0x1ba1, 0x1bc1, 0x1bcc, 0x1be4, 0x1be8, 0x1c09, 0x1c09,
+	0x1c09, 0x1c2c, 0x1c2c, 0x1c2c, 0x1c4a, 0x1c5b, 0x1c5b, 0x1c72,
+	0x1c72, 0x1c72, 0x1c72, 0x1c72, 0x1c7f, 0x1c8a, 0x1c8a, 0x1ca1,
+	0x1cad, 0x1cbe, 0x1cd2, 0x1cee,
 } // Size: 1248 bytes
 
-const daLangStr string = "" + // Size: 4141 bytes
+const daLangStr string = "" + // Size: 4150 bytes
 	"afarabkhasiskavestanafrikaansakanamhariskaragonesiskarabiskassamesiskava" +
 	"riskaymaraaserbajdsjanskbashkirhviderussiskbulgarskbislamabambarabengali" +
 	"tibetanskbretonskbosniskcatalansktjetjenskchamorrokorsikanskcreetjekkisk" +
@@ -16743,14 +16746,14 @@ const daLangStr string = "" + // Size: 4141 bytes
 	"oserersahosukumasususumeriskshimaoreklassisk syrisksyrisktemnetesotereno" +
 	"tetumtigretivitokelauklingontlingittamasheknyasa tongansktok pisintaroko" +
 	"tsimshisktumbukatuvalutasawaqtuviniancentralmarokkansk tamazightudmurtug" +
-	"aristiskumbundurodvaivotiskvunjowalsertyskwalamowaraywashowalbiriwu-kine" +
-	"siskkalmyksogayaoyapeseyangbenyembakantonesiskzapotecblissymbolerzenagat" +
-	"amazightzuniintet sprogligt indholdzazamoderne standardarabiskøstrigsk t" +
-	"yskschweizerhøjtyskaustralsk engelskcanadisk engelskbritisk engelskameri" +
-	"kansk engelsklatinamerikansk spanskeuropæisk spanskmexicansk spanskcanad" +
-	"isk franskschweizisk franskflamskbrasiliansk portugisiskeuropæisk portug" +
-	"isiskmoldoviskserbokroatiskcongolesisk swahiliforenklet kinesisktraditio" +
-	"nelt kinesisk"
+	"aristiskumbunduukendt sprogvaivotiskvunjowalsertyskwalamowaraywashowalbi" +
+	"riwu-kinesiskkalmyksogayaoyapeseyangbenyembakantonesiskzapotecblissymbol" +
+	"erzenagatamazightzuniintet sprogligt indholdzazamoderne standardarabiskø" +
+	"strigsk tyskschweizerhøjtyskaustralsk engelskcanadisk engelskbritisk eng" +
+	"elskamerikansk engelsklatinamerikansk spanskeuropæisk spanskmexicansk sp" +
+	"anskcanadisk franskschweizisk franskflamskbrasiliansk portugisiskeuropæi" +
+	"sk portugisiskmoldoviskserbokroatiskcongolesisk swahiliforenklet kinesis" +
+	"ktraditionelt kinesisk"
 
 var daLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -16831,18 +16834,18 @@ var daLangIdx = []uint16{ // 613 elements
 	0x0d85, 0x0d85, 0x0d85, 0x0d8a, 0x0d8e, 0x0d94, 0x0d99, 0x0d9e,
 	0x0da2, 0x0da9, 0x0da9, 0x0db0, 0x0db7, 0x0db7, 0x0dbf, 0x0dcd,
 	0x0dd6, 0x0dd6, 0x0ddc, 0x0ddc, 0x0de5, 0x0de5, 0x0dec, 0x0df2,
-	0x0df9, 0x0e01, 0x0e1c, 0x0e22, 0x0e2c, 0x0e33, 0x0e36, 0x0e39,
-	0x0e39, 0x0e39, 0x0e39, 0x0e39, 0x0e3f, 0x0e3f, 0x0e44, 0x0e4e,
-	0x0e54, 0x0e59, 0x0e5e, 0x0e65, 0x0e70, 0x0e76, 0x0e76, 0x0e7a,
+	0x0df9, 0x0e01, 0x0e1c, 0x0e22, 0x0e2c, 0x0e33, 0x0e3f, 0x0e42,
+	0x0e42, 0x0e42, 0x0e42, 0x0e42, 0x0e48, 0x0e48, 0x0e4d, 0x0e57,
+	0x0e5d, 0x0e62, 0x0e67, 0x0e6e, 0x0e79, 0x0e7f, 0x0e7f, 0x0e83,
 	// Entry 240 - 27F
-	0x0e7d, 0x0e83, 0x0e8a, 0x0e8f, 0x0e8f, 0x0e9a, 0x0ea1, 0x0ead,
-	0x0ead, 0x0eb3, 0x0ebc, 0x0ec0, 0x0ed7, 0x0edb, 0x0ef2, 0x0ef2,
-	0x0f00, 0x0f11, 0x0f22, 0x0f32, 0x0f41, 0x0f53, 0x0f69, 0x0f7a,
-	0x0f8a, 0x0f8a, 0x0f99, 0x0faa, 0x0faa, 0x0fb0, 0x0fc7, 0x0fdd,
-	0x0fe6, 0x0ff3, 0x1006, 0x1018, 0x102d,
+	0x0e86, 0x0e8c, 0x0e93, 0x0e98, 0x0e98, 0x0ea3, 0x0eaa, 0x0eb6,
+	0x0eb6, 0x0ebc, 0x0ec5, 0x0ec9, 0x0ee0, 0x0ee4, 0x0efb, 0x0efb,
+	0x0f09, 0x0f1a, 0x0f2b, 0x0f3b, 0x0f4a, 0x0f5c, 0x0f72, 0x0f83,
+	0x0f93, 0x0f93, 0x0fa2, 0x0fb3, 0x0fb3, 0x0fb9, 0x0fd0, 0x0fe6,
+	0x0fef, 0x0ffc, 0x100f, 0x1021, 0x1036,
 } // Size: 1250 bytes
 
-const deLangStr string = "" + // Size: 5600 bytes
+const deLangStr string = "" + // Size: 5614 bytes
 	"AfarAbchasischAvestischAfrikaansAkanAmharischAragonesischArabischAssames" +
 	"ischAwarischAymaraAserbaidschanischBaschkirischWeißrussischBulgarischBis" +
 	"lamaBambaraBengalischTibetischBretonischBosnischKatalanischTschetschenis" +
@@ -16910,16 +16913,17 @@ const deLangStr string = "" + // Size: 5600 bytes
 	"(Wasserpolnisch)TuluTemneTesoTerenoTetumTigreTivTokelauanischTsachurisch" +
 	"KlingonischTlingitTalischTamaseqNyasa TongaNeumelanesischTuroyoTarokoTsa" +
 	"konischTsimshianTatischTumbukaTuvaluischTasawaqTuwinischZentralatlas-Tam" +
-	"azightUdmurtischUgaritischUmbunduRootVaiVenetischWepsischWestflämischMai" +
-	"nfränkischWotischVõroVunjoWalliserdeutschWalamoWarayWashoWarlpiriWuKalmü" +
-	"ckischMingrelischSogaYaoYapesischYangbenYembaNheengatuKantonesischZapote" +
-	"kischBliss-SymboleSeeländischZenagaTamazightZuniKeine SprachinhalteZazaM" +
-	"odernes HocharabischÖsterreichisches DeutschSchweizer HochdeutschAustral" +
-	"isches EnglischKanadisches EnglischBritisches EnglischAmerikanisches Eng" +
-	"lischLateinamerikanisches SpanischEuropäisches SpanischMexikanisches Spa" +
-	"nischKanadisches FranzösischSchweizer FranzösischNiedersächsischFlämisch" +
-	"Brasilianisches PortugiesischEuropäisches PortugiesischMoldauischSerbo-K" +
-	"roatischKongo-SwahiliChinesisch (vereinfacht)Chinesisch (traditionell)"
+	"azightUdmurtischUgaritischUmbunduUnbekannte SpracheVaiVenetischWepsischW" +
+	"estflämischMainfränkischWotischVõroVunjoWalliserdeutschWalamoWarayWashoW" +
+	"arlpiriWuKalmückischMingrelischSogaYaoYapesischYangbenYembaNheengatuKant" +
+	"onesischZapotekischBliss-SymboleSeeländischZenagaTamazightZuniKeine Spra" +
+	"chinhalteZazaModernes HocharabischÖsterreichisches DeutschSchweizer Hoch" +
+	"deutschAustralisches EnglischKanadisches EnglischBritisches EnglischAmer" +
+	"ikanisches EnglischLateinamerikanisches SpanischEuropäisches SpanischMex" +
+	"ikanisches SpanischKanadisches FranzösischSchweizer FranzösischNiedersäc" +
+	"hsischFlämischBrasilianisches PortugiesischEuropäisches PortugiesischMol" +
+	"dauischSerbo-KroatischKongo-SwahiliChinesisch (vereinfacht)Chinesisch (t" +
+	"raditionell)"
 
 var deLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -17000,18 +17004,18 @@ var deLangIdx = []uint16{ // 613 elements
 	0x1223, 0x123e, 0x1242, 0x1247, 0x124b, 0x1251, 0x1256, 0x125b,
 	0x125e, 0x126b, 0x1276, 0x1281, 0x1288, 0x128f, 0x1296, 0x12a1,
 	0x12af, 0x12b5, 0x12bb, 0x12c5, 0x12ce, 0x12d5, 0x12dc, 0x12e6,
-	0x12ed, 0x12f6, 0x130c, 0x1316, 0x1320, 0x1327, 0x132b, 0x132e,
-	0x1337, 0x133f, 0x134c, 0x135a, 0x1361, 0x1366, 0x136b, 0x137a,
-	0x1380, 0x1385, 0x138a, 0x1392, 0x1394, 0x13a0, 0x13ab, 0x13af,
+	0x12ed, 0x12f6, 0x130c, 0x1316, 0x1320, 0x1327, 0x1339, 0x133c,
+	0x1345, 0x134d, 0x135a, 0x1368, 0x136f, 0x1374, 0x1379, 0x1388,
+	0x138e, 0x1393, 0x1398, 0x13a0, 0x13a2, 0x13ae, 0x13b9, 0x13bd,
 	// Entry 240 - 27F
-	0x13b2, 0x13bb, 0x13c2, 0x13c7, 0x13d0, 0x13dc, 0x13e7, 0x13f4,
-	0x1400, 0x1406, 0x140f, 0x1413, 0x1426, 0x142a, 0x143f, 0x143f,
-	0x1458, 0x146d, 0x1483, 0x1497, 0x14aa, 0x14c1, 0x14de, 0x14f4,
-	0x150a, 0x150a, 0x1522, 0x1538, 0x1548, 0x1551, 0x156e, 0x1589,
-	0x1593, 0x15a2, 0x15af, 0x15c7, 0x15e0,
+	0x13c0, 0x13c9, 0x13d0, 0x13d5, 0x13de, 0x13ea, 0x13f5, 0x1402,
+	0x140e, 0x1414, 0x141d, 0x1421, 0x1434, 0x1438, 0x144d, 0x144d,
+	0x1466, 0x147b, 0x1491, 0x14a5, 0x14b8, 0x14cf, 0x14ec, 0x1502,
+	0x1518, 0x1518, 0x1530, 0x1546, 0x1556, 0x155f, 0x157c, 0x1597,
+	0x15a1, 0x15b0, 0x15bd, 0x15d5, 0x15ee,
 } // Size: 1250 bytes
 
-const elLangStr string = "" + // Size: 9051 bytes
+const elLangStr string = "" + // Size: 9070 bytes
 	"ΑφάρΑμπχαζικάΑβεστάνΑφρικάανςΑκάνΑμαρικάΑραγκονικάΑραβικάΑσαμεζικάΆβαρικ" +
 	"ΑϊμάραΑζερμπαϊτζανικάΜπασκίρΛευκορωσικάΒουλγαρικάΜπισλάμαΜπαμπάραΜπενγκ" +
 	"άλιΘιβετιανάΒρετονικάΒοσνιακάΚαταλανικάΤσετσενικάΚαμόρροΚορσικανικάΚριΤ" +
@@ -17068,15 +17072,15 @@ const elLangStr string = "" + // Size: 9051 bytes
 	"έρΣάχοΣουκούμαΣούσουΣουμερικάΚομόρριαΚλασικά ΣυριακάΣυριακάΤίμνεΤέσοΤερ" +
 	"ένοΤέτουμΤίγκρεΤιβΤοκελάουΚλίνγκονΤλίνγκιτΤαμασέκΝιάσα ΤόνγκαΤοκ ΠισίνΤ" +
 	"αρόκοΤσίμσιανΤουμπούκαΤουβαλούΤασαβάκΤουβινικάΤαμαζίτ Κεντρικού ΜαρόκοΟ" +
-	"υντμούρτΟυγκαριτικάΟυμπούντουΡουτΒάιΒότικΒούντζοΒάλσερΓουάλαμοΓουάρειΓο" +
-	"υασόΓουαρλπίριwuuΚαλμίκΣόγκαΓιάοΓιαπίζΓιανγκμπένΓιέμπαΚαντονέζικαΖάποτε" +
-	"κΣύμβολα BlissΖενάγκαΤυπικά Ταμαζίγκτ ΜαρόκουΖούνιΧωρίς γλωσσολογικό πε" +
-	"ριεχόμενοΖάζαΣύγχρονα Τυπικά ΑραβικάΓερμανικά ΑυστρίαςΆνω Γερμανικά Ελβ" +
-	"ετίαςΑγγλικά ΑυστραλίαςΑγγλικά ΚαναδάΑγγλικά Ηνωμένου ΒασιλείουΑγγλικά " +
-	"ΑμερικήςΙσπανικά Λατινικής ΑμερικήςΙσπανικά ΕυρώπηςΙσπανικά ΜεξικούΓαλλ" +
-	"ικά ΚαναδάΓαλλικά ΕλβετίαςΚάτω Γερμανικά ΟλλανδίαςΦλαμανδικάΠορτογαλικά" +
-	" ΒραζιλίαςΠορτογαλικά ΕυρώπηςΜολδαβικάΣερβοκροατικάΚονγκό ΣουαχίλιΑπλοπο" +
-	"ιημένα ΚινεζικάΠαραδοσιακά Κινεζικά"
+	"υντμούρτΟυγκαριτικάΟυμπούντουΆγνωστη γλώσσαΒάιΒότικΒούντζοΒάλσερΓουάλαμ" +
+	"οΓουάρειΓουασόΓουαρλπίριwuuΚαλμίκΣόγκαΓιάοΓιαπίζΓιανγκμπένΓιέμπαΚαντονέ" +
+	"ζικαΖάποτεκΣύμβολα BlissΖενάγκαΤυπικά Ταμαζίγκτ ΜαρόκουΖούνιΧωρίς γλωσσ" +
+	"ολογικό περιεχόμενοΖάζαΣύγχρονα Τυπικά ΑραβικάΓερμανικά ΑυστρίαςΆνω Γερ" +
+	"μανικά ΕλβετίαςΑγγλικά ΑυστραλίαςΑγγλικά ΚαναδάΑγγλικά Ηνωμένου Βασιλεί" +
+	"ουΑγγλικά ΑμερικήςΙσπανικά Λατινικής ΑμερικήςΙσπανικά ΕυρώπηςΙσπανικά Μ" +
+	"εξικούΓαλλικά ΚαναδάΓαλλικά ΕλβετίαςΚάτω Γερμανικά ΟλλανδίαςΦλαμανδικάΠ" +
+	"ορτογαλικά ΒραζιλίαςΠορτογαλικά ΕυρώπηςΜολδαβικάΣερβοκροατικάΚονγκό Σου" +
+	"αχίλιΑπλοποιημένα ΚινεζικάΠαραδοσιακά Κινεζικά"
 
 var elLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -17157,18 +17161,18 @@ var elLangIdx = []uint16{ // 613 elements
 	0x1d97, 0x1d97, 0x1d97, 0x1da1, 0x1da9, 0x1db5, 0x1dc1, 0x1dcd,
 	0x1dd3, 0x1de3, 0x1de3, 0x1df3, 0x1e03, 0x1e03, 0x1e11, 0x1e28,
 	0x1e39, 0x1e39, 0x1e45, 0x1e45, 0x1e55, 0x1e55, 0x1e67, 0x1e77,
-	0x1e85, 0x1e97, 0x1ec5, 0x1ed7, 0x1eed, 0x1f01, 0x1f09, 0x1f0f,
-	0x1f0f, 0x1f0f, 0x1f0f, 0x1f0f, 0x1f19, 0x1f19, 0x1f27, 0x1f33,
-	0x1f43, 0x1f51, 0x1f5d, 0x1f71, 0x1f74, 0x1f80, 0x1f80, 0x1f8a,
+	0x1e85, 0x1e97, 0x1ec5, 0x1ed7, 0x1eed, 0x1f01, 0x1f1c, 0x1f22,
+	0x1f22, 0x1f22, 0x1f22, 0x1f22, 0x1f2c, 0x1f2c, 0x1f3a, 0x1f46,
+	0x1f56, 0x1f64, 0x1f70, 0x1f84, 0x1f87, 0x1f93, 0x1f93, 0x1f9d,
 	// Entry 240 - 27F
-	0x1f92, 0x1f9e, 0x1fb2, 0x1fbe, 0x1fbe, 0x1fd4, 0x1fe2, 0x1ff6,
-	0x1ff6, 0x2004, 0x2032, 0x203c, 0x2076, 0x207e, 0x20aa, 0x20aa,
-	0x20cd, 0x20f7, 0x211a, 0x2135, 0x2167, 0x2186, 0x21ba, 0x21d9,
-	0x21f8, 0x21f8, 0x2213, 0x2232, 0x2260, 0x2274, 0x229d, 0x22c2,
-	0x22d4, 0x22ee, 0x230b, 0x2334, 0x235b,
+	0x1fa5, 0x1fb1, 0x1fc5, 0x1fd1, 0x1fd1, 0x1fe7, 0x1ff5, 0x2009,
+	0x2009, 0x2017, 0x2045, 0x204f, 0x2089, 0x2091, 0x20bd, 0x20bd,
+	0x20e0, 0x210a, 0x212d, 0x2148, 0x217a, 0x2199, 0x21cd, 0x21ec,
+	0x220b, 0x220b, 0x2226, 0x2245, 0x2273, 0x2287, 0x22b0, 0x22d5,
+	0x22e7, 0x2301, 0x231e, 0x2347, 0x236e,
 } // Size: 1250 bytes
 
-const enLangStr string = "" + // Size: 4944 bytes
+const enLangStr string = "" + // Size: 4956 bytes
 	"AfarAbkhazianAvestanAfrikaansAkanAmharicAragoneseArabicAssameseAvaricAym" +
 	"araAzerbaijaniBashkirBelarusianBulgarianBislamaBambaraBanglaTibetanBreto" +
 	"nBosnianCatalanChechenChamorroCorsicanCreeCzechChurch SlavicChuvashWelsh" +
@@ -17229,15 +17233,15 @@ const enLangStr string = "" + // Size: 4944 bytes
 	"erianComorianClassical SyriacSyriacSilesianTuluTimneTesoTerenoTetumTigre" +
 	"TivTokelauTsakhurKlingonTlingitTalyshTamashekNyasa TongaTok PisinTuroyoT" +
 	"arokoTsakonianTsimshianMuslim TatTumbukaTuvaluTasawaqTuvinianCentral Atl" +
-	"as TamazightUdmurtUgariticUmbunduRootVaiVenetianVepsWest FlemishMain-Fra" +
-	"nconianVoticVõroVunjoWalserWolayttaWarayWashoWarlpiriWu ChineseKalmykMin" +
-	"grelianSogaYaoYapeseYangbenYembaNheengatuCantoneseZapotecBlissymbolsZeel" +
-	"andicZenagaStandard Moroccan TamazightZuniNo linguistic contentZazaModer" +
-	"n Standard ArabicAustrian GermanSwiss High GermanAustralian EnglishCanad" +
-	"ian EnglishBritish EnglishAmerican EnglishLatin American SpanishEuropean" +
-	" SpanishMexican SpanishDariCanadian FrenchSwiss FrenchLow SaxonFlemishBr" +
-	"azilian PortugueseEuropean PortugueseMoldavianSerbo-CroatianCongo Swahil" +
-	"iSimplified ChineseTraditional Chinese"
+	"as TamazightUdmurtUgariticUmbunduUnknown languageVaiVenetianVepsWest Fle" +
+	"mishMain-FranconianVoticVõroVunjoWalserWolayttaWarayWashoWarlpiriWu Chin" +
+	"eseKalmykMingrelianSogaYaoYapeseYangbenYembaNheengatuCantoneseZapotecBli" +
+	"ssymbolsZeelandicZenagaStandard Moroccan TamazightZuniNo linguistic cont" +
+	"entZazaModern Standard ArabicAustrian GermanSwiss High GermanAustralian " +
+	"EnglishCanadian EnglishBritish EnglishAmerican EnglishLatin American Spa" +
+	"nishEuropean SpanishMexican SpanishDariCanadian FrenchSwiss FrenchLow Sa" +
+	"xonFlemishBrazilian PortugueseEuropean PortugueseMoldavianSerbo-Croatian" +
+	"Congo SwahiliSimplified ChineseTraditional Chinese"
 
 var enLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -17318,18 +17322,18 @@ var enLangIdx = []uint16{ // 613 elements
 	0x1034, 0x103c, 0x1040, 0x1045, 0x1049, 0x104f, 0x1054, 0x1059,
 	0x105c, 0x1063, 0x106a, 0x1071, 0x1078, 0x107e, 0x1086, 0x1091,
 	0x109a, 0x10a0, 0x10a6, 0x10af, 0x10b8, 0x10c2, 0x10c9, 0x10cf,
-	0x10d6, 0x10de, 0x10f5, 0x10fb, 0x1103, 0x110a, 0x110e, 0x1111,
-	0x1119, 0x111d, 0x1129, 0x1138, 0x113d, 0x1142, 0x1147, 0x114d,
-	0x1155, 0x115a, 0x115f, 0x1167, 0x1171, 0x1177, 0x1181, 0x1185,
+	0x10d6, 0x10de, 0x10f5, 0x10fb, 0x1103, 0x110a, 0x111a, 0x111d,
+	0x1125, 0x1129, 0x1135, 0x1144, 0x1149, 0x114e, 0x1153, 0x1159,
+	0x1161, 0x1166, 0x116b, 0x1173, 0x117d, 0x1183, 0x118d, 0x1191,
 	// Entry 240 - 27F
-	0x1188, 0x118e, 0x1195, 0x119a, 0x11a3, 0x11ac, 0x11b3, 0x11be,
-	0x11c7, 0x11cd, 0x11e8, 0x11ec, 0x1201, 0x1205, 0x121b, 0x121b,
-	0x122a, 0x123b, 0x124d, 0x125d, 0x126c, 0x127c, 0x1292, 0x12a2,
-	0x12b1, 0x12b5, 0x12c4, 0x12d0, 0x12d9, 0x12e0, 0x12f4, 0x1307,
-	0x1310, 0x131e, 0x132b, 0x133d, 0x1350,
+	0x1194, 0x119a, 0x11a1, 0x11a6, 0x11af, 0x11b8, 0x11bf, 0x11ca,
+	0x11d3, 0x11d9, 0x11f4, 0x11f8, 0x120d, 0x1211, 0x1227, 0x1227,
+	0x1236, 0x1247, 0x1259, 0x1269, 0x1278, 0x1288, 0x129e, 0x12ae,
+	0x12bd, 0x12c1, 0x12d0, 0x12dc, 0x12e5, 0x12ec, 0x1300, 0x1313,
+	0x131c, 0x132a, 0x1337, 0x1349, 0x135c,
 } // Size: 1250 bytes
 
-const esLangStr string = "" + // Size: 4319 bytes
+const esLangStr string = "" + // Size: 4332 bytes
 	"afarabjasioavésticoafrikáansakanamáricoaragonésárabeasamésavaraimaraazer" +
 	"baiyanobaskirbielorrusobúlgarobislamabambarabengalítibetanobretónbosnioc" +
 	"atalánchechenochamorrocorsocreechecoeslavo eclesiásticochuvasiogalésdané" +
@@ -17380,14 +17384,15 @@ const esLangStr string = "" + // Size: 4319 bytes
 	"inkésogdianosranan tongoserersahosukumasususumeriocomorensesiríaco clási" +
 	"cosiriacotemnetesoterenotetúntigrétivtokelauanoklingontlingittamashekton" +
 	"ga del Nyasatok pisintarokotsimshianotumbukatuvaluanotasawaqtuvinianotam" +
-	"azight del Atlas Centraludmurtugaríticoumbunduraízvaivóticovunjowalserwo" +
-	"laytawaraywashowarlpirichino wukalmyksogayaoyapésyangbenyembacantonészap" +
-	"otecosímbolos Blisszenagatamazight estándar marroquízuñisin contenido li" +
-	"ngüísticozazakiárabe estándar modernoalemán austríacoalto alemán suizoin" +
-	"glés australianoinglés canadienseinglés británicoinglés estadounidensees" +
-	"pañol latinoamericanoespañol de Españaespañol de Méxicofrancés canadiens" +
-	"efrancés suizobajo sajónflamencoportugués de Brasilportugués de Portugal" +
-	"moldavoserbocroatasuajili del Congochino simplificadochino tradicional"
+	"azight del Atlas Centraludmurtugaríticoumbundulengua desconocidavaivótic" +
+	"ovunjowalserwolaytawaraywashowarlpirichino wukalmyksogayaoyapésyangbenye" +
+	"mbacantonészapotecosímbolos Blisszenagatamazight estándar marroquízuñisi" +
+	"n contenido lingüísticozazakiárabe estándar modernoalemán austríacoalto " +
+	"alemán suizoinglés australianoinglés canadienseinglés británicoinglés es" +
+	"tadounidenseespañol latinoamericanoespañol de Españaespañol de Méxicofra" +
+	"ncés canadiensefrancés suizobajo sajónflamencoportugués de Brasilportugu" +
+	"és de Portugalmoldavoserbocroatasuajili del Congochino simplificadochin" +
+	"o tradicional"
 
 var esLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -17468,15 +17473,15 @@ var esLangIdx = []uint16{ // 613 elements
 	0x0df9, 0x0df9, 0x0df9, 0x0dfe, 0x0e02, 0x0e08, 0x0e0e, 0x0e14,
 	0x0e17, 0x0e21, 0x0e21, 0x0e28, 0x0e2f, 0x0e2f, 0x0e37, 0x0e46,
 	0x0e4f, 0x0e4f, 0x0e55, 0x0e55, 0x0e5f, 0x0e5f, 0x0e66, 0x0e6f,
-	0x0e76, 0x0e7f, 0x0e9a, 0x0ea0, 0x0eaa, 0x0eb1, 0x0eb6, 0x0eb9,
-	0x0eb9, 0x0eb9, 0x0eb9, 0x0eb9, 0x0ec0, 0x0ec0, 0x0ec5, 0x0ecb,
-	0x0ed2, 0x0ed7, 0x0edc, 0x0ee4, 0x0eec, 0x0ef2, 0x0ef2, 0x0ef6,
+	0x0e76, 0x0e7f, 0x0e9a, 0x0ea0, 0x0eaa, 0x0eb1, 0x0ec3, 0x0ec6,
+	0x0ec6, 0x0ec6, 0x0ec6, 0x0ec6, 0x0ecd, 0x0ecd, 0x0ed2, 0x0ed8,
+	0x0edf, 0x0ee4, 0x0ee9, 0x0ef1, 0x0ef9, 0x0eff, 0x0eff, 0x0f03,
 	// Entry 240 - 27F
-	0x0ef9, 0x0eff, 0x0f06, 0x0f0b, 0x0f0b, 0x0f14, 0x0f1c, 0x0f2b,
-	0x0f2b, 0x0f31, 0x0f4e, 0x0f53, 0x0f6e, 0x0f74, 0x0f8c, 0x0f8c,
-	0x0f9e, 0x0fb0, 0x0fc3, 0x0fd5, 0x0fe7, 0x0ffd, 0x1015, 0x1028,
-	0x103b, 0x103b, 0x104e, 0x105c, 0x1067, 0x106f, 0x1083, 0x1099,
-	0x10a0, 0x10ab, 0x10bc, 0x10ce, 0x10df,
+	0x0f06, 0x0f0c, 0x0f13, 0x0f18, 0x0f18, 0x0f21, 0x0f29, 0x0f38,
+	0x0f38, 0x0f3e, 0x0f5b, 0x0f60, 0x0f7b, 0x0f81, 0x0f99, 0x0f99,
+	0x0fab, 0x0fbd, 0x0fd0, 0x0fe2, 0x0ff4, 0x100a, 0x1022, 0x1035,
+	0x1048, 0x1048, 0x105b, 0x1069, 0x1074, 0x107c, 0x1090, 0x10a6,
+	0x10ad, 0x10b8, 0x10c9, 0x10db, 0x10ec,
 } // Size: 1250 bytes
 
 const es419LangStr string = "" + // Size: 218 bytes
@@ -17574,7 +17579,7 @@ var es419LangIdx = []uint16{ // 611 elements
 	0x00cb, 0x00cb, 0x00da,
 } // Size: 1246 bytes
 
-const etLangStr string = "" + // Size: 4574 bytes
+const etLangStr string = "" + // Size: 4586 bytes
 	"afariabhaasiavestaafrikaaniakaniamharaaragoniaraabiaassamiavaariaimaraas" +
 	"erbaidžaanibaškiirivalgevenebulgaariabislamabambarabengalitiibetibretoon" +
 	"ibosniakatalaanitšetšeenitšamorrokorsikakriitšehhikirikuslaavitšuvašikõm" +
@@ -17629,14 +17634,14 @@ const etLangStr string = "" + // Size: 4574 bytes
 	"terfriisisukumasususumerikomoorivanasüüriasüüriasileesiatulutemnetesoter" +
 	"enotetumitigreetivitokelautsahhiklingonitlingititalõšitamašekitšitongauu" +
 	"smelaneesiaturojotarokotsakooniatšimšilõunataaditumbukatuvalutaswaqitõva" +
-	"tamasiktiudmurdiugaritiumbundurootvaivenetivepsalääneflaamiMaini frangiv" +
-	"adjavõruvundžowalserivolaitavaraivašovarlpiriuukalmõkimegrelisogajaojapi" +
-	"yangbenijembanjengatukantonisapoteegiBlissi sümbolidzeelandizenagatamasi" +
-	"kti (Maroko)sunjimittekeelelinezazaaraabia (tänapäevane)Austria saksaŠve" +
-	"itsi ülemsaksaAustraalia ingliseKanada ingliseBriti ingliseAmeerika ingl" +
-	"iseLadina-Ameerika hispaaniaEuroopa hispaaniaMehhiko hispaaniaKanada pra" +
-	"ntsuseŠveitsi prantsuseHollandi alamsaksaflaamiBrasiilia portugaliEuroop" +
-	"a portugalimoldovaserbia-horvaadiKongo suahiili"
+	"tamasiktiudmurdiugaritiumbundumääramata keelvaivenetivepsalääneflaamiMai" +
+	"ni frangivadjavõruvundžowalserivolaitavaraivašovarlpiriuukalmõkimegrelis" +
+	"ogajaojapiyangbenijembanjengatukantonisapoteegiBlissi sümbolidzeelandize" +
+	"nagatamasikti (Maroko)sunjimittekeelelinezazaaraabia (tänapäevane)Austri" +
+	"a saksaŠveitsi ülemsaksaAustraalia ingliseKanada ingliseBriti ingliseAme" +
+	"erika ingliseLadina-Ameerika hispaaniaEuroopa hispaaniaMehhiko hispaania" +
+	"Kanada prantsuseŠveitsi prantsuseHollandi alamsaksaflaamiBrasiilia portu" +
+	"galiEuroopa portugalimoldovaserbia-horvaadiKongo suahiili"
 
 var etLangIdx = []uint16{ // 611 elements
 	// Entry 0 - 3F
@@ -17717,18 +17722,18 @@ var etLangIdx = []uint16{ // 611 elements
 	0x0efb, 0x0f03, 0x0f07, 0x0f0c, 0x0f10, 0x0f16, 0x0f1c, 0x0f22,
 	0x0f26, 0x0f2d, 0x0f33, 0x0f3b, 0x0f43, 0x0f4b, 0x0f54, 0x0f5d,
 	0x0f6a, 0x0f70, 0x0f76, 0x0f7f, 0x0f87, 0x0f92, 0x0f99, 0x0f9f,
-	0x0fa6, 0x0fab, 0x0fb4, 0x0fbb, 0x0fc2, 0x0fc9, 0x0fcd, 0x0fd0,
-	0x0fd6, 0x0fdb, 0x0fe8, 0x0ff4, 0x0ff9, 0x0ffe, 0x1005, 0x100c,
-	0x1013, 0x1018, 0x101d, 0x1025, 0x1027, 0x102f, 0x1036, 0x103a,
+	0x0fa6, 0x0fab, 0x0fb4, 0x0fbb, 0x0fc2, 0x0fc9, 0x0fd9, 0x0fdc,
+	0x0fe2, 0x0fe7, 0x0ff4, 0x1000, 0x1005, 0x100a, 0x1011, 0x1018,
+	0x101f, 0x1024, 0x1029, 0x1031, 0x1033, 0x103b, 0x1042, 0x1046,
 	// Entry 240 - 27F
-	0x103d, 0x1041, 0x1049, 0x104e, 0x1056, 0x105d, 0x1066, 0x1076,
-	0x107e, 0x1084, 0x1096, 0x109b, 0x10a9, 0x10ad, 0x10c4, 0x10c4,
-	0x10d1, 0x10e4, 0x10f6, 0x1104, 0x1111, 0x1121, 0x113a, 0x114b,
-	0x115c, 0x115c, 0x116c, 0x117e, 0x1190, 0x1196, 0x11a9, 0x11ba,
-	0x11c1, 0x11d0, 0x11de,
+	0x1049, 0x104d, 0x1055, 0x105a, 0x1062, 0x1069, 0x1072, 0x1082,
+	0x108a, 0x1090, 0x10a2, 0x10a7, 0x10b5, 0x10b9, 0x10d0, 0x10d0,
+	0x10dd, 0x10f0, 0x1102, 0x1110, 0x111d, 0x112d, 0x1146, 0x1157,
+	0x1168, 0x1168, 0x1178, 0x118a, 0x119c, 0x11a2, 0x11b5, 0x11c6,
+	0x11cd, 0x11dc, 0x11ea,
 } // Size: 1246 bytes
 
-const faLangStr string = "" + // Size: 7988 bytes
+const faLangStr string = "" + // Size: 8001 bytes
 	"آفاریآبخازیاوستاییآفریکانسآکانامهریآراگونیعربیآسامیآواریآیماراییترکی آذر" +
 	"بایجانیباشغیریبلاروسیبلغاریبیسلامابامباراییبنگالیتبتیبرتونبوسنیاییکاتال" +
 	"انچچنیچاموروییکورسیکریاییچکیاسلاوی کلیساییچوواشیولزیدانمارکیآلمانیدیوهی" +
@@ -17782,13 +17787,13 @@ const faLangStr string = "" + // Size: 7988 bytes
 	"ریکوموریسریانی کلاسیکسریانیسیلزیاییتمنه\u200cایتسوییترنوتتومیتیگره" +
 	"\u200cایتیویکلینگونتلین\u200cگیتیتاماشقیتونگایی نیاساتوک\u200cپیسینیتارو" +
 	"کوییتسیم\u200cشیانیتومبوکاییتووالوییتسواکیتوواییآمازیغی اطلس مرکزیاودمو" +
-	"رتیاوگاریتیامبوندوییریشهویاییوتیونجووالسروالاموواراییواشوییوارلپیریقلمو" +
-	"قیسوگایییائویییاپییانگبنییمباییکانتونیزاپوتکیزناگاآمازیغی معیار مراکشزو" +
-	"نیاییبدون محتوای زبانیزازاییعربی رسمیترکی آذری جنوبیآلمانی اتریشآلمانی " +
-	"معیار سوئیسانگلیسی استرالیاانگلیسی کاناداانگلیسی بریتانیاانگلیسی امریکا" +
-	"اسپانیایی امریکای لاتیناسپانیایی اروپااسپانیایی مکزیکدریفرانسوی کاناداف" +
-	"رانسوی سوئیسساکسونی سفلیفلمنگیپرتغالی برزیلپرتغالی اروپامولداویاییصرب و" +
-	" کرواتیسواحیلی کنگوچینی ساده\u200cشدهچینی سنتی"
+	"رتیاوگاریتیامبوندوییزبان نامشخصویاییوتیونجووالسروالاموواراییواشوییوارلپ" +
+	"یریقلموقیسوگایییائویییاپییانگبنییمباییکانتونیزاپوتکیزناگاآمازیغی معیار " +
+	"مراکشزونیاییبدون محتوای زبانیزازاییعربی رسمیترکی آذری جنوبیآلمانی اتریش" +
+	"آلمانی معیار سوئیسانگلیسی استرالیاانگلیسی کاناداانگلیسی بریتانیاانگلیسی" +
+	" امریکااسپانیایی امریکای لاتیناسپانیایی اروپااسپانیایی مکزیکدریفرانسوی ک" +
+	"انادافرانسوی سوئیسساکسونی سفلیفلمنگیپرتغالی برزیلپرتغالی اروپامولداویای" +
+	"یصرب و کرواتیسواحیلی کنگوچینی ساده\u200cشدهچینی سنتی"
 
 var faLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -17869,18 +17874,18 @@ var faLangIdx = []uint16{ // 613 elements
 	0x1a6d, 0x1a7d, 0x1a7d, 0x1a8c, 0x1a96, 0x1a9e, 0x1aa8, 0x1ab9,
 	0x1ac1, 0x1ac1, 0x1ac1, 0x1acf, 0x1ae2, 0x1ae2, 0x1af0, 0x1b09,
 	0x1b1e, 0x1b1e, 0x1b2e, 0x1b2e, 0x1b43, 0x1b43, 0x1b55, 0x1b65,
-	0x1b71, 0x1b7d, 0x1b9f, 0x1baf, 0x1bbf, 0x1bd1, 0x1bd9, 0x1be3,
-	0x1be3, 0x1be3, 0x1be3, 0x1be3, 0x1be9, 0x1be9, 0x1bf1, 0x1bfb,
-	0x1c07, 0x1c13, 0x1c1f, 0x1c2f, 0x1c2f, 0x1c3b, 0x1c3b, 0x1c47,
+	0x1b71, 0x1b7d, 0x1b9f, 0x1baf, 0x1bbf, 0x1bd1, 0x1be6, 0x1bf0,
+	0x1bf0, 0x1bf0, 0x1bf0, 0x1bf0, 0x1bf6, 0x1bf6, 0x1bfe, 0x1c08,
+	0x1c14, 0x1c20, 0x1c2c, 0x1c3c, 0x1c3c, 0x1c48, 0x1c48, 0x1c54,
 	// Entry 240 - 27F
-	0x1c53, 0x1c5b, 0x1c69, 0x1c75, 0x1c75, 0x1c83, 0x1c91, 0x1c91,
-	0x1c91, 0x1c9b, 0x1cbf, 0x1ccd, 0x1ced, 0x1cf9, 0x1d0a, 0x1d26,
-	0x1d3d, 0x1d5f, 0x1d7e, 0x1d99, 0x1db8, 0x1dd3, 0x1dff, 0x1e1c,
-	0x1e39, 0x1e3f, 0x1e5a, 0x1e73, 0x1e8a, 0x1e96, 0x1eaf, 0x1ec8,
-	0x1edc, 0x1ef2, 0x1f09, 0x1f23, 0x1f34,
+	0x1c60, 0x1c68, 0x1c76, 0x1c82, 0x1c82, 0x1c90, 0x1c9e, 0x1c9e,
+	0x1c9e, 0x1ca8, 0x1ccc, 0x1cda, 0x1cfa, 0x1d06, 0x1d17, 0x1d33,
+	0x1d4a, 0x1d6c, 0x1d8b, 0x1da6, 0x1dc5, 0x1de0, 0x1e0c, 0x1e29,
+	0x1e46, 0x1e4c, 0x1e67, 0x1e80, 0x1e97, 0x1ea3, 0x1ebc, 0x1ed5,
+	0x1ee9, 0x1eff, 0x1f16, 0x1f30, 0x1f41,
 } // Size: 1250 bytes
 
-const fiLangStr string = "" + // Size: 4736 bytes
+const fiLangStr string = "" + // Size: 4747 bytes
 	"afarabhaasiavestaafrikaansakanamharaaragoniaarabiaassamiavaariaimaraazer" +
 	"ibaškiirivalkovenäjäbulgariabislamabambarabengalitiibetbretonibosniakata" +
 	"laanitšetšeenitšamorrokorsikacreetšekkikirkkoslaavitšuvassikymritanskasa" +
@@ -17937,15 +17942,15 @@ const fiLangStr string = "" + // Size: 4736 bytes
 	"soninkesogdisrananserersahosaterlandinfriisisukumasususumerikomorimuinai" +
 	"ssyyriasyyriasleesiatulutemnetesoterenotetumtigretivtokelautsahuriklingo" +
 	"ntlingittališitamašekmalawintongatok-pisinturojotarokotsakoniatsimšitati" +
-	"tumbukatuvalutasawaqtuvakeskiatlaksentamazightudmurttiugaritmbundujuuriv" +
-	"aivenetsiavepsälänsiflaamimaininfrankkivatjavõrovunjowalserwolaittawaray" +
-	"washowarlpiriwu-kiinakalmukkimingrelisogajaojapiyangbenyembañeengatúkant" +
-	"oninkiinazapoteekkiblisskieliseelantizenagavakioitu tamazightzuniei kiel" +
-	"ellistä sisältöäzazayleisarabiaitävallansaksasveitsinyläsaksaaustraliane" +
-	"nglantikanadanenglantibritannianenglantiamerikanenglantiamerikanespanjae" +
-	"uroopanespanjameksikonespanjakanadanranskasveitsinranskaalankomaidenalas" +
-	"aksaflaamibrasilianportugalieuroopanportugalimoldovaserbokroaattikingwan" +
-	"ayksinkertaistettu kiinaperinteinen kiina"
+	"tumbukatuvalutasawaqtuvakeskiatlaksentamazightudmurttiugaritmbundutuntem" +
+	"aton kielivaivenetsiavepsälänsiflaamimaininfrankkivatjavõrovunjowalserwo" +
+	"laittawaraywashowarlpiriwu-kiinakalmukkimingrelisogajaojapiyangbenyembañ" +
+	"eengatúkantoninkiinazapoteekkiblisskieliseelantizenagavakioitu tamazight" +
+	"zuniei kielellistä sisältöäzazayleisarabiaitävallansaksasveitsinyläsaksa" +
+	"australianenglantikanadanenglantibritannianenglantiamerikanenglantiameri" +
+	"kanespanjaeuroopanespanjameksikonespanjakanadanranskasveitsinranskaalank" +
+	"omaidenalasaksaflaamibrasilianportugalieuroopanportugalimoldovaserbokroa" +
+	"attikingwanayksinkertaistettu kiinaperinteinen kiina"
 
 var fiLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -18026,18 +18031,18 @@ var fiLangIdx = []uint16{ // 613 elements
 	0x0f86, 0x0f8d, 0x0f91, 0x0f96, 0x0f9a, 0x0fa0, 0x0fa5, 0x0faa,
 	0x0fad, 0x0fb4, 0x0fbb, 0x0fc2, 0x0fc9, 0x0fd0, 0x0fd8, 0x0fe4,
 	0x0fed, 0x0ff3, 0x0ff9, 0x1001, 0x1008, 0x100c, 0x1013, 0x1019,
-	0x1020, 0x1024, 0x103a, 0x1042, 0x1048, 0x104e, 0x1053, 0x1056,
-	0x105e, 0x1064, 0x1070, 0x107d, 0x1082, 0x1087, 0x108c, 0x1092,
-	0x109a, 0x109f, 0x10a4, 0x10ac, 0x10b4, 0x10bc, 0x10c4, 0x10c8,
+	0x1020, 0x1024, 0x103a, 0x1042, 0x1048, 0x104e, 0x105e, 0x1061,
+	0x1069, 0x106f, 0x107b, 0x1088, 0x108d, 0x1092, 0x1097, 0x109d,
+	0x10a5, 0x10aa, 0x10af, 0x10b7, 0x10bf, 0x10c7, 0x10cf, 0x10d3,
 	// Entry 240 - 27F
-	0x10cb, 0x10cf, 0x10d6, 0x10db, 0x10e5, 0x10f2, 0x10fc, 0x1106,
-	0x110e, 0x1114, 0x1126, 0x112a, 0x1145, 0x1149, 0x1154, 0x1154,
-	0x1163, 0x1174, 0x1186, 0x1195, 0x11a7, 0x11b7, 0x11c6, 0x11d5,
-	0x11e4, 0x11e4, 0x11f1, 0x11ff, 0x1213, 0x1219, 0x122b, 0x123c,
-	0x1243, 0x1250, 0x1258, 0x126f, 0x1280,
+	0x10d6, 0x10da, 0x10e1, 0x10e6, 0x10f0, 0x10fd, 0x1107, 0x1111,
+	0x1119, 0x111f, 0x1131, 0x1135, 0x1150, 0x1154, 0x115f, 0x115f,
+	0x116e, 0x117f, 0x1191, 0x11a0, 0x11b2, 0x11c2, 0x11d1, 0x11e0,
+	0x11ef, 0x11ef, 0x11fc, 0x120a, 0x121e, 0x1224, 0x1236, 0x1247,
+	0x124e, 0x125b, 0x1263, 0x127a, 0x128b,
 } // Size: 1250 bytes
 
-const filLangStr string = "" + // Size: 3132 bytes
+const filLangStr string = "" + // Size: 3147 bytes
 	"AfarAbkhazianAfrikaansAkanAmharicAragoneseArabicAssameseAvaricAymaraAzer" +
 	"baijaniBashkirBelarusianBulgarianBislamaBambaraBanglaTibetanBretonBosnia" +
 	"nCatalanChechenChamorroCorsicanCzechChurch SlavicChuvashWelshDanishGerma" +
@@ -18074,14 +18079,14 @@ const filLangStr string = "" + // Size: 3132 bytes
 	"nguSicilianScotsKatimugang KurdishSenaKoyraboro SenniTachelhitShanKatimu" +
 	"gang SamiLule SamiInari SamiSkolt SamiSoninkeSranan TongoSahoSukumaComor" +
 	"ianSyriacTimneTesoTetumTigreKlingonTok PisinTarokoTumbukaTuvaluTasawaqTu" +
-	"vinianCentral Atlas TamazightUdmurtUmbunduRootVaiVunjoWalserWolayttaWara" +
-	"yWarlpiriKalmykSogaYangbenYembaCantoneseStandard Moroccan TamazightZuniW" +
-	"alang nilalaman na ukol sa wikaZazaModernong Karaniwang ArabicAustrian G" +
-	"ermanSwiss High GermanIngles ng AustralyaIngles sa CanadaIngles na Briti" +
-	"shIngles na AmericanLatin American na EspanyolEuropean SpanishMexican na" +
-	" EspanyolFrench sa CanadaSwiss na FrenchLow SaxonFlemishPortuges ng Bras" +
-	"ilEuropean PortugueseMoldavianSerbo-CroatianCongo SwahiliPinasimpleng Ch" +
-	"ineseTradisyonal na Chinese"
+	"vinianCentral Atlas TamazightUdmurtUmbunduHindi Kilalang WikaVaiVunjoWal" +
+	"serWolayttaWarayWarlpiriKalmykSogaYangbenYembaCantoneseStandard Moroccan" +
+	" TamazightZuniWalang nilalaman na ukol sa wikaZazaModernong Karaniwang A" +
+	"rabicAustrian GermanSwiss High GermanIngles ng AustralyaIngles sa Canada" +
+	"Ingles na BritishIngles na AmericanLatin American na EspanyolEuropean Sp" +
+	"anishMexican na EspanyolFrench sa CanadaSwiss na FrenchLow SaxonFlemishP" +
+	"ortuges ng BrasilEuropean PortugueseMoldavianSerbo-CroatianCongo Swahili" +
+	"Pinasimpleng ChineseTradisyonal na Chinese"
 
 var filLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -18162,18 +18167,18 @@ var filLangIdx = []uint16{ // 613 elements
 	0x09ea, 0x09ea, 0x09ea, 0x09ef, 0x09f3, 0x09f3, 0x09f8, 0x09fd,
 	0x09fd, 0x09fd, 0x09fd, 0x0a04, 0x0a04, 0x0a04, 0x0a04, 0x0a04,
 	0x0a0d, 0x0a0d, 0x0a13, 0x0a13, 0x0a13, 0x0a13, 0x0a1a, 0x0a20,
-	0x0a27, 0x0a2f, 0x0a46, 0x0a4c, 0x0a4c, 0x0a53, 0x0a57, 0x0a5a,
-	0x0a5a, 0x0a5a, 0x0a5a, 0x0a5a, 0x0a5a, 0x0a5a, 0x0a5f, 0x0a65,
-	0x0a6d, 0x0a72, 0x0a72, 0x0a7a, 0x0a7a, 0x0a80, 0x0a80, 0x0a84,
+	0x0a27, 0x0a2f, 0x0a46, 0x0a4c, 0x0a4c, 0x0a53, 0x0a66, 0x0a69,
+	0x0a69, 0x0a69, 0x0a69, 0x0a69, 0x0a69, 0x0a69, 0x0a6e, 0x0a74,
+	0x0a7c, 0x0a81, 0x0a81, 0x0a89, 0x0a89, 0x0a8f, 0x0a8f, 0x0a93,
 	// Entry 240 - 27F
-	0x0a84, 0x0a84, 0x0a8b, 0x0a90, 0x0a90, 0x0a99, 0x0a99, 0x0a99,
-	0x0a99, 0x0a99, 0x0ab4, 0x0ab8, 0x0ad8, 0x0adc, 0x0af7, 0x0af7,
-	0x0b06, 0x0b17, 0x0b2a, 0x0b3a, 0x0b4b, 0x0b5d, 0x0b77, 0x0b87,
-	0x0b9a, 0x0b9a, 0x0baa, 0x0bb9, 0x0bc2, 0x0bc9, 0x0bdb, 0x0bee,
-	0x0bf7, 0x0c05, 0x0c12, 0x0c26, 0x0c3c,
+	0x0a93, 0x0a93, 0x0a9a, 0x0a9f, 0x0a9f, 0x0aa8, 0x0aa8, 0x0aa8,
+	0x0aa8, 0x0aa8, 0x0ac3, 0x0ac7, 0x0ae7, 0x0aeb, 0x0b06, 0x0b06,
+	0x0b15, 0x0b26, 0x0b39, 0x0b49, 0x0b5a, 0x0b6c, 0x0b86, 0x0b96,
+	0x0ba9, 0x0ba9, 0x0bb9, 0x0bc8, 0x0bd1, 0x0bd8, 0x0bea, 0x0bfd,
+	0x0c06, 0x0c14, 0x0c21, 0x0c35, 0x0c4b,
 } // Size: 1250 bytes
 
-const frLangStr string = "" + // Size: 5136 bytes
+const frLangStr string = "" + // Size: 5151 bytes
 	"afarabkhazeavestiqueafrikaansakanamhariquearagonaisarabeassamaisavarayma" +
 	"raazéribachkirbiélorussebulgarebichelamarbambarabengalitibétainbretonbos" +
 	"niaquecatalantchétchènechamorrocorsecreetchèqueslavon d’églisetchouvache" +
@@ -18235,15 +18240,15 @@ const frLangStr string = "" + // Size: 5136 bytes
 	"syriaque classiquesyriaquesilésientouloutemnetesoterenotetumtigrétivtoke" +
 	"lautsakhourklingontlingittalyshtamacheqtonga nyasatok pisintouroyotaroko" +
 	"tsakonientsimshiantati caucasientoumboukatuvalutasawaqtouvatamazight du " +
-	"Maroc centraloudmourteougaritiqueoumboundouracinevaïvénitienvepseflamand" +
-	" occidentalfranconien du Mainvotevõrovunjowalserwalamowaraywashowarlpiri" +
-	"wukalmoukmingréliensogayaoyapoisyangbenyembanheengatoucantonaiszapotèque" +
-	"symboles Blisszélandaiszenagaamazighe standard marocainzuñisans contenu " +
-	"linguistiquezazakiarabe standard moderneallemand autrichienallemand suis" +
-	"seanglais australienanglais canadienanglais britanniqueanglais américain" +
-	"français canadienfrançais suissebas-saxon néerlandaisflamandportugais br" +
-	"ésilienportugais européenmoldaveserbo-croateswahili du Congochinois sim" +
-	"plifiéchinois traditionnel"
+	"Maroc centraloudmourteougaritiqueoumboundoulangue indéterminéevaïvénitie" +
+	"nvepseflamand occidentalfranconien du Mainvotevõrovunjowalserwalamowaray" +
+	"washowarlpiriwukalmoukmingréliensogayaoyapoisyangbenyembanheengatoucanto" +
+	"naiszapotèquesymboles Blisszélandaiszenagaamazighe standard marocainzuñi" +
+	"sans contenu linguistiquezazakiarabe standard moderneallemand autrichien" +
+	"allemand suisseanglais australienanglais canadienanglais britanniqueangl" +
+	"ais américainfrançais canadienfrançais suissebas-saxon néerlandaisflaman" +
+	"dportugais brésilienportugais européenmoldaveserbo-croateswahili du Cong" +
+	"ochinois simplifiéchinois traditionnel"
 
 var frLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -18324,15 +18329,15 @@ var frLangIdx = []uint16{ // 613 elements
 	0x10e9, 0x10f2, 0x10f8, 0x10fd, 0x1101, 0x1107, 0x110c, 0x1112,
 	0x1115, 0x111c, 0x1124, 0x112b, 0x1132, 0x1138, 0x1140, 0x114b,
 	0x1154, 0x115b, 0x1161, 0x116a, 0x1173, 0x1181, 0x118a, 0x1190,
-	0x1197, 0x119c, 0x11b6, 0x11bf, 0x11ca, 0x11d4, 0x11da, 0x11de,
-	0x11e7, 0x11ec, 0x11fe, 0x1210, 0x1214, 0x1219, 0x121e, 0x1224,
-	0x122a, 0x122f, 0x1234, 0x123c, 0x123e, 0x1245, 0x1250, 0x1254,
+	0x1197, 0x119c, 0x11b6, 0x11bf, 0x11ca, 0x11d4, 0x11e9, 0x11ed,
+	0x11f6, 0x11fb, 0x120d, 0x121f, 0x1223, 0x1228, 0x122d, 0x1233,
+	0x1239, 0x123e, 0x1243, 0x124b, 0x124d, 0x1254, 0x125f, 0x1263,
 	// Entry 240 - 27F
-	0x1257, 0x125d, 0x1264, 0x1269, 0x1273, 0x127c, 0x1286, 0x1294,
-	0x129e, 0x12a4, 0x12be, 0x12c3, 0x12dc, 0x12e2, 0x12f8, 0x12f8,
-	0x130b, 0x131a, 0x132c, 0x133c, 0x134f, 0x1361, 0x1361, 0x1361,
-	0x1361, 0x1361, 0x1373, 0x1383, 0x1399, 0x13a0, 0x13b4, 0x13c7,
-	0x13ce, 0x13da, 0x13ea, 0x13fc, 0x1410,
+	0x1266, 0x126c, 0x1273, 0x1278, 0x1282, 0x128b, 0x1295, 0x12a3,
+	0x12ad, 0x12b3, 0x12cd, 0x12d2, 0x12eb, 0x12f1, 0x1307, 0x1307,
+	0x131a, 0x1329, 0x133b, 0x134b, 0x135e, 0x1370, 0x1370, 0x1370,
+	0x1370, 0x1370, 0x1382, 0x1392, 0x13a8, 0x13af, 0x13c3, 0x13d6,
+	0x13dd, 0x13e9, 0x13f9, 0x140b, 0x141f,
 } // Size: 1250 bytes
 
 const frCALangStr string = "" + // Size: 529 bytes
@@ -18435,7 +18440,7 @@ var frCALangIdx = []uint16{ // 611 elements
 	0x0200, 0x0200, 0x0211,
 } // Size: 1246 bytes
 
-const guLangStr string = "" + // Size: 11776 bytes
+const guLangStr string = "" + // Size: 11798 bytes
 	"અફારઅબખાજિયનઅવેસ્તનઆફ્રિકન્સઅકાનએમ્હારિકઅર્ગોનીઝઅરબીઆસામીઅવેરિકઆયમારાઅઝર" +
 	"બૈજાનીબશ્કીરબેલારુશિયનબલ્ગેરિયનબિસ્લામાબામ્બારાબંગાળીતિબેટીયનબ્રેટોનબો" +
 	"સ્નિયનકતલાનચેચનકેમોરોકોર્સિકનક્રીચેકચર્ચ સ્લાવિકચૂવાશવેલ્શડેનિશજર્મનદિ" +
@@ -18485,15 +18490,15 @@ const guLangStr string = "" + // Size: 11776 bytes
 	"્કેસોગ્ડિએનસ્રાનન ટોન્ગોસેરેરસાહોસુકુમાસુસુસુમેરિયનકોમોરિયનપરંપરાગત સિ" +
 	"રિએકસિરિએકતુલુટિમ્નેતેસોતેરેનોતેતુમટાઇગ્રેતિવતોકેલાઉક્લિન્ગોનક્લીન્ગકિ" +
 	"ટતામાશેખન્યાસા ટોન્ગાટોક પિસિનટારોકોસિમ્શિયનમુસ્લિમ તાટતુમ્બુકાતુવાલુત" +
-	"સાવાકટુવીનિયનસેન્ટ્રલ ઍટ્લસ તામાઝિગ્ટઉદમુર્તયુગેરિટિકઉમ્બુન્ડૂરૂટવાઇવો" +
-	"ટિકવુન્જોવેલ્સેરવોલાયટ્ટાવારેયવાશોવાર્લ્પીરીwuuકાલ્મિકસોગાયાઓયાપીસયાન્" +
-	"ગબેનયેમ્બાકેંટોનીઝઝેપોટેકબ્લિસિમ્બોલ્સઝેનાગાપ્રમાણભૂત મોરોક્કન તામાઝિગ" +
-	"્ટઝૂનીકોઇ ભાષાશાસ્ત્રીય સામગ્રી નથીઝાઝામોડર્ન સ્ટાન્ડર્ડ અરબીઓસ્ટ્રિઅન" +
-	" જર્મનસ્વિસ હાય જર્મનઓસ્ટ્રેલિયન અંગ્રેજીકેનેડિયન અંગ્રેજીબ્રિટિશ અંગ્રે" +
-	"જીઅમેરિકન અંગ્રેજીલેટિન અમેરિકન સ્પેનિશયુરોપિયન સ્પેનિશમેક્સિકન સ્પેનિ" +
-	"શકેનેડિયન ફ્રેંચસ્વિસ ફ્રેંચલો સેક્સોનફ્લેમિશબ્રાઝિલીયન પોર્ટુગીઝયુરોપ" +
-	"િયન પોર્ટુગીઝમોલડાવિયનસર્બો-ક્રોએશિયનકોંગો સ્વાહિલીસરળીકૃત ચાઇનીઝપારંપ" +
-	"રિક ચાઇનીઝ"
+	"સાવાકટુવીનિયનસેન્ટ્રલ ઍટ્લસ તામાઝિગ્ટઉદમુર્તયુગેરિટિકઉમ્બુન્ડૂઅજ્ઞાત ભ" +
+	"ાષાવાઇવોટિકવુન્જોવેલ્સેરવોલાયટ્ટાવારેયવાશોવાર્લ્પીરીwuuકાલ્મિકસોગાયાઓય" +
+	"ાપીસયાન્ગબેનયેમ્બાકેંટોનીઝઝેપોટેકબ્લિસિમ્બોલ્સઝેનાગાપ્રમાણભૂત મોરોક્કન" +
+	" તામાઝિગ્ટઝૂનીકોઇ ભાષાશાસ્ત્રીય સામગ્રી નથીઝાઝામોડર્ન સ્ટાન્ડર્ડ અરબીઓસ્" +
+	"ટ્રિઅન જર્મનસ્વિસ હાય જર્મનઓસ્ટ્રેલિયન અંગ્રેજીકેનેડિયન અંગ્રેજીબ્રિટિ" +
+	"શ અંગ્રેજીઅમેરિકન અંગ્રેજીલેટિન અમેરિકન સ્પેનિશયુરોપિયન સ્પેનિશમેક્સિક" +
+	"ન સ્પેનિશકેનેડિયન ફ્રેંચસ્વિસ ફ્રેંચલો સેક્સોનફ્લેમિશબ્રાઝિલીયન પોર્ટુ" +
+	"ગીઝયુરોપિયન પોર્ટુગીઝમોલડાવિયનસર્બો-ક્રોએશિયનકોંગો સ્વાહિલીસરળીકૃત ચાઇ" +
+	"નીઝપારંપરિક ચાઇનીઝ"
 
 var guLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -18574,18 +18579,18 @@ var guLangIdx = []uint16{ // 613 elements
 	0x260c, 0x260c, 0x2618, 0x262a, 0x2636, 0x2648, 0x2657, 0x266c,
 	0x2675, 0x268a, 0x268a, 0x26a5, 0x26c3, 0x26c3, 0x26d8, 0x26fd,
 	0x2716, 0x2716, 0x2728, 0x2728, 0x2740, 0x275f, 0x2777, 0x2789,
-	0x279b, 0x27b3, 0x27f7, 0x280c, 0x2827, 0x2842, 0x284b, 0x2854,
-	0x2854, 0x2854, 0x2854, 0x2854, 0x2863, 0x2863, 0x2875, 0x288a,
-	0x28a5, 0x28b4, 0x28c0, 0x28de, 0x28e1, 0x28f6, 0x28f6, 0x2902,
+	0x279b, 0x27b3, 0x27f7, 0x280c, 0x2827, 0x2842, 0x2861, 0x286a,
+	0x286a, 0x286a, 0x286a, 0x286a, 0x2879, 0x2879, 0x288b, 0x28a0,
+	0x28bb, 0x28ca, 0x28d6, 0x28f4, 0x28f7, 0x290c, 0x290c, 0x2918,
 	// Entry 240 - 27F
-	0x290b, 0x291a, 0x2932, 0x2944, 0x2944, 0x295c, 0x2971, 0x2998,
-	0x2998, 0x29aa, 0x29fa, 0x2a06, 0x2a57, 0x2a63, 0x2aa1, 0x2aa1,
-	0x2acc, 0x2af5, 0x2b2f, 0x2b60, 0x2b8e, 0x2bbc, 0x2bf7, 0x2c25,
-	0x2c53, 0x2c53, 0x2c7e, 0x2ca0, 0x2cbc, 0x2cd1, 0x2d0b, 0x2d3f,
-	0x2d5a, 0x2d85, 0x2dad, 0x2dd5, 0x2e00,
+	0x2921, 0x2930, 0x2948, 0x295a, 0x295a, 0x2972, 0x2987, 0x29ae,
+	0x29ae, 0x29c0, 0x2a10, 0x2a1c, 0x2a6d, 0x2a79, 0x2ab7, 0x2ab7,
+	0x2ae2, 0x2b0b, 0x2b45, 0x2b76, 0x2ba4, 0x2bd2, 0x2c0d, 0x2c3b,
+	0x2c69, 0x2c69, 0x2c94, 0x2cb6, 0x2cd2, 0x2ce7, 0x2d21, 0x2d55,
+	0x2d70, 0x2d9b, 0x2dc3, 0x2deb, 0x2e16,
 } // Size: 1250 bytes
 
-const heLangStr string = "" + // Size: 7096 bytes
+const heLangStr string = "" + // Size: 7112 bytes
 	"אפאריתאבחזיתאבסטןאפריקאנסאקאןאמהריתאראגוניתערביתאסאמיתאבאריתאיימאריתאזרי" +
 	"תבשקיריתבלארוסיתבולגריתביסלמהבמבארהבנגליתטיבטיתברטוניתבוסניתקטלאניתצ׳צ׳" +
 	"ניתצ׳מורוקורסיקניתקריצ׳כיתסלאבית כנסייתית עתיקהצ׳ובאשוולשיתדניתגרמניתדי" +
@@ -18632,11 +18637,11 @@ const heLangStr string = "" + // Size: 7096 bytes
 	"אדיתסידאמוסאמי דרומיתלולה סאמיאינארי סאמיסקולט סאמיסונינקהסוגדיאןסרנאן " +
 	"טונגוסררסאהוסוקומהסוסושומריתסירית קלאסיתסוריתטימנהטסוטרנוטטוםטיגריתטיבט" +
 	"וקלאוקלינגוןטלינגיטטמאשקניאסה טונגהטוק פיסיןטרוקוטסימשיאןטומבוקהטובאלוט" +
-	"סוואקטוביניתטמזייט של מרכז מרוקואודמורטאוגריתיתאומבונדורוטוואיווטיקוונג" +
-	"׳ווואלסרווליאטהווראיוואשווורלפיריסינית ווקלמיקיתסוגהיאויאפזיתיאנגבןימבה" +
-	"קנטונזיתזאפוטקבליסימבולסזנאגהתמזיע׳ת מרוקאית תקניתזוניללא תוכן לשוניזאז" +
-	"אערבית ספרותיתגרמנית (שוויץ)אנגלית (בריטניה)צרפתית (שוויץ)סקסונית תחתית" +
-	"פלמיתמולדביתסרבו-קרואטיתסווהילי קונגוסינית פשוטהסינית מסורתית"
+	"סוואקטוביניתטמזייט של מרכז מרוקואודמורטאוגריתיתאומבונדושפה לא ידועהוואי" +
+	"ווטיקוונג׳ווואלסרווליאטהווראיוואשווורלפיריסינית ווקלמיקיתסוגהיאויאפזיתי" +
+	"אנגבןימבהקנטונזיתזאפוטקבליסימבולסזנאגהתמזיע׳ת מרוקאית תקניתזוניללא תוכן" +
+	" לשוניזאזאערבית ספרותיתגרמנית (שוויץ)אנגלית (בריטניה)צרפתית (שוויץ)סקסונ" +
+	"ית תחתיתפלמיתמולדביתסרבו-קרואטיתסווהילי קונגוסינית פשוטהסינית מסורתית"
 
 var heLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -18717,18 +18722,18 @@ var heLangIdx = []uint16{ // 613 elements
 	0x185d, 0x185d, 0x185d, 0x1867, 0x186d, 0x1875, 0x187d, 0x1889,
 	0x188f, 0x189b, 0x189b, 0x18a9, 0x18b7, 0x18b7, 0x18c1, 0x18d6,
 	0x18e7, 0x18e7, 0x18f1, 0x18f1, 0x1901, 0x1901, 0x190f, 0x191b,
-	0x1927, 0x1935, 0x195a, 0x1968, 0x1978, 0x1988, 0x198e, 0x1996,
-	0x1996, 0x1996, 0x1996, 0x1996, 0x19a0, 0x19a0, 0x19ac, 0x19b8,
-	0x19c6, 0x19d0, 0x19da, 0x19ea, 0x19f9, 0x1a07, 0x1a07, 0x1a0f,
+	0x1927, 0x1935, 0x195a, 0x1968, 0x1978, 0x1988, 0x199e, 0x19a6,
+	0x19a6, 0x19a6, 0x19a6, 0x19a6, 0x19b0, 0x19b0, 0x19bc, 0x19c8,
+	0x19d6, 0x19e0, 0x19ea, 0x19fa, 0x1a09, 0x1a17, 0x1a17, 0x1a1f,
 	// Entry 240 - 27F
-	0x1a15, 0x1a21, 0x1a2d, 0x1a35, 0x1a35, 0x1a45, 0x1a51, 0x1a65,
-	0x1a65, 0x1a6f, 0x1a97, 0x1a9f, 0x1ab9, 0x1ac1, 0x1ada, 0x1ada,
-	0x1ada, 0x1af3, 0x1af3, 0x1af3, 0x1b10, 0x1b10, 0x1b10, 0x1b10,
-	0x1b10, 0x1b10, 0x1b10, 0x1b29, 0x1b42, 0x1b4c, 0x1b4c, 0x1b4c,
-	0x1b5a, 0x1b71, 0x1b8a, 0x1b9f, 0x1bb8,
+	0x1a25, 0x1a31, 0x1a3d, 0x1a45, 0x1a45, 0x1a55, 0x1a61, 0x1a75,
+	0x1a75, 0x1a7f, 0x1aa7, 0x1aaf, 0x1ac9, 0x1ad1, 0x1aea, 0x1aea,
+	0x1aea, 0x1b03, 0x1b03, 0x1b03, 0x1b20, 0x1b20, 0x1b20, 0x1b20,
+	0x1b20, 0x1b20, 0x1b20, 0x1b39, 0x1b52, 0x1b5c, 0x1b5c, 0x1b5c,
+	0x1b6a, 0x1b81, 0x1b9a, 0x1baf, 0x1bc8,
 } // Size: 1250 bytes
 
-const hiLangStr string = "" + // Size: 11573 bytes
+const hiLangStr string = "" + // Size: 11595 bytes
 	"अफ़ारअब्ख़ाज़ियनअवस्ताईअफ़्रीकीअकनअम्हेरीअर्गोनीअरबीअसमियाअवेरिकआयमाराअज" +
 	"़रबैजानीबशख़िरबेलारूसीबुल्गारियाईबिस्लामाबाम्बाराबंगालीतिब्बतीब्रेटनबो" +
 	"स्नियाईकातालानचेचनकमोरोकोर्सीकनक्रीचेकचर्च साल्विकचूवाशवेल्शडेनिशजर्मन" +
@@ -18777,14 +18782,14 @@ const hiLangStr string = "" + // Size: 11573 bytes
 	"नारी सामीस्कोल्ट सामीसोनिन्केसोग्डिएनस्रानान टॉन्गोसेरेरसाहोसुकुमासुसु" +
 	"सुमेरियनकोमोरियनक्लासिकल सिरिएकसिरिएकटिम्नेटेसोतेरेनोतेतुमटाइग्रेतिवतो" +
 	"केलाऊक्लिंगनत्लिंगिततामाशेकन्यासा टोन्गाटोक पिसिनतारोकोत्सिमीशियनतम्बू" +
-	"कातुवालुटासवाकतुवीनियनमध्य एटलस तमाज़ितउदमुर्तयुगैरिटिकउम्बुन्डुरूटवाई" +
-	"वॉटिकवुंजोवाल्सरवलामोवारैवाशोवॉल्पेरीकाल्मिकसोगायाओयापीसयांगबेनयेंबाकै" +
-	"ंटोनीज़ज़ेपोटेकब्लिसिम्बॉल्सज़ेनान्गामानक मोरक्कन तामाज़ाइटज़ूनीकोई भा" +
-	"षा सामग्री नहींज़ाज़ाआधुनिक मानक अरबीऑस्ट्रियाई जर्मनस्विस उच्च जर्मनऑ" +
-	"स्ट्रेलियाई अंग्रेज़ीकनाडाई अंग्रेज़ीब्रिटिश अंग्रेज़ीअमेरिकी अंग्रेज़" +
-	"ीलैटिन अमेरिकी स्पेनिशयूरोपीय स्पेनिशमैक्सिकन स्पेनिशकनाडाई फ़्रेंचस्व" +
-	"िस फ़्रेंचनिचली सैक्सनफ़्लेमिशब्राज़ीली पुर्तगालीयूरोपीय पुर्तगालीमोलड" +
-	"ावियनसेर्बो-क्रोएशियाईकांगो स्वाहिलीसरलीकृत चीनीपारंपरिक चीनी"
+	"कातुवालुटासवाकतुवीनियनमध्य एटलस तमाज़ितउदमुर्तयुगैरिटिकउम्बुन्डुअज्ञात" +
+	" भाषावाईवॉटिकवुंजोवाल्सरवलामोवारैवाशोवॉल्पेरीकाल्मिकसोगायाओयापीसयांगबेनय" +
+	"ेंबाकैंटोनीज़ज़ेपोटेकब्लिसिम्बॉल्सज़ेनान्गामानक मोरक्कन तामाज़ाइटज़ूनी" +
+	"कोई भाषा सामग्री नहींज़ाज़ाआधुनिक मानक अरबीऑस्ट्रियाई जर्मनस्विस उच्च " +
+	"जर्मनऑस्ट्रेलियाई अंग्रेज़ीकनाडाई अंग्रेज़ीब्रिटिश अंग्रेज़ीअमेरिकी अं" +
+	"ग्रेज़ीलैटिन अमेरिकी स्पेनिशयूरोपीय स्पेनिशमैक्सिकन स्पेनिशकनाडाई फ़्र" +
+	"ेंचस्विस फ़्रेंचनिचली सैक्सनफ़्लेमिशब्राज़ीली पुर्तगालीयूरोपीय पुर्तगा" +
+	"लीमोलडावियनसेर्बो-क्रोएशियाईकांगो स्वाहिलीसरलीकृत चीनीपारंपरिक चीनी"
 
 var hiLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -18865,18 +18870,18 @@ var hiLangIdx = []uint16{ // 613 elements
 	0x25c9, 0x25c9, 0x25c9, 0x25db, 0x25e7, 0x25f9, 0x2608, 0x261d,
 	0x2626, 0x263b, 0x263b, 0x2650, 0x2668, 0x2668, 0x267d, 0x26a2,
 	0x26bb, 0x26bb, 0x26cd, 0x26cd, 0x26eb, 0x26eb, 0x2700, 0x2712,
-	0x2724, 0x273c, 0x276b, 0x2780, 0x279b, 0x27b6, 0x27bf, 0x27c8,
-	0x27c8, 0x27c8, 0x27c8, 0x27c8, 0x27d7, 0x27d7, 0x27e6, 0x27f8,
-	0x2807, 0x2813, 0x281f, 0x2837, 0x2837, 0x284c, 0x284c, 0x2858,
+	0x2724, 0x273c, 0x276b, 0x2780, 0x279b, 0x27b6, 0x27d5, 0x27de,
+	0x27de, 0x27de, 0x27de, 0x27de, 0x27ed, 0x27ed, 0x27fc, 0x280e,
+	0x281d, 0x2829, 0x2835, 0x284d, 0x284d, 0x2862, 0x2862, 0x286e,
 	// Entry 240 - 27F
-	0x2861, 0x2870, 0x2885, 0x2894, 0x2894, 0x28af, 0x28c7, 0x28ee,
-	0x28ee, 0x2909, 0x2947, 0x2956, 0x298f, 0x29a1, 0x29cd, 0x29cd,
-	0x29fb, 0x2a27, 0x2a67, 0x2a95, 0x2ac6, 0x2af7, 0x2b32, 0x2b5d,
-	0x2b8b, 0x2b8b, 0x2bb3, 0x2bd8, 0x2bfa, 0x2c12, 0x2c49, 0x2c7a,
-	0x2c95, 0x2cc6, 0x2cee, 0x2d10, 0x2d35,
+	0x2877, 0x2886, 0x289b, 0x28aa, 0x28aa, 0x28c5, 0x28dd, 0x2904,
+	0x2904, 0x291f, 0x295d, 0x296c, 0x29a5, 0x29b7, 0x29e3, 0x29e3,
+	0x2a11, 0x2a3d, 0x2a7d, 0x2aab, 0x2adc, 0x2b0d, 0x2b48, 0x2b73,
+	0x2ba1, 0x2ba1, 0x2bc9, 0x2bee, 0x2c10, 0x2c28, 0x2c5f, 0x2c90,
+	0x2cab, 0x2cdc, 0x2d04, 0x2d26, 0x2d4b,
 } // Size: 1250 bytes
 
-const hrLangStr string = "" + // Size: 4630 bytes
+const hrLangStr string = "" + // Size: 4635 bytes
 	"afarskiabhaskiavestičkiafrikaansakanskiamharskiaragonskiarapskiasamskiav" +
 	"arskiajmarskiazerbajdžanskibaškirskibjeloruskibugarskibislamabambarabang" +
 	"latibetskibretonskibosanskikatalonskičečenskichamorrokorzičkicreečeškicr" +
@@ -18931,15 +18936,15 @@ const hrLangStr string = "" + // Size: 4630 bytes
 	"kumasususumerskikomorskiklasični sirskisirijskitemnetesoterenotetumtigri" +
 	"škitivtokelaunskiklingonskitlingittamašečkinyasa tongatok pisintarokots" +
 	"imshiantumbukatuvaluanskitasawaqtuvinskitamašek (Srednji Atlas)udmurtski" +
-	"ugaritskiumbundukorijenskivaivotskivunjowalserskiwalamowaraywashowarlpir" +
-	"iwu kineskikalmyksogayaojapskiyangbenyembakantonskizapotečkiBlissovi sim" +
-	"bolizenagastandardni marokanski tamašekzunibez jezičnog sadržajazazakimo" +
-	"derni standardni arapskijužnoazerbajdžanskiaustrijski njemačkigornjonjem" +
-	"ački (švicarski)australski engleskikanadski engleskibritanski engleskiam" +
-	"erički engleskilatinoamerički španjolskieuropski španjolskimeksički špan" +
-	"jolskikanadski francuskišvicarski francuskidonjosaksonskiflamanskibrazil" +
-	"ski portugalskieuropski portugalskimoldavskisrpsko-hrvatskikongoanski sv" +
-	"ahilikineski (pojednostavljeni)kineski (tradicionalni)"
+	"ugaritskiumbundunepoznati jezikvaivotskivunjowalserskiwalamowaraywashowa" +
+	"rlpiriwu kineskikalmyksogayaojapskiyangbenyembakantonskizapotečkiBlissov" +
+	"i simbolizenagastandardni marokanski tamašekzunibez jezičnog sadržajazaz" +
+	"akimoderni standardni arapskijužnoazerbajdžanskiaustrijski njemačkigornj" +
+	"onjemački (švicarski)australski engleskikanadski engleskibritanski engle" +
+	"skiamerički engleskilatinoamerički španjolskieuropski španjolskimeksički" +
+	" španjolskikanadski francuskišvicarski francuskidonjosaksonskiflamanskib" +
+	"razilski portugalskieuropski portugalskimoldavskisrpsko-hrvatskikongoans" +
+	"ki svahilikineski (pojednostavljeni)kineski (tradicionalni)"
 
 var hrLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -19020,18 +19025,18 @@ var hrLangIdx = []uint16{ // 613 elements
 	0x0ee4, 0x0ee4, 0x0ee4, 0x0ee9, 0x0eed, 0x0ef3, 0x0ef8, 0x0f01,
 	0x0f04, 0x0f0f, 0x0f0f, 0x0f19, 0x0f20, 0x0f20, 0x0f2b, 0x0f36,
 	0x0f3f, 0x0f3f, 0x0f45, 0x0f45, 0x0f4e, 0x0f4e, 0x0f55, 0x0f60,
-	0x0f67, 0x0f6f, 0x0f87, 0x0f90, 0x0f99, 0x0fa0, 0x0faa, 0x0fad,
-	0x0fad, 0x0fad, 0x0fad, 0x0fad, 0x0fb3, 0x0fb3, 0x0fb8, 0x0fc1,
-	0x0fc7, 0x0fcc, 0x0fd1, 0x0fd9, 0x0fe3, 0x0fe9, 0x0fe9, 0x0fed,
+	0x0f67, 0x0f6f, 0x0f87, 0x0f90, 0x0f99, 0x0fa0, 0x0faf, 0x0fb2,
+	0x0fb2, 0x0fb2, 0x0fb2, 0x0fb2, 0x0fb8, 0x0fb8, 0x0fbd, 0x0fc6,
+	0x0fcc, 0x0fd1, 0x0fd6, 0x0fde, 0x0fe8, 0x0fee, 0x0fee, 0x0ff2,
 	// Entry 240 - 27F
-	0x0ff0, 0x0ff6, 0x0ffd, 0x1002, 0x1002, 0x100b, 0x1015, 0x1025,
-	0x1025, 0x102b, 0x1049, 0x104d, 0x1064, 0x106a, 0x1084, 0x1099,
-	0x10ad, 0x10c9, 0x10dc, 0x10ed, 0x10ff, 0x1111, 0x112c, 0x1140,
-	0x1155, 0x1155, 0x1167, 0x117b, 0x1189, 0x1192, 0x11a7, 0x11bb,
-	0x11c4, 0x11d3, 0x11e5, 0x11ff, 0x1216,
+	0x0ff5, 0x0ffb, 0x1002, 0x1007, 0x1007, 0x1010, 0x101a, 0x102a,
+	0x102a, 0x1030, 0x104e, 0x1052, 0x1069, 0x106f, 0x1089, 0x109e,
+	0x10b2, 0x10ce, 0x10e1, 0x10f2, 0x1104, 0x1116, 0x1131, 0x1145,
+	0x115a, 0x115a, 0x116c, 0x1180, 0x118e, 0x1197, 0x11ac, 0x11c0,
+	0x11c9, 0x11d8, 0x11ea, 0x1204, 0x121b,
 } // Size: 1250 bytes
 
-const huLangStr string = "" + // Size: 4071 bytes
+const huLangStr string = "" + // Size: 4083 bytes
 	"afarabházavesztánafrikaansakanamharaaragonézarabasszámiavarajmaraazerbaj" +
 	"dzsánibaskírbelaruszbolgárbislamabambarabanglatibetibretonbosnyákkatalán" +
 	"csecsencsamorókorzikaikrícsehegyházi szlávcsuvaswalesidánnémetdivehidzso" +
@@ -19078,14 +19083,14 @@ const huLangStr string = "" + // Size: 4071 bytes
 	"zámiszoninkesogdienszranai tongószererszahószukumaszuszusumércomoreiklas" +
 	"szikus szírszírtemneteszóterenótetumtigrétivtokelauiklingontlingittamase" +
 	"knyugati nyaszatok pisintarokócsimsiánitumbukatuvaluszaváktuvaiközép-atl" +
-	"aszi tamazigtudmurtugaritiumbunduősivaivotjákvunjowalservalamovaraóvasów" +
-	"arlpiriwu kínaikalmükszogajaójapijangbenjembakantonizapotékBliss jelképr" +
-	"endszerzenagamarokkói tamazightzuninincs nyelvészeti tartalomzazamodern " +
-	"szabányos arabosztrák németsvájci felnémetausztrál angolkanadai angolbri" +
-	"t angolamerikai angollatin-amerikai spanyoleurópai spanyolspanyol (mexik" +
-	"ói)kanadai franciasvájci franciaalsószászflamandbrazíliai portugáleuróp" +
-	"ai portugálmoldvaiszerbhorvátkongói szuahéliegyszerűsített kínaihagyomán" +
-	"yos kínai"
+	"aszi tamazigtudmurtugaritiumbunduismeretlen nyelvvaivotjákvunjowalserval" +
+	"amovaraóvasówarlpiriwu kínaikalmükszogajaójapijangbenjembakantonizapoték" +
+	"Bliss jelképrendszerzenagamarokkói tamazightzuninincs nyelvészeti tartal" +
+	"omzazamodern szabányos arabosztrák németsvájci felnémetausztrál angolkan" +
+	"adai angolbrit angolamerikai angollatin-amerikai spanyoleurópai spanyols" +
+	"panyol (mexikói)kanadai franciasvájci franciaalsószászflamandbrazíliai p" +
+	"ortugáleurópai portugálmoldvaiszerbhorvátkongói szuahéliegyszerűsített k" +
+	"ínaihagyományos kínai"
 
 var huLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -19166,18 +19171,18 @@ var huLangIdx = []uint16{ // 613 elements
 	0x0d3c, 0x0d3c, 0x0d3c, 0x0d41, 0x0d47, 0x0d4e, 0x0d53, 0x0d59,
 	0x0d5c, 0x0d64, 0x0d64, 0x0d6b, 0x0d72, 0x0d72, 0x0d79, 0x0d87,
 	0x0d90, 0x0d90, 0x0d97, 0x0d97, 0x0da1, 0x0da1, 0x0da8, 0x0dae,
-	0x0db5, 0x0dba, 0x0dd2, 0x0dd8, 0x0ddf, 0x0de6, 0x0dea, 0x0ded,
-	0x0ded, 0x0ded, 0x0ded, 0x0ded, 0x0df4, 0x0df4, 0x0df9, 0x0dff,
-	0x0e05, 0x0e0b, 0x0e10, 0x0e18, 0x0e21, 0x0e28, 0x0e28, 0x0e2d,
+	0x0db5, 0x0dba, 0x0dd2, 0x0dd8, 0x0ddf, 0x0de6, 0x0df6, 0x0df9,
+	0x0df9, 0x0df9, 0x0df9, 0x0df9, 0x0e00, 0x0e00, 0x0e05, 0x0e0b,
+	0x0e11, 0x0e17, 0x0e1c, 0x0e24, 0x0e2d, 0x0e34, 0x0e34, 0x0e39,
 	// Entry 240 - 27F
-	0x0e31, 0x0e35, 0x0e3c, 0x0e41, 0x0e41, 0x0e48, 0x0e50, 0x0e65,
-	0x0e65, 0x0e6b, 0x0e7e, 0x0e82, 0x0e9d, 0x0ea1, 0x0eb7, 0x0eb7,
-	0x0ec6, 0x0ed7, 0x0ee6, 0x0ef3, 0x0efd, 0x0f0b, 0x0f21, 0x0f31,
-	0x0f43, 0x0f43, 0x0f52, 0x0f61, 0x0f6c, 0x0f73, 0x0f87, 0x0f99,
-	0x0fa0, 0x0fac, 0x0fbd, 0x0fd4, 0x0fe7,
+	0x0e3d, 0x0e41, 0x0e48, 0x0e4d, 0x0e4d, 0x0e54, 0x0e5c, 0x0e71,
+	0x0e71, 0x0e77, 0x0e8a, 0x0e8e, 0x0ea9, 0x0ead, 0x0ec3, 0x0ec3,
+	0x0ed2, 0x0ee3, 0x0ef2, 0x0eff, 0x0f09, 0x0f17, 0x0f2d, 0x0f3d,
+	0x0f4f, 0x0f4f, 0x0f5e, 0x0f6d, 0x0f78, 0x0f7f, 0x0f93, 0x0fa5,
+	0x0fac, 0x0fb8, 0x0fc9, 0x0fe0, 0x0ff3,
 } // Size: 1250 bytes
 
-const hyLangStr string = "" + // Size: 8542 bytes
+const hyLangStr string = "" + // Size: 8549 bytes
 	"աֆարերենաբխազերենաֆրիկաանսաքանամհարերենարագոներենարաբերենասամերենավարերե" +
 	"նայմարաադրբեջաներենբաշկիրերենբելառուսերենբուլղարերենբիսլամաբամբարաբենգա" +
 	"լերենտիբեթերենբրետոներենբոսնիերենկատալաներենչեչեներենչամոռոկորսիկերենչե" +
@@ -19229,16 +19234,16 @@ const hyLangStr string = "" + // Size: 8542 bytes
 	"ոերենսուկումակոմորերենասորերենտուլուտեմնետեսոտերենոտետումտիգրետիվերենտո" +
 	"կելաուցախուրկլինգոնտլինգիտթալիշերենտամաշեկտոկ փիսինտուրոյոտարոկոցակոներ" +
 	"ենցիմշյանտումբուկաթուվալուերենտասավաքտուվերենկենտրոնատլասյան թամազիղտու" +
-	"դմուրտերենուգարիտերենումբունդուռուտերենվաիվենետերենվեպսերենարևմտաֆլաման" +
-	"դերենվոդերենվորովունջովալսերենվոլայտավարայերենվաշովարլպիրիվու չինարենկա" +
-	"լմիկերենսոգայաոյափերենյանգբենեմբականտոներենսապոտեկերենզեյլանդերենզենագա" +
-	"ընդհանուր մարոկյան թամազիղտզունիերենառանց լեզվային բովանդակությանզազաեր" +
-	"ենարդի ընդհանուր արաբերենավստրիական գերմաներենշվեյցարական վերին գերմանե" +
-	"րենավստրալիական անգլերենկանադական անգլերենբրիտանական անգլերենամերիկյան " +
-	"անգլերենլատինամերիկյան իսպաներենեվրոպական իսպաներենմեքսիկական իսպաներեն" +
-	"կանադական ֆրանսերենշվեյցարական ֆրանսերենստորին սաքսոներենֆլամանդերենբրա" +
-	"զիլական պորտուգալերենեվրոպական պորտուգալերենմոլդովերենսերբա-խորվաթերենկ" +
-	"ոնգոյի սուահիլիպարզեցված չինարենավանդական չինարեն"
+	"դմուրտերենուգարիտերենումբունդուանհայտ լեզուվաիվենետերենվեպսերենարևմտաֆլ" +
+	"ամանդերենվոդերենվորովունջովալսերենվոլայտավարայերենվաշովարլպիրիվու չինար" +
+	"ենկալմիկերենսոգայաոյափերենյանգբենեմբականտոներենսապոտեկերենզեյլանդերենզե" +
+	"նագաընդհանուր մարոկյան թամազիղտզունիերենառանց լեզվային բովանդակությանզա" +
+	"զաերենարդի ընդհանուր արաբերենավստրիական գերմաներենշվեյցարական վերին գեր" +
+	"մաներենավստրալիական անգլերենկանադական անգլերենբրիտանական անգլերենամերիկ" +
+	"յան անգլերենլատինամերիկյան իսպաներենեվրոպական իսպաներենմեքսիկական իսպան" +
+	"երենկանադական ֆրանսերենշվեյցարական ֆրանսերենստորին սաքսոներենֆլամանդերե" +
+	"նբրազիլական պորտուգալերենեվրոպական պորտուգալերենմոլդովերենսերբա-խորվաթե" +
+	"րենկոնգոյի սուահիլիպարզեցված չինարենավանդական չինարեն"
 
 var hyLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -19319,18 +19324,18 @@ var hyLangIdx = []uint16{ // 613 elements
 	0x1aac, 0x1aac, 0x1ab8, 0x1ac2, 0x1aca, 0x1ad6, 0x1ae2, 0x1aec,
 	0x1afa, 0x1b0a, 0x1b16, 0x1b24, 0x1b32, 0x1b44, 0x1b52, 0x1b52,
 	0x1b63, 0x1b71, 0x1b7d, 0x1b8f, 0x1b9d, 0x1b9d, 0x1baf, 0x1bc7,
-	0x1bd5, 0x1be5, 0x1c14, 0x1c2c, 0x1c42, 0x1c56, 0x1c66, 0x1c6c,
-	0x1c7e, 0x1c8e, 0x1cb0, 0x1cb0, 0x1cbe, 0x1cc6, 0x1cd2, 0x1ce2,
-	0x1cf0, 0x1d02, 0x1d0a, 0x1d1a, 0x1d2f, 0x1d43, 0x1d43, 0x1d4b,
+	0x1bd5, 0x1be5, 0x1c14, 0x1c2c, 0x1c42, 0x1c56, 0x1c6d, 0x1c73,
+	0x1c85, 0x1c95, 0x1cb7, 0x1cb7, 0x1cc5, 0x1ccd, 0x1cd9, 0x1ce9,
+	0x1cf7, 0x1d09, 0x1d11, 0x1d21, 0x1d36, 0x1d4a, 0x1d4a, 0x1d52,
 	// Entry 240 - 27F
-	0x1d51, 0x1d5f, 0x1d6d, 0x1d75, 0x1d75, 0x1d89, 0x1d9f, 0x1d9f,
-	0x1db5, 0x1dc1, 0x1df5, 0x1e07, 0x1e3f, 0x1e4f, 0x1e7b, 0x1e7b,
-	0x1ea4, 0x1eda, 0x1f03, 0x1f26, 0x1f4b, 0x1f6e, 0x1f9d, 0x1fc2,
-	0x1fe9, 0x1fe9, 0x200e, 0x2037, 0x2058, 0x206e, 0x209d, 0x20ca,
-	0x20de, 0x20fd, 0x211c, 0x213d, 0x215e,
+	0x1d58, 0x1d66, 0x1d74, 0x1d7c, 0x1d7c, 0x1d90, 0x1da6, 0x1da6,
+	0x1dbc, 0x1dc8, 0x1dfc, 0x1e0e, 0x1e46, 0x1e56, 0x1e82, 0x1e82,
+	0x1eab, 0x1ee1, 0x1f0a, 0x1f2d, 0x1f52, 0x1f75, 0x1fa4, 0x1fc9,
+	0x1ff0, 0x1ff0, 0x2015, 0x203e, 0x205f, 0x2075, 0x20a4, 0x20d1,
+	0x20e5, 0x2104, 0x2123, 0x2144, 0x2165,
 } // Size: 1250 bytes
 
-const idLangStr string = "" + // Size: 3994 bytes
+const idLangStr string = "" + // Size: 4010 bytes
 	"AfarAbkhazAvestaAfrikaansAkanAmharikAragonArabAssamAvarAymaraAzerbaijani" +
 	"BashkirBelarusiaBulgariaBislamaBambaraBengaliTibetBretonBosniaKatalanChe" +
 	"chenChamorroKorsikaKreeCheskaBahasa Gereja SlavoniaChuvashWelshDanskJerm" +
@@ -19381,12 +19386,12 @@ const idLangStr string = "" + // Size: 3994 bytes
 	"ranan TongoSererSahoSukumaSusuSumeriaKomoriaSuriah KlasikSuriahSilesiaTu" +
 	"luTimneTesoTerenoTetunTigreTivTokelauKlingonTlingitTamashekNyasa TongaTo" +
 	"k PisinTuroyoTarokoTsimshiaTat MuslimTumbukaTuvaluTasawaqTuviniaTamazigh" +
-	"t Maroko TengahUdmurtUgaritUmbunduRootVaiVenesiaVotiaVunjoWalserWalamoWa" +
-	"raiWashoWarlpiriKalmukSogaYaoYapoisYangbenYembaKantonZapotekBlissymbolZe" +
-	"nagaTamazight Maroko StandarZuniTidak ada konten linguistikZazaArab Stan" +
-	"dar ModernJerman Tinggi (Swiss)Inggris (Inggris)Spanyol (Eropa)Portugis " +
-	"(Eropa)MoldaviaSerbo-KroasiaKongo SwahiliTionghoa (Aksara Sederhana)Tion" +
-	"ghoa (Aksara Tradisional)"
+	"t Maroko TengahUdmurtUgaritUmbunduBahasa Tidak DikenalVaiVenesiaVotiaVun" +
+	"joWalserWalamoWaraiWashoWarlpiriKalmukSogaYaoYapoisYangbenYembaKantonZap" +
+	"otekBlissymbolZenagaTamazight Maroko StandarZuniTidak ada konten linguis" +
+	"tikZazaArab Standar ModernJerman Tinggi (Swiss)Inggris (Inggris)Spanyol " +
+	"(Eropa)Portugis (Eropa)MoldaviaSerbo-KroasiaKongo SwahiliTionghoa (Aksar" +
+	"a Sederhana)Tionghoa (Aksara Tradisional)"
 
 var idLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -19467,18 +19472,18 @@ var idLangIdx = []uint16{ // 613 elements
 	0x0d80, 0x0d87, 0x0d8b, 0x0d90, 0x0d94, 0x0d9a, 0x0d9f, 0x0da4,
 	0x0da7, 0x0dae, 0x0dae, 0x0db5, 0x0dbc, 0x0dbc, 0x0dc4, 0x0dcf,
 	0x0dd8, 0x0dde, 0x0de4, 0x0de4, 0x0dec, 0x0df6, 0x0dfd, 0x0e03,
-	0x0e0a, 0x0e11, 0x0e28, 0x0e2e, 0x0e34, 0x0e3b, 0x0e3f, 0x0e42,
-	0x0e49, 0x0e49, 0x0e49, 0x0e49, 0x0e4e, 0x0e4e, 0x0e53, 0x0e59,
-	0x0e5f, 0x0e64, 0x0e69, 0x0e71, 0x0e71, 0x0e77, 0x0e77, 0x0e7b,
+	0x0e0a, 0x0e11, 0x0e28, 0x0e2e, 0x0e34, 0x0e3b, 0x0e4f, 0x0e52,
+	0x0e59, 0x0e59, 0x0e59, 0x0e59, 0x0e5e, 0x0e5e, 0x0e63, 0x0e69,
+	0x0e6f, 0x0e74, 0x0e79, 0x0e81, 0x0e81, 0x0e87, 0x0e87, 0x0e8b,
 	// Entry 240 - 27F
-	0x0e7e, 0x0e84, 0x0e8b, 0x0e90, 0x0e90, 0x0e96, 0x0e9d, 0x0ea7,
-	0x0ea7, 0x0ead, 0x0ec5, 0x0ec9, 0x0ee4, 0x0ee8, 0x0efb, 0x0efb,
-	0x0efb, 0x0f10, 0x0f10, 0x0f10, 0x0f21, 0x0f21, 0x0f21, 0x0f30,
-	0x0f30, 0x0f30, 0x0f30, 0x0f30, 0x0f30, 0x0f30, 0x0f30, 0x0f40,
-	0x0f48, 0x0f55, 0x0f62, 0x0f7d, 0x0f9a,
+	0x0e8e, 0x0e94, 0x0e9b, 0x0ea0, 0x0ea0, 0x0ea6, 0x0ead, 0x0eb7,
+	0x0eb7, 0x0ebd, 0x0ed5, 0x0ed9, 0x0ef4, 0x0ef8, 0x0f0b, 0x0f0b,
+	0x0f0b, 0x0f20, 0x0f20, 0x0f20, 0x0f31, 0x0f31, 0x0f31, 0x0f40,
+	0x0f40, 0x0f40, 0x0f40, 0x0f40, 0x0f40, 0x0f40, 0x0f40, 0x0f50,
+	0x0f58, 0x0f65, 0x0f72, 0x0f8d, 0x0faa,
 } // Size: 1250 bytes
 
-const isLangStr string = "" + // Size: 4605 bytes
+const isLangStr string = "" + // Size: 4619 bytes
 	"afárabkasískaavestískaafríkanskaakanamharískaaragonskaarabískaassamskaav" +
 	"arískaaímaraaserskabaskírhvítrússneskabúlgarskabíslamabambarabengalskatí" +
 	"beskabretónskabosnískakatalónskatsjetsjenskakamorrókorsískakrítékkneskak" +
@@ -19528,14 +19533,14 @@ const isLangStr string = "" + // Size: 4605 bytes
 	"esamískasóninkesogdíensranan tongoserersahosúkúmasúsúsúmerskashimaoríska" +
 	"klassísk sýrlenskasýrlenskatímnetesóterenótetúmtígretívtókeláskaklingons" +
 	"katlingittamasjektongverska (nyasa)tokpisintarókótsimsískatúmbúkatúvalús" +
-	"katasawaqtúvínskatamazightúdmúrtúgarítískaúmbúndúrótvaívotískavunjóvalse" +
-	"rvalamóvaraívasjóvarlpirikalmúkskasógajaójapískayangbenyembakantoneskasa" +
-	"pótekblisstáknsenagastaðlað marokkóskt tamazightsúníekkert tungumálaefni" +
-	"zázáískastöðluð nútímaarabískaausturrísk þýskasvissnesk háþýskaáströlsk " +
-	"enskakanadísk enskabresk enskabandarísk enskarómönsk-amerísk spænskaevró" +
-	"psk spænskamexíkósk spænskakanadísk franskasvissnesk franskalágsaxneskaf" +
-	"læmskabrasílísk portúgalskaevrópsk portúgalskamoldóvskaserbókróatískaKon" +
-	"gó-svahílíkínverska (einfölduð)kínverska (hefðbundin)"
+	"katasawaqtúvínskatamazightúdmúrtúgarítískaúmbúndúóþekkt tungumálvaívotís" +
+	"kavunjóvalservalamóvaraívasjóvarlpirikalmúkskasógajaójapískayangbenyemba" +
+	"kantoneskasapótekblisstáknsenagastaðlað marokkóskt tamazightsúníekkert t" +
+	"ungumálaefnizázáískastöðluð nútímaarabískaausturrísk þýskasvissnesk háþý" +
+	"skaáströlsk enskakanadísk enskabresk enskabandarísk enskarómönsk-amerísk" +
+	" spænskaevrópsk spænskamexíkósk spænskakanadísk franskasvissnesk franska" +
+	"lágsaxneskaflæmskabrasílísk portúgalskaevrópsk portúgalskamoldóvskaserbó" +
+	"króatískaKongó-svahílíkínverska (einfölduð)kínverska (hefðbundin)"
 
 var isLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -19616,18 +19621,18 @@ var isLangIdx = []uint16{ // 613 elements
 	0x0eff, 0x0eff, 0x0eff, 0x0f05, 0x0f0a, 0x0f11, 0x0f17, 0x0f1d,
 	0x0f21, 0x0f2c, 0x0f2c, 0x0f36, 0x0f3d, 0x0f3d, 0x0f45, 0x0f57,
 	0x0f5f, 0x0f5f, 0x0f67, 0x0f67, 0x0f71, 0x0f71, 0x0f7a, 0x0f85,
-	0x0f8c, 0x0f96, 0x0f9f, 0x0fa7, 0x0fb4, 0x0fbe, 0x0fc2, 0x0fc6,
-	0x0fc6, 0x0fc6, 0x0fc6, 0x0fc6, 0x0fce, 0x0fce, 0x0fd4, 0x0fda,
-	0x0fe1, 0x0fe7, 0x0fed, 0x0ff5, 0x0ff5, 0x0fff, 0x0fff, 0x1004,
+	0x0f8c, 0x0f96, 0x0f9f, 0x0fa7, 0x0fb4, 0x0fbe, 0x0fd0, 0x0fd4,
+	0x0fd4, 0x0fd4, 0x0fd4, 0x0fd4, 0x0fdc, 0x0fdc, 0x0fe2, 0x0fe8,
+	0x0fef, 0x0ff5, 0x0ffb, 0x1003, 0x1003, 0x100d, 0x100d, 0x1012,
 	// Entry 240 - 27F
-	0x1008, 0x1010, 0x1017, 0x101c, 0x101c, 0x1026, 0x102e, 0x1038,
-	0x1038, 0x103e, 0x105d, 0x1063, 0x1078, 0x1083, 0x109f, 0x109f,
-	0x10b2, 0x10c6, 0x10d6, 0x10e5, 0x10f0, 0x1100, 0x111b, 0x112c,
-	0x113f, 0x113f, 0x1150, 0x1161, 0x116d, 0x1175, 0x118d, 0x11a2,
-	0x11ac, 0x11bd, 0x11cd, 0x11e5, 0x11fd,
+	0x1016, 0x101e, 0x1025, 0x102a, 0x102a, 0x1034, 0x103c, 0x1046,
+	0x1046, 0x104c, 0x106b, 0x1071, 0x1086, 0x1091, 0x10ad, 0x10ad,
+	0x10c0, 0x10d4, 0x10e4, 0x10f3, 0x10fe, 0x110e, 0x1129, 0x113a,
+	0x114d, 0x114d, 0x115e, 0x116f, 0x117b, 0x1183, 0x119b, 0x11b0,
+	0x11ba, 0x11cb, 0x11db, 0x11f3, 0x120b,
 } // Size: 1250 bytes
 
-const itLangStr string = "" + // Size: 5026 bytes
+const itLangStr string = "" + // Size: 5040 bytes
 	"afarabcasoavestanafrikaansakanamaricoaragonesearaboassameseavaroaymaraaz" +
 	"erbaigianobaschirobielorussobulgarobislamabambarabengalesetibetanobreton" +
 	"ebosniacocatalanocecenochamorrocorsocreececoslavo della Chiesaciuvasciog" +
@@ -19689,15 +19694,15 @@ const itLangStr string = "" + // Size: 5026 bytes
 	"lassicosiriacoslesianotulutemnetesoterenotetumtigretivtokelautsakhurklin" +
 	"gontlingittalisciotamasheknyasa del Tongatok pisinturoyotarokozaconicots" +
 	"imshiantat islamicotumbukatuvalutasawaqtuviniantamazightudmurtugariticom" +
-	"bundurootvaivenetovepsofiammingo occidentalevotovõrovunjowalserwalamowar" +
-	"aywashowarlpiriwukalmykmengreliosogayao (bantu)yapeseyangbenyembanheenga" +
-	"tucantonesezapotecblissymbolzelandesezenagatamazight del Marocco standar" +
-	"dzuninessun contenuto linguisticozazaarabo moderno standardtedesco austr" +
-	"iacoalto tedesco svizzeroinglese australianoinglese canadeseinglese brit" +
-	"annicoinglese americanospagnolo latinoamericanospagnolo europeospagnolo " +
-	"messicanofrancese canadesefrancese svizzerobasso tedesco olandesefiammin" +
-	"goportoghese brasilianoportoghese europeomoldavoserbo-croatoswahili del " +
-	"Congocinese semplificatocinese tradizionale"
+	"bundulingua imprecisatavaivenetovepsofiammingo occidentalevotovõrovunjow" +
+	"alserwalamowaraywashowarlpiriwukalmykmengreliosogayao (bantu)yapeseyangb" +
+	"enyembanheengatucantonesezapotecblissymbolzelandesezenagatamazight del M" +
+	"arocco standardzuninessun contenuto linguisticozazaarabo moderno standar" +
+	"dtedesco austriacoalto tedesco svizzeroinglese australianoinglese canade" +
+	"seinglese britannicoinglese americanospagnolo latinoamericanospagnolo eu" +
+	"ropeospagnolo messicanofrancese canadesefrancese svizzerobasso tedesco o" +
+	"landesefiammingoportoghese brasilianoportoghese europeomoldavoserbo-croa" +
+	"toswahili del Congocinese semplificatocinese tradizionale"
 
 var itLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -19778,18 +19783,18 @@ var itLangIdx = []uint16{ // 613 elements
 	0x106c, 0x1074, 0x1078, 0x107d, 0x1081, 0x1087, 0x108c, 0x1091,
 	0x1094, 0x109b, 0x10a2, 0x10a9, 0x10b0, 0x10b8, 0x10c0, 0x10cf,
 	0x10d8, 0x10de, 0x10e4, 0x10ec, 0x10f5, 0x1101, 0x1108, 0x110e,
-	0x1115, 0x111d, 0x1126, 0x112c, 0x1135, 0x113b, 0x113f, 0x1142,
-	0x1148, 0x114d, 0x1162, 0x1162, 0x1166, 0x116b, 0x1170, 0x1176,
-	0x117c, 0x1181, 0x1186, 0x118e, 0x1190, 0x1196, 0x119f, 0x11a3,
+	0x1115, 0x111d, 0x1126, 0x112c, 0x1135, 0x113b, 0x114d, 0x1150,
+	0x1156, 0x115b, 0x1170, 0x1170, 0x1174, 0x1179, 0x117e, 0x1184,
+	0x118a, 0x118f, 0x1194, 0x119c, 0x119e, 0x11a4, 0x11ad, 0x11b1,
 	// Entry 240 - 27F
-	0x11ae, 0x11b4, 0x11bb, 0x11c0, 0x11c9, 0x11d2, 0x11d9, 0x11e3,
-	0x11ec, 0x11f2, 0x1210, 0x1214, 0x1230, 0x1234, 0x124a, 0x124a,
-	0x125b, 0x1270, 0x1283, 0x1293, 0x12a5, 0x12b6, 0x12ce, 0x12de,
-	0x12f0, 0x12f0, 0x1301, 0x1312, 0x1328, 0x1331, 0x1346, 0x1358,
-	0x135f, 0x136b, 0x137c, 0x138f, 0x13a2,
+	0x11bc, 0x11c2, 0x11c9, 0x11ce, 0x11d7, 0x11e0, 0x11e7, 0x11f1,
+	0x11fa, 0x1200, 0x121e, 0x1222, 0x123e, 0x1242, 0x1258, 0x1258,
+	0x1269, 0x127e, 0x1291, 0x12a1, 0x12b3, 0x12c4, 0x12dc, 0x12ec,
+	0x12fe, 0x12fe, 0x130f, 0x1320, 0x1336, 0x133f, 0x1354, 0x1366,
+	0x136d, 0x1379, 0x138a, 0x139d, 0x13b0,
 } // Size: 1250 bytes
 
-const jaLangStr string = "" + // Size: 10070 bytes
+const jaLangStr string = "" + // Size: 10073 bytes
 	"アファル語アブハズ語アヴェスタ語アフリカーンス語アカン語アムハラ語アラゴン語アラビア語アッサム語アヴァル語アイマラ語アゼルバイジャン語バシキール" +
 	"語ベラルーシ語ブルガリア語ビスラマ語バンバラ語ベンガル語チベット語ブルトン語ボスニア語カタロニア語チェチェン語チャモロ語コルシカ語クリー語チ" +
 	"ェコ語教会スラブ語チュヴァシ語ウェールズ語デンマーク語ドイツ語ディベヒ語ゾンカ語エウェ語ギリシャ語英語エスペラント語スペイン語エストニア語バ" +
@@ -19834,11 +19839,11 @@ const jaLangStr string = "" + // Size: 10070 bytes
 	"ンケ語ソグド語スリナム語セレル語サホ語ザーターフリジア語スクマ語スス語シュメール語コモロ語古典シリア語シリア語シレジア語トゥル語テムネ語テソ" +
 	"語テレーノ語テトゥン語ティグレ語ティブ語トケラウ語ツァフル語クリンゴン語トリンギット語タリシュ語タマシェク語トンガ語(ニアサ)トク・ピシン語" +
 	"トゥロヨ語タロコ語ツァコン語チムシュ語ムスリム・タタール語トゥンブカ語ツバル語タサワク語トゥヴァ語中央アトラス・タマジクト語ウドムルト語ウガ" +
-	"リト語ムブンドゥ語ルートヴァイ語ヴェネト語ヴェプス語西フラマン語マインフランク語ヴォート語ヴォロ語ヴンジョ語ヴァリス語ウォライタ語ワライ語ワ" +
-	"ショ語ワルピリ語呉語カルムイク語メグレル語ソガ語ヤオ語ヤップ語ヤンベン語イエンバ語ニェエンガトゥ語広東語サポテカ語ブリスシンボルゼーラント語" +
-	"ゼナガ語標準モロッコ タマジクト語ズニ語言語的内容なしザザ語現代標準アラビア語標準ドイツ語 (スイス)オーストラリア英語カナダ英語イギリス英" +
-	"語アメリカ英語スペイン語 (イベリア半島)フレミッシュ語ポルトガル語 (イベリア半島)モルダビア語セルボ・クロアチア語コンゴ・スワヒリ語簡体" +
-	"中国語繁体中国語"
+	"リト語ムブンドゥ語言語不明ヴァイ語ヴェネト語ヴェプス語西フラマン語マインフランク語ヴォート語ヴォロ語ヴンジョ語ヴァリス語ウォライタ語ワライ語" +
+	"ワショ語ワルピリ語呉語カルムイク語メグレル語ソガ語ヤオ語ヤップ語ヤンベン語イエンバ語ニェエンガトゥ語広東語サポテカ語ブリスシンボルゼーラント" +
+	"語ゼナガ語標準モロッコ タマジクト語ズニ語言語的内容なしザザ語現代標準アラビア語標準ドイツ語 (スイス)オーストラリア英語カナダ英語イギリス" +
+	"英語アメリカ英語スペイン語 (イベリア半島)フレミッシュ語ポルトガル語 (イベリア半島)モルダビア語セルボ・クロアチア語コンゴ・スワヒリ語簡" +
+	"体中国語繁体中国語"
 
 var jaLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -19919,18 +19924,18 @@ var jaLangIdx = []uint16{ // 613 elements
 	0x223d, 0x224c, 0x2258, 0x2264, 0x226d, 0x227c, 0x228b, 0x229a,
 	0x22a6, 0x22b5, 0x22c4, 0x22d6, 0x22eb, 0x22fa, 0x230c, 0x2323,
 	0x2338, 0x2347, 0x2353, 0x2362, 0x2371, 0x238f, 0x23a1, 0x23ad,
-	0x23bc, 0x23cb, 0x23f2, 0x2404, 0x2413, 0x2425, 0x242e, 0x243a,
-	0x2449, 0x2458, 0x246a, 0x2482, 0x2491, 0x249d, 0x24ac, 0x24bb,
-	0x24cd, 0x24d9, 0x24e5, 0x24f4, 0x24fa, 0x250c, 0x251b, 0x2524,
+	0x23bc, 0x23cb, 0x23f2, 0x2404, 0x2413, 0x2425, 0x2431, 0x243d,
+	0x244c, 0x245b, 0x246d, 0x2485, 0x2494, 0x24a0, 0x24af, 0x24be,
+	0x24d0, 0x24dc, 0x24e8, 0x24f7, 0x24fd, 0x250f, 0x251e, 0x2527,
 	// Entry 240 - 27F
-	0x252d, 0x2539, 0x2548, 0x2557, 0x256f, 0x2578, 0x2587, 0x259c,
-	0x25ae, 0x25ba, 0x25df, 0x25e8, 0x25fd, 0x2606, 0x2621, 0x2621,
-	0x2621, 0x263f, 0x265a, 0x2669, 0x267b, 0x268d, 0x268d, 0x26b1,
-	0x26b1, 0x26b1, 0x26b1, 0x26b1, 0x26b1, 0x26c6, 0x26c6, 0x26ed,
-	0x26ff, 0x271d, 0x2738, 0x2747, 0x2756,
+	0x2530, 0x253c, 0x254b, 0x255a, 0x2572, 0x257b, 0x258a, 0x259f,
+	0x25b1, 0x25bd, 0x25e2, 0x25eb, 0x2600, 0x2609, 0x2624, 0x2624,
+	0x2624, 0x2642, 0x265d, 0x266c, 0x267e, 0x2690, 0x2690, 0x26b4,
+	0x26b4, 0x26b4, 0x26b4, 0x26b4, 0x26b4, 0x26c9, 0x26c9, 0x26f0,
+	0x2702, 0x2720, 0x273b, 0x274a, 0x2759,
 } // Size: 1250 bytes
 
-const kaLangStr string = "" + // Size: 12200 bytes
+const kaLangStr string = "" + // Size: 12197 bytes
 	"აფარიაფხაზურიავესტურიაფრიკაანსიაკანიამჰარულიარაგონულიარაბულიასამურიხუნძუ" +
 	"რიაიმარააზერბაიჯანულიბაშკირულიბელორუსულიბულგარულიბისლამაბამბარაბენგალუ" +
 	"რიტიბეტურიბრეტონულიბოსნიურიკატალანურიჩეჩნურიჩამოროკორსიკულიკრიჩეხურისა" +
@@ -19981,15 +19986,15 @@ const kaLangStr string = "" + // Size: 12200 bytes
 	"შანიჩადური არაბულისამხრეთსამურილულე-საამურიინარი-საამურისკოლტ-საამურის" +
 	"ონინკესრანან ტონგოსაჰოსუკუმაშუმერულიკომორულიკლასიკური სირიულისირიულიტი" +
 	"ნმეტესოტეტუმითიგრეკლინგონიტოკ-პისინიტაროკოტუმბუკატუვალუტასავაქიტუვაცენ" +
-	"ტრალური მოროკოს ტამაზიგხტიუდმურტულიუგარითულიუმბუნდუძირეული ენავაივუნჯო" +
-	"ვალსერიველაითავარაივალპირიყალმუხურისოგაიანგბენიიემბაკანტონურიბლისსიმბო" +
-	"ლოებიზენაგასტანდარტული მაროკოული ტამაზიგხტიზუნილინგვისტური შიგთავსი არ" +
-	" არისზაზაკითანამედროვე სტანდარტული არაბულიავსტრიული გერმანულიშვეიცარიული" +
-	" ზემოგერმანულიავსტრალიური ინგლისურიკანადური ინგლისურიბრიტანული ინგლისური" +
-	"ამერიკული ინგლისურილათინურ ამერიკული ესპანურიევროპული ესპანურიმექსიკურ" +
-	"ი ესპანურიკანადური ფრანგულიშვეიცარიული ფრანგულიქვემოსაქსონურიფლამანდიუ" +
-	"რიბრაზილიური პორტუგალიურიევროპული პორტუგალიურიმოლდავურისერბულ-ხორვატულ" +
-	"იკონგოს სუაჰილიგამარტივებული ჩინურიტრადიციული ჩინური"
+	"ტრალური მოროკოს ტამაზიგხტიუდმურტულიუგარითულიუმბუნდუუცნობი ენავაივუნჯოვ" +
+	"ალსერიველაითავარაივალპირიყალმუხურისოგაიანგბენიიემბაკანტონურიბლისსიმბოლ" +
+	"ოებიზენაგასტანდარტული მაროკოული ტამაზიგხტიზუნილინგვისტური შიგთავსი არ " +
+	"არისზაზაკითანამედროვე სტანდარტული არაბულიავსტრიული გერმანულიშვეიცარიულ" +
+	"ი ზემოგერმანულიავსტრალიური ინგლისურიკანადური ინგლისურიბრიტანული ინგლის" +
+	"ურიამერიკული ინგლისურილათინურ ამერიკული ესპანურიევროპული ესპანურიმექსი" +
+	"კური ესპანურიკანადური ფრანგულიშვეიცარიული ფრანგულიქვემოსაქსონურიფლამან" +
+	"დიურიბრაზილიური პორტუგალიურიევროპული პორტუგალიურიმოლდავურისერბულ-ხორვა" +
+	"ტულიკონგოს სუაჰილიგამარტივებული ჩინურიტრადიციული ჩინური"
 
 var kaLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -20070,18 +20075,18 @@ var kaLangIdx = []uint16{ // 613 elements
 	0x27d2, 0x27d2, 0x27d2, 0x27e1, 0x27ed, 0x27ed, 0x27ff, 0x280e,
 	0x280e, 0x280e, 0x280e, 0x2826, 0x2826, 0x2826, 0x2826, 0x2826,
 	0x2842, 0x2842, 0x2854, 0x2854, 0x2854, 0x2854, 0x2869, 0x287b,
-	0x2893, 0x289f, 0x28f2, 0x290d, 0x2928, 0x293d, 0x295c, 0x2965,
-	0x2965, 0x2965, 0x2965, 0x2965, 0x2965, 0x2965, 0x2974, 0x2989,
-	0x299e, 0x29ad, 0x29ad, 0x29c2, 0x29c2, 0x29dd, 0x29dd, 0x29e9,
+	0x2893, 0x289f, 0x28f2, 0x290d, 0x2928, 0x293d, 0x2959, 0x2962,
+	0x2962, 0x2962, 0x2962, 0x2962, 0x2962, 0x2962, 0x2971, 0x2986,
+	0x299b, 0x29aa, 0x29aa, 0x29bf, 0x29bf, 0x29da, 0x29da, 0x29e6,
 	// Entry 240 - 27F
-	0x29e9, 0x29e9, 0x2a01, 0x2a10, 0x2a10, 0x2a2b, 0x2a2b, 0x2a55,
-	0x2a55, 0x2a67, 0x2ac3, 0x2acf, 0x2b1d, 0x2b2f, 0x2b88, 0x2b88,
-	0x2bbf, 0x2c08, 0x2c45, 0x2c79, 0x2cb0, 0x2ce7, 0x2d31, 0x2d62,
-	0x2d96, 0x2d96, 0x2dc7, 0x2e01, 0x2e2b, 0x2e4c, 0x2e8f, 0x2ecc,
-	0x2ee7, 0x2f15, 0x2f3d, 0x2f77, 0x2fa8,
+	0x29e6, 0x29e6, 0x29fe, 0x2a0d, 0x2a0d, 0x2a28, 0x2a28, 0x2a52,
+	0x2a52, 0x2a64, 0x2ac0, 0x2acc, 0x2b1a, 0x2b2c, 0x2b85, 0x2b85,
+	0x2bbc, 0x2c05, 0x2c42, 0x2c76, 0x2cad, 0x2ce4, 0x2d2e, 0x2d5f,
+	0x2d93, 0x2d93, 0x2dc4, 0x2dfe, 0x2e28, 0x2e49, 0x2e8c, 0x2ec9,
+	0x2ee4, 0x2f12, 0x2f3a, 0x2f74, 0x2fa5,
 } // Size: 1250 bytes
 
-const kkLangStr string = "" + // Size: 8563 bytes
+const kkLangStr string = "" + // Size: 8573 bytes
 	"афар тіліабхаз тіліафрикаанс тіліакан тіліамхар тіліарагон тіліараб тілі" +
 	"ассам тіліавар тіліаймара тіліәзірбайжан тілібашқұрт тілібеларусь тіліб" +
 	"олгар тілібислама тілібамбара тілібенгал тілітибет тілібретон тілібосни" +
@@ -20140,12 +20145,12 @@ const kkLangStr string = "" + // Size: 8563 bytes
 	"анан тонго тілісахо тілісукума тілікомор тілісирия тілітемне тілітесо т" +
 	"ілітетум тілітигре тіліклингон тіліток-писин тілітароко тілітумбука тіл" +
 	"ітувалу тілітасавак тілітувин тіліорталық атлас тамазигхт тіліудмурт ті" +
-	"ліумбунду тіліата тілвай тілівунджо тілівальзер тіліволайта тіліварай т" +
-	"ілівальбири тіліқалмақ тілісога тіліянгбен тілійемба тілікантон тілімар" +
-	"окколық стандартты тамазигхт тілізуни тілітілдік мазмұны жоқзаза тіліқа" +
-	"зіргі стандартты араб тіліағылшын тілі (АҚШ)төменгі саксон тіліфламанд " +
-	"тілімолдован тілісерб-хорват тіліконго суахили тіліжеңілдетілген қытай " +
-	"тілідәстүрлі қытай тілі"
+	"ліумбунду тілібелгісіз тілвай тілівунджо тілівальзер тіліволайта тіліва" +
+	"рай тілівальбири тіліқалмақ тілісога тіліянгбен тілійемба тілікантон ті" +
+	"лімарокколық стандартты тамазигхт тілізуни тілітілдік мазмұны жоқзаза т" +
+	"іліқазіргі стандартты араб тіліағылшын тілі (АҚШ)төменгі саксон тіліфла" +
+	"манд тілімолдован тілісерб-хорват тіліконго суахили тіліжеңілдетілген қ" +
+	"ытай тілідәстүрлі қытай тілі"
 
 var kkLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -20226,18 +20231,18 @@ var kkLangIdx = []uint16{ // 613 elements
 	0x1d7a, 0x1d7a, 0x1d7a, 0x1d8d, 0x1d9e, 0x1d9e, 0x1db1, 0x1dc4,
 	0x1dc4, 0x1dc4, 0x1dc4, 0x1ddb, 0x1ddb, 0x1ddb, 0x1ddb, 0x1ddb,
 	0x1df5, 0x1df5, 0x1e0a, 0x1e0a, 0x1e0a, 0x1e0a, 0x1e21, 0x1e36,
-	0x1e4d, 0x1e60, 0x1e95, 0x1eaa, 0x1eaa, 0x1ec1, 0x1ece, 0x1edd,
-	0x1edd, 0x1edd, 0x1edd, 0x1edd, 0x1edd, 0x1edd, 0x1ef2, 0x1f09,
-	0x1f20, 0x1f33, 0x1f33, 0x1f4c, 0x1f4c, 0x1f61, 0x1f61, 0x1f72,
+	0x1e4d, 0x1e60, 0x1e95, 0x1eaa, 0x1eaa, 0x1ec1, 0x1ed8, 0x1ee7,
+	0x1ee7, 0x1ee7, 0x1ee7, 0x1ee7, 0x1ee7, 0x1ee7, 0x1efc, 0x1f13,
+	0x1f2a, 0x1f3d, 0x1f3d, 0x1f56, 0x1f56, 0x1f6b, 0x1f6b, 0x1f7c,
 	// Entry 240 - 27F
-	0x1f72, 0x1f72, 0x1f87, 0x1f9a, 0x1f9a, 0x1faf, 0x1faf, 0x1faf,
-	0x1faf, 0x1faf, 0x1ff4, 0x2005, 0x2027, 0x2038, 0x206d, 0x206d,
-	0x206d, 0x206d, 0x206d, 0x206d, 0x206d, 0x208d, 0x208d, 0x208d,
-	0x208d, 0x208d, 0x208d, 0x208d, 0x20b1, 0x20c8, 0x20c8, 0x20c8,
-	0x20e1, 0x20ff, 0x2121, 0x214f, 0x2173,
+	0x1f7c, 0x1f7c, 0x1f91, 0x1fa4, 0x1fa4, 0x1fb9, 0x1fb9, 0x1fb9,
+	0x1fb9, 0x1fb9, 0x1ffe, 0x200f, 0x2031, 0x2042, 0x2077, 0x2077,
+	0x2077, 0x2077, 0x2077, 0x2077, 0x2077, 0x2097, 0x2097, 0x2097,
+	0x2097, 0x2097, 0x2097, 0x2097, 0x20bb, 0x20d2, 0x20d2, 0x20d2,
+	0x20eb, 0x2109, 0x212b, 0x2159, 0x217d,
 } // Size: 1250 bytes
 
-const kmLangStr string = "" + // Size: 8834 bytes
+const kmLangStr string = "" + // Size: 8864 bytes
 	"អាហ្វារអាប់ខាហ៊្សានអាវេស្ថានអាហ្វ្រិកានអាកានអំហារិកអារ៉ាហ្គោនអារ៉ាប់អាសា" +
 	"មីសអាវ៉ារីកអីម៉ារ៉ាអាស៊ែបៃហ្សង់បាស្គៀបេឡារុស្សប៊ុលហ្គារីប៊ីស្លាម៉ាបាម្" +
 	"បារាបង់ក្លាដែសទីបេប្រីស្តុនបូស្នីកាតាឡានឈីឆេនឈីម៉ូរ៉ូកូស៊ីខានឆេកឈឺជស្ល" +
@@ -20276,11 +20281,11 @@ const kmLangStr string = "" + // Size: 8834 bytes
 	"ឃឺដខាងត្បូងស៊ីណាគុយរ៉ាបូរ៉ុស៊ីនីតាឈីលហ៊ីតសានសាមីខាងត្បូងលូលីសាមីអ៊ីណារ" +
 	"ីសាម៉ីស្កុលសាមីសូនីនគេស្រាណានតុងហ្គោសាហូស៊ូគូម៉ាកូម៉ូរីស៊ីរៀគធីមនីតេសូ" +
 	"ទីទុំធីហ្គ្រាឃ្លីនហ្គុនថុកពីស៊ីនតារ៉ូកូទុមប៊ូកាទូវ៉ាលូតាសាវ៉ាក់ទូវីនៀត" +
-	"ាម៉ាសាយអាត្លាសកណ្តាលអាត់មូដអាម់ប៊ុនឌូរូតវៃវុនចូវេលសឺវ៉ូឡាយតាវ៉ារេយវ៉ារ" +
-	"ីប៉ារីកាលមីគសូហ្គាយ៉ាងបេនយេមបាកន្តាំងតាម៉ាហ្សៃម៉ារ៉ុកស្តង់ដាហ្សូនីគ្មា" +
-	"ន\u200bទិន្នន័យ\u200bភាសាហ្សាហ្សាអារ៉ាប់ផ្លូវការអេស្ប៉ាញ (អ៊ឺរ៉ុប)ហ្សា" +
-	"ក់ស្យុងក្រោមផ្លាមីសព័រទុយហ្គាល់ (អឺរ៉ុប)ម៉ុលដាវីសឺបូក្រូអាតកុងហ្គោស្វា" +
-	"ហ៊ីលីចិន\u200bអក្សរ\u200bកាត់ចិន\u200bអក្សរ\u200bពេញ"
+	"ាម៉ាសាយអាត្លាសកណ្តាលអាត់មូដអាម់ប៊ុនឌូភាសាមិនស្គាល់វៃវុនចូវេលសឺវ៉ូឡាយតា" +
+	"វ៉ារេយវ៉ារីប៉ារីកាលមីគសូហ្គាយ៉ាងបេនយេមបាកន្តាំងតាម៉ាហ្សៃម៉ារ៉ុកស្តង់ដា" +
+	"ហ្សូនីគ្មាន\u200bទិន្នន័យ\u200bភាសាហ្សាហ្សាអារ៉ាប់ផ្លូវការអេស្ប៉ាញ (អ៊" +
+	"ឺរ៉ុប)ហ្សាក់ស្យុងក្រោមផ្លាមីសព័រទុយហ្គាល់ (អឺរ៉ុប)ម៉ុលដាវីសឺបូក្រូអាតក" +
+	"ុងហ្គោស្វាហ៊ីលីចិន\u200bអក្សរ\u200bកាត់ចិន\u200bអក្សរ\u200bពេញ"
 
 var kmLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -20361,18 +20366,18 @@ var kmLangIdx = []uint16{ // 613 elements
 	0x1e17, 0x1e17, 0x1e17, 0x1e26, 0x1e32, 0x1e32, 0x1e41, 0x1e59,
 	0x1e59, 0x1e59, 0x1e59, 0x1e77, 0x1e77, 0x1e77, 0x1e77, 0x1e77,
 	0x1e92, 0x1e92, 0x1ea7, 0x1ea7, 0x1ea7, 0x1ea7, 0x1ebf, 0x1ed4,
-	0x1eef, 0x1f01, 0x1f40, 0x1f55, 0x1f55, 0x1f73, 0x1f7c, 0x1f82,
-	0x1f82, 0x1f82, 0x1f82, 0x1f82, 0x1f82, 0x1f82, 0x1f91, 0x1fa0,
-	0x1fb8, 0x1fca, 0x1fca, 0x1fe8, 0x1fe8, 0x1ffa, 0x1ffa, 0x200c,
+	0x1eef, 0x1f01, 0x1f40, 0x1f55, 0x1f55, 0x1f73, 0x1f9a, 0x1fa0,
+	0x1fa0, 0x1fa0, 0x1fa0, 0x1fa0, 0x1fa0, 0x1fa0, 0x1faf, 0x1fbe,
+	0x1fd6, 0x1fe8, 0x1fe8, 0x2006, 0x2006, 0x2018, 0x2018, 0x202a,
 	// Entry 240 - 27F
-	0x200c, 0x200c, 0x2021, 0x2030, 0x2030, 0x2045, 0x2045, 0x2045,
-	0x2045, 0x2045, 0x208a, 0x209c, 0x20d5, 0x20ed, 0x211a, 0x211a,
-	0x211a, 0x211a, 0x211a, 0x211a, 0x211a, 0x211a, 0x211a, 0x214a,
-	0x214a, 0x214a, 0x214a, 0x214a, 0x217a, 0x218f, 0x218f, 0x21c8,
-	0x21e0, 0x2201, 0x2231, 0x225b, 0x2282,
+	0x202a, 0x202a, 0x203f, 0x204e, 0x204e, 0x2063, 0x2063, 0x2063,
+	0x2063, 0x2063, 0x20a8, 0x20ba, 0x20f3, 0x210b, 0x2138, 0x2138,
+	0x2138, 0x2138, 0x2138, 0x2138, 0x2138, 0x2138, 0x2138, 0x2168,
+	0x2168, 0x2168, 0x2168, 0x2168, 0x2198, 0x21ad, 0x21ad, 0x21e6,
+	0x21fe, 0x221f, 0x224f, 0x2279, 0x22a0,
 } // Size: 1250 bytes
 
-const knLangStr string = "" + // Size: 12261 bytes
+const knLangStr string = "" + // Size: 12283 bytes
 	"ಅಫಾರ್ಅಬ್ಖಾಜಿಯನ್ಅವೆಸ್ಟನ್ಆಫ್ರಿಕಾನ್ಸ್ಅಕಾನ್ಅಂಹರಿಕ್ಅರಗೊನೀಸ್ಅರೇಬಿಕ್ಅಸ್ಸಾಮೀಸ್ಅವ" +
 	"ರಿಕ್ಅಯ್ಮಾರಾಅಜೆರ್ಬೈಜಾನಿಬಶ್ಕಿರ್ಬೆಲರೂಸಿಯನ್ಬಲ್ಗೇರಿಯನ್ಬಿಸ್ಲಾಮಾಬಂಬಾರಾಬಾಂಗ್ಲಾ" +
 	"ಟಿಬೇಟಿಯನ್ಬ್ರೆಟನ್ಬೋಸ್ನಿಯನ್ಕೆಟಲಾನ್ಚೆಚನ್ಕಮೊರೊಕೋರ್ಸಿಕನ್ಕ್ರೀಜೆಕ್ಚರ್ಚ್ ಸ್ಲಾವ" +
@@ -20425,15 +20430,15 @@ const knLangStr string = "" + // Size: 12261 bytes
 	"ೇರೇರ್ಸಹೊಸುಕುಮಾಸುಸುಸುಮೇರಿಯನ್ಕೊಮೊರಿಯನ್ಶಾಸ್ತ್ರೀಯ ಸಿರಿಯಕ್ಸಿರಿಯಕ್ಟಿಮ್ನೆಟೆಸೊ" +
 	"ಟೆರೆನೋಟೇಟಮ್ಟೈಗ್ರೆಟಿವ್ಟೊಕೆಲಾವ್ಕ್ಲಿಂಗನ್ಟ್ಲಿಂಗಿಟ್ಟಮಾಷೆಕ್ನ್ಯಾಸಾ ಟೋಂಗಾಟೋಕ್ " +
 	"ಪಿಸಿನ್ಟರೊಕೊಸಿಂಶಿಯನ್ತುಂಬುಕಾಟುವಾಲುಟಸವಕ್ಟುವಿನಿಯನ್ಮಧ್ಯ ಅಟ್ಲಾಸ್ ಟಮಜೈಟ್ಉಡ್" +
-	"\u200cಮುರ್ಟ್ಉಗಾರಿಟಿಕ್ಉಂಬುಂಡುರೂಟ್ವಾಯಿವೋಟಿಕ್ವುಂಜೊವಾಲ್ಸರ್ವಲಾಯ್ತಾವರಾಯ್ವಾಷೋವಾ" +
-	"ರ್ಲ್\u200cಪಿರಿವುಕಲ್ಮೈಕ್ಸೊಗಯಾವೊಯಪೀಸೆಯಾಂಗ್ಬೆನ್ಯೆಂಬಾಕ್ಯಾಂಟನೀಸ್ಝೋಪೊಟೆಕ್ಬ್ಲ" +
-	"ಿಸ್ಸಿಂಬಲ್ಸ್ಝೆನಾಗಾಸ್ಟ್ಯಾಂಡರ್ಡ್ ಮೊರೊಕ್ಕನ್ ಟಮಜೈಟ್ಝೂನಿಯಾವುದೇ ಭಾಷಾಸಂಬಂಧಿ ವಿ" +
-	"ಷಯವಿಲ್ಲಜಾಝಾಆಧುನಿಕ ಪ್ರಮಾಣಿತ ಅರೇಬಿಕ್ಆಸ್ಟ್ರಿಯನ್ ಜರ್ಮನ್ಸ್ವಿಸ್ ಹೈ ಜರ್ಮನ್ಆಸ್" +
-	"ಟ್ರೇಲಿಯನ್ ಇಂಗ್ಲೀಷ್ಕೆನೆಡಿಯನ್ ಇಂಗ್ಲೀಷ್ಬ್ರಿಟಿಷ್ ಇಂಗ್ಲೀಷ್ಅಮೆರಿಕನ್ ಇಂಗ್ಲೀಷ್" +
-	"ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕನ್ ಸ್ಪ್ಯಾನಿಷ್ಯುರೋಪಿಯನ್ ಸ್ಪ್ಯಾನಿಷ್ಮೆಕ್ಸಿಕನ್ ಸ್ಪ್ಯಾನಿಷ್ಕೆ" +
-	"ನೆಡಿಯನ್ ಫ್ರೆಂಚ್ಸ್ವಿಸ್ ಫ್ರೆಂಚ್ಲೋ ಸ್ಯಾಕ್ಸನ್ಫ್ಲೆಮಿಷ್ಬ್ರೆಜಿಲಿಯನ್ ಪೋರ್ಚುಗೀಸ" +
-	"್ಯೂರೋಪಿಯನ್ ಪೋರ್ಚುಗೀಸ್ಮಾಲ್ಡೇವಿಯನ್ಸರ್ಬೋ-ಕ್ರೊಯೇಶಿಯನ್ಕಾಂಗೊ ಸ್ವಹಿಲಿಸರಳೀಕೃತ " +
-	"ಚೈನೀಸ್ಸಾಂಪ್ರದಾಯಿಕ ಚೈನೀಸ್"
+	"\u200cಮುರ್ಟ್ಉಗಾರಿಟಿಕ್ಉಂಬುಂಡುಅಪರಿಚಿತ ಭಾಷೆವಾಯಿವೋಟಿಕ್ವುಂಜೊವಾಲ್ಸರ್ವಲಾಯ್ತಾವರಾ" +
+	"ಯ್ವಾಷೋವಾರ್ಲ್\u200cಪಿರಿವುಕಲ್ಮೈಕ್ಸೊಗಯಾವೊಯಪೀಸೆಯಾಂಗ್ಬೆನ್ಯೆಂಬಾಕ್ಯಾಂಟನೀಸ್ಝೋಪ" +
+	"ೊಟೆಕ್ಬ್ಲಿಸ್ಸಿಂಬಲ್ಸ್ಝೆನಾಗಾಸ್ಟ್ಯಾಂಡರ್ಡ್ ಮೊರೊಕ್ಕನ್ ಟಮಜೈಟ್ಝೂನಿಯಾವುದೇ ಭಾಷಾಸ" +
+	"ಂಬಂಧಿ ವಿಷಯವಿಲ್ಲಜಾಝಾಆಧುನಿಕ ಪ್ರಮಾಣಿತ ಅರೇಬಿಕ್ಆಸ್ಟ್ರಿಯನ್ ಜರ್ಮನ್ಸ್ವಿಸ್ ಹೈ ಜ" +
+	"ರ್ಮನ್ಆಸ್ಟ್ರೇಲಿಯನ್ ಇಂಗ್ಲೀಷ್ಕೆನೆಡಿಯನ್ ಇಂಗ್ಲೀಷ್ಬ್ರಿಟಿಷ್ ಇಂಗ್ಲೀಷ್ಅಮೆರಿಕನ್ " +
+	"ಇಂಗ್ಲೀಷ್ಲ್ಯಾಟಿನ್ ಅಮೇರಿಕನ್ ಸ್ಪ್ಯಾನಿಷ್ಯುರೋಪಿಯನ್ ಸ್ಪ್ಯಾನಿಷ್ಮೆಕ್ಸಿಕನ್ ಸ್ಪ್" +
+	"ಯಾನಿಷ್ಕೆನೆಡಿಯನ್ ಫ್ರೆಂಚ್ಸ್ವಿಸ್ ಫ್ರೆಂಚ್ಲೋ ಸ್ಯಾಕ್ಸನ್ಫ್ಲೆಮಿಷ್ಬ್ರೆಜಿಲಿಯನ್ ಪ" +
+	"ೋರ್ಚುಗೀಸ್ಯೂರೋಪಿಯನ್ ಪೋರ್ಚುಗೀಸ್ಮಾಲ್ಡೇವಿಯನ್ಸರ್ಬೋ-ಕ್ರೊಯೇಶಿಯನ್ಕಾಂಗೊ ಸ್ವಹಿಲಿ" +
+	"ಸರಳೀಕೃತ ಚೈನೀಸ್ಸಾಂಪ್ರದಾಯಿಕ ಚೈನೀಸ್"
 
 var knLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -20514,18 +20519,18 @@ var knLangIdx = []uint16{ // 613 elements
 	0x27a5, 0x27a5, 0x27a5, 0x27b7, 0x27c3, 0x27d5, 0x27e4, 0x27f6,
 	0x2802, 0x281a, 0x281a, 0x2832, 0x284d, 0x284d, 0x2862, 0x2884,
 	0x28a3, 0x28a3, 0x28b2, 0x28b2, 0x28ca, 0x28ca, 0x28df, 0x28f1,
-	0x2900, 0x291b, 0x2950, 0x296e, 0x2989, 0x299e, 0x29aa, 0x29b6,
-	0x29b6, 0x29b6, 0x29b6, 0x29b6, 0x29c8, 0x29c8, 0x29d7, 0x29ec,
-	0x2a01, 0x2a10, 0x2a1c, 0x2a3d, 0x2a43, 0x2a58, 0x2a58, 0x2a61,
+	0x2900, 0x291b, 0x2950, 0x296e, 0x2989, 0x299e, 0x29c0, 0x29cc,
+	0x29cc, 0x29cc, 0x29cc, 0x29cc, 0x29de, 0x29de, 0x29ed, 0x2a02,
+	0x2a17, 0x2a26, 0x2a32, 0x2a53, 0x2a59, 0x2a6e, 0x2a6e, 0x2a77,
 	// Entry 240 - 27F
-	0x2a6d, 0x2a7c, 0x2a97, 0x2aa6, 0x2aa6, 0x2ac4, 0x2adc, 0x2b06,
-	0x2b06, 0x2b18, 0x2b6b, 0x2b77, 0x2bc4, 0x2bd0, 0x2c11, 0x2c11,
-	0x2c42, 0x2c6e, 0x2cab, 0x2cdf, 0x2d10, 0x2d41, 0x2d91, 0x2dcb,
-	0x2e05, 0x2e05, 0x2e36, 0x2e5e, 0x2e80, 0x2e98, 0x2ed8, 0x2f12,
-	0x2f33, 0x2f64, 0x2f89, 0x2fb1, 0x2fe5,
+	0x2a83, 0x2a92, 0x2aad, 0x2abc, 0x2abc, 0x2ada, 0x2af2, 0x2b1c,
+	0x2b1c, 0x2b2e, 0x2b81, 0x2b8d, 0x2bda, 0x2be6, 0x2c27, 0x2c27,
+	0x2c58, 0x2c84, 0x2cc1, 0x2cf5, 0x2d26, 0x2d57, 0x2da7, 0x2de1,
+	0x2e1b, 0x2e1b, 0x2e4c, 0x2e74, 0x2e96, 0x2eae, 0x2eee, 0x2f28,
+	0x2f49, 0x2f7a, 0x2f9f, 0x2fc7, 0x2ffb,
 } // Size: 1250 bytes
 
-const koLangStr string = "" + // Size: 7030 bytes
+const koLangStr string = "" + // Size: 7045 bytes
 	"아파르어압카즈어아베스타어아프리칸스어아칸어암하라어아라곤어아랍어아삼어아바릭어아이마라어아제르바이잔어바슈키르어벨라루스어불가리아어비슬라마어" +
 	"밤바라어벵골어티베트어브르타뉴어보스니아어카탈로니아어체첸어차모로어코르시카어크리어체코어교회 슬라브어추바시어웨일스어덴마크어독일어디베히" +
 	"어종카어에웨어그리스어영어에스페란토어스페인어에스토니아어바스크어페르시아어풀라어핀란드어피지어페로어프랑스어서부 프리지아어아일랜드어스코" +
@@ -20558,9 +20563,9 @@ const koLangStr string = "" + // Size: 7030 bytes
 	"니어고대 아일랜드어타셸히트어샨어차디언 아라비아어시다모어남부 사미어룰레 사미어이나리 사미어스콜트 사미어소닌케어소그디엔어스라난 통" +
 	"가어세레르어사호어수쿠마어수수어수메르어코모로어고전 시리아어시리아어팀니어테조어테레노어테툼어티그레어티브어토켈라우제도어차후르어클링온어" +
 	"틀링깃족어탈리쉬어타마섹어니아사 통가어토크 피신어타로코어트심시안어툼부카어투발루어타사와크어투비니안어중앙 모로코 타마지트어우드말트어" +
-	"유가리틱어움분두어어근바이어보틱어분조어월저어월라이타어와라이어와쇼어왈피리어우어칼미크어소가어야오족어얍페세어양본어옘바어광둥어사포테크어" +
-	"블리스 심볼제나가어표준 모로코 타마지트어주니어언어 관련 내용 없음자자어현대 표준 아랍어고지 독일어(스위스)영어(호주)저지 색슨" +
-	"어플라망어몰도바어세르비아-크로아티아어콩고 스와힐리어"
+	"유가리틱어움분두어알 수 없는 언어바이어보틱어분조어월저어월라이타어와라이어와쇼어왈피리어우어칼미크어소가어야오족어얍페세어양본어옘바어광" +
+	"둥어사포테크어블리스 심볼제나가어표준 모로코 타마지트어주니어언어 관련 내용 없음자자어현대 표준 아랍어고지 독일어(스위스)영어(호" +
+	"주)저지 색슨어플라망어몰도바어세르비아-크로아티아어콩고 스와힐리어"
 
 var koLangIdx = []uint16{ // 611 elements
 	// Entry 0 - 3F
@@ -20641,18 +20646,18 @@ var koLangIdx = []uint16{ // 611 elements
 	0x186b, 0x186b, 0x186b, 0x1874, 0x187d, 0x1889, 0x1892, 0x189e,
 	0x18a7, 0x18bc, 0x18c8, 0x18d4, 0x18e3, 0x18ef, 0x18fb, 0x190e,
 	0x191e, 0x191e, 0x192a, 0x192a, 0x1939, 0x1939, 0x1945, 0x1951,
-	0x1960, 0x196f, 0x198f, 0x199e, 0x19ad, 0x19b9, 0x19bf, 0x19c8,
-	0x19c8, 0x19c8, 0x19c8, 0x19c8, 0x19d1, 0x19d1, 0x19da, 0x19e3,
-	0x19f2, 0x19fe, 0x1a07, 0x1a13, 0x1a19, 0x1a25, 0x1a25, 0x1a2e,
+	0x1960, 0x196f, 0x198f, 0x199e, 0x19ad, 0x19b9, 0x19ce, 0x19d7,
+	0x19d7, 0x19d7, 0x19d7, 0x19d7, 0x19e0, 0x19e0, 0x19e9, 0x19f2,
+	0x1a01, 0x1a0d, 0x1a16, 0x1a22, 0x1a28, 0x1a34, 0x1a34, 0x1a3d,
 	// Entry 240 - 27F
-	0x1a3a, 0x1a46, 0x1a4f, 0x1a58, 0x1a58, 0x1a61, 0x1a70, 0x1a80,
-	0x1a80, 0x1a8c, 0x1aac, 0x1ab5, 0x1ad0, 0x1ad9, 0x1af0, 0x1af0,
-	0x1af0, 0x1b0b, 0x1b19, 0x1b19, 0x1b19, 0x1b19, 0x1b19, 0x1b19,
-	0x1b19, 0x1b19, 0x1b19, 0x1b19, 0x1b29, 0x1b35, 0x1b35, 0x1b35,
-	0x1b41, 0x1b60, 0x1b76,
+	0x1a49, 0x1a55, 0x1a5e, 0x1a67, 0x1a67, 0x1a70, 0x1a7f, 0x1a8f,
+	0x1a8f, 0x1a9b, 0x1abb, 0x1ac4, 0x1adf, 0x1ae8, 0x1aff, 0x1aff,
+	0x1aff, 0x1b1a, 0x1b28, 0x1b28, 0x1b28, 0x1b28, 0x1b28, 0x1b28,
+	0x1b28, 0x1b28, 0x1b28, 0x1b28, 0x1b38, 0x1b44, 0x1b44, 0x1b44,
+	0x1b50, 0x1b6f, 0x1b85,
 } // Size: 1246 bytes
 
-const kyLangStr string = "" + // Size: 6711 bytes
+const kyLangStr string = "" + // Size: 6728 bytes
 	"афарчаабхазчаафрикаанчааканчаамхарчаарагончоарабчаассамчааварикчеаймарач" +
 	"аазербайжанчабашкырчабеларусчаболгарчабисламачабамбарачабангладешчетибе" +
 	"тчебретончобоснийчекаталанчачеченчечаморрочокорсиканчачехчечиркөө славя" +
@@ -20695,12 +20700,12 @@ const kyLangStr string = "" + // Size: 6711 bytes
 	"үштүк курдчасеначакойраборо сенничеташелитчешанчатүштүк саамичелуле-сам" +
 	"ичеинари саамическолт саамичесонинкечесранан тонгочосахочосукумачакомор" +
 	"чосириячатимнечетесочотетумчатигречеклингончоток-писинчетарокочотумбука" +
-	"чатувалучатасабакчатувинчеБорбордук Атлас тамазитчеудмуртчаумбундучатүп" +
-	"күвайичевунжочовалцерчевольяттачаварайчаворлпиричеwuuкалмыкчасогачаянгб" +
-	"енчейембачакантончомарокко тамазигт адабий тилиндезуничетилдик мазмун ж" +
-	"окзазачаазыркы адабий араб тилиндеадабий немисче (Швейцария)испанча (Ев" +
-	"ропа)төмөнкү саксончофламандчапортугалча (Европа)молдованчасерб-хорватк" +
-	"онго суахаличекытайча (жөнөкөйлөштүрүлгөн)кытайча (салттуу)"
+	"чатувалучатасабакчатувинчеБорбордук Атлас тамазитчеудмуртчаумбундучабел" +
+	"гисиз тилдевайичевунжочовалцерчевольяттачаварайчаворлпиричеwuuкалмыкчас" +
+	"огачаянгбенчейембачакантончомарокко тамазигт адабий тилиндезуничетилдик" +
+	" мазмун жокзазачаазыркы адабий араб тилиндеадабий немисче (Швейцария)исп" +
+	"анча (Европа)төмөнкү саксончофламандчапортугалча (Европа)молдованчасерб" +
+	"-хорватконго суахаличекытайча (жөнөкөйлөштүрүлгөн)кытайча (салттуу)"
 
 var kyLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -20781,18 +20786,18 @@ var kyLangIdx = []uint16{ // 613 elements
 	0x16a0, 0x16a0, 0x16a0, 0x16ae, 0x16ba, 0x16ba, 0x16c8, 0x16d6,
 	0x16d6, 0x16d6, 0x16d6, 0x16e8, 0x16e8, 0x16e8, 0x16e8, 0x16e8,
 	0x16fd, 0x16fd, 0x170d, 0x170d, 0x170d, 0x170d, 0x171f, 0x172f,
-	0x1741, 0x174f, 0x177f, 0x178f, 0x178f, 0x17a1, 0x17ab, 0x17b7,
-	0x17b7, 0x17b7, 0x17b7, 0x17b7, 0x17b7, 0x17b7, 0x17c5, 0x17d5,
-	0x17e9, 0x17f7, 0x17f7, 0x180b, 0x180e, 0x181e, 0x181e, 0x182a,
+	0x1741, 0x174f, 0x177f, 0x178f, 0x178f, 0x17a1, 0x17bc, 0x17c8,
+	0x17c8, 0x17c8, 0x17c8, 0x17c8, 0x17c8, 0x17c8, 0x17d6, 0x17e6,
+	0x17fa, 0x1808, 0x1808, 0x181c, 0x181f, 0x182f, 0x182f, 0x183b,
 	// Entry 240 - 27F
-	0x182a, 0x182a, 0x183a, 0x1848, 0x1848, 0x1858, 0x1858, 0x1858,
-	0x1858, 0x1858, 0x1893, 0x189f, 0x18bf, 0x18cb, 0x18fc, 0x18fc,
-	0x18fc, 0x192c, 0x192c, 0x192c, 0x192c, 0x192c, 0x192c, 0x1949,
-	0x1949, 0x1949, 0x1949, 0x1949, 0x1968, 0x197a, 0x197a, 0x199d,
-	0x19b1, 0x19c6, 0x19e3, 0x1a18, 0x1a37,
+	0x183b, 0x183b, 0x184b, 0x1859, 0x1859, 0x1869, 0x1869, 0x1869,
+	0x1869, 0x1869, 0x18a4, 0x18b0, 0x18d0, 0x18dc, 0x190d, 0x190d,
+	0x190d, 0x193d, 0x193d, 0x193d, 0x193d, 0x193d, 0x193d, 0x195a,
+	0x195a, 0x195a, 0x195a, 0x195a, 0x1979, 0x198b, 0x198b, 0x19ae,
+	0x19c2, 0x19d7, 0x19f4, 0x1a29, 0x1a48,
 } // Size: 1250 bytes
 
-const loLangStr string = "" + // Size: 10855 bytes
+const loLangStr string = "" + // Size: 10894 bytes
 	"ອະຟາແອບຄາຊຽນອາເວັສແຕນອາຟຣິການອາການອຳຮາຣິກອາຣາໂກເນັດອາຣັບອັສຊາມີສອາວາຣິກອ" +
 	"າຍມາລາອາເຊີໄບຈານິບາຣກີເບລາຣັສຊຽນບັງກາຣຽນບິສລະມາບາມບາຣາເບັງກາລີທິເບທັນເ" +
 	"ບຣຕັນບອສນຽນຄາຕາລານຊີເຄນຊາມໍໂຣຄໍຊິກາຄີເຊກໂບດສລາວິກຊູວາຊເວວແດນິຊເຢຍລະມັນ" +
@@ -20838,14 +20843,14 @@ const loLangStr string = "" + // Size: 10855 bytes
 	"າດຊິດາໂມຊາມິໃຕ້ລຸນຊາມິອີນາຣິຊາມິສກອດຊາມິໂຊນິນກີຊອກດິນສຣານນານຕອນໂກເຊເລີ" +
 	"ຊາໂຮຊູຄູມ້າຊູຊູຊູເມີເລຍໂຄໂນຣຽນຊີເລຍແບບດັ້ງເດີມຊີເລຍທີມເນເຕໂຊເຕເລໂນເຕຕູ" +
 	"ມໄທກຣີຕີວໂຕເກເລົາຄຣິງກອນທລີງກິດທາມາກເຊກນາຍອາຊາຕອງກາທອກພີຊິນຕາໂລໂກຊີມຊີ" +
-	"ແອນຕຳບູກາຕູວາລູຕາຊາວັກຕູວີນຽນອັດລາສ ທາມາຊີກ ກາງອຸດມັດຢູກາລິກອຳບັນດູລູດ" +
-	"ໄວໂວຕິກວັນໂຈວາເຊີວາລາໂມວາເລວາໂຊວາຣພິຣິການມິກໂຊກາເຢົ້າຢັບແຍງເບນແຢມບາກວາ" +
-	"ງຕຸ້ງຊາໂປແຕບສັນຍາລັກບລີຊິມເຊນາກາໂມຣັອກແຄນ ທາມາຊີກ ມາດຕະຖານຊູນີບໍ່ມີເນື" +
-	"້ອຫາພາສາຊາຊາອາຣາບິກມາດຕະຖານສະໄໝໃໝ່ເຢຍລະມັນ (ໂອສຕຣິດ)ສະວິສ ໄຮ ເຈີແມນອັງ" +
-	"ກິດ (ໂອດສະຕາລີ)ອັງກິດ (ບຣິດທິຊ)ອັງກິດ (ອາເມລິກັນ)ລາຕິນ ອາເມຣິກັນ ສະແປນ" +
-	"ນິຊສະເປັນ ຢຸໂຣບເມັກຊິກັນ ສະແປນນິຊຟລັງ(ການາດາ)ຊາຊອນ ຕອນໄຕຟລີມິຊປອກຕຸຍກິ" +
-	"ສ ບະເລຊີ່ນປອກຕຸຍກິສ ຢຸໂຣບໂມດາວຽນເຊີໂບ-ໂກເຊຍຄອງໂກ ຊວາຮີລິຈີນແບບຮຽບງ່າຍຈ" +
-	"ີນແບບດັ້ງເດີມ"
+	"ແອນຕຳບູກາຕູວາລູຕາຊາວັກຕູວີນຽນອັດລາສ ທາມາຊີກ ກາງອຸດມັດຢູກາລິກອຳບັນດູບໍ່" +
+	"ສາມາດລະບຸພາສາໄວໂວຕິກວັນໂຈວາເຊີວາລາໂມວາເລວາໂຊວາຣພິຣິການມິກໂຊກາເຢົ້າຢັບແ" +
+	"ຍງເບນແຢມບາກວາງຕຸ້ງຊາໂປແຕບສັນຍາລັກບລີຊິມເຊນາກາໂມຣັອກແຄນ ທາມາຊີກ ມາດຕະຖາ" +
+	"ນຊູນີບໍ່ມີເນື້ອຫາພາສາຊາຊາອາຣາບິກມາດຕະຖານສະໄໝໃໝ່ເຢຍລະມັນ (ໂອສຕຣິດ)ສະວິສ" +
+	" ໄຮ ເຈີແມນອັງກິດ (ໂອດສະຕາລີ)ອັງກິດ (ບຣິດທິຊ)ອັງກິດ (ອາເມລິກັນ)ລາຕິນ ອາເມ" +
+	"ຣິກັນ ສະແປນນິຊສະເປັນ ຢຸໂຣບເມັກຊິກັນ ສະແປນນິຊຟລັງ(ການາດາ)ຊາຊອນ ຕອນໄຕຟລີ" +
+	"ມິຊປອກຕຸຍກິສ ບະເລຊີ່ນປອກຕຸຍກິສ ຢຸໂຣບໂມດາວຽນເຊີໂບ-ໂກເຊຍຄອງໂກ ຊວາຮີລິຈີນ" +
+	"ແບບຮຽບງ່າຍຈີນແບບດັ້ງເດີມ"
 
 var loLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -20926,18 +20931,18 @@ var loLangIdx = []uint16{ // 613 elements
 	0x23b1, 0x23b1, 0x23b1, 0x23c0, 0x23cc, 0x23de, 0x23ed, 0x23fc,
 	0x2405, 0x241d, 0x241d, 0x2432, 0x2447, 0x2447, 0x245f, 0x2483,
 	0x249b, 0x249b, 0x24ad, 0x24ad, 0x24c5, 0x24c5, 0x24d7, 0x24e9,
-	0x24fe, 0x2513, 0x2545, 0x2557, 0x256c, 0x2581, 0x258a, 0x2590,
-	0x2590, 0x2590, 0x2590, 0x2590, 0x259f, 0x259f, 0x25ae, 0x25bd,
-	0x25cf, 0x25db, 0x25e7, 0x25fc, 0x25fc, 0x260e, 0x260e, 0x261a,
+	0x24fe, 0x2513, 0x2545, 0x2557, 0x256c, 0x2581, 0x25b1, 0x25b7,
+	0x25b7, 0x25b7, 0x25b7, 0x25b7, 0x25c6, 0x25c6, 0x25d5, 0x25e4,
+	0x25f6, 0x2602, 0x260e, 0x2623, 0x2623, 0x2635, 0x2635, 0x2641,
 	// Entry 240 - 27F
-	0x2629, 0x2632, 0x2644, 0x2653, 0x2653, 0x266b, 0x2680, 0x26aa,
-	0x26aa, 0x26bc, 0x2706, 0x2712, 0x2742, 0x274e, 0x2790, 0x2790,
-	0x27c0, 0x27e9, 0x2819, 0x2819, 0x2843, 0x2873, 0x28b7, 0x28d9,
-	0x290d, 0x290d, 0x292d, 0x292d, 0x294c, 0x295e, 0x2992, 0x29bd,
-	0x29d2, 0x29f1, 0x2a16, 0x2a3d, 0x2a67,
+	0x2650, 0x2659, 0x266b, 0x267a, 0x267a, 0x2692, 0x26a7, 0x26d1,
+	0x26d1, 0x26e3, 0x272d, 0x2739, 0x2769, 0x2775, 0x27b7, 0x27b7,
+	0x27e7, 0x2810, 0x2840, 0x2840, 0x286a, 0x289a, 0x28de, 0x2900,
+	0x2934, 0x2934, 0x2954, 0x2954, 0x2973, 0x2985, 0x29b9, 0x29e4,
+	0x29f9, 0x2a18, 0x2a3d, 0x2a64, 0x2a8e,
 } // Size: 1250 bytes
 
-const ltLangStr string = "" + // Size: 5947 bytes
+const ltLangStr string = "" + // Size: 5958 bytes
 	"afarųabchazųavestųafrikanųakanųamharųaragonesųarabųasamųavarikųaimarųaze" +
 	"rbaidžaniečiųbaškirųbaltarusiųbulgarųbislamabambarųbengalųtibetiečiųbret" +
 	"onųbosniųkatalonųčečėnųčamorųkorsikiečiųkryčekųbažnytinė slavųčiuvašųval" +
@@ -21002,16 +21007,16 @@ const ltLangStr string = "" + // Size: 5947 bytes
 	"sileziečiųtulųtimnetesoTerenotetumtigretivTokelautsakurųklingonųtlingitų" +
 	"talyšųtamašekniasa tongųPapua pidžinųturoyoTarokotsakonųtsimšianmusulmon" +
 	"ų tatųtumbukųTuvalutasavakųtuviųCentrinio Maroko tamazitųudmurtųugaritų" +
-	"umbundurūtvaivenetųvepsųvakarų flamandųpagrindinė frankonųVotikveruvunjo" +
-	"valserųvalamovaraiVašovalrpirikinų kalbos vu tarmėkalmukųmegrelųsogųjaoj" +
-	"apezųjangbenųjembųnjengatukinų kalbos Kantono tarmėzapotekųBLISS simboli" +
-	"ųzelandųzenagastandartinė Maroko tamazigtųZuninėra kalbinio turiniozaza" +
-	"šiuolaikinė standartinė arabųAustrijos vokiečiųŠveicarijos aukštutinė v" +
-	"okiečiųAustralijos anglųKanados anglųDidžiosios Britanijos anglųJungtini" +
-	"ų Valstijų anglųLotynų Amerikos ispanųEuropos ispanųMeksikos ispanųKana" +
-	"dos prancūzųŠveicarijos prancūzųŽemutinės Saksonijos (Nyderlandai)flaman" +
-	"dųBrazilijos portugalųEuropos portugalųmoldavųserbų-kroatųKongo suahilių" +
-	"supaprastintoji kinųtradicinė kinų"
+	"umbundunežinoma kalbavaivenetųvepsųvakarų flamandųpagrindinė frankonųVot" +
+	"ikveruvunjovalserųvalamovaraiVašovalrpirikinų kalbos vu tarmėkalmukųmegr" +
+	"elųsogųjaojapezųjangbenųjembųnjengatukinų kalbos Kantono tarmėzapotekųBL" +
+	"ISS simboliųzelandųzenagastandartinė Maroko tamazigtųZuninėra kalbinio t" +
+	"uriniozazašiuolaikinė standartinė arabųAustrijos vokiečiųŠveicarijos auk" +
+	"štutinė vokiečiųAustralijos anglųKanados anglųDidžiosios Britanijos ang" +
+	"lųJungtinių Valstijų anglųLotynų Amerikos ispanųEuropos ispanųMeksikos i" +
+	"spanųKanados prancūzųŠveicarijos prancūzųŽemutinės Saksonijos (Nyderland" +
+	"ai)flamandųBrazilijos portugalųEuropos portugalųmoldavųserbų-kroatųKongo" +
+	" suahiliųsupaprastintoji kinųtradicinė kinų"
 
 var ltLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -21092,18 +21097,18 @@ var ltLangIdx = []uint16{ // 613 elements
 	0x1367, 0x1373, 0x1378, 0x137d, 0x1381, 0x1387, 0x138c, 0x1391,
 	0x1394, 0x139b, 0x13a3, 0x13ac, 0x13b5, 0x13bd, 0x13c5, 0x13d1,
 	0x13e0, 0x13e6, 0x13ec, 0x13f4, 0x13fd, 0x140d, 0x1415, 0x141b,
-	0x1424, 0x142a, 0x1444, 0x144c, 0x1454, 0x145b, 0x145f, 0x1462,
-	0x1469, 0x146f, 0x1480, 0x1495, 0x149a, 0x149e, 0x14a3, 0x14ab,
-	0x14b1, 0x14b6, 0x14bb, 0x14c3, 0x14d9, 0x14e1, 0x14e9, 0x14ee,
+	0x1424, 0x142a, 0x1444, 0x144c, 0x1454, 0x145b, 0x146a, 0x146d,
+	0x1474, 0x147a, 0x148b, 0x14a0, 0x14a5, 0x14a9, 0x14ae, 0x14b6,
+	0x14bc, 0x14c1, 0x14c6, 0x14ce, 0x14e4, 0x14ec, 0x14f4, 0x14f9,
 	// Entry 240 - 27F
-	0x14f1, 0x14f8, 0x1501, 0x1507, 0x150f, 0x152a, 0x1533, 0x1542,
-	0x154a, 0x1550, 0x156e, 0x1572, 0x1588, 0x158c, 0x15ad, 0x15ad,
-	0x15c1, 0x15e5, 0x15f7, 0x1605, 0x1622, 0x163d, 0x1655, 0x1664,
-	0x1674, 0x1674, 0x1686, 0x169d, 0x16c1, 0x16ca, 0x16df, 0x16f1,
-	0x16f9, 0x1707, 0x1716, 0x172b, 0x173b,
+	0x14fc, 0x1503, 0x150c, 0x1512, 0x151a, 0x1535, 0x153e, 0x154d,
+	0x1555, 0x155b, 0x1579, 0x157d, 0x1593, 0x1597, 0x15b8, 0x15b8,
+	0x15cc, 0x15f0, 0x1602, 0x1610, 0x162d, 0x1648, 0x1660, 0x166f,
+	0x167f, 0x167f, 0x1691, 0x16a8, 0x16cc, 0x16d5, 0x16ea, 0x16fc,
+	0x1704, 0x1712, 0x1721, 0x1736, 0x1746,
 } // Size: 1250 bytes
 
-const lvLangStr string = "" + // Size: 4355 bytes
+const lvLangStr string = "" + // Size: 4366 bytes
 	"afāruabhāzuavestaafrikanduakanuamharuaragoniešuarābuasamiešuavāruaimarua" +
 	"zerbaidžāņubaškīrubaltkrievubulgārubišlamābambarubengāļutibetiešubretoņu" +
 	"bosniešukatalāņučečenučamorrukorsikāņukrīčehubaznīcslāvučuvašuvelsiešudā" +
@@ -21152,14 +21157,14 @@ const lvLangStr string = "" + // Size: 4355 bytes
 	"mususušumerukomoruklasiskā sīriešusīriešutemnutesoterenotetumutigrutivut" +
 	"okelaviešuklingoņutlinkitutuareguNjasas tongutokpisinstarokocimšiāņutumb" +
 	"ukutuvaliešutasavakutuviešuCentrālmarokas tamazītsudmurtuugaritiešuumbun" +
-	"dusaknevajuvotuvundžoVallisas vācuvalamuvarajuvašovarlpirīkalmikusogujao" +
-	"japiešujanbaņujembukantoniešusapotekublissimbolikazenagustandarta marokā" +
-	"ņu berberuzunjubez lingvistiska saturazazakimūsdienu standarta arābudie" +
-	"nvidazerbaidžāņuAustrijas vācuŠveices augšvācuAustrālijas angļuKanādas a" +
-	"ngļuLielbritānijas angļuASV angļuLatīņamerikas spāņuEiropas spāņuMeksika" +
-	"s spāņuKanādas frančuŠveices frančulejassakšuflāmuBrazīlijas portugāļuEi" +
-	"ropas portugāļumoldāvuserbu–horvātuKongo svahiliķīniešu vienkāršotāķīnie" +
-	"šu tradicionālā"
+	"dunezināma valodavajuvotuvundžoVallisas vācuvalamuvarajuvašovarlpirīkalm" +
+	"ikusogujaojapiešujanbaņujembukantoniešusapotekublissimbolikazenagustanda" +
+	"rta marokāņu berberuzunjubez lingvistiska saturazazakimūsdienu standarta" +
+	" arābudienvidazerbaidžāņuAustrijas vācuŠveices augšvācuAustrālijas angļu" +
+	"Kanādas angļuLielbritānijas angļuASV angļuLatīņamerikas spāņuEiropas spā" +
+	"ņuMeksikas spāņuKanādas frančuŠveices frančulejassakšuflāmuBrazīlijas p" +
+	"ortugāļuEiropas portugāļumoldāvuserbu–horvātuKongo svahiliķīniešu vienkā" +
+	"ršotāķīniešu tradicionālā"
 
 var lvLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -21240,18 +21245,18 @@ var lvLangIdx = []uint16{ // 613 elements
 	0x0e09, 0x0e09, 0x0e09, 0x0e0e, 0x0e12, 0x0e18, 0x0e1e, 0x0e23,
 	0x0e27, 0x0e33, 0x0e33, 0x0e3c, 0x0e44, 0x0e44, 0x0e4b, 0x0e57,
 	0x0e60, 0x0e60, 0x0e66, 0x0e66, 0x0e71, 0x0e71, 0x0e78, 0x0e82,
-	0x0e8a, 0x0e92, 0x0eab, 0x0eb2, 0x0ebd, 0x0ec4, 0x0ec9, 0x0ecd,
-	0x0ecd, 0x0ecd, 0x0ecd, 0x0ecd, 0x0ed1, 0x0ed1, 0x0ed8, 0x0ee6,
-	0x0eec, 0x0ef2, 0x0ef7, 0x0f00, 0x0f00, 0x0f07, 0x0f07, 0x0f0b,
+	0x0e8a, 0x0e92, 0x0eab, 0x0eb2, 0x0ebd, 0x0ec4, 0x0ed4, 0x0ed8,
+	0x0ed8, 0x0ed8, 0x0ed8, 0x0ed8, 0x0edc, 0x0edc, 0x0ee3, 0x0ef1,
+	0x0ef7, 0x0efd, 0x0f02, 0x0f0b, 0x0f0b, 0x0f12, 0x0f12, 0x0f16,
 	// Entry 240 - 27F
-	0x0f0e, 0x0f16, 0x0f1e, 0x0f23, 0x0f23, 0x0f2e, 0x0f36, 0x0f43,
-	0x0f43, 0x0f49, 0x0f65, 0x0f6a, 0x0f81, 0x0f87, 0x0fa1, 0x0fb7,
-	0x0fc6, 0x0fd9, 0x0fec, 0x0ffb, 0x1011, 0x101b, 0x1032, 0x1041,
-	0x1051, 0x1051, 0x1061, 0x1071, 0x107c, 0x1082, 0x1099, 0x10ac,
-	0x10b4, 0x10c4, 0x10d1, 0x10ea, 0x1103,
+	0x0f19, 0x0f21, 0x0f29, 0x0f2e, 0x0f2e, 0x0f39, 0x0f41, 0x0f4e,
+	0x0f4e, 0x0f54, 0x0f70, 0x0f75, 0x0f8c, 0x0f92, 0x0fac, 0x0fc2,
+	0x0fd1, 0x0fe4, 0x0ff7, 0x1006, 0x101c, 0x1026, 0x103d, 0x104c,
+	0x105c, 0x105c, 0x106c, 0x107c, 0x1087, 0x108d, 0x10a4, 0x10b7,
+	0x10bf, 0x10cf, 0x10dc, 0x10f5, 0x110e,
 } // Size: 1250 bytes
 
-const mkLangStr string = "" + // Size: 10280 bytes
+const mkLangStr string = "" + // Size: 10297 bytes
 	"афарскиапхаскиавестанскиафрикансаканскиамхарскиарагонскиарапскиасамскиав" +
 	"арскиајмарскиазербејџанскибашкирскибелорускибугарскибисламабамбарабенга" +
 	"лскитибетскибретонскибосанскикаталонскичеченскичаморскикорзиканскикриче" +
@@ -21317,14 +21322,15 @@ const mkLangStr string = "" + // Size: 10280 bytes
 	"ен сирискисирискишлезискитулутимнетесотеренотетумтигретивтокелауанскица" +
 	"хурскиклингонскитлингитталишкитамашекњаса тонгаток писинтуројотарокоцак" +
 	"онскицимшијанскитатскитумбукатувалуанскитазавактуванскицентралноатланск" +
-	"и тамазитскиудмуртскиугаритскиумбундукоренвајвенетскивепшкизападнофлама" +
-	"нскимајнскофранконскивотскивирувунџовалсерволамоварајскивашоварлпиривук" +
-	"алмичкимегрелскисогајаојапскијенгбенјембањенгатукантонскизапотечкиблисс" +
-	"имболизеландскизенагастандарден марокански тамазитскизунибез лингвистич" +
-	"ка содржиназазалитературен арапскиавстралиски англискиканадски англиски" +
-	"британски англискиамерикански англискишпански (во Европа)канадски франц" +
-	"ускишвајцарски францускифламанскипортугалски (во Европа)молдавскисрпско" +
-	"хрватскиконгоански свахилипоедноставен кинескитрадиционален кинески"
+	"и тамазитскиудмуртскиугаритскиумбундунепознат јазиквајвенетскивепшкизап" +
+	"аднофламанскимајнскофранконскивотскивирувунџовалсерволамоварајскивашова" +
+	"рлпиривукалмичкимегрелскисогајаојапскијенгбенјембањенгатукантонскизапот" +
+	"ечкиблиссимболизеландскизенагастандарден марокански тамазитскизунибез л" +
+	"ингвистичка содржиназазалитературен арапскиавстралиски англискиканадски" +
+	" англискибритански англискиамерикански англискишпански (во Европа)канадс" +
+	"ки францускишвајцарски францускифламанскипортугалски (во Европа)молдавс" +
+	"кисрпскохрватскиконгоански свахилипоедноставен кинескитрадиционален кин" +
+	"ески"
 
 var mkLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -21405,18 +21411,18 @@ var mkLangIdx = []uint16{ // 613 elements
 	0x2251, 0x2261, 0x2269, 0x2273, 0x227b, 0x2287, 0x2291, 0x229b,
 	0x22a1, 0x22b9, 0x22c9, 0x22dd, 0x22eb, 0x22f9, 0x2307, 0x231a,
 	0x232b, 0x2337, 0x2343, 0x2353, 0x2369, 0x2375, 0x2383, 0x2399,
-	0x23a7, 0x23b7, 0x23ee, 0x2400, 0x2412, 0x2420, 0x242a, 0x2430,
-	0x2440, 0x244c, 0x246c, 0x248e, 0x249a, 0x24a2, 0x24ac, 0x24b8,
-	0x24c4, 0x24d4, 0x24dc, 0x24ec, 0x24f0, 0x2500, 0x2512, 0x251a,
+	0x23a7, 0x23b7, 0x23ee, 0x2400, 0x2412, 0x2420, 0x243b, 0x2441,
+	0x2451, 0x245d, 0x247d, 0x249f, 0x24ab, 0x24b3, 0x24bd, 0x24c9,
+	0x24d5, 0x24e5, 0x24ed, 0x24fd, 0x2501, 0x2511, 0x2523, 0x252b,
 	// Entry 240 - 27F
-	0x2520, 0x252c, 0x253a, 0x2544, 0x2552, 0x2564, 0x2576, 0x258c,
-	0x259e, 0x25aa, 0x25e8, 0x25f0, 0x2620, 0x2628, 0x264d, 0x264d,
-	0x264d, 0x264d, 0x2674, 0x2695, 0x26b8, 0x26df, 0x26df, 0x2701,
-	0x2701, 0x2701, 0x2724, 0x274b, 0x274b, 0x275d, 0x275d, 0x2787,
-	0x2799, 0x27b5, 0x27d8, 0x27ff, 0x2828,
+	0x2531, 0x253d, 0x254b, 0x2555, 0x2563, 0x2575, 0x2587, 0x259d,
+	0x25af, 0x25bb, 0x25f9, 0x2601, 0x2631, 0x2639, 0x265e, 0x265e,
+	0x265e, 0x265e, 0x2685, 0x26a6, 0x26c9, 0x26f0, 0x26f0, 0x2712,
+	0x2712, 0x2712, 0x2735, 0x275c, 0x275c, 0x276e, 0x276e, 0x2798,
+	0x27aa, 0x27c6, 0x27e9, 0x2810, 0x2839,
 } // Size: 1250 bytes
 
-const mlLangStr string = "" + // Size: 12319 bytes
+const mlLangStr string = "" + // Size: 12329 bytes
 	"അഫാർഅബ്\u200cഖാസിയൻഅവസ്റ്റാൻആഫ്രിക്കാൻസ്അകാൻ\u200cഅംഹാരിക്അരഗോണീസ്അറബിക്" +
 	"ആസ്സാമീസ്അവാരിക്അയ്മാറഅസർബൈജാനിബഷ്ഖിർബെലാറുഷ്യൻബൾഗേറിയൻബിസ്\u200cലാമബം" +
 	"ബാറബംഗാളിടിബറ്റൻബ്രെട്ടൺബോസ്നിയൻകറ്റാലാൻചെചൻചമോറോകോർസിക്കൻക്രീചെക്ക്ചർ" +
@@ -21470,12 +21476,12 @@ const mlLangStr string = "" + // Size: 12319 bytes
 	"െറർസാഹോസുകുമസുസുസുമേരിയൻകൊമോറിയൻപുരാതന സുറിയാനിഭാഷസുറിയാനിടിംനേടെസോടെറ" +
 	"േനോടെറ്റുംടൈഗ്രിടിവ്ടൊക്കേലൗക്ലിംഗോൺലിംഗ്വിറ്റ്ടമഷേക്ന്യാസാ ഡോങ്കടോക് " +
 	"പിസിൻതരോക്കോസിംഷ്യൻടുംബുകടുവാലുടസവാക്ക്തുവിനിയൻമധ്യ അറ്റ്\u200cലസ് ടമാ" +
-	"സൈറ്റ്ഉഡ്മുർട്ട്ഉഗറിട്ടിക്ഉംബുന്ദുമൂലഭാഷവൈവോട്ടിക്വുൻജോവാൾസർവൊലൈറ്റവാര" +
-	"േയ്വാഷൊവൂൾപിരിവു ചൈനീസ്കൽമൈക്സോഗോയാവോയെപ്പീസ്യാംഗ്ബെൻയംബകാന്റണീസ്സാപ്പ" +
-	"ോടെക്ബ്ലിസ്സിംബൽസ്സെനഗസ്റ്റാൻഡേർഡ് മൊറോക്കൻ റ്റാമസിയറ്റ്സുനിഭാഷാപരമായ " +
-	"ഉള്ളടക്കമൊന്നുമില്ലസാസാആധുനിക സ്റ്റാൻഡേർഡ് അറബിക്ഓസ്\u200cട്രിയൻ ജർമൻസ" +
-	"്വിസ് ഹൈ ജർമൻഓസ്\u200cട്രേലിയൻ ഇംഗ്ലീഷ്കനേഡിയൻ ഇംഗ്ലീഷ്ബ്രിട്ടീഷ് ഇംഗ്" +
-	"ലീഷ്അമേരിക്കൻ ഇംഗ്ലീഷ്ലാറ്റിൻ അമേരിക്കൻ സ്\u200cപാനിഷ്യൂറോപ്യൻ സ്" +
+	"സൈറ്റ്ഉഡ്മുർട്ട്ഉഗറിട്ടിക്ഉംബുന്ദുഅജ്ഞാത ഭാഷവൈവോട്ടിക്വുൻജോവാൾസർവൊലൈറ്" +
+	"റവാരേയ്വാഷൊവൂൾപിരിവു ചൈനീസ്കൽമൈക്സോഗോയാവോയെപ്പീസ്യാംഗ്ബെൻയംബകാന്റണീസ്സ" +
+	"ാപ്പോടെക്ബ്ലിസ്സിംബൽസ്സെനഗസ്റ്റാൻഡേർഡ് മൊറോക്കൻ റ്റാമസിയറ്റ്സുനിഭാഷാപര" +
+	"മായ ഉള്ളടക്കമൊന്നുമില്ലസാസാആധുനിക സ്റ്റാൻഡേർഡ് അറബിക്ഓസ്\u200cട്രിയൻ ജ" +
+	"ർമൻസ്വിസ് ഹൈ ജർമൻഓസ്\u200cട്രേലിയൻ ഇംഗ്ലീഷ്കനേഡിയൻ ഇംഗ്ലീഷ്ബ്രിട്ടീഷ് " +
+	"ഇംഗ്ലീഷ്അമേരിക്കൻ ഇംഗ്ലീഷ്ലാറ്റിൻ അമേരിക്കൻ സ്\u200cപാനിഷ്യൂറോപ്യൻ സ്" +
 	"\u200cപാനിഷ്മെക്സിക്കൻ സ്പാനിഷ്കനേഡിയൻ ഫ്രഞ്ച്സ്വിസ് ഫ്രഞ്ച്ലോ സാക്സൺഫ്ല" +
 	"മിഷ്ബ്രസീലിയൻ പോർച്ചുഗീസ്യൂറോപ്യൻ പോർച്ചുഗീസ്മോൾഡാവിയൻസെർബോ-ക്രൊയേഷ്യൻ" +
 	"കോംഗോ സ്വാഹിലിലളിതമാക്കിയ ചൈനീസ്പരമ്പരാഗത ചൈനീസ്"
@@ -21559,18 +21565,18 @@ var mlLangIdx = []uint16{ // 613 elements
 	0x27c7, 0x27c7, 0x27c7, 0x27d6, 0x27e2, 0x27f4, 0x2809, 0x281b,
 	0x2827, 0x283f, 0x283f, 0x2857, 0x2878, 0x2878, 0x288a, 0x28ac,
 	0x28c8, 0x28c8, 0x28dd, 0x28dd, 0x28f2, 0x28f2, 0x2904, 0x2916,
-	0x292e, 0x2946, 0x298a, 0x29a8, 0x29c6, 0x29de, 0x29f0, 0x29f6,
-	0x29f6, 0x29f6, 0x29f6, 0x29f6, 0x2a0e, 0x2a0e, 0x2a1d, 0x2a2c,
-	0x2a41, 0x2a53, 0x2a5f, 0x2a74, 0x2a8d, 0x2a9f, 0x2a9f, 0x2aab,
+	0x292e, 0x2946, 0x298a, 0x29a8, 0x29c6, 0x29de, 0x29fa, 0x2a00,
+	0x2a00, 0x2a00, 0x2a00, 0x2a00, 0x2a18, 0x2a18, 0x2a27, 0x2a36,
+	0x2a4b, 0x2a5d, 0x2a69, 0x2a7e, 0x2a97, 0x2aa9, 0x2aa9, 0x2ab5,
 	// Entry 240 - 27F
-	0x2ab7, 0x2acf, 0x2ae7, 0x2af0, 0x2af0, 0x2b0b, 0x2b29, 0x2b50,
-	0x2b50, 0x2b5c, 0x2bbe, 0x2bca, 0x2c1f, 0x2c2b, 0x2c75, 0x2c75,
-	0x2ca0, 0x2cc6, 0x2d03, 0x2d31, 0x2d68, 0x2d9c, 0x2de9, 0x2e1d,
-	0x2e54, 0x2e54, 0x2e7f, 0x2ea7, 0x2ec0, 0x2ed5, 0x2f12, 0x2f4c,
-	0x2f67, 0x2f95, 0x2fbd, 0x2ff1, 0x301f,
+	0x2ac1, 0x2ad9, 0x2af1, 0x2afa, 0x2afa, 0x2b15, 0x2b33, 0x2b5a,
+	0x2b5a, 0x2b66, 0x2bc8, 0x2bd4, 0x2c29, 0x2c35, 0x2c7f, 0x2c7f,
+	0x2caa, 0x2cd0, 0x2d0d, 0x2d3b, 0x2d72, 0x2da6, 0x2df3, 0x2e27,
+	0x2e5e, 0x2e5e, 0x2e89, 0x2eb1, 0x2eca, 0x2edf, 0x2f1c, 0x2f56,
+	0x2f71, 0x2f9f, 0x2fc7, 0x2ffb, 0x3029,
 } // Size: 1250 bytes
 
-const mnLangStr string = "" + // Size: 5582 bytes
+const mnLangStr string = "" + // Size: 5605 bytes
 	"афарабхазафрикаканамхарарагонарабассамавар хэлаймараазербайжанбашкирбела" +
 	"русьболгарбисламбамбарабенгалтөвдбретонбосникаталанчеченьчаморро хэлкор" +
 	"сикчехсүмийн славян хэлчувашуэльсданигермандивехи хэлжонхаэвэгреканглиэ" +
@@ -21605,13 +21611,13 @@ const mnLangStr string = "" + // Size: 5582 bytes
 	"нталингамбайсангүсицилийншотландуудсенакёраборо сенитачелхитшаньөмнөд с" +
 	"амилюле самиинари самисколт самисонинкесранан тонгосахосукумакомори хэл" +
 	"сирийнтимнтэсотетумтигрклингон хэлток писинтарокотумбулатувалутасавакту" +
-	"ватөв атласын тамазайтудмуртумбундурутвайвунжоуолсэруоллайттаварайхалим" +
-	"аг хэлсогаянгбенембакантон хэлтамазитзунихэл зүйн агуулгагүйзазастандар" +
-	"т арабавстри германшвейцари дээр германавстрали англиканад англибритани" +
-	"йн англиамерикийн англилатин америкийн испаниевропын испанимексикийн ис" +
-	"паниканад францшвейцари францбага саксонфламандпортугаль (бразил)европы" +
-	"н португальмолдавхорватын сербконго свахилихялбаршуулсан хятадуламжлалт" +
-	" хятад"
+	"ватөв атласын тамазайтудмуртумбундутодорхойгүй хэлвайвунжоуолсэруоллайт" +
+	"таварайхалимаг хэлсогаянгбенембакантон хэлтамазитзунихэл зүйн агуулгагү" +
+	"йзазастандарт арабавстри германшвейцари дээр германавстрали англиканад " +
+	"англибританийн англиамерикийн англилатин америкийн испаниевропын испани" +
+	"мексикийн испаниканад францшвейцари францбага саксонфламандпортугаль (б" +
+	"разил)европын португальмолдавхорватын сербконго свахилихялбаршуулсан хя" +
+	"тадуламжлалт хятад"
 
 var mnLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -21692,18 +21698,18 @@ var mnLangIdx = []uint16{ // 613 elements
 	0x120b, 0x120b, 0x120b, 0x1213, 0x121b, 0x121b, 0x1225, 0x122d,
 	0x122d, 0x122d, 0x122d, 0x1242, 0x1242, 0x1242, 0x1242, 0x1242,
 	0x1253, 0x1253, 0x125f, 0x125f, 0x125f, 0x125f, 0x126d, 0x1279,
-	0x1287, 0x128f, 0x12b5, 0x12c1, 0x12c1, 0x12cf, 0x12d5, 0x12db,
-	0x12db, 0x12db, 0x12db, 0x12db, 0x12db, 0x12db, 0x12e5, 0x12f1,
-	0x1303, 0x130d, 0x130d, 0x130d, 0x130d, 0x1322, 0x1322, 0x132a,
+	0x1287, 0x128f, 0x12b5, 0x12c1, 0x12c1, 0x12cf, 0x12ec, 0x12f2,
+	0x12f2, 0x12f2, 0x12f2, 0x12f2, 0x12f2, 0x12f2, 0x12fc, 0x1308,
+	0x131a, 0x1324, 0x1324, 0x1324, 0x1324, 0x1339, 0x1339, 0x1341,
 	// Entry 240 - 27F
-	0x132a, 0x132a, 0x1336, 0x133e, 0x133e, 0x1351, 0x1351, 0x1351,
-	0x1351, 0x1351, 0x135f, 0x1367, 0x138b, 0x1393, 0x13ac, 0x13ac,
-	0x13c5, 0x13eb, 0x1406, 0x141b, 0x1438, 0x1455, 0x147f, 0x149a,
-	0x14b9, 0x14b9, 0x14ce, 0x14e9, 0x14fe, 0x150c, 0x152d, 0x154e,
-	0x155a, 0x1573, 0x158c, 0x15b1, 0x15ce,
+	0x1341, 0x1341, 0x134d, 0x1355, 0x1355, 0x1368, 0x1368, 0x1368,
+	0x1368, 0x1368, 0x1376, 0x137e, 0x13a2, 0x13aa, 0x13c3, 0x13c3,
+	0x13dc, 0x1402, 0x141d, 0x1432, 0x144f, 0x146c, 0x1496, 0x14b1,
+	0x14d0, 0x14d0, 0x14e5, 0x1500, 0x1515, 0x1523, 0x1544, 0x1565,
+	0x1571, 0x158a, 0x15a3, 0x15c8, 0x15e5,
 } // Size: 1250 bytes
 
-const mrLangStr string = "" + // Size: 11500 bytes
+const mrLangStr string = "" + // Size: 11522 bytes
 	"अफारअबखेजियनअवेस्तनअफ्रिकान्सअकानअम्हारिकअर्गोनीजअरबीआसामीअ\u200dॅव्हेरि" +
 	"कऐमराअझरबैजानीबष्किरबेलारुशियनबल्गेरियनबिस्लामाबाम्बाराबंगालीतिबेटीब्र" +
 	"ेतॉनबोस्नियनकातालानचेचेनकॅमोरोकॉर्सिकनक्रीझेकचर्च स्लाव्हिकचूवाशवेल्शड" +
@@ -21752,14 +21758,14 @@ const mrLangStr string = "" + // Size: 11500 bytes
 	"ोल्ट सामीसोनिन्केसोग्डिएनस्रानान टॉन्गोसेरेरसाहोसुकुमासुसुसुमेरियनकोमो" +
 	"रियनअभिजात सिरियाकसिरियाकटिम्नेतेसोतेरेनोतेतुमटाइग्रेतिवटोकेलाऊक्लिंगो" +
 	"नलिंगिततामाशेकन्यासा टोन्गाटोक पिसिनतारोकोसिम्शियनतुम्बुकाटुवालुतासाव्" +
-	"हाकटुवीनियनमध्य ऍटलास तॅमॅझायटउदमुर्तयुगॅरिटिकउम्बुन्डुरूटवाईवॉटिकवुंज" +
-	"ोवालसेरवोलायतावारेवाशोवार्लपिरीव्हू चिनीकाल्मिकसोगायाओयापीसयानगबेनयेमब" +
-	"ाकँटोनीजझेपोटेकब्लिसिम्बॉल्सझेनान्गाप्रमाण मोरोक्कन तॅमॅझायटझुनीभाषावै" +
-	"ज्ञानिक सामग्री नाहीझाझाआधुनिक प्रमाणित अरबीऑस्ट्रियन जर्मनस्विस हाय ज" +
-	"र्मनऑस्ट्रेलियन इंग्रजीकॅनडियन इंग्रजीब्रिटिश इंग्रजीअमेरिकन इंग्रजीलॅ" +
-	"टिन अमेरिकन स्पॅनिशयुरोपियन स्पॅनिशमेक्सिकन स्पॅनिशकॅनडियन फ्रेंचस्विस" +
-	" फ्रेंचलो सॅक्सनफ्लेमिशब्राझिलियन पोर्तुगीजयुरोपियन पोर्तुगीजमोल्डाव्हिय" +
-	"नसर्बो-क्रोएशियनकाँगो स्वाहिलीसरलीकृत चीनीपारंपारिक चीनी"
+	"हाकटुवीनियनमध्य ऍटलास तॅमॅझायटउदमुर्तयुगॅरिटिकउम्बुन्डुअज्ञात भाषावाईव" +
+	"ॉटिकवुंजोवालसेरवोलायतावारेवाशोवार्लपिरीव्हू चिनीकाल्मिकसोगायाओयापीसयान" +
+	"गबेनयेमबाकँटोनीजझेपोटेकब्लिसिम्बॉल्सझेनान्गाप्रमाण मोरोक्कन तॅमॅझायटझु" +
+	"नीभाषावैज्ञानिक सामग्री नाहीझाझाआधुनिक प्रमाणित अरबीऑस्ट्रियन जर्मनस्व" +
+	"िस हाय जर्मनऑस्ट्रेलियन इंग्रजीकॅनडियन इंग्रजीब्रिटिश इंग्रजीअमेरिकन इ" +
+	"ंग्रजीलॅटिन अमेरिकन स्पॅनिशयुरोपियन स्पॅनिशमेक्सिकन स्पॅनिशकॅनडियन फ्र" +
+	"ेंचस्विस फ्रेंचलो सॅक्सनफ्लेमिशब्राझिलियन पोर्तुगीजयुरोपियन पोर्तुगीजम" +
+	"ोल्डाव्हियनसर्बो-क्रोएशियनकाँगो स्वाहिलीसरलीकृत चीनीपारंपारिक चीनी"
 
 var mrLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -21840,18 +21846,18 @@ var mrLangIdx = []uint16{ // 613 elements
 	0x2565, 0x2565, 0x2565, 0x2577, 0x2583, 0x2595, 0x25a4, 0x25b9,
 	0x25c2, 0x25d7, 0x25d7, 0x25ef, 0x2601, 0x2601, 0x2616, 0x263b,
 	0x2654, 0x2654, 0x2666, 0x2666, 0x267e, 0x267e, 0x2696, 0x26a8,
-	0x26c3, 0x26db, 0x2710, 0x2725, 0x2740, 0x275b, 0x2764, 0x276d,
-	0x276d, 0x276d, 0x276d, 0x276d, 0x277c, 0x277c, 0x278b, 0x279d,
-	0x27b2, 0x27be, 0x27ca, 0x27e5, 0x27fe, 0x2813, 0x2813, 0x281f,
+	0x26c3, 0x26db, 0x2710, 0x2725, 0x2740, 0x275b, 0x277a, 0x2783,
+	0x2783, 0x2783, 0x2783, 0x2783, 0x2792, 0x2792, 0x27a1, 0x27b3,
+	0x27c8, 0x27d4, 0x27e0, 0x27fb, 0x2814, 0x2829, 0x2829, 0x2835,
 	// Entry 240 - 27F
-	0x2828, 0x2837, 0x284c, 0x285b, 0x285b, 0x2870, 0x2885, 0x28ac,
-	0x28ac, 0x28c4, 0x2908, 0x2914, 0x295e, 0x296a, 0x29a2, 0x29a2,
-	0x29cd, 0x29f6, 0x2a2d, 0x2a58, 0x2a83, 0x2aae, 0x2ae9, 0x2b17,
-	0x2b45, 0x2b45, 0x2b6d, 0x2b8f, 0x2ba8, 0x2bbd, 0x2bf7, 0x2c2b,
-	0x2c4f, 0x2c7a, 0x2ca2, 0x2cc4, 0x2cec,
+	0x283e, 0x284d, 0x2862, 0x2871, 0x2871, 0x2886, 0x289b, 0x28c2,
+	0x28c2, 0x28da, 0x291e, 0x292a, 0x2974, 0x2980, 0x29b8, 0x29b8,
+	0x29e3, 0x2a0c, 0x2a43, 0x2a6e, 0x2a99, 0x2ac4, 0x2aff, 0x2b2d,
+	0x2b5b, 0x2b5b, 0x2b83, 0x2ba5, 0x2bbe, 0x2bd3, 0x2c0d, 0x2c41,
+	0x2c65, 0x2c90, 0x2cb8, 0x2cda, 0x2d02,
 } // Size: 1250 bytes
 
-const msLangStr string = "" + // Size: 3266 bytes
+const msLangStr string = "" + // Size: 3284 bytes
 	"aaAbkhaziaAvestanAfrikaansAkanAmharicAragonArabAssamAvaricAymaraAzerbaij" +
 	"anBashkirBelarusBulgariaBislamaBambaraBenggalaTibetBretonBosniaCatalonia" +
 	"ChechenChamorroCorsicaCzechSlavik GerejaChuvashWalesDenmarkJermanDivehiD" +
@@ -21891,13 +21897,13 @@ const msLangStr string = "" + // Size: 3266 bytes
 	"achelhitShanArab ChadianSami SelatanLule SamiInari SamiSkolt SamiSoninke" +
 	"Sranan TongoSahoSukumaComoriaSyriacTimneTesoTetumTigreKlingonTalyshTok P" +
 	"isinTarokoTumbukaTuvaluTasawaqTuvinianTamazight Atlas TengahUdmurtUmbund" +
-	"uRootVaiVunjoWalserWolayttaWarayWarlpiriCina WuKalmykSogaYangbenYembaKan" +
-	"tonisTamazight Maghribi StandardZuniTiada kandungan linguistikZazaArab S" +
-	"tandard ModenJerman AustriaJerman Halus SwitzerlandInggeris AustraliaIng" +
-	"geris KanadaInggeris BritishInggeris ASSepanyol Amerika LatinSepanyol Er" +
-	"opahSepanyol MexicoPerancis KanadaPerancis SwitzerlandSaxon RendahFlemis" +
-	"hPortugis BrazilPortugis EropahMoldaviaSerboCroatiaCongo SwahiliCina Rin" +
-	"gkasCina Tradisional"
+	"uBahasa Tidak DiketahuiVaiVunjoWalserWolayttaWarayWarlpiriCina WuKalmykS" +
+	"ogaYangbenYembaKantonisTamazight Maghribi StandardZuniTiada kandungan li" +
+	"nguistikZazaArab Standard ModenJerman AustriaJerman Halus SwitzerlandIng" +
+	"geris AustraliaInggeris KanadaInggeris BritishInggeris ASSepanyol Amerik" +
+	"a LatinSepanyol EropahSepanyol MexicoPerancis KanadaPerancis Switzerland" +
+	"Saxon RendahFlemishPortugis BrazilPortugis EropahMoldaviaSerboCroatiaCon" +
+	"go SwahiliCina RingkasCina Tradisional"
 
 var msLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -21978,18 +21984,18 @@ var msLangIdx = []uint16{ // 613 elements
 	0x0a91, 0x0a91, 0x0a91, 0x0a96, 0x0a9a, 0x0a9a, 0x0a9f, 0x0aa4,
 	0x0aa4, 0x0aa4, 0x0aa4, 0x0aab, 0x0aab, 0x0ab1, 0x0ab1, 0x0ab1,
 	0x0aba, 0x0aba, 0x0ac0, 0x0ac0, 0x0ac0, 0x0ac0, 0x0ac7, 0x0acd,
-	0x0ad4, 0x0adc, 0x0af2, 0x0af8, 0x0af8, 0x0aff, 0x0b03, 0x0b06,
-	0x0b06, 0x0b06, 0x0b06, 0x0b06, 0x0b06, 0x0b06, 0x0b0b, 0x0b11,
-	0x0b19, 0x0b1e, 0x0b1e, 0x0b26, 0x0b2d, 0x0b33, 0x0b33, 0x0b37,
+	0x0ad4, 0x0adc, 0x0af2, 0x0af8, 0x0af8, 0x0aff, 0x0b15, 0x0b18,
+	0x0b18, 0x0b18, 0x0b18, 0x0b18, 0x0b18, 0x0b18, 0x0b1d, 0x0b23,
+	0x0b2b, 0x0b30, 0x0b30, 0x0b38, 0x0b3f, 0x0b45, 0x0b45, 0x0b49,
 	// Entry 240 - 27F
-	0x0b37, 0x0b37, 0x0b3e, 0x0b43, 0x0b43, 0x0b4b, 0x0b4b, 0x0b4b,
-	0x0b4b, 0x0b4b, 0x0b66, 0x0b6a, 0x0b84, 0x0b88, 0x0b9b, 0x0b9b,
-	0x0ba9, 0x0bc1, 0x0bd3, 0x0be2, 0x0bf2, 0x0bfd, 0x0c13, 0x0c22,
-	0x0c31, 0x0c31, 0x0c40, 0x0c54, 0x0c60, 0x0c67, 0x0c76, 0x0c85,
-	0x0c8d, 0x0c99, 0x0ca6, 0x0cb2, 0x0cc2,
+	0x0b49, 0x0b49, 0x0b50, 0x0b55, 0x0b55, 0x0b5d, 0x0b5d, 0x0b5d,
+	0x0b5d, 0x0b5d, 0x0b78, 0x0b7c, 0x0b96, 0x0b9a, 0x0bad, 0x0bad,
+	0x0bbb, 0x0bd3, 0x0be5, 0x0bf4, 0x0c04, 0x0c0f, 0x0c25, 0x0c34,
+	0x0c43, 0x0c43, 0x0c52, 0x0c66, 0x0c72, 0x0c79, 0x0c88, 0x0c97,
+	0x0c9f, 0x0cab, 0x0cb8, 0x0cc4, 0x0cd4,
 } // Size: 1250 bytes
 
-const myLangStr string = "" + // Size: 10322 bytes
+const myLangStr string = "" + // Size: 10320 bytes
 	"အာဖာအဘ်ခါဇီရာတောင်အာဖရိကအာကန်အမ်ဟာရစ်ခ်အာရာဂွန်အာရဗီအာသံအာဗာရစ်ခ်အိုင်မာ" +
 	"ရအဇာဘိုင်ဂျန်ဘက်ရှ်ကာဘီလာရုဇ်ဘူလ်ဂေးရီးယားဘစ်စ်လာမာဘန်ဘာရာဘင်္ဂါလီတိဘက" +
 	"်ဘရီတွန်ဘော့စ်နီးယားကတ်တလန်ချက်ချန်းချမိုရိုခိုစီကန်ခရီးချက်ချပ်ချ် စလ" +
@@ -22034,7 +22040,7 @@ const myLangStr string = "" + // Size: 10322 bytes
 	" ဆမ်နီအိုင်းရစ် ဟောင်းတာချယ်လ်ဟစ်ရှမ်းတောင် ဆာမိလူလီ ဆာမိအီနာရီ ဆာမိစခို" +
 	"းလ် ဆမ်မီဆိုနင်ကေးဆရာနန် တွန်ဂိုဆာဟိုဆူကူမာကိုမိုရီးယန်းဆီးရီးယားတင်မ်" +
 	"နဲတီဆိုတီတွမ်တီဂရီကလင်ဂွန်တော့ခ် ပိစင်တရိုကိုတမ်ဘူကာတူဗာလူတာဆာဝါခ်တူဗန" +
-	"်အလယ်အာ့တလာစ် တာမာဇိုက်အူမူရတ်အူဘန်ဒူမူလရင်းမြစ်ဗိုင်ဗွန်ဂျိုဝေါလ်ဆာဝိ" +
+	"်အလယ်အာ့တလာစ် တာမာဇိုက်အူမူရတ်အူဘန်ဒူမသိသော ဘာသာဗိုင်ဗွန်ဂျိုဝေါလ်ဆာဝိ" +
 	"ုလက်တာဝါရေးဝေါလ်ပီရီကာလ်မိုက်ဆိုဂါရန်ဘဲန်ရမ်ဘာကွမ်တုံမိုရိုကို တမဇိုက်" +
 	"ဇူနီဘာသာစကားနှင့် ပတ်သက်သောအရာ မရှိပါဇာဇာဩစတြီးယား ဂျာမန်အလီမဲန်နစ် ဂျ" +
 	"ာမန်ဩစတြေးလျှ အင်္ဂလိပ်ကနေဒါ အင်္ဂလိပ်ဗြိတိသျှ အင်္ဂလိပ်အမေရိကန် အင်္ဂ" +
@@ -22120,18 +22126,18 @@ var myLangIdx = []uint16{ // 611 elements
 	0x22e7, 0x22e7, 0x22e7, 0x22fc, 0x230b, 0x230b, 0x231d, 0x232c,
 	0x232c, 0x232c, 0x232c, 0x2344, 0x2344, 0x2344, 0x2344, 0x2344,
 	0x2366, 0x2366, 0x237b, 0x237b, 0x237b, 0x237b, 0x2390, 0x23a2,
-	0x23ba, 0x23c9, 0x2409, 0x241e, 0x241e, 0x2433, 0x2454, 0x2463,
-	0x2463, 0x2463, 0x2463, 0x2463, 0x2463, 0x2463, 0x247b, 0x2490,
-	0x24a8, 0x24b7, 0x24b7, 0x24d2, 0x24d2, 0x24ed, 0x24ed, 0x24fc,
+	0x23ba, 0x23c9, 0x2409, 0x241e, 0x241e, 0x2433, 0x2452, 0x2461,
+	0x2461, 0x2461, 0x2461, 0x2461, 0x2461, 0x2461, 0x2479, 0x248e,
+	0x24a6, 0x24b5, 0x24b5, 0x24d0, 0x24d0, 0x24eb, 0x24eb, 0x24fa,
 	// Entry 240 - 27F
-	0x24fc, 0x24fc, 0x2511, 0x2520, 0x2520, 0x2535, 0x2535, 0x2535,
-	0x2535, 0x2535, 0x2566, 0x2572, 0x25d1, 0x25dd, 0x25dd, 0x25dd,
-	0x260b, 0x263c, 0x2673, 0x269e, 0x26d2, 0x2706, 0x2706, 0x2727,
-	0x2727, 0x2727, 0x274c, 0x276e, 0x279b, 0x27b6, 0x27e1, 0x2809,
-	0x2827, 0x2827, 0x2852,
+	0x24fa, 0x24fa, 0x250f, 0x251e, 0x251e, 0x2533, 0x2533, 0x2533,
+	0x2533, 0x2533, 0x2564, 0x2570, 0x25cf, 0x25db, 0x25db, 0x25db,
+	0x2609, 0x263a, 0x2671, 0x269c, 0x26d0, 0x2704, 0x2704, 0x2725,
+	0x2725, 0x2725, 0x274a, 0x276c, 0x2799, 0x27b4, 0x27df, 0x2807,
+	0x2825, 0x2825, 0x2850,
 } // Size: 1246 bytes
 
-const neLangStr string = "" + // Size: 13512 bytes
+const neLangStr string = "" + // Size: 13539 bytes
 	"अफारअब्खाजियालीअवेस्तानअफ्रिकान्सआकानअम्हारिकअरागोनीअरबीआसामीअवारिकऐमारा" +
 	"अजरबैजानीबास्किरबेलारुसीबुल्गेरियालीबिस्लामबाम्बाराबंगालीतिब्बतीब्रेटन" +
 	"बोस्नियालीक्याटालनचेचेनचामोर्रोकोर्सिकनक्रीचेकचर्च स्लाभिकचुभासवेल्शडे" +
@@ -22190,14 +22196,14 @@ const neLangStr string = "" + // Size: 13512 bytes
 	"ीदक्षिणी सामीलुले सामीइनारी सामीस्कोइट सामीसोनिन्केस्रानान टोङ्गोसाहोस" +
 	"ुकुमासुसूसुमेरियालीकोमोरीपरम्परागत सिरियाकसिरियाकटिम्नेटेसोटेटुमटिग्रे" +
 	"क्लिङ्गनन्यास टोङ्गाटोक पिसिनटारोकोमुस्लिम टाटटुम्बुकाटुभालुतासावाकटुभ" +
-	"िनियालीकेन्द्रीय एट्लास टामाजिघटउड्मुर्टउम्बुन्डीrootभाइमुख्य-फ्राङ्को" +
-	"नियालीभुन्जोवाल्सरवोलेट्टावारेवार्ल्पिरीकाल्मिकमिनग्रेलियालीसोगायाङ्बे" +
-	"नयेम्बान्हिनगातुकान्टोनियालीब्लिससिम्बोल्समानक मोरोक्कोन तामाजिघटजुनीभ" +
-	"ाषिक सामग्री छैनजाजाआधुनिक मानक अरबीअस्ट्रियाली जर्मनस्वीस हाई जर्मनअस" +
-	"्ट्रेलियाली अङ्ग्रेजीक्यानाडेली अङ्ग्रेजीबेलायती अङ्ग्रेजीअमेरिकी अङ्ग" +
-	"्रेजील्याटिन अमेरिकी स्पेनीयुरोपेली स्पेनीमेक्सिकन स्पेनीक्यानेडाली फ्" +
-	"रान्सेलीतल्लो साक्सनफ्लेमिसब्राजिली पोर्तुगीयुरोपेली पोर्तुगीकङ्गो स्व" +
-	"ाहिलीसरलिकृत चिनियाँपरम्परागत चिनियाँ"
+	"िनियालीकेन्द्रीय एट्लास टामाजिघटउड्मुर्टउम्बुन्डीअज्ञात भाषाभाइमुख्य-फ" +
+	"्राङ्कोनियालीभुन्जोवाल्सरवोलेट्टावारेवार्ल्पिरीकाल्मिकमिनग्रेलियालीसोग" +
+	"ायाङ्बेनयेम्बान्हिनगातुकान्टोनियालीब्लिससिम्बोल्समानक मोरोक्कोन तामाजि" +
+	"घटजुनीभाषिक सामग्री छैनजाजाआधुनिक मानक अरबीअस्ट्रियाली जर्मनस्वीस हाई " +
+	"जर्मनअस्ट्रेलियाली अङ्ग्रेजीक्यानाडेली अङ्ग्रेजीबेलायती अङ्ग्रेजीअमेरि" +
+	"की अङ्ग्रेजील्याटिन अमेरिकी स्पेनीयुरोपेली स्पेनीमेक्सिकन स्पेनीक्याने" +
+	"डाली फ्रान्सेलीतल्लो साक्सनफ्लेमिसब्राजिली पोर्तुगीयुरोपेली पोर्तुगीकङ" +
+	"्गो स्वाहिलीसरलिकृत चिनियाँपरम्परागत चिनियाँ"
 
 var neLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -22278,18 +22284,18 @@ var neLangIdx = []uint16{ // 613 elements
 	0x2dce, 0x2dce, 0x2dce, 0x2de0, 0x2dec, 0x2dec, 0x2dfb, 0x2e0d,
 	0x2e0d, 0x2e0d, 0x2e0d, 0x2e25, 0x2e25, 0x2e25, 0x2e25, 0x2e47,
 	0x2e60, 0x2e60, 0x2e72, 0x2e72, 0x2e72, 0x2e91, 0x2ea9, 0x2ebb,
-	0x2ed0, 0x2eee, 0x2f35, 0x2f4d, 0x2f4d, 0x2f68, 0x2f6c, 0x2f75,
-	0x2f75, 0x2f75, 0x2f75, 0x2faf, 0x2faf, 0x2faf, 0x2fc1, 0x2fd3,
-	0x2feb, 0x2ff7, 0x2ff7, 0x3015, 0x3015, 0x302a, 0x3051, 0x305d,
+	0x2ed0, 0x2eee, 0x2f35, 0x2f4d, 0x2f4d, 0x2f68, 0x2f87, 0x2f90,
+	0x2f90, 0x2f90, 0x2f90, 0x2fca, 0x2fca, 0x2fca, 0x2fdc, 0x2fee,
+	0x3006, 0x3012, 0x3012, 0x3030, 0x3030, 0x3045, 0x306c, 0x3078,
 	// Entry 240 - 27F
-	0x305d, 0x305d, 0x3072, 0x3084, 0x309f, 0x30c3, 0x30c3, 0x30ed,
-	0x30ed, 0x30ed, 0x312e, 0x313a, 0x3169, 0x3175, 0x31a1, 0x31a1,
-	0x31d2, 0x31fb, 0x323e, 0x3278, 0x32a9, 0x32da, 0x3318, 0x3343,
-	0x336e, 0x336e, 0x33ab, 0x33ab, 0x33cd, 0x33e2, 0x3413, 0x3444,
-	0x3444, 0x3444, 0x346c, 0x3497, 0x34c8,
+	0x3078, 0x3078, 0x308d, 0x309f, 0x30ba, 0x30de, 0x30de, 0x3108,
+	0x3108, 0x3108, 0x3149, 0x3155, 0x3184, 0x3190, 0x31bc, 0x31bc,
+	0x31ed, 0x3216, 0x3259, 0x3293, 0x32c4, 0x32f5, 0x3333, 0x335e,
+	0x3389, 0x3389, 0x33c6, 0x33c6, 0x33e8, 0x33fd, 0x342e, 0x345f,
+	0x345f, 0x345f, 0x3487, 0x34b2, 0x34e3,
 } // Size: 1250 bytes
 
-const nlLangStr string = "" + // Size: 4728 bytes
+const nlLangStr string = "" + // Size: 4738 bytes
 	"AfarAbchazischAvestischAfrikaansAkanAmhaarsAragoneesArabischAssameesAvar" +
 	"ischAymaraAzerbeidzjaansBasjkiersWit-RussischBulgaarsBislamaBambaraBenga" +
 	"alsTibetaansBretonsBosnischCatalaansTsjetsjeensChamorroCorsicaansCreeTsj" +
@@ -22351,11 +22357,11 @@ const nlLangStr string = "" + // Size: 4728 bytes
 	"ek SyrischSyrischSilezischTuluTimneTesoTerenoTetunTigreTivTokelausTsakhu" +
 	"rKlingonTlingitTalyshTamashekNyasa TongaTok PisinTuroyoTarokoTsakonischT" +
 	"simshianMoslim TatToemboekaTuvaluaansTasawaqToevaansTamazight (Centraal-" +
-	"Marokko)OedmoertsOegaritischUmbunduRootVaiVenetiaansWepsischWest-VlaamsO" +
-	"pperfrankischVotischVõroVunjoWalserWolayttaWarayWashoWarlpiriWuyuKalmuks" +
-	"MingreelsSogaYaoYapeesYangbenYembaNheengatuKantoneesZapotecBlissymbolenZ" +
-	"eeuwsZenagaStandaard Marokkaanse TamazightZunigeen linguïstische inhoudZ" +
-	"azaServo-Kroatisch"
+	"Marokko)OedmoertsOegaritischUmbunduonbekende taalVaiVenetiaansWepsischWe" +
+	"st-VlaamsOpperfrankischVotischVõroVunjoWalserWolayttaWarayWashoWarlpiriW" +
+	"uyuKalmuksMingreelsSogaYaoYapeesYangbenYembaNheengatuKantoneesZapotecBli" +
+	"ssymbolenZeeuwsZenagaStandaard Marokkaanse TamazightZunigeen linguïstisc" +
+	"he inhoudZazaServo-Kroatisch"
 
 var nlLangIdx = []uint16{ // 610 elements
 	// Entry 0 - 3F
@@ -22436,18 +22442,18 @@ var nlLangIdx = []uint16{ // 610 elements
 	0x107d, 0x1086, 0x108a, 0x108f, 0x1093, 0x1099, 0x109e, 0x10a3,
 	0x10a6, 0x10ae, 0x10b5, 0x10bc, 0x10c3, 0x10c9, 0x10d1, 0x10dc,
 	0x10e5, 0x10eb, 0x10f1, 0x10fb, 0x1104, 0x110e, 0x1117, 0x1121,
-	0x1128, 0x1130, 0x114c, 0x1155, 0x1160, 0x1167, 0x116b, 0x116e,
-	0x1178, 0x1180, 0x118b, 0x1199, 0x11a0, 0x11a5, 0x11aa, 0x11b0,
-	0x11b8, 0x11bd, 0x11c2, 0x11ca, 0x11ce, 0x11d5, 0x11de, 0x11e2,
+	0x1128, 0x1130, 0x114c, 0x1155, 0x1160, 0x1167, 0x1175, 0x1178,
+	0x1182, 0x118a, 0x1195, 0x11a3, 0x11aa, 0x11af, 0x11b4, 0x11ba,
+	0x11c2, 0x11c7, 0x11cc, 0x11d4, 0x11d8, 0x11df, 0x11e8, 0x11ec,
 	// Entry 240 - 27F
-	0x11e5, 0x11eb, 0x11f2, 0x11f7, 0x1200, 0x1209, 0x1210, 0x121c,
-	0x1222, 0x1228, 0x1247, 0x124b, 0x1265, 0x1269, 0x1269, 0x1269,
-	0x1269, 0x1269, 0x1269, 0x1269, 0x1269, 0x1269, 0x1269, 0x1269,
-	0x1269, 0x1269, 0x1269, 0x1269, 0x1269, 0x1269, 0x1269, 0x1269,
-	0x1269, 0x1278,
+	0x11ef, 0x11f5, 0x11fc, 0x1201, 0x120a, 0x1213, 0x121a, 0x1226,
+	0x122c, 0x1232, 0x1251, 0x1255, 0x126f, 0x1273, 0x1273, 0x1273,
+	0x1273, 0x1273, 0x1273, 0x1273, 0x1273, 0x1273, 0x1273, 0x1273,
+	0x1273, 0x1273, 0x1273, 0x1273, 0x1273, 0x1273, 0x1273, 0x1273,
+	0x1273, 0x1282,
 } // Size: 1244 bytes
 
-const noLangStr string = "" + // Size: 4834 bytes
+const noLangStr string = "" + // Size: 4844 bytes
 	"afarabkhasiskavestiskafrikaansakanamhariskaragonskarabiskassamesiskavari" +
 	"skaymaraaserbajdsjanskbasjkirskhviterussiskbulgarskbislamabambarabengali" +
 	"tibetanskbretonskbosniskkatalansktsjetsjenskchamorrokorsikanskcreetsjekk" +
@@ -22509,12 +22515,12 @@ const noLangStr string = "" + // Size: 4834 bytes
 	"iskschlesisktulutemnetesoterenotetumtigrétivtokelauisktsakhurskklingontl" +
 	"ingittalysjtamasjeknyasa-tongansktok pisinturoyotarokotsakonisktsimshian" +
 	"muslimsk tattumbukatuvalsktasawaqtuvinsksentralmarokkansk tamazightudmur" +
-	"tiskugaritiskumbundurotvaivenetianskvepsiskvestflamskMain-frankiskvotisk" +
-	"sørestiskvunjowalsertyskwolayttawaray-waraywashowarlpiriwukalmukkiskming" +
-	"relsksogayaoyapesiskyangbenyembanheengatukantonesiskzapotekiskblissymbol" +
-	"erzeeuwszenagastandard marrokansk tamazightzuniuten språklig innholdzaza" +
-	"iskmoderne standardarabisknedersaksiskflamskmoldovskserbokroatiskkongole" +
-	"sisk swahiliforenklet kinesisktradisjonell kinesisk"
+	"tiskugaritiskumbunduukjent språkvaivenetianskvepsiskvestflamskMain-frank" +
+	"iskvotisksørestiskvunjowalsertyskwolayttawaray-waraywashowarlpiriwukalmu" +
+	"kkiskmingrelsksogayaoyapesiskyangbenyembanheengatukantonesiskzapotekiskb" +
+	"lissymbolerzeeuwszenagastandard marrokansk tamazightzuniuten språklig in" +
+	"nholdzazaiskmoderne standardarabisknedersaksiskflamskmoldovskserbokroati" +
+	"skkongolesisk swahiliforenklet kinesisktradisjonell kinesisk"
 
 var noLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -22595,18 +22601,18 @@ var noLangIdx = []uint16{ // 613 elements
 	0x106f, 0x1078, 0x107c, 0x1081, 0x1085, 0x108b, 0x1090, 0x1096,
 	0x1099, 0x10a3, 0x10ac, 0x10b3, 0x10ba, 0x10c0, 0x10c8, 0x10d6,
 	0x10df, 0x10e5, 0x10eb, 0x10f4, 0x10fd, 0x1109, 0x1110, 0x1117,
-	0x111e, 0x1125, 0x1140, 0x1149, 0x1152, 0x1159, 0x115c, 0x115f,
-	0x1169, 0x1170, 0x117a, 0x1187, 0x118d, 0x1197, 0x119c, 0x11a6,
-	0x11ae, 0x11b9, 0x11be, 0x11c6, 0x11c8, 0x11d2, 0x11db, 0x11df,
+	0x111e, 0x1125, 0x1140, 0x1149, 0x1152, 0x1159, 0x1166, 0x1169,
+	0x1173, 0x117a, 0x1184, 0x1191, 0x1197, 0x11a1, 0x11a6, 0x11b0,
+	0x11b8, 0x11c3, 0x11c8, 0x11d0, 0x11d2, 0x11dc, 0x11e5, 0x11e9,
 	// Entry 240 - 27F
-	0x11e2, 0x11ea, 0x11f1, 0x11f6, 0x11ff, 0x120a, 0x1214, 0x1220,
-	0x1226, 0x122c, 0x1249, 0x124d, 0x1263, 0x126a, 0x1281, 0x1281,
-	0x1281, 0x1281, 0x1281, 0x1281, 0x1281, 0x1281, 0x1281, 0x1281,
-	0x1281, 0x1281, 0x1281, 0x1281, 0x128d, 0x1293, 0x1293, 0x1293,
-	0x129b, 0x12a8, 0x12bb, 0x12cd, 0x12e2,
+	0x11ec, 0x11f4, 0x11fb, 0x1200, 0x1209, 0x1214, 0x121e, 0x122a,
+	0x1230, 0x1236, 0x1253, 0x1257, 0x126d, 0x1274, 0x128b, 0x128b,
+	0x128b, 0x128b, 0x128b, 0x128b, 0x128b, 0x128b, 0x128b, 0x128b,
+	0x128b, 0x128b, 0x128b, 0x128b, 0x1297, 0x129d, 0x129d, 0x129d,
+	0x12a5, 0x12b2, 0x12c5, 0x12d7, 0x12ec,
 } // Size: 1250 bytes
 
-const paLangStr string = "" + // Size: 8148 bytes
+const paLangStr string = "" + // Size: 8173 bytes
 	"ਅਫ਼ਾਰਅਬਖਾਜ਼ੀਅਨਅਫ਼ਰੀਕੀਅਕਾਨਅਮਹਾਰਿਕਅਰਾਗੋਨੀਅਰਬੀਅਸਾਮੀਅਵਾਰਿਕਅਈਮਾਰਾਅਜ਼ਰਬਾਈਜਾਨੀਬ" +
 	"ਸ਼ਕੀਰਬੇਲਾਰੂਸੀਬੁਲਗਾਰੀਆਈਬਿਸਲਾਮਾਬੰਬਾਰਾਬੰਗਾਲੀਤਿੱਬਤੀਬਰੇਟਨਬੋਸਨੀਆਈਕੈਟਾਲਾਨਚੇਚਨ" +
 	"ਚਮੋਰੋਕੋਰਸੀਕਨਚੈੱਕਚਰਚ ਸਲਾਵੀਚੁਵਾਸ਼ਵੈਲਸ਼ਡੈਨਿਸ਼ਜਰਮਨਦਿਵੇਹੀਜ਼ੋਂਗਖਾਈਵਈਯੂਨਾਨੀਅੰ" +
@@ -22642,11 +22648,11 @@ const paLangStr string = "" + // Size: 8148 bytes
 	"ਖਣੀ ਕੁਰਦਿਸ਼ਸੇਨਾਕੋਇਰਾਬੋਰੋ ਸੇਂਨੀਟਚੇਲਹਿਟਸ਼ਾਨਦੱਖਣੀ ਸਾਮੀਲਿਊਲ ਸਾਮੀਇਨਾਰੀ ਸਾਮੀ" +
 	"ਸਕੌਲਟ ਸਾਮੀਸੋਨਿੰਕੇਸ੍ਰਾਨਾਨ ਟੋਂਗੋਸਾਹੋਸੁਕੁਮਾਕੋਮੋਰੀਅਨਸੀਰੀਆਈਟਿਮਨੇਟੇਸੋਟੇਟਮਟਿਗ" +
 	"ਰਾਕਲਿੰਗਨਟੋਕ ਪਿਸਿਨਟਾਰੋਕੋਤੁੰਬੁਕਾਟਿਊਵਾਲੂਤਾਸਾਵਿਕਤੁਵੀਨੀਅਨਮੱਧ ਐਟਲਸ ਤਮਾਜ਼ਿਤਉਦ" +
-	"ਮੁਰਤਉਮਬੁੰਡੂਰੂਟਵਾਈਵੂੰਜੋਵਾਲਸਰਵੋਲਾਏਟਾਵੈਰੇਵਾਲਪੁਰੀਚੀਨੀ ਵੂਕਾਲਮਿਕਸੋਗਾਯਾਂਗਬੇਨਯ" +
-	"ੇਂਬਾਕੈਂਟੋਨੀਜ਼ਮਿਆਰੀ ਮੋਰੋਕੇਨ ਟਾਮਾਜ਼ਿਕਜ਼ੂਨੀਬੋਲੀ ਸੰਬੰਧੀ ਕੋਈ ਸਮੱਗਰੀ ਨਹੀਂਜ਼ਾ" +
-	"ਜ਼ਾਆਧੁਨਿਕ ਮਿਆਰੀ ਅਰਬੀਜਰਮਨ (ਆਸਟਰੀਆਈ)ਅੰਗਰੇਜ਼ੀ (ਬਰਤਾਨਵੀ)ਅੰਗਰੇਜ਼ੀ (ਅਮਰੀਕੀ)ਸ" +
-	"ਪੇਨੀ (ਯੂਰਪੀ)ਫਰਾਂਸੀਸੀ (ਕੈਨੇਡੀਅਨ)ਲੋ ਸੈਕਸਨਫਲੈਮਿਸ਼ਪੁਰਤਗਾਲੀ (ਬ੍ਰਾਜ਼ੀਲੀ)ਪੁਰਤ" +
-	"ਗਾਲੀ (ਯੂਰਪੀ)ਮੋਲਡਾਵੀਆਈਚੀਨੀ (ਸਰਲ)ਚੀਨੀ (ਰਵਾਇਤੀ)"
+	"ਮੁਰਤਉਮਬੁੰਡੂਅਣਪਛਾਤੀ ਬੋਲੀਵਾਈਵੂੰਜੋਵਾਲਸਰਵੋਲਾਏਟਾਵੈਰੇਵਾਲਪੁਰੀਚੀਨੀ ਵੂਕਾਲਮਿਕਸੋਗ" +
+	"ਾਯਾਂਗਬੇਨਯੇਂਬਾਕੈਂਟੋਨੀਜ਼ਮਿਆਰੀ ਮੋਰੋਕੇਨ ਟਾਮਾਜ਼ਿਕਜ਼ੂਨੀਬੋਲੀ ਸੰਬੰਧੀ ਕੋਈ ਸਮੱਗਰ" +
+	"ੀ ਨਹੀਂਜ਼ਾਜ਼ਾਆਧੁਨਿਕ ਮਿਆਰੀ ਅਰਬੀਜਰਮਨ (ਆਸਟਰੀਆਈ)ਅੰਗਰੇਜ਼ੀ (ਬਰਤਾਨਵੀ)ਅੰਗਰੇਜ਼ੀ " +
+	"(ਅਮਰੀਕੀ)ਸਪੇਨੀ (ਯੂਰਪੀ)ਫਰਾਂਸੀਸੀ (ਕੈਨੇਡੀਅਨ)ਲੋ ਸੈਕਸਨਫਲੈਮਿਸ਼ਪੁਰਤਗਾਲੀ (ਬ੍ਰਾਜ਼ੀ" +
+	"ਲੀ)ਪੁਰਤਗਾਲੀ (ਯੂਰਪੀ)ਮੋਲਡਾਵੀਆਈਚੀਨੀ (ਸਰਲ)ਚੀਨੀ (ਰਵਾਇਤੀ)"
 
 var paLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -22727,18 +22733,18 @@ var paLangIdx = []uint16{ // 613 elements
 	0x1b56, 0x1b56, 0x1b56, 0x1b65, 0x1b71, 0x1b71, 0x1b7d, 0x1b8c,
 	0x1b8c, 0x1b8c, 0x1b8c, 0x1b9e, 0x1b9e, 0x1b9e, 0x1b9e, 0x1b9e,
 	0x1bb7, 0x1bb7, 0x1bc9, 0x1bc9, 0x1bc9, 0x1bc9, 0x1bde, 0x1bf3,
-	0x1c08, 0x1c20, 0x1c4c, 0x1c5e, 0x1c5e, 0x1c73, 0x1c7c, 0x1c85,
-	0x1c85, 0x1c85, 0x1c85, 0x1c85, 0x1c85, 0x1c85, 0x1c94, 0x1ca3,
-	0x1cb8, 0x1cc4, 0x1cc4, 0x1cd9, 0x1cec, 0x1cfe, 0x1cfe, 0x1d0a,
+	0x1c08, 0x1c20, 0x1c4c, 0x1c5e, 0x1c5e, 0x1c73, 0x1c95, 0x1c9e,
+	0x1c9e, 0x1c9e, 0x1c9e, 0x1c9e, 0x1c9e, 0x1c9e, 0x1cad, 0x1cbc,
+	0x1cd1, 0x1cdd, 0x1cdd, 0x1cf2, 0x1d05, 0x1d17, 0x1d17, 0x1d23,
 	// Entry 240 - 27F
-	0x1d0a, 0x1d0a, 0x1d1f, 0x1d2e, 0x1d2e, 0x1d49, 0x1d49, 0x1d49,
-	0x1d49, 0x1d49, 0x1d87, 0x1d96, 0x1ddf, 0x1df1, 0x1e20, 0x1e20,
-	0x1e44, 0x1e44, 0x1e44, 0x1e44, 0x1e74, 0x1ea1, 0x1ea1, 0x1ec2,
-	0x1ec2, 0x1ec2, 0x1ef5, 0x1ef5, 0x1f0b, 0x1f20, 0x1f56, 0x1f80,
-	0x1f9b, 0x1f9b, 0x1f9b, 0x1fb3, 0x1fd4,
+	0x1d23, 0x1d23, 0x1d38, 0x1d47, 0x1d47, 0x1d62, 0x1d62, 0x1d62,
+	0x1d62, 0x1d62, 0x1da0, 0x1daf, 0x1df8, 0x1e0a, 0x1e39, 0x1e39,
+	0x1e5d, 0x1e5d, 0x1e5d, 0x1e5d, 0x1e8d, 0x1eba, 0x1eba, 0x1edb,
+	0x1edb, 0x1edb, 0x1f0e, 0x1f0e, 0x1f24, 0x1f39, 0x1f6f, 0x1f99,
+	0x1fb4, 0x1fb4, 0x1fb4, 0x1fcc, 0x1fed,
 } // Size: 1250 bytes
 
-const plLangStr string = "" + // Size: 5567 bytes
+const plLangStr string = "" + // Size: 5568 bytes
 	"afarabchaskiawestyjskiafrikaansakanamharskiaragońskiarabskiasamskiawarsk" +
 	"iajmaraazerbejdżańskibaszkirskibiałoruskibułgarskibislamabambarabengalsk" +
 	"itybetańskibretońskibośniackikatalońskiczeczeńskiczamorrokorsykańskikric" +
@@ -22804,17 +22810,17 @@ const plLangStr string = "" + // Size: 5567 bytes
 	"susumeryjskikomoryjskisyriackisyryjskiśląskitulutemneatesoterenotetumtig" +
 	"retiwtokelaucachurskiklingońskitlingittałyskitamaszektonga (Niasa)tok pi" +
 	"sinturoyotarokocakońskitsimshiantackitumbukatuvalutasawaqtuwińskitamazig" +
-	"ht (Atlas Środkowy)udmurckiugaryckiumbundujęzyk rdzennywaiweneckiwepskiz" +
-	"achodnioflamandzkimeński frankońskiwotiackivõrovunjowalserwolaytawarajwa" +
-	"showarlpiriwukałmuckimegrelskisogayaojapskiyangbenyembanheengatukantońsk" +
-	"izapoteckiblisszelandzkizenagastandardowy marokański tamazightzunibrak t" +
-	"reści o charakterze językowymzazakiwspółczesny arabskiaustriacki niemiec" +
-	"kiwysokoniemiecki (Szwajcaria)australijski angielskikanadyjski angielski" +
-	"brytyjski angielskiamerykański angielskiamerykański hiszpańskieuropejski" +
-	" hiszpańskimeksykański hiszpańskikanadyjski francuskiszwajcarski francus" +
-	"kidolnosaksońskiflamandzkibrazylijski portugalskieuropejski portugalskim" +
-	"ołdawskiserbsko-chorwackikongijski suahilichiński uproszczonychiński tra" +
-	"dycyjny"
+	"ht (Atlas Środkowy)udmurckiugaryckiumbundunieznany językwaiweneckiwepski" +
+	"zachodnioflamandzkimeński frankońskiwotiackivõrovunjowalserwolaytawarajw" +
+	"ashowarlpiriwukałmuckimegrelskisogayaojapskiyangbenyembanheengatukantońs" +
+	"kizapoteckiblisszelandzkizenagastandardowy marokański tamazightzunibrak " +
+	"treści o charakterze językowymzazakiwspółczesny arabskiaustriacki niemie" +
+	"ckiwysokoniemiecki (Szwajcaria)australijski angielskikanadyjski angielsk" +
+	"ibrytyjski angielskiamerykański angielskiamerykański hiszpańskieuropejsk" +
+	"i hiszpańskimeksykański hiszpańskikanadyjski francuskiszwajcarski francu" +
+	"skidolnosaksońskiflamandzkibrazylijski portugalskieuropejski portugalski" +
+	"mołdawskiserbsko-chorwackikongijski suahilichiński uproszczonychiński tr" +
+	"adycyjny"
 
 var plLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -22895,18 +22901,18 @@ var plLangIdx = []uint16{ // 613 elements
 	0x121a, 0x1222, 0x1226, 0x122b, 0x1230, 0x1236, 0x123b, 0x1240,
 	0x1243, 0x124a, 0x1253, 0x125e, 0x1265, 0x126d, 0x1275, 0x1282,
 	0x128b, 0x1291, 0x1297, 0x12a0, 0x12a9, 0x12ae, 0x12b5, 0x12bb,
-	0x12c2, 0x12cb, 0x12e6, 0x12ee, 0x12f6, 0x12fd, 0x130b, 0x130e,
-	0x1315, 0x131b, 0x132e, 0x1341, 0x1349, 0x134e, 0x1353, 0x1359,
-	0x1360, 0x1365, 0x136a, 0x1372, 0x1374, 0x137d, 0x1386, 0x138a,
+	0x12c2, 0x12cb, 0x12e6, 0x12ee, 0x12f6, 0x12fd, 0x130c, 0x130f,
+	0x1316, 0x131c, 0x132f, 0x1342, 0x134a, 0x134f, 0x1354, 0x135a,
+	0x1361, 0x1366, 0x136b, 0x1373, 0x1375, 0x137e, 0x1387, 0x138b,
 	// Entry 240 - 27F
-	0x138d, 0x1393, 0x139a, 0x139f, 0x13a8, 0x13b2, 0x13bb, 0x13c0,
-	0x13c9, 0x13cf, 0x13f0, 0x13f4, 0x1419, 0x141f, 0x1434, 0x1434,
-	0x1448, 0x1464, 0x147a, 0x148e, 0x14a1, 0x14b7, 0x14cf, 0x14e5,
-	0x14fd, 0x14fd, 0x1511, 0x1526, 0x1535, 0x153f, 0x1556, 0x156c,
-	0x1576, 0x1587, 0x1598, 0x15ac, 0x15bf,
+	0x138e, 0x1394, 0x139b, 0x13a0, 0x13a9, 0x13b3, 0x13bc, 0x13c1,
+	0x13ca, 0x13d0, 0x13f1, 0x13f5, 0x141a, 0x1420, 0x1435, 0x1435,
+	0x1449, 0x1465, 0x147b, 0x148f, 0x14a2, 0x14b8, 0x14d0, 0x14e6,
+	0x14fe, 0x14fe, 0x1512, 0x1527, 0x1536, 0x1540, 0x1557, 0x156d,
+	0x1577, 0x1588, 0x1599, 0x15ad, 0x15c0,
 } // Size: 1250 bytes
 
-const ptLangStr string = "" + // Size: 4104 bytes
+const ptLangStr string = "" + // Size: 4119 bytes
 	"afarabcázioavésticoafricânerakanamáricoaragonêsárabeassamêsavaricaimaraa" +
 	"zerbaijanobashkirbielorrussobúlgarobislamábambarabengalitibetanobretãobó" +
 	"sniocatalãochechenochamorrocórsicocreetchecoeslavo eclesiásticotchuvache" +
@@ -22957,11 +22963,12 @@ const ptLangStr string = "" + // Size: 4104 bytes
 	"rinamêssereresahosukumasususumériocomorianosiríaco clássicosiríacotimnet" +
 	"esoterenotétumtigrétivtoquelauanoklingontlinguitetamaxequetonganês de Ny" +
 	"asatok pisintarokotsimshianotumbukatuvaluanotasawaqtuvinianotamazight do" +
-	" Atlas Centraludmurteugaríticoumbunduraizvaivóticovunjowalserwolayttawar" +
-	"aywashowarlpiriwukalmyklusogayaoyapeseyangbenyembacantonêszapotecosímbol" +
-	"os bliszenagatamazight marroquino padrãozunhisem conteúdo linguísticozaz" +
-	"aárabe modernoazeri sulalto alemão (Suíça)baixo saxãoflamengomoldávioser" +
-	"vo-croatasuaíli do Congochinês simplificadochinês tradicional"
+	" Atlas Centraludmurteugaríticoumbunduidioma desconhecidovaivóticovunjowa" +
+	"lserwolayttawaraywashowarlpiriwukalmyklusogayaoyapeseyangbenyembacantonê" +
+	"szapotecosímbolos bliszenagatamazight marroquino padrãozunhisem conteúdo" +
+	" linguísticozazaárabe modernoazeri sulalto alemão (Suíça)baixo saxãoflam" +
+	"engomoldávioservo-croatasuaíli do Congochinês simplificadochinês tradici" +
+	"onal"
 
 var ptLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -23042,18 +23049,18 @@ var ptLangIdx = []uint16{ // 613 elements
 	0x0e02, 0x0e02, 0x0e02, 0x0e07, 0x0e0b, 0x0e11, 0x0e17, 0x0e1d,
 	0x0e20, 0x0e2b, 0x0e2b, 0x0e32, 0x0e3b, 0x0e3b, 0x0e44, 0x0e56,
 	0x0e5f, 0x0e5f, 0x0e65, 0x0e65, 0x0e6f, 0x0e6f, 0x0e76, 0x0e7f,
-	0x0e86, 0x0e8f, 0x0ea9, 0x0eb0, 0x0eba, 0x0ec1, 0x0ec5, 0x0ec8,
-	0x0ec8, 0x0ec8, 0x0ec8, 0x0ec8, 0x0ecf, 0x0ecf, 0x0ed4, 0x0eda,
-	0x0ee2, 0x0ee7, 0x0eec, 0x0ef4, 0x0ef6, 0x0efc, 0x0efc, 0x0f02,
+	0x0e86, 0x0e8f, 0x0ea9, 0x0eb0, 0x0eba, 0x0ec1, 0x0ed4, 0x0ed7,
+	0x0ed7, 0x0ed7, 0x0ed7, 0x0ed7, 0x0ede, 0x0ede, 0x0ee3, 0x0ee9,
+	0x0ef1, 0x0ef6, 0x0efb, 0x0f03, 0x0f05, 0x0f0b, 0x0f0b, 0x0f11,
 	// Entry 240 - 27F
-	0x0f05, 0x0f0b, 0x0f12, 0x0f17, 0x0f17, 0x0f20, 0x0f28, 0x0f36,
-	0x0f36, 0x0f3c, 0x0f58, 0x0f5d, 0x0f77, 0x0f7b, 0x0f89, 0x0f92,
-	0x0f92, 0x0fa8, 0x0fa8, 0x0fa8, 0x0fa8, 0x0fa8, 0x0fa8, 0x0fa8,
-	0x0fa8, 0x0fa8, 0x0fa8, 0x0fa8, 0x0fb4, 0x0fbc, 0x0fbc, 0x0fbc,
-	0x0fc5, 0x0fd1, 0x0fe1, 0x0ff5, 0x1008,
+	0x0f14, 0x0f1a, 0x0f21, 0x0f26, 0x0f26, 0x0f2f, 0x0f37, 0x0f45,
+	0x0f45, 0x0f4b, 0x0f67, 0x0f6c, 0x0f86, 0x0f8a, 0x0f98, 0x0fa1,
+	0x0fa1, 0x0fb7, 0x0fb7, 0x0fb7, 0x0fb7, 0x0fb7, 0x0fb7, 0x0fb7,
+	0x0fb7, 0x0fb7, 0x0fb7, 0x0fb7, 0x0fc3, 0x0fcb, 0x0fcb, 0x0fcb,
+	0x0fd4, 0x0fe0, 0x0ff0, 0x1004, 0x1017,
 } // Size: 1250 bytes
 
-const ptPTLangStr string = "" + // Size: 882 bytes
+const ptPTLangStr string = "" + // Size: 878 bytes
 	"africanêschecochuvasheweestóniofrísico ocidentalhaúçahindiarménioigbocan" +
 	"arimgandamacedónionorueguês nynorsknorueguês bokmåloccitanoosséticopolac" +
 	"opastókinyarwandasami do nortetigríniaturcomanotongaiorubainglês antigom" +
@@ -23062,10 +23069,10 @@ const ptPTLangStr string = "" + // Size: 882 bytes
 	"ássicoalemão suíçocabardianocrioulo cabo-verdianolezghianoluri do norte" +
 	"luomohawkbaixo-alemãonórdico antigolíngua pangasinesapersa antigolíngua " +
 	"pohnpeicaprovençal antigorajastanêssakhairlandês antigoárabe do Chadeina" +
-	"ri samirootvaisogaárabe moderno padrãoalemão austríacoalto alemão suíçoi" +
-	"nglês australianoinglês canadianoinglês britânicoinglês americanoespanho" +
-	"l latino-americanoespanhol europeufrancês canadianofrancês suíçobaixo-sa" +
-	"xãoportuguês do Brasilportuguês europeu"
+	"ri samivaisogaárabe moderno padrãoalemão austríacoalto alemão suíçoinglê" +
+	"s australianoinglês canadianoinglês britânicoinglês americanoespanhol la" +
+	"tino-americanoespanhol europeufrancês canadianofrancês suíçobaixo-saxãop" +
+	"ortuguês do Brasilportuguês europeu"
 
 var ptPTLangIdx = []uint16{ // 608 elements
 	// Entry 0 - 3F
@@ -23146,17 +23153,17 @@ var ptPTLangIdx = []uint16{ // 608 elements
 	0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267,
 	0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267,
 	0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267,
-	0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x026b, 0x026e,
-	0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e,
-	0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x0272,
+	0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x0267, 0x026a,
+	0x026a, 0x026a, 0x026a, 0x026a, 0x026a, 0x026a, 0x026a, 0x026a,
+	0x026a, 0x026a, 0x026a, 0x026a, 0x026a, 0x026a, 0x026a, 0x026e,
 	// Entry 240 - 27F
-	0x0272, 0x0272, 0x0272, 0x0272, 0x0272, 0x0272, 0x0272, 0x0272,
-	0x0272, 0x0272, 0x0272, 0x0272, 0x0272, 0x0272, 0x0288, 0x0288,
-	0x029a, 0x02ae, 0x02c1, 0x02d2, 0x02e4, 0x02f5, 0x030e, 0x031e,
-	0x031e, 0x031e, 0x0330, 0x0340, 0x034c, 0x034c, 0x0360, 0x0372,
+	0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e,
+	0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x026e, 0x0284, 0x0284,
+	0x0296, 0x02aa, 0x02bd, 0x02ce, 0x02e0, 0x02f1, 0x030a, 0x031a,
+	0x031a, 0x031a, 0x032c, 0x033c, 0x0348, 0x0348, 0x035c, 0x036e,
 } // Size: 1240 bytes
 
-const roLangStr string = "" + // Size: 4228 bytes
+const roLangStr string = "" + // Size: 4243 bytes
 	"afarabhazăavestanăafrikaansakanamharicăaragonezăarabăasamezăavarăaymaraa" +
 	"zerăbașkirăbielorusăbulgarăbislamabambarabengalezătibetanăbretonăbosniac" +
 	"ăcatalanăcecenăchamorrocorsicanăcreecehăslavonăciuvașăgalezădanezăgerma" +
@@ -23207,12 +23214,12 @@ const roLangStr string = "" + // Size: 4228 bytes
 	"samiinari samiskolt samisoninkesogdiensranan tongoserersahosukumasususum" +
 	"erianăcomorezăsiriacă clasicăsiriacătimnetesoterenotetumtigretivtokelauk" +
 	"lingonianătlingittamasheknyasa tongatok pisintarokotsimshiantumbukatuval" +
-	"utasawaqtuvanătamazight central marocanăudmurtugariticăumbundurootvaivot" +
-	"icăvunjowalserwolaitawaraywashowarlpirichineză wucalmucăsogayaoyapezăyan" +
-	"gbenyembacantonezăzapotecăsimboluri Bilsszenagatamazight standard maroca" +
-	"năzunifară conținut lingvisticzazaarabă standard modernăgermană standard" +
-	" (Elveția)saxona de josflamandămoldoveneascăsârbo-croatăswahili (R.D. Co" +
-	"ngo)chineză tradițională"
+	"utasawaqtuvanătamazight central marocanăudmurtugariticăumbundulimbă necu" +
+	"noscutăvaivoticăvunjowalserwolaitawaraywashowarlpirichineză wucalmucăsog" +
+	"ayaoyapezăyangbenyembacantonezăzapotecăsimboluri Bilsszenagatamazight st" +
+	"andard marocanăzunifară conținut lingvisticzazaarabă standard modernăger" +
+	"mană standard (Elveția)saxona de josflamandămoldoveneascăsârbo-croatăswa" +
+	"hili (R.D. Congo)chineză tradițională"
 
 var roLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -23293,18 +23300,18 @@ var roLangIdx = []uint16{ // 613 elements
 	0x0e80, 0x0e80, 0x0e80, 0x0e85, 0x0e89, 0x0e8f, 0x0e94, 0x0e99,
 	0x0e9c, 0x0ea3, 0x0ea3, 0x0eaf, 0x0eb6, 0x0eb6, 0x0ebe, 0x0ec9,
 	0x0ed2, 0x0ed2, 0x0ed8, 0x0ed8, 0x0ee1, 0x0ee1, 0x0ee8, 0x0eee,
-	0x0ef5, 0x0efc, 0x0f17, 0x0f1d, 0x0f27, 0x0f2e, 0x0f32, 0x0f35,
-	0x0f35, 0x0f35, 0x0f35, 0x0f35, 0x0f3c, 0x0f3c, 0x0f41, 0x0f47,
-	0x0f4e, 0x0f53, 0x0f58, 0x0f60, 0x0f6b, 0x0f73, 0x0f73, 0x0f77,
+	0x0ef5, 0x0efc, 0x0f17, 0x0f1d, 0x0f27, 0x0f2e, 0x0f41, 0x0f44,
+	0x0f44, 0x0f44, 0x0f44, 0x0f44, 0x0f4b, 0x0f4b, 0x0f50, 0x0f56,
+	0x0f5d, 0x0f62, 0x0f67, 0x0f6f, 0x0f7a, 0x0f82, 0x0f82, 0x0f86,
 	// Entry 240 - 27F
-	0x0f7a, 0x0f81, 0x0f88, 0x0f8d, 0x0f8d, 0x0f97, 0x0fa0, 0x0faf,
-	0x0faf, 0x0fb5, 0x0fd1, 0x0fd5, 0x0fef, 0x0ff3, 0x100b, 0x100b,
-	0x100b, 0x1027, 0x1027, 0x1027, 0x1027, 0x1027, 0x1027, 0x1027,
-	0x1027, 0x1027, 0x1027, 0x1027, 0x1034, 0x103d, 0x103d, 0x103d,
-	0x104b, 0x1059, 0x106d, 0x106d, 0x1084,
+	0x0f89, 0x0f90, 0x0f97, 0x0f9c, 0x0f9c, 0x0fa6, 0x0faf, 0x0fbe,
+	0x0fbe, 0x0fc4, 0x0fe0, 0x0fe4, 0x0ffe, 0x1002, 0x101a, 0x101a,
+	0x101a, 0x1036, 0x1036, 0x1036, 0x1036, 0x1036, 0x1036, 0x1036,
+	0x1036, 0x1036, 0x1036, 0x1036, 0x1043, 0x104c, 0x104c, 0x104c,
+	0x105a, 0x1068, 0x107c, 0x107c, 0x1093,
 } // Size: 1250 bytes
 
-const ruLangStr string = "" + // Size: 9389 bytes
+const ruLangStr string = "" + // Size: 9395 bytes
 	"афарскийабхазскийавестийскийафрикаансаканамхарскийарагонскийарабскийасса" +
 	"мскийаварскийаймараазербайджанскийбашкирскийбелорусскийболгарскийбислам" +
 	"абамбарабенгальскийтибетскийбретонскийбоснийскийкаталанскийчеченскийчам" +
@@ -23362,16 +23369,16 @@ const ruLangStr string = "" + // Size: 9389 bytes
 	"ерерсахосукумасусушумерскийкоморскийклассический сирийскийсирийскийтемн" +
 	"етесотеренотетумтигретивитокелайскийклингонскийтлингиттамашектонгаток-п" +
 	"исинтуройоседекскийцимшиантумбукатувалутасавактувинскийсреднеатласский " +
-	"тамазигхтскийудмуртскийугаритскийумбундукорневой языкваиводскийвунджова" +
-	"ллисскийволамоварайвашовальбиривукалмыцкийсогаяояпянгбенйембакантонский" +
-	"сапотекскийблиссимволиказенагскийтамазигхтскийзуньинет языкового матери" +
-	"алазазаарабский литературныйавстрийский немецкийлитературный швейцарски" +
-	"й немецкийавстралийский английскийканадский английскийбританский англий" +
-	"скийамериканский английскийлатиноамериканский испанскийевропейский испа" +
-	"нскиймексиканский испанскийканадский французскийшвейцарский французский" +
-	"нижнесаксонскийфламандскийбразильский португальскийевропейский португал" +
-	"ьскиймолдавскийсербскохорватскийконголезский суахиликитайский, упрощенн" +
-	"ое письмокитайский, традиционное письмо"
+	"тамазигхтскийудмуртскийугаритскийумбундунеизвестный языкваиводскийвундж" +
+	"оваллисскийволамоварайвашовальбиривукалмыцкийсогаяояпянгбенйембакантонс" +
+	"кийсапотекскийблиссимволиказенагскийтамазигхтскийзуньинет языкового мат" +
+	"ериалазазаарабский литературныйавстрийский немецкийлитературный швейцар" +
+	"ский немецкийавстралийский английскийканадский английскийбританский анг" +
+	"лийскийамериканский английскийлатиноамериканский испанскийевропейский и" +
+	"спанскиймексиканский испанскийканадский французскийшвейцарский французс" +
+	"кийнижнесаксонскийфламандскийбразильский португальскийевропейский порту" +
+	"гальскиймолдавскийсербскохорватскийконголезский суахиликитайский, упрощ" +
+	"енное письмокитайский, традиционное письмо"
 
 var ruLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -23452,18 +23459,18 @@ var ruLangIdx = []uint16{ // 613 elements
 	0x1e58, 0x1e58, 0x1e58, 0x1e62, 0x1e6a, 0x1e76, 0x1e80, 0x1e8a,
 	0x1e92, 0x1ea8, 0x1ea8, 0x1ebe, 0x1ecc, 0x1ecc, 0x1eda, 0x1ee4,
 	0x1ef5, 0x1f01, 0x1f13, 0x1f13, 0x1f21, 0x1f21, 0x1f2f, 0x1f3b,
-	0x1f49, 0x1f5b, 0x1f94, 0x1fa8, 0x1fbc, 0x1fca, 0x1fe3, 0x1fe9,
-	0x1fe9, 0x1fe9, 0x1fe9, 0x1fe9, 0x1ff7, 0x1ff7, 0x2003, 0x2017,
-	0x2023, 0x202d, 0x2035, 0x2045, 0x2049, 0x205b, 0x205b, 0x2063,
+	0x1f49, 0x1f5b, 0x1f94, 0x1fa8, 0x1fbc, 0x1fca, 0x1fe9, 0x1fef,
+	0x1fef, 0x1fef, 0x1fef, 0x1fef, 0x1ffd, 0x1ffd, 0x2009, 0x201d,
+	0x2029, 0x2033, 0x203b, 0x204b, 0x204f, 0x2061, 0x2061, 0x2069,
 	// Entry 240 - 27F
-	0x2067, 0x206b, 0x2077, 0x2081, 0x2081, 0x2095, 0x20ab, 0x20c5,
-	0x20c5, 0x20d7, 0x20f1, 0x20fb, 0x2127, 0x212f, 0x2158, 0x2158,
-	0x217f, 0x21bf, 0x21ee, 0x2215, 0x223e, 0x226b, 0x22a2, 0x22cb,
-	0x22f6, 0x22f6, 0x231f, 0x234c, 0x236a, 0x2380, 0x23b1, 0x23e2,
-	0x23f6, 0x2418, 0x243f, 0x2474, 0x24ad,
+	0x206d, 0x2071, 0x207d, 0x2087, 0x2087, 0x209b, 0x20b1, 0x20cb,
+	0x20cb, 0x20dd, 0x20f7, 0x2101, 0x212d, 0x2135, 0x215e, 0x215e,
+	0x2185, 0x21c5, 0x21f4, 0x221b, 0x2244, 0x2271, 0x22a8, 0x22d1,
+	0x22fc, 0x22fc, 0x2325, 0x2352, 0x2370, 0x2386, 0x23b7, 0x23e8,
+	0x23fc, 0x241e, 0x2445, 0x247a, 0x24b3,
 } // Size: 1250 bytes
 
-const siLangStr string = "" + // Size: 9440 bytes
+const siLangStr string = "" + // Size: 9465 bytes
 	"අෆාර්ඇබ්කාසියානුඅප්\u200dරිකානුඅකාන්ඇම්හාරික්ඇරගොනීස්අරාබිඇසමියානුඇවරික්" +
 	"අයිමරාඅසර්බයිජාන්බාෂ්කිර්බෙලරුසියානුබල්ගේරියානුබිස්ලමාබම්බරාබෙංගාලිටිබ" +
 	"ෙට්බ්\u200dරේටොන්බොස්නියානුකැටලන්චෙච්නියානුචමොරොක්\u200dරොඑශියානුචෙත්ච" +
@@ -23504,14 +23511,14 @@ const siLangStr string = "" + // Size: 9440 bytes
 	"රො සෙන්නිටචේල්හිට්ශාන්දකුණු සාමිලුලේ සාමිඉනාරි සාමිස්කොල්ට් සාමිසොනින්" +
 	"කෙස්\u200dරන් ටොන්ගොසහොසුකුමාකොමොරියන්ස්\u200dරයෑක්ටිම්නෙටෙසෝටේටම්ටීග්" +
 	"\u200dරෙක්ලින්ගොන්ටොක් පිසින්ටරොකොටුම්බුකාටුවාලුටසවාක්ටුවිනියන්මධ්\u200d" +
-	"යම ඇට්ලස් ටමසිට්අඩ්මර්ට්උබුන්ඩුරූට්වයිවුන්ජෝවොල්සර්වොලෙට්ටවොරෙය්වොපිරි" +
-	"වූ චයිනිස්කල්මික්සොගායන්ග්බෙන්යෙම්බාකැන්ටොනීස්සම්මත මොරොක්කෝ ටමසිග්ත්ස" +
-	"ුනිවාග් විද්\u200dයා අන්තර්ගතයක් නැතසාසානවීන සම්මත අරාබිඔස්ට්\u200dරිය" +
-	"ානු ජර්මන්ස්විස් උසස් ජර්මන්ඕස්ට්\u200dරේලියානු ඉංග්\u200dරීසිකැනේඩියා" +
-	"නු ඉංග්\u200dරීසිබ්\u200dරිතාන්\u200dය ඉංග්\u200dරීසිඇමෙරිකානු ඉංග්" +
-	"\u200dරීසිලතින් ඇමරිකානු ස්පාඤ්ඤයුරෝපීය ස්පාඤ්ඤමෙක්සිකානු ස්පාඤ්ඤකැනේඩිය" +
-	"ානු ප්\u200dරංශස්විස් ප්\u200dරංශපහළ සැක්සන්ෆ්ලෙමිශ්බ්\u200dරසීල පෘතුග" +
-	"ීසියුරෝපීය පෘතුගීසිමොල්ඩවිආනුසුළුකළ චීනසාම්ප්\u200dරදායික චීන"
+	"යම ඇට්ලස් ටමසිට්අඩ්මර්ට්උබුන්ඩුනොදන්නා භාෂාවවයිවුන්ජෝවොල්සර්වොලෙට්ටවොර" +
+	"ෙය්වොපිරිවූ චයිනිස්කල්මික්සොගායන්ග්බෙන්යෙම්බාකැන්ටොනීස්සම්මත මොරොක්කෝ " +
+	"ටමසිග්ත්සුනිවාග් විද්\u200dයා අන්තර්ගතයක් නැතසාසානවීන සම්මත අරාබිඔස්ට්" +
+	"\u200dරියානු ජර්මන්ස්විස් උසස් ජර්මන්ඕස්ට්\u200dරේලියානු ඉංග්\u200dරීසික" +
+	"ැනේඩියානු ඉංග්\u200dරීසිබ්\u200dරිතාන්\u200dය ඉංග්\u200dරීසිඇමෙරිකානු " +
+	"ඉංග්\u200dරීසිලතින් ඇමරිකානු ස්පාඤ්ඤයුරෝපීය ස්පාඤ්ඤමෙක්සිකානු ස්පාඤ්ඤක" +
+	"ැනේඩියානු ප්\u200dරංශස්විස් ප්\u200dරංශපහළ සැක්සන්ෆ්ලෙමිශ්බ්\u200dරසීල" +
+	" පෘතුගීසියුරෝපීය පෘතුගීසිමොල්ඩවිආනුසුළුකළ චීනසාම්ප්\u200dරදායික චීන"
 
 var siLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -23592,18 +23599,18 @@ var siLangIdx = []uint16{ // 613 elements
 	0x1e78, 0x1e78, 0x1e78, 0x1e8a, 0x1e96, 0x1e96, 0x1ea5, 0x1eba,
 	0x1eba, 0x1eba, 0x1eba, 0x1ed8, 0x1ed8, 0x1ed8, 0x1ed8, 0x1ed8,
 	0x1ef7, 0x1ef7, 0x1f06, 0x1f06, 0x1f06, 0x1f06, 0x1f1e, 0x1f30,
-	0x1f42, 0x1f5d, 0x1f95, 0x1fad, 0x1fad, 0x1fc2, 0x1fce, 0x1fd7,
-	0x1fd7, 0x1fd7, 0x1fd7, 0x1fd7, 0x1fd7, 0x1fd7, 0x1fe9, 0x1ffe,
-	0x2013, 0x2025, 0x2025, 0x2037, 0x2053, 0x2068, 0x2068, 0x2074,
+	0x1f42, 0x1f5d, 0x1f95, 0x1fad, 0x1fad, 0x1fc2, 0x1fe7, 0x1ff0,
+	0x1ff0, 0x1ff0, 0x1ff0, 0x1ff0, 0x1ff0, 0x1ff0, 0x2002, 0x2017,
+	0x202c, 0x203e, 0x203e, 0x2050, 0x206c, 0x2081, 0x2081, 0x208d,
 	// Entry 240 - 27F
-	0x2074, 0x2074, 0x208f, 0x20a1, 0x20a1, 0x20bf, 0x20bf, 0x20bf,
-	0x20bf, 0x20bf, 0x2100, 0x210c, 0x215a, 0x2166, 0x2192, 0x2192,
-	0x21c9, 0x21fb, 0x2241, 0x227b, 0x22b8, 0x22ef, 0x232d, 0x2358,
-	0x238c, 0x238c, 0x23bd, 0x23e2, 0x2401, 0x2419, 0x2447, 0x2475,
-	0x2493, 0x2493, 0x2493, 0x24af, 0x24e0,
+	0x208d, 0x208d, 0x20a8, 0x20ba, 0x20ba, 0x20d8, 0x20d8, 0x20d8,
+	0x20d8, 0x20d8, 0x2119, 0x2125, 0x2173, 0x217f, 0x21ab, 0x21ab,
+	0x21e2, 0x2214, 0x225a, 0x2294, 0x22d1, 0x2308, 0x2346, 0x2371,
+	0x23a5, 0x23a5, 0x23d6, 0x23fb, 0x241a, 0x2432, 0x2460, 0x248e,
+	0x24ac, 0x24ac, 0x24ac, 0x24c8, 0x24f9,
 } // Size: 1250 bytes
 
-const skLangStr string = "" + // Size: 5794 bytes
+const skLangStr string = "" + // Size: 5802 bytes
 	"afarčinaabcházčinaavestčinaafrikánčinaakančinaamharčinaaragónčinaarabčin" +
 	"aásamčinaavarčinaaymarčinaazerbajdžančinabaškirčinabieloruštinabulharčin" +
 	"abislamabambarčinabengálčinatibetčinabretónčinabosniačtinakatalánčinačeč" +
@@ -23666,16 +23673,16 @@ const skLangStr string = "" + // Size: 5794 bytes
 	"nasahosukumasususumerčinakomorčinasýrčina (klasická)sýrčinatemnetesoterê" +
 	"natetumčinatigrejčinativtokelauštinaklingónčinatlingitčinatuaregčinaňasa" +
 	" tonganovoguinejský pidžintarokocimšjančinatumbukatuvalčinatasawaqtuvian" +
-	"činastredomarocká tuaregčinaudmurtčinaugaritčinaumbundukoreňvaivodčinav" +
-	"unjowalserčinawalamčinawaraywashowarlpirikalmyčtinasogajaojapčinajangben" +
-	"yembakantončinazapotéčtinasystém Blisszenagatuaregčina (štandardná maroc" +
-	"ká)zuništinabez jazykového obsahuzazaarabčina (moderná štandardná)nemčin" +
-	"a (rakúska)nemčina (švajčiarska spisovná)angličtina (austrálska)angličti" +
-	"na (kanadská)angličtina (britská)angličtina (americká)španielčina (latin" +
-	"skoamerická)španielčina (európska)španielčina (mexická)francúzština (kan" +
-	"adská)francúzština (švajčiarska)dolná saštinaflámčinaportugalčina (brazí" +
-	"lska)portugalčina (európska)moldavčinasrbochorvátčinasvahilčina (konžská" +
-	")čínština (zjednodušená)čínština (tradičná)"
+	"činastredomarocká tuaregčinaudmurtčinaugaritčinaumbunduneznámy jazykvai" +
+	"vodčinavunjowalserčinawalamčinawaraywashowarlpirikalmyčtinasogajaojapčin" +
+	"ajangbenyembakantončinazapotéčtinasystém Blisszenagatuaregčina (štandard" +
+	"ná marocká)zuništinabez jazykového obsahuzazaarabčina (moderná štandardn" +
+	"á)nemčina (rakúska)nemčina (švajčiarska spisovná)angličtina (austrálska" +
+	")angličtina (kanadská)angličtina (britská)angličtina (americká)španielči" +
+	"na (latinskoamerická)španielčina (európska)španielčina (mexická)francúzš" +
+	"tina (kanadská)francúzština (švajčiarska)dolná saštinaflámčinaportugalči" +
+	"na (brazílska)portugalčina (európska)moldavčinasrbochorvátčinasvahilčina" +
+	" (konžská)čínština (zjednodušená)čínština (tradičná)"
 
 var skLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -23756,18 +23763,18 @@ var skLangIdx = []uint16{ // 613 elements
 	0x12f6, 0x12f6, 0x12f6, 0x12fb, 0x12ff, 0x1306, 0x1310, 0x131b,
 	0x131e, 0x132b, 0x132b, 0x1338, 0x1344, 0x1344, 0x134f, 0x135a,
 	0x1370, 0x1370, 0x1376, 0x1376, 0x1383, 0x1383, 0x138a, 0x1394,
-	0x139b, 0x13a6, 0x13c0, 0x13cb, 0x13d6, 0x13dd, 0x13e3, 0x13e6,
-	0x13e6, 0x13e6, 0x13e6, 0x13e6, 0x13ee, 0x13ee, 0x13f3, 0x13fe,
-	0x1408, 0x140d, 0x1412, 0x141a, 0x141a, 0x1425, 0x1425, 0x1429,
+	0x139b, 0x13a6, 0x13c0, 0x13cb, 0x13d6, 0x13dd, 0x13eb, 0x13ee,
+	0x13ee, 0x13ee, 0x13ee, 0x13ee, 0x13f6, 0x13f6, 0x13fb, 0x1406,
+	0x1410, 0x1415, 0x141a, 0x1422, 0x1422, 0x142d, 0x142d, 0x1431,
 	// Entry 240 - 27F
-	0x142c, 0x1434, 0x143b, 0x1440, 0x1440, 0x144b, 0x1458, 0x1465,
-	0x1465, 0x146b, 0x148e, 0x1498, 0x14ae, 0x14b2, 0x14d3, 0x14d3,
-	0x14e6, 0x1508, 0x1521, 0x1538, 0x154e, 0x1565, 0x1586, 0x159f,
-	0x15b7, 0x15b7, 0x15d1, 0x15ef, 0x15fe, 0x1608, 0x1622, 0x163b,
-	0x1646, 0x1657, 0x166e, 0x168a, 0x16a2,
+	0x1434, 0x143c, 0x1443, 0x1448, 0x1448, 0x1453, 0x1460, 0x146d,
+	0x146d, 0x1473, 0x1496, 0x14a0, 0x14b6, 0x14ba, 0x14db, 0x14db,
+	0x14ee, 0x1510, 0x1529, 0x1540, 0x1556, 0x156d, 0x158e, 0x15a7,
+	0x15bf, 0x15bf, 0x15d9, 0x15f7, 0x1606, 0x1610, 0x162a, 0x1643,
+	0x164e, 0x165f, 0x1676, 0x1692, 0x16aa,
 } // Size: 1250 bytes
 
-const slLangStr string = "" + // Size: 6423 bytes
+const slLangStr string = "" + // Size: 6424 bytes
 	"afarščinaabhaščinaavestijščinaafrikanščinaakanščinaamharščinaaragonščina" +
 	"arabščinaasamščinaavarščinaajmarščinaazerbajdžanščinabaškirščinabelorušč" +
 	"inabolgarščinabislamščinabambarščinabengalščinatibetanščinabretonščinabo" +
@@ -23836,16 +23843,16 @@ const slLangStr string = "" + // Size: 6423 bytes
 	"inatemnejščinatesotetumščinatigrejščinativščinatokelavščinaklingonščinat" +
 	"lingitščinatamajaščinamalavijska tongščinatok pisintarokotsimščinatumbuk" +
 	"ščinatuvalujščinatasawaqtuvinščinatamašek (srednji atlas)udmurtščinauga" +
-	"ritski jezikumbundščinarootščinavajščinavotjaščinavunjowalservalamščinav" +
-	"arajščinavašajščinavarlpirščinakalmiščinasogščinajaojščinajapščinajangbe" +
-	"njembajščinakantonščinazapoteščinaznakovni jezik Blisszenaščinastandardn" +
-	"i maroški tamazigzunijščinabrez jezikoslovne vsebinezazajščinasodobna st" +
-	"andardna arabščinaavstrijska nemščinavisoka nemščina (Švica)avstralska a" +
-	"ngleščinakanadska angleščinaangleščina (VB)angleščina (ZDA)latinskoameri" +
-	"ška španščinaiberska španščinakanadska francoščinašvicarska francoščina" +
-	"nizka saščinaflamščinabrazilska portugalščinaiberska portugalščinamoldav" +
-	"ščinasrbohrvaščinakongoška svahilščinapoenostavljena kitajščinatradicio" +
-	"nalna kitajščina"
+	"ritski jezikumbundščinaneznan jezikvajščinavotjaščinavunjowalservalamšči" +
+	"navarajščinavašajščinavarlpirščinakalmiščinasogščinajaojščinajapščinajan" +
+	"gbenjembajščinakantonščinazapoteščinaznakovni jezik Blisszenaščinastanda" +
+	"rdni maroški tamazigzunijščinabrez jezikoslovne vsebinezazajščinasodobna" +
+	" standardna arabščinaavstrijska nemščinavisoka nemščina (Švica)avstralsk" +
+	"a angleščinakanadska angleščinaangleščina (VB)angleščina (ZDA)latinskoam" +
+	"eriška španščinaiberska španščinakanadska francoščinašvicarska francošči" +
+	"nanizka saščinaflamščinabrazilska portugalščinaiberska portugalščinamold" +
+	"avščinasrbohrvaščinakongoška svahilščinapoenostavljena kitajščinatradici" +
+	"onalna kitajščina"
 
 var slLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -23926,18 +23933,18 @@ var slLangIdx = []uint16{ // 613 elements
 	0x153c, 0x153c, 0x153c, 0x1549, 0x154d, 0x154d, 0x1559, 0x1566,
 	0x1570, 0x157e, 0x157e, 0x158c, 0x159a, 0x159a, 0x15a7, 0x15bd,
 	0x15c6, 0x15c6, 0x15cc, 0x15cc, 0x15d7, 0x15d7, 0x15e4, 0x15f2,
-	0x15f9, 0x1605, 0x161d, 0x162a, 0x1639, 0x1646, 0x1651, 0x165b,
-	0x165b, 0x165b, 0x165b, 0x165b, 0x1667, 0x1667, 0x166c, 0x1672,
-	0x167e, 0x168a, 0x1697, 0x16a5, 0x16a5, 0x16b1, 0x16b1, 0x16bb,
+	0x15f9, 0x1605, 0x161d, 0x162a, 0x1639, 0x1646, 0x1652, 0x165c,
+	0x165c, 0x165c, 0x165c, 0x165c, 0x1668, 0x1668, 0x166d, 0x1673,
+	0x167f, 0x168b, 0x1698, 0x16a6, 0x16a6, 0x16b2, 0x16b2, 0x16bc,
 	// Entry 240 - 27F
-	0x16c6, 0x16d0, 0x16d7, 0x16e4, 0x16e4, 0x16f1, 0x16fe, 0x1712,
-	0x1712, 0x171d, 0x1738, 0x1744, 0x175d, 0x1769, 0x1787, 0x1787,
-	0x179c, 0x17b6, 0x17cd, 0x17e2, 0x17f3, 0x1805, 0x1823, 0x1837,
-	0x1837, 0x1837, 0x184d, 0x1865, 0x1874, 0x187f, 0x1898, 0x18af,
-	0x18bc, 0x18cb, 0x18e2, 0x18fd, 0x1917,
+	0x16c7, 0x16d1, 0x16d8, 0x16e5, 0x16e5, 0x16f2, 0x16ff, 0x1713,
+	0x1713, 0x171e, 0x1739, 0x1745, 0x175e, 0x176a, 0x1788, 0x1788,
+	0x179d, 0x17b7, 0x17ce, 0x17e3, 0x17f4, 0x1806, 0x1824, 0x1838,
+	0x1838, 0x1838, 0x184e, 0x1866, 0x1875, 0x1880, 0x1899, 0x18b0,
+	0x18bd, 0x18cc, 0x18e3, 0x18fe, 0x1918,
 } // Size: 1250 bytes
 
-const sqLangStr string = "" + // Size: 4427 bytes
+const sqLangStr string = "" + // Size: 4430 bytes
 	"afarishtabkazishtafrikanishtakanishtamarishtaragonezishtarabishtasamezis" +
 	"htavarikishtajmarishtazerbajxhanishtbashkirishtbjellorusishtbullgarishtb" +
 	"islamishtbambarishtbengalishttibetishtbretonishtboshnjakishtkatalonishtç" +
@@ -23990,15 +23997,15 @@ const sqLangStr string = "" + // Size: 4427 bytes
 	"samishte skoltisoninkishtsrananisht (sranantongoisht)sahoishtsukumaishtk" +
 	"amorianishtsiriakishttimneishttesoishttetumishttigreishtklingonishtpisin" +
 	"ishte tokutorokoishttumbukaishttuvaluishttasavakishttuvinianishttamaziat" +
-	"ishte atlase qendroreudmurtishtumbunduishtrutishtvaishtvunxhoishtualseri" +
-	"shtulajtaishtuarajishtuarlpirishtkalmikishtsogishtjangbenishtjembaishtka" +
-	"ntonezishttamaziatishte standarde marokenezunishtnuk ka përmbajtje gjuhë" +
-	"sorezazaishtarabishte standarde modernegjermanishte austriakegjermanisht" +
-	"e zvicerane (dialekti i Alpeve)anglishte australianeanglishte kanadezean" +
-	"glishte britanikeanglishte amerikanespanjishte amerikano-latinespanjisht" +
-	"e evropianespanjishte meksikanefrëngjishte kanadezefrëngjishte zvicerane" +
-	"gjermanishte saksone e vendeve të ulëtaflamandishtportugalishte brazilia" +
-	"neportugalishte evropianemoldavishtserbo-kroatishtsuahilishte kongoje"
+	"ishte atlase qendroreudmurtishtumbunduishte panjohurvaishtvunxhoishtuals" +
+	"erishtulajtaishtuarajishtuarlpirishtkalmikishtsogishtjangbenishtjembaish" +
+	"tkantonezishttamaziatishte standarde marokenezunishtnuk ka përmbajtje gj" +
+	"uhësorezazaishtarabishte standarde modernegjermanishte austriakegjermani" +
+	"shte zvicerane (dialekti i Alpeve)anglishte australianeanglishte kanadez" +
+	"eanglishte britanikeanglishte amerikanespanjishte amerikano-latinespanji" +
+	"shte evropianespanjishte meksikanefrëngjishte kanadezefrëngjishte zvicer" +
+	"anegjermanishte saksone e vendeve të ulëtaflamandishtportugalishte brazi" +
+	"lianeportugalishte evropianemoldavishtserbo-kroatishtsuahilishte kongoje"
 
 var sqLangIdx = []uint16{ // 611 elements
 	// Entry 0 - 3F
@@ -24079,18 +24086,18 @@ var sqLangIdx = []uint16{ // 611 elements
 	0x0e45, 0x0e45, 0x0e45, 0x0e4e, 0x0e56, 0x0e56, 0x0e5f, 0x0e68,
 	0x0e68, 0x0e68, 0x0e68, 0x0e73, 0x0e73, 0x0e73, 0x0e73, 0x0e73,
 	0x0e82, 0x0e82, 0x0e8c, 0x0e8c, 0x0e8c, 0x0e8c, 0x0e97, 0x0ea1,
-	0x0eac, 0x0eb8, 0x0ed5, 0x0edf, 0x0edf, 0x0eea, 0x0ef1, 0x0ef7,
-	0x0ef7, 0x0ef7, 0x0ef7, 0x0ef7, 0x0ef7, 0x0ef7, 0x0f01, 0x0f0b,
-	0x0f15, 0x0f1e, 0x0f1e, 0x0f29, 0x0f29, 0x0f33, 0x0f33, 0x0f3a,
+	0x0eac, 0x0eb8, 0x0ed5, 0x0edf, 0x0edf, 0x0eea, 0x0ef4, 0x0efa,
+	0x0efa, 0x0efa, 0x0efa, 0x0efa, 0x0efa, 0x0efa, 0x0f04, 0x0f0e,
+	0x0f18, 0x0f21, 0x0f21, 0x0f2c, 0x0f2c, 0x0f36, 0x0f36, 0x0f3d,
 	// Entry 240 - 27F
-	0x0f3a, 0x0f3a, 0x0f45, 0x0f4e, 0x0f4e, 0x0f5a, 0x0f5a, 0x0f5a,
-	0x0f5a, 0x0f5a, 0x0f7a, 0x0f81, 0x0f9e, 0x0fa6, 0x0fc1, 0x0fc1,
-	0x0fd7, 0x1001, 0x1016, 0x1028, 0x103b, 0x104e, 0x1069, 0x107d,
-	0x1091, 0x1091, 0x10a6, 0x10bc, 0x10e5, 0x10f0, 0x1108, 0x111f,
-	0x1129, 0x1138, 0x114b,
+	0x0f3d, 0x0f3d, 0x0f48, 0x0f51, 0x0f51, 0x0f5d, 0x0f5d, 0x0f5d,
+	0x0f5d, 0x0f5d, 0x0f7d, 0x0f84, 0x0fa1, 0x0fa9, 0x0fc4, 0x0fc4,
+	0x0fda, 0x1004, 0x1019, 0x102b, 0x103e, 0x1051, 0x106c, 0x1080,
+	0x1094, 0x1094, 0x10a9, 0x10bf, 0x10e8, 0x10f3, 0x110b, 0x1122,
+	0x112c, 0x113b, 0x114e,
 } // Size: 1246 bytes
 
-const srLangStr string = "" + // Size: 8071 bytes
+const srLangStr string = "" + // Size: 8092 bytes
 	"афарскиабхаскиавестанскиафрикансаканскиамхарскиарагонскиарапскиасамскиав" +
 	"арскиајмараазербејџанскибашкирскибелорускибугарскибисламабамбарабенгалс" +
 	"китибетанскибретонскибосанскикаталонскичеченскичаморокорзиканскикричешк" +
@@ -24142,13 +24149,13 @@ const srLangStr string = "" + // Size: 8071 bytes
 	"кисранан тонгосерерскисахосукумасусусумерскикоморскисиријачкисиријскити" +
 	"мнетесотеренотетумтигретивтокелауклингонскитлингиттамашекњаса тонгаток " +
 	"писинтарокоцимшиантумбукатувалутасавактувинскицентралноатласки тамазигт" +
-	"удмуртскиугаритскиумбундуРутваиводскивунџовалсерскиволајтаварајскивашов" +
-	"арлпирикалмичкисогајаојапскијангбенјембакантонскизапотечкиблисимболизен" +
-	"агастандардни марокански тамазигтзунибез лингвистичког садржајазазасавр" +
-	"емени стандардни арапскишвајцарски високи немачкиенглески (Велика Брита" +
-	"нија)енглески (Сједињене Америчке Државе)нискосаксонскифламанскипортуга" +
-	"лски (Португал)молдавскисрпскохрватскикисвахилипоједностављени кинескит" +
-	"радиционални кинески"
+	"удмуртскиугаритскиумбундунепознат језикваиводскивунџовалсерскиволајтава" +
+	"рајскивашоварлпирикалмичкисогајаојапскијангбенјембакантонскизапотечкибл" +
+	"исимболизенагастандардни марокански тамазигтзунибез лингвистичког садрж" +
+	"ајазазасавремени стандардни арапскишвајцарски високи немачкиенглески (В" +
+	"елика Британија)енглески (Сједињене Америчке Државе)нискосаксонскифлама" +
+	"нскипортугалски (Португал)молдавскисрпскохрватскикисвахилипоједноставље" +
+	"ни кинескитрадиционални кинески"
 
 var srLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -24229,18 +24236,18 @@ var srLangIdx = []uint16{ // 613 elements
 	0x1b04, 0x1b04, 0x1b04, 0x1b0e, 0x1b16, 0x1b22, 0x1b2c, 0x1b36,
 	0x1b3c, 0x1b4a, 0x1b4a, 0x1b5e, 0x1b6c, 0x1b6c, 0x1b7a, 0x1b8d,
 	0x1b9e, 0x1b9e, 0x1baa, 0x1baa, 0x1bb8, 0x1bb8, 0x1bc6, 0x1bd2,
-	0x1be0, 0x1bf0, 0x1c21, 0x1c33, 0x1c45, 0x1c53, 0x1c59, 0x1c5f,
-	0x1c5f, 0x1c5f, 0x1c5f, 0x1c5f, 0x1c6b, 0x1c6b, 0x1c75, 0x1c87,
-	0x1c95, 0x1ca5, 0x1cad, 0x1cbd, 0x1cbd, 0x1ccd, 0x1ccd, 0x1cd5,
+	0x1be0, 0x1bf0, 0x1c21, 0x1c33, 0x1c45, 0x1c53, 0x1c6e, 0x1c74,
+	0x1c74, 0x1c74, 0x1c74, 0x1c74, 0x1c80, 0x1c80, 0x1c8a, 0x1c9c,
+	0x1caa, 0x1cba, 0x1cc2, 0x1cd2, 0x1cd2, 0x1ce2, 0x1ce2, 0x1cea,
 	// Entry 240 - 27F
-	0x1cdb, 0x1ce7, 0x1cf5, 0x1cff, 0x1cff, 0x1d11, 0x1d23, 0x1d37,
-	0x1d37, 0x1d43, 0x1d7d, 0x1d85, 0x1db7, 0x1dbf, 0x1df5, 0x1df5,
-	0x1df5, 0x1e25, 0x1e25, 0x1e25, 0x1e57, 0x1e9a, 0x1e9a, 0x1e9a,
-	0x1e9a, 0x1e9a, 0x1e9a, 0x1e9a, 0x1eb6, 0x1ec8, 0x1ec8, 0x1ef1,
-	0x1f03, 0x1f1f, 0x1f31, 0x1f5e, 0x1f87,
+	0x1cf0, 0x1cfc, 0x1d0a, 0x1d14, 0x1d14, 0x1d26, 0x1d38, 0x1d4c,
+	0x1d4c, 0x1d58, 0x1d92, 0x1d9a, 0x1dcc, 0x1dd4, 0x1e0a, 0x1e0a,
+	0x1e0a, 0x1e3a, 0x1e3a, 0x1e3a, 0x1e6c, 0x1eaf, 0x1eaf, 0x1eaf,
+	0x1eaf, 0x1eaf, 0x1eaf, 0x1eaf, 0x1ecb, 0x1edd, 0x1edd, 0x1f06,
+	0x1f18, 0x1f34, 0x1f46, 0x1f73, 0x1f9c,
 } // Size: 1250 bytes
 
-const srLatnLangStr string = "" + // Size: 4236 bytes
+const srLatnLangStr string = "" + // Size: 4247 bytes
 	"afarskiabhaskiavestanskiafrikansakanskiamharskiaragonskiarapskiasamskiav" +
 	"arskiajmaraazerbejdžanskibaškirskibeloruskibugarskibislamabambarabengals" +
 	"kitibetanskibretonskibosanskikatalonskičečenskičamorokorzikanskikričeški" +
@@ -24292,13 +24299,13 @@ const srLatnLangStr string = "" + // Size: 4236 bytes
 	"ngosererskisahosukumasususumerskikomorskisirijačkisirijskitimnetesoteren" +
 	"otetumtigretivtokelauklingonskitlingittamašeknjasa tongatok pisintarokoc" +
 	"imšiantumbukatuvalutasavaktuvinskicentralnoatlaski tamazigtudmurtskiugar" +
-	"itskiumbunduRutvaivodskivundžovalserskivolajtavarajskivašovarlpirikalmič" +
-	"kisogajaojapskijangbenjembakantonskizapotečkiblisimbolizenagastandardni " +
-	"marokanski tamazigtzunibez lingvističkog sadržajazazasavremeni standardn" +
-	"i arapskišvajcarski visoki nemačkiengleski (Velika Britanija)engleski (S" +
-	"jedinjene Američke Države)niskosaksonskiflamanskiportugalski (Portugal)m" +
-	"oldavskisrpskohrvatskikisvahilipojednostavljeni kineskitradicionalni kin" +
-	"eski"
+	"itskiumbundunepoznat jezikvaivodskivundžovalserskivolajtavarajskivašovar" +
+	"lpirikalmičkisogajaojapskijangbenjembakantonskizapotečkiblisimbolizenaga" +
+	"standardni marokanski tamazigtzunibez lingvističkog sadržajazazasavremen" +
+	"i standardni arapskišvajcarski visoki nemačkiengleski (Velika Britanija)" +
+	"engleski (Sjedinjene Američke Države)niskosaksonskiflamanskiportugalski " +
+	"(Portugal)moldavskisrpskohrvatskikisvahilipojednostavljeni kineskitradic" +
+	"ionalni kineski"
 
 var srLatnLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -24379,18 +24386,18 @@ var srLatnLangIdx = []uint16{ // 613 elements
 	0x0e2e, 0x0e2e, 0x0e2e, 0x0e33, 0x0e37, 0x0e3d, 0x0e42, 0x0e47,
 	0x0e4a, 0x0e51, 0x0e51, 0x0e5b, 0x0e62, 0x0e62, 0x0e6a, 0x0e75,
 	0x0e7e, 0x0e7e, 0x0e84, 0x0e84, 0x0e8c, 0x0e8c, 0x0e93, 0x0e99,
-	0x0ea0, 0x0ea8, 0x0ec1, 0x0eca, 0x0ed3, 0x0eda, 0x0edd, 0x0ee0,
-	0x0ee0, 0x0ee0, 0x0ee0, 0x0ee0, 0x0ee6, 0x0ee6, 0x0eed, 0x0ef6,
-	0x0efd, 0x0f05, 0x0f0a, 0x0f12, 0x0f12, 0x0f1b, 0x0f1b, 0x0f1f,
+	0x0ea0, 0x0ea8, 0x0ec1, 0x0eca, 0x0ed3, 0x0eda, 0x0ee8, 0x0eeb,
+	0x0eeb, 0x0eeb, 0x0eeb, 0x0eeb, 0x0ef1, 0x0ef1, 0x0ef8, 0x0f01,
+	0x0f08, 0x0f10, 0x0f15, 0x0f1d, 0x0f1d, 0x0f26, 0x0f26, 0x0f2a,
 	// Entry 240 - 27F
-	0x0f22, 0x0f28, 0x0f2f, 0x0f34, 0x0f34, 0x0f3d, 0x0f47, 0x0f51,
-	0x0f51, 0x0f57, 0x0f75, 0x0f79, 0x0f95, 0x0f99, 0x0fb5, 0x0fb5,
-	0x0fb5, 0x0fd0, 0x0fd0, 0x0fd0, 0x0feb, 0x1012, 0x1012, 0x1012,
-	0x1012, 0x1012, 0x1012, 0x1012, 0x1020, 0x1029, 0x1029, 0x103f,
-	0x1048, 0x1056, 0x105f, 0x1077, 0x108c,
+	0x0f2d, 0x0f33, 0x0f3a, 0x0f3f, 0x0f3f, 0x0f48, 0x0f52, 0x0f5c,
+	0x0f5c, 0x0f62, 0x0f80, 0x0f84, 0x0fa0, 0x0fa4, 0x0fc0, 0x0fc0,
+	0x0fc0, 0x0fdb, 0x0fdb, 0x0fdb, 0x0ff6, 0x101d, 0x101d, 0x101d,
+	0x101d, 0x101d, 0x101d, 0x101d, 0x102b, 0x1034, 0x1034, 0x104a,
+	0x1053, 0x1061, 0x106a, 0x1082, 0x1097,
 } // Size: 1250 bytes
 
-const svLangStr string = "" + // Size: 5455 bytes
+const svLangStr string = "" + // Size: 5468 bytes
 	"afarabchaziskaavestiskaafrikaansakanamhariskaaragonesiskaarabiskaassames" +
 	"iskaavariskaaymaraazerbajdzjanskabasjkiriskavitryskabulgariskabislamabam" +
 	"barabengalitibetanskabretonskabosniskakatalanskatjetjenskachamorrokorsik" +
@@ -24456,16 +24463,17 @@ const svLangStr string = "" + // Size: 5455 bytes
 	"sisk syriskasyriskasilesiskatulutemnetesoterenotetumtigrétivitokelauiska" +
 	"tsakhurklingonskatlingittalyshtamasheknyasatonganskatok pisinturoyotarok" +
 	"otsakodiskatsimshianmuslimsk tatariskatumbukatuvaluanskatasawaqtuviniska" +
-	"centralmarockansk tamazightudmurtiskaugaritiskaumbundurotvajvenetianskav" +
-	"epsvästflamländskaMain-frankiskavotiskavõruvunjowalsertyskawalamowaraywa" +
-	"showarlpiriwukalmuckiskamingrelianskalusogakiyaojapetiskayangbenbamileké" +
-	"-jembanheengatukantonesiskazapotekblissymbolerzeeländskazenagamarockansk" +
-	" standard-tamazightzuniinget språkligt innehållzazaiskamodern standardar" +
-	"abiskaösterrikisk tyskaschweizisk högtyskaaustralisk engelskakanadensisk" +
-	" engelskabrittisk engelskaamerikansk engelskalatinamerikansk spanskaeuro" +
-	"peisk spanskamexikansk spanskakanadensisk franskaschweizisk franskalågsa" +
-	"xiskaflamländskabrasiliansk portugisiskaeuropeisk portugisiskamoldaviska" +
-	"serbokroatiskaKongo-swahiliförenklad kinesiskatraditionell kinesiska"
+	"centralmarockansk tamazightudmurtiskaugaritiskaumbunduobestämt språkvajv" +
+	"enetianskavepsvästflamländskaMain-frankiskavotiskavõruvunjowalsertyskawa" +
+	"lamowaraywashowarlpiriwukalmuckiskamingrelianskalusogakiyaojapetiskayang" +
+	"benbamileké-jembanheengatukantonesiskazapotekblissymbolerzeeländskazenag" +
+	"amarockansk standard-tamazightzuniinget språkligt innehållzazaiskamodern" +
+	" standardarabiskaösterrikisk tyskaschweizisk högtyskaaustralisk engelska" +
+	"kanadensisk engelskabrittisk engelskaamerikansk engelskalatinamerikansk " +
+	"spanskaeuropeisk spanskamexikansk spanskakanadensisk franskaschweizisk f" +
+	"ranskalågsaxiskaflamländskabrasiliansk portugisiskaeuropeisk portugisisk" +
+	"amoldaviskaserbokroatiskaKongo-swahiliförenklad kinesiskatraditionell ki" +
+	"nesiska"
 
 var svLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -24546,18 +24554,18 @@ var svLangIdx = []uint16{ // 613 elements
 	0x11b1, 0x11ba, 0x11be, 0x11c3, 0x11c7, 0x11cd, 0x11d2, 0x11d8,
 	0x11dc, 0x11e7, 0x11ee, 0x11f8, 0x11ff, 0x1205, 0x120d, 0x121b,
 	0x1224, 0x122a, 0x1230, 0x123a, 0x1243, 0x1255, 0x125c, 0x1267,
-	0x126e, 0x1277, 0x1292, 0x129c, 0x12a6, 0x12ad, 0x12b0, 0x12b3,
-	0x12be, 0x12c2, 0x12d3, 0x12e1, 0x12e8, 0x12ed, 0x12f2, 0x12fd,
-	0x1303, 0x1308, 0x130d, 0x1315, 0x1317, 0x1322, 0x132f, 0x1335,
+	0x126e, 0x1277, 0x1292, 0x129c, 0x12a6, 0x12ad, 0x12bd, 0x12c0,
+	0x12cb, 0x12cf, 0x12e0, 0x12ee, 0x12f5, 0x12fa, 0x12ff, 0x130a,
+	0x1310, 0x1315, 0x131a, 0x1322, 0x1324, 0x132f, 0x133c, 0x1342,
 	// Entry 240 - 27F
-	0x133a, 0x1343, 0x134a, 0x1359, 0x1362, 0x136e, 0x1375, 0x1381,
-	0x138c, 0x1392, 0x13af, 0x13b3, 0x13cd, 0x13d5, 0x13ec, 0x13ec,
-	0x13fe, 0x1412, 0x1425, 0x1439, 0x144a, 0x145d, 0x1474, 0x1485,
-	0x1496, 0x1496, 0x14a9, 0x14bb, 0x14c6, 0x14d2, 0x14ea, 0x1500,
-	0x150a, 0x1518, 0x1525, 0x1539, 0x154f,
+	0x1347, 0x1350, 0x1357, 0x1366, 0x136f, 0x137b, 0x1382, 0x138e,
+	0x1399, 0x139f, 0x13bc, 0x13c0, 0x13da, 0x13e2, 0x13f9, 0x13f9,
+	0x140b, 0x141f, 0x1432, 0x1446, 0x1457, 0x146a, 0x1481, 0x1492,
+	0x14a3, 0x14a3, 0x14b6, 0x14c8, 0x14d3, 0x14df, 0x14f7, 0x150d,
+	0x1517, 0x1525, 0x1532, 0x1546, 0x155c,
 } // Size: 1250 bytes
 
-const swLangStr string = "" + // Size: 3904 bytes
+const swLangStr string = "" + // Size: 3919 bytes
 	"KiafarKiabkhaziKiafrikanaKiakaniKiamhariKiaragoniKiarabuKiassamKiavariKi" +
 	"aymaraKiazerbaijaniKibashkirKibelarusiKibulgariaKibislamaKibambaraKibeng" +
 	"aliKitibetiKibretoniKibosniaKikatalaniKichecheniaKichamorroKikosikaniKic" +
@@ -24607,12 +24615,12 @@ const swLangStr string = "" + // Size: 3904 bytes
 	"ha KusiniKisami cha LuleKisami cha InariKisami cha SkoltKisoninkeLugha y" +
 	"a Sranan TongoKisahoKisukumaKisusuShikomorLugha ya SyriacKitemneKitesoKi" +
 	"tetumKitigreKiklingoniKitokpisinKitarokoKitumbukaKituvaluKitasawaqKituva" +
-	"Central Atlas TamazightUdmurtUmbunduRootKivaiKivunjoWalserKiwolayttaKiwa" +
-	"rayKiwarlpiriKikalmykKisogaKiyaoKiyangbenKiyembaKikantoniTamaziti Sanifu" +
-	" ya KimorokoKizuniHakuna maudhui ya lughaKizazaKiarabu Sanifu cha Kisasa" +
-	"Kihispania (Uhispania)Kihispania (Mexico)Kifaransa (Canada)KiflemiKireno" +
-	" (Brazil)Kiserbia-kroeshiaKingwanaKichina (Kilichorahisishwa)Kichina cha" +
-	" Jadi"
+	"Central Atlas TamazightUdmurtUmbunduLugha IsiyojulikanaKivaiKivunjoWalse" +
+	"rKiwolayttaKiwarayKiwarlpiriKikalmykKisogaKiyaoKiyangbenKiyembaKikantoni" +
+	"Tamaziti Sanifu ya KimorokoKizuniHakuna maudhui ya lughaKizazaKiarabu Sa" +
+	"nifu cha KisasaKihispania (Uhispania)Kihispania (Mexico)Kifaransa (Canad" +
+	"a)KiflemiKireno (Brazil)Kiserbia-kroeshiaKingwanaKichina (Kilichorahisis" +
+	"hwa)Kichina cha Jadi"
 
 var swLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -24693,18 +24701,18 @@ var swLangIdx = []uint16{ // 613 elements
 	0x0d7c, 0x0d7c, 0x0d7c, 0x0d83, 0x0d89, 0x0d89, 0x0d90, 0x0d97,
 	0x0d97, 0x0d97, 0x0d97, 0x0da1, 0x0da1, 0x0da1, 0x0da1, 0x0da1,
 	0x0dab, 0x0dab, 0x0db3, 0x0db3, 0x0db3, 0x0db3, 0x0dbc, 0x0dc4,
-	0x0dcd, 0x0dd3, 0x0dea, 0x0df0, 0x0df0, 0x0df7, 0x0dfb, 0x0e00,
-	0x0e00, 0x0e00, 0x0e00, 0x0e00, 0x0e00, 0x0e00, 0x0e07, 0x0e0d,
-	0x0e17, 0x0e1e, 0x0e1e, 0x0e28, 0x0e28, 0x0e30, 0x0e30, 0x0e36,
+	0x0dcd, 0x0dd3, 0x0dea, 0x0df0, 0x0df0, 0x0df7, 0x0e0a, 0x0e0f,
+	0x0e0f, 0x0e0f, 0x0e0f, 0x0e0f, 0x0e0f, 0x0e0f, 0x0e16, 0x0e1c,
+	0x0e26, 0x0e2d, 0x0e2d, 0x0e37, 0x0e37, 0x0e3f, 0x0e3f, 0x0e45,
 	// Entry 240 - 27F
-	0x0e3b, 0x0e3b, 0x0e44, 0x0e4b, 0x0e4b, 0x0e54, 0x0e54, 0x0e54,
-	0x0e54, 0x0e54, 0x0e6f, 0x0e75, 0x0e8c, 0x0e92, 0x0eab, 0x0eab,
-	0x0eab, 0x0eab, 0x0eab, 0x0eab, 0x0eab, 0x0eab, 0x0eab, 0x0ec1,
-	0x0ed4, 0x0ed4, 0x0ee6, 0x0ee6, 0x0ee6, 0x0eed, 0x0efc, 0x0efc,
-	0x0efc, 0x0f0d, 0x0f15, 0x0f30, 0x0f40,
+	0x0e4a, 0x0e4a, 0x0e53, 0x0e5a, 0x0e5a, 0x0e63, 0x0e63, 0x0e63,
+	0x0e63, 0x0e63, 0x0e7e, 0x0e84, 0x0e9b, 0x0ea1, 0x0eba, 0x0eba,
+	0x0eba, 0x0eba, 0x0eba, 0x0eba, 0x0eba, 0x0eba, 0x0eba, 0x0ed0,
+	0x0ee3, 0x0ee3, 0x0ef5, 0x0ef5, 0x0ef5, 0x0efc, 0x0f0b, 0x0f0b,
+	0x0f0b, 0x0f1c, 0x0f24, 0x0f3f, 0x0f4f,
 } // Size: 1250 bytes
 
-const taLangStr string = "" + // Size: 12975 bytes
+const taLangStr string = "" + // Size: 13006 bytes
 	"அஃபார்அப்காஜியான்அவெஸ்தான்ஆஃப்ரிகான்ஸ்அகான்அம்ஹாரிக்ஆர்கோனீஸ்அரபிக்அஸ்ஸா" +
 	"மீஸ்அவேரிக்அய்மராஅஸர்பைஜானிபஷ்கிர்பெலாருஷியன்பல்கேரியன்பிஸ்லாமாபம்பாரா" +
 	"வங்காளம்திபெத்தியன்பிரெட்டன்போஸ்னியன்கேட்டலான்செச்சென்சாமோரோகார்சிகன்க" +
@@ -24759,15 +24767,15 @@ const taLangStr string = "" + // Size: 12975 bytes
 	"்ட் சமிசோனின்கேசோக்தியன்ஸ்ரானன் டோங்கோசெரெர்சஹோசுகுமாசுசுசுமேரியன்கொமோ" +
 	"ரியன்பாரம்பரிய சிரியாக்சிரியாக்டிம்னேடெசோடெரெனோடெடும்டைக்ரேடிவ்டோகேலௌக" +
 	"்ளிங்கோன்லிங்கிட்தமஷேக்நயாசா டோங்காடோக் பிஸின்தரோகோட்ஸிம்ஷியன்தும்புகா" +
-	"டுவாலுடசவாக்டுவினியன்மத்திய அட்லஸ் டமசைட்உட்முர்ட்உகாரிடிக்அம்பொண்டுரூ" +
-	"ட்வைவோட்க்வுன்ஜோவால்சேர்வோலாய்ட்டாவாரேவாஷோவல்பிரிவூ சீனம்கல்மிக்சோகாயா" +
-	"வ்யாபேசேயாங்பென்யெம்பாகாண்டோனீஸ்ஜாபோடெக்ப்லிஸ்ஸிம்பால்ஸ்ஜெனகாஸ்டாண்டர்" +
-	"ட் மொராக்கன் தமாசைட்ஜூனிமொழி உள்ளடக்கம் ஏதுமில்லைஜாஜாநவீன நிலையான அரபி" +
-	"க்ஆஸ்திரிய ஜெர்மன்ஸ்விஸ் ஹை ஜெர்மன்ஆஸ்திரேலிய ஆங்கிலம்கனடிய ஆங்கிலம்பி" +
-	"ரிட்டிஷ் ஆங்கிலம்அமெரிக்க ஆங்கிலம்லத்தின் அமெரிக்க ஸ்பானிஷ்ஐரோப்பிய ஸ்" +
-	"பானிஷ்மெக்ஸிகன் ஸ்பானிஷ்கனடிய பிரெஞ்சுஸ்விஸ் பிரஞ்சுலோ சாக்ஸன்ஃப்லெமிஷ" +
-	"்பிரேசிலிய போர்ச்சுகீஸ்ஐரோப்பிய போர்ச்சுகீஸ்மோல்டாவியன்செர்போ-குரோஷியன" +
-	"்காங்கோ ஸ்வாஹிலிஎளிதாக்கப்பட்ட சீனம்பாரம்பரிய சீனம்"
+	"டுவாலுடசவாக்டுவினியன்மத்திய அட்லஸ் டமசைட்உட்முர்ட்உகாரிடிக்அம்பொண்டுஅற" +
+	"ியப்படாத மொழிவைவோட்க்வுன்ஜோவால்சேர்வோலாய்ட்டாவாரேவாஷோவல்பிரிவூ சீனம்கல" +
+	"்மிக்சோகாயாவ்யாபேசேயாங்பென்யெம்பாகாண்டோனீஸ்ஜாபோடெக்ப்லிஸ்ஸிம்பால்ஸ்ஜென" +
+	"காஸ்டாண்டர்ட் மொராக்கன் தமாசைட்ஜூனிமொழி உள்ளடக்கம் ஏதுமில்லைஜாஜாநவீன ந" +
+	"ிலையான அரபிக்ஆஸ்திரிய ஜெர்மன்ஸ்விஸ் ஹை ஜெர்மன்ஆஸ்திரேலிய ஆங்கிலம்கனடிய" +
+	" ஆங்கிலம்பிரிட்டிஷ் ஆங்கிலம்அமெரிக்க ஆங்கிலம்லத்தின் அமெரிக்க ஸ்பானிஷ்ஐர" +
+	"ோப்பிய ஸ்பானிஷ்மெக்ஸிகன் ஸ்பானிஷ்கனடிய பிரெஞ்சுஸ்விஸ் பிரஞ்சுலோ சாக்ஸன" +
+	"்ஃப்லெமிஷ்பிரேசிலிய போர்ச்சுகீஸ்ஐரோப்பிய போர்ச்சுகீஸ்மோல்டாவியன்செர்போ" +
+	"-குரோஷியன்காங்கோ ஸ்வாஹிலிஎளிதாக்கப்பட்ட சீனம்பாரம்பரிய சீனம்"
 
 var taLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -24848,18 +24856,18 @@ var taLangIdx = []uint16{ // 613 elements
 	0x2a7d, 0x2a7d, 0x2a7d, 0x2a8f, 0x2a9b, 0x2aad, 0x2abf, 0x2ad1,
 	0x2add, 0x2aef, 0x2aef, 0x2b0d, 0x2b25, 0x2b25, 0x2b37, 0x2b59,
 	0x2b78, 0x2b78, 0x2b87, 0x2b87, 0x2ba8, 0x2ba8, 0x2bc0, 0x2bd2,
-	0x2be4, 0x2bff, 0x2c37, 0x2c52, 0x2c6d, 0x2c88, 0x2c94, 0x2c9a,
-	0x2c9a, 0x2c9a, 0x2c9a, 0x2c9a, 0x2cac, 0x2cac, 0x2cbe, 0x2cd6,
-	0x2cf4, 0x2d00, 0x2d0c, 0x2d21, 0x2d37, 0x2d4c, 0x2d4c, 0x2d58,
+	0x2be4, 0x2bff, 0x2c37, 0x2c52, 0x2c6d, 0x2c88, 0x2cb3, 0x2cb9,
+	0x2cb9, 0x2cb9, 0x2cb9, 0x2cb9, 0x2ccb, 0x2ccb, 0x2cdd, 0x2cf5,
+	0x2d13, 0x2d1f, 0x2d2b, 0x2d40, 0x2d56, 0x2d6b, 0x2d6b, 0x2d77,
 	// Entry 240 - 27F
-	0x2d64, 0x2d76, 0x2d8e, 0x2da0, 0x2da0, 0x2dbe, 0x2dd6, 0x2e06,
-	0x2e06, 0x2e15, 0x2e68, 0x2e74, 0x2ebb, 0x2ec7, 0x2efc, 0x2efc,
-	0x2f2a, 0x2f59, 0x2f90, 0x2fb8, 0x2fef, 0x3020, 0x3067, 0x3098,
-	0x30cc, 0x30cc, 0x30f4, 0x311c, 0x3138, 0x3153, 0x3193, 0x31d0,
-	0x31f1, 0x321f, 0x324a, 0x3284, 0x32af,
+	0x2d83, 0x2d95, 0x2dad, 0x2dbf, 0x2dbf, 0x2ddd, 0x2df5, 0x2e25,
+	0x2e25, 0x2e34, 0x2e87, 0x2e93, 0x2eda, 0x2ee6, 0x2f1b, 0x2f1b,
+	0x2f49, 0x2f78, 0x2faf, 0x2fd7, 0x300e, 0x303f, 0x3086, 0x30b7,
+	0x30eb, 0x30eb, 0x3113, 0x313b, 0x3157, 0x3172, 0x31b2, 0x31ef,
+	0x3210, 0x323e, 0x3269, 0x32a3, 0x32ce,
 } // Size: 1250 bytes
 
-const teLangStr string = "" + // Size: 12415 bytes
+const teLangStr string = "" + // Size: 12434 bytes
 	"అఫార్అబ్ఖాజియన్అవేస్టాన్ఆఫ్రికాన్స్అకాన్అమ్హారిక్అరగోనిస్అరబిక్అస్సామీస్" +
 	"అవారిక్ఐమారాఅజర్బైజానిబష్కిర్బెలరుషియన్బల్గేరియన్బిస్లామాబంబారాబాంగ్లా" +
 	"టిబెటన్బ్రెటన్బోస్నియన్కెటలాన్చెచెన్చమర్రోకోర్సికన్క్రిచెక్చర్చ స్లావి" +
@@ -24912,15 +24920,15 @@ const teLangStr string = "" + // Size: 12415 bytes
 	"గ్డియన్స్రానన్ టోనగోసెరేర్సహోసుకుమాసుసుసుమేరియాన్కొమొరియన్సాంప్రదాయ సి" +
 	"రియాక్సిరియాక్తుళుటింనేటెసోటెరెనోటేటంటీగ్రెటివ్టోకెలావ్క్లింగాన్ట్లింగ" +
 	"ిట్టామషేక్న్యాసా టోన్గాటోక్ పిసిన్తరోకోశింషీయన్టుంబుకాటువాలుటసావాఖ్టువ" +
-	"ినియన్సెంట్రల్ అట్లాస్ టామాజైట్ఉడ్ముర్ట్ఉగారిటిక్ఉమ్బుండురూట్వాయివోటిక" +
-	"్వుంజొవాల్సర్వాలేట్టావారేవాషోవార్లపిరివు చైనీస్కల్మిక్సొగాయాయేయాపిస్యా" +
-	"ంగ్\u200cబెన్యెంబాకాంటనీస్జపోటెక్బ్లిసింబల్స్జెనాగాప్రామాణిక మొరొకన్ త" +
-	"మజియట్జునిలిపి లేదుజాజాఆధునిక ప్రామాణిక అరబిక్ఆస్ట్రేలియన్ జర్మన్స్విస" +
-	"్ హై జర్మన్ఆస్ట్రేలియన్ ఇంగ్లీష్కెనడియన్ ఇంగ్లీష్బ్రిటిష్ ఇంగ్లీష్అమెర" +
-	"ికన్ ఇంగ్లీష్లాటిన్ అమెరికన్ స్పానిష్యూరోపియన్ స్పానిష్మెక్సికన్ స్పాన" +
-	"ిష్కెనడియెన్ ఫ్రెంచ్స్విస్ ఫ్రెంచ్లో సాక్సన్ఫ్లెమిష్బ్రెజీలియన్ పోర్చు" +
-	"గీస్యూరోపియన్ పోర్చుగీస్మొల్డావియన్సేర్బో-క్రొయేషియన్కాంగో స్వాహిలిసరళ" +
-	"ీకృత చైనీస్సాంప్రదాయక చైనీస్"
+	"ినియన్సెంట్రల్ అట్లాస్ టామాజైట్ఉడ్ముర్ట్ఉగారిటిక్ఉమ్బుండుతెలియని భాషవా" +
+	"యివోటిక్వుంజొవాల్సర్వాలేట్టావారేవాషోవార్లపిరివు చైనీస్కల్మిక్సొగాయాయేయ" +
+	"ాపిస్యాంగ్\u200cబెన్యెంబాకాంటనీస్జపోటెక్బ్లిసింబల్స్జెనాగాప్రామాణిక మొ" +
+	"రొకన్ తమజియట్జునిలిపి లేదుజాజాఆధునిక ప్రామాణిక అరబిక్ఆస్ట్రేలియన్ జర్మ" +
+	"న్స్విస్ హై జర్మన్ఆస్ట్రేలియన్ ఇంగ్లీష్కెనడియన్ ఇంగ్లీష్బ్రిటిష్ ఇంగ్ల" +
+	"ీష్అమెరికన్ ఇంగ్లీష్లాటిన్ అమెరికన్ స్పానిష్యూరోపియన్ స్పానిష్మెక్సికన" +
+	"్ స్పానిష్కెనడియెన్ ఫ్రెంచ్స్విస్ ఫ్రెంచ్లో సాక్సన్ఫ్లెమిష్బ్రెజీలియన్" +
+	" పోర్చుగీస్యూరోపియన్ పోర్చుగీస్మొల్డావియన్సేర్బో-క్రొయేషియన్కాంగో స్వాహి" +
+	"లిసరళీకృత చైనీస్సాంప్రదాయక చైనీస్"
 
 var teLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -25001,18 +25009,18 @@ var teLangIdx = []uint16{ // 613 elements
 	0x286c, 0x286c, 0x2878, 0x2887, 0x2893, 0x28a5, 0x28b1, 0x28c3,
 	0x28cf, 0x28e7, 0x28e7, 0x2902, 0x291d, 0x291d, 0x2932, 0x2957,
 	0x2976, 0x2976, 0x2985, 0x2985, 0x299d, 0x299d, 0x29b2, 0x29c4,
-	0x29d9, 0x29f4, 0x2a3b, 0x2a56, 0x2a71, 0x2a89, 0x2a95, 0x2aa1,
-	0x2aa1, 0x2aa1, 0x2aa1, 0x2aa1, 0x2ab3, 0x2ab3, 0x2ac2, 0x2ad7,
-	0x2aef, 0x2afb, 0x2b07, 0x2b22, 0x2b3b, 0x2b50, 0x2b50, 0x2b5c,
+	0x29d9, 0x29f4, 0x2a3b, 0x2a56, 0x2a71, 0x2a89, 0x2aa8, 0x2ab4,
+	0x2ab4, 0x2ab4, 0x2ab4, 0x2ab4, 0x2ac6, 0x2ac6, 0x2ad5, 0x2aea,
+	0x2b02, 0x2b0e, 0x2b1a, 0x2b35, 0x2b4e, 0x2b63, 0x2b63, 0x2b6f,
 	// Entry 240 - 27F
-	0x2b68, 0x2b7a, 0x2b98, 0x2ba7, 0x2ba7, 0x2bbf, 0x2bd4, 0x2bf8,
-	0x2bf8, 0x2c0a, 0x2c51, 0x2c5d, 0x2c76, 0x2c82, 0x2cc3, 0x2cc3,
-	0x2cfa, 0x2d26, 0x2d63, 0x2d94, 0x2dc5, 0x2df6, 0x2e3a, 0x2e6e,
-	0x2ea2, 0x2ea2, 0x2ed3, 0x2efb, 0x2f17, 0x2f2f, 0x2f6f, 0x2fa9,
-	0x2fca, 0x2ffe, 0x3026, 0x304e, 0x307f,
+	0x2b7b, 0x2b8d, 0x2bab, 0x2bba, 0x2bba, 0x2bd2, 0x2be7, 0x2c0b,
+	0x2c0b, 0x2c1d, 0x2c64, 0x2c70, 0x2c89, 0x2c95, 0x2cd6, 0x2cd6,
+	0x2d0d, 0x2d39, 0x2d76, 0x2da7, 0x2dd8, 0x2e09, 0x2e4d, 0x2e81,
+	0x2eb5, 0x2eb5, 0x2ee6, 0x2f0e, 0x2f2a, 0x2f42, 0x2f82, 0x2fbc,
+	0x2fdd, 0x3011, 0x3039, 0x3061, 0x3092,
 } // Size: 1250 bytes
 
-const thLangStr string = "" + // Size: 13813 bytes
+const thLangStr string = "" + // Size: 13852 bytes
 	"อะฟาร์อับคาซอเวสตะแอฟริกานส์อาคันอัมฮาราอารากอนอาหรับอัสสัมอาวาร์ไอย์มาร" +
 	"าอาเซอร์ไบจานบัชคีร์เบลารุสบัลแกเรียบิสลามาบัมบาราเบงกาลีทิเบตเบรตันบอ" +
 	"สเนียกาตาลังเชเชนชามอร์โรคอร์ซิกาครีเช็กเชอร์ชสลาวิกชูวัชเวลส์เดนมาร์ก" +
@@ -25071,15 +25079,15 @@ const thLangStr string = "" + // Size: 13813 bytes
 	"ซูซูเมอโคเมอเรียนซีเรียแบบดั้งเดิมซีเรียไซลีเซียตูลูทิมเนเตโซเทเรโนเตต" +
 	"ุมตีเกรทิฟโตเกเลาแซคเซอร์คลิงกอนทลิงกิตทาลิชทามาเชกไนอะซาตองกาท็อกพิซิ" +
 	"นตูโรโยทาโรโกซาโคเนียซิมชีแอนตัตมุสลิมทุมบูกาตูวาลูตัสซาวัคตูวาทามาไซต" +
-	"์แอตลาสกลางอุดมูร์ตยูการิตอุมบุนดูรูทไวเวเนโต้เวปส์เฟลมิชตะวันตกเมน-ฟร" +
-	"านโกเนียโวทิกโวโรวุนจูวัลเซอร์วาลาโมวาเรย์วาโชวอล์เพอร์รีจีนอู๋คัลมืยค" +
-	"์เมเกรเลียโซกาเย้ายัปแยงเบนเยมบาเหงงกาตุกวางตุ้งซาโปเตกบลิสซิมโบลส์เซแ" +
-	"ลนด์เซนากาทามาไซต์โมร็อกโกมาตรฐานซูนิไม่มีข้อมูลภาษาซาซาอาหรับมาตรฐานส" +
-	"มัยใหม่เยอรมัน - ออสเตรียเยอรมันสูง (สวิส)อังกฤษ - ออสเตรเลียอังกฤษ - " +
-	"แคนาดาอังกฤษ - สหราชอาณาจักรอังกฤษ - อเมริกันสเปน - ละตินอเมริกาสเปน -" +
-	" ยุโรปสเปน - เม็กซิโกฝรั่งเศส - แคนาดาฝรั่งเศส (สวิส)แซกซอนใต้เฟลมิชโปรต" +
-	"ุเกส - บราซิลโปรตุเกส - ยุโรปมอลโดวาเซอร์โบ-โครเอเชียสวาฮีลี-คองโกจีนต" +
-	"ัวย่อจีนตัวเต็ม"
+	"์แอตลาสกลางอุดมูร์ตยูการิตอุมบุนดูภาษาที่ไม่รู้จักไวเวเนโต้เวปส์เฟลมิช" +
+	"ตะวันตกเมน-ฟรานโกเนียโวทิกโวโรวุนจูวัลเซอร์วาลาโมวาเรย์วาโชวอล์เพอร์รี" +
+	"จีนอู๋คัลมืยค์เมเกรเลียโซกาเย้ายัปแยงเบนเยมบาเหงงกาตุกวางตุ้งซาโปเตกบล" +
+	"ิสซิมโบลส์เซแลนด์เซนากาทามาไซต์โมร็อกโกมาตรฐานซูนิไม่มีข้อมูลภาษาซาซาอ" +
+	"าหรับมาตรฐานสมัยใหม่เยอรมัน - ออสเตรียเยอรมันสูง (สวิส)อังกฤษ - ออสเตร" +
+	"เลียอังกฤษ - แคนาดาอังกฤษ - สหราชอาณาจักรอังกฤษ - อเมริกันสเปน - ละติน" +
+	"อเมริกาสเปน - ยุโรปสเปน - เม็กซิโกฝรั่งเศส - แคนาดาฝรั่งเศส (สวิส)แซกซ" +
+	"อนใต้เฟลมิชโปรตุเกส - บราซิลโปรตุเกส - ยุโรปมอลโดวาเซอร์โบ-โครเอเชียสว" +
+	"าฮีลี-คองโกจีนตัวย่อจีนตัวเต็ม"
 
 var thLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -25160,18 +25168,18 @@ var thLangIdx = []uint16{ // 613 elements
 	0x2d88, 0x2da0, 0x2dac, 0x2dbb, 0x2dc7, 0x2dd9, 0x2de8, 0x2df7,
 	0x2e00, 0x2e15, 0x2e2d, 0x2e42, 0x2e57, 0x2e66, 0x2e7b, 0x2e9c,
 	0x2eb7, 0x2ec9, 0x2edb, 0x2ef3, 0x2f0b, 0x2f26, 0x2f3b, 0x2f4d,
-	0x2f65, 0x2f71, 0x2fa7, 0x2fbf, 0x2fd4, 0x2fec, 0x2ff5, 0x2ffb,
-	0x3010, 0x301f, 0x3046, 0x306e, 0x307d, 0x3089, 0x3098, 0x30b0,
-	0x30c2, 0x30d4, 0x30e0, 0x3101, 0x3113, 0x312b, 0x3146, 0x3152,
+	0x2f65, 0x2f71, 0x2fa7, 0x2fbf, 0x2fd4, 0x2fec, 0x301c, 0x3022,
+	0x3037, 0x3046, 0x306d, 0x3095, 0x30a4, 0x30b0, 0x30bf, 0x30d7,
+	0x30e9, 0x30fb, 0x3107, 0x3128, 0x313a, 0x3152, 0x316d, 0x3179,
 	// Entry 240 - 27F
-	0x315e, 0x3167, 0x3179, 0x3188, 0x31a0, 0x31b8, 0x31cd, 0x31f1,
-	0x3206, 0x3218, 0x325d, 0x3269, 0x3296, 0x32a2, 0x32e1, 0x32e1,
-	0x3311, 0x333e, 0x3371, 0x3398, 0x33d4, 0x3401, 0x3434, 0x3452,
-	0x3479, 0x3479, 0x34a6, 0x34cd, 0x34e8, 0x34fa, 0x3527, 0x3551,
-	0x3566, 0x3597, 0x35bc, 0x35d7, 0x35f5,
+	0x3185, 0x318e, 0x31a0, 0x31af, 0x31c7, 0x31df, 0x31f4, 0x3218,
+	0x322d, 0x323f, 0x3284, 0x3290, 0x32bd, 0x32c9, 0x3308, 0x3308,
+	0x3338, 0x3365, 0x3398, 0x33bf, 0x33fb, 0x3428, 0x345b, 0x3479,
+	0x34a0, 0x34a0, 0x34cd, 0x34f4, 0x350f, 0x3521, 0x354e, 0x3578,
+	0x358d, 0x35be, 0x35e3, 0x35fe, 0x361c,
 } // Size: 1250 bytes
 
-const trLangStr string = "" + // Size: 5927 bytes
+const trLangStr string = "" + // Size: 5935 bytes
 	"AfarAbhazcaAvestçeAfrikaancaAkanAmharcaAragoncaArapçaAssamcaAvar DiliAym" +
 	"araAzericeBaşkırtçaBelarusçaBulgarcaBislamaBambaraBengalceTibetçeBretonc" +
 	"aBoşnakçaKatalancaÇeçenceÇamorro diliKorsikacaKriceÇekçeKilise SlavcasıÇ" +
@@ -25241,16 +25249,16 @@ const trLangStr string = "" + // Size: 5927 bytes
 	"ilezyacaTulucaTimneTesoTerenoTetumTigreTivTokelau diliSahurcaKlingoncaTl" +
 	"ingitTalışçaTamaşekNyasa TongaTok PisinTuroyoTarokoTsakoncaTsimshianTatç" +
 	"aTumbukaTuvalyancaTasawaqTuvacaOrta Atlas TamazigtiUdmurtçaUgarit diliUm" +
-	"bunduKökenVaiVenedikçeVeps diliBatı FlamancaMain Frankonya DiliVotçaVõro" +
-	"VunjoWalserValamoVarayVaşoWarlpiriWu ÇincesiKalmıkçaMegrelceSogaYaoYapça" +
-	"YangbenYembaNheengatuKantoncaZapotek diliBlis SembolleriZelandacaZenaga " +
-	"diliStandart Fas TamazigtiZuniceDilbilim içeriği yokZazacaModern Standar" +
-	"t ArapçaGüney AzericeAvusturya Almancasıİsviçre Yüksek AlmancasıAvustral" +
-	"ya İngilizcesiKanada İngilizcesiİngiliz İngilizcesiAmerikan İngilizcesiL" +
-	"atin Amerika İspanyolcasıAvrupa İspanyolcasıMeksika İspanyolcasıKanada F" +
-	"ransızcasıİsviçre FransızcasıAşağı SaksoncaFlamancaBrezilya Portekizcesi" +
-	"Avrupa PortekizcesiMoldovacaSırp-Hırvat DiliKongo SvahiliBasitleştirilmi" +
-	"ş ÇinceGeleneksel Çince"
+	"bunduBilinmeyen DilVaiVenedikçeVeps diliBatı FlamancaMain Frankonya Dili" +
+	"VotçaVõroVunjoWalserValamoVarayVaşoWarlpiriWu ÇincesiKalmıkçaMegrelceSog" +
+	"aYaoYapçaYangbenYembaNheengatuKantoncaZapotek diliBlis SembolleriZelanda" +
+	"caZenaga diliStandart Fas TamazigtiZuniceDilbilim içeriği yokZazacaModer" +
+	"n Standart ArapçaGüney AzericeAvusturya Almancasıİsviçre Yüksek Almancas" +
+	"ıAvustralya İngilizcesiKanada İngilizcesiİngiliz İngilizcesiAmerikan İn" +
+	"gilizcesiLatin Amerika İspanyolcasıAvrupa İspanyolcasıMeksika İspanyolca" +
+	"sıKanada Fransızcasıİsviçre FransızcasıAşağı SaksoncaFlamancaBrezilya Po" +
+	"rtekizcesiAvrupa PortekizcesiMoldovacaSırp-Hırvat DiliKongo SvahiliBasit" +
+	"leştirilmiş ÇinceGeleneksel Çince"
 
 var trLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -25331,18 +25339,18 @@ var trLangIdx = []uint16{ // 613 elements
 	0x137c, 0x1385, 0x138b, 0x1390, 0x1394, 0x139a, 0x139f, 0x13a4,
 	0x13a7, 0x13b3, 0x13ba, 0x13c3, 0x13ca, 0x13d4, 0x13dc, 0x13e7,
 	0x13f0, 0x13f6, 0x13fc, 0x1404, 0x140d, 0x1413, 0x141a, 0x1424,
-	0x142b, 0x1431, 0x1445, 0x144e, 0x1459, 0x1460, 0x1466, 0x1469,
-	0x1473, 0x147c, 0x148a, 0x149d, 0x14a3, 0x14a8, 0x14ad, 0x14b3,
-	0x14b9, 0x14be, 0x14c3, 0x14cb, 0x14d6, 0x14e0, 0x14e8, 0x14ec,
+	0x142b, 0x1431, 0x1445, 0x144e, 0x1459, 0x1460, 0x146e, 0x1471,
+	0x147b, 0x1484, 0x1492, 0x14a5, 0x14ab, 0x14b0, 0x14b5, 0x14bb,
+	0x14c1, 0x14c6, 0x14cb, 0x14d3, 0x14de, 0x14e8, 0x14f0, 0x14f4,
 	// Entry 240 - 27F
-	0x14ef, 0x14f5, 0x14fc, 0x1501, 0x150a, 0x1512, 0x151e, 0x152d,
-	0x1536, 0x1541, 0x1557, 0x155d, 0x1573, 0x1579, 0x1590, 0x159e,
-	0x15b2, 0x15ce, 0x15e5, 0x15f8, 0x160d, 0x1622, 0x163e, 0x1653,
-	0x1669, 0x1669, 0x167d, 0x1694, 0x16a5, 0x16ad, 0x16c2, 0x16d5,
-	0x16de, 0x16f0, 0x16fd, 0x1716, 0x1727,
+	0x14f7, 0x14fd, 0x1504, 0x1509, 0x1512, 0x151a, 0x1526, 0x1535,
+	0x153e, 0x1549, 0x155f, 0x1565, 0x157b, 0x1581, 0x1598, 0x15a6,
+	0x15ba, 0x15d6, 0x15ed, 0x1600, 0x1615, 0x162a, 0x1646, 0x165b,
+	0x1671, 0x1671, 0x1685, 0x169c, 0x16ad, 0x16b5, 0x16ca, 0x16dd,
+	0x16e6, 0x16f8, 0x1705, 0x171e, 0x172f,
 } // Size: 1250 bytes
 
-const ukLangStr string = "" + // Size: 9189 bytes
+const ukLangStr string = "" + // Size: 9202 bytes
 	"афарськаабхазькаавестійськаафрикаансаканамхарськаарагонськаарабськаассам" +
 	"ськааварськааймараазербайджанськабашкирськабілоруськаболгарськабісламаб" +
 	"амбарабенгальськатибетськабретонськабоснійськакаталонськачеченськачамор" +
@@ -25401,14 +25409,14 @@ const ukLangStr string = "" + // Size: 9189 bytes
 	"тсонінкесогдійськасранан тонгосерерсахосукумасусушумерськакоморськасирі" +
 	"йська класичнасирійськатемнетесотеренотетумтигретівтокелауклінгонтлінгі" +
 	"ттамашекньяса тонгаток-пісінтарокоцимшиантумбукатувалутасавактувинськац" +
-	"ентральномароканська тамазітудмуртськаугаритськаумбундукоріньваїводська" +
-	"вуньовалзерськаваламоварайвашовалпірікалмицькасогаяояпянгбенємбакантонс" +
-	"ькасапотекськаблісса мовазенагастандартна марокканська берберськазуньїн" +
-	"емає мовного вмістузазакісучасна стандартна арабськапівденноазербайджан" +
-	"ськаверхньонімецька (Швейцарія)британська англійськаамериканська англій" +
-	"ськаіспанська (Європа)нижньосаксонськафламандськапортугальська (Європа)" +
-	"молдавськасербсько-хорватськаконгійське суахілікитайська спрощенакитайс" +
-	"ька традиційна"
+	"ентральномароканська тамазітудмуртськаугаритськаумбундуневідома моваваї" +
+	"водськавуньовалзерськаваламоварайвашовалпірікалмицькасогаяояпянгбенємба" +
+	"кантонськасапотекськаблісса мовазенагастандартна марокканська берберськ" +
+	"азуньїнемає мовного вмістузазакісучасна стандартна арабськапівденноазер" +
+	"байджанськаверхньонімецька (Швейцарія)британська англійськаамериканська" +
+	" англійськаіспанська (Європа)нижньосаксонськафламандськапортугальська (Є" +
+	"вропа)молдавськасербсько-хорватськаконгійське суахілікитайська спрощена" +
+	"китайська традиційна"
 
 var ukLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -25489,18 +25497,18 @@ var ukLangIdx = []uint16{ // 613 elements
 	0x1f12, 0x1f12, 0x1f12, 0x1f1c, 0x1f24, 0x1f30, 0x1f3a, 0x1f44,
 	0x1f4a, 0x1f58, 0x1f58, 0x1f66, 0x1f74, 0x1f74, 0x1f82, 0x1f97,
 	0x1fa8, 0x1fa8, 0x1fb4, 0x1fb4, 0x1fc2, 0x1fc2, 0x1fd0, 0x1fdc,
-	0x1fea, 0x1ffc, 0x2035, 0x2049, 0x205d, 0x206b, 0x2077, 0x207d,
-	0x207d, 0x207d, 0x207d, 0x207d, 0x208b, 0x208b, 0x2095, 0x20a9,
-	0x20b5, 0x20bf, 0x20c7, 0x20d5, 0x20d5, 0x20e7, 0x20e7, 0x20ef,
+	0x1fea, 0x1ffc, 0x2035, 0x2049, 0x205d, 0x206b, 0x2084, 0x208a,
+	0x208a, 0x208a, 0x208a, 0x208a, 0x2098, 0x2098, 0x20a2, 0x20b6,
+	0x20c2, 0x20cc, 0x20d4, 0x20e2, 0x20e2, 0x20f4, 0x20f4, 0x20fc,
 	// Entry 240 - 27F
-	0x20f3, 0x20f7, 0x2103, 0x210b, 0x210b, 0x211f, 0x2135, 0x214a,
-	0x214a, 0x2156, 0x2198, 0x21a2, 0x21c8, 0x21d4, 0x2208, 0x2236,
-	0x2236, 0x2269, 0x2269, 0x2269, 0x2292, 0x22bf, 0x22bf, 0x22e0,
-	0x22e0, 0x22e0, 0x22e0, 0x22e0, 0x2300, 0x2316, 0x2316, 0x233f,
-	0x2353, 0x2378, 0x239b, 0x23be, 0x23e5,
+	0x2100, 0x2104, 0x2110, 0x2118, 0x2118, 0x212c, 0x2142, 0x2157,
+	0x2157, 0x2163, 0x21a5, 0x21af, 0x21d5, 0x21e1, 0x2215, 0x2243,
+	0x2243, 0x2276, 0x2276, 0x2276, 0x229f, 0x22cc, 0x22cc, 0x22ed,
+	0x22ed, 0x22ed, 0x22ed, 0x22ed, 0x230d, 0x2323, 0x2323, 0x234c,
+	0x2360, 0x2385, 0x23a8, 0x23cb, 0x23f2,
 } // Size: 1250 bytes
 
-const urLangStr string = "" + // Size: 5313 bytes
+const urLangStr string = "" + // Size: 5330 bytes
 	"افارابقازیانایفریکانزاکانامہاریاراگونیزعربیآسامیاواریایماراآذربائیجانیبا" +
 	"شکیربیلاروسیبلغاریبسلامابمبارابنگالیتبتیبریٹنبوسنیکیٹالانچیچنکموروکوراس" +
 	"یکنچیکچرچ سلاؤچوواشویلشڈینشجرمنڈیویہیژونگکھاایویونانیانگریزیایسپرانٹوہس" +
@@ -25533,13 +25541,13 @@ const urLangStr string = "" + // Size: 5313 bytes
 	"یسیلینسکاٹجنوبی کردسیناكويرابورو سينیتشلحيتشانجنوبی سامیلول سامیاناری س" +
 	"امیسکولٹ سامیسوننکےسرانن ٹونگوساہوسکوماکوموریائیسریانیٹمنےتیسوٹیٹمٹگرےک" +
 	"لنگنٹوک پِسِنٹوروکوٹمبوکاتووالوتاساواقتووینینسینٹرل ایٹلس ٹمازائٹادمورت" +
-	"اومبوندوروٹوائیونجووالسروولایتاوارےوارلپیریwuuکالمیکسوگایانگبینیمباکینٹ" +
-	"ونیزاسٹینڈرڈ مراقشی تمازیقیزونیکوئی لسانی مواد نہیںزازاماڈرن اسٹینڈرڈ ع" +
-	"ربیآزربائیجانی (عربی)آسٹریائی جرمنسوئس ہائی جرمنآسٹریلیائی انگریزیکینیڈ" +
-	"ین انگریزیبرطانوی انگریزیامریکی انگریزیلاطینی امریکی ہسپانوییورپی ہسپان" +
-	"ویمیکسیکن ہسپانویکینیڈین فرانسیسیسوئس فرینچادنی سیکسنفلیمِشبرازیلی پرتگ" +
-	"الییورپی پرتگالیمالدوواسربو-کروئیشینکانگو سواحلیچینی (آسان کردہ)روایتی " +
-	"چینی"
+	"اومبوندونامعلوم زبانوائیونجووالسروولایتاوارےوارلپیریwuuکالمیکسوگایانگبی" +
+	"نیمباکینٹونیزاسٹینڈرڈ مراقشی تمازیقیزونیکوئی لسانی مواد نہیںزازاماڈرن ا" +
+	"سٹینڈرڈ عربیآزربائیجانی (عربی)آسٹریائی جرمنسوئس ہائی جرمنآسٹریلیائی انگ" +
+	"ریزیکینیڈین انگریزیبرطانوی انگریزیامریکی انگریزیلاطینی امریکی ہسپانوییو" +
+	"رپی ہسپانویمیکسیکن ہسپانویکینیڈین فرانسیسیسوئس فرینچادنی سیکسنفلیمِشبرا" +
+	"زیلی پرتگالییورپی پرتگالیمالدوواسربو-کروئیشینکانگو سواحلیچینی (آسان کرد" +
+	"ہ)روایتی چینی"
 
 var urLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -25620,15 +25628,15 @@ var urLangIdx = []uint16{ // 613 elements
 	0x10dc, 0x10dc, 0x10dc, 0x10e4, 0x10ec, 0x10ec, 0x10f4, 0x10fc,
 	0x10fc, 0x10fc, 0x10fc, 0x1106, 0x1106, 0x1106, 0x1106, 0x1106,
 	0x1117, 0x1117, 0x1123, 0x1123, 0x1123, 0x1123, 0x112f, 0x113b,
-	0x1149, 0x1157, 0x117d, 0x1189, 0x1189, 0x1199, 0x119f, 0x11a7,
-	0x11a7, 0x11a7, 0x11a7, 0x11a7, 0x11a7, 0x11a7, 0x11af, 0x11b9,
-	0x11c7, 0x11cf, 0x11cf, 0x11df, 0x11e2, 0x11ee, 0x11ee, 0x11f6,
+	0x1149, 0x1157, 0x117d, 0x1189, 0x1189, 0x1199, 0x11b0, 0x11b8,
+	0x11b8, 0x11b8, 0x11b8, 0x11b8, 0x11b8, 0x11b8, 0x11c0, 0x11ca,
+	0x11d8, 0x11e0, 0x11e0, 0x11f0, 0x11f3, 0x11ff, 0x11ff, 0x1207,
 	// Entry 240 - 27F
-	0x11f6, 0x11f6, 0x1204, 0x120c, 0x120c, 0x121c, 0x121c, 0x121c,
-	0x121c, 0x121c, 0x1248, 0x1250, 0x1275, 0x127d, 0x12a1, 0x12c2,
-	0x12db, 0x12f5, 0x1318, 0x1335, 0x1352, 0x136d, 0x1395, 0x13ae,
-	0x13cb, 0x13cb, 0x13ea, 0x13fd, 0x1410, 0x141c, 0x1439, 0x1452,
-	0x1460, 0x1479, 0x1490, 0x14ac, 0x14c1,
+	0x1207, 0x1207, 0x1215, 0x121d, 0x121d, 0x122d, 0x122d, 0x122d,
+	0x122d, 0x122d, 0x1259, 0x1261, 0x1286, 0x128e, 0x12b2, 0x12d3,
+	0x12ec, 0x1306, 0x1329, 0x1346, 0x1363, 0x137e, 0x13a6, 0x13bf,
+	0x13dc, 0x13dc, 0x13fb, 0x140e, 0x1421, 0x142d, 0x144a, 0x1463,
+	0x1471, 0x148a, 0x14a1, 0x14bd, 0x14d2,
 } // Size: 1250 bytes
 
 const uzLangStr string = "" + // Size: 2777 bytes
@@ -25664,13 +25672,13 @@ const uzLangStr string = "" + // Size: 2777 bytes
 	"angusitsiliyashotlandjanubiy kurdsenakoyraboro-sennitashelxitshanjanubiy" +
 	" saamlule-saaminari-saamskolt-saamsoninkesranan-tongosukumaqamartimnetes" +
 	"otetumtigreklingontok-piksintarokotumbukatuvalutasavaktuvamarkaziy atlas" +
-	" tamazigxtudmurtumbundutub aholi tilivaivunjovarayvalbiriwuuqalmoqsogaya" +
-	"ngbenyembakantontamazigxtzunitil tarkibi yo‘qzazastandart arabnemis (Avs" +
-	"triya)yuqori nemis (Shveytsariya)ingliz (Avstraliya)ingliz (Kanada)ingli" +
-	"z (Britaniya)ingliz (Amerika)ispan (Lotin Amerikasi)ispan (Yevropa)ispan" +
-	" (Meksika)fransuz (Kanada)fransuz (Shveytsariya)quyi saksonflamandportug" +
-	"al (Braziliya)portugal (Yevropa)moldovansuaxili (Kongo)xitoy (soddalashg" +
-	"an)xitoy (an’anaviy)"
+	" tamazigxtudmurtumbundunoma’lum tilvaivunjovarayvalbiriwuuqalmoqsogayang" +
+	"benyembakantontamazigxtzunitil tarkibi yo‘qzazastandart arabnemis (Avstr" +
+	"iya)yuqori nemis (Shveytsariya)ingliz (Avstraliya)ingliz (Kanada)ingliz " +
+	"(Britaniya)ingliz (Amerika)ispan (Lotin Amerikasi)ispan (Yevropa)ispan (" +
+	"Meksika)fransuz (Kanada)fransuz (Shveytsariya)quyi saksonflamandportugal" +
+	" (Braziliya)portugal (Yevropa)moldovansuaxili (Kongo)xitoy (soddalashgan" +
+	")xitoy (an’anaviy)"
 
 var uzLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -25762,7 +25770,7 @@ var uzLangIdx = []uint16{ // 613 elements
 	0x0aa3, 0x0aa3, 0x0ab2, 0x0ac6, 0x0ad9,
 } // Size: 1250 bytes
 
-const viLangStr string = "" + // Size: 8662 bytes
+const viLangStr string = "" + // Size: 8681 bytes
 	"Tiếng AfarTiếng AbkhaziaTiếng AvestanTiếng AfrikaansTiếng AkanTiếng Amha" +
 	"ricTiếng AragonTiếng Ả RậpTiếng AssamTiếng AvaricTiếng AymaraTiếng Azerb" +
 	"aijanTiếng BashkirTiếng BelarusTiếng BulgariaTiếng BislamaTiếng BambaraT" +
@@ -25856,15 +25864,15 @@ const viLangStr string = "" + // Size: 8662 bytes
 	"iếng TigreTiếng TivTiếng TokelauTiếng KlingonTiếng TlingitTiếng Tamashek" +
 	"Tiếng Nyasa TongaTiếng Tok PisinTiếng TarokoTiếng TsimshianTiếng Tumbuka" +
 	"Tiếng TuvaluTiếng TasawaqTiếng TuvinianTiếng Tamazight Miền Trung Ma-rốc" +
-	"Tiếng UdmurtTiếng UgariticTiếng UmbunduTiếng RootTiếng VaiTiếng VoticTiế" +
-	"ng VunjoTiếng WalserTiếng WalamoTiếng WarayTiếng WashoTiếng WarlpiriTiến" +
-	"g NgôTiếng KalmykTiếng SogaTiếng YaoTiếng YapTiếng YangbenTiếng YembaTiế" +
-	"ng Quảng ĐôngTiếng ZapotecKý hiệu BlissymbolsTiếng ZenagaTiếng Tamazight" +
-	" Chuẩn của Ma-rốcTiếng ZuniKhông có nội dung ngôn ngữTiếng ZazaTiếng Ả R" +
-	"ập Hiện đạiTiếng Thượng Giéc-man (Thụy Sĩ)Tiếng Anh (Anh)Tiếng Anh (Mỹ" +
-	")Tiếng Tây Ban Nha (Mỹ La tinh)Tiếng Tây Ban Nha (Châu Âu)Tiếng Hạ Saxon" +
-	"Tiếng FlemishTiếng Bồ Đào Nha (Châu Âu)Tiếng MoldovaTiếng Serbo-CroatiaT" +
-	"iếng Swahili Congo"
+	"Tiếng UdmurtTiếng UgariticTiếng UmbunduNgôn ngữ không xác địnhTiếng VaiT" +
+	"iếng VoticTiếng VunjoTiếng WalserTiếng WalamoTiếng WarayTiếng WashoTiếng" +
+	" WarlpiriTiếng NgôTiếng KalmykTiếng SogaTiếng YaoTiếng YapTiếng YangbenT" +
+	"iếng YembaTiếng Quảng ĐôngTiếng ZapotecKý hiệu BlissymbolsTiếng ZenagaTi" +
+	"ếng Tamazight Chuẩn của Ma-rốcTiếng ZuniKhông có nội dung ngôn ngữTiến" +
+	"g ZazaTiếng Ả Rập Hiện đạiTiếng Thượng Giéc-man (Thụy Sĩ)Tiếng Anh (Anh)" +
+	"Tiếng Anh (Mỹ)Tiếng Tây Ban Nha (Mỹ La tinh)Tiếng Tây Ban Nha (Châu Âu)T" +
+	"iếng Hạ SaxonTiếng FlemishTiếng Bồ Đào Nha (Châu Âu)Tiếng MoldovaTiếng S" +
+	"erbo-CroatiaTiếng Swahili Congo"
 
 var viLangIdx = []uint16{ // 611 elements
 	// Entry 0 - 3F
@@ -25945,18 +25953,18 @@ var viLangIdx = []uint16{ // 611 elements
 	0x1dd8, 0x1dd8, 0x1dd8, 0x1de5, 0x1df1, 0x1dff, 0x1e0c, 0x1e19,
 	0x1e24, 0x1e33, 0x1e33, 0x1e42, 0x1e51, 0x1e51, 0x1e61, 0x1e74,
 	0x1e85, 0x1e85, 0x1e93, 0x1e93, 0x1ea4, 0x1ea4, 0x1eb3, 0x1ec1,
-	0x1ed0, 0x1ee0, 0x1f07, 0x1f15, 0x1f25, 0x1f34, 0x1f40, 0x1f4b,
-	0x1f4b, 0x1f4b, 0x1f4b, 0x1f4b, 0x1f58, 0x1f58, 0x1f65, 0x1f73,
-	0x1f81, 0x1f8e, 0x1f9b, 0x1fab, 0x1fb7, 0x1fc5, 0x1fc5, 0x1fd1,
+	0x1ed0, 0x1ee0, 0x1f07, 0x1f15, 0x1f25, 0x1f34, 0x1f53, 0x1f5e,
+	0x1f5e, 0x1f5e, 0x1f5e, 0x1f5e, 0x1f6b, 0x1f6b, 0x1f78, 0x1f86,
+	0x1f94, 0x1fa1, 0x1fae, 0x1fbe, 0x1fca, 0x1fd8, 0x1fd8, 0x1fe4,
 	// Entry 240 - 27F
-	0x1fdc, 0x1fe7, 0x1ff6, 0x2003, 0x2003, 0x2019, 0x2028, 0x203e,
-	0x203e, 0x204c, 0x2074, 0x2080, 0x20a1, 0x20ad, 0x20cc, 0x20cc,
-	0x20cc, 0x20f4, 0x20f4, 0x20f4, 0x2105, 0x2117, 0x213a, 0x215a,
-	0x215a, 0x215a, 0x215a, 0x215a, 0x216c, 0x217b, 0x217b, 0x219d,
-	0x21ac, 0x21c1, 0x21d6,
+	0x1fef, 0x1ffa, 0x2009, 0x2016, 0x2016, 0x202c, 0x203b, 0x2051,
+	0x2051, 0x205f, 0x2087, 0x2093, 0x20b4, 0x20c0, 0x20df, 0x20df,
+	0x20df, 0x2107, 0x2107, 0x2107, 0x2118, 0x212a, 0x214d, 0x216d,
+	0x216d, 0x216d, 0x216d, 0x216d, 0x217f, 0x218e, 0x218e, 0x21b0,
+	0x21bf, 0x21d4, 0x21e9,
 } // Size: 1246 bytes
 
-const zhLangStr string = "" + // Size: 6428 bytes
+const zhLangStr string = "" + // Size: 6431 bytes
 	"阿法尔文阿布哈西亚语阿维斯塔文南非荷兰语阿肯文阿姆哈拉文阿拉贡文阿拉伯语阿萨姆文阿瓦尔文艾马拉文阿塞拜疆语巴什基尔文白俄罗斯语保加利亚语比斯拉马" +
 	"文班巴拉文孟加拉语藏语布列塔尼文波斯尼亚语加泰罗尼亚语车臣文查莫罗文科西嘉文克里族文捷克语教会斯拉夫文楚瓦什文威尔士语丹麦语德文迪维希文宗卡" +
 	"文埃维文希腊语英语世界语西班牙文爱沙尼亚语巴斯克文波斯文富拉文芬兰语斐济文法罗文法语西弗里西亚文爱尔兰语苏格兰盖尔文加利西亚语瓜拉尼文古吉拉" +
@@ -25984,10 +25992,10 @@ const zhLangStr string = "" + // Size: 6428 bytes
 	"斯坦文拉帕努伊文拉罗汤加文兰博文吉普赛文阿罗蒙文罗瓦文桑达韦文萨哈文萨马利亚阿拉姆文桑布鲁文萨萨克文桑塔利文甘拜文桑古文西西里文苏格兰文南库" +
 	"尔德文塞内卡文塞纳文塞尔库普文东桑海文古爱尔兰文希尔哈文掸文乍得阿拉伯文悉达摩文南萨米文律勒萨米文伊纳里萨米文斯科特萨米文索宁克文粟特文苏里" +
 	"南汤加文塞雷尔文萨霍文苏库马文苏苏文苏美尔文科摩罗文古典叙利亚文古叙利亚文泰姆奈文特索文特伦诺文德顿文提格雷文蒂夫文托克劳文克林贡文特林吉特" +
-	"文塔马奇克文尼亚萨汤加文托克皮辛文太鲁阁文钦西安文通布卡文图瓦卢文北桑海文图瓦文塔马齐格特文乌德穆尔特文乌加里特文翁本杜文根语言瓦伊文维普森" +
-	"文沃提克文温旧文瓦尔瑟文瓦拉莫文瓦瑞文瓦绍文瓦尔皮瑞文吴语卡尔梅克文索加文瑶族语雅浦文洋卞文耶姆巴文粤语萨波蒂克文布里斯符号泽纳加文标准摩洛" +
-	"哥塔马塞特文祖尼文无语言内容扎扎文现代标准阿拉伯语南阿塞拜疆文奥地利德文瑞士高地德文拉丁美洲西班牙文欧洲西班牙文墨西哥西班牙文低萨克森文佛兰" +
-	"德文巴西葡萄牙文欧洲葡萄牙文摩尔多瓦文塞尔维亚-克罗地亚文刚果斯瓦希里文简体中文繁体中文"
+	"文塔马奇克文尼亚萨汤加文托克皮辛文太鲁阁文钦西安文通布卡文图瓦卢文北桑海文图瓦文塔马齐格特文乌德穆尔特文乌加里特文翁本杜文未知语言瓦伊文维普" +
+	"森文沃提克文温旧文瓦尔瑟文瓦拉莫文瓦瑞文瓦绍文瓦尔皮瑞文吴语卡尔梅克文索加文瑶族语雅浦文洋卞文耶姆巴文粤语萨波蒂克文布里斯符号泽纳加文标准摩" +
+	"洛哥塔马塞特文祖尼文无语言内容扎扎文现代标准阿拉伯语南阿塞拜疆文奥地利德文瑞士高地德文拉丁美洲西班牙文欧洲西班牙文墨西哥西班牙文低萨克森文佛" +
+	"兰德文巴西葡萄牙文欧洲葡萄牙文摩尔多瓦文塞尔维亚-克罗地亚文刚果斯瓦希里文简体中文繁体中文"
 
 var zhLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -26068,18 +26076,18 @@ var zhLangIdx = []uint16{ // 613 elements
 	0x15c1, 0x15c1, 0x15c1, 0x15cd, 0x15d6, 0x15e2, 0x15eb, 0x15f7,
 	0x1600, 0x160c, 0x160c, 0x1618, 0x1627, 0x1627, 0x1636, 0x1648,
 	0x1657, 0x1657, 0x1663, 0x1663, 0x166f, 0x166f, 0x167b, 0x1687,
-	0x1693, 0x169c, 0x16ae, 0x16c0, 0x16cf, 0x16db, 0x16e4, 0x16ed,
-	0x16ed, 0x16f9, 0x16f9, 0x16f9, 0x1705, 0x1705, 0x170e, 0x171a,
-	0x1726, 0x172f, 0x1738, 0x1747, 0x174d, 0x175c, 0x175c, 0x1765,
+	0x1693, 0x169c, 0x16ae, 0x16c0, 0x16cf, 0x16db, 0x16e7, 0x16f0,
+	0x16f0, 0x16fc, 0x16fc, 0x16fc, 0x1708, 0x1708, 0x1711, 0x171d,
+	0x1729, 0x1732, 0x173b, 0x174a, 0x1750, 0x175f, 0x175f, 0x1768,
 	// Entry 240 - 27F
-	0x176e, 0x1777, 0x1780, 0x178c, 0x178c, 0x1792, 0x17a1, 0x17b0,
-	0x17b0, 0x17bc, 0x17da, 0x17e3, 0x17f2, 0x17fb, 0x1813, 0x1825,
-	0x1834, 0x1846, 0x1846, 0x1846, 0x1846, 0x1846, 0x185e, 0x1870,
-	0x1885, 0x1885, 0x1885, 0x1885, 0x1894, 0x18a0, 0x18b2, 0x18c4,
-	0x18d3, 0x18ef, 0x1904, 0x1910, 0x191c,
+	0x1771, 0x177a, 0x1783, 0x178f, 0x178f, 0x1795, 0x17a4, 0x17b3,
+	0x17b3, 0x17bf, 0x17dd, 0x17e6, 0x17f5, 0x17fe, 0x1816, 0x1828,
+	0x1837, 0x1849, 0x1849, 0x1849, 0x1849, 0x1849, 0x1861, 0x1873,
+	0x1888, 0x1888, 0x1888, 0x1888, 0x1897, 0x18a3, 0x18b5, 0x18c7,
+	0x18d6, 0x18f2, 0x1907, 0x1913, 0x191f,
 } // Size: 1250 bytes
 
-const zhHantLangStr string = "" + // Size: 7573 bytes
+const zhHantLangStr string = "" + // Size: 7576 bytes
 	"阿法文阿布哈茲文阿維斯塔文南非荷蘭文阿坎文阿姆哈拉文阿拉貢文阿拉伯文阿薩姆文阿瓦爾文艾馬拉文亞塞拜然文巴什喀爾文白俄羅斯文保加利亞文比斯拉馬文班" +
 	"巴拉文孟加拉文藏文布列塔尼文波士尼亞文加泰蘭文車臣文查莫洛文科西嘉文克里文捷克文宗教斯拉夫文楚瓦什文威爾斯文丹麥文德文迪維西文宗卡文埃維文希" +
 	"臘文英文世界文西班牙文愛沙尼亞文巴斯克文波斯文富拉文芬蘭文斐濟文法羅文法文西弗里西亞文愛爾蘭文蘇格蘭蓋爾文加利西亞文瓜拉尼文古吉拉特文曼島文" +
@@ -26113,10 +26121,10 @@ const zhHantLangStr string = "" + // Size: 7573 bytes
 	"東桑海文古愛爾蘭文薩莫吉希亞文希爾哈文撣文阿拉伯文（查德）希達摩文下西利西亞文塞拉亞文南薩米文魯勒薩米文伊納里薩米文斯科特薩米文索尼基文索格" +
 	"底亞納文蘇拉南東墎文塞雷爾文薩霍文沙特菲士蘭文蘇庫馬文蘇蘇文蘇美文葛摩文古敘利亞文敘利亞文西利西亞文圖盧文提姆文特索文泰雷諾文泰頓文蒂格雷文" +
 	"提夫文托克勞文查庫爾文克林貢文特林基特文塔里什文塔馬奇克文東加文（尼亞薩）托比辛文圖羅尤文太魯閣文特薩克尼恩文欽西安文穆斯林塔特文圖姆布卡文" +
-	"吐瓦魯文北桑海文圖瓦文中阿特拉斯塔馬塞特文烏德穆爾特文烏加列文姆本杜文根語言瓦伊文威尼斯文維普森文西佛蘭德文美茵-法蘭克尼亞文沃提克文佛羅文" +
-	"溫舊文瓦爾瑟文瓦拉莫文瓦瑞文瓦紹文沃皮瑞文吳語卡爾梅克文明格列爾文索加文瑤文雅浦文洋卞文耶姆巴文奈恩加圖文粵語薩波特克文布列斯符號西蘭文澤納" +
-	"加文標準摩洛哥塔馬塞特文祖尼文無語言內容扎扎文現代標準阿拉伯文高地德文（瑞士）低地薩克遜文佛蘭芒文摩爾多瓦文塞爾維亞克羅埃西亞文史瓦希里文（" +
-	"剛果）簡體中文繁體中文"
+	"吐瓦魯文北桑海文圖瓦文中阿特拉斯塔馬塞特文烏德穆爾特文烏加列文姆本杜文未知語言瓦伊文威尼斯文維普森文西佛蘭德文美茵-法蘭克尼亞文沃提克文佛羅" +
+	"文溫舊文瓦爾瑟文瓦拉莫文瓦瑞文瓦紹文沃皮瑞文吳語卡爾梅克文明格列爾文索加文瑤文雅浦文洋卞文耶姆巴文奈恩加圖文粵語薩波特克文布列斯符號西蘭文澤" +
+	"納加文標準摩洛哥塔馬塞特文祖尼文無語言內容扎扎文現代標準阿拉伯文高地德文（瑞士）低地薩克遜文佛蘭芒文摩爾多瓦文塞爾維亞克羅埃西亞文史瓦希里文" +
+	"（剛果）簡體中文繁體中文"
 
 var zhHantLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -26197,18 +26205,18 @@ var zhHantLangIdx = []uint16{ // 613 elements
 	0x19e3, 0x19f2, 0x19fb, 0x1a04, 0x1a0d, 0x1a19, 0x1a22, 0x1a2e,
 	0x1a37, 0x1a43, 0x1a4f, 0x1a5b, 0x1a6a, 0x1a76, 0x1a85, 0x1a9d,
 	0x1aa9, 0x1ab5, 0x1ac1, 0x1ad3, 0x1adf, 0x1af1, 0x1b00, 0x1b0c,
-	0x1b18, 0x1b21, 0x1b3f, 0x1b51, 0x1b5d, 0x1b69, 0x1b72, 0x1b7b,
-	0x1b87, 0x1b93, 0x1ba2, 0x1bbb, 0x1bc7, 0x1bd0, 0x1bd9, 0x1be5,
-	0x1bf1, 0x1bfa, 0x1c03, 0x1c0f, 0x1c15, 0x1c24, 0x1c33, 0x1c3c,
+	0x1b18, 0x1b21, 0x1b3f, 0x1b51, 0x1b5d, 0x1b69, 0x1b75, 0x1b7e,
+	0x1b8a, 0x1b96, 0x1ba5, 0x1bbe, 0x1bca, 0x1bd3, 0x1bdc, 0x1be8,
+	0x1bf4, 0x1bfd, 0x1c06, 0x1c12, 0x1c18, 0x1c27, 0x1c36, 0x1c3f,
 	// Entry 240 - 27F
-	0x1c42, 0x1c4b, 0x1c54, 0x1c60, 0x1c6f, 0x1c75, 0x1c84, 0x1c93,
-	0x1c9c, 0x1ca8, 0x1cc6, 0x1ccf, 0x1cde, 0x1ce7, 0x1cff, 0x1cff,
-	0x1cff, 0x1d17, 0x1d17, 0x1d17, 0x1d17, 0x1d17, 0x1d17, 0x1d17,
-	0x1d17, 0x1d17, 0x1d17, 0x1d17, 0x1d29, 0x1d35, 0x1d35, 0x1d35,
-	0x1d44, 0x1d62, 0x1d7d, 0x1d89, 0x1d95,
+	0x1c45, 0x1c4e, 0x1c57, 0x1c63, 0x1c72, 0x1c78, 0x1c87, 0x1c96,
+	0x1c9f, 0x1cab, 0x1cc9, 0x1cd2, 0x1ce1, 0x1cea, 0x1d02, 0x1d02,
+	0x1d02, 0x1d1a, 0x1d1a, 0x1d1a, 0x1d1a, 0x1d1a, 0x1d1a, 0x1d1a,
+	0x1d1a, 0x1d1a, 0x1d1a, 0x1d1a, 0x1d2c, 0x1d38, 0x1d38, 0x1d38,
+	0x1d47, 0x1d65, 0x1d80, 0x1d8c, 0x1d98,
 } // Size: 1250 bytes
 
-const zuLangStr string = "" + // Size: 4670 bytes
+const zuLangStr string = "" + // Size: 4680 bytes
 	"isi-Afarisi-Abkhaziani-Afrikaansisi-Akanisi-Amharicisi-Aragoneseisi-Arab" +
 	"icisi-Assameseisi-Avaricisi-Aymaraisi-Azerbaijaniisi-Bashkirisi-Belarusi" +
 	"anisi-Bulgarii-Bislamaisi-Bambaraisi-Bengaliisi-Tibetanisi-Bretonisi-Bos" +
@@ -26265,15 +26273,15 @@ const zuLangStr string = "" + // Size: 4670 bytes
 	"ri Samiisi-Skolt Samii-Soninkei-Sranan Tongoi-Sahoi-Sukumaisi-Comoriani-" +
 	"Syriacisi-Timneisi-Tesoisi-Tetumisi-Tigreisi-Klingonisi-Tok Pisinisi-Tar" +
 	"okoisi-Tumbukaisi-Tuvaluisi-Tasawaqisi-Tuvinianisi-Central Atlas Tamazig" +
-	"htisi-Udmurtisi-Umbundui-Rootisi-VaiisiVunjoisi-Walserisi-Wolayttaisi-Wa" +
-	"rayisi-Warlpiriisi-Wu Chineseisi-Kalmykisi-Sogaisi-Yangbenisi-Yembaisi-C" +
-	"antoneseisi-Moroccan Tamazight esivamileisi-Zuniakukho okuqukethwe kolim" +
-	"iisi-Zazaisi-Arabic esivamile sesimanjeisi-Austrian Germani-Swiss High G" +
-	"ermanisi-Austrillian Englishi-Canadian Englishi-British Englishi-America" +
-	"n Englishisi-Latin American Spanishi-European Spanishi-Mexican Spanishi-" +
-	"Canadian Frenchi-Swiss Frenchisi-Low Saxonisi-Flemishisi-Brazillian Port" +
-	"ugueseisi-European Portugueseisi-Moldavianisi-Serbo-Croatianisi-Congo Sw" +
-	"ahiliisi-Chinese (esenziwe-lula)isi-Chinese (Okosiko)"
+	"htisi-Udmurtisi-Umbunduulimi olungaziwaisi-VaiisiVunjoisi-Walserisi-Wola" +
+	"yttaisi-Warayisi-Warlpiriisi-Wu Chineseisi-Kalmykisi-Sogaisi-Yangbenisi-" +
+	"Yembaisi-Cantoneseisi-Moroccan Tamazight esivamileisi-Zuniakukho okuquke" +
+	"thwe kolimiisi-Zazaisi-Arabic esivamile sesimanjeisi-Austrian Germani-Sw" +
+	"iss High Germanisi-Austrillian Englishi-Canadian Englishi-British Englis" +
+	"hi-American Englishisi-Latin American Spanishi-European Spanishi-Mexican" +
+	" Spanishi-Canadian Frenchi-Swiss Frenchisi-Low Saxonisi-Flemishisi-Brazi" +
+	"llian Portugueseisi-European Portugueseisi-Moldavianisi-Serbo-Croatianis" +
+	"i-Congo Swahiliisi-Chinese (esenziwe-lula)isi-Chinese (Okosiko)"
 
 var zuLangIdx = []uint16{ // 613 elements
 	// Entry 0 - 3F
@@ -26354,18 +26362,18 @@ var zuLangIdx = []uint16{ // 613 elements
 	0x0f3f, 0x0f3f, 0x0f3f, 0x0f48, 0x0f50, 0x0f50, 0x0f59, 0x0f62,
 	0x0f62, 0x0f62, 0x0f62, 0x0f6d, 0x0f6d, 0x0f6d, 0x0f6d, 0x0f6d,
 	0x0f7a, 0x0f7a, 0x0f84, 0x0f84, 0x0f84, 0x0f84, 0x0f8f, 0x0f99,
-	0x0fa4, 0x0fb0, 0x0fcb, 0x0fd5, 0x0fd5, 0x0fe0, 0x0fe6, 0x0fed,
-	0x0fed, 0x0fed, 0x0fed, 0x0fed, 0x0fed, 0x0fed, 0x0ff5, 0x0fff,
-	0x100b, 0x1014, 0x1014, 0x1020, 0x102e, 0x1038, 0x1038, 0x1040,
+	0x0fa4, 0x0fb0, 0x0fcb, 0x0fd5, 0x0fd5, 0x0fe0, 0x0ff0, 0x0ff7,
+	0x0ff7, 0x0ff7, 0x0ff7, 0x0ff7, 0x0ff7, 0x0ff7, 0x0fff, 0x1009,
+	0x1015, 0x101e, 0x101e, 0x102a, 0x1038, 0x1042, 0x1042, 0x104a,
 	// Entry 240 - 27F
-	0x1040, 0x1040, 0x104b, 0x1054, 0x1054, 0x1061, 0x1061, 0x1061,
-	0x1061, 0x1061, 0x1081, 0x1089, 0x10a2, 0x10aa, 0x10c8, 0x10c8,
-	0x10db, 0x10ee, 0x1105, 0x1117, 0x1128, 0x113a, 0x1154, 0x1166,
-	0x1177, 0x1177, 0x1188, 0x1196, 0x11a3, 0x11ae, 0x11c7, 0x11de,
-	0x11eb, 0x11fd, 0x120e, 0x1229, 0x123e,
+	0x104a, 0x104a, 0x1055, 0x105e, 0x105e, 0x106b, 0x106b, 0x106b,
+	0x106b, 0x106b, 0x108b, 0x1093, 0x10ac, 0x10b4, 0x10d2, 0x10d2,
+	0x10e5, 0x10f8, 0x110f, 0x1121, 0x1132, 0x1144, 0x115e, 0x1170,
+	0x1181, 0x1181, 0x1192, 0x11a0, 0x11ad, 0x11b8, 0x11d1, 0x11e8,
+	0x11f5, 0x1207, 0x1218, 0x1233, 0x1248,
 } // Size: 1250 bytes
 
-// Total size for lang: 1022818 bytes (1022 KB)
+// Total size for lang: 1024178 bytes (1024 KB)
 
 // Number of keys: 175
 var (
@@ -50333,4 +50341,4 @@ var selfHeaders = [1]header{
 
 // Total size for self: 4040 bytes (4 KB)
 
-// Total table size 2127659 bytes (2077KiB); checksum: E92D966F
+// Total table size 2129019 bytes (2079KiB); checksum: C21E1902

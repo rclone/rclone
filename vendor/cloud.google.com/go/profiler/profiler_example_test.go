@@ -19,13 +19,7 @@ import (
 )
 
 func ExampleStart() {
-	// The caller should provide the target string in the config so Cloud
-	// Profiler knows how to group the profile data. Otherwise the target
-	// string is set to "unknown".
-	//
-	// Optionally DebugLogging can be set in the config to enable detailed
-	// logging from profiler.
-	err := profiler.Start(&profiler.Config{Target: "my-target"})
+	err := profiler.Start(profiler.Config{Service: "my-service", ServiceVersion: "v1"})
 	if err != nil {
 		//TODO: Handle error.
 	}

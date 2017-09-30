@@ -8,12 +8,14 @@
     "AdminCreateUser": "<p>Creates a new user in the specified user pool and sends a welcome message via email or phone (SMS). This message is based on a template that you configured in your call to <a href=\"API_CreateUserPool.html\">CreateUserPool</a> or <a href=\"API_UpdateUserPool.html\">UpdateUserPool</a>. This template includes your custom sign-up instructions and placeholders for user name and temporary password.</p> <p>Requires developer credentials.</p>",
     "AdminDeleteUser": "<p>Deletes a user as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminDeleteUserAttributes": "<p>Deletes the user attributes in a user pool as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
+    "AdminDisableProviderForUser": "<p>Disables the user from signing in with the specified external (SAML or social) identity provider. If the user to disable is a Cognito User Pools native username + password user, they are not permitted to use their password to sign-in. If the user to disable is a linked external IdP user, any link between that user and an existing user is removed. The next time the external user (no longer attached to the previously linked <code>DestinationUser</code>) signs in, they must create a new user account. See <a href=\"API_AdminLinkProviderForUser.html\">AdminLinkProviderForUser</a>.</p> <p>This action is enabled only for admin access and requires developer credentials.</p> <p>The <code>ProviderName</code> must match the value specified when creating an IdP for the pool. </p> <p>To disable a native username + password user, the <code>ProviderName</code> value must be <code>Cognito</code> and the <code>ProviderAttributeName</code> must be <code>Cognito_Subject</code>, with the <code>ProviderAttributeValue</code> being the name that is used in the user pool for the user.</p> <p>The <code>ProviderAttributeName</code> must always be <code>Cognito_Subject</code> for social identity providers. The <code>ProviderAttributeValue</code> must always be the exact subject that was used when the user was originally linked as a source user.</p> <p>For de-linking a SAML identity, there are two scenarios. If the linked identity has not yet been used to sign-in, the <code>ProviderAttributeName</code> and <code>ProviderAttributeValue</code> must be the same values that were used for the <code>SourceUser</code> when the identities were originally linked in the <a href=\"API_AdminLinkProviderForUser.html\">AdminLinkProviderForUser</a> call. (If the linking was done with <code>ProviderAttributeName</code> set to <code>Cognito_Subject</code>, the same applies here). However, if the user has already signed in, the <code>ProviderAttributeName</code> must be <code>Cognito_Subject</code> and <code>ProviderAttributeValue</code> must be the subject of the SAML assertion.</p>",
     "AdminDisableUser": "<p>Disables the specified user as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminEnableUser": "<p>Enables the specified user as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminForgetDevice": "<p>Forgets the device, as an administrator.</p> <p>Requires developer credentials.</p>",
     "AdminGetDevice": "<p>Gets the device, as an administrator.</p> <p>Requires developer credentials.</p>",
     "AdminGetUser": "<p>Gets the specified user by user name in a user pool as an administrator. Works on any user.</p> <p>Requires developer credentials.</p>",
     "AdminInitiateAuth": "<p>Initiates the authentication flow, as an administrator.</p> <p>Requires developer credentials.</p>",
+    "AdminLinkProviderForUser": "<p>Links an existing user account in a user pool (<code>DestinationUser</code>) to an identity from an external identity provider (<code>SourceUser</code>) based on a specified attribute name and value from the external identity provider. This allows you to create a link from the existing user account to an external federated user identity that has not yet been used to sign in, so that the federated user identity can be used to sign in as the existing user account. </p> <p> For example, if there is an existing user with a username and password, this API links that user to a federated user identity, so that when the federated user identity is used, the user signs in as the existing user account. </p> <important> <p>Because this API allows a user with an external federated identity to sign in as an existing user in the user pool, it is critical that it only be used with external identity providers and provider attributes that have been trusted by the application owner.</p> </important> <p>See also <a href=\"API_AdminDisableProviderForUser.html\">AdminDisableProviderForUser</a>.</p> <p>This action is enabled only for admin access and requires developer credentials.</p>",
     "AdminListDevices": "<p>Lists devices, as an administrator.</p> <p>Requires developer credentials.</p>",
     "AdminListGroupsForUser": "<p>Lists the groups that the user belongs to.</p> <p>Requires developer credentials.</p>",
     "AdminRemoveUserFromGroup": "<p>Removes the specified user from the specified group.</p> <p>Requires developer credentials.</p>",
@@ -29,18 +31,21 @@
     "ConfirmSignUp": "<p>Confirms registration of a user and handles the existing alias from a previous user.</p>",
     "CreateGroup": "<p>Creates a new group in the specified user pool.</p> <p>Requires developer credentials.</p>",
     "CreateIdentityProvider": "<p>Creates an identity provider for a user pool.</p>",
+    "CreateResourceServer": "<p>Creates a new OAuth2.0 resource server and defines custom scopes in it.</p>",
     "CreateUserImportJob": "<p>Creates the user import job.</p>",
     "CreateUserPool": "<p>Creates a new Amazon Cognito user pool and sets the password policy for the pool.</p>",
     "CreateUserPoolClient": "<p>Creates the user pool client.</p>",
     "CreateUserPoolDomain": "<p>Creates a new domain for a user pool.</p>",
     "DeleteGroup": "<p>Deletes a group. Currently only groups with no members can be deleted.</p> <p>Requires developer credentials.</p>",
     "DeleteIdentityProvider": "<p>Deletes an identity provider for a user pool.</p>",
-    "DeleteUser": "<p>Allows a user to delete one's self.</p>",
+    "DeleteResourceServer": "<p>Deletes a resource server.</p>",
+    "DeleteUser": "<p>Allows a user to delete himself or herself.</p>",
     "DeleteUserAttributes": "<p>Deletes the attributes for a user.</p>",
     "DeleteUserPool": "<p>Deletes the specified Amazon Cognito user pool.</p>",
     "DeleteUserPoolClient": "<p>Allows the developer to delete the user pool client.</p>",
     "DeleteUserPoolDomain": "<p>Deletes a domain for a user pool.</p>",
     "DescribeIdentityProvider": "<p>Gets information about a specific identity provider.</p>",
+    "DescribeResourceServer": "<p>Describes a resource server.</p>",
     "DescribeUserImportJob": "<p>Describes the user import job.</p>",
     "DescribeUserPool": "<p>Returns the configuration information and metadata of the specified user pool.</p>",
     "DescribeUserPoolClient": "<p>Client method for returning the configuration information and metadata of the specified user pool client.</p>",
@@ -51,6 +56,7 @@
     "GetDevice": "<p>Gets the device.</p>",
     "GetGroup": "<p>Gets a group.</p> <p>Requires developer credentials.</p>",
     "GetIdentityProviderByIdentifier": "<p>Gets the specified identity provider.</p>",
+    "GetUICustomization": "<p>Gets the UI Customization information for a particular app client's app UI, if there is something set. If nothing is set for the particular client, but there is an existing pool level customization (app <code>clientId</code> will be <code>ALL</code>), then that is returned. If nothing is present, then an empty shape is returned.</p>",
     "GetUser": "<p>Gets the user attributes and metadata for a user.</p>",
     "GetUserAttributeVerificationCode": "<p>Gets the user attribute verification code for the specified attribute name.</p>",
     "GlobalSignOut": "<p>Signs out users from all devices.</p>",
@@ -58,6 +64,7 @@
     "ListDevices": "<p>Lists the devices.</p>",
     "ListGroups": "<p>Lists the groups associated with a user pool.</p> <p>Requires developer credentials.</p>",
     "ListIdentityProviders": "<p>Lists information about all identity providers for a user pool.</p>",
+    "ListResourceServers": "<p>Lists the resource servers for a user pool.</p>",
     "ListUserImportJobs": "<p>Lists the user import jobs.</p>",
     "ListUserPoolClients": "<p>Lists the clients that have been created for the specified user pool.</p>",
     "ListUserPools": "<p>Lists the user pools associated with an AWS account.</p>",
@@ -65,6 +72,7 @@
     "ListUsersInGroup": "<p>Lists the users in the specified group.</p> <p>Requires developer credentials.</p>",
     "ResendConfirmationCode": "<p>Resends the confirmation (for confirmation of registration) to a specific user in the user pool.</p>",
     "RespondToAuthChallenge": "<p>Responds to the authentication challenge.</p>",
+    "SetUICustomization": "<p>Sets the UI customization information for a user pool's built-in app UI.</p> <p>You can specify app UI customization settings for a single client (with a specific <code>clientId</code>) or for all clients (by setting the <code>clientId</code> to <code>ALL</code>). If you specify <code>ALL</code>, the default configuration will be used for every client that has no UI customization set previously. If you specify UI customization settings for a particular client, it will no longer fall back to the <code>ALL</code> configuration. </p> <note> <p>To use this API, your user pool must have a domain associated with it. Otherwise, there is no place to host the app's pages, and the service will throw an error.</p> </note>",
     "SetUserSettings": "<p>Sets the user settings like multi-factor authentication (MFA). If MFA is to be removed for a particular attribute pass the attribute with code delivery as null. If null list is passed, all MFA options are removed.</p>",
     "SignUp": "<p>Registers the user in the specified user pool and creates a user name, password, and user attributes.</p>",
     "StartUserImportJob": "<p>Starts the user import.</p>",
@@ -72,6 +80,7 @@
     "UpdateDeviceStatus": "<p>Updates the device status.</p>",
     "UpdateGroup": "<p>Updates the specified group with the specified attributes.</p> <p>Requires developer credentials.</p>",
     "UpdateIdentityProvider": "<p>Updates identity provider information for a user pool.</p>",
+    "UpdateResourceServer": "<p>Updates the name and scopes of resource server. All other fields are read-only.</p>",
     "UpdateUserAttributes": "<p>Allows a user to update a specific attribute (one at a time).</p>",
     "UpdateUserPool": "<p>Updates the specified user pool with the specified attributes.</p>",
     "UpdateUserPoolClient": "<p>Allows the developer to update the specified user pool client and password policy.</p>",
@@ -148,6 +157,16 @@
       "refs": {
       }
     },
+    "AdminDisableProviderForUserRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AdminDisableProviderForUserResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "AdminDisableUserRequest": {
       "base": "<p>Represents the request to disable any user as an administrator.</p>",
       "refs": {
@@ -200,6 +219,16 @@
     },
     "AdminInitiateAuthResponse": {
       "base": "<p>Initiates the authentication response, as an administrator.</p>",
+      "refs": {
+      }
+    },
+    "AdminLinkProviderForUserRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "AdminLinkProviderForUserResponse": {
+      "base": null,
       "refs": {
       }
     },
@@ -348,6 +377,12 @@
         "UserType$Attributes": "<p>A container with information about the user type attributes.</p>"
       }
     },
+    "AttributeMappingKeyType": {
+      "base": null,
+      "refs": {
+        "AttributeMappingType$key": null
+      }
+    },
     "AttributeMappingType": {
       "base": null,
       "refs": {
@@ -432,6 +467,19 @@
         "UserType$Enabled": "<p>Specifies whether the user is enabled.</p>"
       }
     },
+    "CSSType": {
+      "base": null,
+      "refs": {
+        "SetUICustomizationRequest$CSS": "<p>The CSS values in the UI customization.</p>",
+        "UICustomizationType$CSS": "<p>The CSS values in the UI customization.</p>"
+      }
+    },
+    "CSSVersionType": {
+      "base": null,
+      "refs": {
+        "UICustomizationType$CSSVersion": "<p>The CSS version number.</p>"
+      }
+    },
     "CallbackURLsListType": {
       "base": null,
       "refs": {
@@ -482,15 +530,18 @@
       "refs": {
         "AdminInitiateAuthRequest$ClientId": "<p>The app client ID.</p>",
         "AdminRespondToAuthChallengeRequest$ClientId": "<p>The app client ID.</p>",
-        "ConfirmForgotPasswordRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
-        "ConfirmSignUpRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
-        "DeleteUserPoolClientRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
-        "DescribeUserPoolClientRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
+        "ConfirmForgotPasswordRequest$ClientId": "<p>The app client ID of the app associated with the user pool.</p>",
+        "ConfirmSignUpRequest$ClientId": "<p>The ID of the app client associated with the user pool.</p>",
+        "DeleteUserPoolClientRequest$ClientId": "<p>The app client ID of the app associated with the user pool.</p>",
+        "DescribeUserPoolClientRequest$ClientId": "<p>The app client ID of the app associated with the user pool.</p>",
         "ForgotPasswordRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
+        "GetUICustomizationRequest$ClientId": "<p>The client ID for the client app.</p>",
         "InitiateAuthRequest$ClientId": "<p>The app client ID.</p>",
         "ResendConfirmationCodeRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
         "RespondToAuthChallengeRequest$ClientId": "<p>The app client ID.</p>",
+        "SetUICustomizationRequest$ClientId": "<p>The client ID for the client app.</p>",
         "SignUpRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
+        "UICustomizationType$ClientId": "<p>The client ID for the client app.</p>",
         "UpdateUserPoolClientRequest$ClientId": "<p>The ID of the client associated with the user pool.</p>",
         "UserPoolClientDescription$ClientId": "<p>The ID of the client associated with the user pool.</p>",
         "UserPoolClientType$ClientId": "<p>The ID of the client associated with the user pool.</p>"
@@ -630,6 +681,16 @@
       "refs": {
       }
     },
+    "CreateResourceServerRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateResourceServerResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "CreateUserImportJobRequest": {
       "base": "<p>Represents the request to create the user import job.</p>",
       "refs": {
@@ -673,7 +734,6 @@
     "CustomAttributeNameType": {
       "base": null,
       "refs": {
-        "AttributeMappingType$key": null,
         "SchemaAttributeType$Name": "<p>A schema attribute of the name type.</p>"
       }
     },
@@ -697,6 +757,8 @@
         "IdentityProviderType$CreationDate": "<p>The date the identity provider was created.</p>",
         "ProviderDescription$LastModifiedDate": "<p>The date the provider was last modified.</p>",
         "ProviderDescription$CreationDate": "<p>The date the provider was added to the user pool.</p>",
+        "UICustomizationType$LastModifiedDate": "<p>The last-modified date for the UI customization.</p>",
+        "UICustomizationType$CreationDate": "<p>The creation date for the UI customization.</p>",
         "UserImportJobType$CreationDate": "<p>The date the user import job was created.</p>",
         "UserImportJobType$StartDate": "<p>The date when the user import job was started.</p>",
         "UserImportJobType$CompletionDate": "<p>The date when the user import job was completed.</p>",
@@ -710,12 +772,23 @@
         "UserType$UserLastModifiedDate": "<p>The last modified date of the user.</p>"
       }
     },
+    "DefaultEmailOptionType": {
+      "base": null,
+      "refs": {
+        "VerificationMessageTemplateType$DefaultEmailOption": "<p>The default email option.</p>"
+      }
+    },
     "DeleteGroupRequest": {
       "base": null,
       "refs": {
       }
     },
     "DeleteIdentityProviderRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteResourceServerRequest": {
       "base": null,
       "refs": {
       }
@@ -775,6 +848,16 @@
       }
     },
     "DescribeIdentityProviderResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeResourceServerRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeResourceServerResponse": {
       "base": null,
       "refs": {
       }
@@ -929,13 +1012,26 @@
         "UserPoolType$EmailConfiguration": "<p>The email configuration.</p>"
       }
     },
+    "EmailVerificationMessageByLinkType": {
+      "base": null,
+      "refs": {
+        "VerificationMessageTemplateType$EmailMessageByLink": "<p>The email message template for sending a confirmation link to the user.</p>"
+      }
+    },
     "EmailVerificationMessageType": {
       "base": null,
       "refs": {
         "CreateUserPoolRequest$EmailVerificationMessage": "<p>A string representing the email verification message.</p>",
         "MessageTemplateType$EmailMessage": "<p>The message template for email messages.</p>",
         "UpdateUserPoolRequest$EmailVerificationMessage": "<p>The contents of the email verification message.</p>",
-        "UserPoolType$EmailVerificationMessage": "<p>The contents of the email verification message.</p>"
+        "UserPoolType$EmailVerificationMessage": "<p>The contents of the email verification message.</p>",
+        "VerificationMessageTemplateType$EmailMessage": "<p>The email message template.</p>"
+      }
+    },
+    "EmailVerificationSubjectByLinkType": {
+      "base": null,
+      "refs": {
+        "VerificationMessageTemplateType$EmailSubjectByLink": "<p>The subject line for the email message template for sending a confirmation link to the user.</p>"
       }
     },
     "EmailVerificationSubjectType": {
@@ -944,7 +1040,8 @@
         "CreateUserPoolRequest$EmailVerificationSubject": "<p>A string representing the email verification subject.</p>",
         "MessageTemplateType$EmailSubject": "<p>The subject line for email messages.</p>",
         "UpdateUserPoolRequest$EmailVerificationSubject": "<p>The subject of the email verification message.</p>",
-        "UserPoolType$EmailVerificationSubject": "<p>The subject of the email verification message.</p>"
+        "UserPoolType$EmailVerificationSubject": "<p>The subject of the email verification message.</p>",
+        "VerificationMessageTemplateType$EmailSubject": "<p>The subject line for the email message template.</p>"
       }
     },
     "ExpiredCodeException": {
@@ -1030,6 +1127,16 @@
       }
     },
     "GetIdentityProviderByIdentifierResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetUICustomizationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetUICustomizationResponse": {
       "base": null,
       "refs": {
       }
@@ -1128,6 +1235,18 @@
         "CreateIdentityProviderRequest$IdpIdentifiers": "<p>A list of identity provider identifiers.</p>",
         "IdentityProviderType$IdpIdentifiers": "<p>A list of identity provider identifiers.</p>",
         "UpdateIdentityProviderRequest$IdpIdentifiers": "<p>A list of identity provider identifiers.</p>"
+      }
+    },
+    "ImageFileType": {
+      "base": null,
+      "refs": {
+        "SetUICustomizationRequest$ImageFile": "<p>The uploaded logo image for the UI customization.</p>"
+      }
+    },
+    "ImageUrlType": {
+      "base": null,
+      "refs": {
+        "UICustomizationType$ImageUrl": "<p>The logo image for the UI customization.</p>"
       }
     },
     "InitiateAuthRequest": {
@@ -1248,6 +1367,22 @@
         "ListIdentityProvidersRequest$MaxResults": "<p>The maximum number of identity providers to return.</p>"
       }
     },
+    "ListResourceServersLimitType": {
+      "base": null,
+      "refs": {
+        "ListResourceServersRequest$MaxResults": "<p>The maximum number of resource servers to return.</p>"
+      }
+    },
+    "ListResourceServersRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListResourceServersResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "ListUserImportJobsRequest": {
       "base": "<p>Represents the request to list the user import jobs.</p>",
       "refs": {
@@ -1302,8 +1437,8 @@
       "base": null,
       "refs": {
         "CreateUserPoolClientRequest$LogoutURLs": "<p>A list of allowed logout URLs for the identity providers.</p>",
-        "UpdateUserPoolClientRequest$LogoutURLs": "<p>A list ofallowed logout URLs for the identity providers.</p>",
-        "UserPoolClientType$LogoutURLs": "<p>A list ofallowed logout URLs for the identity providers.</p>"
+        "UpdateUserPoolClientRequest$LogoutURLs": "<p>A list of allowed logout URLs for the identity providers.</p>",
+        "UserPoolClientType$LogoutURLs": "<p>A list of allowed logout URLs for the identity providers.</p>"
       }
     },
     "LongType": {
@@ -1435,6 +1570,8 @@
       "refs": {
         "ListIdentityProvidersRequest$NextToken": "<p>A pagination token.</p>",
         "ListIdentityProvidersResponse$NextToken": "<p>A pagination token.</p>",
+        "ListResourceServersRequest$NextToken": "<p>A pagination token.</p>",
+        "ListResourceServersResponse$NextToken": "<p>A pagination token.</p>",
         "ListUserImportJobsRequest$PaginationToken": "<p>An identifier that was returned from the previous call to <code>ListUserImportJobs</code>, which can be used to return the next set of import jobs in the list.</p>",
         "ListUserImportJobsResponse$PaginationToken": "<p>An identifier that can be used to return the next set of user import jobs in the list.</p>",
         "ListUserPoolsRequest$NextToken": "<p>An identifier that was returned from the previous call to this operation, which can be used to return the next set of items in the list.</p>",
@@ -1511,13 +1648,27 @@
     "ProviderNameType": {
       "base": null,
       "refs": {
-        "CreateIdentityProviderRequest$ProviderName": "<p>The identity provider name.</p>",
         "DeleteIdentityProviderRequest$ProviderName": "<p>The identity provider name.</p>",
         "DescribeIdentityProviderRequest$ProviderName": "<p>The identity provider name.</p>",
         "IdentityProviderType$ProviderName": "<p>The identity provider name.</p>",
         "ProviderDescription$ProviderName": "<p>The identity provider name.</p>",
+        "ProviderUserIdentifierType$ProviderName": "<p>The name of the provider, for example, Facebook, Google, or Login with Amazon.</p>",
         "SupportedIdentityProvidersListType$member": null,
         "UpdateIdentityProviderRequest$ProviderName": "<p>The identity provider name.</p>"
+      }
+    },
+    "ProviderNameTypeV1": {
+      "base": null,
+      "refs": {
+        "CreateIdentityProviderRequest$ProviderName": "<p>The identity provider name.</p>"
+      }
+    },
+    "ProviderUserIdentifierType": {
+      "base": "<p>A container for information about an identity provider for a user pool.</p>",
+      "refs": {
+        "AdminDisableProviderForUserRequest$User": "<p>The user to be disabled.</p>",
+        "AdminLinkProviderForUserRequest$DestinationUser": "<p>The existing user in the user pool to be linked to the external identity provider user account. Can be a native (Username + Password) Cognito User Pools user or a federated user (for example, a SAML or Facebook user). If the user doesn't exist, an exception is thrown. This is the user that is returned when the new user (with the linked identity provider attribute) signs in.</p> <p>The <code>ProviderAttributeValue</code> for the <code>DestinationUser</code> must match the username for the user in the user pool. The <code>ProviderAttributeName</code> will always be ignored.</p>",
+        "AdminLinkProviderForUserRequest$SourceUser": "<p>An external identity provider account for a user who does not currently exist yet in the user pool. This user must be a federated user (for example, a SAML or Facebook user), not another native user.</p> <p>If the <code>SourceUser</code> is a federated social identity provider user (Facebook, Google, or Login with Amazon), you must set the <code>ProviderAttributeName</code> to <code>Cognito_Subject</code>. For social identity providers, the <code>ProviderName</code> will be <code>Facebook</code>, <code>Google</code>, or <code>LoginWithAmazon</code>, and Cognito will automatically parse the Facebook, Google, and Login with Amazon tokens for <code>id</code>, <code>sub</code>, and <code>user_id</code>, respectively. The <code>ProviderAttributeValue</code> for the user must be the same value as the <code>id</code>, <code>sub</code>, or <code>user_id</code> value found in the social identity provider token.</p> <p/> <p>For SAML, the <code>ProviderAttributeName</code> can be any value that matches a claim in the SAML assertion. If you wish to link SAML users based on the subject of the SAML assertion, you should map the subject to a claim through the SAML identity provider and submit that claim name as the <code>ProviderAttributeName</code>. If you set <code>ProviderAttributeName</code> to <code>Cognito_Subject</code>, Cognito will automatically parse the default unique identifier found in the subject from the SAML token.</p>"
       }
     },
     "ProvidersListType": {
@@ -1574,6 +1725,65 @@
     "ResourceNotFoundException": {
       "base": "<p>This exception is thrown when the Amazon Cognito service cannot find the requested resource.</p>",
       "refs": {
+      }
+    },
+    "ResourceServerIdentifierType": {
+      "base": null,
+      "refs": {
+        "CreateResourceServerRequest$Identifier": "<p>A unique resource server identifier for the resource server. This could be an HTTPS endpoint where the resource server is located. For example, <code>https://my-weather-api.example.com</code>.</p>",
+        "DeleteResourceServerRequest$Identifier": "<p>The identifier for the resource server.</p>",
+        "DescribeResourceServerRequest$Identifier": "<p>The identifier for the resource server</p>",
+        "ResourceServerType$Identifier": "<p>The identifier for the resource server.</p>",
+        "UpdateResourceServerRequest$Identifier": "<p>The identifier for the resource server.</p>"
+      }
+    },
+    "ResourceServerNameType": {
+      "base": null,
+      "refs": {
+        "CreateResourceServerRequest$Name": "<p>A friendly name for the resource server.</p>",
+        "ResourceServerType$Name": "<p>The name of the resource server.</p>",
+        "UpdateResourceServerRequest$Name": "<p>The name of the resource server.</p>"
+      }
+    },
+    "ResourceServerScopeDescriptionType": {
+      "base": null,
+      "refs": {
+        "ResourceServerScopeType$ScopeDescription": "<p>A description of the scope.</p>"
+      }
+    },
+    "ResourceServerScopeListType": {
+      "base": null,
+      "refs": {
+        "CreateResourceServerRequest$Scopes": "<p>A list of scopes. Each scope is map, where the keys are <code>name</code> and <code>description</code>.</p>",
+        "ResourceServerType$Scopes": "<p>A list of scopes that are defined for the resource server.</p>",
+        "UpdateResourceServerRequest$Scopes": "<p>The scope values to be set for the resource server.</p>"
+      }
+    },
+    "ResourceServerScopeNameType": {
+      "base": null,
+      "refs": {
+        "ResourceServerScopeType$ScopeName": "<p>The name of the scope.</p>"
+      }
+    },
+    "ResourceServerScopeType": {
+      "base": "<p>A resource server scope.</p>",
+      "refs": {
+        "ResourceServerScopeListType$member": null
+      }
+    },
+    "ResourceServerType": {
+      "base": "<p>A container for information about a resource server for a user pool.</p>",
+      "refs": {
+        "CreateResourceServerResponse$ResourceServer": "<p>The newly created resource server.</p>",
+        "DescribeResourceServerResponse$ResourceServer": "<p>The resource server.</p>",
+        "ResourceServersListType$member": null,
+        "UpdateResourceServerResponse$ResourceServer": "<p>The resource server.</p>"
+      }
+    },
+    "ResourceServersListType": {
+      "base": null,
+      "refs": {
+        "ListResourceServersResponse$ResourceServers": "<p>The resource servers.</p>"
       }
     },
     "RespondToAuthChallengeRequest": {
@@ -1663,6 +1873,16 @@
         "RespondToAuthChallengeResponse$Session": "<p>The session which should be passed both ways in challenge-response calls to the service. If the <a href=\"API_InitiateAuth.html\">InitiateAuth</a> or <a href=\"API_RespondToAuthChallenge.html\">RespondToAuthChallenge</a> API call determines that the caller needs to go through another challenge, they return a session with other challenge parameters. This session should be passed as it is to the next <code>RespondToAuthChallenge</code> API call.</p>"
       }
     },
+    "SetUICustomizationRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "SetUICustomizationResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "SetUserSettingsRequest": {
       "base": "<p>Represents the request to set user settings.</p>",
       "refs": {
@@ -1700,7 +1920,8 @@
         "UpdateUserPoolRequest$SmsVerificationMessage": "<p>A container with information about the SMS verification message.</p>",
         "UpdateUserPoolRequest$SmsAuthenticationMessage": "<p>The contents of the SMS authentication message.</p>",
         "UserPoolType$SmsVerificationMessage": "<p>The contents of the SMS verification message.</p>",
-        "UserPoolType$SmsAuthenticationMessage": "<p>The contents of the SMS authentication message.</p>"
+        "UserPoolType$SmsAuthenticationMessage": "<p>The contents of the SMS authentication message.</p>",
+        "VerificationMessageTemplateType$SmsMessage": "<p>The SMS message template.</p>"
       }
     },
     "StartUserImportJobRequest": {
@@ -1739,6 +1960,8 @@
     "StringType": {
       "base": null,
       "refs": {
+        "AdminDisableProviderForUserRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
+        "AdminLinkProviderForUserRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "AttributeMappingType$value": null,
         "AuthParametersType$key": null,
         "AuthParametersType$value": null,
@@ -1758,6 +1981,8 @@
         "NumberAttributeConstraintsType$MaxValue": "<p>The maximum value of an attribute that is of the number data type.</p>",
         "ProviderDetailsType$key": null,
         "ProviderDetailsType$value": null,
+        "ProviderUserIdentifierType$ProviderAttributeName": "<p>The name of the provider attribute to link to, for example, <code>NameID</code>.</p>",
+        "ProviderUserIdentifierType$ProviderAttributeValue": "<p>The value of the provider attribute to link to, for example, <code>xxxxx_account</code>.</p>",
         "SignUpResponse$UserSub": "<p>The UUID of the authenticated user. This is not the same as <code>username</code>.</p>",
         "SmsConfigurationType$ExternalId": "<p>The external ID.</p>",
         "StringAttributeConstraintsType$MinLength": "<p>The minimum length of an attribute value of the string type.</p>",
@@ -1808,6 +2033,13 @@
       "refs": {
       }
     },
+    "UICustomizationType": {
+      "base": "<p>A container for the UI customization information for a user pool's built-in app UI.</p>",
+      "refs": {
+        "GetUICustomizationResponse$UICustomization": "<p>The UI customization information.</p>",
+        "SetUICustomizationResponse$UICustomization": "<p>The UI customization information.</p>"
+      }
+    },
     "UnexpectedLambdaException": {
       "base": "<p>This exception is thrown when the Amazon Cognito service encounters an unexpected exception with the AWS Lambda service.</p>",
       "refs": {
@@ -1849,6 +2081,16 @@
       }
     },
     "UpdateIdentityProviderResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateResourceServerRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateResourceServerResponse": {
       "base": null,
       "refs": {
       }
@@ -1960,7 +2202,7 @@
       }
     },
     "UserPoolClientType": {
-      "base": "<p>A user pool of the client type.</p>",
+      "base": "<p>Contains information about a user pool client.</p>",
       "refs": {
         "CreateUserPoolClientResponse$UserPoolClient": "<p>The user pool client that was just created.</p>",
         "DescribeUserPoolClientResponse$UserPoolClient": "<p>The user pool client from a server response to describe the user pool client.</p>",
@@ -1999,15 +2241,18 @@
         "AdminUserGlobalSignOutRequest$UserPoolId": "<p>The user pool ID.</p>",
         "CreateGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "CreateIdentityProviderRequest$UserPoolId": "<p>The user pool ID.</p>",
+        "CreateResourceServerRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "CreateUserImportJobRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
         "CreateUserPoolClientRequest$UserPoolId": "<p>The user pool ID for the user pool where you want to create a user pool client.</p>",
         "CreateUserPoolDomainRequest$UserPoolId": "<p>The user pool ID.</p>",
         "DeleteGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "DeleteIdentityProviderRequest$UserPoolId": "<p>The user pool ID.</p>",
+        "DeleteResourceServerRequest$UserPoolId": "<p>The user pool ID for the user pool that hosts the resource server.</p>",
         "DeleteUserPoolClientRequest$UserPoolId": "<p>The user pool ID for the user pool where you want to delete the client.</p>",
         "DeleteUserPoolDomainRequest$UserPoolId": "<p>The user pool ID.</p>",
         "DeleteUserPoolRequest$UserPoolId": "<p>The user pool ID for the user pool you want to delete.</p>",
         "DescribeIdentityProviderRequest$UserPoolId": "<p>The user pool ID.</p>",
+        "DescribeResourceServerRequest$UserPoolId": "<p>The user pool ID for the user pool that hosts the resource server.</p>",
         "DescribeUserImportJobRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
         "DescribeUserPoolClientRequest$UserPoolId": "<p>The user pool ID for the user pool you want to describe.</p>",
         "DescribeUserPoolRequest$UserPoolId": "<p>The user pool ID for the user pool you want to describe.</p>",
@@ -2016,18 +2261,24 @@
         "GetCSVHeaderResponse$UserPoolId": "<p>The user pool ID for the user pool that the users are to be imported into.</p>",
         "GetGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "GetIdentityProviderByIdentifierRequest$UserPoolId": "<p>The user pool ID.</p>",
+        "GetUICustomizationRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "GroupType$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "IdentityProviderType$UserPoolId": "<p>The user pool ID.</p>",
         "ListGroupsRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "ListIdentityProvidersRequest$UserPoolId": "<p>The user pool ID.</p>",
+        "ListResourceServersRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "ListUserImportJobsRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
         "ListUserPoolClientsRequest$UserPoolId": "<p>The user pool ID for the user pool where you want to list user pool clients.</p>",
         "ListUsersInGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "ListUsersRequest$UserPoolId": "<p>The user pool ID for the user pool on which the search should be performed.</p>",
+        "ResourceServerType$UserPoolId": "<p>The user pool ID for the user pool that hosts the resource server.</p>",
+        "SetUICustomizationRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "StartUserImportJobRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
         "StopUserImportJobRequest$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
+        "UICustomizationType$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "UpdateGroupRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "UpdateIdentityProviderRequest$UserPoolId": "<p>The user pool ID.</p>",
+        "UpdateResourceServerRequest$UserPoolId": "<p>The user pool ID for the user pool.</p>",
         "UpdateUserPoolClientRequest$UserPoolId": "<p>The user pool ID for the user pool where you want to update the user pool client.</p>",
         "UpdateUserPoolRequest$UserPoolId": "<p>The user pool ID for the user pool you want to update.</p>",
         "UserImportJobType$UserPoolId": "<p>The user pool ID for the user pool that the users are being imported into.</p>",
@@ -2097,7 +2348,7 @@
     "UserType": {
       "base": "<p>The user type.</p>",
       "refs": {
-        "AdminCreateUserResponse$User": "<p>The user returned in the request to create a new user.</p>",
+        "AdminCreateUserResponse$User": "<p>The newly created user.</p>",
         "UsersListType$member": null
       }
     },
@@ -2155,6 +2406,14 @@
       "refs": {
         "ListUsersInGroupResponse$Users": "<p>The users returned in the request to list users.</p>",
         "ListUsersResponse$Users": "<p>The users returned in the request to list users.</p>"
+      }
+    },
+    "VerificationMessageTemplateType": {
+      "base": "<p>The template for verification messages.</p>",
+      "refs": {
+        "CreateUserPoolRequest$VerificationMessageTemplate": "<p>The template for the verification message that the user sees when the app requests permission to access the user's information.</p>",
+        "UpdateUserPoolRequest$VerificationMessageTemplate": "<p>The template for verification messages.</p>",
+        "UserPoolType$VerificationMessageTemplate": "<p>The template for verification messages.</p>"
       }
     },
     "VerifiedAttributeType": {

@@ -14,19 +14,18 @@ const opAssociateTeamMember = "AssociateTeamMember"
 
 // AssociateTeamMemberRequest generates a "aws/request.Request" representing the
 // client's request for the AssociateTeamMember operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See AssociateTeamMember for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the AssociateTeamMember method directly
-// instead.
+// See AssociateTeamMember for more information on using the AssociateTeamMember
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the AssociateTeamMemberRequest method.
 //    req, resp := client.AssociateTeamMemberRequest(params)
@@ -113,19 +112,18 @@ const opCreateProject = "CreateProject"
 
 // CreateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the CreateProject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateProject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateProject method directly
-// instead.
+// See CreateProject for more information on using the CreateProject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateProjectRequest method.
 //    req, resp := client.CreateProjectRequest(params)
@@ -216,19 +214,18 @@ const opCreateUserProfile = "CreateUserProfile"
 
 // CreateUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the CreateUserProfile operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See CreateUserProfile for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the CreateUserProfile method directly
-// instead.
+// See CreateUserProfile for more information on using the CreateUserProfile
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the CreateUserProfileRequest method.
 //    req, resp := client.CreateUserProfileRequest(params)
@@ -305,19 +302,18 @@ const opDeleteProject = "DeleteProject"
 
 // DeleteProjectRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteProject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteProject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteProject method directly
-// instead.
+// See DeleteProject for more information on using the DeleteProject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteProjectRequest method.
 //    req, resp := client.DeleteProjectRequest(params)
@@ -394,19 +390,18 @@ const opDeleteUserProfile = "DeleteUserProfile"
 
 // DeleteUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the DeleteUserProfile operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DeleteUserProfile for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DeleteUserProfile method directly
-// instead.
+// See DeleteUserProfile for more information on using the DeleteUserProfile
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DeleteUserProfileRequest method.
 //    req, resp := client.DeleteUserProfileRequest(params)
@@ -477,19 +472,18 @@ const opDescribeProject = "DescribeProject"
 
 // DescribeProjectRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeProject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeProject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeProject method directly
-// instead.
+// See DescribeProject for more information on using the DescribeProject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeProjectRequest method.
 //    req, resp := client.DescribeProjectRequest(params)
@@ -570,19 +564,18 @@ const opDescribeUserProfile = "DescribeUserProfile"
 
 // DescribeUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the DescribeUserProfile operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DescribeUserProfile for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DescribeUserProfile method directly
-// instead.
+// See DescribeUserProfile for more information on using the DescribeUserProfile
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DescribeUserProfileRequest method.
 //    req, resp := client.DescribeUserProfileRequest(params)
@@ -653,19 +646,18 @@ const opDisassociateTeamMember = "DisassociateTeamMember"
 
 // DisassociateTeamMemberRequest generates a "aws/request.Request" representing the
 // client's request for the DisassociateTeamMember operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See DisassociateTeamMember for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the DisassociateTeamMember method directly
-// instead.
+// See DisassociateTeamMember for more information on using the DisassociateTeamMember
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the DisassociateTeamMemberRequest method.
 //    req, resp := client.DisassociateTeamMemberRequest(params)
@@ -746,19 +738,18 @@ const opListProjects = "ListProjects"
 
 // ListProjectsRequest generates a "aws/request.Request" representing the
 // client's request for the ListProjects operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListProjects for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListProjects method directly
-// instead.
+// See ListProjects for more information on using the ListProjects
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListProjectsRequest method.
 //    req, resp := client.ListProjectsRequest(params)
@@ -829,19 +820,18 @@ const opListResources = "ListResources"
 
 // ListResourcesRequest generates a "aws/request.Request" representing the
 // client's request for the ListResources operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListResources for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListResources method directly
-// instead.
+// See ListResources for more information on using the ListResources
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListResourcesRequest method.
 //    req, resp := client.ListResourcesRequest(params)
@@ -911,23 +901,107 @@ func (c *CodeStar) ListResourcesWithContext(ctx aws.Context, input *ListResource
 	return out, req.Send()
 }
 
+const opListTagsForProject = "ListTagsForProject"
+
+// ListTagsForProjectRequest generates a "aws/request.Request" representing the
+// client's request for the ListTagsForProject operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See ListTagsForProject for more information on using the ListTagsForProject
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the ListTagsForProjectRequest method.
+//    req, resp := client.ListTagsForProjectRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProject
+func (c *CodeStar) ListTagsForProjectRequest(input *ListTagsForProjectInput) (req *request.Request, output *ListTagsForProjectOutput) {
+	op := &request.Operation{
+		Name:       opListTagsForProject,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &ListTagsForProjectInput{}
+	}
+
+	output = &ListTagsForProjectOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// ListTagsForProject API operation for AWS CodeStar.
+//
+// Gets the tags for a project.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS CodeStar's
+// API operation ListTagsForProject for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeProjectNotFoundException "ProjectNotFoundException"
+//   The specified AWS CodeStar project was not found.
+//
+//   * ErrCodeValidationException "ValidationException"
+//   The specified input is either not valid, or it could not be validated.
+//
+//   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
+//   The next token is not valid.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProject
+func (c *CodeStar) ListTagsForProject(input *ListTagsForProjectInput) (*ListTagsForProjectOutput, error) {
+	req, out := c.ListTagsForProjectRequest(input)
+	return out, req.Send()
+}
+
+// ListTagsForProjectWithContext is the same as ListTagsForProject with the addition of
+// the ability to pass a context and additional request options.
+//
+// See ListTagsForProject for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CodeStar) ListTagsForProjectWithContext(ctx aws.Context, input *ListTagsForProjectInput, opts ...request.Option) (*ListTagsForProjectOutput, error) {
+	req, out := c.ListTagsForProjectRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opListTeamMembers = "ListTeamMembers"
 
 // ListTeamMembersRequest generates a "aws/request.Request" representing the
 // client's request for the ListTeamMembers operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListTeamMembers for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListTeamMembers method directly
-// instead.
+// See ListTeamMembers for more information on using the ListTeamMembers
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListTeamMembersRequest method.
 //    req, resp := client.ListTeamMembersRequest(params)
@@ -1001,19 +1075,18 @@ const opListUserProfiles = "ListUserProfiles"
 
 // ListUserProfilesRequest generates a "aws/request.Request" representing the
 // client's request for the ListUserProfiles operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See ListUserProfiles for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the ListUserProfiles method directly
-// instead.
+// See ListUserProfiles for more information on using the ListUserProfiles
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the ListUserProfilesRequest method.
 //    req, resp := client.ListUserProfilesRequest(params)
@@ -1080,23 +1153,200 @@ func (c *CodeStar) ListUserProfilesWithContext(ctx aws.Context, input *ListUserP
 	return out, req.Send()
 }
 
+const opTagProject = "TagProject"
+
+// TagProjectRequest generates a "aws/request.Request" representing the
+// client's request for the TagProject operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See TagProject for more information on using the TagProject
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the TagProjectRequest method.
+//    req, resp := client.TagProjectRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProject
+func (c *CodeStar) TagProjectRequest(input *TagProjectInput) (req *request.Request, output *TagProjectOutput) {
+	op := &request.Operation{
+		Name:       opTagProject,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &TagProjectInput{}
+	}
+
+	output = &TagProjectOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// TagProject API operation for AWS CodeStar.
+//
+// Adds tags to a project.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS CodeStar's
+// API operation TagProject for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeProjectNotFoundException "ProjectNotFoundException"
+//   The specified AWS CodeStar project was not found.
+//
+//   * ErrCodeValidationException "ValidationException"
+//   The specified input is either not valid, or it could not be validated.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A resource limit has been exceeded.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   Another modification is being made. That modification must complete before
+//   you can make your change.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProject
+func (c *CodeStar) TagProject(input *TagProjectInput) (*TagProjectOutput, error) {
+	req, out := c.TagProjectRequest(input)
+	return out, req.Send()
+}
+
+// TagProjectWithContext is the same as TagProject with the addition of
+// the ability to pass a context and additional request options.
+//
+// See TagProject for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CodeStar) TagProjectWithContext(ctx aws.Context, input *TagProjectInput, opts ...request.Option) (*TagProjectOutput, error) {
+	req, out := c.TagProjectRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opUntagProject = "UntagProject"
+
+// UntagProjectRequest generates a "aws/request.Request" representing the
+// client's request for the UntagProject operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UntagProject for more information on using the UntagProject
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UntagProjectRequest method.
+//    req, resp := client.UntagProjectRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProject
+func (c *CodeStar) UntagProjectRequest(input *UntagProjectInput) (req *request.Request, output *UntagProjectOutput) {
+	op := &request.Operation{
+		Name:       opUntagProject,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UntagProjectInput{}
+	}
+
+	output = &UntagProjectOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UntagProject API operation for AWS CodeStar.
+//
+// Removes tags from a project.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS CodeStar's
+// API operation UntagProject for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeProjectNotFoundException "ProjectNotFoundException"
+//   The specified AWS CodeStar project was not found.
+//
+//   * ErrCodeValidationException "ValidationException"
+//   The specified input is either not valid, or it could not be validated.
+//
+//   * ErrCodeLimitExceededException "LimitExceededException"
+//   A resource limit has been exceeded.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   Another modification is being made. That modification must complete before
+//   you can make your change.
+//
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProject
+func (c *CodeStar) UntagProject(input *UntagProjectInput) (*UntagProjectOutput, error) {
+	req, out := c.UntagProjectRequest(input)
+	return out, req.Send()
+}
+
+// UntagProjectWithContext is the same as UntagProject with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UntagProject for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *CodeStar) UntagProjectWithContext(ctx aws.Context, input *UntagProjectInput, opts ...request.Option) (*UntagProjectOutput, error) {
+	req, out := c.UntagProjectRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
 const opUpdateProject = "UpdateProject"
 
 // UpdateProjectRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateProject operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateProject for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateProject method directly
-// instead.
+// See UpdateProject for more information on using the UpdateProject
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateProjectRequest method.
 //    req, resp := client.UpdateProjectRequest(params)
@@ -1167,19 +1417,18 @@ const opUpdateTeamMember = "UpdateTeamMember"
 
 // UpdateTeamMemberRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateTeamMember operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateTeamMember for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateTeamMember method directly
-// instead.
+// See UpdateTeamMember for more information on using the UpdateTeamMember
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateTeamMemberRequest method.
 //    req, resp := client.UpdateTeamMemberRequest(params)
@@ -1268,19 +1517,18 @@ const opUpdateUserProfile = "UpdateUserProfile"
 
 // UpdateUserProfileRequest generates a "aws/request.Request" representing the
 // client's request for the UpdateUserProfile operation. The "output" return
-// value can be used to capture response data after the request's "Send" method
-// is called.
+// value will be populated with the request's response once the request complets
+// successfuly.
 //
-// See UpdateUserProfile for usage and error information.
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
 //
-// Creating a request object using this method should be used when you want to inject
-// custom logic into the request's lifecycle using a custom handler, or if you want to
-// access properties on the request object before or after sending the request. If
-// you just want the service response, call the UpdateUserProfile method directly
-// instead.
+// See UpdateUserProfile for more information on using the UpdateUserProfile
+// API call, and error handling.
 //
-// Note: You must call the "Send" method on the returned request object in order
-// to execute the request.
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
 //
 //    // Example sending a request using the UpdateUserProfileRequest method.
 //    req, resp := client.UpdateUserProfileRequest(params)
@@ -1373,8 +1621,8 @@ type AssociateTeamMemberInput struct {
 	// to remotely access project resources, for example Amazon EC2 instances.
 	RemoteAccessAllowed *bool `locationName:"remoteAccessAllowed" type:"boolean"`
 
-	// The Amazon Resource Name (ARN) for the IAM user you want to add to the DevHub
-	// project.
+	// The Amazon Resource Name (ARN) for the IAM user you want to add to the AWS
+	// CodeStar project.
 	//
 	// UserArn is a required field
 	UserArn *string `locationName:"userArn" min:"32" type:"string" required:"true"`
@@ -2365,7 +2613,7 @@ func (s *ListProjectsOutput) SetProjects(v []*ProjectSummary) *ListProjectsOutpu
 type ListResourcesInput struct {
 	_ struct{} `type:"structure"`
 
-	// he maximum amount of data that can be contained in a single set of results.
+	// The maximum amount of data that can be contained in a single set of results.
 	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
 
 	// The continuation token for the next set of results, if the results cannot
@@ -2459,6 +2707,105 @@ func (s *ListResourcesOutput) SetNextToken(v string) *ListResourcesOutput {
 // SetResources sets the Resources field's value.
 func (s *ListResourcesOutput) SetResources(v []*Resource) *ListResourcesOutput {
 	s.Resources = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectRequest
+type ListTagsForProjectInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the project to get tags for.
+	//
+	// Id is a required field
+	Id *string `locationName:"id" min:"2" type:"string" required:"true"`
+
+	// Reserved for future use.
+	MaxResults *int64 `locationName:"maxResults" min:"1" type:"integer"`
+
+	// Reserved for future use.
+	NextToken *string `locationName:"nextToken" min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s ListTagsForProjectInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsForProjectInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *ListTagsForProjectInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "ListTagsForProjectInput"}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.Id != nil && len(*s.Id) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 2))
+	}
+	if s.MaxResults != nil && *s.MaxResults < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("MaxResults", 1))
+	}
+	if s.NextToken != nil && len(*s.NextToken) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("NextToken", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetId sets the Id field's value.
+func (s *ListTagsForProjectInput) SetId(v string) *ListTagsForProjectInput {
+	s.Id = &v
+	return s
+}
+
+// SetMaxResults sets the MaxResults field's value.
+func (s *ListTagsForProjectInput) SetMaxResults(v int64) *ListTagsForProjectInput {
+	s.MaxResults = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListTagsForProjectInput) SetNextToken(v string) *ListTagsForProjectInput {
+	s.NextToken = &v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectResult
+type ListTagsForProjectOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Reserved for future use.
+	NextToken *string `locationName:"nextToken" min:"1" type:"string"`
+
+	// The tags for the project.
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation
+func (s ListTagsForProjectOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s ListTagsForProjectOutput) GoString() string {
+	return s.String()
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListTagsForProjectOutput) SetNextToken(v string) *ListTagsForProjectOutput {
+	s.NextToken = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *ListTagsForProjectOutput) SetTags(v map[string]*string) *ListTagsForProjectOutput {
+	s.Tags = v
 	return s
 }
 
@@ -2712,6 +3059,86 @@ func (s *Resource) SetId(v string) *Resource {
 	return s
 }
 
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectRequest
+type TagProjectInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the project you want to add a tag to.
+	//
+	// Id is a required field
+	Id *string `locationName:"id" min:"2" type:"string" required:"true"`
+
+	// The tags you want to add to the project.
+	//
+	// Tags is a required field
+	Tags map[string]*string `locationName:"tags" type:"map" required:"true"`
+}
+
+// String returns the string representation
+func (s TagProjectInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TagProjectInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *TagProjectInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "TagProjectInput"}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.Id != nil && len(*s.Id) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 2))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetId sets the Id field's value.
+func (s *TagProjectInput) SetId(v string) *TagProjectInput {
+	s.Id = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *TagProjectInput) SetTags(v map[string]*string) *TagProjectInput {
+	s.Tags = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectResult
+type TagProjectOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The tags for the project.
+	Tags map[string]*string `locationName:"tags" type:"map"`
+}
+
+// String returns the string representation
+func (s TagProjectOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s TagProjectOutput) GoString() string {
+	return s.String()
+}
+
+// SetTags sets the Tags field's value.
+func (s *TagProjectOutput) SetTags(v map[string]*string) *TagProjectOutput {
+	s.Tags = v
+	return s
+}
+
 // Information about a team member in a project.
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TeamMember
 type TeamMember struct {
@@ -2760,6 +3187,77 @@ func (s *TeamMember) SetRemoteAccessAllowed(v bool) *TeamMember {
 func (s *TeamMember) SetUserArn(v string) *TeamMember {
 	s.UserArn = &v
 	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectRequest
+type UntagProjectInput struct {
+	_ struct{} `type:"structure"`
+
+	// The ID of the project to remove tags from.
+	//
+	// Id is a required field
+	Id *string `locationName:"id" min:"2" type:"string" required:"true"`
+
+	// The tags to remove from the project.
+	//
+	// Tags is a required field
+	Tags []*string `locationName:"tags" type:"list" required:"true"`
+}
+
+// String returns the string representation
+func (s UntagProjectInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UntagProjectInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UntagProjectInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UntagProjectInput"}
+	if s.Id == nil {
+		invalidParams.Add(request.NewErrParamRequired("Id"))
+	}
+	if s.Id != nil && len(*s.Id) < 2 {
+		invalidParams.Add(request.NewErrParamMinLen("Id", 2))
+	}
+	if s.Tags == nil {
+		invalidParams.Add(request.NewErrParamRequired("Tags"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetId sets the Id field's value.
+func (s *UntagProjectInput) SetId(v string) *UntagProjectInput {
+	s.Id = &v
+	return s
+}
+
+// SetTags sets the Tags field's value.
+func (s *UntagProjectInput) SetTags(v []*string) *UntagProjectInput {
+	s.Tags = v
+	return s
+}
+
+// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectResult
+type UntagProjectOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s UntagProjectOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UntagProjectOutput) GoString() string {
+	return s.String()
 }
 
 // Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProjectRequest

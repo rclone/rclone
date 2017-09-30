@@ -39,7 +39,7 @@ type fieldTest struct {
 
 var testStruct = fieldTest{
 	Common: Common{
-		name: "mapping", // exclude "type" as distinguising attribute
+		name: "mapping", // exclude "type" as distinguishing attribute
 		Type: "foo",
 		Alt:  "foo",
 	},

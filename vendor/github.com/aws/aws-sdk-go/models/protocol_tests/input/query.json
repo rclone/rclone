@@ -554,6 +554,50 @@
     ]
   },
   {
+    "description": "Base64 encoded Blobs nested",
+    "metadata": {
+      "protocol": "query",
+      "apiVersion": "2014-01-01"
+    },
+    "shapes": {
+      "InputShape": {
+        "type": "structure",
+        "members": {
+		  "BlobArgs": {
+			"shape": "BlobsType"
+		  }
+        }
+      },
+	  "BlobsType": {
+        "type": "list",
+        "member": {
+          "shape": "BlobType"
+        },
+        "flattened": true
+	  },
+      "BlobType": {
+        "type": "blob"
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+          "BlobArgs": ["foo"]
+        },
+        "serialized": {
+          "uri": "/",
+          "body": "Action=OperationName&Version=2014-01-01&BlobArgs.1=Zm9v"
+        }
+      }
+    ]
+  },
+  {
     "description": "Timestamp values",
     "metadata": {
       "protocol": "query",

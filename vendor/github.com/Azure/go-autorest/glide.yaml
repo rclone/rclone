@@ -4,25 +4,19 @@ import:
   subpackages:
   - .
 - package: golang.org/x/crypto
-  vcs: git
   repo: https://github.com/golang/crypto.git
-  subpackages:
-  - /pkcs12
-- package: golang.org/x/net
   vcs: git
+  subpackages:
+  - pkcs12
+- package: golang.org/x/net
   repo: https://github.com/golang/net.git
+  vcs: git
   subpackages:
   - .
 - package: golang.org/x/text
-  vcs: git
   repo: https://github.com/golang/text.git
+  vcs: git
   subpackages:
   - .
-testImports:
-- package: github.com/stretchr/testify
-  vcs: git
-  repo: https://github.com/stretchr/testify.git
-  subpackages:
-  - /require
-- package: github.com/Masterminds/semver
-  version: ~1.2.2
+- package: github.com/mitchellh/go-homedir
+- package: github.com/dimchansky/utfbom

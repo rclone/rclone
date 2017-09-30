@@ -1,530 +1,14 @@
 {
+  "batchPath": "batch",
+  "revision": "20170926",
+  "documentationLink": "https://cloud.google.com/appengine/docs/admin-api/",
+  "id": "appengine:v1alpha",
+  "title": "Google App Engine Admin API",
   "ownerName": "Google",
   "discoveryVersion": "v1",
   "resources": {
     "apps": {
       "resources": {
-        "operations": {
-          "methods": {
-            "get": {
-              "flatPath": "v1alpha/apps/{appsId}/operations/{operationsId}",
-              "id": "appengine.apps.operations.get",
-              "path": "v1alpha/apps/{appsId}/operations/{operationsId}",
-              "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.",
-              "response": {
-                "$ref": "Operation"
-              },
-              "parameterOrder": [
-                "appsId",
-                "operationsId"
-              ],
-              "httpMethod": "GET",
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ],
-              "parameters": {
-                "appsId": {
-                  "description": "Part of `name`. The name of the operation resource.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                },
-                "operationsId": {
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                }
-              }
-            },
-            "list": {
-              "flatPath": "v1alpha/apps/{appsId}/operations",
-              "id": "appengine.apps.operations.list",
-              "path": "v1alpha/apps/{appsId}/operations",
-              "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as \"/v1/{name=users/*}/operations\" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
-              "response": {
-                "$ref": "ListOperationsResponse"
-              },
-              "parameterOrder": [
-                "appsId"
-              ],
-              "httpMethod": "GET",
-              "parameters": {
-                "pageToken": {
-                  "location": "query",
-                  "description": "The standard list page token.",
-                  "type": "string"
-                },
-                "appsId": {
-                  "type": "string",
-                  "required": true,
-                  "location": "path",
-                  "description": "Part of `name`. The name of the operation's parent resource."
-                },
-                "pageSize": {
-                  "type": "integer",
-                  "location": "query",
-                  "format": "int32",
-                  "description": "The standard list page size."
-                },
-                "filter": {
-                  "description": "The standard list filter.",
-                  "type": "string",
-                  "location": "query"
-                }
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ]
-            }
-          }
-        },
-        "locations": {
-          "methods": {
-            "get": {
-              "description": "Get information about a location.",
-              "httpMethod": "GET",
-              "parameterOrder": [
-                "appsId",
-                "locationsId"
-              ],
-              "response": {
-                "$ref": "Location"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ],
-              "parameters": {
-                "locationsId": {
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                },
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `name`. Resource name for the location.",
-                  "type": "string",
-                  "required": true
-                }
-              },
-              "flatPath": "v1alpha/apps/{appsId}/locations/{locationsId}",
-              "path": "v1alpha/apps/{appsId}/locations/{locationsId}",
-              "id": "appengine.apps.locations.get"
-            },
-            "list": {
-              "path": "v1alpha/apps/{appsId}/locations",
-              "id": "appengine.apps.locations.list",
-              "description": "Lists information about the supported locations for this service.",
-              "httpMethod": "GET",
-              "parameterOrder": [
-                "appsId"
-              ],
-              "response": {
-                "$ref": "ListLocationsResponse"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ],
-              "parameters": {
-                "filter": {
-                  "description": "The standard list filter.",
-                  "type": "string",
-                  "location": "query"
-                },
-                "pageToken": {
-                  "description": "The standard list page token.",
-                  "type": "string",
-                  "location": "query"
-                },
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `name`. The resource that owns the locations collection, if applicable.",
-                  "type": "string",
-                  "required": true
-                },
-                "pageSize": {
-                  "format": "int32",
-                  "description": "The standard list page size.",
-                  "type": "integer",
-                  "location": "query"
-                }
-              },
-              "flatPath": "v1alpha/apps/{appsId}/locations"
-            }
-          }
-        },
-        "domainMappings": {
-          "methods": {
-            "patch": {
-              "httpMethod": "PATCH",
-              "parameterOrder": [
-                "appsId",
-                "domainMappingsId"
-              ],
-              "response": {
-                "$ref": "Operation"
-              },
-              "parameters": {
-                "appsId": {
-                  "description": "Part of `name`. Name of the resource to update. Example: apps/myapp/domainMappings/example.com.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                },
-                "domainMappingsId": {
-                  "location": "path",
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true
-                },
-                "noManagedCertificate": {
-                  "description": "Whether a managed certificate should be provided by App Engine. If true, a certificate ID must be manaually set in the DomainMapping resource to configure SSL for this domain. If false, a managed certificate will be provisioned and a certificate ID will be automatically populated. Only applicable if ssl_settings.certificate_id is specified in the update mask.",
-                  "type": "boolean",
-                  "location": "query"
-                },
-                "updateMask": {
-                  "location": "query",
-                  "format": "google-fieldmask",
-                  "description": "Standard field mask for the set of fields to be updated.",
-                  "type": "string"
-                }
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/cloud-platform"
-              ],
-              "flatPath": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
-              "path": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
-              "id": "appengine.apps.domainMappings.patch",
-              "description": "Updates the specified domain mapping. To map an SSL certificate to a domain mapping, update certificate_id to point to an AuthorizedCertificate resource. A user must be authorized to administer the associated domain in order to update a DomainMapping resource.",
-              "request": {
-                "$ref": "DomainMapping"
-              }
-            },
-            "get": {
-              "flatPath": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
-              "id": "appengine.apps.domainMappings.get",
-              "path": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
-              "description": "Gets the specified domain mapping.",
-              "response": {
-                "$ref": "DomainMapping"
-              },
-              "parameterOrder": [
-                "appsId",
-                "domainMappingsId"
-              ],
-              "httpMethod": "GET",
-              "parameters": {
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `name`. Name of the resource requested. Example: apps/myapp/domainMappings/example.com.",
-                  "type": "string",
-                  "required": true
-                },
-                "domainMappingsId": {
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                }
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ]
-            },
-            "list": {
-              "flatPath": "v1alpha/apps/{appsId}/domainMappings",
-              "id": "appengine.apps.domainMappings.list",
-              "path": "v1alpha/apps/{appsId}/domainMappings",
-              "description": "Lists the domain mappings on an application.",
-              "response": {
-                "$ref": "ListDomainMappingsResponse"
-              },
-              "parameterOrder": [
-                "appsId"
-              ],
-              "httpMethod": "GET",
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ],
-              "parameters": {
-                "pageToken": {
-                  "description": "Continuation token for fetching the next page of results.",
-                  "type": "string",
-                  "location": "query"
-                },
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
-                  "type": "string",
-                  "required": true
-                },
-                "pageSize": {
-                  "location": "query",
-                  "format": "int32",
-                  "description": "Maximum results to return per page.",
-                  "type": "integer"
-                }
-              }
-            },
-            "create": {
-              "description": "Maps a domain to an application. A user must be authorized to administer a domain in order to map it to an application. For a list of available authorized domains, see AuthorizedDomains.ListAuthorizedDomains.",
-              "request": {
-                "$ref": "DomainMapping"
-              },
-              "response": {
-                "$ref": "Operation"
-              },
-              "parameterOrder": [
-                "appsId"
-              ],
-              "httpMethod": "POST",
-              "parameters": {
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
-                  "type": "string",
-                  "required": true
-                },
-                "noManagedCertificate": {
-                  "location": "query",
-                  "description": "Whether a managed certificate should be provided by App Engine. If true, a certificate ID must be manaually set in the DomainMapping resource to configure SSL for this domain. If false, a managed certificate will be provisioned and a certificate ID will be automatically populated.",
-                  "type": "boolean"
-                }
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/cloud-platform"
-              ],
-              "flatPath": "v1alpha/apps/{appsId}/domainMappings",
-              "id": "appengine.apps.domainMappings.create",
-              "path": "v1alpha/apps/{appsId}/domainMappings"
-            },
-            "delete": {
-              "description": "Deletes the specified domain mapping. A user must be authorized to administer the associated domain in order to delete a DomainMapping resource.",
-              "httpMethod": "DELETE",
-              "parameterOrder": [
-                "appsId",
-                "domainMappingsId"
-              ],
-              "response": {
-                "$ref": "Operation"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/cloud-platform"
-              ],
-              "parameters": {
-                "appsId": {
-                  "description": "Part of `name`. Name of the resource to delete. Example: apps/myapp/domainMappings/example.com.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                },
-                "domainMappingsId": {
-                  "location": "path",
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true
-                }
-              },
-              "flatPath": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
-              "path": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
-              "id": "appengine.apps.domainMappings.delete"
-            }
-          }
-        },
-        "authorizedCertificates": {
-          "methods": {
-            "delete": {
-              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
-              "id": "appengine.apps.authorizedCertificates.delete",
-              "path": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
-              "description": "Deletes the specified SSL certificate.",
-              "response": {
-                "$ref": "Empty"
-              },
-              "parameterOrder": [
-                "appsId",
-                "authorizedCertificatesId"
-              ],
-              "httpMethod": "DELETE",
-              "parameters": {
-                "appsId": {
-                  "description": "Part of `name`. Name of the resource to delete. Example: apps/myapp/authorizedCertificates/12345.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                },
-                "authorizedCertificatesId": {
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true,
-                  "location": "path"
-                }
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/cloud-platform"
-              ]
-            },
-            "patch": {
-              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
-              "path": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
-              "id": "appengine.apps.authorizedCertificates.patch",
-              "request": {
-                "$ref": "AuthorizedCertificate"
-              },
-              "description": "Updates the specified SSL certificate. To renew a certificate and maintain its existing domain mappings, update certificate_data with a new certificate. The new certificate must be applicable to the same domains as the original certificate. The certificate display_name may also be updated.",
-              "httpMethod": "PATCH",
-              "parameterOrder": [
-                "appsId",
-                "authorizedCertificatesId"
-              ],
-              "response": {
-                "$ref": "AuthorizedCertificate"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/cloud-platform"
-              ],
-              "parameters": {
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `name`. Name of the resource to update. Example: apps/myapp/authorizedCertificates/12345.",
-                  "type": "string",
-                  "required": true
-                },
-                "authorizedCertificatesId": {
-                  "location": "path",
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true
-                },
-                "updateMask": {
-                  "location": "query",
-                  "format": "google-fieldmask",
-                  "description": "Standard field mask for the set of fields to be updated. Updates are only supported on the certificate_raw_data and display_name fields.",
-                  "type": "string"
-                }
-              }
-            },
-            "get": {
-              "httpMethod": "GET",
-              "parameterOrder": [
-                "appsId",
-                "authorizedCertificatesId"
-              ],
-              "response": {
-                "$ref": "AuthorizedCertificate"
-              },
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ],
-              "parameters": {
-                "authorizedCertificatesId": {
-                  "location": "path",
-                  "description": "Part of `name`. See documentation of `appsId`.",
-                  "type": "string",
-                  "required": true
-                },
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `name`. Name of the resource requested. Example: apps/myapp/authorizedCertificates/12345.",
-                  "type": "string",
-                  "required": true
-                },
-                "view": {
-                  "enum": [
-                    "BASIC_CERTIFICATE",
-                    "FULL_CERTIFICATE"
-                  ],
-                  "description": "Controls the set of fields returned in the GET response.",
-                  "type": "string",
-                  "location": "query"
-                }
-              },
-              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
-              "path": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
-              "id": "appengine.apps.authorizedCertificates.get",
-              "description": "Gets the specified SSL certificate."
-            },
-            "list": {
-              "response": {
-                "$ref": "ListAuthorizedCertificatesResponse"
-              },
-              "parameterOrder": [
-                "appsId"
-              ],
-              "httpMethod": "GET",
-              "scopes": [
-                "https://www.googleapis.com/auth/appengine.admin",
-                "https://www.googleapis.com/auth/cloud-platform",
-                "https://www.googleapis.com/auth/cloud-platform.read-only"
-              ],
-              "parameters": {
-                "pageToken": {
-                  "description": "Continuation token for fetching the next page of results.",
-                  "type": "string",
-                  "location": "query"
-                },
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
-                  "type": "string",
-                  "required": true
-                },
-                "pageSize": {
-                  "location": "query",
-                  "format": "int32",
-                  "description": "Maximum results to return per page.",
-                  "type": "integer"
-                }
-              },
-              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates",
-              "id": "appengine.apps.authorizedCertificates.list",
-              "path": "v1alpha/apps/{appsId}/authorizedCertificates",
-              "description": "Lists all SSL certificates the user is authorized to administer."
-            },
-            "create": {
-              "response": {
-                "$ref": "AuthorizedCertificate"
-              },
-              "parameterOrder": [
-                "appsId"
-              ],
-              "httpMethod": "POST",
-              "scopes": [
-                "https://www.googleapis.com/auth/cloud-platform"
-              ],
-              "parameters": {
-                "appsId": {
-                  "location": "path",
-                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
-                  "type": "string",
-                  "required": true
-                }
-              },
-              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates",
-              "id": "appengine.apps.authorizedCertificates.create",
-              "path": "v1alpha/apps/{appsId}/authorizedCertificates",
-              "request": {
-                "$ref": "AuthorizedCertificate"
-              },
-              "description": "Uploads the specified SSL certificate."
-            }
-          }
-        },
         "authorizedDomains": {
           "methods": {
             "list": {
@@ -543,10 +27,10 @@
                   "location": "query"
                 },
                 "appsId": {
+                  "location": "path",
                   "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
                   "type": "string",
-                  "required": true,
-                  "location": "path"
+                  "required": true
                 },
                 "pageSize": {
                   "location": "query",
@@ -565,42 +49,541 @@
               "path": "v1alpha/apps/{appsId}/authorizedDomains"
             }
           }
+        },
+        "operations": {
+          "methods": {
+            "get": {
+              "path": "v1alpha/apps/{appsId}/operations/{operationsId}",
+              "id": "appengine.apps.operations.get",
+              "description": "Gets the latest state of a long-running operation. Clients can use this method to poll the operation result at intervals as recommended by the API service.",
+              "httpMethod": "GET",
+              "parameterOrder": [
+                "appsId",
+                "operationsId"
+              ],
+              "response": {
+                "$ref": "Operation"
+              },
+              "parameters": {
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `name`. The name of the operation resource.",
+                  "type": "string",
+                  "required": true
+                },
+                "operationsId": {
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ],
+              "flatPath": "v1alpha/apps/{appsId}/operations/{operationsId}"
+            },
+            "list": {
+              "flatPath": "v1alpha/apps/{appsId}/operations",
+              "path": "v1alpha/apps/{appsId}/operations",
+              "id": "appengine.apps.operations.list",
+              "description": "Lists operations that match the specified filter in the request. If the server doesn't support this method, it returns UNIMPLEMENTED.NOTE: the name binding allows API services to override the binding to use different resource name schemes, such as users/*/operations. To override the binding, API services can add a binding such as \"/v1/{name=users/*}/operations\" to their service configuration. For backwards compatibility, the default name includes the operations collection id, however overriding users must ensure the name binding is the parent resource, without the operations collection id.",
+              "httpMethod": "GET",
+              "parameterOrder": [
+                "appsId"
+              ],
+              "response": {
+                "$ref": "ListOperationsResponse"
+              },
+              "parameters": {
+                "filter": {
+                  "description": "The standard list filter.",
+                  "type": "string",
+                  "location": "query"
+                },
+                "pageToken": {
+                  "description": "The standard list page token.",
+                  "type": "string",
+                  "location": "query"
+                },
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `name`. The name of the operation's parent resource.",
+                  "type": "string",
+                  "required": true
+                },
+                "pageSize": {
+                  "location": "query",
+                  "format": "int32",
+                  "description": "The standard list page size.",
+                  "type": "integer"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ]
+            }
+          }
+        },
+        "locations": {
+          "methods": {
+            "get": {
+              "description": "Get information about a location.",
+              "response": {
+                "$ref": "Location"
+              },
+              "parameterOrder": [
+                "appsId",
+                "locationsId"
+              ],
+              "httpMethod": "GET",
+              "parameters": {
+                "locationsId": {
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                },
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `name`. Resource name for the location.",
+                  "type": "string",
+                  "required": true
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ],
+              "flatPath": "v1alpha/apps/{appsId}/locations/{locationsId}",
+              "id": "appengine.apps.locations.get",
+              "path": "v1alpha/apps/{appsId}/locations/{locationsId}"
+            },
+            "list": {
+              "description": "Lists information about the supported locations for this service.",
+              "response": {
+                "$ref": "ListLocationsResponse"
+              },
+              "parameterOrder": [
+                "appsId"
+              ],
+              "httpMethod": "GET",
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ],
+              "parameters": {
+                "filter": {
+                  "location": "query",
+                  "description": "The standard list filter.",
+                  "type": "string"
+                },
+                "pageToken": {
+                  "location": "query",
+                  "description": "The standard list page token.",
+                  "type": "string"
+                },
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `name`. The resource that owns the locations collection, if applicable.",
+                  "type": "string",
+                  "required": true
+                },
+                "pageSize": {
+                  "location": "query",
+                  "format": "int32",
+                  "description": "The standard list page size.",
+                  "type": "integer"
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/locations",
+              "id": "appengine.apps.locations.list",
+              "path": "v1alpha/apps/{appsId}/locations"
+            }
+          }
+        },
+        "domainMappings": {
+          "methods": {
+            "delete": {
+              "path": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
+              "id": "appengine.apps.domainMappings.delete",
+              "description": "Deletes the specified domain mapping. A user must be authorized to administer the associated domain in order to delete a DomainMapping resource.",
+              "httpMethod": "DELETE",
+              "parameterOrder": [
+                "appsId",
+                "domainMappingsId"
+              ],
+              "response": {
+                "$ref": "Operation"
+              },
+              "parameters": {
+                "appsId": {
+                  "description": "Part of `name`. Name of the resource to delete. Example: apps/myapp/domainMappings/example.com.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                },
+                "domainMappingsId": {
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                }
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "flatPath": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}"
+            },
+            "patch": {
+              "request": {
+                "$ref": "DomainMapping"
+              },
+              "description": "Updates the specified domain mapping. To map an SSL certificate to a domain mapping, update certificate_id to point to an AuthorizedCertificate resource. A user must be authorized to administer the associated domain in order to update a DomainMapping resource.",
+              "response": {
+                "$ref": "Operation"
+              },
+              "parameterOrder": [
+                "appsId",
+                "domainMappingsId"
+              ],
+              "httpMethod": "PATCH",
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "updateMask": {
+                  "format": "google-fieldmask",
+                  "description": "Standard field mask for the set of fields to be updated.",
+                  "type": "string",
+                  "location": "query"
+                },
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `name`. Name of the resource to update. Example: apps/myapp/domainMappings/example.com.",
+                  "type": "string",
+                  "required": true
+                },
+                "domainMappingsId": {
+                  "location": "path",
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true
+                },
+                "noManagedCertificate": {
+                  "location": "query",
+                  "description": "Whether a managed certificate should be provided by App Engine. If true, a certificate ID must be manually set in the DomainMapping resource to configure SSL for this domain. If false, a managed certificate will be provisioned and a certificate ID will be automatically populated. Only applicable if ssl_settings.certificate_id is specified in the update mask.",
+                  "type": "boolean"
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
+              "id": "appengine.apps.domainMappings.patch",
+              "path": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}"
+            },
+            "get": {
+              "description": "Gets the specified domain mapping.",
+              "httpMethod": "GET",
+              "parameterOrder": [
+                "appsId",
+                "domainMappingsId"
+              ],
+              "response": {
+                "$ref": "DomainMapping"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ],
+              "parameters": {
+                "appsId": {
+                  "description": "Part of `name`. Name of the resource requested. Example: apps/myapp/domainMappings/example.com.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                },
+                "domainMappingsId": {
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
+              "path": "v1alpha/apps/{appsId}/domainMappings/{domainMappingsId}",
+              "id": "appengine.apps.domainMappings.get"
+            },
+            "list": {
+              "description": "Lists the domain mappings on an application.",
+              "response": {
+                "$ref": "ListDomainMappingsResponse"
+              },
+              "parameterOrder": [
+                "appsId"
+              ],
+              "httpMethod": "GET",
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ],
+              "parameters": {
+                "pageToken": {
+                  "location": "query",
+                  "description": "Continuation token for fetching the next page of results.",
+                  "type": "string"
+                },
+                "appsId": {
+                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                },
+                "pageSize": {
+                  "location": "query",
+                  "format": "int32",
+                  "description": "Maximum results to return per page.",
+                  "type": "integer"
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/domainMappings",
+              "id": "appengine.apps.domainMappings.list",
+              "path": "v1alpha/apps/{appsId}/domainMappings"
+            },
+            "create": {
+              "httpMethod": "POST",
+              "parameterOrder": [
+                "appsId"
+              ],
+              "response": {
+                "$ref": "Operation"
+              },
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
+                  "type": "string",
+                  "required": true
+                },
+                "noManagedCertificate": {
+                  "description": "Whether a managed certificate should be provided by App Engine. If true, a certificate ID must be manaually set in the DomainMapping resource to configure SSL for this domain. If false, a managed certificate will be provisioned and a certificate ID will be automatically populated.",
+                  "type": "boolean",
+                  "location": "query"
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/domainMappings",
+              "path": "v1alpha/apps/{appsId}/domainMappings",
+              "id": "appengine.apps.domainMappings.create",
+              "request": {
+                "$ref": "DomainMapping"
+              },
+              "description": "Maps a domain to an application. A user must be authorized to administer a domain in order to map it to an application. For a list of available authorized domains, see AuthorizedDomains.ListAuthorizedDomains."
+            }
+          }
+        },
+        "authorizedCertificates": {
+          "methods": {
+            "create": {
+              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates",
+              "id": "appengine.apps.authorizedCertificates.create",
+              "path": "v1alpha/apps/{appsId}/authorizedCertificates",
+              "request": {
+                "$ref": "AuthorizedCertificate"
+              },
+              "description": "Uploads the specified SSL certificate.",
+              "response": {
+                "$ref": "AuthorizedCertificate"
+              },
+              "parameterOrder": [
+                "appsId"
+              ],
+              "httpMethod": "POST",
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
+                  "type": "string",
+                  "required": true
+                }
+              }
+            },
+            "delete": {
+              "id": "appengine.apps.authorizedCertificates.delete",
+              "path": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
+              "description": "Deletes the specified SSL certificate.",
+              "response": {
+                "$ref": "Empty"
+              },
+              "parameterOrder": [
+                "appsId",
+                "authorizedCertificatesId"
+              ],
+              "httpMethod": "DELETE",
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `name`. Name of the resource to delete. Example: apps/myapp/authorizedCertificates/12345.",
+                  "type": "string",
+                  "required": true
+                },
+                "authorizedCertificatesId": {
+                  "location": "path",
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}"
+            },
+            "patch": {
+              "request": {
+                "$ref": "AuthorizedCertificate"
+              },
+              "description": "Updates the specified SSL certificate. To renew a certificate and maintain its existing domain mappings, update certificate_data with a new certificate. The new certificate must be applicable to the same domains as the original certificate. The certificate display_name may also be updated.",
+              "response": {
+                "$ref": "AuthorizedCertificate"
+              },
+              "parameterOrder": [
+                "appsId",
+                "authorizedCertificatesId"
+              ],
+              "httpMethod": "PATCH",
+              "scopes": [
+                "https://www.googleapis.com/auth/cloud-platform"
+              ],
+              "parameters": {
+                "updateMask": {
+                  "location": "query",
+                  "format": "google-fieldmask",
+                  "description": "Standard field mask for the set of fields to be updated. Updates are only supported on the certificate_raw_data and display_name fields.",
+                  "type": "string"
+                },
+                "appsId": {
+                  "description": "Part of `name`. Name of the resource to update. Example: apps/myapp/authorizedCertificates/12345.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                },
+                "authorizedCertificatesId": {
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
+              "id": "appengine.apps.authorizedCertificates.patch",
+              "path": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}"
+            },
+            "get": {
+              "response": {
+                "$ref": "AuthorizedCertificate"
+              },
+              "parameterOrder": [
+                "appsId",
+                "authorizedCertificatesId"
+              ],
+              "httpMethod": "GET",
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ],
+              "parameters": {
+                "appsId": {
+                  "location": "path",
+                  "description": "Part of `name`. Name of the resource requested. Example: apps/myapp/authorizedCertificates/12345.",
+                  "type": "string",
+                  "required": true
+                },
+                "view": {
+                  "location": "query",
+                  "enum": [
+                    "BASIC_CERTIFICATE",
+                    "FULL_CERTIFICATE"
+                  ],
+                  "description": "Controls the set of fields returned in the GET response.",
+                  "type": "string"
+                },
+                "authorizedCertificatesId": {
+                  "location": "path",
+                  "description": "Part of `name`. See documentation of `appsId`.",
+                  "type": "string",
+                  "required": true
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
+              "id": "appengine.apps.authorizedCertificates.get",
+              "path": "v1alpha/apps/{appsId}/authorizedCertificates/{authorizedCertificatesId}",
+              "description": "Gets the specified SSL certificate."
+            },
+            "list": {
+              "description": "Lists all SSL certificates the user is authorized to administer.",
+              "response": {
+                "$ref": "ListAuthorizedCertificatesResponse"
+              },
+              "parameterOrder": [
+                "appsId"
+              ],
+              "httpMethod": "GET",
+              "scopes": [
+                "https://www.googleapis.com/auth/appengine.admin",
+                "https://www.googleapis.com/auth/cloud-platform",
+                "https://www.googleapis.com/auth/cloud-platform.read-only"
+              ],
+              "parameters": {
+                "pageToken": {
+                  "location": "query",
+                  "description": "Continuation token for fetching the next page of results.",
+                  "type": "string"
+                },
+                "appsId": {
+                  "description": "Part of `parent`. Name of the parent Application resource. Example: apps/myapp.",
+                  "type": "string",
+                  "required": true,
+                  "location": "path"
+                },
+                "pageSize": {
+                  "location": "query",
+                  "format": "int32",
+                  "description": "Maximum results to return per page.",
+                  "type": "integer"
+                },
+                "view": {
+                  "enum": [
+                    "BASIC_CERTIFICATE",
+                    "FULL_CERTIFICATE"
+                  ],
+                  "description": "Controls the set of fields returned in the LIST response.",
+                  "type": "string",
+                  "location": "query"
+                }
+              },
+              "flatPath": "v1alpha/apps/{appsId}/authorizedCertificates",
+              "id": "appengine.apps.authorizedCertificates.list",
+              "path": "v1alpha/apps/{appsId}/authorizedCertificates"
+            }
+          }
         }
       }
     }
   },
   "parameters": {
-    "key": {
-      "description": "API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.",
-      "type": "string",
-      "location": "query"
-    },
-    "access_token": {
-      "description": "OAuth access token.",
-      "type": "string",
-      "location": "query"
-    },
-    "quotaUser": {
-      "location": "query",
-      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.",
-      "type": "string"
-    },
-    "pp": {
-      "default": "true",
-      "type": "boolean",
-      "location": "query",
-      "description": "Pretty-print response."
-    },
-    "bearer_token": {
-      "description": "OAuth bearer token.",
-      "type": "string",
-      "location": "query"
-    },
-    "oauth_token": {
-      "type": "string",
-      "location": "query",
-      "description": "OAuth 2.0 token for the current user."
-    },
     "upload_protocol": {
       "description": "Upload protocol for media (e.g. \"raw\", \"multipart\").",
       "type": "string",
@@ -641,12 +624,6 @@
       "type": "string"
     },
     "alt": {
-      "enum": [
-        "json",
-        "media",
-        "proto"
-      ],
-      "type": "string",
       "enumDescriptions": [
         "Responses with Content-Type of application/json",
         "Media download with context-dependent Content-Type",
@@ -654,13 +631,77 @@
       ],
       "location": "query",
       "description": "Data format for response.",
-      "default": "json"
+      "default": "json",
+      "enum": [
+        "json",
+        "media",
+        "proto"
+      ],
+      "type": "string"
+    },
+    "access_token": {
+      "location": "query",
+      "description": "OAuth access token.",
+      "type": "string"
+    },
+    "key": {
+      "location": "query",
+      "description": "API key. Your API key identifies your project and provides you with API access, quota, and reports. Required unless you provide an OAuth 2.0 token.",
+      "type": "string"
+    },
+    "quotaUser": {
+      "location": "query",
+      "description": "Available to use for quota purposes for server-side applications. Can be any arbitrary string assigned to a user, but should not exceed 40 characters.",
+      "type": "string"
+    },
+    "pp": {
+      "description": "Pretty-print response.",
+      "default": "true",
+      "type": "boolean",
+      "location": "query"
+    },
+    "bearer_token": {
+      "description": "OAuth bearer token.",
+      "type": "string",
+      "location": "query"
+    },
+    "oauth_token": {
+      "location": "query",
+      "description": "OAuth 2.0 token for the current user.",
+      "type": "string"
     }
   },
   "schemas": {
-    "ListLocationsResponse": {
-      "description": "The response message for Locations.ListLocations.",
+    "OperationMetadataV1Beta5": {
+      "description": "Metadata for the given google.longrunning.Operation.",
       "type": "object",
+      "properties": {
+        "target": {
+          "description": "Name of the resource that this operation is acting on. Example: apps/myapp/services/default.@OutputOnly",
+          "type": "string"
+        },
+        "user": {
+          "description": "User who requested this operation.@OutputOnly",
+          "type": "string"
+        },
+        "method": {
+          "description": "API method name that initiated this operation. Example: google.appengine.v1beta5.Version.CreateVersion.@OutputOnly",
+          "type": "string"
+        },
+        "insertTime": {
+          "format": "google-datetime",
+          "description": "Timestamp that this operation was created.@OutputOnly",
+          "type": "string"
+        },
+        "endTime": {
+          "format": "google-datetime",
+          "description": "Timestamp that this operation completed.@OutputOnly",
+          "type": "string"
+        }
+      },
+      "id": "OperationMetadataV1Beta5"
+    },
+    "ListLocationsResponse": {
       "properties": {
         "nextPageToken": {
           "description": "The standard List next-page token.",
@@ -674,26 +715,13 @@
           "type": "array"
         }
       },
-      "id": "ListLocationsResponse"
+      "id": "ListLocationsResponse",
+      "description": "The response message for Locations.ListLocations.",
+      "type": "object"
     },
     "ManagedCertificate": {
-      "description": "A certificate managed by App Engine.",
-      "type": "object",
       "properties": {
-        "lastRenewalTime": {
-          "type": "string",
-          "format": "google-datetime",
-          "description": "Time at which the certificate was last renewed. The renewal process is fully managed. Certificate renewal will automatically occur before the certificate expires. Renewal errors can be tracked via ManagementStatus.@OutputOnly"
-        },
         "status": {
-          "enum": [
-            "UNSPECIFIED_STATUS",
-            "OK",
-            "PENDING",
-            "FAILED_RETRYING_INTERNAL",
-            "FAILED_RETRYING_NOT_VISIBLE",
-            "FAILED_PERMANENTLY_NOT_VISIBLE"
-          ],
           "description": "Status of certificate management. Refers to the most recent certificate acquisition or renewal attempt.@OutputOnly",
           "type": "string",
           "enumDescriptions": [
@@ -703,20 +731,45 @@
             "Most recent renewal failed due to a system failure and will be retried. System failure is likely transient, and subsequent renewal attempts may succeed. The last successfully provisioned certificate may still be serving.",
             "Most recent renewal failed due to an invalid DNS setup and will be retried. Renewal attempts will continue to fail until the certificate domain's DNS configuration is fixed. The last successfully provisioned certificate may still be serving.",
             "All renewal attempts have been exhausted. Most recent renewal failed due to an invalid DNS setup and will not be retried. The last successfully provisioned certificate may still be serving."
+          ],
+          "enum": [
+            "UNSPECIFIED_STATUS",
+            "OK",
+            "PENDING",
+            "FAILED_RETRYING_INTERNAL",
+            "FAILED_RETRYING_NOT_VISIBLE",
+            "FAILED_PERMANENTLY_NOT_VISIBLE"
           ]
+        },
+        "lastRenewalTime": {
+          "format": "google-datetime",
+          "description": "Time at which the certificate was last renewed. The renewal process is fully managed. Certificate renewal will automatically occur before the certificate expires. Renewal errors can be tracked via ManagementStatus.@OutputOnly",
+          "type": "string"
         }
       },
-      "id": "ManagedCertificate"
+      "id": "ManagedCertificate",
+      "description": "A certificate managed by App Engine.",
+      "type": "object"
+    },
+    "CertificateRawData": {
+      "properties": {
+        "privateKey": {
+          "description": "Unencrypted PEM encoded RSA private key. This field is set once on certificate creation and then encrypted. The key size must be 2048 bits or fewer. Must include the header and footer. Example: \u003cpre\u003e -----BEGIN RSA PRIVATE KEY----- \u003cunencrypted_key_value\u003e -----END RSA PRIVATE KEY----- \u003c/pre\u003e @InputOnly",
+          "type": "string"
+        },
+        "publicCertificate": {
+          "description": "PEM encoded x.509 public key certificate. This field is set once on certificate creation. Must include the header and footer. Example: \u003cpre\u003e -----BEGIN CERTIFICATE----- \u003ccertificate_value\u003e -----END CERTIFICATE----- \u003c/pre\u003e",
+          "type": "string"
+        }
+      },
+      "id": "CertificateRawData",
+      "description": "An SSL certificate obtained from a certificate authority.",
+      "type": "object"
     },
     "OperationMetadataV1": {
       "description": "Metadata for the given google.longrunning.Operation.",
       "type": "object",
       "properties": {
-        "insertTime": {
-          "format": "google-datetime",
-          "description": "Time that this operation was created.@OutputOnly",
-          "type": "string"
-        },
         "warning": {
           "description": "Durable messages that persist on every operation poll. @OutputOnly",
           "items": {
@@ -724,9 +777,14 @@
           },
           "type": "array"
         },
+        "insertTime": {
+          "format": "google-datetime",
+          "description": "Time that this operation was created.@OutputOnly",
+          "type": "string"
+        },
         "user": {
-          "type": "string",
-          "description": "User who requested this operation.@OutputOnly"
+          "description": "User who requested this operation.@OutputOnly",
+          "type": "string"
         },
         "target": {
           "description": "Name of the resource that this operation is acting on. Example: apps/myapp/services/default.@OutputOnly",
@@ -749,6 +807,7 @@
       "id": "OperationMetadataV1"
     },
     "SslSettings": {
+      "description": "SSL configuration for a DomainMapping resource.",
       "type": "object",
       "properties": {
         "isManagedCertificate": {
@@ -760,36 +819,12 @@
           "type": "string"
         }
       },
-      "id": "SslSettings",
-      "description": "SSL configuration for a DomainMapping resource."
-    },
-    "CertificateRawData": {
-      "description": "An SSL certificate obtained from a certificate authority.",
-      "type": "object",
-      "properties": {
-        "privateKey": {
-          "description": "Unencrypted PEM encoded RSA private key. This field is set once on certificate creation and then encrypted. The key size must be 2048 bits or fewer. Must include the header and footer. Example: \u003cpre\u003e -----BEGIN RSA PRIVATE KEY----- \u003cunencrypted_key_value\u003e -----END RSA PRIVATE KEY----- \u003c/pre\u003e @InputOnly",
-          "type": "string"
-        },
-        "publicCertificate": {
-          "description": "PEM encoded x.509 public key certificate. This field is set once on certificate creation. Must include the header and footer. Example: \u003cpre\u003e -----BEGIN CERTIFICATE----- \u003ccertificate_value\u003e -----END CERTIFICATE----- \u003c/pre\u003e",
-          "type": "string"
-        }
-      },
-      "id": "CertificateRawData"
+      "id": "SslSettings"
     },
     "Operation": {
       "description": "This resource represents a long-running operation that is the result of a network API call.",
       "type": "object",
       "properties": {
-        "metadata": {
-          "additionalProperties": {
-            "type": "any",
-            "description": "Properties of the object. Contains field @type with type URL."
-          },
-          "description": "Service-specific metadata associated with the operation. It typically contains progress information and common metadata such as create time. Some services might not provide such metadata. Any method that returns a long-running operation should document the metadata type, if any.",
-          "type": "object"
-        },
         "done": {
           "description": "If the value is false, it means the operation is still in progress. If true, the operation is completed, and either error or response is available.",
           "type": "boolean"
@@ -809,32 +844,85 @@
         "error": {
           "$ref": "Status",
           "description": "The error result of the operation in case of failure or cancellation."
+        },
+        "metadata": {
+          "additionalProperties": {
+            "description": "Properties of the object. Contains field @type with type URL.",
+            "type": "any"
+          },
+          "description": "Service-specific metadata associated with the operation. It typically contains progress information and common metadata such as create time. Some services might not provide such metadata. Any method that returns a long-running operation should document the metadata type, if any.",
+          "type": "object"
         }
       },
       "id": "Operation"
     },
     "ListDomainMappingsResponse": {
-      "id": "ListDomainMappingsResponse",
       "description": "Response message for DomainMappings.ListDomainMappings.",
       "type": "object",
       "properties": {
+        "nextPageToken": {
+          "description": "Continuation token for fetching the next page of results.",
+          "type": "string"
+        },
         "domainMappings": {
           "description": "The domain mappings for the application.",
           "items": {
             "$ref": "DomainMapping"
           },
           "type": "array"
+        }
+      },
+      "id": "ListDomainMappingsResponse"
+    },
+    "OperationMetadataExperimental": {
+      "description": "Metadata for the given google.longrunning.Operation.",
+      "type": "object",
+      "properties": {
+        "target": {
+          "description": "Name of the resource that this operation is acting on. Example: apps/myapp/customDomains/example.com.@OutputOnly",
+          "type": "string"
         },
-        "nextPageToken": {
-          "description": "Continuation token for fetching the next page of results.",
+        "user": {
+          "description": "User who requested this operation.@OutputOnly",
+          "type": "string"
+        },
+        "method": {
+          "description": "API method that initiated this operation. Example: google.appengine.experimental.CustomDomains.CreateCustomDomain.@OutputOnly",
+          "type": "string"
+        },
+        "insertTime": {
+          "format": "google-datetime",
+          "description": "Time that this operation was created.@OutputOnly",
+          "type": "string"
+        },
+        "endTime": {
+          "format": "google-datetime",
+          "description": "Time that this operation completed.@OutputOnly",
           "type": "string"
         }
-      }
+      },
+      "id": "OperationMetadataExperimental"
     },
     "OperationMetadataV1Alpha": {
       "description": "Metadata for the given google.longrunning.Operation.",
       "type": "object",
       "properties": {
+        "target": {
+          "description": "Name of the resource that this operation is acting on. Example: apps/myapp/services/default.@OutputOnly",
+          "type": "string"
+        },
+        "user": {
+          "description": "User who requested this operation.@OutputOnly",
+          "type": "string"
+        },
+        "ephemeralMessage": {
+          "description": "Ephemeral message that may change every time the operation is polled. @OutputOnly",
+          "type": "string"
+        },
+        "method": {
+          "description": "API method that initiated this operation. Example: google.appengine.v1alpha.Versions.CreateVersion.@OutputOnly",
+          "type": "string"
+        },
         "endTime": {
           "format": "google-datetime",
           "description": "Time that this operation completed.@OutputOnly",
@@ -851,92 +939,20 @@
           "format": "google-datetime",
           "description": "Time that this operation was created.@OutputOnly",
           "type": "string"
-        },
-        "user": {
-          "description": "User who requested this operation.@OutputOnly",
-          "type": "string"
-        },
-        "target": {
-          "description": "Name of the resource that this operation is acting on. Example: apps/myapp/services/default.@OutputOnly",
-          "type": "string"
-        },
-        "ephemeralMessage": {
-          "type": "string",
-          "description": "Ephemeral message that may change every time the operation is polled. @OutputOnly"
-        },
-        "method": {
-          "description": "API method that initiated this operation. Example: google.appengine.v1alpha.Versions.CreateVersion.@OutputOnly",
-          "type": "string"
         }
       },
       "id": "OperationMetadataV1Alpha"
-    },
-    "OperationMetadataExperimental": {
-      "description": "Metadata for the given google.longrunning.Operation.",
-      "type": "object",
-      "properties": {
-        "method": {
-          "description": "API method that initiated this operation. Example: google.appengine.experimental.CustomDomains.CreateCustomDomain.@OutputOnly",
-          "type": "string"
-        },
-        "insertTime": {
-          "format": "google-datetime",
-          "description": "Time that this operation was created.@OutputOnly",
-          "type": "string"
-        },
-        "endTime": {
-          "format": "google-datetime",
-          "description": "Time that this operation completed.@OutputOnly",
-          "type": "string"
-        },
-        "target": {
-          "description": "Name of the resource that this operation is acting on. Example: apps/myapp/customDomains/example.com.@OutputOnly",
-          "type": "string"
-        },
-        "user": {
-          "type": "string",
-          "description": "User who requested this operation.@OutputOnly"
-        }
-      },
-      "id": "OperationMetadataExperimental"
-    },
-    "Status": {
-      "description": "The Status type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by gRPC (https://github.com/grpc). The error model is designed to be:\nSimple to use and understand for most users\nFlexible enough to meet unexpected needsOverviewThe Status message contains three pieces of data: error code, error message, and error details. The error code should be an enum value of google.rpc.Code, but it may accept additional error codes if needed. The error message should be a developer-facing English message that helps developers understand and resolve the error. If a localized user-facing error message is needed, put the localized message in the error details or localize it in the client. The optional error details may contain arbitrary information about the error. There is a predefined set of error detail types in the package google.rpc that can be used for common error conditions.Language mappingThe Status message is the logical representation of the error model, but it is not necessarily the actual wire format. When the Status message is exposed in different client libraries and different wire protocols, it can be mapped differently. For example, it will likely be mapped to some exceptions in Java, but more likely mapped to some error codes in C.Other usesThe error model and the Status message can be used in a variety of environments, either with or without APIs, to provide a consistent developer experience across different environments.Example uses of this error model include:\nPartial errors. If a service needs to return partial errors to the client, it may embed the Status in the normal response to indicate the partial errors.\nWorkflow errors. A typical workflow has multiple steps. Each step may have a Status message for error reporting.\nBatch operations. If a client uses batch request and batch response, the Status message should be used directly inside batch response, one for each error sub-response.\nAsynchronous operations. If an API call embeds asynchronous operation results in its response, the status of those operations should be represented directly using the Status message.\nLogging. If some API errors are stored in logs, the message Status could be used directly after any stripping needed for security/privacy reasons.",
-      "type": "object",
-      "properties": {
-        "message": {
-          "description": "A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.",
-          "type": "string"
-        },
-        "details": {
-          "description": "A list of messages that carry the error details. There will be a common set of message types for APIs to use.",
-          "items": {
-            "additionalProperties": {
-              "description": "Properties of the object. Contains field @type with type URL.",
-              "type": "any"
-            },
-            "type": "object"
-          },
-          "type": "array"
-        },
-        "code": {
-          "format": "int32",
-          "description": "The status code, which should be an enum value of google.rpc.Code.",
-          "type": "integer"
-        }
-      },
-      "id": "Status"
     },
     "AuthorizedDomain": {
       "description": "A domain that a user has been authorized to administer. To authorize use of a domain, verify ownership via Webmaster Central (https://www.google.com/webmasters/verification/home).",
       "type": "object",
       "properties": {
-        "name": {
-          "description": "Full path to the AuthorizedDomain resource in the API. Example: apps/myapp/authorizedDomains/example.com.@OutputOnly",
-          "type": "string"
-        },
         "id": {
           "description": "Fully qualified domain name of the domain authorized for use. Example: example.com.",
+          "type": "string"
+        },
+        "name": {
+          "description": "Full path to the AuthorizedDomain resource in the API. Example: apps/myapp/authorizedDomains/example.com.@OutputOnly",
           "type": "string"
         }
       },
@@ -960,46 +976,32 @@
       },
       "id": "ListAuthorizedDomainsResponse"
     },
-    "LocationMetadata": {
-      "description": "Metadata for the given google.cloud.location.Location.",
+    "Status": {
+      "description": "The Status type defines a logical error model that is suitable for different programming environments, including REST APIs and RPC APIs. It is used by gRPC (https://github.com/grpc). The error model is designed to be:\nSimple to use and understand for most users\nFlexible enough to meet unexpected needsOverviewThe Status message contains three pieces of data: error code, error message, and error details. The error code should be an enum value of google.rpc.Code, but it may accept additional error codes if needed. The error message should be a developer-facing English message that helps developers understand and resolve the error. If a localized user-facing error message is needed, put the localized message in the error details or localize it in the client. The optional error details may contain arbitrary information about the error. There is a predefined set of error detail types in the package google.rpc that can be used for common error conditions.Language mappingThe Status message is the logical representation of the error model, but it is not necessarily the actual wire format. When the Status message is exposed in different client libraries and different wire protocols, it can be mapped differently. For example, it will likely be mapped to some exceptions in Java, but more likely mapped to some error codes in C.Other usesThe error model and the Status message can be used in a variety of environments, either with or without APIs, to provide a consistent developer experience across different environments.Example uses of this error model include:\nPartial errors. If a service needs to return partial errors to the client, it may embed the Status in the normal response to indicate the partial errors.\nWorkflow errors. A typical workflow has multiple steps. Each step may have a Status message for error reporting.\nBatch operations. If a client uses batch request and batch response, the Status message should be used directly inside batch response, one for each error sub-response.\nAsynchronous operations. If an API call embeds asynchronous operation results in its response, the status of those operations should be represented directly using the Status message.\nLogging. If some API errors are stored in logs, the message Status could be used directly after any stripping needed for security/privacy reasons.",
       "type": "object",
       "properties": {
-        "standardEnvironmentAvailable": {
-          "description": "App Engine Standard Environment is available in the given location.@OutputOnly",
-          "type": "boolean"
-        },
-        "flexibleEnvironmentAvailable": {
-          "description": "App Engine Flexible Environment is available in the given location.@OutputOnly",
-          "type": "boolean"
-        }
-      },
-      "id": "LocationMetadata"
-    },
-    "DomainMapping": {
-      "type": "object",
-      "properties": {
-        "resourceRecords": {
+        "details": {
+          "description": "A list of messages that carry the error details. There is a common set of message types for APIs to use.",
           "items": {
-            "$ref": "ResourceRecord"
+            "additionalProperties": {
+              "description": "Properties of the object. Contains field @type with type URL.",
+              "type": "any"
+            },
+            "type": "object"
           },
-          "type": "array",
-          "description": "The resource records required to configure this domain mapping. These records must be added to the domain's DNS configuration in order to serve the application via this domain mapping.@OutputOnly"
+          "type": "array"
         },
-        "id": {
-          "description": "Relative name of the domain serving the application. Example: example.com.",
-          "type": "string"
+        "code": {
+          "format": "int32",
+          "description": "The status code, which should be an enum value of google.rpc.Code.",
+          "type": "integer"
         },
-        "sslSettings": {
-          "$ref": "SslSettings",
-          "description": "SSL configuration for this domain. If unconfigured, this domain will not serve with SSL."
-        },
-        "name": {
-          "description": "Full path to the DomainMapping resource in the API. Example: apps/myapp/domainMapping/example.com.@OutputOnly",
+        "message": {
+          "description": "A developer-facing error message, which should be in English. Any user-facing error message should be localized and sent in the google.rpc.Status.details field, or localized by the client.",
           "type": "string"
         }
       },
-      "id": "DomainMapping",
-      "description": "A domain serving an App Engine application."
+      "id": "Status"
     },
     "Empty": {
       "description": "A generic empty message that you can re-use to avoid defining duplicated empty messages in your APIs. A typical example is to use it as the request or the response type of an API method. For instance:\nservice Foo {\n  rpc Bar(google.protobuf.Empty) returns (google.protobuf.Empty);\n}\nThe JSON representation for Empty is empty JSON object {}.",
@@ -1007,19 +1009,51 @@
       "properties": {},
       "id": "Empty"
     },
+    "DomainMapping": {
+      "description": "A domain serving an App Engine application.",
+      "type": "object",
+      "properties": {
+        "sslSettings": {
+          "$ref": "SslSettings",
+          "description": "SSL configuration for this domain. If unconfigured, this domain will not serve with SSL."
+        },
+        "name": {
+          "description": "Full path to the DomainMapping resource in the API. Example: apps/myapp/domainMapping/example.com.@OutputOnly",
+          "type": "string"
+        },
+        "resourceRecords": {
+          "description": "The resource records required to configure this domain mapping. These records must be added to the domain's DNS configuration in order to serve the application via this domain mapping.@OutputOnly",
+          "items": {
+            "$ref": "ResourceRecord"
+          },
+          "type": "array"
+        },
+        "id": {
+          "description": "Relative name of the domain serving the application. Example: example.com.",
+          "type": "string"
+        }
+      },
+      "id": "DomainMapping"
+    },
+    "LocationMetadata": {
+      "description": "Metadata for the given google.cloud.location.Location.",
+      "type": "object",
+      "properties": {
+        "flexibleEnvironmentAvailable": {
+          "description": "App Engine Flexible Environment is available in the given location.@OutputOnly",
+          "type": "boolean"
+        },
+        "standardEnvironmentAvailable": {
+          "description": "App Engine Standard Environment is available in the given location.@OutputOnly",
+          "type": "boolean"
+        }
+      },
+      "id": "LocationMetadata"
+    },
     "OperationMetadataV1Beta": {
       "description": "Metadata for the given google.longrunning.Operation.",
       "type": "object",
       "properties": {
-        "method": {
-          "description": "API method that initiated this operation. Example: google.appengine.v1beta.Versions.CreateVersion.@OutputOnly",
-          "type": "string"
-        },
-        "endTime": {
-          "format": "google-datetime",
-          "description": "Time that this operation completed.@OutputOnly",
-          "type": "string"
-        },
         "warning": {
           "description": "Durable messages that persist on every operation poll. @OutputOnly",
           "items": {
@@ -1032,29 +1066,32 @@
           "description": "Time that this operation was created.@OutputOnly",
           "type": "string"
         },
-        "user": {
-          "description": "User who requested this operation.@OutputOnly",
-          "type": "string"
-        },
         "target": {
           "description": "Name of the resource that this operation is acting on. Example: apps/myapp/services/default.@OutputOnly",
           "type": "string"
         },
+        "user": {
+          "description": "User who requested this operation.@OutputOnly",
+          "type": "string"
+        },
         "ephemeralMessage": {
           "description": "Ephemeral message that may change every time the operation is polled. @OutputOnly",
+          "type": "string"
+        },
+        "method": {
+          "description": "API method that initiated this operation. Example: google.appengine.v1beta.Versions.CreateVersion.@OutputOnly",
+          "type": "string"
+        },
+        "endTime": {
+          "format": "google-datetime",
+          "description": "Time that this operation completed.@OutputOnly",
           "type": "string"
         }
       },
       "id": "OperationMetadataV1Beta"
     },
     "Location": {
-      "description": "A resource that represents Google Cloud Platform location.",
-      "type": "object",
       "properties": {
-        "name": {
-          "description": "Resource name for the location, which may vary between implementations. For example: \"projects/example-project/locations/us-east1\"",
-          "type": "string"
-        },
         "locationId": {
           "description": "The canonical id for this location. For example: \"us-east1\".",
           "type": "string"
@@ -1068,17 +1105,22 @@
           "type": "object"
         },
         "labels": {
-          "description": "Cross-service attributes for the location. For example\n{\"cloud.googleapis.com/region\": \"us-east1\"}\n",
-          "type": "object",
           "additionalProperties": {
             "type": "string"
-          }
+          },
+          "description": "Cross-service attributes for the location. For example\n{\"cloud.googleapis.com/region\": \"us-east1\"}\n",
+          "type": "object"
+        },
+        "name": {
+          "description": "Resource name for the location, which may vary between implementations. For example: \"projects/example-project/locations/us-east1\"",
+          "type": "string"
         }
       },
-      "id": "Location"
+      "id": "Location",
+      "description": "A resource that represents Google Cloud Platform location.",
+      "type": "object"
     },
     "AuthorizedCertificate": {
-      "id": "AuthorizedCertificate",
       "description": "An SSL certificate that a user has been authorized to administer. A user is authorized to administer any certificate that applies to one of their authorized domains.",
       "type": "object",
       "properties": {
@@ -1086,16 +1128,16 @@
           "description": "The user-specified display name of the certificate. This is not guaranteed to be unique. Example: My Certificate.",
           "type": "string"
         },
-        "managedCertificate": {
-          "$ref": "ManagedCertificate",
-          "description": "Only applicable if this certificate is managed by App Engine. Managed certificates are tied to the lifecycle of a DomainMapping and cannot be updated or deleted via the AuthorizedCertificates API. If this certificate is manually administered by the user, this field will be empty.@OutputOnly"
-        },
         "certificateRawData": {
           "description": "The SSL certificate serving the AuthorizedCertificate resource. This must be obtained independently from a certificate authority.",
           "$ref": "CertificateRawData"
         },
+        "managedCertificate": {
+          "description": "Only applicable if this certificate is managed by App Engine. Managed certificates are tied to the lifecycle of a DomainMapping and cannot be updated or deleted via the AuthorizedCertificates API. If this certificate is manually administered by the user, this field will be empty.@OutputOnly",
+          "$ref": "ManagedCertificate"
+        },
         "visibleDomainMappings": {
-          "description": "The full paths to user visible Domain Mapping resources that have this certificate mapped. Example: apps/myapp/domainMappings/example.com.This may not represent the full list of mapped domain mappings if the user does not have VIEWER permissions on all of the applications that have this certificate mapped. See domain_mappings_count for a complete count.Only returned by GET requests when specifically requested by the view=FULL option.@OutputOnly",
+          "description": "The full paths to user visible Domain Mapping resources that have this certificate mapped. Example: apps/myapp/domainMappings/example.com.This may not represent the full list of mapped domain mappings if the user does not have VIEWER permissions on all of the applications that have this certificate mapped. See domain_mappings_count for a complete count.Only returned by GET or LIST requests when specifically requested by the view=FULL_CERTIFICATE option.@OutputOnly",
           "items": {
             "type": "string"
           },
@@ -1112,7 +1154,7 @@
         },
         "domainMappingsCount": {
           "format": "int32",
-          "description": "Aggregate count of the domain mappings with this certificate mapped. This count includes domain mappings on applications for which the user does not have VIEWER permissions.Only returned by GET requests when specifically requested by the view=FULL option.@OutputOnly",
+          "description": "Aggregate count of the domain mappings with this certificate mapped. This count includes domain mappings on applications for which the user does not have VIEWER permissions.Only returned by GET or LIST requests when specifically requested by the view=FULL_CERTIFICATE option.@OutputOnly",
           "type": "integer"
         },
         "domainNames": {
@@ -1126,33 +1168,34 @@
           "description": "Relative name of the certificate. This is a unique value autogenerated on AuthorizedCertificate resource creation. Example: 12345.@OutputOnly",
           "type": "string"
         }
-      }
+      },
+      "id": "AuthorizedCertificate"
     },
     "ResourceRecord": {
       "description": "A DNS resource record.",
       "type": "object",
       "properties": {
+        "rrdata": {
+          "description": "Data for this record. Values vary by record type, as defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1).",
+          "type": "string"
+        },
         "name": {
           "description": "Relative name of the object affected by this record. Only applicable for CNAME records. Example: 'www'.",
           "type": "string"
         },
         "type": {
-          "enumDescriptions": [
-            "An A resource record. Data is an IPv4 address.",
-            "An AAAA resource record. Data is an IPv6 address.",
-            "A CNAME resource record. Data is a domain name to be aliased."
-          ],
           "enum": [
             "A",
             "AAAA",
             "CNAME"
           ],
           "description": "Resource record type. Example: AAAA.",
-          "type": "string"
-        },
-        "rrdata": {
-          "description": "Data for this record. Values vary by record type, as defined in RFC 1035 (section 5) and RFC 1034 (section 3.6.1).",
-          "type": "string"
+          "type": "string",
+          "enumDescriptions": [
+            "An A resource record. Data is an IPv4 address.",
+            "An AAAA resource record. Data is an IPv6 address.",
+            "A CNAME resource record. Data is a domain name to be aliased."
+          ]
         }
       },
       "id": "ResourceRecord"
@@ -1179,64 +1222,21 @@
       "description": "Metadata for the given google.longrunning.Operation.",
       "type": "object",
       "properties": {
-        "method": {
-          "description": "API method that initiated this operation. Example: google.appengine.v1beta4.Version.CreateVersion.@OutputOnly",
-          "type": "string"
-        },
-        "endTime": {
-          "type": "string",
-          "format": "google-datetime",
-          "description": "Timestamp that this operation completed.@OutputOnly"
-        },
-        "operationType": {
-          "description": "Type of this operation. Deprecated, use method field instead. Example: \"create_version\".@OutputOnly",
-          "type": "string"
-        },
         "insertTime": {
           "format": "google-datetime",
           "description": "Timestamp that this operation was created.@OutputOnly",
           "type": "string"
-        },
-        "user": {
-          "type": "string",
-          "description": "User who requested this operation.@OutputOnly"
         },
         "target": {
           "description": "Name of the resource that this operation is acting on. Example: apps/myapp/modules/default.@OutputOnly",
           "type": "string"
-        }
-      },
-      "id": "OperationMetadata"
-    },
-    "ListAuthorizedCertificatesResponse": {
-      "properties": {
-        "certificates": {
-          "items": {
-            "$ref": "AuthorizedCertificate"
-          },
-          "type": "array",
-          "description": "The SSL certificates the user is authorized to administer."
         },
-        "nextPageToken": {
-          "description": "Continuation token for fetching the next page of results.",
+        "user": {
+          "description": "User who requested this operation.@OutputOnly",
           "type": "string"
-        }
-      },
-      "id": "ListAuthorizedCertificatesResponse",
-      "description": "Response message for AuthorizedCertificates.ListAuthorizedCertificates.",
-      "type": "object"
-    },
-    "OperationMetadataV1Beta5": {
-      "description": "Metadata for the given google.longrunning.Operation.",
-      "type": "object",
-      "properties": {
+        },
         "method": {
-          "description": "API method name that initiated this operation. Example: google.appengine.v1beta5.Version.CreateVersion.@OutputOnly",
-          "type": "string"
-        },
-        "insertTime": {
-          "format": "google-datetime",
-          "description": "Timestamp that this operation was created.@OutputOnly",
+          "description": "API method that initiated this operation. Example: google.appengine.v1beta4.Version.CreateVersion.@OutputOnly",
           "type": "string"
         },
         "endTime": {
@@ -1244,36 +1244,50 @@
           "description": "Timestamp that this operation completed.@OutputOnly",
           "type": "string"
         },
-        "target": {
-          "description": "Name of the resource that this operation is acting on. Example: apps/myapp/services/default.@OutputOnly",
-          "type": "string"
-        },
-        "user": {
-          "description": "User who requested this operation.@OutputOnly",
+        "operationType": {
+          "description": "Type of this operation. Deprecated, use method field instead. Example: \"create_version\".@OutputOnly",
           "type": "string"
         }
       },
-      "id": "OperationMetadataV1Beta5"
+      "id": "OperationMetadata"
+    },
+    "ListAuthorizedCertificatesResponse": {
+      "properties": {
+        "nextPageToken": {
+          "description": "Continuation token for fetching the next page of results.",
+          "type": "string"
+        },
+        "certificates": {
+          "description": "The SSL certificates the user is authorized to administer.",
+          "items": {
+            "$ref": "AuthorizedCertificate"
+          },
+          "type": "array"
+        }
+      },
+      "id": "ListAuthorizedCertificatesResponse",
+      "description": "Response message for AuthorizedCertificates.ListAuthorizedCertificates.",
+      "type": "object"
     }
   },
   "protocol": "rest",
   "icons": {
-    "x32": "http://www.google.com/images/icons/product/search-32.gif",
-    "x16": "http://www.google.com/images/icons/product/search-16.gif"
+    "x16": "http://www.google.com/images/icons/product/search-16.gif",
+    "x32": "http://www.google.com/images/icons/product/search-32.gif"
   },
   "version": "v1alpha",
   "baseUrl": "https://appengine.googleapis.com/",
   "auth": {
     "oauth2": {
       "scopes": {
+        "https://www.googleapis.com/auth/appengine.admin": {
+          "description": "View and manage your applications deployed on Google App Engine"
+        },
         "https://www.googleapis.com/auth/cloud-platform.read-only": {
           "description": "View your data across Google Cloud Platform services"
         },
         "https://www.googleapis.com/auth/cloud-platform": {
           "description": "View and manage your data across Google Cloud Platform services"
-        },
-        "https://www.googleapis.com/auth/appengine.admin": {
-          "description": "View and manage your applications deployed on Google App Engine"
         }
       }
     }
@@ -1284,10 +1298,5 @@
   "rootUrl": "https://appengine.googleapis.com/",
   "basePath": "",
   "ownerDomain": "google.com",
-  "name": "appengine",
-  "batchPath": "batch",
-  "id": "appengine:v1alpha",
-  "revision": "20170626",
-  "documentationLink": "https://cloud.google.com/appengine/docs/admin-api/",
-  "title": "Google App Engine Admin API"
+  "name": "appengine"
 }

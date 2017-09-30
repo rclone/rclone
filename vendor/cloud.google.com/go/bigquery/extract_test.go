@@ -15,7 +15,6 @@
 package bigquery
 
 import (
-	"reflect"
 	"testing"
 
 	"golang.org/x/net/context"
@@ -25,10 +24,11 @@ import (
 
 func defaultExtractJob() *bq.Job {
 	return &bq.Job{
+		JobReference: &bq.JobReference{JobId: "RANDOM", ProjectId: "client-project-id"},
 		Configuration: &bq.JobConfiguration{
 			Extract: &bq.JobConfigurationExtract{
 				SourceTable: &bq.TableReference{
-					ProjectId: "project-id",
+					ProjectId: "client-project-id",
 					DatasetId: "dataset-id",
 					TableId:   "table-id",
 				},
@@ -39,10 +39,11 @@ func defaultExtractJob() *bq.Job {
 }
 
 func TestExtract(t *testing.T) {
+	defer fixRandomJobID("RANDOM")()
 	s := &testService{}
 	c := &Client{
 		service:   s,
-		projectID: "project-id",
+		projectID: "client-project-id",
 	}
 
 	testCases := []struct {
@@ -86,17 +87,15 @@ func TestExtract(t *testing.T) {
 		},
 	}
 
-	for _, tc := range testCases {
+	for i, tc := range testCases {
 		ext := tc.src.ExtractorTo(tc.dst)
 		tc.config.Src = ext.Src
 		tc.config.Dst = ext.Dst
 		ext.ExtractConfig = tc.config
 		if _, err := ext.Run(context.Background()); err != nil {
-			t.Errorf("err calling extract: %v", err)
+			t.Errorf("#%d: err calling extract: %v", i, err)
 			continue
 		}
-		if !reflect.DeepEqual(s.Job, tc.want) {
-			t.Errorf("extracting: got:\n%v\nwant:\n%v", s.Job, tc.want)
-		}
+		checkJob(t, i, s.Job, tc.want)
 	}
 }

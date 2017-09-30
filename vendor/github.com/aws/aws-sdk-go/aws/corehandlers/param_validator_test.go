@@ -3,8 +3,7 @@ package corehandlers_test
 import (
 	"fmt"
 	"testing"
-
-	"github.com/stretchr/testify/assert"
+	"reflect"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
@@ -14,7 +13,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/service/kinesis"
-	"github.com/stretchr/testify/require"
 )
 
 var testSvc = func() *client.Client {
@@ -113,7 +111,9 @@ func TestNoErrors(t *testing.T) {
 
 	req := testSvc.NewRequest(&request.Operation{}, input, nil)
 	corehandlers.ValidateParametersHandler.Fn(req)
-	require.NoError(t, req.Error)
+	if req.Error != nil {
+		t.Fatalf("expect no error, got %v", req.Error)
+	}
 }
 
 func TestMissingRequiredParameters(t *testing.T) {
@@ -121,17 +121,33 @@ func TestMissingRequiredParameters(t *testing.T) {
 	req := testSvc.NewRequest(&request.Operation{}, input, nil)
 	corehandlers.ValidateParametersHandler.Fn(req)
 
-	require.Error(t, req.Error)
-	assert.Equal(t, "InvalidParameter", req.Error.(awserr.Error).Code())
-	assert.Equal(t, "3 validation error(s) found.", req.Error.(awserr.Error).Message())
+	if req.Error == nil {
+		t.Fatalf("expect error")
+	}
+	if e, a := "InvalidParameter", req.Error.(awserr.Error).Code(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "3 validation error(s) found.", req.Error.(awserr.Error).Message(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	errs := req.Error.(awserr.BatchedErrors).OrigErrs()
-	assert.Len(t, errs, 3)
-	assert.Equal(t, "ParamRequiredError: missing required field, StructShape.RequiredList.", errs[0].Error())
-	assert.Equal(t, "ParamRequiredError: missing required field, StructShape.RequiredMap.", errs[1].Error())
-	assert.Equal(t, "ParamRequiredError: missing required field, StructShape.RequiredBool.", errs[2].Error())
+	if e, a := 3, len(errs); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "ParamRequiredError: missing required field, StructShape.RequiredList.", errs[0].Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "ParamRequiredError: missing required field, StructShape.RequiredMap.", errs[1].Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "ParamRequiredError: missing required field, StructShape.RequiredBool.", errs[2].Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
-	assert.Equal(t, "InvalidParameter: 3 validation error(s) found.\n- missing required field, StructShape.RequiredList.\n- missing required field, StructShape.RequiredMap.\n- missing required field, StructShape.RequiredBool.\n", req.Error.Error())
+	if e, a := "InvalidParameter: 3 validation error(s) found.\n- missing required field, StructShape.RequiredList.\n- missing required field, StructShape.RequiredMap.\n- missing required field, StructShape.RequiredBool.\n", req.Error.Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestNestedMissingRequiredParameters(t *testing.T) {
@@ -148,15 +164,29 @@ func TestNestedMissingRequiredParameters(t *testing.T) {
 	req := testSvc.NewRequest(&request.Operation{}, input, nil)
 	corehandlers.ValidateParametersHandler.Fn(req)
 
-	require.Error(t, req.Error)
-	assert.Equal(t, "InvalidParameter", req.Error.(awserr.Error).Code())
-	assert.Equal(t, "3 validation error(s) found.", req.Error.(awserr.Error).Message())
+	if req.Error == nil {
+		t.Fatalf("expect error")
+	}
+	if e, a := "InvalidParameter", req.Error.(awserr.Error).Code(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "3 validation error(s) found.", req.Error.(awserr.Error).Message(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	errs := req.Error.(awserr.BatchedErrors).OrigErrs()
-	assert.Len(t, errs, 3)
-	assert.Equal(t, "ParamRequiredError: missing required field, StructShape.RequiredList[0].Name.", errs[0].Error())
-	assert.Equal(t, "ParamRequiredError: missing required field, StructShape.RequiredMap[key2].Name.", errs[1].Error())
-	assert.Equal(t, "ParamRequiredError: missing required field, StructShape.OptionalStruct.Name.", errs[2].Error())
+	if e, a := 3, len(errs); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "ParamRequiredError: missing required field, StructShape.RequiredList[0].Name.", errs[0].Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "ParamRequiredError: missing required field, StructShape.RequiredMap[key2].Name.", errs[1].Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "ParamRequiredError: missing required field, StructShape.OptionalStruct.Name.", errs[2].Error(); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 type testInput struct {
@@ -226,7 +256,9 @@ func TestValidateFieldMinParameter(t *testing.T) {
 		req := testSvc.NewRequest(&request.Operation{}, &c.in, nil)
 		corehandlers.ValidateParametersHandler.Fn(req)
 
-		assert.Equal(t, c.err, req.Error, "%d case failed", i)
+		if e, a := c.err, req.Error; !reflect.DeepEqual(e,a) {
+			t.Errorf("%d, expect %v, got %v", i, e, a)
+		}
 	}
 }
 
