@@ -660,6 +660,7 @@ func (o *Object) MimeType() string {
 var (
 	_ fs.Fs          = (*Fs)(nil)
 	_ fs.Purger      = (*Fs)(nil)
+	_ fs.CleanUpper  = (*Fs)(nil)
 	_ fs.PutStreamer = (*Fs)(nil)
 	_ fs.ListRer     = (*Fs)(nil)
 	//_ fs.Copier = (*Fs)(nil)
