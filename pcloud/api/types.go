@@ -135,7 +135,7 @@ func (g *GetFileLinkResult) IsValid() bool {
 	if len(g.Hosts) == 0 {
 		return false
 	}
-	return time.Until(time.Time(g.Expires)) > 30*time.Second
+	return time.Time(g.Expires).Sub(time.Now()) > 30*time.Second
 }
 
 // URL returns a URL from the Path and Hosts.  Check with IsValid
