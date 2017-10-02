@@ -31,6 +31,7 @@ Rclone is a command line program to sync files and directories to and from
   * pCloud
   * QingStor
   * SFTP
+  * Webdav / Owncloud / Nextcloud
   * Yandex Disk
   * The local filesystem
 

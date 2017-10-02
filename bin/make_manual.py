@@ -38,6 +38,7 @@ docs = [
     "swift.md",
     "pcloud.md",
     "sftp.md",
+    "webdav.md",
     "yandex.md",
 
     "local.md",

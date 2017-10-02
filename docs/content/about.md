@@ -29,14 +29,17 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="Microsoft Azure Blob Storage" home="https://azure.microsoft.com/en-us/services/storage/blobs/" config="/azureblob/" >}}
 * {{< provider name="Microsoft OneDrive" home="https://onedrive.live.com/" config="/onedrive/" >}}
 * {{< provider name="Minio" home="https://www.minio.io/" config="/s3/#minio" >}}
+* {{< provider name="Nextloud" home="https://nextcloud.com/" config="/webdav/#nextcloud" >}}
 * {{< provider name="OVH" home="https://www.ovh.co.uk/public-cloud/storage/object-storage/" config="/swift/" >}}
 * {{< provider name="Openstack Swift" home="https://docs.openstack.org/swift/latest/" config="/swift/" >}}
-* {{< provider name="pCloud" home="https://www.pcloud.com/" config="/pcloud/" >}}
 * {{< provider name="Oracle Cloud Storage" home="https://cloud.oracle.com/storage-opc" config="/swift/" >}}
+* {{< provider name="Ownloud" home="https://owncloud.org/" config="/webdav/#owncloud" >}}
+* {{< provider name="pCloud" home="https://www.pcloud.com/" config="/pcloud/" >}}
 * {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 * {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 * {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SFTP" config="/sftp/" >}}
 * {{< provider name="Wasabi" home="https://wasabi.com/" config="/s3/#wasabi" >}}
+* {{< provider name="WebDAV" home="https://en.wikipedia.org/wiki/WebDAV" config="/webdav/" >}}
 * {{< provider name="Yandex Disk" home="https://disk.yandex.com/" config="/yandex/" >}}
 * {{< provider name="The local filesystem" home="/local/" config="/local/" >}}
 

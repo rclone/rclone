@@ -57,6 +57,7 @@ from various cloud storage systems and using file transfer services, such as:
   * pCloud
   * QingStor
   * SFTP
+  * Webdav / Owncloud / Nextcloud
   * Yandex Disk
   * The local filesystem
 

@@ -33,6 +33,7 @@ Here is an overview of the major features of each cloud storage system.
 | pCloud                       | MD5, SHA1   | Yes     | No               | No              | W         |
 | QingStor                     | MD5         | No      | No               | No              | R/W       |
 | SFTP                         | MD5, SHA1 ‡ | Yes     | Depends          | No              | -         |
+| WebDAV                       | -           | Yes ††  | Depends          | No              | -         |
 | Yandex Disk                  | MD5         | Yes     | No               | No              | R/W       |
 | The local filesystem         | All         | Yes     | Depends          | No              | -         |
 
@@ -52,6 +53,8 @@ This is an SHA256 sum of all the 4MB block SHA256s.
 
 ‡ SFTP supports checksums if the same login has shell access and `md5sum`
 or `sha1sum` as well as `echo` are in the remote's PATH.
+
+†† WebDAV supports modtimes when used with Owncloud and Nextcloud only.
 
 ### ModTime ###
 
@@ -134,6 +137,7 @@ operations more efficient.
 | pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           |
 | QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           |
 | SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          |
+| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        |
 | Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes   | Yes          |
 | The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          |
 
@@ -145,6 +149,8 @@ the directory.
 † Note Swift and Hubic implement this in order to delete directory
 markers but they don't actually have a quicker way of deleting files
 other than deleting them individually.
+
+‡ StreamUpload is not supported with Nextcloud
 
 ### Copy ###
 
