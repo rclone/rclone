@@ -268,20 +268,22 @@ func matchListings(srcListEntries, dstListEntries DirEntries, transforms []match
 			prev := srcList[iSrc-1].name
 			if srcName == prev {
 				Logf(src, "Duplicate %s found in source - ignoring", DirEntryType(src))
-				src = nil // ignore the src
+				iDst-- // ignore the src and retry the dst
+				continue
 			} else if srcName < prev {
-				Errorf(src, "Out of order listing in source")
-				src = nil // ignore the src
+				// this should never happen since we sort the listings
+				panic("Out of order listing in source")
 			}
 		}
 		if dst != nil && iDst > 0 {
 			prev := dstList[iDst-1].name
 			if dstName == prev {
 				Logf(dst, "Duplicate %s found in destination - ignoring", DirEntryType(dst))
-				dst = nil // ignore the dst
+				iSrc-- // ignore the dst and retry the src
+				continue
 			} else if dstName < prev {
-				Errorf(dst, "Out of order listing in destination")
-				dst = nil // ignore the dst
+				// this should never happen since we sort the listings
+				panic("Out of order listing in destination")
 			}
 		}
 		if src != nil && dst != nil {

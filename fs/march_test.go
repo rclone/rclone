@@ -101,11 +101,15 @@ func TestMatchListings(t *testing.T) {
 		{
 			what: "One duplicate",
 			input: DirEntries{
+				A, A,
 				a, a,
 				a, nil,
+				b, b,
 			},
 			matches: []matchPair{
+				{A, A},
 				{a, a},
+				{b, b},
 			},
 		},
 		{
@@ -141,20 +145,6 @@ func TestMatchListings(t *testing.T) {
 			},
 			transforms: []matchTransformFn{strings.ToLower},
 		},
-		/*{
-			what: "Out of order",
-			input: DirEntries{
-				c, nil,
-				b, b,
-				a, nil,
-			},
-			srcOnly: DirEntries{
-				c,
-			},
-			dstOnly: DirEntries{
-				b,
-			},
-		},*/
 	} {
 		var srcList, dstList DirEntries
 		for i := 0; i < len(test.input); i += 2 {
