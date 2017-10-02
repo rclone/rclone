@@ -629,7 +629,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	dstPath := path.Join(f.slashRoot, dstRemote)
 
 	// Check if destination exists
-	_, err := f.getDirMetadata(f.slashRoot)
+	_, err := f.getDirMetadata(dstPath)
 	if err == nil {
 		return fs.ErrorDirExists
 	} else if err != fs.ErrorDirNotFound {
