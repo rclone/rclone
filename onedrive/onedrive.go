@@ -276,14 +276,6 @@ func parsePath(path string) (root string) {
 	return
 }
 
-// mimics url.PathEscape which only available from go 1.8
-func pathEscape(path string) string {
-	u := url.URL{
-		Path: path,
-	}
-	return u.EscapedPath()
-}
-
 // retryErrorCodes is a slice of error codes that we will retry
 var retryErrorCodes = []int{
 	429, // Too Many Requests.
@@ -310,7 +302,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Response, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/root:/" + pathEscape(replaceReservedChars(path)),
+		Path:   "/root:/" + rest.URLEscape(replaceReservedChars(path)),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(&opts, nil, &info)
@@ -1026,7 +1018,7 @@ func (o *Object) ModTime() time.Time {
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/root:/" + pathEscape(o.srvPath()),
+		Path:   "/root:/" + rest.URLEscape(o.srvPath()),
 	}
 	update := api.SetFileSystemInfo{
 		FileSystemInfo: api.FileSystemInfoFacet{
@@ -1081,7 +1073,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err error) {
 	opts := rest.Opts{
 		Method: "POST",
-		Path:   "/root:/" + pathEscape(o.srvPath()) + ":/upload.createSession",
+		Path:   "/root:/" + rest.URLEscape(o.srvPath()) + ":/upload.createSession",
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1187,7 +1179,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		var resp *http.Response
 		opts := rest.Opts{
 			Method:        "PUT",
-			Path:          "/root:/" + pathEscape(o.srvPath()) + ":/content",
+			Path:          "/root:/" + rest.URLEscape(o.srvPath()) + ":/content",
 			ContentLength: &size,
 			Body:          in,
 		}

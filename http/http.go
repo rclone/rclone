@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html"
 )
@@ -63,24 +64,6 @@ type Object struct {
 	contentType string
 }
 
-// Join a URL and a path returning a new URL
-//
-// path should be URL escaped
-func urlJoin(base *url.URL, path string) (*url.URL, error) {
-	rel, err := url.Parse(path)
-	if err != nil {
-		return nil, errors.Wrapf(err, "Error parsing %q as URL", path)
-	}
-	return base.ResolveReference(rel), nil
-}
-
-// urlEscape escapes URL path the in string using URL escaping rules
-func urlEscape(in string) string {
-	var u url.URL
-	u.Path = in
-	return u.String()
-}
-
 // statusError returns an error if the res contained an error
 func statusError(res *http.Response, err error) error {
 	if err != nil {
@@ -106,7 +89,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	u, err := urlJoin(base, urlEscape(root))
+	u, err := rest.URLJoin(base, rest.URLEscape(root))
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +186,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 
 // Join's the remote onto the base URL
 func (f *Fs) url(remote string) string {
-	return f.endpointURL + urlEscape(remote)
+	return f.endpointURL + rest.URLEscape(remote)
 }
 
 func parseInt64(s string) int64 {
@@ -216,7 +199,7 @@ func parseInt64(s string) int64 {
 
 // parseName turns a name as found in the page into a remote path or returns false
 func parseName(base *url.URL, name string) (string, bool) {
-	u, err := urlJoin(base, name)
+	u, err := rest.URLJoin(base, name)
 	if err != nil {
 		return "", false
 	}
