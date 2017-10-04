@@ -91,6 +91,15 @@ func (api *Client) SetSigner(signer SignerFn) *Client {
 	return api
 }
 
+// SetUserPass creates an Authorization header for all requests with
+// the UserName and Password passed in
+func (api *Client) SetUserPass(UserName, Password string) *Client {
+	req, _ := http.NewRequest("GET", "http://example.com", nil)
+	req.SetBasicAuth(UserName, Password)
+	api.SetHeader("Authorization", req.Header.Get("Authorization"))
+	return api
+}
+
 // Opts contains parameters for Call, CallJSON etc
 type Opts struct {
 	Method                string // GET, POST etc
