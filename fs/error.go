@@ -225,6 +225,7 @@ func Cause(cause error) (retriable bool, err error) {
 // errors and all errors were exported from the stdlib.
 var retriableErrorStrings = []string{
 	"use of closed network connection", // not exported :-(
+	"unexpected EOF reading trailer",
 }
 
 // Errors which indicate networking errors which should be retried
