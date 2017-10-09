@@ -90,7 +90,8 @@ systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
 uploads.  This might happen in the future, but for the moment rclone
-mount won't do that, so will be less reliable than the rclone command.
+mount won't do that, so will be less reliable than the rclone sync
+command.
 
 ### Filters ###
 
