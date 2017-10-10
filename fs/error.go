@@ -224,8 +224,10 @@ func Cause(cause error) (retriable bool, err error) {
 // This is incredibly ugly - if only errors.Cause worked for all
 // errors and all errors were exported from the stdlib.
 var retriableErrorStrings = []string{
-	"use of closed network connection", // not exported :-(
-	"unexpected EOF reading trailer",
+	"use of closed network connection", // internal/poll/fd.go
+	"unexpected EOF reading trailer",   // net/http/transfer.go
+	"transport connection broken",      // net/http/transport.go
+	"http: ContentLength=",             // net/http/transfer.go
 }
 
 // Errors which indicate networking errors which should be retried
