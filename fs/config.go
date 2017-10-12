@@ -10,6 +10,7 @@ import (
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -989,6 +990,58 @@ func ChooseOption(o *Option) string {
 	}
 	fmt.Printf("%s> ", o.Name)
 	return ReadLine()
+}
+
+// JsonConfig Created a new remote type X with parameters Y
+func JsonConfig(name string, provider string, jsonstr string) {
+	bytes := []byte(jsonstr)
+
+	// Unmarshal string into structs.
+	var options []Option
+	json.Unmarshal(bytes, &options)
+
+	configData.SetValue(name, "type", provider)
+	// Loop over structs and display them.
+	for op := range options {
+		configData.SetValue(name, options[op].Name, options[op].Value)
+	}
+	configData.SetValue(name, ConfigAutomatic, "yes")
+	RemoteConfig(name)
+	ShowRemote(name)
+	SaveConfig()
+}
+
+// ListOptions Lists all the options needed to connect to a protocol
+func ListOptions(provider string) {
+	fs := MustFind(provider)
+	b, err := json.Marshal(fs.Options)
+	if err != nil {
+		fmt.Println("error:", err)
+	}
+	os.Stdout.Write(b)
+}
+
+// ListProviders print all providersList, in json format, the protocols supported by sync
+func ListProviders() {
+	o := &Option{
+		Name: "Storage",
+		Help: "Type of storage to configure.",
+	}
+	for _, item := range fsRegistry {
+		example := OptionExample{
+			Value: item.Name,
+			Help:  item.Description,
+		}
+		o.Examples = append(o.Examples, example)
+	}
+	if len(o.Examples) > 0 {
+		o.Examples.Sort()
+		b, err := json.Marshal(o.Examples)
+		if err != nil {
+			fmt.Println("error:", err)
+		}
+		os.Stdout.Write(b)
+	}
 }
 
 // fsOption returns an Option describing the possible remotes
