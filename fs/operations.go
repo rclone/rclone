@@ -1716,7 +1716,9 @@ func Rmdirs(f Fs, dir string) error {
 
 // moveOrCopyFile moves or copies a single file possibly to a new name
 func moveOrCopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string, cp bool) (err error) {
-	if fdst.Name() == fsrc.Name() && dstFileName == srcFileName {
+	dstFilePath := path.Join(fdst.Root(), dstFileName)
+	srcFilePath := path.Join(fsrc.Root(), srcFileName)
+	if fdst.Name() == fsrc.Name() && dstFilePath == srcFilePath {
 		Debugf(fdst, "don't need to copy/move %s, it is already at target location", dstFileName)
 		return nil
 	}
