@@ -257,7 +257,7 @@ you might want to pass `--suffix` with today's date.
 
 Local address to bind to for outgoing connections.  This can be an
 IPv4 address (1.2.3.4), an IPv6 address (1234::789A) or host name.  If
-the host name doesn't resolve or resoves to more than one IP address
+the host name doesn't resolve or resolves to more than one IP address
 it will give an error.
 
 ### --bwlimit=BANDWIDTH_SPEC ###
