@@ -1056,8 +1056,8 @@ file to see what the values are (the config file can be found by
 looking at the help for `--config` in `rclone help`).
 
 To find the name of the environment variable, you need to set, take
-`RCLONE_` + name of remote + `_` + name of config file option and make
-it all uppercase.
+`RCLONE_CONFIG_` + name of remote + `_` + name of config file option
+and make it all uppercase.
 
 For example, to configure an S3 remote named `mys3:` without a config
 file (using unix ways of setting environment variables):
