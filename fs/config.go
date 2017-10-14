@@ -992,56 +992,47 @@ func ChooseOption(o *Option) string {
 	return ReadLine()
 }
 
-// JsonConfig Created a new remote type X with parameters Y
-func JsonConfig(name string, provider string, jsonstr string) {
-	bytes := []byte(jsonstr)
-
-	// Unmarshal string into structs.
-	var options []Option
-	json.Unmarshal(bytes, &options)
-
-	configData.SetValue(name, "type", provider)
-	// Loop over structs and display them.
-	for op := range options {
-		configData.SetValue(name, options[op].Name, options[op].Value)
+// UpdateRemote adds the keyValues passed in to the remote of name.
+// keyValues should be key, value pairs.
+func UpdateRemote(name string, keyValues []string) error {
+	if len(keyValues)%2 != 0 {
+		return errors.New("found key without value")
 	}
-	configData.SetValue(name, ConfigAutomatic, "yes")
+	// Set the config
+	for i := 0; i < len(keyValues); i += 2 {
+		configData.SetValue(name, keyValues[i], keyValues[i+1])
+	}
 	RemoteConfig(name)
 	ShowRemote(name)
 	SaveConfig()
+	return nil
 }
 
-// ListOptions Lists all the options needed to connect to a protocol
-func ListOptions(provider string) {
-	fs := MustFind(provider)
-	b, err := json.Marshal(fs.Options)
+// CreateRemote creates a new remote with name, provider and a list of
+// parameters which are key, value pairs.  If update is set then it
+// adds the new keys rather than replacing all of them.
+func CreateRemote(name string, provider string, keyValues []string) error {
+	// Delete the old config if it exists
+	configData.DeleteSection(name)
+	// Set the type
+	configData.SetValue(name, "type", provider)
+	// Show this is automatically configured
+	configData.SetValue(name, ConfigAutomatic, "yes")
+	// Set the remaining values
+	return UpdateRemote(name, keyValues)
+}
+
+// JSONListProviders prints all the providers and options in JSON format
+func JSONListProviders() error {
+	b, err := json.MarshalIndent(fsRegistry, "", "    ")
 	if err != nil {
-		fmt.Println("error:", err)
+		return errors.Wrap(err, "failed to marshal examples")
 	}
-	os.Stdout.Write(b)
-}
-
-// ListProviders print all providersList, in json format, the protocols supported by sync
-func ListProviders() {
-	o := &Option{
-		Name: "Storage",
-		Help: "Type of storage to configure.",
+	_, err = os.Stdout.Write(b)
+	if err != nil {
+		return errors.Wrap(err, "failed to write providers list")
 	}
-	for _, item := range fsRegistry {
-		example := OptionExample{
-			Value: item.Name,
-			Help:  item.Description,
-		}
-		o.Examples = append(o.Examples, example)
-	}
-	if len(o.Examples) > 0 {
-		o.Examples.Sort()
-		b, err := json.Marshal(o.Examples)
-		if err != nil {
-			fmt.Println("error:", err)
-		}
-		os.Stdout.Write(b)
-	}
+	return nil
 }
 
 // fsOption returns an Option describing the possible remotes
@@ -1366,4 +1357,25 @@ func ConfigFileSections() []string {
 		}
 	}
 	return sections
+}
+
+// ConfigDump dumps all the config as a JSON file
+func ConfigDump() error {
+	dump := make(map[string]map[string]string)
+	for _, name := range configData.GetSectionList() {
+		params := make(map[string]string)
+		for _, key := range configData.GetKeyList(name) {
+			params[key] = ConfigFileGet(name, key)
+		}
+		dump[name] = params
+	}
+	b, err := json.MarshalIndent(dump, "", "    ")
+	if err != nil {
+		return errors.Wrap(err, "failed to marshal config dump")
+	}
+	_, err = os.Stdout.Write(b)
+	if err != nil {
+		return errors.Wrap(err, "failed to write config dump")
+	}
+	return nil
 }

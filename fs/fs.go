@@ -62,9 +62,9 @@ type RegInfo struct {
 	// Create a new file system.  If root refers to an existing
 	// object, then it should return a Fs which which points to
 	// the parent of that object and ErrorIsFile.
-	NewFs func(name string, root string) (Fs, error)
+	NewFs func(name string, root string) (Fs, error) `json:"-"`
 	// Function to call to help with config
-	Config func(string)
+	Config func(string) `json:"-"`
 	// Options for the Fs configuration
 	Options []Option
 }
@@ -75,8 +75,7 @@ type Option struct {
 	Help       string
 	Optional   bool
 	IsPassword bool
-	Examples   OptionExamples
-	Value      string
+	Examples   OptionExamples `json:",omitempty"`
 }
 
 // OptionExamples is a slice of examples

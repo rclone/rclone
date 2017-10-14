@@ -1,65 +1,123 @@
 package config
 
 import (
-	"fmt"
-	"os"
-
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
 	"github.com/spf13/cobra"
 )
 
 func init() {
-	cmd.Root.AddCommand(commandDefintion)
+	cmd.Root.AddCommand(configCommand)
+	configCommand.AddCommand(configEditCommand)
+	configCommand.AddCommand(configFileCommand)
+	configCommand.AddCommand(configShowCommand)
+	configCommand.AddCommand(configDumpCommand)
+	configCommand.AddCommand(configProvidersCommand)
+	configCommand.AddCommand(configCreateCommand)
+	configCommand.AddCommand(configUpdateCommand)
+	configCommand.AddCommand(configDeleteCommand)
 }
 
-var commandDefintion = &cobra.Command{
-	Use:   "config [function]",
+var configCommand = &cobra.Command{
+	Use:   "config",
 	Short: `Enter an interactive configuration session.`,
-	Long: "`rclone config`" + `
- enters an interactive configuration sessions where you can setup
-new remotes and manage existing ones. You may also set or remove a password to
-protect your configuration.
-
-Additional functions:
-
-  * ` + "`rclone config edit`" + ` – same as above
-  * ` + "`rclone config file`" + ` – show path of configuration file in use
-  * ` + "`rclone config show`" + ` – print (decrypted) config file
-  * ` + "`rclone config listproviders`" + ` – List, in json format, the protocols supported by sync
-  * ` + "`rclone config listoptions type`" + ` – Lists all the options needed to connect to a protocol
-  * ` + "`rclone config jsonconfig`name type jsonoptions" + ` – Created a new remote type X with parameters Y
+	Long: `Enter an interactive configuration session where you can setup new
+remotes and manage existing ones. You may also set or remove a
+password to protect your configuration.
 `,
 	Run: func(command *cobra.Command, args []string) {
-		cmd.CheckArgs(0, 4, command, args)
+		cmd.CheckArgs(0, 0, command, args)
+		fs.EditConfig()
+	},
+}
+
+var configEditCommand = &cobra.Command{
+	Use:   "edit",
+	Short: configCommand.Short,
+	Long:  configCommand.Long,
+	Run:   configCommand.Run,
+}
+
+var configFileCommand = &cobra.Command{
+	Use:   "file",
+	Short: `Show path of configuration file in use.`,
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(0, 0, command, args)
+		fs.ShowConfigLocation()
+	},
+}
+
+var configShowCommand = &cobra.Command{
+	Use:   "show [<remote>]",
+	Short: `Print (decrypted) config file, or the config for a single remote.`,
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(0, 1, command, args)
 		if len(args) == 0 {
-			fs.EditConfig()
-		} else if (len(args) == 1) {
-			switch args[0] {
-			case "edit":
-				fs.EditConfig()
-			case "show":
-				fs.ShowConfig()
-			case "file":
-				fs.ShowConfigLocation()
-			case "listproviders":
-				fs.ListProviders()
-			default:
-				fmt.Fprintf(os.Stderr, "Unknown subcommand %q, %s only supports edit, show and file.\n", args[0], command.Name())
-			}
-		} else if (len(args) == 2) {
-			if ((args[0] == "listoptions") && (args[1] != "")) {
-				fs.ListOptions(args[1])
-			} else {
-				fmt.Fprintf(os.Stderr, "Unknown subcommand %q %q, %s only supports optionsprovider <type>.\n", args[0], args[1], command.Name())
-			}
-		} else if (len(args) == 4) {
-			if ((args[0] == "jsonconfig") && (args[1] != "") && (args[2] != "") && (args[3]!= "")) {
-				fs.JsonConfig(args[1], args[2], args[3])
-			} else {
-				fmt.Fprintf(os.Stderr, "Unknown subcommand %q %q %q %q, %s only supports jsonconfig <name> <type> <json:options>.\n", args[0], args[1], args[2], args[3], command.Name())
-		    }
+			fs.ShowConfig()
+		} else {
+			fs.ShowRemote(args[0])
 		}
-		return
+	},
+}
+
+var configDumpCommand = &cobra.Command{
+	Use:   "dump",
+	Short: `Dump the config file as JSON.`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 0, command, args)
+		return fs.ConfigDump()
+	},
+}
+
+var configProvidersCommand = &cobra.Command{
+	Use:   "providers",
+	Short: `List in JSON format all the providers and options.`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(0, 0, command, args)
+		return fs.JSONListProviders()
+	},
+}
+
+var configCreateCommand = &cobra.Command{
+	Use:   "create <name> <type> [<key> <value>]*",
+	Short: `Create a new remote with name, type and options.`,
+	Long: `
+Create a new remote of <name> with <type> and options.  The options
+should be passed in in pairs of <key> <value>.
+
+For example to make a swift remote of name myremote using auto config
+you would do:
+
+    rclone config create myremote swift env_auth true
+`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(2, 256, command, args)
+		return fs.CreateRemote(args[0], args[1], args[2:])
+	},
+}
+
+var configUpdateCommand = &cobra.Command{
+	Use:   "update <name> [<key> <value>]+",
+	Short: `Update options in an existing remote.`,
+	Long: `
+Update an existing remote's options. The options should be passed in
+in pairs of <key> <value>.
+
+For example to update the env_auth field of a remote of name myremote you would do:
+
+    rclone config update myremote swift env_auth true
+`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(3, 256, command, args)
+		return fs.UpdateRemote(args[0], args[1:])
+	},
+}
+
+var configDeleteCommand = &cobra.Command{
+	Use:   "delete <name>",
+	Short: `Delete an existing remote <name>.`,
+	Run: func(command *cobra.Command, args []string) {
+		cmd.CheckArgs(1, 1, command, args)
+		fs.DeleteRemote(args[0])
 	},
 }
