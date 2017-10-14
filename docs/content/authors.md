@@ -105,3 +105,6 @@ Contributors
   * LingMan <LingMan@users.noreply.github.com>
   * Jacob McNamee <jacobmcnamee@gmail.com>
   * jersou <jertux@gmail.com>
+  * thierry <thierry@substantiel.fr>
+  * Simon Leinen <simon.leinen@gmail.com> <ubuntu@s3-test.novalocal>
+  * Dan Dascalescu <ddascalescu+github@gmail.com>
