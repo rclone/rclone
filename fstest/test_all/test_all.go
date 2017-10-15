@@ -132,6 +132,11 @@ var (
 			SubDir:   false,
 			FastList: false,
 		},
+		{
+			Name:     "TestMega:",
+			SubDir:   false,
+			FastList: false,
+		},
 	}
 	// Flags
 	maxTries = flag.Int("maxtries", 5, "Number of times to try each test")
