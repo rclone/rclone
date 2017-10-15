@@ -16,6 +16,7 @@ import (
 	_ "github.com/ncw/rclone/backend/http"
 	_ "github.com/ncw/rclone/backend/hubic"
 	_ "github.com/ncw/rclone/backend/local"
+	_ "github.com/ncw/rclone/backend/mega"
 	_ "github.com/ncw/rclone/backend/onedrive"
 	_ "github.com/ncw/rclone/backend/pcloud"
 	_ "github.com/ncw/rclone/backend/qingstor"
