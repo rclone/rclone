@@ -182,15 +182,15 @@ func MustObscure(x string) string {
 func Reveal(x string) (string, error) {
 	ciphertext, err := base64.RawURLEncoding.DecodeString(x)
 	if err != nil {
-		return "", errors.Wrap(err, "base64 decode failed")
+		return "", errors.Wrap(err, "base64 decode failed when revealing password - is it obscured?")
 	}
 	if len(ciphertext) < aes.BlockSize {
-		return "", errors.New("input too short")
+		return "", errors.New("input too short when revealing password - is it obscured?")
 	}
 	buf := ciphertext[aes.BlockSize:]
 	iv := ciphertext[:aes.BlockSize]
 	if err := crypt(buf, buf, iv); err != nil {
-		return "", errors.Wrap(err, "decrypt failed")
+		return "", errors.Wrap(err, "decrypt failed when revealing password - is it obscured?")
 	}
 	return string(buf), nil
 }
