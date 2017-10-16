@@ -340,10 +340,10 @@ be the same account as the Google Drive you want to access)
 
 2. Select a project or create a new project.
 
-3. Under Overview, Google APIs, Google Apps APIs, click "Drive API",
-then "Enable".
+3. Under "ENABLE APIS AND SERVICES" search for "Drive", and enable the
+then "Google Drive API".
 
-4. Click "Credentials" in the left-side panel (not "Go to
+4. Click "Credentials" in the left-side panel (not "Create
 credentials", which opens the wizard), then "Create credentials", then
 "OAuth client ID".  It will prompt you to set the OAuth consent screen
 product name, if you haven't set one already.
