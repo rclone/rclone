@@ -15,9 +15,9 @@ installations.
 
 Paths are specified as `remote:path`. If the path does not begin with
 a `/` it is relative to the home directory of the user.  An empty path
-`remote:` refers to the users home directory.
+`remote:` refers to the user's home directory.
 
-Here is an example of making a SFTP configuration.  First run
+Here is an example of making an SFTP configuration.  First run
 
     rclone config
 
@@ -94,7 +94,7 @@ d) Delete this remote
 y/e/d> y
 ```
 
-This remote is called `remote` and can now be used like this
+This remote is called `remote` and can now be used like this:
 
 See all directories in the home directory
 
@@ -115,7 +115,7 @@ excess files in the directory.
 
 ### SSH Authentication ###
 
-The SFTP remote supports 3 authentication methods
+The SFTP remote supports three authentication methods:
 
   * Password
   * Key file
@@ -124,7 +124,7 @@ The SFTP remote supports 3 authentication methods
 Key files should be unencrypted PEM-encoded private key files.  For
 instance `/home/$USER/.ssh/id_rsa`.
 
-If you don't specify `pass` or `key_file` then it will attempt to
+If you don't specify `pass` or `key_file` then rclone will attempt to
 contact an ssh-agent.
 
 ### ssh-agent on macOS ###
