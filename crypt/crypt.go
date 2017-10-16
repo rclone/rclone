@@ -7,6 +7,7 @@ import (
 	"path"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
@@ -129,6 +130,22 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		BucketBased:             true,
 		CanHaveEmptyDirectories: true,
 	}).Fill(f).Mask(wrappedFs)
+
+	doDirChangeNotify := wrappedFs.Features().DirChangeNotify
+	if doDirChangeNotify != nil {
+		f.features.DirChangeNotify = func(notifyFunc func(string), pollInterval time.Duration) chan bool {
+			wrappedNotifyFunc := func(path string) {
+				decrypted, err := f.DecryptFileName(path)
+				if err != nil {
+					fs.Logf(f, "DirChangeNotify was unable to decrypt %q: %s", path, err)
+					return
+				}
+				notifyFunc(decrypted)
+			}
+			return doDirChangeNotify(wrappedNotifyFunc, pollInterval)
+		}
+	}
+
 	return f, err
 }
 
