@@ -136,7 +136,7 @@
   branch = "master"
   name = "github.com/ncw/swift"
   packages = ["."]
-  revision = "9d3f812e23d270d1c66a9a01e20af1005061cdc4"
+  revision = "c95c6e5c2d1a3d37fc44c8c6dc9e231c7500667d"
 
 [[projects]]
   branch = "master"
@@ -157,10 +157,10 @@
   revision = "2b3a18b5f0fb6b4f9190549597d3f962c02bc5eb"
 
 [[projects]]
+  branch = "master"
   name = "github.com/pkg/sftp"
   packages = ["."]
-  revision = "98203f5a8333288eb3163b7c667d4260fe1333e9"
-  version = "1.0.0"
+  revision = "7c1f7a370726a2457b33b29baefc2402b4965c65"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"

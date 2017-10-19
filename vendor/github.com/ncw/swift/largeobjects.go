@@ -276,8 +276,9 @@ func (file *largeObjectCreateFile) Size() int64 {
 }
 
 func withLORetry(expectedSize int64, fn func() (Headers, int64, error)) (err error) {
+	endTimer := time.NewTimer(readAfterWriteTimeout)
+	defer endTimer.Stop()
 	waitingTime := readAfterWriteWait
-	endTimer := time.After(readAfterWriteTimeout)
 	for {
 		var headers Headers
 		var sz int64
@@ -288,11 +289,13 @@ func withLORetry(expectedSize int64, fn func() (Headers, int64, error)) (err err
 		} else {
 			return
 		}
+		waitTimer := time.NewTimer(waitingTime)
 		select {
-		case <-endTimer:
+		case <-endTimer.C:
+			waitTimer.Stop()
 			err = fmt.Errorf("Timeout expired while waiting for object to have size == %d, got: %d", expectedSize, sz)
 			return
-		case <-time.After(waitingTime):
+		case <-waitTimer.C:
 			waitingTime *= 2
 		}
 	}

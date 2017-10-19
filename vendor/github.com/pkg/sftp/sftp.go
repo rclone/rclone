@@ -1,5 +1,5 @@
 // Package sftp implements the SSH File Transfer Protocol as described in
-// https://filezilla-project.org/specs/draft-ietf-secsh-filexfer-02.txt
+// https://tools.ietf.org/html/draft-ietf-secsh-filexfer-02
 package sftp
 
 import (
