@@ -18,6 +18,7 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="Backblaze B2" home="https://www.backblaze.com/b2/cloud-storage.html" config="/b2/" >}}
 * {{< provider name="Box" home="https://www.box.com/" config="/box/" >}}
 * {{< provider name="Ceph" home="http://ceph.com/" config="/s3/#ceph" >}}
+* {{< provider name="DigitalOcean Spaces" home="https://www.digitalocean.com/products/object-storage/" config="/s3/#digitalocean-spaces" >}}
 * {{< provider name="Dreamhost" home="https://www.dreamhost.com/cloud/storage/" config="/s3/" >}}
 * {{< provider name="Dropbox" home="https://www.dropbox.com/" config="/dropbox/" >}}
 * {{< provider name="FTP" home="https://en.wikipedia.org/wiki/File_Transfer_Protocol" config="/ftp/" >}}

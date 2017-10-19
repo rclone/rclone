@@ -24,6 +24,7 @@ See the following for detailed instructions for
   * [Backblaze B2](/b2/)
   * [Box](/box/)
   * [Crypt](/crypt/) - to encrypt other remotes
+  * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Dropbox](/dropbox/)
   * [FTP](/ftp/)
   * [Google Cloud Storage](/googlecloudstorage/)
