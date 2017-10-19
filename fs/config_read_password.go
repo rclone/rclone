@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"strings"
 
 	"golang.org/x/crypto/ssh/terminal"
 )
@@ -22,5 +21,5 @@ func ReadPassword() string {
 	if err != nil {
 		log.Fatalf("Failed to read password: %v", err)
 	}
-	return strings.TrimSpace(string(line))
+	return string(line)
 }
