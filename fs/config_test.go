@@ -107,9 +107,9 @@ func TestReveal(t *testing.T) {
 		in      string
 		wantErr string
 	}{
-		{"YmJiYmJiYmJiYmJiYmJiYp*gcEWbAw", "base64 decode failed: illegal base64 data at input byte 22"},
-		{"aGVsbG8", "input too short"},
-		{"", "input too short"},
+		{"YmJiYmJiYmJiYmJiYmJiYp*gcEWbAw", "base64 decode failed when revealing password - is it obscured?: illegal base64 data at input byte 22"},
+		{"aGVsbG8", "input too short when revealing password - is it obscured?"},
+		{"", "input too short when revealing password - is it obscured?"},
 	} {
 		gotString, gotErr := Reveal(test.in)
 		assert.Equal(t, "", gotString)
@@ -202,9 +202,6 @@ func TestPassword(t *testing.T) {
 
 	// Simple check of wrong passwords
 	hashedKeyCompare(t, "mis", "match", false)
-
-	// Check that passwords match with trimmed whitespace
-	hashedKeyCompare(t, "   abcdef   \t", "abcdef", true)
 
 	// Check that passwords match after unicode normalization
 	hashedKeyCompare(t, "ﬀ\u0041\u030A", "ffÅ", true)

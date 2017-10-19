@@ -551,11 +551,15 @@ func checkPassword(password string) (string, error) {
 	if !utf8.ValidString(password) {
 		return "", errors.New("password contains invalid utf8 characters")
 	}
-	// Remove leading+trailing whitespace
-	password = strings.TrimSpace(password)
+	// Check for leading/trailing whitespace
+	trimmedPassword := strings.TrimSpace(password)
+	// Warn user if password has leading+trailing whitespace
+	if len(password) != len(trimmedPassword) {
+		fmt.Fprintln(os.Stderr, "Your password contains leading/trailing whitespace - in previous versions of rclone this was stripped")
+	}
 	// Normalize to reduce weird variations.
 	password = norm.NFKC.String(password)
-	if len(password) == 0 {
+	if len(password) == 0 || len(trimmedPassword) == 0 {
 		return "", errors.New("no characters in password")
 	}
 	return password, nil
