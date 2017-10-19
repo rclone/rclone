@@ -464,7 +464,7 @@ for more info.
 
 ### --log-level LEVEL ###
 
-This sets the log level for rclone.  The default log level is `INFO`.
+This sets the log level for rclone.  The default log level is `NOTICE`.
 
 `DEBUG` is equivalent to `-vv`. It outputs lots of debug info - useful
 for bug reports and really finding out what rclone is doing.
