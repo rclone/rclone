@@ -5,6 +5,7 @@ import (
 	"io"
 	"log"
 	"net/url"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -267,8 +268,6 @@ func ossConnection(endpoint string, accessID string, accessKey string) (*oss.Cli
 
 func NewFs(name, root string) (fs.Fs, error) {
 	bucket, directory, err := ossParsePath(root)
-	fmt.Println("bucket", bucket)
-	fmt.Println("directory", directory)
 	if err != nil {
 		return nil, err
 	}
@@ -280,7 +279,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 	f := &Fs{
-		name:               name, //remote名字
+		name:               name, //remote的name
 		c:                  c,
 		bucket:             bucket,    //bucket的name
 		root:               directory, //bucket里目录的路径，可以为空
@@ -288,6 +287,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		locationConstraint: fs.ConfigFileGet(name, "location_constraint"),
 		storageClass:       fs.ConfigFileGet(name, "storage_class"),
 	}
+	fmt.Println("newFs:", f.root)
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
 		WriteMimeType: true,
@@ -310,6 +310,25 @@ func NewFs(name, root string) (fs.Fs, error) {
 		log.Fatalf("Bucket is not existed for %q", bucket)
 		return nil, nil
 	}
+
+	if f.root != "" {
+		f.root += "/"
+		//Check to see if the object exists
+		bucket, _ := f.c.Bucket(f.bucket)
+		pre := oss.Prefix(f.root)
+		_, err := bucket.ListObjects(pre)
+		if err == nil {
+			f.root = path.Dir(directory)
+			if f.root == "." {
+				f.root = ""
+			} else {
+				f.root += "/"
+			}
+			// return an error with an fs which points to the parent
+			return f, fs.ErrorIsFile
+		}
+	}
+
 	return f, nil
 }
 
@@ -317,7 +336,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 // If it can't be found it returns the error ErrorObjectNotFound.
 // 返回路径中的object，如果object不存在则返回ErrorObjectNotFound错误
 func (f *Fs) newObjectWithInfo(remote string, info *oss.ObjectProperties) (fs.Object, error) {
-	//newRemote := strings.TrimLeft(remote, "/")
 	o := &Object{
 		fs:     f,
 		remote: remote,
@@ -344,7 +362,6 @@ func (f *Fs) newObjectWithInfo(remote string, info *oss.ObjectProperties) (fs.Ob
 // NewObject finds the Object at remote.  If it can't be found
 // it returns the error fs.ErrorObjectNotFound.
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
-	//newRemote := strings.TrimLeft(remote, "/")
 	return f.newObjectWithInfo(remote, nil)
 }
 
@@ -361,108 +378,71 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 	if dir != "" {
 		root += dir + "/"
 	}
-	if root != "" {
-		for {
-			bucket, err := f.c.Bucket(f.bucket)
-			pre := oss.Prefix(root)
-			lisObjects, err := bucket.ListObjects(pre)
-			rootLength := len(f.root)
-			if !recurse {
-				for _, commonPrefix := range lisObjects.CommonPrefixes {
-					if commonPrefix == "" {
-						fs.Logf(f, "Nil common prefix received")
-						continue
-					}
-					remote := commonPrefix
-					if !strings.HasPrefix(remote, f.root) {
-						fs.Logf(f, "Odd name received %q", remote)
-						continue
-					}
-					remote = remote[rootLength:]
-					if strings.HasSuffix(remote, "/") {
-						remote = remote[:len(remote)-1]
-					}
-					err = fn(remote, &oss.ObjectProperties{Key: remote}, true)
-					if err != nil {
-						return err
-					}
-				}
-			}
-			for _, object := range lisObjects.Objects {
-				key := object.Key
-				if !strings.HasPrefix(key, f.root) {
-					fs.Logf(f, "Odd name received %q", key)
+	delimiter := oss.Delimiter("")
+	if !recurse {
+		delimiter = oss.Delimiter("/")
+	}
+	pre := oss.Prefix(root)
+	fmt.Println("pre:", root)
+	bucket, _ := f.c.Bucket(f.bucket)
+	for {
+		listObjects, err := bucket.ListObjects(pre, delimiter)
+		rootLength := len(f.root)
+		if !recurse {
+			for _, commonPrefix := range listObjects.CommonPrefixes {
+				if commonPrefix == "" {
+					fs.Logf(f, "Nil common prefix received")
 					continue
 				}
-				remote := key[rootLength:]
-				err = fn(remote, &object, false)
+				remote := commonPrefix
+				if !strings.HasPrefix(remote, f.root) {
+					fs.Logf(f, "Odd name received %q", remote)
+					continue
+				}
+				remote = remote[rootLength:]
+				if strings.HasSuffix(remote, "/") {
+					remote = remote[:len(remote)-1]
+				}
+				err = fn(remote, &oss.ObjectProperties{Key: remote}, true)
 				if err != nil {
 					return err
 				}
-			}
-			if !lisObjects.IsTruncated {
-				break
 			}
 		}
-	} else {
-		for {
-			bucket, err := f.c.Bucket(f.bucket)
-			lisObjects, err := bucket.ListObjects()
-			rootLength := len(f.root)
-			if !recurse {
-				for _, commonPrefix := range lisObjects.CommonPrefixes {
-					if commonPrefix == "" {
-						fs.Logf(f, "Nil common prefix received")
-						continue
-					}
-					remote := commonPrefix
-					if !strings.HasPrefix(remote, f.root) {
-						fs.Logf(f, "Odd name received %q", remote)
-						continue
-					}
-					remote = remote[rootLength:]
-					if strings.HasSuffix(remote, "/") {
-						remote = remote[:len(remote)-1]
-					}
-					err = fn(remote, &oss.ObjectProperties{Key: remote}, true)
-					if err != nil {
-						return err
-					}
-				}
+		for _, object := range listObjects.Objects {
+			key := object.Key
+			if !strings.HasPrefix(key, f.root) {
+				fs.Logf(f, "Odd name received %q", key)
+				continue
 			}
-			for _, object := range lisObjects.Objects {
-				key := object.Key
-				if !strings.HasPrefix(key, f.root) {
-					fs.Logf(f, "Odd name received %q", key)
-					continue
-				}
-				remote := key[rootLength:]
-				err = fn(remote, &object, false)
-				if err != nil {
-					return err
-				}
+			if strings.HasSuffix(key, "/") {
+				continue
 			}
-			if !lisObjects.IsTruncated {
-				break
+			remote := key[rootLength:]
+			err = fn(remote, &object, false)
+			if err != nil {
+				return err
 			}
+		}
+		if !listObjects.IsTruncated {
+			break
 		}
 	}
+
 	return nil
 }
 
 // Convert a list item into a DirEntry
 func (f *Fs) itemToDirEntry(remote string, object *oss.ObjectProperties, isDirectory bool) (fs.DirEntry, error) {
-	var newRemote string
-	newRemote = f.root + remote
 	if isDirectory {
 		size := int64(0)
 		if &object.Size != nil {
 			size = object.Size
 		}
-		d := fs.NewDir(newRemote, time.Time{}).SetSize(size)
+		d := fs.NewDir(remote, time.Time{}).SetSize(size)
 		return d, nil
 	}
-	o, err := f.newObjectWithInfo(newRemote, object)
+	o, err := f.newObjectWithInfo(remote, object)
 	if err != nil {
 		return nil, err
 	}
@@ -474,6 +454,9 @@ func (f *Fs) itemToDirEntry(remote string, object *oss.ObjectProperties, isDirec
 func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 	// List the objects and directories
 	err = f.list(dir, false, func(remote string, object *oss.ObjectProperties, isDirectory bool) error {
+		if strings.HasSuffix(remote, "/") {
+			return nil
+		}
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -544,6 +527,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	}
 	list := fs.NewListRHelper(callback)
 	err = f.list(dir, true, func(remote string, object *oss.ObjectProperties, isDirectory bool) error {
+		fmt.Println("***ListR-dir:", dir)
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -649,18 +633,9 @@ func (o *Object) String() string {
 	return o.remote
 }
 
-//func deleteSlash(r rune) rune {
-//	if r == '/' {
-//		return ' '
-//	}
-//	return r
-//}
-// Remote returns the remote path
-// 返回路径
 func (o *Object) Remote() string {
-	newRemote := strings.TrimLeft(o.remote, "/")
-	//newRemote := strings.Map(deleteSlash, o.remote)
-	return newRemote
+	fmt.Println("Remote:", o.remote)
+	return o.remote
 }
 
 var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
@@ -693,18 +668,14 @@ func (o *Object) metaData(f *Fs) (err error) {
 	if o.meta != nil {
 		return nil
 	}
+	key := o.fs.root + o.remote
 	archiveBucket, err := f.c.Bucket(o.fs.bucket)
-	meta, erro := archiveBucket.GetObjectDetailedMeta(o.String())
+	meta, erro := archiveBucket.GetObjectDetailedMeta(key)
 	ContentLength, err := strconv.ParseInt(meta.Get("Content-Length"), 10, 64)
 	o.size = ContentLength
 	last := meta.Get("Last-Modified")
-	//lastModified, _ := time.ParseInLocation("2006-01-02 15:04:05", last, time.Local)
 	lastModified, _ := time.Parse("Mon, 02 Jan 2006 15:04:05 MST", last)
 	o.lastModified = lastModified
-	//lastModified, _ := last.Format("2006-01-02 15:04:05")
-	fmt.Println("metaData-object", o.String())
-	fmt.Println("metaData-lastModified", lastModified)
-
 	return erro
 }
 
@@ -751,7 +722,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	key := o.fs.root + o.remote
 	sourceKey := o.fs.bucket + "/" + key
 	bucket, err := o.fs.c.Bucket(o.fs.bucket)
-	_, erro := bucket.CopyObject(o.String(), o.String(), oss.ContentType(mimeType),
+	_, erro := bucket.CopyObject(key, key, oss.ContentType(mimeType),
 		oss.CopySource(o.fs.bucket, url.QueryEscape(sourceKey)),
 		oss.MetadataDirective(oss.MetaReplace))
 	return erro
@@ -766,8 +737,9 @@ func (o *Object) Storable() bool {
 // Open an object for read
 // 获取一个对象实例
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
+	key := o.fs.root + o.remote
 	bucket, _ := o.fs.c.Bucket(o.fs.bucket)
-	resp, err := bucket.GetObject(o.String())
+	resp, err := bucket.GetObject(key)
 	if err != nil {
 		return nil, err
 	}
@@ -783,7 +755,8 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 	mimeType := fs.MimeType(src)
 	bucket, err := o.fs.c.Bucket(o.fs.bucket)
-	erro := bucket.PutObject(o.String(), in, oss.ContentType(mimeType))
+	key := o.fs.root + o.remote
+	erro := bucket.PutObject(key, in, oss.ContentType(mimeType))
 	if erro != nil {
 		return erro
 	}
@@ -797,11 +770,12 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 // 删除一个object
 func (o *Object) Remove() error {
 	bucket, _ := o.fs.c.Bucket(o.fs.bucket)
-	isObjectExist, _ := bucket.IsObjectExist(o.String())
+	key := o.fs.root + o.remote
+	isObjectExist, _ := bucket.IsObjectExist(key)
 	if isObjectExist {
 		return nil
 	} else {
-		erro := bucket.DeleteObject(o.String())
+		erro := bucket.DeleteObject(key)
 		return erro
 	}
 }
