@@ -23,6 +23,12 @@ So if you would like to send a donation, I will use it to buy flowers
 <img alt="" border="0" src="https://www.paypalobjects.com/en_GB/i/scr/pixel.gif" width="1" height="1">
 </form>
 
+### Paypal.me ###
+
+My paypal.me link https://www.paypal.me/nickcw can be used to send
+money if the donate button doesn't work for you (eg you live in
+Japan), or if you prefer to use it.
+
 ### Bitcoin ###
 
 [![19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk](/img/ncw-bitcoin-address.png)](bitcoin:19j3oLUsqBcTRvZ2LSq2phVjsAAJ86xSnk)
