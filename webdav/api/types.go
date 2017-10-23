@@ -26,11 +26,11 @@ type Response struct {
 
 // Prop is the properties of a response
 type Prop struct {
-	Status   string   `xml:"DAV: status"`
-	Name     string   `xml:"DAV: prop>displayname,omitempty"`
-	Type     xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
-	Size     int64    `xml:"DAV: prop>getcontentlength,omitempty"`
-	Modified Time     `xml:"DAV: prop>getlastmodified,omitempty"`
+	Status   string    `xml:"DAV: status"`
+	Name     string    `xml:"DAV: prop>displayname,omitempty"`
+	Type     *xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
+	Size     int64     `xml:"DAV: prop>getcontentlength,omitempty"`
+	Modified Time      `xml:"DAV: prop>getlastmodified,omitempty"`
 }
 
 // Parse a status of the form "HTTP/1.1 200 OK",

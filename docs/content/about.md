@@ -35,6 +35,7 @@ Rclone is a command line program to sync files and directories to and from:
 * {{< provider name="Oracle Cloud Storage" home="https://cloud.oracle.com/storage-opc" config="/swift/" >}}
 * {{< provider name="Ownloud" home="https://owncloud.org/" config="/webdav/#owncloud" >}}
 * {{< provider name="pCloud" home="https://www.pcloud.com/" config="/pcloud/" >}}
+* {{< provider name="put.io" home="https://put.io/" config="/webdav/#put-io" >}}
 * {{< provider name="QingStor" home="https://www.qingcloud.com/products/storage" config="/qingstor/" >}}
 * {{< provider name="Rackspace Cloud Files" home="https://www.rackspace.com/cloud/files" config="/swift/" >}}
 * {{< provider name="SFTP" home="https://en.wikipedia.org/wiki/SFTP" config="/sftp/" >}}

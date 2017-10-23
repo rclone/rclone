@@ -360,6 +360,9 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAl
 	opts := rest.Opts{
 		Method: "PROPFIND",
 		Path:   f.dirPath(dir), // FIXME Should not start with /
+		ExtraHeaders: map[string]string{
+			"Depth": "1",
+		},
 	}
 	var result api.Multistatus
 	var resp *http.Response
@@ -384,8 +387,19 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAl
 	for i := range result.Responses {
 		item := &result.Responses[i]
 
-		// Collections must end in /
-		isDir := strings.HasSuffix(item.Href, "/")
+		// Figure out what this is
+		isDir := false
+		if t := item.Props.Type; t != nil {
+			// When a client sees a resourcetype it
+			// doesn't recognize it should assume it is a
+			// regular non-collection resource.  [WebDav
+			// book by Lisa Dusseault ch 7.5.8 p170]
+			if t.Space == "DAV:" && t.Local == "collection" {
+				isDir = true
+			} else {
+				fs.Debugf(nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
+			}
+		}
 
 		// Find name
 		u, err := rest.URLJoin(baseURL, item.Href)
@@ -393,8 +407,12 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAl
 			fs.Errorf(nil, "URL Join failed for %q and %q: %v", baseURL, item.Href, err)
 			continue
 		}
+		// Make sure directories end with a /
+		if isDir {
+			u.Path = addSlash(u.Path)
+		}
 		if !strings.HasPrefix(u.Path, baseURL.Path) {
-			fs.Debugf(nil, "Item with unknown path received: %q, %q", item.Href, u.Path)
+			fs.Debugf(nil, "Item with unknown path received: %q, %q", u.Path, baseURL.Path)
 			continue
 		}
 		remote := path.Join(dir, u.Path[len(baseURL.Path):])
