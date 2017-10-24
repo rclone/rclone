@@ -788,7 +788,11 @@ func urlEncode(str string) string {
 // container.  It returns a string which prefixes current segments.
 func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, contentType string) (string, error) {
 	// Create the segmentsContainer if it doesn't exist
-	err := o.fs.c.ContainerCreate(o.fs.segmentsContainer, nil)
+	var err error = swift.ContainerNotFound
+	_, _, err = o.fs.c.Container(o.fs.segmentsContainer)
+	if err == swift.ContainerNotFound {
+		err = o.fs.c.ContainerCreate(o.fs.segmentsContainer, nil)
+	}
 	if err != nil {
 		return "", err
 	}
