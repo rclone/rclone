@@ -75,11 +75,11 @@ func (s *server) serve() {
 	mux.HandleFunc("/", s.handler)
 	// FIXME make a transport?
 	httpServer := &http.Server{
-		Addr:           s.bindAddress,
-		Handler:        mux,
-		ReadTimeout:    10 * time.Second,
-		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20,
+		Addr:              s.bindAddress,
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second, // time to send the headers
+		IdleTimeout:       60 * time.Second, // time to keep idle connections open
+		MaxHeaderBytes:    1 << 20,
 	}
 	fs.Logf(s.f, "Serving on http://%s/", bindAddress)
 	log.Fatal(httpServer.ListenAndServe())
