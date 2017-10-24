@@ -3,9 +3,9 @@ package oss
 import (
 	"fmt"
 	"io"
-	"log"
+	//"log"
 	"net/url"
-	"path"
+	//	"path"
 	"regexp"
 	"strconv"
 	"strings"
@@ -287,7 +287,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 		locationConstraint: fs.ConfigFileGet(name, "location_constraint"),
 		storageClass:       fs.ConfigFileGet(name, "storage_class"),
 	}
-	fmt.Println("newFs:", f.root)
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
 		WriteMimeType: true,
@@ -301,34 +300,15 @@ func NewFs(name, root string) (fs.Fs, error) {
 		f.storageClass = *ossStorageClass
 	}
 
-	bucketObject, err := f.c.Bucket(bucket) //取存储空间（Bucket）的对象实例。
-	if err != nil {
-		log.Fatalf("Check Bucket Failed for %q: %v", bucket, err)
-		return nil, err
-	}
-	if bucketObject == nil {
-		log.Fatalf("Bucket is not existed for %q", bucket)
-		return nil, nil
-	}
-
 	if f.root != "" {
 		f.root += "/"
 		//Check to see if the object exists
 		bucket, _ := f.c.Bucket(f.bucket)
-		pre := oss.Prefix(f.root)
-		_, err := bucket.ListObjects(pre)
-		if err == nil {
-			f.root = path.Dir(directory)
-			if f.root == "." {
-				f.root = ""
-			} else {
-				f.root += "/"
-			}
-			// return an error with an fs which points to the parent
-			return f, fs.ErrorIsFile
+		isObjectExist, _ := bucket.IsObjectExist(f.root)
+		if !isObjectExist {
+			f.root += ""
 		}
 	}
-
 	return f, nil
 }
 
@@ -383,7 +363,6 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 		delimiter = oss.Delimiter("/")
 	}
 	pre := oss.Prefix(root)
-	fmt.Println("pre:", root)
 	bucket, _ := f.c.Bucket(f.bucket)
 	for {
 		listObjects, err := bucket.ListObjects(pre, delimiter)
@@ -527,7 +506,6 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	}
 	list := fs.NewListRHelper(callback)
 	err = f.list(dir, true, func(remote string, object *oss.ObjectProperties, isDirectory bool) error {
-		fmt.Println("***ListR-dir:", dir)
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
 			return err
@@ -552,7 +530,7 @@ func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.
 		fs := &Object{
 			fs: f,
 			//在给复制到oss上的object设置信息时，如果f.root不为空（即上传到指定目录），则要在文件夹和object名字中间加上一个“/”
-			remote: f.root + "/" + src.Remote(),
+			remote: src.Remote(),
 		}
 		return fs, fs.Update(in, src, options...)
 	} else {
@@ -634,7 +612,6 @@ func (o *Object) String() string {
 }
 
 func (o *Object) Remote() string {
-	fmt.Println("Remote:", o.remote)
 	return o.remote
 }
 
@@ -673,9 +650,6 @@ func (o *Object) metaData(f *Fs) (err error) {
 	meta, erro := archiveBucket.GetObjectDetailedMeta(key)
 	ContentLength, err := strconv.ParseInt(meta.Get("Content-Length"), 10, 64)
 	o.size = ContentLength
-	last := meta.Get("Last-Modified")
-	lastModified, _ := time.Parse("Mon, 02 Jan 2006 15:04:05 MST", last)
-	o.lastModified = lastModified
 	return erro
 }
 
@@ -773,10 +747,10 @@ func (o *Object) Remove() error {
 	key := o.fs.root + o.remote
 	isObjectExist, _ := bucket.IsObjectExist(key)
 	if isObjectExist {
-		return nil
-	} else {
 		erro := bucket.DeleteObject(key)
 		return erro
+	} else {
+		return nil
 	}
 }
 
