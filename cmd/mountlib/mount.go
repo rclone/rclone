@@ -9,6 +9,7 @@ import (
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
 	"github.com/spf13/cobra"
+	"github.com/spf13/pflag"
 )
 
 // Options set by command line flags
@@ -170,14 +171,8 @@ like this:
 
 	// Add flags
 	flags := commandDefintion.Flags()
-	flags.BoolVarP(&NoModTime, "no-modtime", "", NoModTime, "Don't read/write the modification time (can speed things up).")
-	flags.BoolVarP(&NoChecksum, "no-checksum", "", NoChecksum, "Don't compare checksums on up/download.")
 	flags.BoolVarP(&DebugFUSE, "debug-fuse", "", DebugFUSE, "Debug the FUSE internals - needs -v.")
-	flags.BoolVarP(&NoSeek, "no-seek", "", NoSeek, "Don't allow seeking in files.")
-	flags.DurationVarP(&DirCacheTime, "dir-cache-time", "", DirCacheTime, "Time to cache directory entries for.")
-	flags.DurationVarP(&PollInterval, "poll-interval", "", PollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
 	// mount options
-	flags.BoolVarP(&ReadOnly, "read-only", "", ReadOnly, "Mount read-only.")
 	flags.BoolVarP(&AllowNonEmpty, "allow-non-empty", "", AllowNonEmpty, "Allow mounting over a non-empty directory.")
 	flags.BoolVarP(&AllowRoot, "allow-root", "", AllowRoot, "Allow access to root user.")
 	flags.BoolVarP(&AllowOther, "allow-other", "", AllowOther, "Allow access to other users.")
@@ -188,6 +183,19 @@ like this:
 	ExtraFlags = flags.StringArrayP("fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
 	//flags.BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 
-	platformFlags(flags)
+	// Add in the generic flags
+	AddFlags(flags)
+
 	return commandDefintion
+}
+
+// AddFlags adds the non filing system specific flags to the command
+func AddFlags(flags *pflag.FlagSet) {
+	flags.BoolVarP(&NoModTime, "no-modtime", "", NoModTime, "Don't read/write the modification time (can speed things up).")
+	flags.BoolVarP(&NoChecksum, "no-checksum", "", NoChecksum, "Don't compare checksums on up/download.")
+	flags.BoolVarP(&NoSeek, "no-seek", "", NoSeek, "Don't allow seeking in files.")
+	flags.DurationVarP(&DirCacheTime, "dir-cache-time", "", DirCacheTime, "Time to cache directory entries for.")
+	flags.DurationVarP(&PollInterval, "poll-interval", "", PollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
+	flags.BoolVarP(&ReadOnly, "read-only", "", ReadOnly, "Mount read-only.")
+	platformFlags(flags)
 }

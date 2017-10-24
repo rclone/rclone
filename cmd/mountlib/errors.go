@@ -7,7 +7,7 @@ import "fmt"
 // Error describes low level errors in a cross platform way
 type Error byte
 
-// NB if changing errors translateError in cmd/mount/fs.go, cmd/cmount/fs.go
+// NB if changing errors translateError in cmd/mount/fs.go, cmd/cmount/fs.go, cmd/serve/webdav/webdav.go
 
 // Low level errors
 const (

@@ -165,3 +165,13 @@ func (fh *WriteFileHandle) Release() error {
 	}
 	return err
 }
+
+// Close closes the file calling Flush then Release
+func (fh *WriteFileHandle) Close() error {
+	err := fh.Flush()
+	err2 := fh.Release()
+	if err != nil {
+		return err
+	}
+	return err2
+}

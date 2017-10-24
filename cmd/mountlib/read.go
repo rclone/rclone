@@ -271,3 +271,18 @@ func (fh *ReadFileHandle) Release() error {
 	}
 	return err
 }
+
+// Size returns the size of the underlying file
+func (fh *ReadFileHandle) Size() int64 {
+	return fh.o.Size()
+}
+
+// Close closes the file calling Flush then Release
+func (fh *ReadFileHandle) Close() error {
+	err := fh.Flush()
+	err2 := fh.Release()
+	if err != nil {
+		return err
+	}
+	return err2
+}
