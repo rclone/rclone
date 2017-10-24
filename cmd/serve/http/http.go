@@ -46,6 +46,8 @@ The server will log errors.  Use -v to see access logs.
 
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
+
+Note the Range header is not supported yet.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
@@ -91,6 +93,15 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+	rangeHeader := r.Header.Get("Range")
+	if rangeHeader != "" {
+		http.Error(w, "Range not supported yet", http.StatusRequestedRangeNotSatisfiable)
+		return
+	}
+	//r.Header().Set("Accept-Ranges", "bytes")
+	w.Header().Set("Accept-Ranges", "none") // show we don't support Range yet
+	w.Header().Set("Server", "rclone/"+fs.Version)
+
 	urlPath := r.URL.Path
 	isDir := strings.HasSuffix(urlPath, "/")
 	remote := strings.Trim(urlPath, "/")
