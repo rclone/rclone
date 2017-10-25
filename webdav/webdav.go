@@ -159,6 +159,21 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
+// itemIsDir returns true if the item is a directory
+//
+// When a client sees a resourcetype it doesn't recognize it should
+// assume it is a regular non-collection resource.  [WebDav book by
+// Lisa Dusseault ch 7.5.8 p170]
+func itemIsDir(item *api.Response) bool {
+	if t := item.Props.Type; t != nil {
+		if t.Space == "DAV:" && t.Local == "collection" {
+			return true
+		}
+		fs.Debugf(nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
+	}
+	return false
+}
+
 // readMetaDataForPath reads the metadata from the path
 func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
 	// FIXME how do we read back additional properties?
@@ -188,7 +203,7 @@ func (f *Fs) readMetaDataForPath(path string) (info *api.Prop, err error) {
 	if !item.Props.StatusOK() {
 		return nil, fs.ErrorObjectNotFound
 	}
-	if strings.HasSuffix(item.Href, "/") {
+	if itemIsDir(&item) {
 		return nil, fs.ErrorNotAFile
 	}
 	return &item.Props, nil
@@ -386,20 +401,7 @@ func (f *Fs) listAll(dir string, directoriesOnly bool, filesOnly bool, fn listAl
 	}
 	for i := range result.Responses {
 		item := &result.Responses[i]
-
-		// Figure out what this is
-		isDir := false
-		if t := item.Props.Type; t != nil {
-			// When a client sees a resourcetype it
-			// doesn't recognize it should assume it is a
-			// regular non-collection resource.  [WebDav
-			// book by Lisa Dusseault ch 7.5.8 p170]
-			if t.Space == "DAV:" && t.Local == "collection" {
-				isDir = true
-			} else {
-				fs.Debugf(nil, "Unknown resource type %q/%q on %q", t.Space, t.Local, item.Props.Name)
-			}
-		}
+		isDir := itemIsDir(item)
 
 		// Find name
 		u, err := rest.URLJoin(baseURL, item.Href)
