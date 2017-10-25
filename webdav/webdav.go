@@ -638,13 +638,17 @@ func (f *Fs) copyOrMove(src fs.Object, remote string, method string) (fs.Object,
 	if err != nil {
 		return nil, errors.Wrap(err, "Copy mkParentDir failed")
 	}
+	destinationURL, err := rest.URLJoin(f.endpoint, dstPath)
+	if err != nil {
+		return nil, errors.Wrap(err, "copyOrMove couldn't join URL")
+	}
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:     method,
 		Path:       srcObj.filePath(),
 		NoResponse: true,
 		ExtraHeaders: map[string]string{
-			"Destination": path.Join(f.endpoint.Path, dstPath),
+			"Destination": destinationURL.String(),
 			"Overwrite":   "F",
 		},
 	}
@@ -732,13 +736,18 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		return errors.Wrap(err, "DirMove mkParentDir dst failed")
 	}
 
+	destinationURL, err := rest.URLJoin(f.endpoint, dstPath)
+	if err != nil {
+		return errors.Wrap(err, "DirMove couldn't join URL")
+	}
+
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:     "MOVE",
 		Path:       addSlash(srcPath),
 		NoResponse: true,
 		ExtraHeaders: map[string]string{
-			"Destination": addSlash(path.Join(f.endpoint.Path, dstPath)),
+			"Destination": addSlash(destinationURL.String()),
 			"Overwrite":   "F",
 		},
 	}
