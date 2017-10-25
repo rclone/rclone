@@ -14,8 +14,6 @@ import (
 // DirEntry describes the contents of a directory entry
 //
 // It can be a file or a directory
-//
-// node may be nil, but o may not
 type DirEntry struct {
 	Obj  fs.DirEntry
 	Node Node
@@ -205,7 +203,7 @@ func (d *Dir) _readDir() error {
 			name := path.Base(obj.Remote())
 			d.items[name] = &DirEntry{
 				Obj:  obj,
-				Node: nil,
+				Node: newFile(d, obj, name),
 			}
 		case fs.Directory:
 			dir := item
@@ -221,7 +219,7 @@ func (d *Dir) _readDir() error {
 			}
 			d.items[name] = &DirEntry{
 				Obj:  dir,
-				Node: nil,
+				Node: newDir(d.fsys, d.f, dir),
 			}
 		default:
 			err = errors.Errorf("unknown type %T", item)
@@ -283,31 +281,6 @@ func (d *Dir) SetModTime(modTime time.Time) error {
 	return nil
 }
 
-// lookupNode calls lookup then makes sure the node is not nil in the DirEntry
-func (d *Dir) lookupNode(leaf string) (item *DirEntry, err error) {
-	item, err = d.lookup(leaf)
-	if err != nil {
-		return nil, err
-	}
-	if item.Node != nil {
-		return item, nil
-	}
-	var node Node
-	switch x := item.Obj.(type) {
-	case fs.Object:
-		node, err = newFile(d, x, leaf), nil
-	case fs.Directory:
-		node, err = newDir(d.fsys, d.f, x), nil
-	default:
-		err = errors.Errorf("unknown type %T", item)
-	}
-	if err != nil {
-		return nil, err
-	}
-	item = d.addObject(item.Obj, node)
-	return item, nil
-}
-
 // Lookup looks up a specific entry in the receiver.
 //
 // Lookup should return a Node corresponding to the entry.  If the
@@ -317,7 +290,7 @@ func (d *Dir) lookupNode(leaf string) (item *DirEntry, err error) {
 func (d *Dir) Lookup(name string) (node Node, err error) {
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Lookup")
-	item, err := d.lookupNode(name)
+	item, err := d.lookup(name)
 	if err != nil {
 		if err != ENOENT {
 			fs.Errorf(path, "Dir.Lookup error: %v", err)
@@ -392,7 +365,7 @@ func (d *Dir) Remove(name string) error {
 	}
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Remove")
-	item, err := d.lookupNode(name)
+	item, err := d.lookup(name)
 	if err != nil {
 		fs.Errorf(path, "Dir.Remove error: %v", err)
 		return err
@@ -440,7 +413,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)
 	// fs.Debugf(oldPath, "Dir.Rename to %q", newPath)
-	oldItem, err := d.lookupNode(oldName)
+	oldItem, err := d.lookup(oldName)
 	if err != nil {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
