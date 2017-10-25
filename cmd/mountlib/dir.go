@@ -1,6 +1,7 @@
 package mountlib
 
 import (
+	"os"
 	"path"
 	"strings"
 	"sync"
@@ -53,6 +54,30 @@ func (d *Dir) String() string {
 // IsFile returns false for Dir - satisfies Node interface
 func (d *Dir) IsFile() bool {
 	return false
+}
+
+// IsDir returns true for Dir - satisfies Node interface
+func (d *Dir) IsDir() bool {
+	return true
+}
+
+// Mode bits of the directory - satisfies Node interface
+func (d *Dir) Mode() (mode os.FileMode) {
+	return os.ModeDir | 0777
+}
+
+// Name (base) of the directory - satisfies Node interface
+func (d *Dir) Name() (name string) {
+	name = path.Base(d.path)
+	if name == "." {
+		name = "/"
+	}
+	return name
+}
+
+// Sys returns underlying data source (can be nil) - satisfies Node interface
+func (d *Dir) Sys() interface{} {
+	return nil
 }
 
 // Inode returns the inode number - satisfies Node interface
@@ -240,6 +265,11 @@ func (d *Dir) isEmpty() (bool, error) {
 func (d *Dir) ModTime() time.Time {
 	// fs.Debugf(d.path, "Dir.ModTime %v", d.modTime)
 	return d.modTime
+}
+
+// Size of the directory
+func (d *Dir) Size() int64 {
+	return 0
 }
 
 // SetModTime sets the modTime for this dir

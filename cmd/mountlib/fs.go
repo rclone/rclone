@@ -2,6 +2,7 @@ package mountlib
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -11,8 +12,11 @@ import (
 
 // Node represents either a *Dir or a *File
 type Node interface {
+	os.FileInfo
 	IsFile() bool
 	Inode() uint64
+	SetModTime(modTime time.Time) error
+	Fsync() error
 }
 
 var (
@@ -40,6 +44,7 @@ type FS struct {
 	noSeek       bool          // don't allow seeking if set
 	noChecksum   bool          // don't check checksums if set
 	readOnly     bool          // if set FS is read only
+	noModTime    bool          // don't read mod times for files
 	dirCacheTime time.Duration // how long to consider directory listing cache valid
 }
 
@@ -58,6 +63,9 @@ func NewFS(f fs.Fs) *FS {
 	}
 	if ReadOnly {
 		fsys.readOnly = true
+	}
+	if NoModTime {
+		fsys.noModTime = true
 	}
 	fsys.dirCacheTime = DirCacheTime
 

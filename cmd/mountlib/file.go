@@ -1,6 +1,7 @@
 package mountlib
 
 import (
+	"os"
 	"path"
 	"sync"
 	"sync/atomic"
@@ -45,6 +46,26 @@ func (f *File) IsFile() bool {
 	return true
 }
 
+// IsDir returns false for File - satisfies Node interface
+func (f *File) IsDir() bool {
+	return false
+}
+
+// Mode bits of the file or directory - satisfies Node interface
+func (f *File) Mode() (mode os.FileMode) {
+	return 0666
+}
+
+// Name (base) of the directory - satisfies Node interface
+func (f *File) Name() (name string) {
+	return path.Base(f.o.Remote())
+}
+
+// Sys returns underlying data source (can be nil) - satisfies Node interface
+func (f *File) Sys() interface{} {
+	return nil
+}
+
 // Inode returns the inode number - satisfies Node interface
 func (f *File) Inode() uint64 {
 	return f.inode
@@ -70,25 +91,37 @@ func (f *File) addWriters(n int) {
 	f.mu.Unlock()
 }
 
-// Attr fills out the attributes for the file
-func (f *File) Attr(noModTime bool) (modTime time.Time, Size, Blocks uint64, err error) {
+// ModTime returns the modified time of the file
+//
+// if NoModTime is set then it returns the mod time of the directory
+func (f *File) ModTime() (modTime time.Time) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	// if o is nil it isn't valid yet or there are writers, so return the size so far
-	if f.o == nil || f.writers != 0 {
-		Size = uint64(atomic.LoadInt64(&f.size))
-		if !noModTime && !f.pendingModTime.IsZero() {
-			modTime = f.pendingModTime
-		}
-	} else {
-		Size = uint64(f.o.Size())
-		if !noModTime {
-			modTime = f.o.ModTime()
+
+	if !f.d.fsys.noModTime {
+		// if o is nil it isn't valid yet or there are writers, so return the size so far
+		if f.o == nil || f.writers != 0 {
+			if !f.pendingModTime.IsZero() {
+				return f.pendingModTime
+			}
+		} else {
+			return f.o.ModTime()
 		}
 	}
-	Blocks = (Size + 511) / 512
-	// fs.Debugf(f.o, "File.Attr modTime=%v, Size=%d, Blocks=%v", modTime, Size, Blocks)
-	return
+
+	return f.d.modTime
+}
+
+// Size of the file
+func (f *File) Size() int64 {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	// if o is nil it isn't valid yet or there are writers, so return the size so far
+	if f.o == nil || f.writers != 0 {
+		return atomic.LoadInt64(&f.size)
+	}
+	return f.o.Size()
 }
 
 // SetModTime sets the modtime for the file

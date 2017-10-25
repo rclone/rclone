@@ -203,11 +203,9 @@ func (fsys *FS) stat(node mountlib.Node, stat *fuse.Stat_t) (errc int) {
 		modTime = x.ModTime()
 		Mode = mountlib.DirPerms | fuse.S_IFDIR
 	case *mountlib.File:
-		var err error
-		modTime, Size, Blocks, err = x.Attr(mountlib.NoModTime)
-		if err != nil {
-			return translateError(err)
-		}
+		modTime = x.ModTime()
+		Size = uint64(x.Size())
+		Blocks = (Size + 511) / 512
 		Mode = mountlib.FilePerms | fuse.S_IFREG
 	}
 	//stat.Dev = 1
@@ -392,10 +390,7 @@ func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 		return -fuse.EIO
 	}
 	// Read the size so far
-	_, currentSize, _, err := file.Attr(true)
-	if err != nil {
-		return translateError(err)
-	}
+	currentSize := file.Size()
 	fs.Debugf(path, "truncate to %d, currentSize %d", size, currentSize)
 	if int64(currentSize) != size {
 		fs.Errorf(path, "Can't truncate files")

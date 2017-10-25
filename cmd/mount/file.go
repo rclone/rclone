@@ -30,10 +30,9 @@ var _ fusefs.Node = (*File)(nil)
 // Attr fills out the attributes for the file
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	defer fs.Trace(f, "")("a=%+v, err=%v", a, &err)
-	modTime, Size, Blocks, err := f.File.Attr(mountlib.NoModTime)
-	if err != nil {
-		return translateError(err)
-	}
+	modTime := f.File.ModTime()
+	Size := uint64(f.File.Size())
+	Blocks := (Size + 511) / 512
 	a.Gid = mountlib.GID
 	a.Uid = mountlib.UID
 	a.Mode = mountlib.FilePerms
