@@ -109,3 +109,4 @@ Contributors
   * Simon Leinen <simon.leinen@gmail.com> <ubuntu@s3-test.novalocal>
   * Dan Dascalescu <ddascalescu+github@gmail.com>
   * Jason Rose <jason@jro.io>
+  * Andrew Starr-Bochicchio <a.starr.b@gmail.com>
