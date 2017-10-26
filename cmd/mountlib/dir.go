@@ -356,10 +356,10 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	return dir, nil
 }
 
-// Remove removes the entry with the given name from
-// the receiver, which must be a directory.  The entry to be removed
-// may correspond to a file (unlink) or to a directory (rmdir).
-func (d *Dir) Remove(name string) error {
+// RemoveName removes the entry with the given name from the receiver,
+// which must be a directory.  The entry to be removed may correspond
+// to a file (unlink) or to a directory (rmdir).
+func (d *Dir) RemoveName(name string) error {
 	if d.fsys.readOnly {
 		return EROFS
 	}

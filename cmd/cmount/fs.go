@@ -489,7 +489,7 @@ func (fsys *FS) Unlink(filePath string) (errc int) {
 	if errc != 0 {
 		return errc
 	}
-	return translateError(parentDir.Remove(leaf))
+	return translateError(parentDir.RemoveName(leaf))
 }
 
 // Mkdir creates a directory.
@@ -510,7 +510,7 @@ func (fsys *FS) Rmdir(dirPath string) (errc int) {
 	if errc != 0 {
 		return errc
 	}
-	return translateError(parentDir.Remove(leaf))
+	return translateError(parentDir.RemoveName(leaf))
 }
 
 // Rename renames a file.

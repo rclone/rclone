@@ -164,7 +164,7 @@ var _ fusefs.NodeRemover = (*Dir)(nil)
 // may correspond to a file (unlink) or to a directory (rmdir).
 func (d *Dir) Remove(ctx context.Context, req *fuse.RemoveRequest) (err error) {
 	defer fs.Trace(d, "name=%q", req.Name)("err=%v", &err)
-	err = d.Dir.Remove(req.Name)
+	err = d.Dir.RemoveName(req.Name)
 	if err != nil {
 		return translateError(err)
 	}
