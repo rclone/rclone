@@ -17,6 +17,8 @@ type Node interface {
 	Inode() uint64
 	SetModTime(modTime time.Time) error
 	Fsync() error
+	Remove() error
+	RemoveAll() error
 }
 
 var (

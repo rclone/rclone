@@ -251,3 +251,23 @@ func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
 func (f *File) Fsync() error {
 	return nil
 }
+
+// Remove the file
+func (f *File) Remove() error {
+	if f.d.fsys.readOnly {
+		return EROFS
+	}
+	err := f.o.Remove()
+	if err != nil {
+		fs.Errorf(f.o, "File.Remove file error: %v", err)
+		return err
+	}
+	// Remove the item from the directory listing
+	f.d.delObject(f.Name())
+	return nil
+}
+
+// RemoveAll the file - same as remove for files
+func (f *File) RemoveAll() error {
+	return f.Remove()
+}

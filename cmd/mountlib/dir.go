@@ -362,6 +362,55 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	return dir, nil
 }
 
+// Remove the directory
+func (d *Dir) Remove() error {
+	if d.fsys.readOnly {
+		return EROFS
+	}
+	// Check directory is empty first
+	empty, err := d.isEmpty()
+	if err != nil {
+		fs.Errorf(d.path, "Dir.Remove dir error: %v", err)
+		return err
+	}
+	if !empty {
+		fs.Errorf(d.path, "Dir.Remove not empty")
+		return ENOTEMPTY
+	}
+	// remove directory
+	err = d.f.Rmdir(d.path)
+	if err != nil {
+		fs.Errorf(d.path, "Dir.Remove failed to remove directory: %v", err)
+		return err
+	}
+	// Remove the item from the parent directory listing
+	if d.parent != nil {
+		d.parent.delObject(d.Name())
+	}
+	return nil
+}
+
+// RemoveAll removes the directory and any contents recursively
+func (d *Dir) RemoveAll() error {
+	if d.fsys.readOnly {
+		return EROFS
+	}
+	// Remove contents of the directory
+	items, err := d.ReadDirAll()
+	if err != nil {
+		fs.Errorf(d.path, "Dir.RemoveAll failed to read directory: %v", err)
+		return err
+	}
+	for _, item := range items {
+		err = item.Node.RemoveAll()
+		if err != nil {
+			fs.Errorf(item.Obj, "Dir.RemoveAll failed to remove: %v", err)
+			return err
+		}
+	}
+	return d.Remove()
+}
+
 // RemoveName removes the entry with the given name from the receiver,
 // which must be a directory.  The entry to be removed may correspond
 // to a file (unlink) or to a directory (rmdir).
@@ -376,39 +425,7 @@ func (d *Dir) RemoveName(name string) error {
 		fs.Errorf(path, "Dir.Remove error: %v", err)
 		return err
 	}
-	switch x := item.Obj.(type) {
-	case fs.Object:
-		err = x.Remove()
-		if err != nil {
-			fs.Errorf(path, "Dir.Remove file error: %v", err)
-			return err
-		}
-	case fs.Directory:
-		// Check directory is empty first
-		dir := item.Node.(*Dir)
-		empty, err := dir.isEmpty()
-		if err != nil {
-			fs.Errorf(path, "Dir.Remove dir error: %v", err)
-			return err
-		}
-		if !empty {
-			fs.Errorf(path, "Dir.Remove not empty")
-			return ENOTEMPTY
-		}
-		// remove directory
-		err = d.f.Rmdir(path)
-		if err != nil {
-			fs.Errorf(path, "Dir.Remove failed to remove directory: %v", err)
-			return err
-		}
-	default:
-		fs.Errorf(path, "Dir.Remove unknown type %T", item)
-		return errors.Errorf("unknown type %T", item)
-	}
-	// Remove the item from the directory listing
-	d.delObject(name)
-	// fs.Debugf(path, "Dir.Remove OK")
-	return nil
+	return item.Node.Remove()
 }
 
 // Rename the file
