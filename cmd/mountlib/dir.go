@@ -24,17 +24,21 @@ type Dir struct {
 	fsys    *FS
 	inode   uint64 // inode number
 	f       fs.Fs
+	parent  *Dir // parent, nil for root
 	path    string
 	modTime time.Time
+	entry   fs.Directory
 	mu      sync.Mutex           // protects the following
 	read    time.Time            // time directory entry last read
 	items   map[string]*DirEntry // NB can be nil when directory not read yet
 }
 
-func newDir(fsys *FS, f fs.Fs, fsDir fs.Directory) *Dir {
+func newDir(fsys *FS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 	return &Dir{
 		fsys:    fsys,
 		f:       f,
+		parent:  parent,
+		entry:   fsDir,
 		path:    fsDir.Remote(),
 		modTime: fsDir.ModTime(),
 		inode:   NewInode(),
@@ -138,6 +142,8 @@ func (d *Dir) walk(absPath string, fun func(*Dir)) {
 // reading everything again
 func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 	d.ForgetAll()
+	d.parent = newParent
+	d.entry = fsDir
 	d.path = fsDir.Remote()
 	d.modTime = fsDir.ModTime()
 	d.read = time.Time{}
@@ -219,7 +225,7 @@ func (d *Dir) _readDir() error {
 			}
 			d.items[name] = &DirEntry{
 				Obj:  dir,
-				Node: newDir(d.fsys, d.f, dir),
+				Node: newDir(d.fsys, d.f, d, dir),
 			}
 		default:
 			err = errors.Errorf("unknown type %T", item)
@@ -350,7 +356,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 		return nil, err
 	}
 	fsDir := fs.NewDir(path, time.Now())
-	dir := newDir(d.fsys, d.f, fsDir)
+	dir := newDir(d.fsys, d.f, d, fsDir)
 	d.addObject(fsDir, dir)
 	// fs.Debugf(path, "Dir.Mkdir OK")
 	return dir, nil
