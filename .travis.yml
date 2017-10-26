@@ -6,8 +6,8 @@ os:
 go:
 - 1.6.4
 - 1.7.6
-- 1.8.3
-- 1.9
+- 1.8.5
+- 1.9.2
 - tip
 install:
 - git fetch --unshallow --tags
@@ -32,12 +32,12 @@ matrix:
   - go: tip
   include:
   - os: osx
-    go: 1.9
+    go: 1.9.2
     env: GOTAGS=""
 deploy:
   provider: script
   script: make travis_beta
   on:
     branch: master
-    go: 1.9
+    go: 1.9.2
     condition: "`uname` == 'Linux'"
