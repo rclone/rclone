@@ -9,7 +9,6 @@ import (
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
@@ -77,12 +76,11 @@ func (s *server) serve() {
 	mux.HandleFunc("/", s.handler)
 	// FIXME make a transport?
 	httpServer := &http.Server{
-		Addr:              s.bindAddress,
-		Handler:           mux,
-		ReadHeaderTimeout: 10 * time.Second, // time to send the headers
-		IdleTimeout:       60 * time.Second, // time to keep idle connections open
-		MaxHeaderBytes:    1 << 20,
+		Addr:           s.bindAddress,
+		Handler:        mux,
+		MaxHeaderBytes: 1 << 20,
 	}
+	initServer(httpServer)
 	fs.Logf(s.f, "Serving on http://%s/", bindAddress)
 	log.Fatal(httpServer.ListenAndServe())
 }
