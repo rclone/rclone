@@ -301,7 +301,7 @@ func (fsys *FS) Readdir(dirPath string,
 	fill(".", nil, 0)
 	fill("..", nil, 0)
 	for _, item := range items {
-		name := path.Base(item.Obj.Remote())
+		name := path.Base(item.DirEntry().Remote())
 		fill(name, nil, 0)
 	}
 	itemsRead = len(items)

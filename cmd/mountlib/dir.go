@@ -11,14 +11,6 @@ import (
 	"github.com/pkg/errors"
 )
 
-// DirEntry describes the contents of a directory entry
-//
-// It can be a file or a directory
-type DirEntry struct {
-	Obj  fs.DirEntry
-	Node Node
-}
-
 // Dir represents a directory entry
 type Dir struct {
 	fsys    *FS
@@ -28,9 +20,9 @@ type Dir struct {
 	path    string
 	modTime time.Time
 	entry   fs.Directory
-	mu      sync.Mutex           // protects the following
-	read    time.Time            // time directory entry last read
-	items   map[string]*DirEntry // NB can be nil when directory not read yet
+	mu      sync.Mutex      // protects the following
+	read    time.Time       // time directory entry last read
+	items   map[string]Node // NB can be nil when directory not read yet
 }
 
 func newDir(fsys *FS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
@@ -124,8 +116,8 @@ func (d *Dir) walk(absPath string, fun func(*Dir)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	if d.items != nil {
-		for _, entry := range d.items {
-			if dir, ok := entry.Node.(*Dir); ok {
+		for _, node := range d.items {
+			if dir, ok := node.(*Dir); ok {
 				dir.walk(absPath, fun)
 			}
 		}
@@ -152,17 +144,12 @@ func (d *Dir) rename(newParent *Dir, fsDir fs.Directory) {
 // addObject adds a new object or directory to the directory
 //
 // note that we add new objects rather than updating old ones
-func (d *Dir) addObject(o fs.DirEntry, node Node) *DirEntry {
-	item := &DirEntry{
-		Obj:  o,
-		Node: node,
-	}
+func (d *Dir) addObject(node Node) {
 	d.mu.Lock()
 	if d.items != nil {
-		d.items[path.Base(o.Remote())] = item
+		d.items[node.Name()] = node
 	}
 	d.mu.Unlock()
-	return item
 }
 
 // delObject removes an object from the directory
@@ -201,32 +188,26 @@ func (d *Dir) _readDir() error {
 	oldItems := d.items
 
 	// Cache the items by name
-	d.items = make(map[string]*DirEntry, len(entries))
+	d.items = make(map[string]Node, len(entries))
 	for _, entry := range entries {
 		switch item := entry.(type) {
 		case fs.Object:
 			obj := item
 			name := path.Base(obj.Remote())
-			d.items[name] = &DirEntry{
-				Obj:  obj,
-				Node: newFile(d, obj, name),
-			}
+			d.items[name] = newFile(d, obj, name)
 		case fs.Directory:
 			dir := item
 			name := path.Base(dir.Remote())
 			// Use old dir value if it exists
 			if oldItems != nil {
-				if oldItem, ok := oldItems[name]; ok {
-					if _, ok := oldItem.Obj.(fs.Directory); ok {
-						d.items[name] = oldItem
+				if oldNode, ok := oldItems[name]; ok {
+					if oldNode.IsDir() {
+						d.items[name] = oldNode
 						continue
 					}
 				}
 			}
-			d.items[name] = &DirEntry{
-				Obj:  dir,
-				Node: newDir(d.fsys, d.f, d, dir),
-			}
+			d.items[name] = newDir(d.fsys, d.f, d, dir)
 		default:
 			err = errors.Errorf("unknown type %T", item)
 			fs.Errorf(d.path, "readDir error: %v", err)
@@ -240,7 +221,7 @@ func (d *Dir) _readDir() error {
 // lookup a single item in the directory
 //
 // returns ENOENT if not found.
-func (d *Dir) lookup(leaf string) (*DirEntry, error) {
+func (d *Dir) lookup(leaf string) (Node, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	err := d._readDir()
@@ -296,7 +277,7 @@ func (d *Dir) SetModTime(modTime time.Time) error {
 func (d *Dir) Lookup(name string) (node Node, err error) {
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Lookup")
-	item, err := d.lookup(name)
+	node, err = d.lookup(name)
 	if err != nil {
 		if err != ENOENT {
 			fs.Errorf(path, "Dir.Lookup error: %v", err)
@@ -304,11 +285,11 @@ func (d *Dir) Lookup(name string) (node Node, err error) {
 		return nil, err
 	}
 	// fs.Debugf(path, "Dir.Lookup OK")
-	return item.Node, nil
+	return node, nil
 }
 
 // ReadDirAll reads the contents of the directory
-func (d *Dir) ReadDirAll() (items []*DirEntry, err error) {
+func (d *Dir) ReadDirAll() (items []Node, err error) {
 	// fs.Debugf(d.path, "Dir.ReadDirAll")
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -357,7 +338,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	}
 	fsDir := fs.NewDir(path, time.Now())
 	dir := newDir(d.fsys, d.f, d, fsDir)
-	d.addObject(fsDir, dir)
+	d.addObject(dir)
 	// fs.Debugf(path, "Dir.Mkdir OK")
 	return dir, nil
 }
@@ -396,15 +377,15 @@ func (d *Dir) RemoveAll() error {
 		return EROFS
 	}
 	// Remove contents of the directory
-	items, err := d.ReadDirAll()
+	nodes, err := d.ReadDirAll()
 	if err != nil {
 		fs.Errorf(d.path, "Dir.RemoveAll failed to read directory: %v", err)
 		return err
 	}
-	for _, item := range items {
-		err = item.Node.RemoveAll()
+	for _, node := range nodes {
+		err = node.RemoveAll()
 		if err != nil {
-			fs.Errorf(item.Obj, "Dir.RemoveAll failed to remove: %v", err)
+			fs.Errorf(node.DirEntry(), "Dir.RemoveAll failed to remove: %v", err)
 			return err
 		}
 	}
@@ -425,12 +406,12 @@ func (d *Dir) RemoveName(name string) error {
 	}
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Remove")
-	item, err := d.lookup(name)
+	node, err := d.lookup(name)
 	if err != nil {
 		fs.Errorf(path, "Dir.Remove error: %v", err)
 		return err
 	}
-	return item.Node.Remove()
+	return node.Remove()
 }
 
 // Rename the file
@@ -441,14 +422,12 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)
 	// fs.Debugf(oldPath, "Dir.Rename to %q", newPath)
-	oldItem, err := d.lookup(oldName)
+	oldNode, err := d.lookup(oldName)
 	if err != nil {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err
 	}
-	var newObj fs.DirEntry
-	oldNode := oldItem.Node
-	switch x := oldItem.Obj.(type) {
+	switch x := oldNode.DirEntry().(type) {
 	case fs.Object:
 		oldObject := x
 		// FIXME: could Copy then Delete if Move not available
@@ -464,11 +443,10 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 			return err
 		}
-		newObj = newObject
 		// Update the node with the new details
 		if oldNode != nil {
 			if oldFile, ok := oldNode.(*File); ok {
-				fs.Debugf(oldItem.Obj, "Updating file with %v %p", newObject, oldFile)
+				fs.Debugf(oldNode.DirEntry(), "Updating file with %v %p", newObject, oldFile)
 				oldFile.rename(destDir, newObject)
 			}
 		}
@@ -487,23 +465,22 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 			return err
 		}
 		newDir := fs.NewDirCopy(x).SetRemote(newPath)
-		newObj = newDir
 		// Update the node with the new details
 		if oldNode != nil {
 			if oldDir, ok := oldNode.(*Dir); ok {
-				fs.Debugf(oldItem.Obj, "Updating dir with %v %p", newDir, oldDir)
+				fs.Debugf(oldNode.DirEntry(), "Updating dir with %v %p", newDir, oldDir)
 				oldDir.rename(destDir, newDir)
 			}
 		}
 	default:
-		err = errors.Errorf("unknown type %T", oldItem)
+		err = errors.Errorf("unknown type %T", oldNode)
 		fs.Errorf(d.path, "Dir.ReadDirAll error: %v", err)
 		return err
 	}
 
 	// Show moved - delete from old dir and add to new
 	d.delObject(oldName)
-	destDir.addObject(newObj, oldNode)
+	destDir.addObject(oldNode)
 
 	// fs.Debugf(newPath, "Dir.Rename renamed from %q", oldPath)
 	return nil

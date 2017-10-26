@@ -179,7 +179,7 @@ func (f *File) setObject(o fs.Object) {
 	defer f.mu.Unlock()
 	f.o = o
 	_ = f.applyPendingModTime()
-	f.d.addObject(o, f)
+	f.d.addObject(f)
 }
 
 // Wait for f.o to become non nil for a short time returning it or an

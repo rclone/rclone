@@ -111,7 +111,7 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	}
 	for _, item := range items {
 		var dirent fuse.Dirent
-		switch x := item.Obj.(type) {
+		switch x := item.DirEntry().(type) {
 		case fs.Object:
 			dirent = fuse.Dirent{
 				// Inode FIXME ???
