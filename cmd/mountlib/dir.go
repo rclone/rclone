@@ -411,6 +411,11 @@ func (d *Dir) RemoveAll() error {
 	return d.Remove()
 }
 
+// DirEntry returns the underlying fs.DirEntry
+func (d *Dir) DirEntry() (entry fs.DirEntry) {
+	return d.entry
+}
+
 // RemoveName removes the entry with the given name from the receiver,
 // which must be a directory.  The entry to be removed may correspond
 // to a file (unlink) or to a directory (rmdir).

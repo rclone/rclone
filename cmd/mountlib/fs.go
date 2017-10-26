@@ -19,6 +19,7 @@ type Node interface {
 	Fsync() error
 	Remove() error
 	RemoveAll() error
+	DirEntry() fs.DirEntry
 }
 
 var (

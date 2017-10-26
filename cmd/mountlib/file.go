@@ -271,3 +271,8 @@ func (f *File) Remove() error {
 func (f *File) RemoveAll() error {
 	return f.Remove()
 }
+
+// DirEntry returns the underlying fs.DirEntry
+func (f *File) DirEntry() (entry fs.DirEntry) {
+	return f.o
+}
