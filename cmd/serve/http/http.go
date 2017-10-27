@@ -3,7 +3,6 @@ package http
 import (
 	"fmt"
 	"html/template"
-	"io"
 	"log"
 	"net/http"
 	"path"
@@ -12,18 +11,19 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
+	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
 // Globals
 var (
 	bindAddress = "localhost:8080"
-	readWrite   = false
 )
 
 func init() {
 	Command.Flags().StringVarP(&bindAddress, "addr", "", bindAddress, "IPaddress:Port to bind server to.")
-	// Command.Flags().BoolVarP(&readWrite, "rw", "", readWrite, "Serve in read/write mode.")
+	vfsflags.AddFlags(Command.Flags())
 }
 
 // Command definition for cobra
@@ -45,18 +45,12 @@ The server will log errors.  Use -v to see access logs.
 
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
-
-Note the Range header is not supported yet.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := server{
-				f:           f,
-				bindAddress: bindAddress,
-				readWrite:   readWrite,
-			}
+			s := newServer(f, bindAddress)
 			s.serve()
 			return nil
 		})
@@ -67,7 +61,16 @@ Note the Range header is not supported yet.
 type server struct {
 	f           fs.Fs
 	bindAddress string
-	readWrite   bool
+	vfs         *vfs.VFS
+}
+
+func newServer(f fs.Fs, bindAddress string) *server {
+	s := &server{
+		f:           f,
+		bindAddress: bindAddress,
+		vfs:         vfs.New(f, &vfsflags.Opt),
+	}
+	return s
 }
 
 // serve creates the http server
@@ -91,13 +94,7 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	rangeHeader := r.Header.Get("Range")
-	if rangeHeader != "" {
-		http.Error(w, "Range not supported yet", http.StatusRequestedRangeNotSatisfiable)
-		return
-	}
-	//r.Header().Set("Accept-Ranges", "bytes")
-	w.Header().Set("Accept-Ranges", "none") // show we don't support Range yet
+	w.Header().Set("Accept-Ranges", "bytes")
 	w.Header().Set("Server", "rclone/"+fs.Version)
 
 	urlPath := r.URL.Path
@@ -152,30 +149,33 @@ func internalError(what interface{}, w http.ResponseWriter, text string, err err
 
 // serveDir serves a directory index at dirRemote
 func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote string) {
-	// Check the directory is included in the filters
-	if !fs.Config.Filter.IncludeDirectory(dirRemote) {
-		fs.Infof(dirRemote, "%s: Directory not found (filtered)", r.RemoteAddr)
-		http.Error(w, "Directory not found", http.StatusNotFound)
-		return
-	}
-
 	// List the directory
-	dirEntries, err := fs.ListDirSorted(s.f, false, dirRemote)
-	if err == fs.ErrorDirNotFound {
-		fs.Infof(dirRemote, "%s: Directory not found", r.RemoteAddr)
+	node, err := s.vfs.Stat(dirRemote)
+	if err == vfs.ENOENT {
 		http.Error(w, "Directory not found", http.StatusNotFound)
 		return
 	} else if err != nil {
 		internalError(dirRemote, w, "Failed to list directory", err)
 		return
 	}
+	if !node.IsDir() {
+		http.Error(w, "Not a directory", http.StatusNotFound)
+		return
+	}
+	dir := node.(*vfs.Dir)
+	dirEntries, err := dir.ReadDirAll()
+	if err != nil {
+		internalError(dirRemote, w, "Failed to list directory", err)
+		return
+	}
 
 	var out entries
-	for _, o := range dirEntries {
-		remote := strings.Trim(o.Remote(), "/")
+	for _, node := range dirEntries {
+		obj := node.DirEntry()
+		remote := strings.Trim(obj.Remote(), "/")
 		leaf := path.Base(remote)
 		urlRemote := leaf
-		if _, ok := o.(*fs.Dir); ok {
+		if node.IsDir() {
 			leaf += "/"
 			urlRemote += "/"
 		}
@@ -199,9 +199,8 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 
 // serveFile serves a file object at remote
 func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string) {
-	// FIXME could cache the directories and objects...
-	obj, err := s.f.NewObject(remote)
-	if err == fs.ErrorObjectNotFound {
+	node, err := s.vfs.Stat(remote)
+	if err == vfs.ENOENT {
 		fs.Infof(remote, "%s: File not found", r.RemoteAddr)
 		http.Error(w, "File not found", http.StatusNotFound)
 		return
@@ -209,16 +208,15 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 		internalError(remote, w, "Failed to find file", err)
 		return
 	}
-
-	// Check the object is included in the filters
-	if !fs.Config.Filter.IncludeObject(obj) {
-		fs.Infof(remote, "%s: File not found (filtered)", r.RemoteAddr)
-		http.Error(w, "File not found", http.StatusNotFound)
+	if !node.IsFile() {
+		http.Error(w, "Not a file", http.StatusNotFound)
 		return
 	}
+	obj := node.DirEntry().(fs.Object)
+	file := node.(*vfs.File)
 
 	// Set content length since we know how long the object is
-	w.Header().Set("Content-Length", strconv.FormatInt(obj.Size(), 10))
+	w.Header().Set("Content-Length", strconv.FormatInt(node.Size(), 10))
 
 	// Set content type
 	mimeType := fs.MimeType(obj)
@@ -234,7 +232,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	}
 
 	// open the object
-	in, err := obj.Open()
+	in, err := file.OpenRead()
 	if err != nil {
 		internalError(remote, w, "Failed to open file", err)
 		return
@@ -249,12 +247,8 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	// Account the transfer
 	fs.Stats.Transferring(remote)
 	defer fs.Stats.DoneTransferring(remote, true)
-	in = fs.NewAccount(in, obj).WithBuffer() // account the transfer
+	// FIXME in = fs.NewAccount(in, obj).WithBuffer() // account the transfer
 
-	// Copy the contents of the object to the output
-	fs.Infof(remote, "%s: Serving file", r.RemoteAddr)
-	_, err = io.Copy(w, in)
-	if err != nil {
-		fs.Errorf(remote, "Failed to write file: %v", err)
-	}
+	// Serve the file
+	http.ServeContent(w, r, remote, node.ModTime(), in)
 }

@@ -23,12 +23,7 @@ const (
 )
 
 func startServer(t *testing.T, f fs.Fs) {
-	s := server{
-		f:           f,
-		bindAddress: testBindAddress,
-		readWrite:   false,
-	}
-
+	s := newServer(f, testBindAddress)
 	go s.serve()
 
 	// try to connect to the test server
@@ -81,12 +76,13 @@ func checkGolden(t *testing.T, fileName string, got []byte) {
 	}
 }
 
-func TestGets(t *testing.T) {
+func TestGET(t *testing.T) {
 	for _, test := range []struct {
 		URL    string
 		Status int
 		Golden string
 		Method string
+		Range  string
 	}{
 		{
 			URL:    "",
@@ -152,6 +148,29 @@ func TestGets(t *testing.T) {
 			Status: http.StatusMethodNotAllowed,
 			Golden: "testdata/golden/onepost.txt",
 		},
+		{
+			URL:    "two.txt",
+			Status: http.StatusOK,
+			Golden: "testdata/golden/two.txt",
+		},
+		{
+			URL:    "two.txt",
+			Status: http.StatusPartialContent,
+			Range:  "bytes=2-5",
+			Golden: "testdata/golden/two2-5.txt",
+		},
+		{
+			URL:    "two.txt",
+			Status: http.StatusPartialContent,
+			Range:  "bytes=0-6",
+			Golden: "testdata/golden/two-6.txt",
+		},
+		{
+			URL:    "two.txt",
+			Status: http.StatusPartialContent,
+			Range:  "bytes=3-",
+			Golden: "testdata/golden/two3-.txt",
+		},
 	} {
 		method := test.Method
 		if method == "" {
@@ -159,6 +178,9 @@ func TestGets(t *testing.T) {
 		}
 		req, err := http.NewRequest(method, testURL+test.URL, nil)
 		require.NoError(t, err)
+		if test.Range != "" {
+			req.Header.Add("Range", test.Range)
+		}
 		resp, err := http.DefaultClient.Do(req)
 		require.NoError(t, err)
 		assert.Equal(t, test.Status, resp.StatusCode, test.Golden)
