@@ -27,6 +27,14 @@ var (
 	_ Node = (*Dir)(nil)
 )
 
+// Nodes is a slice of Node
+type Nodes []Node
+
+// Sort functions
+func (ns Nodes) Len() int           { return len(ns) }
+func (ns Nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
+func (ns Nodes) Less(i, j int) bool { return ns[i].DirEntry().Remote() < ns[j].DirEntry().Remote() }
+
 // Noder represents something which can return a node
 type Noder interface {
 	fmt.Stringer

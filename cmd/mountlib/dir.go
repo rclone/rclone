@@ -3,6 +3,7 @@ package mountlib
 import (
 	"os"
 	"path"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -288,8 +289,8 @@ func (d *Dir) Lookup(name string) (node Node, err error) {
 	return node, nil
 }
 
-// ReadDirAll reads the contents of the directory
-func (d *Dir) ReadDirAll() (items []Node, err error) {
+// ReadDirAll reads the contents of the directory sorted
+func (d *Dir) ReadDirAll() (items Nodes, err error) {
 	// fs.Debugf(d.path, "Dir.ReadDirAll")
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -301,6 +302,7 @@ func (d *Dir) ReadDirAll() (items []Node, err error) {
 	for _, item := range d.items {
 		items = append(items, item)
 	}
+	sort.Sort(items)
 	// fs.Debugf(d.path, "Dir.ReadDirAll OK with %d entries", len(items))
 	return items, nil
 }
