@@ -411,11 +411,10 @@ func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 		// Can only read from read file handle
 		return -fuse.EIO
 	}
-	data, err := rfh.Read(int64(len(buff)), ofst)
+	n, err := rfh.ReadAt(buff, ofst)
 	if err != nil {
 		return translateError(err)
 	}
-	n = copy(buff, data)
 	return n
 }
 
@@ -431,12 +430,11 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 		// Can only write to write file handle
 		return -fuse.EIO
 	}
-	// FIXME made Write return int and Read take int since must fit in RAM
-	n64, err := wfh.Write(buff, ofst)
+	n, err := wfh.WriteAt(buff, ofst)
 	if err != nil {
 		return translateError(err)
 	}
-	return int(n64)
+	return n
 }
 
 // Flush flushes an open file descriptor or path

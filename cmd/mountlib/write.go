@@ -21,6 +21,13 @@ type WriteFileHandle struct {
 	offset      int64
 }
 
+// Check interfaces
+var (
+	_ io.Writer   = (*WriteFileHandle)(nil)
+	_ io.WriterAt = (*WriteFileHandle)(nil)
+	_ io.Closer   = (*WriteFileHandle)(nil)
+)
+
 func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, error) {
 	fh := &WriteFileHandle{
 		remote: src.Remote(),
@@ -60,12 +67,23 @@ func (fh *WriteFileHandle) Node() Node {
 	return fh.file
 }
 
-// Write data to the file handle
-func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err error) {
-	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(data))
+// WriteAt writes len(p) bytes from p to the underlying data stream at offset
+// off. It returns the number of bytes written from p (0 <= n <= len(p)) and
+// any error encountered that caused the write to stop early. WriteAt must
+// return a non-nil error if it returns n < len(p).
+//
+// If WriteAt is writing to a destination with a seek offset, WriteAt should
+// not affect nor be affected by the underlying seek offset.
+//
+// Clients of WriteAt can execute parallel WriteAt calls on the same
+// destination if the ranges do not overlap.
+//
+// Implementations must not retain p.
+func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
+	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(p))
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	if fh.offset != offset {
+	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write can't seek in file")
 		return 0, ESPIPE
 	}
@@ -74,16 +92,27 @@ func (fh *WriteFileHandle) Write(data []byte, offset int64) (written int64, err 
 		return 0, EBADF
 	}
 	fh.writeCalled = true
-	n, err := fh.pipeWriter.Write(data)
-	written = int64(n)
-	fh.offset += written
+	n, err = fh.pipeWriter.Write(p)
+	fh.offset += int64(n)
 	fh.file.setSize(fh.offset)
 	if err != nil {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", err)
 		return 0, err
 	}
 	// fs.Debugf(fh.remote, "WriteFileHandle.Write OK (%d bytes written)", n)
-	return written, nil
+	return n, nil
+}
+
+// Write writes len(p) bytes from p to the underlying data stream. It returns
+// the number of bytes written from p (0 <= n <= len(p)) and any error
+// encountered that caused the write to stop early. Write must return a non-nil
+// error if it returns n < len(p). Write must not modify the slice data, even
+// temporarily.
+//
+// Implementations must not retain p.
+func (fh *WriteFileHandle) Write(p []byte) (n int, err error) {
+	// Since we can't seek, just call WriteAt with the current offset
+	return fh.WriteAt(p, fh.offset)
 }
 
 // Offset returns the offset of the file pointer

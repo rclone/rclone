@@ -29,14 +29,14 @@ var _ fusefs.HandleReader = (*ReadFileHandle)(nil)
 
 // Read from the file handle
 func (fh *ReadFileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) (err error) {
-	dataRead := -1
-	defer fs.Trace(fh, "len=%d, offset=%d", req.Size, req.Offset)("read=%d, err=%v", &dataRead, &err)
-	data, err := fh.ReadFileHandle.Read(int64(req.Size), req.Offset)
+	var n int
+	defer fs.Trace(fh, "len=%d, offset=%d", req.Size, req.Offset)("read=%d, err=%v", &n, &err)
+	data := make([]byte, req.Size)
+	n, err = fh.ReadFileHandle.ReadAt(data, req.Offset)
 	if err != nil {
 		return translateError(err)
 	}
-	resp.Data = data
-	dataRead = len(data)
+	resp.Data = data[:n]
 	return nil
 }
 

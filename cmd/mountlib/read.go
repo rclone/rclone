@@ -14,13 +14,22 @@ type ReadFileHandle struct {
 	closed     bool // set if handle has been closed
 	r          *fs.Account
 	o          fs.Object
-	readCalled bool // set if read has been called
-	offset     int64
+	readCalled bool  // set if read has been called
+	offset     int64 // offset of read of o
+	roffset    int64 // offset of Read() calls
 	noSeek     bool
 	file       *File
 	hash       *fs.MultiHasher
 	opened     bool
 }
+
+// Check interfaces
+var (
+	_ io.Reader   = (*ReadFileHandle)(nil)
+	_ io.ReaderAt = (*ReadFileHandle)(nil)
+	_ io.Seeker   = (*ReadFileHandle)(nil)
+	_ io.Closer   = (*ReadFileHandle)(nil)
+)
 
 func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 	var hash *fs.MultiHasher
@@ -113,36 +122,72 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	return nil
 }
 
-// Read from the file handle
-func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err error) {
+// Seek the file
+func (fh *ReadFileHandle) Seek(offset int64, whence int) (n int64, err error) {
+	size := fh.o.Size()
+	switch whence {
+	case 0:
+		fh.roffset = 0
+	case 2:
+		fh.roffset = size
+	}
+	fh.roffset += offset
+	// we don't check the offset - the next Read will
+	return fh.roffset, nil
+}
+
+// ReadAt reads len(p) bytes into p starting at offset off in the
+// underlying input source. It returns the number of bytes read (0 <=
+// n <= len(p)) and any error encountered.
+//
+// When ReadAt returns n < len(p), it returns a non-nil error
+// explaining why more bytes were not returned. In this respect,
+// ReadAt is stricter than Read.
+//
+// Even if ReadAt returns n < len(p), it may use all of p as scratch
+// space during the call. If some data is available but not len(p)
+// bytes, ReadAt blocks until either all the data is available or an
+// error occurs. In this respect ReadAt is different from Read.
+//
+// If the n = len(p) bytes returned by ReadAt are at the end of the
+// input source, ReadAt may return either err == EOF or err == nil.
+//
+// If ReadAt is reading from an input source with a seek offset,
+// ReadAt should not affect nor be affected by the underlying seek
+// offset.
+//
+// Clients of ReadAt can execute parallel ReadAt calls on the same
+// input source.
+//
+// Implementations must not retain p.
+func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	err = fh.openPending() // FIXME pending open could be more efficient in the presense of seek (and retried)
 	if err != nil {
-		return nil, err
+		return 0, err
 	}
-	// fs.Debugf(fh.o, "ReadFileHandle.Read size %d offset %d", reqSize, reqOffset)
+	// fs.Debugf(fh.o, "ReadFileHandle.Read size %d offset %d", reqSize, off)
 	if fh.closed {
 		fs.Errorf(fh.o, "ReadFileHandle.Read error: %v", EBADF)
-		return nil, EBADF
+		return 0, EBADF
 	}
-	doSeek := reqOffset != fh.offset
-	var n int
+	doSeek := off != fh.offset
 	var newOffset int64
 	retries := 0
-	buf := make([]byte, reqSize)
+	reqSize := len(p)
 	doReopen := false
 	for {
 		if doSeek {
 			// Are we attempting to seek beyond the end of the
 			// file - if so just return EOF leaving the underlying
 			// file in an unchanged state.
-			if reqOffset >= fh.o.Size() {
-				fs.Debugf(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", reqOffset, fh.o.Size())
-				return nil, nil
+			if off >= fh.o.Size() {
+				fs.Debugf(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", off, fh.o.Size())
+				return 0, nil
 			}
 			// Otherwise do the seek
-			err = fh.seek(reqOffset, doReopen)
+			err = fh.seek(off, doReopen)
 		} else {
 			err = nil
 		}
@@ -153,7 +198,7 @@ func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err e
 			// One exception to the above is if we fail to fully populate a
 			// page cache page; a read into page cache is always page aligned.
 			// Make sure we never serve a partial read, to avoid that.
-			n, err = io.ReadFull(fh.r, buf)
+			n, err = io.ReadFull(fh.r, p)
 			newOffset = fh.offset + int64(n)
 			// if err == nil && rand.Intn(10) == 0 {
 			// 	err = errors.New("random error")
@@ -177,19 +222,18 @@ func (fh *ReadFileHandle) Read(reqSize, reqOffset int64) (respData []byte, err e
 	if err != nil {
 		fs.Errorf(fh.o, "ReadFileHandle.Read error: %v", err)
 	} else {
-		respData = buf[:n]
 		fh.offset = newOffset
 		// fs.Debugf(fh.o, "ReadFileHandle.Read OK")
 
 		if fh.hash != nil {
-			_, err = fh.hash.Write(respData)
+			_, err = fh.hash.Write(p[:n])
 			if err != nil {
 				fs.Errorf(fh.o, "ReadFileHandle.Read HashError: %v", err)
-				return nil, err
+				return 0, err
 			}
 		}
 	}
-	return respData, err
+	return n, err
 }
 
 func (fh *ReadFileHandle) checkHash() error {
@@ -208,6 +252,38 @@ func (fh *ReadFileHandle) checkHash() error {
 	}
 
 	return nil
+}
+
+// Read reads up to len(p) bytes into p. It returns the number of bytes read (0
+// <= n <= len(p)) and any error encountered. Even if Read returns n < len(p),
+// it may use all of p as scratch space during the call. If some data is
+// available but not len(p) bytes, Read conventionally returns what is
+// available instead of waiting for more.
+//
+// When Read encounters an error or end-of-file condition after successfully
+// reading n > 0 bytes, it returns the number of bytes read. It may return the
+// (non-nil) error from the same call or return the error (and n == 0) from a
+// subsequent call. An instance of this general case is that a Reader returning
+// a non-zero number of bytes at the end of the input stream may return either
+// err == EOF or err == nil. The next Read should return 0, EOF.
+//
+// Callers should always process the n > 0 bytes returned before considering
+// the error err. Doing so correctly handles I/O errors that happen after
+// reading some bytes and also both of the allowed EOF behaviors.
+//
+// Implementations of Read are discouraged from returning a zero byte count
+// with a nil error, except when len(p) == 0. Callers should treat a return of
+// 0 and nil as indicating that nothing happened; in particular it does not
+// indicate EOF.
+//
+// Implementations must not retain p.
+func (fh *ReadFileHandle) Read(p []byte) (n int, err error) {
+	if fh.roffset >= fh.o.Size() {
+		return 0, io.EOF
+	}
+	n, err = fh.ReadAt(p, fh.roffset)
+	fh.roffset += int64(n)
+	return n, err
 }
 
 // close the file handle returning EBADF if it has been

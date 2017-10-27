@@ -28,7 +28,7 @@ var _ fusefs.HandleWriter = (*WriteFileHandle)(nil)
 // Write data to the file handle
 func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
 	defer fs.Trace(fh, "len=%d, offset=%d", len(req.Data), req.Offset)("written=%d, err=%v", &resp.Size, &err)
-	n, err := fh.WriteFileHandle.Write(req.Data, req.Offset)
+	n, err := fh.WriteFileHandle.WriteAt(req.Data, req.Offset)
 	if err != nil {
 		return translateError(err)
 	}
