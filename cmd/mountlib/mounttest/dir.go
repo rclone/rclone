@@ -176,7 +176,7 @@ func TestDirCacheFlush(t *testing.T) {
 	err := run.fremote.Mkdir("dir/subdir")
 	require.NoError(t, err)
 
-	root, err := run.filesys.Root()
+	root, err := run.vfs.Root()
 	require.NoError(t, err)
 
 	// expect newly created "subdir" on remote to not show up

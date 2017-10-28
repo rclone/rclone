@@ -5,20 +5,14 @@ package mount
 import (
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"golang.org/x/net/context"
 )
 
 // ReadFileHandle is an open for read file handle on a File
 type ReadFileHandle struct {
-	*mountlib.ReadFileHandle
-	// mu         sync.Mutex
-	// closed     bool // set if handle has been closed
-	// r          *fs.Account
-	// o          fs.Object
-	// readCalled bool // set if read has been called
-	// offset     int64
+	*vfs.ReadFileHandle
 }
 
 // Check interface satisfied

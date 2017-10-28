@@ -7,21 +7,15 @@ import (
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
 // File represents a file
 type File struct {
-	*mountlib.File
-	// size           int64        // size of file - read and written with atomic int64 - must be 64 bit aligned
-	// d              *Dir         // parent directory - read only
-	// mu             sync.RWMutex // protects the following
-	// o              fs.Object    // NB o may be nil if file is being written
-	// writers        int          // number of writers for this file
-	// pendingModTime time.Time    // will be applied once o becomes available, i.e. after file was written
+	*vfs.File
 }
 
 // Check interface satisfied
@@ -33,9 +27,9 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	modTime := f.File.ModTime()
 	Size := uint64(f.File.Size())
 	Blocks := (Size + 511) / 512
-	a.Gid = mountlib.GID
-	a.Uid = mountlib.UID
-	a.Mode = mountlib.FilePerms
+	a.Gid = vfs.GID
+	a.Uid = vfs.UID
+	a.Mode = vfs.FilePerms
 	a.Size = Size
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -51,7 +45,7 @@ var _ fusefs.NodeSetattrer = (*File)(nil)
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
 func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
 	defer fs.Trace(f, "a=%+v", req)("err=%v", &err)
-	if mountlib.NoModTime {
+	if vfs.NoModTime {
 		return nil
 	}
 	if req.Valid.MtimeNow() {
@@ -70,15 +64,15 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	defer fs.Trace(f, "flags=%v", req.Flags)("fh=%v, err=%v", &fh, &err)
 	switch {
 	case req.Flags.IsReadOnly():
-		if mountlib.NoSeek {
+		if vfs.NoSeek {
 			resp.Flags |= fuse.OpenNonSeekable
 		}
-		var rfh *mountlib.ReadFileHandle
+		var rfh *vfs.ReadFileHandle
 		rfh, err = f.File.OpenRead()
 		fh = &ReadFileHandle{rfh}
 	case req.Flags.IsWriteOnly() || (req.Flags.IsReadWrite() && (req.Flags&fuse.OpenTruncate) != 0):
 		resp.Flags |= fuse.OpenNonSeekable
-		var wfh *mountlib.WriteFileHandle
+		var wfh *vfs.WriteFileHandle
 		wfh, err = f.File.OpenWrite()
 		fh = &WriteFileHandle{wfh}
 	case req.Flags.IsReadWrite():

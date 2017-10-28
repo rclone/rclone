@@ -1,6 +1,6 @@
 // +build !linux,!darwin,!freebsd
 
-package mountlib
+package vfs
 
 import (
 	"github.com/spf13/pflag"

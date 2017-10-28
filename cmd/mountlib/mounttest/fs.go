@@ -15,10 +15,10 @@ import (
 	"testing"
 	"time"
 
-	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
 	_ "github.com/ncw/rclone/fs/all" // import all the file systems
 	"github.com/ncw/rclone/fstest"
+	"github.com/ncw/rclone/vfs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,7 +27,7 @@ type (
 	// UnmountFn is called to unmount the file system
 	UnmountFn func() error
 	// MountFn is called to mount the file system
-	MountFn func(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error)
+	MountFn func(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error)
 )
 
 var (
@@ -46,7 +46,7 @@ func TestMain(m *testing.M, fn MountFn) {
 
 // Run holds the remotes for a test run
 type Run struct {
-	filesys      *mountlib.FS
+	vfs          *vfs.VFS
 	mountPath    string
 	fremote      fs.Fs
 	fremoteName  string
@@ -112,7 +112,7 @@ func newRun() *Run {
 func (r *Run) mount() {
 	log.Printf("mount %q %q", r.fremote, r.mountPath)
 	var err error
-	r.filesys, r.umountResult, r.umountFn, err = mountFn(r.fremote, r.mountPath)
+	r.vfs, r.umountResult, r.umountFn, err = mountFn(r.fremote, r.mountPath)
 	if err != nil {
 		log.Printf("mount failed: %v", err)
 		r.skip = true
@@ -207,10 +207,10 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filepath string) {
 		if fi.IsDir() {
 			dir[name+"/"] = struct{}{}
 			r.readLocal(t, dir, name)
-			assert.Equal(t, mountlib.DirPerms, fi.Mode().Perm())
+			assert.Equal(t, vfs.DirPerms, fi.Mode().Perm())
 		} else {
 			dir[fmt.Sprintf("%s %d", name, fi.Size())] = struct{}{}
-			assert.Equal(t, mountlib.FilePerms, fi.Mode().Perm())
+			assert.Equal(t, vfs.FilePerms, fi.Mode().Perm())
 		}
 	}
 }
@@ -292,5 +292,5 @@ func TestRoot(t *testing.T) {
 	fi, err := os.Lstat(run.mountPath)
 	require.NoError(t, err)
 	assert.True(t, fi.IsDir())
-	assert.Equal(t, fi.Mode().Perm(), mountlib.DirPerms)
+	assert.Equal(t, fi.Mode().Perm(), vfs.DirPerms)
 }

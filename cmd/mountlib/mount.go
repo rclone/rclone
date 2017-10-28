@@ -1,42 +1,25 @@
 package mountlib
 
-// Globals
 import (
 	"log"
-	"os"
-	"time"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 )
 
 // Options set by command line flags
 var (
-	NoModTime    = false
-	NoChecksum   = false
-	DebugFUSE    = false
-	NoSeek       = false
-	DirCacheTime = 5 * 60 * time.Second
-	PollInterval = time.Minute
-	// mount options
-	ReadOnly                         = false
+	DebugFUSE                        = false
 	AllowNonEmpty                    = false
 	AllowRoot                        = false
 	AllowOther                       = false
 	DefaultPermissions               = false
 	WritebackCache                   = false
 	MaxReadAhead       fs.SizeSuffix = 128 * 1024
-	Umask                            = 0
-	UID                              = ^uint32(0) // these values instruct WinFSP-FUSE to use the current user
-	GID                              = ^uint32(0) // overriden for non windows in mount_unix.go
-	// foreground                 = false
-	// default permissions for directories - modified by umask in Mount
-	DirPerms     = os.FileMode(0777)
-	FilePerms    = os.FileMode(0666)
-	ExtraOptions *[]string
-	ExtraFlags   *[]string
+	ExtraOptions       *[]string
+	ExtraFlags         *[]string
 )
 
 // NewMountCommand makes a mount command with the given name and Mount function
@@ -149,10 +132,6 @@ like this:
 			cmd.CheckArgs(2, 2, command, args)
 			fdst := cmd.NewFsDst(args)
 
-			// Mask permissions
-			DirPerms = 0777 &^ os.FileMode(Umask)
-			FilePerms = 0666 &^ os.FileMode(Umask)
-
 			// Show stats if the user has specifically requested them
 			if cmd.ShowStats() {
 				stopStats := cmd.StartStats()
@@ -184,18 +163,7 @@ like this:
 	//flags.BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 
 	// Add in the generic flags
-	AddFlags(flags)
+	vfs.AddFlags(flags)
 
 	return commandDefintion
-}
-
-// AddFlags adds the non filing system specific flags to the command
-func AddFlags(flags *pflag.FlagSet) {
-	flags.BoolVarP(&NoModTime, "no-modtime", "", NoModTime, "Don't read/write the modification time (can speed things up).")
-	flags.BoolVarP(&NoChecksum, "no-checksum", "", NoChecksum, "Don't compare checksums on up/download.")
-	flags.BoolVarP(&NoSeek, "no-seek", "", NoSeek, "Don't allow seeking in files.")
-	flags.DurationVarP(&DirCacheTime, "dir-cache-time", "", DirCacheTime, "Time to cache directory entries for.")
-	flags.DurationVarP(&PollInterval, "poll-interval", "", PollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
-	flags.BoolVarP(&ReadOnly, "read-only", "", ReadOnly, "Mount read-only.")
-	platformFlags(flags)
 }

@@ -1,6 +1,6 @@
 // Cross platform errors
 
-package mountlib
+package vfs
 
 import "fmt"
 

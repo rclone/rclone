@@ -13,6 +13,7 @@ import (
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
 )
 
@@ -48,7 +49,7 @@ func mountOptions(device string) (options []fuse.MountOption) {
 	if mountlib.DefaultPermissions {
 		options = append(options, fuse.DefaultPermissions())
 	}
-	if mountlib.ReadOnly {
+	if vfs.ReadOnly {
 		options = append(options, fuse.ReadOnly())
 	}
 	if mountlib.WritebackCache {
@@ -69,7 +70,7 @@ func mountOptions(device string) (options []fuse.MountOption) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error) {
+func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error) {
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 	c, err := fuse.Mount(mountpoint, mountOptions(f.Name()+":"+f.Root())...)
 	if err != nil {
@@ -100,7 +101,7 @@ func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error
 		return fuse.Unmount(mountpoint)
 	}
 
-	return filesys.FS, errChan, unmount, nil
+	return filesys.VFS, errChan, unmount, nil
 }
 
 // Mount mounts the remote at mountpoint.

@@ -1,4 +1,4 @@
-package mountlib
+package vfs
 
 import (
 	"os"
@@ -14,7 +14,7 @@ import (
 
 // Dir represents a directory entry
 type Dir struct {
-	fsys    *FS
+	vfs     *VFS
 	inode   uint64 // inode number
 	f       fs.Fs
 	parent  *Dir // parent, nil for root
@@ -26,9 +26,9 @@ type Dir struct {
 	items   map[string]Node // NB can be nil when directory not read yet
 }
 
-func newDir(fsys *FS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
+func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 	return &Dir{
-		fsys:    fsys,
+		vfs:     vfs,
 		f:       f,
 		parent:  parent,
 		entry:   fsDir,
@@ -169,7 +169,7 @@ func (d *Dir) _readDir() error {
 		// fs.Debugf(d.path, "Reading directory")
 	} else {
 		age := when.Sub(d.read)
-		if age < d.fsys.dirCacheTime {
+		if age < d.vfs.dirCacheTime {
 			return nil
 		}
 		fs.Debugf(d.path, "Re-reading directory (%v old)", age)
@@ -208,7 +208,7 @@ func (d *Dir) _readDir() error {
 					}
 				}
 			}
-			d.items[name] = newDir(d.fsys, d.f, d, dir)
+			d.items[name] = newDir(d.vfs, d.f, d, dir)
 		default:
 			err = errors.Errorf("unknown type %T", item)
 			fs.Errorf(d.path, "readDir error: %v", err)
@@ -260,7 +260,7 @@ func (d *Dir) Size() int64 {
 
 // SetModTime sets the modTime for this dir
 func (d *Dir) SetModTime(modTime time.Time) error {
-	if d.fsys.readOnly {
+	if d.vfs.readOnly {
 		return EROFS
 	}
 	d.mu.Lock()
@@ -309,7 +309,7 @@ func (d *Dir) ReadDirAll() (items Nodes, err error) {
 
 // Create makes a new file
 func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
-	if d.fsys.readOnly {
+	if d.vfs.readOnly {
 		return nil, nil, EROFS
 	}
 	path := path.Join(d.path, name)
@@ -328,7 +328,7 @@ func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 
 // Mkdir creates a new directory
 func (d *Dir) Mkdir(name string) (*Dir, error) {
-	if d.fsys.readOnly {
+	if d.vfs.readOnly {
 		return nil, EROFS
 	}
 	path := path.Join(d.path, name)
@@ -339,7 +339,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 		return nil, err
 	}
 	fsDir := fs.NewDir(path, time.Now())
-	dir := newDir(d.fsys, d.f, d, fsDir)
+	dir := newDir(d.vfs, d.f, d, fsDir)
 	d.addObject(dir)
 	// fs.Debugf(path, "Dir.Mkdir OK")
 	return dir, nil
@@ -347,7 +347,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 
 // Remove the directory
 func (d *Dir) Remove() error {
-	if d.fsys.readOnly {
+	if d.vfs.readOnly {
 		return EROFS
 	}
 	// Check directory is empty first
@@ -375,7 +375,7 @@ func (d *Dir) Remove() error {
 
 // RemoveAll removes the directory and any contents recursively
 func (d *Dir) RemoveAll() error {
-	if d.fsys.readOnly {
+	if d.vfs.readOnly {
 		return EROFS
 	}
 	// Remove contents of the directory
@@ -403,7 +403,7 @@ func (d *Dir) DirEntry() (entry fs.DirEntry) {
 // which must be a directory.  The entry to be removed may correspond
 // to a file (unlink) or to a directory (rmdir).
 func (d *Dir) RemoveName(name string) error {
-	if d.fsys.readOnly {
+	if d.vfs.readOnly {
 		return EROFS
 	}
 	path := path.Join(d.path, name)
@@ -418,7 +418,7 @@ func (d *Dir) RemoveName(name string) error {
 
 // Rename the file
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
-	if d.fsys.readOnly {
+	if d.vfs.readOnly {
 		return EROFS
 	}
 	oldPath := path.Join(d.path, oldName)

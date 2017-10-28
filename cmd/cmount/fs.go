@@ -12,8 +12,8 @@ import (
 	"time"
 
 	"github.com/billziss-gh/cgofuse/fuse"
-	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
 )
 
@@ -21,7 +21,7 @@ const fhUnset = ^uint64(0)
 
 // FS represents the top level filing system
 type FS struct {
-	FS          *mountlib.FS
+	VFS         *vfs.VFS
 	f           fs.Fs
 	openDirs    *openFiles
 	openFilesWr *openFiles
@@ -32,7 +32,7 @@ type FS struct {
 // NewFS makes a new FS
 func NewFS(f fs.Fs) *FS {
 	fsys := &FS{
-		FS:          mountlib.NewFS(f),
+		VFS:         vfs.New(f),
 		f:           f,
 		openDirs:    newOpenFiles(0x01),
 		openFilesWr: newOpenFiles(0x02),
@@ -45,7 +45,7 @@ func NewFS(f fs.Fs) *FS {
 type openFiles struct {
 	mu    sync.Mutex
 	mark  uint8
-	nodes []mountlib.Noder
+	nodes []vfs.Noder
 }
 
 func newOpenFiles(mark uint8) *openFiles {
@@ -55,11 +55,11 @@ func newOpenFiles(mark uint8) *openFiles {
 }
 
 // Open a node returning a file handle
-func (of *openFiles) Open(node mountlib.Noder) (fh uint64) {
+func (of *openFiles) Open(node vfs.Noder) (fh uint64) {
 	of.mu.Lock()
 	defer of.mu.Unlock()
 	var i int
-	var oldNode mountlib.Noder
+	var oldNode vfs.Noder
 	for i, oldNode = range of.nodes {
 		if oldNode == nil {
 			of.nodes[i] = node
@@ -78,7 +78,7 @@ func (of *openFiles) InRange(fh uint64) bool {
 }
 
 // get the node for fh, call with the lock held
-func (of *openFiles) get(fh uint64) (i int, node mountlib.Noder, errc int) {
+func (of *openFiles) get(fh uint64) (i int, node vfs.Noder, errc int) {
 	receivedMark := uint8(fh)
 	if receivedMark != of.mark {
 		fs.Debugf(nil, "Bad file handle: bad mark 0x%X != 0x%X: 0x%X", receivedMark, of.mark, fh)
@@ -99,7 +99,7 @@ func (of *openFiles) get(fh uint64) (i int, node mountlib.Noder, errc int) {
 }
 
 // Get the node for the file handle
-func (of *openFiles) Get(fh uint64) (node mountlib.Noder, errc int) {
+func (of *openFiles) Get(fh uint64) (node vfs.Noder, errc int) {
 	of.mu.Lock()
 	_, node, errc = of.get(fh)
 	of.mu.Unlock()
@@ -118,18 +118,18 @@ func (of *openFiles) Close(fh uint64) (errc int) {
 }
 
 // lookup a Node given a path
-func (fsys *FS) lookupNode(path string) (node mountlib.Node, errc int) {
-	node, err := fsys.FS.Lookup(path)
+func (fsys *FS) lookupNode(path string) (node vfs.Node, errc int) {
+	node, err := fsys.VFS.Lookup(path)
 	return node, translateError(err)
 }
 
 // lookup a Dir given a path
-func (fsys *FS) lookupDir(path string) (dir *mountlib.Dir, errc int) {
+func (fsys *FS) lookupDir(path string) (dir *vfs.Dir, errc int) {
 	node, errc := fsys.lookupNode(path)
 	if errc != 0 {
 		return nil, errc
 	}
-	dir, ok := node.(*mountlib.Dir)
+	dir, ok := node.(*vfs.Dir)
 	if !ok {
 		return nil, -fuse.ENOTDIR
 	}
@@ -137,19 +137,19 @@ func (fsys *FS) lookupDir(path string) (dir *mountlib.Dir, errc int) {
 }
 
 // lookup a parent Dir given a path returning the dir and the leaf
-func (fsys *FS) lookupParentDir(filePath string) (leaf string, dir *mountlib.Dir, errc int) {
+func (fsys *FS) lookupParentDir(filePath string) (leaf string, dir *vfs.Dir, errc int) {
 	parentDir, leaf := path.Split(filePath)
 	dir, errc = fsys.lookupDir(parentDir)
 	return leaf, dir, errc
 }
 
 // lookup a File given a path
-func (fsys *FS) lookupFile(path string) (file *mountlib.File, errc int) {
+func (fsys *FS) lookupFile(path string) (file *vfs.File, errc int) {
 	node, errc := fsys.lookupNode(path)
 	if errc != 0 {
 		return nil, errc
 	}
-	file, ok := node.(*mountlib.File)
+	file, ok := node.(*vfs.File)
 	if !ok {
 		return nil, -fuse.EISDIR
 	}
@@ -170,7 +170,7 @@ func (fsys *FS) getOpenFilesFromFh(fh uint64) (of *openFiles, errc int) {
 }
 
 // Get the underlying handle from the file handle
-func (fsys *FS) getHandleFromFh(fh uint64) (handle mountlib.Noder, errc int) {
+func (fsys *FS) getHandleFromFh(fh uint64) (handle vfs.Noder, errc int) {
 	of, errc := fsys.getOpenFilesFromFh(fh)
 	if errc != 0 {
 		return nil, errc
@@ -179,11 +179,11 @@ func (fsys *FS) getHandleFromFh(fh uint64) (handle mountlib.Noder, errc int) {
 }
 
 // get a node from the path or from the fh if not fhUnset
-func (fsys *FS) getNode(path string, fh uint64) (node mountlib.Node, errc int) {
+func (fsys *FS) getNode(path string, fh uint64) (node vfs.Node, errc int) {
 	if fh == fhUnset {
 		node, errc = fsys.lookupNode(path)
 	} else {
-		var n mountlib.Noder
+		var n vfs.Noder
 		n, errc = fsys.getHandleFromFh(fh)
 		if errc == 0 {
 			node = n.Node()
@@ -193,27 +193,27 @@ func (fsys *FS) getNode(path string, fh uint64) (node mountlib.Node, errc int) {
 }
 
 // stat fills up the stat block for Node
-func (fsys *FS) stat(node mountlib.Node, stat *fuse.Stat_t) (errc int) {
+func (fsys *FS) stat(node vfs.Node, stat *fuse.Stat_t) (errc int) {
 	var Size uint64
 	var Blocks uint64
 	var modTime time.Time
 	var Mode os.FileMode
 	switch x := node.(type) {
-	case *mountlib.Dir:
+	case *vfs.Dir:
 		modTime = x.ModTime()
-		Mode = mountlib.DirPerms | fuse.S_IFDIR
-	case *mountlib.File:
+		Mode = vfs.DirPerms | fuse.S_IFDIR
+	case *vfs.File:
 		modTime = x.ModTime()
 		Size = uint64(x.Size())
 		Blocks = (Size + 511) / 512
-		Mode = mountlib.FilePerms | fuse.S_IFREG
+		Mode = vfs.FilePerms | fuse.S_IFREG
 	}
 	//stat.Dev = 1
 	stat.Ino = node.Inode() // FIXME do we need to set the inode number?
 	stat.Mode = uint32(Mode)
 	stat.Nlink = 1
-	stat.Uid = mountlib.UID
-	stat.Gid = mountlib.GID
+	stat.Uid = vfs.UID
+	stat.Gid = vfs.GID
 	//stat.Rdev
 	stat.Size = int64(Size)
 	t := fuse.NewTimespec(modTime)
@@ -275,7 +275,7 @@ func (fsys *FS) Readdir(dirPath string,
 		return errc
 	}
 
-	dir, ok := node.(*mountlib.Dir)
+	dir, ok := node.(*vfs.Dir)
 	if !ok {
 		return -fuse.ENOTDIR
 	}
@@ -342,7 +342,7 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 	}
 	rdwrMode := flags & fuse.O_ACCMODE
 	var err error
-	var handle mountlib.Noder
+	var handle vfs.Noder
 	switch {
 	case rdwrMode == fuse.O_RDONLY:
 		handle, err = file.OpenRead()
@@ -385,7 +385,7 @@ func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 	if errc != 0 {
 		return errc
 	}
-	file, ok := node.(*mountlib.File)
+	file, ok := node.(*vfs.File)
 	if !ok {
 		return -fuse.EIO
 	}
@@ -406,7 +406,7 @@ func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	if errc != 0 {
 		return errc
 	}
-	rfh, ok := handle.(*mountlib.ReadFileHandle)
+	rfh, ok := handle.(*vfs.ReadFileHandle)
 	if !ok {
 		// Can only read from read file handle
 		return -fuse.EIO
@@ -425,7 +425,7 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	if errc != 0 {
 		return errc
 	}
-	wfh, ok := handle.(*mountlib.WriteFileHandle)
+	wfh, ok := handle.(*vfs.WriteFileHandle)
 	if !ok {
 		// Can only write to write file handle
 		return -fuse.EIO
@@ -446,9 +446,9 @@ func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 	}
 	var err error
 	switch x := handle.(type) {
-	case *mountlib.ReadFileHandle:
+	case *vfs.ReadFileHandle:
 		err = x.Flush()
-	case *mountlib.WriteFileHandle:
+	case *vfs.WriteFileHandle:
 		err = x.Flush()
 	default:
 		return -fuse.EIO
@@ -470,9 +470,9 @@ func (fsys *FS) Release(path string, fh uint64) (errc int) {
 	_ = of.Close(fh)
 	var err error
 	switch x := handle.(type) {
-	case *mountlib.ReadFileHandle:
+	case *vfs.ReadFileHandle:
 		err = x.Release()
-	case *mountlib.WriteFileHandle:
+	case *vfs.WriteFileHandle:
 		err = x.Release()
 	default:
 		return -fuse.EIO
@@ -540,9 +540,9 @@ func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	}
 	var err error
 	switch x := node.(type) {
-	case *mountlib.Dir:
+	case *vfs.Dir:
 		err = x.SetModTime(t)
-	case *mountlib.File:
+	case *vfs.File:
 		err = x.SetModTime(t)
 	}
 	return translateError(err)
@@ -633,21 +633,21 @@ func translateError(err error) (errc int) {
 		return 0
 	}
 	cause := errors.Cause(err)
-	if mErr, ok := cause.(mountlib.Error); ok {
+	if mErr, ok := cause.(vfs.Error); ok {
 		switch mErr {
-		case mountlib.OK:
+		case vfs.OK:
 			return 0
-		case mountlib.ENOENT:
+		case vfs.ENOENT:
 			return -fuse.ENOENT
-		case mountlib.ENOTEMPTY:
+		case vfs.ENOTEMPTY:
 			return -fuse.ENOTEMPTY
-		case mountlib.EEXIST:
+		case vfs.EEXIST:
 			return -fuse.EEXIST
-		case mountlib.ESPIPE:
+		case vfs.ESPIPE:
 			return -fuse.ESPIPE
-		case mountlib.EBADF:
+		case vfs.EBADF:
 			return -fuse.EBADF
-		case mountlib.EROFS:
+		case vfs.EROFS:
 			return -fuse.EROFS
 		}
 	}

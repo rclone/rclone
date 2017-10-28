@@ -19,6 +19,7 @@ import (
 	"github.com/billziss-gh/cgofuse/fuse"
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"github.com/pkg/errors"
 )
 
@@ -69,7 +70,7 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	if mountlib.DefaultPermissions {
 		options = append(options, "-o", "default_permissions")
 	}
-	if mountlib.ReadOnly {
+	if vfs.ReadOnly {
 		options = append(options, "-o", "ro")
 	}
 	if mountlib.WritebackCache {
@@ -90,7 +91,7 @@ func mountOptions(device string, mountpoint string) (options []string) {
 //
 // returns an error, and an error channel for the serve process to
 // report an error when fusermount is called.
-func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error, error) {
+func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, error) {
 	fs.Debugf(f, "Mounting on %q", mountpoint)
 
 	// Check the mountpoint - in Windows the mountpoint musn't exist before the mount
@@ -160,7 +161,7 @@ func mount(f fs.Fs, mountpoint string) (*mountlib.FS, <-chan error, func() error
 	found:
 	}
 
-	return fsys.FS, errChan, unmount, nil
+	return fsys.VFS, errChan, unmount, nil
 }
 
 // Mount mounts the remote at mountpoint.

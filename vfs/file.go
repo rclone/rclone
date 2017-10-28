@@ -1,4 +1,4 @@
-package mountlib
+package vfs
 
 import (
 	"os"
@@ -98,7 +98,7 @@ func (f *File) ModTime() (modTime time.Time) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	if !f.d.fsys.noModTime {
+	if !f.d.vfs.noModTime {
 		// if o is nil it isn't valid yet or there are writers, so return the size so far
 		if f.o == nil || f.writers != 0 {
 			if !f.pendingModTime.IsZero() {
@@ -126,7 +126,7 @@ func (f *File) Size() int64 {
 
 // SetModTime sets the modtime for the file
 func (f *File) SetModTime(modTime time.Time) error {
-	if f.d.fsys.readOnly {
+	if f.d.vfs.readOnly {
 		return EROFS
 	}
 	f.mu.Lock()
@@ -224,7 +224,7 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 
 // OpenWrite open the file for write
 func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
-	if f.d.fsys.readOnly {
+	if f.d.vfs.readOnly {
 		return nil, EROFS
 	}
 	// if o is nil it isn't valid yet
@@ -254,7 +254,7 @@ func (f *File) Fsync() error {
 
 // Remove the file
 func (f *File) Remove() error {
-	if f.d.fsys.readOnly {
+	if f.d.vfs.readOnly {
 		return EROFS
 	}
 	err := f.o.Remove()

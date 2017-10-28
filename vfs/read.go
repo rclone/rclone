@@ -1,4 +1,4 @@
-package mountlib
+package vfs
 
 import (
 	"io"
@@ -34,7 +34,7 @@ var (
 func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 	var hash *fs.MultiHasher
 	var err error
-	if !f.d.fsys.noChecksum {
+	if !f.d.vfs.noChecksum {
 		hash, err = fs.NewMultiHasherTypes(o.Fs().Hashes())
 		if err != nil {
 			fs.Errorf(o.Fs(), "newReadFileHandle hash error: %v", err)
@@ -43,7 +43,7 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 
 	fh := &ReadFileHandle{
 		o:      o,
-		noSeek: f.d.fsys.noSeek,
+		noSeek: f.d.vfs.noSeek,
 		file:   f,
 		hash:   hash,
 	}

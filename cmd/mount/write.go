@@ -7,8 +7,8 @@ import (
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"golang.org/x/net/context"
 )
 
@@ -16,7 +16,7 @@ var errClosedFileHandle = errors.New("Attempt to use closed file handle")
 
 // WriteFileHandle is an open for write handle on a File
 type WriteFileHandle struct {
-	*mountlib.WriteFileHandle
+	*vfs.WriteFileHandle
 }
 
 // Check interface satisfied
