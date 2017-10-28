@@ -69,7 +69,7 @@ docs](https://golang.org/pkg/regexp/syntax/) for more info on these.
              - doesn't match "hullo"
 
 A `{` and `}` define a choice between elements.  It should contain a
-comma seperated list of patterns, any of which might match.  These
+comma separated list of patterns, any of which might match.  These
 patterns can contain wildcards.
 
     {one,two}_potato - matches "one_potato"

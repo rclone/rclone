@@ -152,7 +152,7 @@ Modified times are used in syncing and are fully supported.
 SFTP supports checksums if the same login has shell access and `md5sum`
 or `sha1sum` as well as `echo` are in the remote's PATH.
 
-The only ssh agent supported under Windows is Putty's pagent.
+The only ssh agent supported under Windows is Putty's pageant.
 
 SFTP isn't supported under plan9 until [this
 issue](https://github.com/pkg/sftp/issues/156) is fixed.

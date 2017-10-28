@@ -7,7 +7,7 @@ date: "2015-09-06"
 
 # Overview of cloud storage systems #
 
-Each cloud storage system is slighly different.  Rclone attempts to
+Each cloud storage system is slightly different.  Rclone attempts to
 provide a unified interface to them, but some underlying differences
 show through.
 

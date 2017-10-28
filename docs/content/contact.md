@@ -29,7 +29,7 @@ Rclone has a Google+ page which announcements are posted to
 
 ## Twitter ##
 
-You can also follow me on twitter for rclone announcments
+You can also follow me on twitter for rclone announcements
 
   * [@njcw](https://twitter.com/njcw)
 

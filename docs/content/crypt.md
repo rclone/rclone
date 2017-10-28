@@ -223,7 +223,7 @@ Standard
   * file names encrypted
   * file names can't be as long (~156 characters)
   * can use sub paths and copy single files
-  * directory structure visibile
+  * directory structure visible
   * identical files names will have identical uploaded names
   * can use shortcuts to shorten the directory recursion
 
@@ -245,7 +245,7 @@ equivalents.  You can not rely on this for strong protection.
   * file names very lightly obfuscated
   * file names can be longer than standard encryption
   * can use sub paths and copy single files
-  * directory structure visibile
+  * directory structure visible
   * identical files names will have identical uploaded names
 
 Cloud storage systems have various limits on file name length and
@@ -293,7 +293,7 @@ This will have the following advantages
 
   * `rclone sync` will check the checksums while copying
   * you can use `rclone check` between the encrypted remotes
-  * you don't decrypt and encrypt unecessarily
+  * you don't decrypt and encrypt unnecessarily
 
 For example, let's say you have your original remote at `remote:` with
 the encrypted version at `eremote:` with path `remote:crypt`.  You
@@ -322,9 +322,9 @@ has a header and is divided into chunks.
   * 24 bytes Nonce (IV)
 
 The initial nonce is generated from the operating systems crypto
-strong random number genrator.  The nonce is incremented for each
+strong random number generator.  The nonce is incremented for each
 chunk read making sure each nonce is unique for each block written.
-The chance of a nonce being re-used is miniscule.  If you wrote an
+The chance of a nonce being re-used is minuscule.  If you wrote an
 exabyte of data (10¹⁸ bytes) you would have a probability of
 approximately 2×10⁻³² of re-using a nonce.
 
@@ -376,7 +376,7 @@ They are then encrypted with EME using AES with 256 bit key. EME
 (ECB-Mix-ECB) is a wide-block encryption mode presented in the 2003
 paper "A Parallelizable Enciphering Mode" by Halevi and Rogaway.
 
-This makes for determinstic encryption which is what we want - the
+This makes for deterministic encryption which is what we want - the
 same filename must encrypt to the same thing otherwise we can't find
 it on the cloud storage system.
 
@@ -400,11 +400,11 @@ used on case insensitive remotes (eg Windows, Amazon Drive).
 
 ### Key derivation ###
 
-Rclone uses `scrypt` with parameters `N=16384, r=8, p=1` with a an
+Rclone uses `scrypt` with parameters `N=16384, r=8, p=1` with an
 optional user supplied salt (password2) to derive the 32+32+16 = 80
 bytes of key material required.  If the user doesn't supply a salt
 then rclone uses an internal one.
 
 `scrypt` makes it impractical to mount a dictionary attack on rclone
-encrypted data.  For full protection agains this you should always use
+encrypted data.  For full protection against this you should always use
 a salt.

@@ -197,7 +197,7 @@ set of OpenStack environment variables.
 When you run through the config, make sure you choose `true` for
 `env_auth` and leave everything else blank.
 
-rclone will then set any empty config parameters from the enviroment
+rclone will then set any empty config parameters from the environment
 using standard OpenStack environment variables.  There is [a list of
 the
 variables](https://godoc.org/github.com/ncw/swift#Connection.ApplyEnvironment)
