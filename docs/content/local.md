@@ -33,7 +33,7 @@ old Linux filesystem with non UTF-8 file names (eg latin1) then you
 can use the `convmv` tool to convert the filesystem to UTF-8. This
 tool is available in most distributions' package managers.
 
-If an invalid (non-UTF8) filename is read, the invalid caracters will
+If an invalid (non-UTF8) filename is read, the invalid characters will
 be replaced with the unicode replacement character, '�'.  `rclone`
 will emit a debug message in this case (use `-v` to see), eg
 
@@ -131,7 +131,7 @@ routine instead.
 This tells rclone to stay in the filesystem specified by the root and
 not to recurse into different file systems.
 
-For example if you have a directory heirachy like this
+For example if you have a directory hierarchy like this
 
 ```
 root
