@@ -68,24 +68,21 @@ func translateError(err error) error {
 	if err == nil {
 		return nil
 	}
-	cause := errors.Cause(err)
-	if mErr, ok := cause.(vfs.Error); ok {
-		switch mErr {
-		case vfs.OK:
-			return nil
-		case vfs.ENOENT:
-			return fuse.ENOENT
-		case vfs.ENOTEMPTY:
-			return fuse.Errno(syscall.ENOTEMPTY)
-		case vfs.EEXIST:
-			return fuse.EEXIST
-		case vfs.ESPIPE:
-			return fuse.Errno(syscall.ESPIPE)
-		case vfs.EBADF:
-			return fuse.Errno(syscall.EBADF)
-		case vfs.EROFS:
-			return fuse.Errno(syscall.EROFS)
-		}
+	switch errors.Cause(err) {
+	case vfs.OK:
+		return nil
+	case vfs.ENOENT:
+		return fuse.ENOENT
+	case vfs.ENOTEMPTY:
+		return fuse.Errno(syscall.ENOTEMPTY)
+	case vfs.EEXIST:
+		return fuse.EEXIST
+	case vfs.ESPIPE:
+		return fuse.Errno(syscall.ESPIPE)
+	case vfs.EBADF:
+		return fuse.Errno(syscall.EBADF)
+	case vfs.EROFS:
+		return fuse.Errno(syscall.EROFS)
 	}
 	return err
 }

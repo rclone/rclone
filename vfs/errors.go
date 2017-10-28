@@ -2,29 +2,34 @@
 
 package vfs
 
-import "fmt"
+import (
+	"fmt"
+	"os"
+)
 
 // Error describes low level errors in a cross platform way
 type Error byte
 
-// NB if changing errors translateError in cmd/mount/fs.go, cmd/cmount/fs.go, cmd/serve/webdav/webdav.go
+// NB if changing errors translateError in cmd/mount/fs.go, cmd/cmount/fs.go
 
 // Low level errors
 const (
 	OK Error = iota
-	ENOENT
 	ENOTEMPTY
-	EEXIST
 	ESPIPE
 	EBADF
 	EROFS
 )
 
+// Errors which have exact counterparts in os
+var (
+	ENOENT = os.ErrNotExist
+	EEXIST = os.ErrExist
+)
+
 var errorNames = []string{
 	OK:        "Success",
-	ENOENT:    "No such file or directory",
 	ENOTEMPTY: "Directory not empty",
-	EEXIST:    "File exists",
 	ESPIPE:    "Illegal seek",
 	EBADF:     "Bad file descriptor",
 	EROFS:     "Read only file system",

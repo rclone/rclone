@@ -632,24 +632,21 @@ func translateError(err error) (errc int) {
 	if err == nil {
 		return 0
 	}
-	cause := errors.Cause(err)
-	if mErr, ok := cause.(vfs.Error); ok {
-		switch mErr {
-		case vfs.OK:
-			return 0
-		case vfs.ENOENT:
-			return -fuse.ENOENT
-		case vfs.ENOTEMPTY:
-			return -fuse.ENOTEMPTY
-		case vfs.EEXIST:
-			return -fuse.EEXIST
-		case vfs.ESPIPE:
-			return -fuse.ESPIPE
-		case vfs.EBADF:
-			return -fuse.EBADF
-		case vfs.EROFS:
-			return -fuse.EROFS
-		}
+	switch errors.Cause(err) {
+	case vfs.OK:
+		return 0
+	case vfs.ENOENT:
+		return -fuse.ENOENT
+	case vfs.ENOTEMPTY:
+		return -fuse.ENOTEMPTY
+	case vfs.EEXIST:
+		return -fuse.EEXIST
+	case vfs.ESPIPE:
+		return -fuse.ESPIPE
+	case vfs.EBADF:
+		return -fuse.EBADF
+	case vfs.EROFS:
+		return -fuse.EROFS
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return -fuse.EIO
