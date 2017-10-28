@@ -135,24 +135,30 @@ func init() {
 					return
 				}
 
-				foundService := ""
+				var resourcesURL []string
+				var resourcesID []string
+
 				for _, service := range services.Services {
 					if service.ServiceAPIVersion == "v2.0" {
-						foundService = service.ServiceResourceID
-						fs.ConfigFileSet(name, configResourceURL, foundService)
-						oauthBusinessResource = oauth2.SetAuthURLParam("resource", foundService)
-
-						fs.Logf(nil, "Found API %s endpoint %s", service.ServiceAPIVersion, service.ServiceEndpointURI)
-						break
+						resourcesID = append(resourcesID, service.ServiceResourceID)
+						resourcesURL = append(resourcesURL, service.ServiceEndpointURI)
 					}
 					// we only support 2.0 API
 					fs.Infof(nil, "Skipping API %s endpoint %s", service.ServiceAPIVersion, service.ServiceEndpointURI)
 				}
 
-				if foundService == "" {
+				var foundService string
+				if len(resourcesID) == 0 {
 					fs.Errorf(nil, "No Service found")
 					return
+				} else if len(resourcesID) == 1 {
+					foundService = resourcesID[0]
+				} else {
+					foundService = fs.Choose("Choose resource URL", resourcesID, resourcesURL, false)
 				}
+
+				fs.ConfigFileSet(name, configResourceURL, foundService)
+				oauthBusinessResource = oauth2.SetAuthURLParam("resource", foundService)
 
 				// get the token from the inital config
 				// we need to update the token with a resource
