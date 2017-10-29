@@ -15,16 +15,6 @@ import (
 	"golang.org/x/net/context"
 )
 
-// DirEntry describes the contents of a directory entry
-//
-// It can be a file or a directory
-//
-// node may be nil, but o may not
-type DirEntry struct {
-	o    fs.DirEntry
-	node fusefs.Node
-}
-
 // Dir represents a directory entry
 type Dir struct {
 	*vfs.Dir
