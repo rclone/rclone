@@ -20,6 +20,7 @@ import (
 	"github.com/ncw/rclone/cmd/mountlib"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs"
+	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
 )
 
@@ -70,7 +71,7 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	if mountlib.DefaultPermissions {
 		options = append(options, "-o", "default_permissions")
 	}
-	if vfs.ReadOnly {
+	if vfsflags.Opt.ReadOnly {
 		options = append(options, "-o", "ro")
 	}
 	if mountlib.WritebackCache {

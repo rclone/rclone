@@ -34,7 +34,7 @@ var (
 func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 	var hash *fs.MultiHasher
 	var err error
-	if !f.d.vfs.noChecksum {
+	if !f.d.vfs.Opt.NoChecksum {
 		hash, err = fs.NewMultiHasherTypes(o.Fs().Hashes())
 		if err != nil {
 			fs.Errorf(o.Fs(), "newReadFileHandle hash error: %v", err)
@@ -43,7 +43,7 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 
 	fh := &ReadFileHandle{
 		o:      o,
-		noSeek: f.d.vfs.noSeek,
+		noSeek: f.d.vfs.Opt.NoSeek,
 		file:   f,
 		hash:   hash,
 	}

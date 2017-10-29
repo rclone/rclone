@@ -14,6 +14,7 @@ import (
 	"github.com/billziss-gh/cgofuse/fuse"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs"
+	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
 )
 
@@ -32,7 +33,7 @@ type FS struct {
 // NewFS makes a new FS
 func NewFS(f fs.Fs) *FS {
 	fsys := &FS{
-		VFS:         vfs.New(f),
+		VFS:         vfs.New(f, &vfsflags.Opt),
 		f:           f,
 		openDirs:    newOpenFiles(0x01),
 		openFilesWr: newOpenFiles(0x02),
@@ -201,19 +202,19 @@ func (fsys *FS) stat(node vfs.Node, stat *fuse.Stat_t) (errc int) {
 	switch x := node.(type) {
 	case *vfs.Dir:
 		modTime = x.ModTime()
-		Mode = vfs.DirPerms | fuse.S_IFDIR
+		Mode = fsys.VFS.Opt.DirPerms | fuse.S_IFDIR
 	case *vfs.File:
 		modTime = x.ModTime()
 		Size = uint64(x.Size())
 		Blocks = (Size + 511) / 512
-		Mode = vfs.FilePerms | fuse.S_IFREG
+		Mode = fsys.VFS.Opt.FilePerms | fuse.S_IFREG
 	}
 	//stat.Dev = 1
 	stat.Ino = node.Inode() // FIXME do we need to set the inode number?
 	stat.Mode = uint32(Mode)
 	stat.Nlink = 1
-	stat.Uid = vfs.UID
-	stat.Gid = vfs.GID
+	stat.Uid = fsys.VFS.Opt.UID
+	stat.Gid = fsys.VFS.Opt.GID
 	//stat.Rdev
 	stat.Size = int64(Size)
 	t := fuse.NewTimespec(modTime)

@@ -1,6 +1,6 @@
 // +build !linux,!darwin,!freebsd
 
-package vfs
+package vfsflags
 
 import (
 	"github.com/spf13/pflag"

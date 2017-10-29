@@ -98,7 +98,7 @@ func (f *File) ModTime() (modTime time.Time) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	if !f.d.vfs.noModTime {
+	if !f.d.vfs.Opt.NoModTime {
 		// if o is nil it isn't valid yet or there are writers, so return the size so far
 		if f.o == nil || f.writers != 0 {
 			if !f.pendingModTime.IsZero() {
@@ -126,7 +126,7 @@ func (f *File) Size() int64 {
 
 // SetModTime sets the modtime for the file
 func (f *File) SetModTime(modTime time.Time) error {
-	if f.d.vfs.readOnly {
+	if f.d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	f.mu.Lock()
@@ -224,7 +224,7 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 
 // OpenWrite open the file for write
 func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
-	if f.d.vfs.readOnly {
+	if f.d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
 	// if o is nil it isn't valid yet
@@ -254,7 +254,7 @@ func (f *File) Fsync() error {
 
 // Remove the file
 func (f *File) Remove() error {
-	if f.d.vfs.readOnly {
+	if f.d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	err := f.o.Remove()
@@ -275,4 +275,14 @@ func (f *File) RemoveAll() error {
 // DirEntry returns the underlying fs.DirEntry
 func (f *File) DirEntry() (entry fs.DirEntry) {
 	return f.o
+}
+
+// Dir returns the directory this file is in
+func (f *File) Dir() *Dir {
+	return f.d
+}
+
+// VFS returns the instance of the VFS
+func (f *File) VFS() *VFS {
+	return f.d.vfs
 }

@@ -5,7 +5,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/vfs"
+	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
 )
 
@@ -163,7 +163,7 @@ like this:
 	//flags.BoolVarP(&foreground, "foreground", "", foreground, "Do not detach.")
 
 	// Add in the generic flags
-	vfs.AddFlags(flags)
+	vfsflags.AddFlags(flags)
 
 	return commandDefintion
 }

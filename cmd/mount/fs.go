@@ -11,6 +11,7 @@ import (
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs"
+	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -27,7 +28,7 @@ var _ fusefs.FS = (*FS)(nil)
 // NewFS makes a new FS
 func NewFS(f fs.Fs) *FS {
 	fsys := &FS{
-		VFS: vfs.New(f),
+		VFS: vfs.New(f, &vfsflags.Opt),
 		f:   f,
 	}
 	return fsys

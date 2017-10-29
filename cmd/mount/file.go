@@ -27,9 +27,9 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 	modTime := f.File.ModTime()
 	Size := uint64(f.File.Size())
 	Blocks := (Size + 511) / 512
-	a.Gid = vfs.GID
-	a.Uid = vfs.UID
-	a.Mode = vfs.FilePerms
+	a.Gid = f.VFS().Opt.GID
+	a.Uid = f.VFS().Opt.UID
+	a.Mode = f.VFS().Opt.FilePerms
 	a.Size = Size
 	a.Atime = modTime
 	a.Mtime = modTime
@@ -45,7 +45,7 @@ var _ fusefs.NodeSetattrer = (*File)(nil)
 // Setattr handles attribute changes from FUSE. Currently supports ModTime only.
 func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
 	defer fs.Trace(f, "a=%+v", req)("err=%v", &err)
-	if vfs.NoModTime {
+	if f.VFS().Opt.NoModTime {
 		return nil
 	}
 	if req.Valid.MtimeNow() {
@@ -64,7 +64,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 	defer fs.Trace(f, "flags=%v", req.Flags)("fh=%v, err=%v", &fh, &err)
 	switch {
 	case req.Flags.IsReadOnly():
-		if vfs.NoSeek {
+		if f.VFS().Opt.NoSeek {
 			resp.Flags |= fuse.OpenNonSeekable
 		}
 		var rfh *vfs.ReadFileHandle

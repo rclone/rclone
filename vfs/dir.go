@@ -169,7 +169,7 @@ func (d *Dir) _readDir() error {
 		// fs.Debugf(d.path, "Reading directory")
 	} else {
 		age := when.Sub(d.read)
-		if age < d.vfs.dirCacheTime {
+		if age < d.vfs.Opt.DirCacheTime {
 			return nil
 		}
 		fs.Debugf(d.path, "Re-reading directory (%v old)", age)
@@ -260,7 +260,7 @@ func (d *Dir) Size() int64 {
 
 // SetModTime sets the modTime for this dir
 func (d *Dir) SetModTime(modTime time.Time) error {
-	if d.vfs.readOnly {
+	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	d.mu.Lock()
@@ -309,7 +309,7 @@ func (d *Dir) ReadDirAll() (items Nodes, err error) {
 
 // Create makes a new file
 func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
-	if d.vfs.readOnly {
+	if d.vfs.Opt.ReadOnly {
 		return nil, nil, EROFS
 	}
 	path := path.Join(d.path, name)
@@ -328,7 +328,7 @@ func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 
 // Mkdir creates a new directory
 func (d *Dir) Mkdir(name string) (*Dir, error) {
-	if d.vfs.readOnly {
+	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
 	path := path.Join(d.path, name)
@@ -347,7 +347,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 
 // Remove the directory
 func (d *Dir) Remove() error {
-	if d.vfs.readOnly {
+	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	// Check directory is empty first
@@ -375,7 +375,7 @@ func (d *Dir) Remove() error {
 
 // RemoveAll removes the directory and any contents recursively
 func (d *Dir) RemoveAll() error {
-	if d.vfs.readOnly {
+	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	// Remove contents of the directory
@@ -403,7 +403,7 @@ func (d *Dir) DirEntry() (entry fs.DirEntry) {
 // which must be a directory.  The entry to be removed may correspond
 // to a file (unlink) or to a directory (rmdir).
 func (d *Dir) RemoveName(name string) error {
-	if d.vfs.readOnly {
+	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	path := path.Join(d.path, name)
@@ -418,7 +418,7 @@ func (d *Dir) RemoveName(name string) error {
 
 // Rename the file
 func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
-	if d.vfs.readOnly {
+	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
 	oldPath := path.Join(d.path, oldName)
@@ -493,4 +493,9 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 // Note that we don't do anything except return OK
 func (d *Dir) Fsync() error {
 	return nil
+}
+
+// VFS returns the instance of the VFS
+func (d *Dir) VFS() *VFS {
+	return d.vfs
 }

@@ -17,25 +17,6 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/spf13/pflag"
-)
-
-// Options set by command line flags
-var (
-	NoModTime    = false
-	NoChecksum   = false
-	NoSeek       = false
-	DirCacheTime = 5 * 60 * time.Second
-	PollInterval = time.Minute
-	// mount options
-	ReadOnly = false
-	Umask    = 0
-	UID      = ^uint32(0) // these values instruct WinFSP-FUSE to use the current user
-	GID      = ^uint32(0) // overriden for non windows in mount_unix.go
-	// foreground                 = false
-	// default permissions for directories - modified by umask in New
-	DirPerms  = os.FileMode(0777)
-	FilePerms = os.FileMode(0666)
 )
 
 // Node represents either a directory (*Dir) or a file (*File)
@@ -48,6 +29,7 @@ type Node interface {
 	Remove() error
 	RemoveAll() error
 	DirEntry() fs.DirEntry
+	VFS() *VFS
 }
 
 // Check interfaces
@@ -80,44 +62,45 @@ var (
 
 // VFS represents the top level filing system
 type VFS struct {
-	f            fs.Fs
-	root         *Dir
-	noSeek       bool          // don't allow seeking if set
-	noChecksum   bool          // don't check checksums if set
-	readOnly     bool          // if set VFS is read only
-	noModTime    bool          // don't read mod times for files
-	dirCacheTime time.Duration // how long to consider directory listing cache valid
+	f    fs.Fs
+	root *Dir
+	Opt  Options
 }
 
-// New creates a new VFS and root directory
-func New(f fs.Fs) *VFS {
+// Options is options for creating the vfs
+type Options struct {
+	NoSeek       bool          // don't allow seeking if set
+	NoChecksum   bool          // don't check checksums if set
+	ReadOnly     bool          // if set VFS is read only
+	NoModTime    bool          // don't read mod times for files
+	DirCacheTime time.Duration // how long to consider directory listing cache valid
+	PollInterval time.Duration
+	Umask        int
+	UID          uint32
+	GID          uint32
+	DirPerms     os.FileMode
+	FilePerms    os.FileMode
+}
+
+// New creates a new VFS and root directory.  If opt is nil, then
+// defaults will be used.
+func New(f fs.Fs, opt *Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
 	vfs := &VFS{
-		f: f,
+		f:   f,
+		Opt: *opt,
 	}
 
-	// Mask permissions
-	DirPerms = 0777 &^ os.FileMode(Umask)
-	FilePerms = 0666 &^ os.FileMode(Umask)
+	// Mask the permissions with the umask
+	vfs.Opt.DirPerms &= ^os.FileMode(vfs.Opt.Umask)
+	vfs.Opt.FilePerms &= ^os.FileMode(vfs.Opt.Umask)
 
-	if NoSeek {
-		vfs.noSeek = true
-	}
-	if NoChecksum {
-		vfs.noChecksum = true
-	}
-	if ReadOnly {
-		vfs.readOnly = true
-	}
-	if NoModTime {
-		vfs.noModTime = true
-	}
-	vfs.dirCacheTime = DirCacheTime
-
+	// Create root directory
 	vfs.root = newDir(vfs, f, nil, fsDir)
 
-	if PollInterval > 0 {
-		vfs.PollChanges(PollInterval)
+	// Start polling if required
+	if vfs.Opt.PollInterval > 0 {
+		vfs.PollChanges(vfs.Opt.PollInterval)
 	}
 	return vfs
 }
@@ -189,15 +172,4 @@ func (vfs *VFS) Statfs() error {
 	resp.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
 	*/
 	return nil
-}
-
-// AddFlags adds the non filing system specific flags to the command
-func AddFlags(flags *pflag.FlagSet) {
-	flags.BoolVarP(&NoModTime, "no-modtime", "", NoModTime, "Don't read/write the modification time (can speed things up).")
-	flags.BoolVarP(&NoChecksum, "no-checksum", "", NoChecksum, "Don't compare checksums on up/download.")
-	flags.BoolVarP(&NoSeek, "no-seek", "", NoSeek, "Don't allow seeking in files.")
-	flags.DurationVarP(&DirCacheTime, "dir-cache-time", "", DirCacheTime, "Time to cache directory entries for.")
-	flags.DurationVarP(&PollInterval, "poll-interval", "", PollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
-	flags.BoolVarP(&ReadOnly, "read-only", "", ReadOnly, "Mount read-only.")
-	platformFlags(flags)
 }
