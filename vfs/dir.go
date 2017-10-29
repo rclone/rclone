@@ -219,10 +219,10 @@ func (d *Dir) _readDir() error {
 	return nil
 }
 
-// lookup a single item in the directory
+// stat a single item in the directory
 //
 // returns ENOENT if not found.
-func (d *Dir) lookup(leaf string) (Node, error) {
+func (d *Dir) stat(leaf string) (Node, error) {
 	d.mu.Lock()
 	defer d.mu.Unlock()
 	err := d._readDir()
@@ -269,23 +269,23 @@ func (d *Dir) SetModTime(modTime time.Time) error {
 	return nil
 }
 
-// Lookup looks up a specific entry in the receiver.
+// Stat looks up a specific entry in the receiver.
 //
-// Lookup should return a Node corresponding to the entry.  If the
-// name does not exist in the directory, Lookup should return ENOENT.
+// Stat should return a Node corresponding to the entry.  If the
+// name does not exist in the directory, Stat should return ENOENT.
 //
-// Lookup need not to handle the names "." and "..".
-func (d *Dir) Lookup(name string) (node Node, err error) {
+// Stat need not to handle the names "." and "..".
+func (d *Dir) Stat(name string) (node Node, err error) {
 	path := path.Join(d.path, name)
-	// fs.Debugf(path, "Dir.Lookup")
-	node, err = d.lookup(name)
+	// fs.Debugf(path, "Dir.Stat")
+	node, err = d.stat(name)
 	if err != nil {
 		if err != ENOENT {
-			fs.Errorf(path, "Dir.Lookup error: %v", err)
+			fs.Errorf(path, "Dir.Stat error: %v", err)
 		}
 		return nil, err
 	}
-	// fs.Debugf(path, "Dir.Lookup OK")
+	// fs.Debugf(path, "Dir.Stat OK")
 	return node, nil
 }
 
@@ -408,7 +408,7 @@ func (d *Dir) RemoveName(name string) error {
 	}
 	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Remove")
-	node, err := d.lookup(name)
+	node, err := d.stat(name)
 	if err != nil {
 		fs.Errorf(path, "Dir.Remove error: %v", err)
 		return err
@@ -424,7 +424,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	oldPath := path.Join(d.path, oldName)
 	newPath := path.Join(destDir.path, newName)
 	// fs.Debugf(oldPath, "Dir.Rename to %q", newPath)
-	oldNode, err := d.lookup(oldName)
+	oldNode, err := d.stat(oldName)
 	if err != nil {
 		fs.Errorf(oldPath, "Dir.Rename error: %v", err)
 		return err

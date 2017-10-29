@@ -120,7 +120,7 @@ func (of *openFiles) Close(fh uint64) (errc int) {
 
 // lookup a Node given a path
 func (fsys *FS) lookupNode(path string) (node vfs.Node, errc int) {
-	node, err := fsys.VFS.Lookup(path)
+	node, err := fsys.VFS.Stat(path)
 	return node, translateError(err)
 }
 

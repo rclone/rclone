@@ -129,8 +129,11 @@ func NewInode() (inode uint64) {
 	return atomic.AddUint64(&inodeCount, 1)
 }
 
-// Lookup finds the Node by path starting from the root
-func (vfs *VFS) Lookup(path string) (node Node, err error) {
+// Stat finds the Node by path starting from the root
+//
+// It is the equivalent of os.Stat - Node contains the os.FileInfo
+// interface.
+func (vfs *VFS) Stat(path string) (node Node, err error) {
 	node = vfs.root
 	for path != "" {
 		i := strings.IndexRune(path, '/')
@@ -148,28 +151,10 @@ func (vfs *VFS) Lookup(path string) (node Node, err error) {
 			// We need to look in a directory, but found a file
 			return nil, ENOENT
 		}
-		node, err = dir.Lookup(name)
+		node, err = dir.Stat(name)
 		if err != nil {
 			return nil, err
 		}
 	}
 	return
-}
-
-// Statfs is called to obtain file system metadata.
-// It should write that data to resp.
-func (vfs *VFS) Statfs() error {
-	/* FIXME
-	const blockSize = 4096
-	const fsBlocks = (1 << 50) / blockSize
-	resp.Blocks = fsBlocks  // Total data blocks in file system.
-	resp.Bfree = fsBlocks   // Free blocks in file system.
-	resp.Bavail = fsBlocks  // Free blocks in file system if you're not root.
-	resp.Files = 1E9        // Total files in file system.
-	resp.Ffree = 1E9        // Free files in file system.
-	resp.Bsize = blockSize  // Block size
-	resp.Namelen = 255      // Maximum file name length?
-	resp.Frsize = blockSize // Fragment size, smallest addressable data size in the file system.
-	*/
-	return nil
 }

@@ -79,7 +79,7 @@ var _ fusefs.NodeRequestLookuper = (*Dir)(nil)
 // Lookup need not to handle the names "." and "..".
 func (d *Dir) Lookup(ctx context.Context, req *fuse.LookupRequest, resp *fuse.LookupResponse) (node fusefs.Node, err error) {
 	defer fs.Trace(d, "name=%q", req.Name)("node=%+v, err=%v", &node, &err)
-	mnode, err := d.Dir.Lookup(req.Name)
+	mnode, err := d.Dir.Stat(req.Name)
 	if err != nil {
 		return nil, translateError(err)
 	}
