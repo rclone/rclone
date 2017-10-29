@@ -2,28 +2,13 @@
 package vfsflags
 
 import (
-	"os"
-	"time"
-
 	"github.com/ncw/rclone/vfs"
 	"github.com/spf13/pflag"
 )
 
 // Options set by command line flags
 var (
-	Opt = vfs.Options{
-		NoModTime:    false,
-		NoChecksum:   false,
-		NoSeek:       false,
-		DirCacheTime: 5 * 60 * time.Second,
-		PollInterval: time.Minute,
-		ReadOnly:     false,
-		Umask:        0,
-		UID:          ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
-		GID:          ^uint32(0), // overriden for non windows in mount_unix.go
-		DirPerms:     os.FileMode(0777),
-		FilePerms:    os.FileMode(0666),
-	}
+	Opt = vfs.DefaultOpt
 )
 
 // AddFlags adds the non filing system specific flags to the command

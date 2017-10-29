@@ -29,7 +29,7 @@ func newFile(d *Dir, o fs.Object, leaf string) *File {
 		d:     d,
 		o:     o,
 		leaf:  leaf,
-		inode: NewInode(),
+		inode: newInode(),
 	}
 }
 

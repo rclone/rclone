@@ -34,7 +34,7 @@ func newDir(vfs *VFS, f fs.Fs, parent *Dir, fsDir fs.Directory) *Dir {
 		entry:   fsDir,
 		path:    fsDir.Remote(),
 		modTime: fsDir.ModTime(),
-		inode:   NewInode(),
+		inode:   newInode(),
 	}
 }
 

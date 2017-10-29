@@ -19,6 +19,21 @@ import (
 	"github.com/ncw/rclone/fs"
 )
 
+// DefaultOpt is the default values uses for Opt
+var DefaultOpt = Options{
+	NoModTime:    false,
+	NoChecksum:   false,
+	NoSeek:       false,
+	DirCacheTime: 5 * 60 * time.Second,
+	PollInterval: time.Minute,
+	ReadOnly:     false,
+	Umask:        0,
+	UID:          ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
+	GID:          ^uint32(0), // overriden for non windows in mount_unix.go
+	DirPerms:     os.FileMode(0777),
+	FilePerms:    os.FileMode(0666),
+}
+
 // Node represents either a directory (*Dir) or a file (*File)
 type Node interface {
 	os.FileInfo
@@ -83,12 +98,18 @@ type Options struct {
 }
 
 // New creates a new VFS and root directory.  If opt is nil, then
-// defaults will be used.
+// DefaultOpt will be used
 func New(f fs.Fs, opt *Options) *VFS {
 	fsDir := fs.NewDir("", time.Now())
 	vfs := &VFS{
-		f:   f,
-		Opt: *opt,
+		f: f,
+	}
+
+	// Make a copy of the options
+	if opt != nil {
+		vfs.Opt = *opt
+	} else {
+		vfs.Opt = DefaultOpt
 	}
 
 	// Mask the permissions with the umask
@@ -100,18 +121,9 @@ func New(f fs.Fs, opt *Options) *VFS {
 
 	// Start polling if required
 	if vfs.Opt.PollInterval > 0 {
-		vfs.PollChanges(vfs.Opt.PollInterval)
-	}
-	return vfs
-}
-
-// PollChanges will poll the remote every pollInterval for changes if the remote
-// supports it. If a non-polling option is used, the given time interval can be
-// ignored
-func (vfs *VFS) PollChanges(pollInterval time.Duration) *VFS {
-	doDirChangeNotify := vfs.f.Features().DirChangeNotify
-	if doDirChangeNotify != nil {
-		doDirChangeNotify(vfs.root.ForgetPath, pollInterval)
+		if do := vfs.f.Features().DirChangeNotify; do != nil {
+			do(vfs.root.ForgetPath, vfs.Opt.PollInterval)
+		}
 	}
 	return vfs
 }
@@ -124,8 +136,8 @@ func (vfs *VFS) Root() (*Dir, error) {
 
 var inodeCount uint64
 
-// NewInode creates a new unique inode number
-func NewInode() (inode uint64) {
+// newInode creates a new unique inode number
+func newInode() (inode uint64) {
 	return atomic.AddUint64(&inodeCount, 1)
 }
 
