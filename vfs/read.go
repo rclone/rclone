@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"io"
+	"os"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
@@ -10,6 +11,7 @@ import (
 
 // ReadFileHandle is an open for read file handle on a File
 type ReadFileHandle struct {
+	baseHandle
 	mu         sync.Mutex
 	closed     bool // set if handle has been closed
 	r          *fs.Account
@@ -351,6 +353,11 @@ func (fh *ReadFileHandle) Release() error {
 // Size returns the size of the underlying file
 func (fh *ReadFileHandle) Size() int64 {
 	return fh.o.Size()
+}
+
+// Stat returns info about the file
+func (fh *ReadFileHandle) Stat() (os.FileInfo, error) {
+	return fh.file, nil
 }
 
 // Close closes the file calling Flush then Release

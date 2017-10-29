@@ -19,6 +19,7 @@ const (
 	ESPIPE
 	EBADF
 	EROFS
+	ENOSYS
 )
 
 // Errors which have exact counterparts in os
@@ -33,6 +34,7 @@ var errorNames = []string{
 	ESPIPE:    "Illegal seek",
 	EBADF:     "Bad file descriptor",
 	EROFS:     "Read only file system",
+	ENOSYS:    "Function not implemented",
 }
 
 // Error renders the error as a string

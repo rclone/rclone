@@ -6,12 +6,17 @@
 // should behave in an identical fashion.  The objects also obey Go's
 // standard interfaces.
 //
+// Note that paths don't start or end with /, so the root directory
+// may be referred to as "".  However Stat strips slashes so you can
+// use paths with slashes in.
+//
 // It also includes directory caching
 package vfs
 
 import (
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"sync/atomic"
 	"time"
@@ -73,6 +78,58 @@ var (
 	_ Noder = (*Dir)(nil)
 	_ Noder = (*ReadFileHandle)(nil)
 	_ Noder = (*WriteFileHandle)(nil)
+)
+
+// Handle is the interface statisified by open files or directories.
+// It is the methods on *os.File.  Not all of them are supported.
+type Handle interface {
+	Chdir() error
+	Chmod(mode os.FileMode) error
+	Chown(uid, gid int) error
+	Close() error
+	Fd() uintptr
+	Name() string
+	Read(b []byte) (n int, err error)
+	ReadAt(b []byte, off int64) (n int, err error)
+	Readdir(n int) ([]os.FileInfo, error)
+	Readdirnames(n int) (names []string, err error)
+	Seek(offset int64, whence int) (ret int64, err error)
+	Stat() (os.FileInfo, error)
+	Sync() error
+	Truncate(size int64) error
+	Write(b []byte) (n int, err error)
+	WriteAt(b []byte, off int64) (n int, err error)
+	WriteString(s string) (n int, err error)
+}
+
+// baseHandle implements all the missing methods
+type baseHandle struct{}
+
+func (h baseHandle) Chdir() error                                         { return ENOSYS }
+func (h baseHandle) Chmod(mode os.FileMode) error                         { return ENOSYS }
+func (h baseHandle) Chown(uid, gid int) error                             { return ENOSYS }
+func (h baseHandle) Close() error                                         { return ENOSYS }
+func (h baseHandle) Fd() uintptr                                          { return 0 }
+func (h baseHandle) Name() string                                         { return "" }
+func (h baseHandle) Read(b []byte) (n int, err error)                     { return 0, ENOSYS }
+func (h baseHandle) ReadAt(b []byte, off int64) (n int, err error)        { return 0, ENOSYS }
+func (h baseHandle) Readdir(n int) ([]os.FileInfo, error)                 { return nil, ENOSYS }
+func (h baseHandle) Readdirnames(n int) (names []string, err error)       { return nil, ENOSYS }
+func (h baseHandle) Seek(offset int64, whence int) (ret int64, err error) { return 0, ENOSYS }
+func (h baseHandle) Stat() (os.FileInfo, error)                           { return nil, ENOSYS }
+func (h baseHandle) Sync() error                                          { return nil }
+func (h baseHandle) Truncate(size int64) error                            { return ENOSYS }
+func (h baseHandle) Write(b []byte) (n int, err error)                    { return 0, ENOSYS }
+func (h baseHandle) WriteAt(b []byte, off int64) (n int, err error)       { return 0, ENOSYS }
+func (h baseHandle) WriteString(s string) (n int, err error)              { return 0, ENOSYS }
+
+// Check interfaces
+var (
+	_ Handle = (*baseHandle)(nil)
+	_ Handle = (*ReadFileHandle)(nil)
+	_ Handle = (*WriteFileHandle)(nil)
+	_ Handle = (*DirHandle)(nil)
+	_ Handle = (*os.File)(nil)
 )
 
 // VFS represents the top level filing system
@@ -146,6 +203,7 @@ func newInode() (inode uint64) {
 // It is the equivalent of os.Stat - Node contains the os.FileInfo
 // interface.
 func (vfs *VFS) Stat(path string) (node Node, err error) {
+	path = strings.Trim(path, "/")
 	node = vfs.root
 	for path != "" {
 		i := strings.IndexRune(path, '/')
@@ -169,4 +227,82 @@ func (vfs *VFS) Stat(path string) (node Node, err error) {
 		}
 	}
 	return
+}
+
+// StatParent finds the parent directory and the leaf name of a path
+func (vfs *VFS) StatParent(name string) (dir *Dir, leaf string, err error) {
+	name = strings.Trim(name, "/")
+	parent, leaf := path.Split(name)
+	node, err := vfs.Stat(parent)
+	if err != nil {
+		return nil, "", err
+	}
+	if node.IsFile() {
+		return nil, "", os.ErrExist
+	}
+	dir = node.(*Dir)
+	return dir, leaf, nil
+}
+
+// OpenFile a file according to the flags and perm provided
+func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
+	rdwrMode := flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
+	var read bool
+	switch {
+	case rdwrMode == os.O_RDONLY:
+		read = true
+	case rdwrMode == os.O_WRONLY || (rdwrMode == os.O_RDWR && (flags&os.O_TRUNC) != 0):
+		read = false
+	case rdwrMode == os.O_RDWR:
+		fs.Errorf(name, "Can't open for Read and Write")
+		return nil, os.ErrPermission
+	default:
+		fs.Errorf(name, "Can't figure out how to open with flags: 0x%X", flags)
+		return nil, os.ErrPermission
+	}
+	node, err := vfs.Stat(name)
+	if err != nil {
+		if err == os.ErrNotExist && !read {
+			return vfs.createFile(name, flags, perm)
+		}
+		return nil, err
+	}
+	if node.IsFile() {
+		file := node.(*File)
+		if read {
+			fd, err = file.OpenRead()
+		} else {
+			fd, err = file.OpenWrite()
+		}
+	} else {
+		fd, err = newDirHandle(node.(*Dir)), nil
+	}
+	return fd, err
+}
+
+func (vfs *VFS) createFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
+	dir, leaf, err := vfs.StatParent(name)
+	if err != nil {
+		return nil, err
+	}
+	_, fd, err = dir.Create(leaf)
+	return fd, err
+}
+
+// Rename oldName to newName
+func (vfs *VFS) Rename(oldName, newName string) error {
+	// find the parent directories
+	oldDir, oldLeaf, err := vfs.StatParent(oldName)
+	if err != nil {
+		return err
+	}
+	newDir, newLeaf, err := vfs.StatParent(newName)
+	if err != nil {
+		return err
+	}
+	err = oldDir.Rename(oldLeaf, newLeaf, newDir)
+	if err != nil {
+		return err
+	}
+	return nil
 }

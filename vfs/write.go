@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"io"
+	"os"
 	"sync"
 	"time"
 
@@ -10,6 +11,7 @@ import (
 
 // WriteFileHandle is an open for write handle on a File
 type WriteFileHandle struct {
+	baseHandle
 	mu          sync.Mutex
 	closed      bool // set if handle has been closed
 	remote      string
@@ -193,6 +195,11 @@ func (fh *WriteFileHandle) Release() error {
 		// fs.Debugf(fh.remote, "WriteFileHandle.Release OK")
 	}
 	return err
+}
+
+// Stat returns info about the file
+func (fh *WriteFileHandle) Stat() (os.FileInfo, error) {
+	return fh.file, nil
 }
 
 // Close closes the file calling Flush then Release
