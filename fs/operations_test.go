@@ -22,16 +22,10 @@ package fs_test
 import (
 	"bytes"
 	"errors"
-	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
-	"os"
-	"path"
-	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 	"testing"
 	"time"
@@ -52,270 +46,39 @@ var (
 
 // TestMain drives the tests
 func TestMain(m *testing.M) {
-	flag.Parse()
-	if !*fstest.Individual {
-		oneRun = newRun()
-	}
-	rc := m.Run()
-	if !*fstest.Individual {
-		oneRun.Finalise()
-	}
-	os.Exit(rc)
+	fstest.TestMain(m)
 }
-
-// Run holds the remotes for a test run
-type Run struct {
-	localName    string
-	flocal       fs.Fs
-	fremote      fs.Fs
-	fremoteName  string
-	cleanRemote  func()
-	mkdir        map[string]bool // whether the remote has been made yet for the fs name
-	Logf, Fatalf func(text string, args ...interface{})
-}
-
-// oneRun holds the master run data if individual is not set
-var oneRun *Run
-
-// newRun initialise the remote and local for testing and returns a
-// run object.
-//
-// r.flocal is an empty local Fs
-// r.fremote is an empty remote Fs
-//
-// Finalise() will tidy them away when done.
-func newRun() *Run {
-	r := &Run{
-		Logf:   log.Printf,
-		Fatalf: log.Fatalf,
-		mkdir:  make(map[string]bool),
-	}
-
-	fstest.Initialise()
-
-	var err error
-	r.fremote, r.fremoteName, r.cleanRemote, err = fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
-	if err != nil {
-		r.Fatalf("Failed to open remote %q: %v", *fstest.RemoteName, err)
-	}
-
-	r.localName, err = ioutil.TempDir("", "rclone")
-	if err != nil {
-		r.Fatalf("Failed to create temp dir: %v", err)
-	}
-	r.localName = filepath.ToSlash(r.localName)
-	r.flocal, err = fs.NewFs(r.localName)
-	if err != nil {
-		r.Fatalf("Failed to make %q: %v", r.localName, err)
-	}
-	fs.CalculateModifyWindow(r.fremote, r.flocal)
-	return r
-}
-
-// dirsToRemove sorts by string length
-type dirsToRemove []string
-
-func (d dirsToRemove) Len() int           { return len(d) }
-func (d dirsToRemove) Swap(i, j int)      { d[i], d[j] = d[j], d[i] }
-func (d dirsToRemove) Less(i, j int) bool { return len(d[i]) > len(d[j]) }
-
-// NewRun initialise the remote and local for testing and returns a
-// run object.  Call this from the tests.
-//
-// r.flocal is an empty local Fs
-// r.fremote is an empty remote Fs
-//
-// Finalise() will tidy them away when done.
-func NewRun(t *testing.T) *Run {
-	var r *Run
-	if *fstest.Individual {
-		r = newRun()
-	} else {
-		// If not individual, use the global one with the clean method overridden
-		r = new(Run)
-		*r = *oneRun
-		r.cleanRemote = func() {
-			var toDelete dirsToRemove
-			require.NoError(t, fs.Walk(r.fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
-				if err != nil {
-					if err == fs.ErrorDirNotFound {
-						return nil
-					}
-					t.Fatalf("Error listing: %v", err)
-				}
-				for _, entry := range entries {
-					switch x := entry.(type) {
-					case fs.Object:
-						err = x.Remove()
-						if err != nil {
-							t.Errorf("Error removing file %q: %v", x.Remote(), err)
-						}
-					case fs.Directory:
-						toDelete = append(toDelete, x.Remote())
-					}
-				}
-				return nil
-			}))
-			sort.Sort(toDelete)
-			for _, dir := range toDelete {
-				err := r.fremote.Rmdir(dir)
-				if err != nil {
-					t.Errorf("Error removing dir %q: %v", dir, err)
-				}
-			}
-			// Check remote is empty
-			fstest.CheckItems(t, r.fremote)
-		}
-	}
-	r.Logf = t.Logf
-	r.Fatalf = t.Fatalf
-	r.Logf("Remote %q, Local %q, Modify Window %q", r.fremote, r.flocal, fs.Config.ModifyWindow)
-	return r
-}
-
-// Rename a file in local
-func (r *Run) RenameFile(item fstest.Item, newpath string) fstest.Item {
-	oldFilepath := path.Join(r.localName, item.Path)
-	newFilepath := path.Join(r.localName, newpath)
-	if err := os.Rename(oldFilepath, newFilepath); err != nil {
-		r.Fatalf("Failed to rename file from %q to %q: %v", item.Path, newpath, err)
-	}
-
-	item.Path = newpath
-
-	return item
-}
-
-// Write a file to local
-func (r *Run) WriteFile(filePath, content string, t time.Time) fstest.Item {
-	item := fstest.NewItem(filePath, content, t)
-	// FIXME make directories?
-	filePath = path.Join(r.localName, filePath)
-	dirPath := path.Dir(filePath)
-	err := os.MkdirAll(dirPath, 0770)
-	if err != nil {
-		r.Fatalf("Failed to make directories %q: %v", dirPath, err)
-	}
-	err = ioutil.WriteFile(filePath, []byte(content), 0600)
-	if err != nil {
-		r.Fatalf("Failed to write file %q: %v", filePath, err)
-	}
-	err = os.Chtimes(filePath, t, t)
-	if err != nil {
-		r.Fatalf("Failed to chtimes file %q: %v", filePath, err)
-	}
-	return item
-}
-
-// ForceMkdir creates the remote
-func (r *Run) ForceMkdir(f fs.Fs) {
-	err := f.Mkdir("")
-	if err != nil {
-		r.Fatalf("Failed to mkdir %q: %v", f, err)
-	}
-	r.mkdir[f.String()] = true
-}
-
-// Mkdir creates the remote if it hasn't been created already
-func (r *Run) Mkdir(f fs.Fs) {
-	if !r.mkdir[f.String()] {
-		r.ForceMkdir(f)
-	}
-}
-
-// WriteObjectTo writes an object to the fs, remote passed in
-func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, useUnchecked bool) fstest.Item {
-	put := f.Put
-	if useUnchecked {
-		put = f.Features().PutUnchecked
-		if put == nil {
-			r.Fatalf("Fs doesn't support PutUnchecked")
-		}
-	}
-	r.Mkdir(f)
-	const maxTries = 10
-	for tries := 1; ; tries++ {
-		in := bytes.NewBufferString(content)
-		objinfo := fs.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
-		_, err := put(in, objinfo)
-		if err == nil {
-			break
-		}
-		// Retry if err returned a retry error
-		if fs.IsRetryError(err) && tries < maxTries {
-			r.Logf("Retry Put of %q to %v: %d/%d (%v)", remote, f, tries, maxTries, err)
-			time.Sleep(2 * time.Second)
-			continue
-		}
-		r.Fatalf("Failed to put %q to %q: %v", remote, f, err)
-	}
-	return fstest.NewItem(remote, content, modTime)
-}
-
-// WriteObject writes an object to the remote
-func (r *Run) WriteObject(remote, content string, modTime time.Time) fstest.Item {
-	return r.WriteObjectTo(r.fremote, remote, content, modTime, false)
-}
-
-// WriteUncheckedObject writes an object to the remote not checking for duplicates
-func (r *Run) WriteUncheckedObject(remote, content string, modTime time.Time) fstest.Item {
-	return r.WriteObjectTo(r.fremote, remote, content, modTime, true)
-}
-
-// WriteBoth calls WriteObject and WriteFile with the same arguments
-func (r *Run) WriteBoth(remote, content string, modTime time.Time) fstest.Item {
-	r.WriteFile(remote, content, modTime)
-	return r.WriteObject(remote, content, modTime)
-}
-
-// Clean the temporary directory
-func (r *Run) cleanTempDir() {
-	err := os.RemoveAll(r.localName)
-	if err != nil {
-		r.Logf("Failed to clean temporary directory %q: %v", r.localName, err)
-	}
-}
-
-// finalise cleans the remote and local
-func (r *Run) Finalise() {
-	// r.Logf("Cleaning remote %q", r.fremote)
-	r.cleanRemote()
-	// r.Logf("Cleaning local %q", r.localName)
-	r.cleanTempDir()
-}
-
-// ------------------------------------------------------------
 
 func TestMkdir(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	fstest.TestMkdir(t, r.fremote)
+	fstest.TestMkdir(t, r.Fremote)
 }
 
 func TestLsd(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteObject("sub dir/hello world", "hello world", t1)
 
-	fstest.CheckItems(t, r.fremote, file1)
+	fstest.CheckItems(t, r.Fremote, file1)
 
 	var buf bytes.Buffer
-	err := fs.ListDir(r.fremote, &buf)
+	err := fs.ListDir(r.Fremote, &buf)
 	require.NoError(t, err)
 	res := buf.String()
 	assert.Contains(t, res, "sub dir\n")
 }
 
 func TestLs(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 
-	fstest.CheckItems(t, r.fremote, file1, file2)
+	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	var buf bytes.Buffer
-	err := fs.List(r.fremote, &buf)
+	err := fs.List(r.Fremote, &buf)
 	require.NoError(t, err)
 	res := buf.String()
 	assert.Contains(t, res, "        0 empty space\n")
@@ -323,22 +86,22 @@ func TestLs(t *testing.T) {
 }
 
 func TestLsLong(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 
-	fstest.CheckItems(t, r.fremote, file1, file2)
+	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	var buf bytes.Buffer
-	err := fs.ListLong(r.fremote, &buf)
+	err := fs.ListLong(r.Fremote, &buf)
 	require.NoError(t, err)
 	res := buf.String()
 	lines := strings.Split(strings.Trim(res, "\n"), "\n")
 	assert.Equal(t, 2, len(lines))
 
 	timeFormat := "2006-01-02 15:04:05.000000000"
-	precision := r.fremote.Precision()
+	precision := r.Fremote.Precision()
 	location := time.Now().Location()
 	checkTime := func(m, filename string, expected time.Time) {
 		modTime, err := time.ParseInLocation(timeFormat, m, location) // parse as localtime
@@ -368,17 +131,17 @@ func TestLsLong(t *testing.T) {
 }
 
 func TestHashSums(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 
-	fstest.CheckItems(t, r.fremote, file1, file2)
+	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	// MD5 Sum
 
 	var buf bytes.Buffer
-	err := fs.Md5sum(r.fremote, &buf)
+	err := fs.Md5sum(r.Fremote, &buf)
 	require.NoError(t, err)
 	res := buf.String()
 	if !strings.Contains(res, "d41d8cd98f00b204e9800998ecf8427e  empty space\n") &&
@@ -395,7 +158,7 @@ func TestHashSums(t *testing.T) {
 	// SHA1 Sum
 
 	buf.Reset()
-	err = fs.Sha1sum(r.fremote, &buf)
+	err = fs.Sha1sum(r.Fremote, &buf)
 	require.NoError(t, err)
 	res = buf.String()
 	if !strings.Contains(res, "da39a3ee5e6b4b0d3255bfef95601890afd80709  empty space\n") &&
@@ -412,7 +175,7 @@ func TestHashSums(t *testing.T) {
 	// Dropbox Hash Sum
 
 	buf.Reset()
-	err = fs.DropboxHashSum(r.fremote, &buf)
+	err = fs.DropboxHashSum(r.Fremote, &buf)
 	require.NoError(t, err)
 	res = buf.String()
 	if !strings.Contains(res, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855  empty space\n") &&
@@ -428,50 +191,50 @@ func TestHashSums(t *testing.T) {
 }
 
 func TestCount(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 	file3 := r.WriteBoth("sub dir/potato3", "hello", t2)
 
-	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
 	// Check the MaxDepth too
 	fs.Config.MaxDepth = 1
 	defer func() { fs.Config.MaxDepth = -1 }()
 
-	objects, size, err := fs.Count(r.fremote)
+	objects, size, err := fs.Count(r.Fremote)
 	require.NoError(t, err)
 	assert.Equal(t, int64(2), objects)
 	assert.Equal(t, int64(60), size)
 }
 
 func TestDelete(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteObject("small", "1234567890", t2)                                                                                           // 10 bytes
 	file2 := r.WriteObject("medium", "------------------------------------------------------------", t1)                                        // 60 bytes
 	file3 := r.WriteObject("large", "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", t1) // 100 bytes
-	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
 	fs.Config.Filter.MaxSize = 60
 	defer func() {
 		fs.Config.Filter.MaxSize = -1
 	}()
 
-	err := fs.Delete(r.fremote)
+	err := fs.Delete(r.Fremote)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.fremote, file3)
+	fstest.CheckItems(t, r.Fremote, file3)
 }
 
 func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs) error) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 
 	check := func(i int, wantErrors int64) {
-		fs.Debugf(r.fremote, "%d: Starting check test", i)
+		fs.Debugf(r.Fremote, "%d: Starting check test", i)
 		oldErrors := fs.Stats.GetErrors()
-		err := checkFunction(r.flocal, r.fremote)
+		err := checkFunction(r.Flocal, r.Fremote)
 		gotErrors := fs.Stats.GetErrors() - oldErrors
 		if wantErrors == 0 && err != nil {
 			t.Errorf("%d: Got error when not expecting one: %v", i, err)
@@ -482,20 +245,20 @@ func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs) error) {
 		if wantErrors != gotErrors {
 			t.Errorf("%d: Expecting %d errors but got %d", i, wantErrors, gotErrors)
 		}
-		fs.Debugf(r.fremote, "%d: Ending check test", i)
+		fs.Debugf(r.Fremote, "%d: Ending check test", i)
 	}
 
 	file1 := r.WriteBoth("rutabaga", "is tasty", t3)
-	fstest.CheckItems(t, r.fremote, file1)
-	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file1)
+	fstest.CheckItems(t, r.Flocal, file1)
 	check(1, 0)
 
 	file2 := r.WriteFile("potato2", "------------------------------------------------------------", t1)
-	fstest.CheckItems(t, r.flocal, file1, file2)
+	fstest.CheckItems(t, r.Flocal, file1, file2)
 	check(2, 1)
 
 	file3 := r.WriteObject("empty space", "", t2)
-	fstest.CheckItems(t, r.fremote, file1, file3)
+	fstest.CheckItems(t, r.Fremote, file1, file3)
 	check(3, 2)
 
 	file2r := file2
@@ -504,11 +267,11 @@ func testCheck(t *testing.T, checkFunction func(fdst, fsrc fs.Fs) error) {
 	} else {
 		r.WriteObject("potato2", "------------------------------------------------------------", t1)
 	}
-	fstest.CheckItems(t, r.fremote, file1, file2r, file3)
+	fstest.CheckItems(t, r.Fremote, file1, file2r, file3)
 	check(4, 1)
 
 	r.WriteFile("empty space", "", t2)
-	fstest.CheckItems(t, r.flocal, file1, file2, file3)
+	fstest.CheckItems(t, r.Flocal, file1, file2, file3)
 	check(5, 0)
 }
 
@@ -526,17 +289,6 @@ func TestCheckSizeOnly(t *testing.T) {
 	TestCheck(t)
 }
 
-func (r *Run) checkWithDuplicates(t *testing.T, items ...fstest.Item) {
-	objects, size, err := fs.Count(r.fremote)
-	require.NoError(t, err)
-	assert.Equal(t, int64(len(items)), objects)
-	wantSize := int64(0)
-	for _, item := range items {
-		wantSize += item.Size
-	}
-	assert.Equal(t, wantSize, size)
-}
-
 func skipIfCantDedupe(t *testing.T, f fs.Fs) {
 	if f.Features().PutUnchecked == nil {
 		t.Skip("Can't test deduplicate - no PutUnchecked")
@@ -550,51 +302,51 @@ func skipIfCantDedupe(t *testing.T, f fs.Fs) {
 }
 
 func TestDeduplicateInteractive(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	skipIfCantDedupe(t, r.fremote)
+	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one", t1)
 	file3 := r.WriteUncheckedObject("one", "This is one", t1)
-	r.checkWithDuplicates(t, file1, file2, file3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := fs.Deduplicate(r.fremote, fs.DeduplicateInteractive)
+	err := fs.Deduplicate(r.Fremote, fs.DeduplicateInteractive)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.fremote, file1)
+	fstest.CheckItems(t, r.Fremote, file1)
 }
 
 func TestDeduplicateSkip(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	skipIfCantDedupe(t, r.fremote)
+	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one", t1)
 	file3 := r.WriteUncheckedObject("one", "This is another one", t1)
-	r.checkWithDuplicates(t, file1, file2, file3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := fs.Deduplicate(r.fremote, fs.DeduplicateSkip)
+	err := fs.Deduplicate(r.Fremote, fs.DeduplicateSkip)
 	require.NoError(t, err)
 
-	r.checkWithDuplicates(t, file1, file3)
+	r.CheckWithDuplicates(t, file1, file3)
 }
 
 func TestDeduplicateFirst(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	skipIfCantDedupe(t, r.fremote)
+	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one A", t1)
 	file3 := r.WriteUncheckedObject("one", "This is one BB", t1)
-	r.checkWithDuplicates(t, file1, file2, file3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := fs.Deduplicate(r.fremote, fs.DeduplicateFirst)
+	err := fs.Deduplicate(r.Fremote, fs.DeduplicateFirst)
 	require.NoError(t, err)
 
-	objects, size, err := fs.Count(r.fremote)
+	objects, size, err := fs.Count(r.Fremote)
 	require.NoError(t, err)
 	assert.Equal(t, int64(1), objects)
 	if size != file1.Size && size != file2.Size && size != file3.Size {
@@ -603,51 +355,51 @@ func TestDeduplicateFirst(t *testing.T) {
 }
 
 func TestDeduplicateNewest(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	skipIfCantDedupe(t, r.fremote)
+	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
 	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
-	r.checkWithDuplicates(t, file1, file2, file3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := fs.Deduplicate(r.fremote, fs.DeduplicateNewest)
+	err := fs.Deduplicate(r.Fremote, fs.DeduplicateNewest)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.fremote, file3)
+	fstest.CheckItems(t, r.Fremote, file3)
 }
 
 func TestDeduplicateOldest(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	skipIfCantDedupe(t, r.fremote)
+	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject("one", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one", "This is one too", t2)
 	file3 := r.WriteUncheckedObject("one", "This is another one", t3)
-	r.checkWithDuplicates(t, file1, file2, file3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := fs.Deduplicate(r.fremote, fs.DeduplicateOldest)
+	err := fs.Deduplicate(r.Fremote, fs.DeduplicateOldest)
 	require.NoError(t, err)
 
-	fstest.CheckItems(t, r.fremote, file1)
+	fstest.CheckItems(t, r.Fremote, file1)
 }
 
 func TestDeduplicateRename(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	skipIfCantDedupe(t, r.fremote)
+	skipIfCantDedupe(t, r.Fremote)
 
 	file1 := r.WriteUncheckedObject("one.txt", "This is one", t1)
 	file2 := r.WriteUncheckedObject("one.txt", "This is one too", t2)
 	file3 := r.WriteUncheckedObject("one.txt", "This is another one", t3)
-	r.checkWithDuplicates(t, file1, file2, file3)
+	r.CheckWithDuplicates(t, file1, file2, file3)
 
-	err := fs.Deduplicate(r.fremote, fs.DeduplicateRename)
+	err := fs.Deduplicate(r.Fremote, fs.DeduplicateRename)
 	require.NoError(t, err)
 
-	require.NoError(t, fs.Walk(r.fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
+	require.NoError(t, fs.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
 		if err != nil {
 			return err
 		}
@@ -670,10 +422,10 @@ func TestDeduplicateRename(t *testing.T) {
 // This should really be a unit test, but the test framework there
 // doesn't have enough tools to make it easy
 func TestMergeDirs(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 
-	mergeDirs := r.fremote.Features().MergeDirs
+	mergeDirs := r.Fremote.Features().MergeDirs
 	if mergeDirs == nil {
 		t.Skip("Can't merge directories")
 	}
@@ -682,7 +434,7 @@ func TestMergeDirs(t *testing.T) {
 	file2 := r.WriteObject("dupe2/two.txt", "This is one too", t2)
 	file3 := r.WriteObject("dupe3/three.txt", "This is another one", t3)
 
-	objs, dirs, err := fs.WalkGetAll(r.fremote, "", true, 1)
+	objs, dirs, err := fs.WalkGetAll(r.Fremote, "", true, 1)
 	require.NoError(t, err)
 	assert.Equal(t, 3, len(dirs))
 	assert.Equal(t, 0, len(objs))
@@ -692,9 +444,9 @@ func TestMergeDirs(t *testing.T) {
 
 	file2.Path = "dupe1/two.txt"
 	file3.Path = "dupe1/three.txt"
-	fstest.CheckItems(t, r.fremote, file1, file2, file3)
+	fstest.CheckItems(t, r.Fremote, file1, file2, file3)
 
-	objs, dirs, err = fs.WalkGetAll(r.fremote, "", true, 1)
+	objs, dirs, err = fs.WalkGetAll(r.Fremote, "", true, 1)
 	require.NoError(t, err)
 	assert.Equal(t, 1, len(dirs))
 	assert.Equal(t, 0, len(objs))
@@ -702,12 +454,12 @@ func TestMergeDirs(t *testing.T) {
 }
 
 func TestCat(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 	file1 := r.WriteBoth("file1", "ABCDEFGHIJ", t1)
 	file2 := r.WriteBoth("file2", "012345678", t2)
 
-	fstest.CheckItems(t, r.fremote, file1, file2)
+	fstest.CheckItems(t, r.Fremote, file1, file2)
 
 	for _, test := range []struct {
 		offset int64
@@ -721,7 +473,7 @@ func TestCat(t *testing.T) {
 		{1, 3, "BCD", "123"},
 	} {
 		var buf bytes.Buffer
-		err := fs.Cat(r.fremote, &buf, test.offset, test.count)
+		err := fs.Cat(r.Fremote, &buf, test.offset, test.count)
 		require.NoError(t, err)
 		res := buf.String()
 
@@ -742,10 +494,10 @@ func TestRcat(t *testing.T) {
 			prefix = "with_checksum_"
 		}
 
-		r := NewRun(t)
+		r := fstest.NewRun(t)
 		defer r.Finalise()
 
-		fstest.CheckListing(t, r.fremote, []fstest.Item{})
+		fstest.CheckListing(t, r.Fremote, []fstest.Item{})
 
 		data1 := "this is some really nice test data"
 		path1 := prefix + "small_file_from_pipe"
@@ -754,16 +506,16 @@ func TestRcat(t *testing.T) {
 		path2 := prefix + "big_file_from_pipe"
 
 		in := ioutil.NopCloser(strings.NewReader(data1))
-		_, err := fs.Rcat(r.fremote, path1, in, t1)
+		_, err := fs.Rcat(r.Fremote, path1, in, t1)
 		require.NoError(t, err)
 
 		in = ioutil.NopCloser(strings.NewReader(data2))
-		_, err = fs.Rcat(r.fremote, path2, in, t2)
+		_, err = fs.Rcat(r.Fremote, path2, in, t2)
 		require.NoError(t, err)
 
 		file1 := fstest.NewItem(path1, data1, t1)
 		file2 := fstest.NewItem(path2, data2, t2)
-		fstest.CheckItems(t, r.fremote, file1, file2)
+		fstest.CheckItems(t, r.Fremote, file1, file2)
 	}
 
 	check(true)
@@ -771,27 +523,27 @@ func TestRcat(t *testing.T) {
 }
 
 func TestRmdirs(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
-	r.Mkdir(r.fremote)
+	r.Mkdir(r.Fremote)
 
 	// Make some files and dirs we expect to keep
-	r.ForceMkdir(r.fremote)
+	r.ForceMkdir(r.Fremote)
 	file1 := r.WriteObject("A1/B1/C1/one", "aaa", t1)
 	//..and dirs we expect to delete
-	require.NoError(t, fs.Mkdir(r.fremote, "A2"))
-	require.NoError(t, fs.Mkdir(r.fremote, "A1/B2"))
-	require.NoError(t, fs.Mkdir(r.fremote, "A1/B2/C2"))
-	require.NoError(t, fs.Mkdir(r.fremote, "A1/B1/C3"))
-	require.NoError(t, fs.Mkdir(r.fremote, "A3"))
-	require.NoError(t, fs.Mkdir(r.fremote, "A3/B3"))
-	require.NoError(t, fs.Mkdir(r.fremote, "A3/B3/C4"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A2"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A1/B2"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A1/B2/C2"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A1/B1/C3"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A3"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A3/B3"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A3/B3/C4"))
 	//..and one more file at the end
 	file2 := r.WriteObject("A1/two", "bbb", t2)
 
 	fstest.CheckListingWithPrecision(
 		t,
-		r.fremote,
+		r.Fremote,
 		[]fstest.Item{
 			file1, file2,
 		},
@@ -810,11 +562,11 @@ func TestRmdirs(t *testing.T) {
 		fs.Config.ModifyWindow,
 	)
 
-	require.NoError(t, fs.Rmdirs(r.fremote, ""))
+	require.NoError(t, fs.Rmdirs(r.Fremote, ""))
 
 	fstest.CheckListingWithPrecision(
 		t,
-		r.fremote,
+		r.Fremote,
 		[]fstest.Item{
 			file1, file2,
 		},
@@ -829,58 +581,58 @@ func TestRmdirs(t *testing.T) {
 }
 
 func TestMoveFile(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.Flocal, file1)
 
 	file2 := file1
 	file2.Path = "sub/file2"
 
-	err := fs.MoveFile(r.fremote, r.flocal, file2.Path, file1.Path)
+	err := fs.MoveFile(r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal)
-	fstest.CheckItems(t, r.fremote, file2)
+	fstest.CheckItems(t, r.Flocal)
+	fstest.CheckItems(t, r.Fremote, file2)
 
 	r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.Flocal, file1)
 
-	err = fs.MoveFile(r.fremote, r.flocal, file2.Path, file1.Path)
+	err = fs.MoveFile(r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal)
-	fstest.CheckItems(t, r.fremote, file2)
+	fstest.CheckItems(t, r.Flocal)
+	fstest.CheckItems(t, r.Fremote, file2)
 
-	err = fs.MoveFile(r.fremote, r.fremote, file2.Path, file2.Path)
+	err = fs.MoveFile(r.Fremote, r.Fremote, file2.Path, file2.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal)
-	fstest.CheckItems(t, r.fremote, file2)
+	fstest.CheckItems(t, r.Flocal)
+	fstest.CheckItems(t, r.Fremote, file2)
 }
 
 func TestCopyFile(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 
 	file1 := r.WriteFile("file1", "file1 contents", t1)
-	fstest.CheckItems(t, r.flocal, file1)
+	fstest.CheckItems(t, r.Flocal, file1)
 
 	file2 := file1
 	file2.Path = "sub/file2"
 
-	err := fs.CopyFile(r.fremote, r.flocal, file2.Path, file1.Path)
+	err := fs.CopyFile(r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal, file1)
-	fstest.CheckItems(t, r.fremote, file2)
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file2)
 
-	err = fs.CopyFile(r.fremote, r.flocal, file2.Path, file1.Path)
+	err = fs.CopyFile(r.Fremote, r.Flocal, file2.Path, file1.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal, file1)
-	fstest.CheckItems(t, r.fremote, file2)
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file2)
 
-	err = fs.CopyFile(r.fremote, r.fremote, file2.Path, file2.Path)
+	err = fs.CopyFile(r.Fremote, r.Fremote, file2.Path, file2.Path)
 	require.NoError(t, err)
-	fstest.CheckItems(t, r.flocal, file1)
-	fstest.CheckItems(t, r.fremote, file2)
+	fstest.CheckItems(t, r.Flocal, file1)
+	fstest.CheckItems(t, r.Fremote, file2)
 }
 
 // testFsInfo is for unit testing fs.Info
@@ -978,7 +730,7 @@ func TestOverlapping(t *testing.T) {
 }
 
 func TestListDirSorted(t *testing.T) {
-	r := NewRun(t)
+	r := fstest.NewRun(t)
 	defer r.Finalise()
 
 	fs.Config.Filter.MaxSize = 10
@@ -993,7 +745,7 @@ func TestListDirSorted(t *testing.T) {
 		r.WriteObject("sub dir/hello world2", "hello world", t1),
 		r.WriteObject("sub dir/sub sub dir/hello world3", "hello world", t1),
 	}
-	fstest.CheckItems(t, r.fremote, files...)
+	fstest.CheckItems(t, r.Fremote, files...)
 	var items fs.DirEntries
 	var err error
 
@@ -1012,27 +764,27 @@ func TestListDirSorted(t *testing.T) {
 		return name
 	}
 
-	items, err = fs.ListDirSorted(r.fremote, true, "")
+	items, err = fs.ListDirSorted(r.Fremote, true, "")
 	require.NoError(t, err)
 	require.Len(t, items, 3)
 	assert.Equal(t, "a.txt", str(0))
 	assert.Equal(t, "sub dir/", str(1))
 	assert.Equal(t, "zend.txt", str(2))
 
-	items, err = fs.ListDirSorted(r.fremote, false, "")
+	items, err = fs.ListDirSorted(r.Fremote, false, "")
 	require.NoError(t, err)
 	require.Len(t, items, 2)
 	assert.Equal(t, "sub dir/", str(0))
 	assert.Equal(t, "zend.txt", str(1))
 
-	items, err = fs.ListDirSorted(r.fremote, true, "sub dir")
+	items, err = fs.ListDirSorted(r.Fremote, true, "sub dir")
 	require.NoError(t, err)
 	require.Len(t, items, 3)
 	assert.Equal(t, "sub dir/hello world", str(0))
 	assert.Equal(t, "sub dir/hello world2", str(1))
 	assert.Equal(t, "sub dir/sub sub dir/", str(2))
 
-	items, err = fs.ListDirSorted(r.fremote, false, "sub dir")
+	items, err = fs.ListDirSorted(r.Fremote, false, "sub dir")
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.Equal(t, "sub dir/sub sub dir/", str(0))
