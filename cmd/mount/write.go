@@ -4,6 +4,7 @@ package mount
 
 import (
 	"errors"
+	"io"
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
@@ -20,7 +21,22 @@ type WriteFileHandle struct {
 }
 
 // Check interface satisfied
-var _ fusefs.Handle = (*WriteFileHandle)(nil)
+var _ fusefs.HandleReader = (*FileHandle)(nil)
+
+// Read from the file handle
+func (fh *FileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fuse.ReadResponse) (err error) {
+	var n int
+	defer fs.Trace(fh, "len=%d, offset=%d", req.Size, req.Offset)("read=%d, err=%v", &n, &err)
+	data := make([]byte, req.Size)
+	n, err = fh.Handle.ReadAt(data, req.Offset)
+	if err == io.EOF {
+		err = nil
+	} else if err != nil {
+		return translateError(err)
+	}
+	resp.Data = data[:n]
+	return nil
+}
 
 // Check interface satisfied
 var _ fusefs.HandleWriter = (*WriteFileHandle)(nil)

@@ -5,6 +5,7 @@
 package cmount
 
 import (
+	"io"
 	"os"
 	"path"
 	"runtime"
@@ -397,13 +398,10 @@ func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	if errc != 0 {
 		return errc
 	}
-	rfh, ok := handle.(*vfs.ReadFileHandle)
-	if !ok {
-		// Can only read from read file handle
-		return -fuse.EIO
-	}
-	n, err := rfh.ReadAt(buff, ofst)
-	if err != nil {
+	n, err := handle.ReadAt(buff, ofst)
+	if err == io.EOF {
+		err = nil
+	} else if err != nil {
 		return translateError(err)
 	}
 	return n

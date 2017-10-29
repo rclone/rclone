@@ -58,7 +58,7 @@ func (d *Dir) IsDir() bool {
 
 // Mode bits of the directory - satisfies Node interface
 func (d *Dir) Mode() (mode os.FileMode) {
-	return os.ModeDir | 0777
+	return d.vfs.Opt.DirPerms
 }
 
 // Name (base) of the directory - satisfies Node interface
@@ -109,10 +109,10 @@ func (d *Dir) ForgetPath(relativePath string) {
 	})
 }
 
-// walk runs a function on all directories whose path matches
-// the given absolute one. It will be called on a directory's
-// children first. It will not apply the function to parent
-// nodes, regardless of the given path.
+// walk runs a function on all cached directories whose path matches
+// the given absolute one. It will be called on a directory's children
+// first. It will not apply the function to parent nodes, regardless
+// of the given path.
 func (d *Dir) walk(absPath string, fun func(*Dir)) {
 	d.mu.Lock()
 	defer d.mu.Unlock()

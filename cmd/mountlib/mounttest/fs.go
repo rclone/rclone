@@ -207,10 +207,10 @@ func (r *Run) readLocal(t *testing.T, dir dirMap, filepath string) {
 		if fi.IsDir() {
 			dir[name+"/"] = struct{}{}
 			r.readLocal(t, dir, name)
-			assert.Equal(t, run.vfs.Opt.DirPerms, fi.Mode().Perm())
+			assert.Equal(t, run.vfs.Opt.DirPerms&os.ModePerm, fi.Mode().Perm())
 		} else {
 			dir[fmt.Sprintf("%s %d", name, fi.Size())] = struct{}{}
-			assert.Equal(t, run.vfs.Opt.FilePerms, fi.Mode().Perm())
+			assert.Equal(t, run.vfs.Opt.FilePerms&os.ModePerm, fi.Mode().Perm())
 		}
 	}
 }
@@ -292,5 +292,5 @@ func TestRoot(t *testing.T) {
 	fi, err := os.Lstat(run.mountPath)
 	require.NoError(t, err)
 	assert.True(t, fi.IsDir())
-	assert.Equal(t, fi.Mode().Perm(), run.vfs.Opt.DirPerms)
+	assert.Equal(t, run.vfs.Opt.DirPerms&os.ModePerm, fi.Mode().Perm())
 }

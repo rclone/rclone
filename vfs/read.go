@@ -49,7 +49,6 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 		file:   f,
 		hash:   hash,
 	}
-	fs.Stats.Transferring(fh.o.Remote())
 	return fh, nil
 }
 
@@ -65,6 +64,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	}
 	fh.r = fs.NewAccount(r, fh.o).WithBuffer() // account the transfer
 	fh.opened = true
+	fs.Stats.Transferring(fh.o.Remote())
 	return nil
 }
 
@@ -165,7 +165,7 @@ func (fh *ReadFileHandle) Seek(offset int64, whence int) (n int64, err error) {
 func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	err = fh.openPending() // FIXME pending open could be more efficient in the presense of seek (and retried)
+	err = fh.openPending() // FIXME pending open could be more efficient in the presense of seek (and retries)
 	if err != nil {
 		return 0, err
 	}
@@ -175,6 +175,9 @@ func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 		return 0, EBADF
 	}
 	doSeek := off != fh.offset
+	if doSeek && fh.noSeek {
+		return 0, ESPIPE
+	}
 	var newOffset int64
 	retries := 0
 	reqSize := len(p)
@@ -186,7 +189,7 @@ func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 			// file in an unchanged state.
 			if off >= fh.o.Size() {
 				fs.Debugf(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", off, fh.o.Size())
-				return 0, nil
+				return 0, io.EOF
 			}
 			// Otherwise do the seek
 			err = fh.seek(off, doReopen)
@@ -233,6 +236,11 @@ func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 				fs.Errorf(fh.o, "ReadFileHandle.Read HashError: %v", err)
 				return 0, err
 			}
+		}
+
+		// If we have no error and we didn't fill the buffer, must be EOF
+		if n != len(p) {
+			err = io.EOF
 		}
 	}
 	return n, err
@@ -297,13 +305,26 @@ func (fh *ReadFileHandle) close() error {
 		return EBADF
 	}
 	fh.closed = true
-	fs.Stats.DoneTransferring(fh.o.Remote(), true)
 
-	if err := fh.checkHash(); err != nil {
-		return err
+	if fh.opened {
+		fs.Stats.DoneTransferring(fh.o.Remote(), true)
+		err1 := fh.checkHash()
+		err2 := fh.r.Close()
+		if err1 != nil {
+			return err1
+		}
+		if err2 != nil {
+			return err2
+		}
 	}
+	return nil
+}
 
-	return fh.r.Close()
+// Close closes the file
+func (fh *ReadFileHandle) Close() error {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	return fh.close()
 }
 
 // Flush is called each time the file or directory is closed.
@@ -358,14 +379,4 @@ func (fh *ReadFileHandle) Size() int64 {
 // Stat returns info about the file
 func (fh *ReadFileHandle) Stat() (os.FileInfo, error) {
 	return fh.file, nil
-}
-
-// Close closes the file calling Flush then Release
-func (fh *ReadFileHandle) Close() error {
-	err := fh.Flush()
-	err2 := fh.Release()
-	if err != nil {
-		return err
-	}
-	return err2
 }

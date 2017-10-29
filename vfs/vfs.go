@@ -35,7 +35,7 @@ var DefaultOpt = Options{
 	Umask:        0,
 	UID:          ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
 	GID:          ^uint32(0), // overriden for non windows in mount_unix.go
-	DirPerms:     os.FileMode(0777),
+	DirPerms:     os.FileMode(0777) | os.ModeDir,
 	FilePerms:    os.FileMode(0666),
 }
 
@@ -174,6 +174,9 @@ func New(f fs.Fs, opt *Options) *VFS {
 	// Mask the permissions with the umask
 	vfs.Opt.DirPerms &= ^os.FileMode(vfs.Opt.Umask)
 	vfs.Opt.FilePerms &= ^os.FileMode(vfs.Opt.Umask)
+
+	// Make sure directories are returned as directories
+	vfs.Opt.DirPerms |= os.ModeDir
 
 	// Create root directory
 	vfs.root = newDir(vfs, f, nil, fsDir)

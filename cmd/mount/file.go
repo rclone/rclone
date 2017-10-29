@@ -64,7 +64,7 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 
 	// fuse flags are based off syscall flags as are os flags, so
 	// should be compatible
-	handle, err := f.File.Open(int(resp.Flags))
+	handle, err := f.File.Open(int(req.Flags))
 	if err != nil {
 		return nil, translateError(err)
 	}

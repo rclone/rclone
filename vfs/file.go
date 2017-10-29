@@ -53,12 +53,12 @@ func (f *File) IsDir() bool {
 
 // Mode bits of the file or directory - satisfies Node interface
 func (f *File) Mode() (mode os.FileMode) {
-	return 0666
+	return f.d.vfs.Opt.FilePerms
 }
 
 // Name (base) of the directory - satisfies Node interface
 func (f *File) Name() (name string) {
-	return path.Base(f.o.Remote())
+	return f.leaf
 }
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
@@ -76,11 +76,12 @@ func (f *File) Node() Node {
 	return f
 }
 
-// rename should be called to update f.o and f.d after a rename
+// rename should be called to update the internals after a rename
 func (f *File) rename(d *Dir, o fs.Object) {
 	f.mu.Lock()
 	f.o = o
 	f.d = d
+	f.leaf = path.Base(o.Remote())
 	f.mu.Unlock()
 }
 
@@ -257,10 +258,12 @@ func (f *File) Remove() error {
 	if f.d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
-	err := f.o.Remove()
-	if err != nil {
-		fs.Errorf(f, "File.Remove file error: %v", err)
-		return err
+	if f.o != nil {
+		err := f.o.Remove()
+		if err != nil {
+			fs.Errorf(f, "File.Remove file error: %v", err)
+			return err
+		}
 	}
 	// Remove the item from the directory listing
 	f.d.delObject(f.Name())
@@ -272,7 +275,7 @@ func (f *File) RemoveAll() error {
 	return f.Remove()
 }
 
-// DirEntry returns the underlying fs.DirEntry
+// DirEntry returns the underlying fs.DirEntry - may be nil
 func (f *File) DirEntry() (entry fs.DirEntry) {
 	return f.o
 }
