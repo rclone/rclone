@@ -50,6 +50,7 @@ type Node interface {
 	RemoveAll() error
 	DirEntry() fs.DirEntry
 	VFS() *VFS
+	Open(flags int) (Handle, error)
 }
 
 // Check interfaces
@@ -78,6 +79,7 @@ var (
 	_ Noder = (*Dir)(nil)
 	_ Noder = (*ReadFileHandle)(nil)
 	_ Noder = (*WriteFileHandle)(nil)
+	_ Noder = (*DirHandle)(nil)
 )
 
 // Handle is the interface statisified by open files or directories.
@@ -246,47 +248,19 @@ func (vfs *VFS) StatParent(name string) (dir *Dir, leaf string, err error) {
 
 // OpenFile a file according to the flags and perm provided
 func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
-	rdwrMode := flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
-	var read bool
-	switch {
-	case rdwrMode == os.O_RDONLY:
-		read = true
-	case rdwrMode == os.O_WRONLY || (rdwrMode == os.O_RDWR && (flags&os.O_TRUNC) != 0):
-		read = false
-	case rdwrMode == os.O_RDWR:
-		fs.Errorf(name, "Can't open for Read and Write")
-		return nil, os.ErrPermission
-	default:
-		fs.Errorf(name, "Can't figure out how to open with flags: 0x%X", flags)
-		return nil, os.ErrPermission
-	}
 	node, err := vfs.Stat(name)
 	if err != nil {
-		if err == os.ErrNotExist && !read {
-			return vfs.createFile(name, flags, perm)
+		if err == ENOENT && flags&os.O_CREATE != 0 {
+			dir, leaf, err := vfs.StatParent(name)
+			if err != nil {
+				return nil, err
+			}
+			_, fd, err = dir.Create(leaf)
+			return fd, err
 		}
 		return nil, err
 	}
-	if node.IsFile() {
-		file := node.(*File)
-		if read {
-			fd, err = file.OpenRead()
-		} else {
-			fd, err = file.OpenWrite()
-		}
-	} else {
-		fd, err = newDirHandle(node.(*Dir)), nil
-	}
-	return fd, err
-}
-
-func (vfs *VFS) createFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
-	dir, leaf, err := vfs.StatParent(name)
-	if err != nil {
-		return nil, err
-	}
-	_, fd, err = dir.Create(leaf)
-	return fd, err
+	return node.Open(flags)
 }
 
 // Rename oldName to newName

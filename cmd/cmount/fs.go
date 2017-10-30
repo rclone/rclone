@@ -337,31 +337,21 @@ func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 // Open opens a file
 func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 	defer fs.Trace(path, "flags=0x%X", flags)("errc=%d, fh=0x%X", &errc, &fh)
-	file, errc := fsys.lookupFile(path)
+
+	// fuse flags are based off syscall flags as are os flags, so
+	// should be compatible
+	handle, err := fsys.VFS.OpenFile(path, flags, 0777)
 	if errc != 0 {
-		return errc, fhUnset
+		return translateError(err), fhUnset
 	}
-	rdwrMode := flags & fuse.O_ACCMODE
-	var err error
-	var handle vfs.Noder
-	switch {
-	case rdwrMode == fuse.O_RDONLY:
-		handle, err = file.OpenRead()
-		if err != nil {
-			return translateError(err), fhUnset
-		}
-		return 0, fsys.openFilesRd.Open(handle)
-	case rdwrMode == fuse.O_WRONLY || (rdwrMode == fuse.O_RDWR && (flags&fuse.O_TRUNC) != 0):
-		handle, err = file.OpenWrite()
-		if err != nil {
-			return translateError(err), fhUnset
-		}
-		return 0, fsys.openFilesWr.Open(handle)
-	case rdwrMode == fuse.O_RDWR:
-		fs.Errorf(path, "Can't open for Read and Write")
-		return -fuse.EPERM, fhUnset
+
+	switch fh := handle.(type) {
+	case *vfs.WriteFileHandle:
+		return 0, fsys.openFilesWr.Open(fh)
+	case *vfs.ReadFileHandle:
+		return 0, fsys.openFilesRd.Open(fh)
 	}
-	fs.Errorf(path, "Can't figure out how to open with flags: 0x%X", flags)
+
 	return -fuse.EPERM, fhUnset
 }
 
@@ -648,6 +638,8 @@ func translateError(err error) (errc int) {
 		return -fuse.EBADF
 	case vfs.EROFS:
 		return -fuse.EROFS
+	case vfs.ENOSYS:
+		return -fuse.ENOSYS
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return -fuse.EIO

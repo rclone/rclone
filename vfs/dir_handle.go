@@ -19,9 +19,25 @@ func newDirHandle(d *Dir) *DirHandle {
 	}
 }
 
+// String converts it to printable
+func (fh *DirHandle) String() string {
+	if fh == nil {
+		return "<nil *DirHandle>"
+	}
+	if fh.d == nil {
+		return "<nil *DirHandle.d>"
+	}
+	return fh.d.String() + " (r)"
+}
+
 // Stat returns info about the current directory
 func (fh *DirHandle) Stat() (fi os.FileInfo, err error) {
 	return fh.d, nil
+}
+
+// Node returns the Node assocuated with this - satisfies Noder interface
+func (fh *DirHandle) Node() Node {
+	return fh.d
 }
 
 // Readdir reads the contents of the directory associated with file and returns

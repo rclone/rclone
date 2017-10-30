@@ -84,6 +84,8 @@ func translateError(err error) error {
 		return fuse.Errno(syscall.EBADF)
 	case vfs.EROFS:
 		return fuse.Errno(syscall.EROFS)
+	case vfs.ENOSYS:
+		return fuse.Errno(syscall.ENOSYS)
 	}
 	return err
 }

@@ -211,7 +211,7 @@ func (d *Dir) _readDir() error {
 			d.items[name] = newDir(d.vfs, d.f, d, dir)
 		default:
 			err = errors.Errorf("unknown type %T", item)
-			fs.Errorf(d.path, "readDir error: %v", err)
+			fs.Errorf(d, "readDir error: %v", err)
 			return err
 		}
 	}
@@ -276,12 +276,11 @@ func (d *Dir) SetModTime(modTime time.Time) error {
 //
 // Stat need not to handle the names "." and "..".
 func (d *Dir) Stat(name string) (node Node, err error) {
-	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Stat")
 	node, err = d.stat(name)
 	if err != nil {
 		if err != ENOENT {
-			fs.Errorf(path, "Dir.Stat error: %v", err)
+			fs.Errorf(d, "Dir.Stat error: %v", err)
 		}
 		return nil, err
 	}
@@ -307,6 +306,16 @@ func (d *Dir) ReadDirAll() (items Nodes, err error) {
 	return items, nil
 }
 
+// Open the directory according to the flags provided
+func (d *Dir) Open(flags int) (fd Handle, err error) {
+	rdwrMode := flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
+	if rdwrMode != os.O_RDONLY {
+		fs.Errorf(d, "Can only open directories read only")
+		return nil, os.ErrPermission
+	}
+	return newDirHandle(d), nil
+}
+
 // Create makes a new file
 func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 	if d.vfs.Opt.ReadOnly {
@@ -319,7 +328,7 @@ func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
 	file := newFile(d, nil, name)
 	fh, err := newWriteFileHandle(d, file, src)
 	if err != nil {
-		fs.Errorf(path, "Dir.Create error: %v", err)
+		fs.Errorf(d, "Dir.Create error: %v", err)
 		return nil, nil, err
 	}
 	// fs.Debugf(path, "Dir.Create OK")
@@ -335,7 +344,7 @@ func (d *Dir) Mkdir(name string) (*Dir, error) {
 	// fs.Debugf(path, "Dir.Mkdir")
 	err := d.f.Mkdir(path)
 	if err != nil {
-		fs.Errorf(path, "Dir.Mkdir failed to create directory: %v", err)
+		fs.Errorf(d, "Dir.Mkdir failed to create directory: %v", err)
 		return nil, err
 	}
 	fsDir := fs.NewDir(path, time.Now())
@@ -353,17 +362,17 @@ func (d *Dir) Remove() error {
 	// Check directory is empty first
 	empty, err := d.isEmpty()
 	if err != nil {
-		fs.Errorf(d.path, "Dir.Remove dir error: %v", err)
+		fs.Errorf(d, "Dir.Remove dir error: %v", err)
 		return err
 	}
 	if !empty {
-		fs.Errorf(d.path, "Dir.Remove not empty")
+		fs.Errorf(d, "Dir.Remove not empty")
 		return ENOTEMPTY
 	}
 	// remove directory
 	err = d.f.Rmdir(d.path)
 	if err != nil {
-		fs.Errorf(d.path, "Dir.Remove failed to remove directory: %v", err)
+		fs.Errorf(d, "Dir.Remove failed to remove directory: %v", err)
 		return err
 	}
 	// Remove the item from the parent directory listing
@@ -381,7 +390,7 @@ func (d *Dir) RemoveAll() error {
 	// Remove contents of the directory
 	nodes, err := d.ReadDirAll()
 	if err != nil {
-		fs.Errorf(d.path, "Dir.RemoveAll failed to read directory: %v", err)
+		fs.Errorf(d, "Dir.RemoveAll failed to read directory: %v", err)
 		return err
 	}
 	for _, node := range nodes {
@@ -406,11 +415,10 @@ func (d *Dir) RemoveName(name string) error {
 	if d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
-	path := path.Join(d.path, name)
 	// fs.Debugf(path, "Dir.Remove")
 	node, err := d.stat(name)
 	if err != nil {
-		fs.Errorf(path, "Dir.Remove error: %v", err)
+		fs.Errorf(d, "Dir.Remove error: %v", err)
 		return err
 	}
 	return node.Remove()

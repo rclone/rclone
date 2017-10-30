@@ -161,7 +161,7 @@ func (f *File) applyPendingModTime() error {
 	case fs.ErrorCantSetModTime, fs.ErrorCantSetModTimeWithoutDelete:
 		// do nothing, in order to not break "touch somefile" if it exists already
 	default:
-		fs.Errorf(f.o, "File.applyPendingModTime error: %v", err)
+		fs.Errorf(f, "File.applyPendingModTime error: %v", err)
 		return err
 	}
 
@@ -216,7 +216,7 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 	err = errors.Wrap(err, "open for read")
 
 	if err != nil {
-		fs.Errorf(o, "File.OpenRead failed: %v", err)
+		fs.Errorf(f, "File.OpenRead failed: %v", err)
 		return nil, err
 	}
 	return fh, nil
@@ -239,7 +239,7 @@ func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
 	err = errors.Wrap(err, "open for write")
 
 	if err != nil {
-		fs.Errorf(o, "File.OpenWrite failed: %v", err)
+		fs.Errorf(f, "File.OpenWrite failed: %v", err)
 		return nil, err
 	}
 	return fh, nil
@@ -259,7 +259,7 @@ func (f *File) Remove() error {
 	}
 	err := f.o.Remove()
 	if err != nil {
-		fs.Errorf(f.o, "File.Remove file error: %v", err)
+		fs.Errorf(f, "File.Remove file error: %v", err)
 		return err
 	}
 	// Remove the item from the directory listing
@@ -285,4 +285,28 @@ func (f *File) Dir() *Dir {
 // VFS returns the instance of the VFS
 func (f *File) VFS() *VFS {
 	return f.d.vfs
+}
+
+// Open a file according to the flags provided
+func (f *File) Open(flags int) (fd Handle, err error) {
+	rdwrMode := flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
+	var read bool
+	switch {
+	case rdwrMode == os.O_RDONLY:
+		read = true
+	case rdwrMode == os.O_WRONLY || (rdwrMode == os.O_RDWR && (flags&os.O_TRUNC) != 0):
+		read = false
+	case rdwrMode == os.O_RDWR:
+		fs.Errorf(f, "Can't open for Read and Write")
+		return nil, os.ErrPermission
+	default:
+		fs.Errorf(f, "Can't figure out how to open with flags: 0x%X", flags)
+		return nil, os.ErrPermission
+	}
+	if read {
+		fd, err = f.OpenRead()
+	} else {
+		fd, err = f.OpenWrite()
+	}
+	return fd, err
 }

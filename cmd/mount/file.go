@@ -9,7 +9,6 @@ import (
 	fusefs "bazil.org/fuse/fs"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs"
-	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
 
@@ -62,40 +61,27 @@ var _ fusefs.NodeOpener = (*File)(nil)
 // Open the file for read or write
 func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fh fusefs.Handle, err error) {
 	defer fs.Trace(f, "flags=%v", req.Flags)("fh=%v, err=%v", &fh, &err)
-	switch {
-	case req.Flags.IsReadOnly():
-		if f.VFS().Opt.NoSeek {
-			resp.Flags |= fuse.OpenNonSeekable
-		}
-		var rfh *vfs.ReadFileHandle
-		rfh, err = f.File.OpenRead()
-		fh = &ReadFileHandle{rfh}
-	case req.Flags.IsWriteOnly() || (req.Flags.IsReadWrite() && (req.Flags&fuse.OpenTruncate) != 0):
-		resp.Flags |= fuse.OpenNonSeekable
-		var wfh *vfs.WriteFileHandle
-		wfh, err = f.File.OpenWrite()
-		fh = &WriteFileHandle{wfh}
-	case req.Flags.IsReadWrite():
-		err = errors.New("can't open for read and write simultaneously")
-	default:
-		err = errors.Errorf("can't figure out how to open with flags %v", req.Flags)
-	}
 
-	/*
-	   // File was opened in append-only mode, all writes will go to end
-	   // of file. OS X does not provide this information.
-	   OpenAppend    OpenFlags = syscall.O_APPEND
-	   OpenCreate    OpenFlags = syscall.O_CREAT
-	   OpenDirectory OpenFlags = syscall.O_DIRECTORY
-	   OpenExclusive OpenFlags = syscall.O_EXCL
-	   OpenNonblock  OpenFlags = syscall.O_NONBLOCK
-	   OpenSync      OpenFlags = syscall.O_SYNC
-	   OpenTruncate  OpenFlags = syscall.O_TRUNC
-	*/
-
+	// fuse flags are based off syscall flags as are os flags, so
+	// should be compatible
+	handle, err := f.File.Open(int(resp.Flags))
 	if err != nil {
 		return nil, translateError(err)
 	}
+
+	switch h := handle.(type) {
+	case *vfs.ReadFileHandle:
+		if f.VFS().Opt.NoSeek {
+			resp.Flags |= fuse.OpenNonSeekable
+		}
+		fh = &ReadFileHandle{h}
+	case *vfs.WriteFileHandle:
+		resp.Flags |= fuse.OpenNonSeekable
+		fh = &WriteFileHandle{h}
+	default:
+		panic("unknown file handle type")
+	}
+
 	return fh, nil
 }
 
