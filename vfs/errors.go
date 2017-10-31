@@ -26,6 +26,7 @@ const (
 var (
 	ENOENT = os.ErrNotExist
 	EEXIST = os.ErrExist
+	EPERM  = os.ErrPermission
 )
 
 var errorNames = []string{

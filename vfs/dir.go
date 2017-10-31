@@ -311,7 +311,7 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 	rdwrMode := flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
 	if rdwrMode != os.O_RDONLY {
 		fs.Errorf(d, "Can only open directories read only")
-		return nil, os.ErrPermission
+		return nil, EPERM
 	}
 	return newDirHandle(d), nil
 }

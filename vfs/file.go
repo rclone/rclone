@@ -298,10 +298,10 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 		read = false
 	case rdwrMode == os.O_RDWR:
 		fs.Errorf(f, "Can't open for Read and Write")
-		return nil, os.ErrPermission
+		return nil, EPERM
 	default:
 		fs.Errorf(f, "Can't figure out how to open with flags: 0x%X", flags)
-		return nil, os.ErrPermission
+		return nil, EPERM
 	}
 	if read {
 		fd, err = f.OpenRead()
