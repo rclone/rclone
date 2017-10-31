@@ -200,8 +200,8 @@ func swiftConnection(name string) (*swift.Connection, error) {
 			return nil, errors.Wrap(err, "failed to read environment variables")
 		}
 	}
-	if c.UserName == "" {
-		return nil, errors.New("user not found")
+	if c.UserName == "" && c.UserId == "" {
+		return nil, errors.New("user name or user id not found")
 	}
 	if c.ApiKey == "" {
 		return nil, errors.New("key not found")
