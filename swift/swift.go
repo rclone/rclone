@@ -49,13 +49,13 @@ func init() {
 			},
 		}, {
 			Name: "user",
-			Help: "User name to log in.",
+			Help: "User name to log in (OS_USERNAME).",
 		}, {
 			Name: "key",
-			Help: "API key or password.",
+			Help: "API key or password (OS_PASSWORD).",
 		}, {
 			Name: "auth",
-			Help: "Authentication URL for server.",
+			Help: "Authentication URL for server (OS_AUTH_URL).",
 			Examples: []fs.OptionExample{{
 				Help:  "Rackspace US",
 				Value: "https://auth.api.rackspacecloud.com/v1.0",
@@ -76,26 +76,29 @@ func init() {
 				Value: "https://auth.cloud.ovh.net/v2.0",
 			}},
 		}, {
+			Name: "user_id",
+			Help: "User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).",
+		}, {
 			Name: "domain",
-			Help: "User domain - optional (v3 auth)",
+			Help: "User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)",
 		}, {
 			Name: "tenant",
-			Help: "Tenant name - optional for v1 auth, required otherwise",
+			Help: "Tenant name - optional for v1 auth, required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)",
 		}, {
 			Name: "tenant_domain",
-			Help: "Tenant domain - optional (v3 auth)",
+			Help: "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME)",
 		}, {
 			Name: "region",
-			Help: "Region name - optional",
+			Help: "Region name - optional (OS_REGION_NAME)",
 		}, {
 			Name: "storage_url",
-			Help: "Storage URL - optional",
+			Help: "Storage URL - optional (OS_STORAGE_URL)",
 		}, {
 			Name: "auth_version",
-			Help: "AuthVersion - optional - set to (1,2,3) if your auth URL has no version",
+			Help: "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)",
 		}, {
 			Name: "endpoint_type",
-			Help: "Endpoint type to choose from the service catalogue",
+			Help: "Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE)",
 			Examples: []fs.OptionExample{{
 				Help:  "Public (default, choose this if not sure)",
 				Value: "public",
@@ -181,14 +184,17 @@ func parsePath(path string) (container, directory string, err error) {
 // swiftConnection makes a connection to swift
 func swiftConnection(name string) (*swift.Connection, error) {
 	c := &swift.Connection{
-		UserName:       fs.ConfigFileGet(name, "user"),
-		ApiKey:         fs.ConfigFileGet(name, "key"),
-		AuthUrl:        fs.ConfigFileGet(name, "auth"),
+		// Keep these in the same order as the Config for ease of checking
+		UserName:     fs.ConfigFileGet(name, "user"),
+		ApiKey:       fs.ConfigFileGet(name, "key"),
+		AuthUrl:      fs.ConfigFileGet(name, "auth"),
+		UserId:       fs.ConfigFileGet(name, "user_id"),
+		Domain:       fs.ConfigFileGet(name, "domain"),
+		Tenant:       fs.ConfigFileGet(name, "tenant"),
+		TenantDomain: fs.ConfigFileGet(name, "tenant_domain"),
+		Region:       fs.ConfigFileGet(name, "region"),
+		// StorageUrl is set below
 		AuthVersion:    fs.ConfigFileGetInt(name, "auth_version", 0),
-		Tenant:         fs.ConfigFileGet(name, "tenant"),
-		Region:         fs.ConfigFileGet(name, "region"),
-		Domain:         fs.ConfigFileGet(name, "domain"),
-		TenantDomain:   fs.ConfigFileGet(name, "tenant_domain"),
 		EndpointType:   swift.EndpointType(fs.ConfigFileGet(name, "endpoint_type", "public")),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
