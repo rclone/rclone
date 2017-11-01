@@ -244,6 +244,7 @@ type ConfigInfo struct {
 	BindAddr              net.IP
 	DisableFeatures       []string
 	Immutable             bool
+	AutoConfirm           bool
 	StreamingUploadCutoff SizeSuffix
 }
 
