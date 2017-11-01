@@ -155,7 +155,7 @@ func NewRun(t *testing.T) *Run {
 				}
 			}
 			// Check remote is empty
-			CheckItems(t, r.Fremote)
+			CheckListingWithPrecision(t, r.Fremote, []Item{}, []string{}, r.Fremote.Precision())
 		}
 	}
 	r.Logf = t.Logf
