@@ -14,6 +14,7 @@ Commercial implementations of that being:
   * [Memset Memstore](https://www.memset.com/cloud/storage/)
   * [OVH Object Storage](https://www.ovh.co.uk/public-cloud/storage/object-storage/)
   * [Oracle Cloud Storage](https://cloud.oracle.com/storage-opc)
+  * [IBM Bluemix Cloud ObjectStorage Swift](https://console.bluemix.net/docs/infrastructure/objectstorage-swift/index.html)
 
 Paths are specified as `remote:container` (or `remote:` for the `lsd`
 command.)  You may put subdirectories in too, eg `remote:container/path/to/dir`.
@@ -96,10 +97,14 @@ Choose a number from below, or type in your own value
  6 / OVH
    \ "https://auth.cloud.ovh.net/v2.0"
 auth> 1
+User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
+user_id> user_id
 User domain - optional (v3 auth)
 domain> Default
-Tenant name - optional for v1 auth, required otherwise
+Tenant name - optional for v1 auth, this or tenant_id required otherwise
 tenant> tenant_name
+Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)
+tenant_id>
 Tenant domain - optional (v3 auth)
 tenant_domain>
 Region name - optional
