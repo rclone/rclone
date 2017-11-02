@@ -1023,7 +1023,7 @@ func UpdateRemote(name string, keyValues []string) error {
 // adds the new keys rather than replacing all of them.
 func CreateRemote(name string, provider string, keyValues []string) error {
 	// Suppress Confirm
-	Config.AutoConfirm := true
+	Config.AutoConfirm = true
 	// Delete the old config if it exists
 	configData.DeleteSection(name)
 	// Set the type
