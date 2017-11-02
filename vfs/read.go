@@ -124,8 +124,11 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	return nil
 }
 
-// Seek the file
+// Seek the file - returns ESPIPE if seeking isn't possible
 func (fh *ReadFileHandle) Seek(offset int64, whence int) (n int64, err error) {
+	if fh.noSeek {
+		return 0, ESPIPE
+	}
 	size := fh.o.Size()
 	switch whence {
 	case 0:

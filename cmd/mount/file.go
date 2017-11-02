@@ -69,20 +69,12 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 		return nil, translateError(err)
 	}
 
-	switch h := handle.(type) {
-	case *vfs.ReadFileHandle:
-		if f.VFS().Opt.NoSeek {
-			resp.Flags |= fuse.OpenNonSeekable
-		}
-		fh = &ReadFileHandle{h}
-	case *vfs.WriteFileHandle:
+	// See if seeking is supported and set FUSE hint accordingly
+	if _, err = handle.Seek(0, 1); err != nil {
 		resp.Flags |= fuse.OpenNonSeekable
-		fh = &WriteFileHandle{h}
-	default:
-		panic("unknown file handle type")
 	}
 
-	return fh, nil
+	return &FileHandle{handle}, nil
 }
 
 // Check interface satisfied

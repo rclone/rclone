@@ -3,7 +3,6 @@
 package mount
 
 import (
-	"errors"
 	"io"
 
 	"bazil.org/fuse"
@@ -13,11 +12,9 @@ import (
 	"golang.org/x/net/context"
 )
 
-var errClosedFileHandle = errors.New("Attempt to use closed file handle")
-
-// WriteFileHandle is an open for write handle on a File
-type WriteFileHandle struct {
-	*vfs.WriteFileHandle
+// FileHandle is an open for read file handle on a File
+type FileHandle struct {
+	vfs.Handle
 }
 
 // Check interface satisfied
@@ -39,18 +36,21 @@ func (fh *FileHandle) Read(ctx context.Context, req *fuse.ReadRequest, resp *fus
 }
 
 // Check interface satisfied
-var _ fusefs.HandleWriter = (*WriteFileHandle)(nil)
+var _ fusefs.HandleWriter = (*FileHandle)(nil)
 
 // Write data to the file handle
-func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
+func (fh *FileHandle) Write(ctx context.Context, req *fuse.WriteRequest, resp *fuse.WriteResponse) (err error) {
 	defer fs.Trace(fh, "len=%d, offset=%d", len(req.Data), req.Offset)("written=%d, err=%v", &resp.Size, &err)
-	n, err := fh.WriteFileHandle.WriteAt(req.Data, req.Offset)
+	n, err := fh.Handle.WriteAt(req.Data, req.Offset)
 	if err != nil {
 		return translateError(err)
 	}
 	resp.Size = int(n)
 	return nil
 }
+
+// Check interface satisfied
+var _ fusefs.HandleFlusher = (*FileHandle)(nil)
 
 // Flush is called on each close() of a file descriptor. So if a
 // filesystem wants to return write errors in close() and the file has
@@ -67,18 +67,18 @@ func (fh *WriteFileHandle) Write(ctx context.Context, req *fuse.WriteRequest, re
 //
 // Filesystems shouldn't assume that flush will always be called after
 // some writes, or that if will be called at all.
-func (fh *WriteFileHandle) Flush(ctx context.Context, req *fuse.FlushRequest) (err error) {
+func (fh *FileHandle) Flush(ctx context.Context, req *fuse.FlushRequest) (err error) {
 	defer fs.Trace(fh, "")("err=%v", &err)
-	return translateError(fh.WriteFileHandle.Flush())
+	return translateError(fh.Handle.Flush())
 }
 
-var _ fusefs.HandleReleaser = (*WriteFileHandle)(nil)
+var _ fusefs.HandleReleaser = (*FileHandle)(nil)
 
 // Release is called when we are finished with the file handle
 //
 // It isn't called directly from userspace so the error is ignored by
 // the kernel
-func (fh *WriteFileHandle) Release(ctx context.Context, req *fuse.ReleaseRequest) (err error) {
+func (fh *FileHandle) Release(ctx context.Context, req *fuse.ReleaseRequest) (err error) {
 	defer fs.Trace(fh, "")("err=%v", &err)
-	return translateError(fh.WriteFileHandle.Release())
+	return translateError(fh.Handle.Release())
 }

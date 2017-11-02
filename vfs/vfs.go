@@ -102,6 +102,9 @@ type Handle interface {
 	Write(b []byte) (n int, err error)
 	WriteAt(b []byte, off int64) (n int, err error)
 	WriteString(s string) (n int, err error)
+	// Additional methods useful for FUSE filesystems
+	Flush() error
+	Release() error
 }
 
 // baseHandle implements all the missing methods
@@ -124,6 +127,8 @@ func (h baseHandle) Truncate(size int64) error                            { retu
 func (h baseHandle) Write(b []byte) (n int, err error)                    { return 0, ENOSYS }
 func (h baseHandle) WriteAt(b []byte, off int64) (n int, err error)       { return 0, ENOSYS }
 func (h baseHandle) WriteString(s string) (n int, err error)              { return 0, ENOSYS }
+func (h baseHandle) Flush() (err error)                                   { return ENOSYS }
+func (h baseHandle) Release() (err error)                                 { return ENOSYS }
 
 // Check interfaces
 var (
@@ -131,7 +136,6 @@ var (
 	_ Handle = (*ReadFileHandle)(nil)
 	_ Handle = (*WriteFileHandle)(nil)
 	_ Handle = (*DirHandle)(nil)
-	_ Handle = (*os.File)(nil)
 )
 
 // VFS represents the top level filing system
