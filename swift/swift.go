@@ -83,7 +83,10 @@ func init() {
 			Help: "User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)",
 		}, {
 			Name: "tenant",
-			Help: "Tenant name - optional for v1 auth, required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)",
+			Help: "Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)",
+		}, {
+			Name: "tenant_id",
+			Help: "Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)",
 		}, {
 			Name: "tenant_domain",
 			Help: "Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME)",
@@ -191,6 +194,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		UserId:       fs.ConfigFileGet(name, "user_id"),
 		Domain:       fs.ConfigFileGet(name, "domain"),
 		Tenant:       fs.ConfigFileGet(name, "tenant"),
+		TenantId:     fs.ConfigFileGet(name, "tenant_id"),
 		TenantDomain: fs.ConfigFileGet(name, "tenant_domain"),
 		Region:       fs.ConfigFileGet(name, "region"),
 		// StorageUrl is set below
@@ -372,11 +376,11 @@ func (f *Fs) list(dir string, recurse bool, fn addEntryFn) error {
 			d := fs.NewDir(remote, time.Time{}).SetSize(object.Bytes)
 			err = fn(d)
 		} else {
+			// newObjectWithInfo does a full metadata read on 0 size objects which might be dynamic large objects
 			o, err := f.newObjectWithInfo(remote, object)
 			if err != nil {
 				return err
 			}
-			// Storable does a full metadata read on 0 size objects which might be dynamic large objects
 			if o.Storable() {
 				err = fn(o)
 			}
