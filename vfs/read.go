@@ -73,6 +73,8 @@ func (fh *ReadFileHandle) String() string {
 	if fh == nil {
 		return "<nil *ReadFileHandle>"
 	}
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	if fh.file == nil {
 		return "<nil *ReadFileHandle.file>"
 	}
@@ -81,6 +83,8 @@ func (fh *ReadFileHandle) String() string {
 
 // Node returns the Node assocuated with this - satisfies Noder interface
 func (fh *ReadFileHandle) Node() Node {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	return fh.file
 }
 
@@ -126,6 +130,8 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 
 // Seek the file - returns ESPIPE if seeking isn't possible
 func (fh *ReadFileHandle) Seek(offset int64, whence int) (n int64, err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	if fh.noSeek {
 		return 0, ESPIPE
 	}
@@ -168,6 +174,11 @@ func (fh *ReadFileHandle) Seek(offset int64, whence int) (n int64, err error) {
 func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
+	return fh.readAt(p, off)
+}
+
+// Implementation of ReadAt - call with lock held
+func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 	err = fh.openPending() // FIXME pending open could be more efficient in the presense of seek (and retries)
 	if err != nil {
 		return 0, err
@@ -291,10 +302,12 @@ func (fh *ReadFileHandle) checkHash() error {
 //
 // Implementations must not retain p.
 func (fh *ReadFileHandle) Read(p []byte) (n int, err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	if fh.roffset >= fh.o.Size() {
 		return 0, io.EOF
 	}
-	n, err = fh.ReadAt(p, fh.roffset)
+	n, err = fh.readAt(p, fh.roffset)
 	fh.roffset += int64(n)
 	return n, err
 }
@@ -311,13 +324,15 @@ func (fh *ReadFileHandle) close() error {
 
 	if fh.opened {
 		fs.Stats.DoneTransferring(fh.o.Remote(), true)
-		err1 := fh.checkHash()
-		err2 := fh.r.Close()
-		if err1 != nil {
-			return err1
+		// Close first so that we have hashes
+		err := fh.r.Close()
+		if err != nil {
+			return err
 		}
-		if err2 != nil {
-			return err2
+		// Now check the hash
+		err = fh.checkHash()
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -376,10 +391,14 @@ func (fh *ReadFileHandle) Release() error {
 
 // Size returns the size of the underlying file
 func (fh *ReadFileHandle) Size() int64 {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	return fh.o.Size()
 }
 
 // Stat returns info about the file
 func (fh *ReadFileHandle) Stat() (os.FileInfo, error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	return fh.file, nil
 }

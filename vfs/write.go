@@ -59,6 +59,8 @@ func (fh *WriteFileHandle) String() string {
 	if fh == nil {
 		return "<nil *WriteFileHandle>"
 	}
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	if fh.file == nil {
 		return "<nil *WriteFileHandle.file>"
 	}
@@ -67,6 +69,8 @@ func (fh *WriteFileHandle) String() string {
 
 // Node returns the Node assocuated with this - satisfies Noder interface
 func (fh *WriteFileHandle) Node() Node {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	return fh.file
 }
 
@@ -83,9 +87,14 @@ func (fh *WriteFileHandle) Node() Node {
 //
 // Implementations must not retain p.
 func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
-	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(p))
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
+	return fh.writeAt(p, off)
+}
+
+// Implementatino of WriteAt - call with lock held
+func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
+	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(p))
 	if fh.closed {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", EBADF)
 		return 0, ECLOSED
@@ -114,12 +123,16 @@ func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
 //
 // Implementations must not retain p.
 func (fh *WriteFileHandle) Write(p []byte) (n int, err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	// Since we can't seek, just call WriteAt with the current offset
-	return fh.WriteAt(p, fh.offset)
+	return fh.writeAt(p, fh.offset)
 }
 
 // Offset returns the offset of the file pointer
 func (fh *WriteFileHandle) Offset() (offset int64) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	return fh.offset
 }
 
@@ -211,5 +224,7 @@ func (fh *WriteFileHandle) Release() error {
 
 // Stat returns info about the file
 func (fh *WriteFileHandle) Stat() (os.FileInfo, error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
 	return fh.file, nil
 }
