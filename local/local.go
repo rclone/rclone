@@ -767,9 +767,17 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 // setMetadata sets the file info from the os.FileInfo passed in
 func (o *Object) setMetadata(info os.FileInfo) {
-	o.size = info.Size()
-	o.modTime = info.ModTime()
-	o.mode = info.Mode()
+	// Don't overwrite the info if we don't need to
+	// this avoids upsetting the race detector
+	if o.size != info.Size() {
+		o.size = info.Size()
+	}
+	if o.modTime != info.ModTime() {
+		o.modTime = info.ModTime()
+	}
+	if o.mode != info.Mode() {
+		o.mode = info.Mode()
+	}
 }
 
 // Stat a Object into info
