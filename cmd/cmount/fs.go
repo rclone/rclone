@@ -23,99 +23,72 @@ const fhUnset = ^uint64(0)
 
 // FS represents the top level filing system
 type FS struct {
-	VFS         *vfs.VFS
-	f           fs.Fs
-	openDirs    *openFiles
-	openFilesWr *openFiles
-	openFilesRd *openFiles
-	ready       chan (struct{})
+	VFS     *vfs.VFS
+	f       fs.Fs
+	ready   chan (struct{})
+	mu      sync.Mutex // to protect the below
+	handles []vfs.Handle
 }
 
 // NewFS makes a new FS
 func NewFS(f fs.Fs) *FS {
 	fsys := &FS{
-		VFS:         vfs.New(f, &vfsflags.Opt),
-		f:           f,
-		openDirs:    newOpenFiles(0x01),
-		openFilesWr: newOpenFiles(0x02),
-		openFilesRd: newOpenFiles(0x03),
-		ready:       make(chan (struct{})),
+		VFS:   vfs.New(f, &vfsflags.Opt),
+		f:     f,
+		ready: make(chan (struct{})),
 	}
 	return fsys
 }
 
-type openFiles struct {
-	mu    sync.Mutex
-	mark  uint8
-	nodes []vfs.Noder
-}
-
-func newOpenFiles(mark uint8) *openFiles {
-	return &openFiles{
-		mark: mark,
-	}
-}
-
-// Open a node returning a file handle
-func (of *openFiles) Open(node vfs.Noder) (fh uint64) {
-	of.mu.Lock()
-	defer of.mu.Unlock()
+// Open a handle returning an integer file handle
+func (fsys *FS) openHandle(handle vfs.Handle) (fh uint64) {
+	fsys.mu.Lock()
+	defer fsys.mu.Unlock()
 	var i int
-	var oldNode vfs.Noder
-	for i, oldNode = range of.nodes {
-		if oldNode == nil {
-			of.nodes[i] = node
+	var oldHandle vfs.Handle
+	for i, oldHandle = range fsys.handles {
+		if oldHandle == nil {
+			fsys.handles[i] = handle
 			goto found
 		}
 	}
-	of.nodes = append(of.nodes, node)
-	i = len(of.nodes) - 1
+	fsys.handles = append(fsys.handles, handle)
+	i = len(fsys.handles) - 1
 found:
-	return uint64((i << 8) | int(of.mark))
+	return uint64(i)
 }
 
-// InRange to see if this fh could be one of ours
-func (of *openFiles) InRange(fh uint64) bool {
-	return uint8(fh) == of.mark
-}
-
-// get the node for fh, call with the lock held
-func (of *openFiles) get(fh uint64) (i int, node vfs.Noder, errc int) {
-	receivedMark := uint8(fh)
-	if receivedMark != of.mark {
-		fs.Debugf(nil, "Bad file handle: bad mark 0x%X != 0x%X: 0x%X", receivedMark, of.mark, fh)
-		return i, nil, -fuse.EBADF
-	}
-	i64 := fh >> 8
-	if i64 > uint64(len(of.nodes)) {
+// get the handle for fh, call with the lock held
+func (fsys *FS) _getHandle(fh uint64) (i int, handle vfs.Handle, errc int) {
+	if fh > uint64(len(fsys.handles)) {
 		fs.Debugf(nil, "Bad file handle: too big: 0x%X", fh)
 		return i, nil, -fuse.EBADF
 	}
-	i = int(i64)
-	node = of.nodes[i]
-	if node == nil {
-		fs.Debugf(nil, "Bad file handle: nil node: 0x%X", fh)
+	i = int(fh)
+	handle = fsys.handles[i]
+	if handle == nil {
+		fs.Debugf(nil, "Bad file handle: nil handle: 0x%X", fh)
 		return i, nil, -fuse.EBADF
 	}
-	return i, node, 0
+	return i, handle, 0
 }
 
-// Get the node for the file handle
-func (of *openFiles) Get(fh uint64) (node vfs.Noder, errc int) {
-	of.mu.Lock()
-	_, node, errc = of.get(fh)
-	of.mu.Unlock()
+// Get the handle for the file handle
+func (fsys *FS) getHandle(fh uint64) (handle vfs.Handle, errc int) {
+	fsys.mu.Lock()
+	_, handle, errc = fsys._getHandle(fh)
+	fsys.mu.Unlock()
 	return
 }
 
-// Close the node
-func (of *openFiles) Close(fh uint64) (errc int) {
-	of.mu.Lock()
-	i, _, errc := of.get(fh)
+// Close the handle
+func (fsys *FS) closeHandle(fh uint64) (errc int) {
+	fsys.mu.Lock()
+	i, _, errc := fsys._getHandle(fh)
 	if errc == 0 {
-		of.nodes[i] = nil
+		fsys.handles[i] = nil
 	}
-	of.mu.Unlock()
+	fsys.mu.Unlock()
 	return
 }
 
@@ -158,35 +131,13 @@ func (fsys *FS) lookupFile(path string) (file *vfs.File, errc int) {
 	return file, 0
 }
 
-// Get the underlying openFile handle from the file handle
-func (fsys *FS) getOpenFilesFromFh(fh uint64) (of *openFiles, errc int) {
-	switch {
-	case fsys.openFilesRd.InRange(fh):
-		return fsys.openFilesRd, 0
-	case fsys.openFilesWr.InRange(fh):
-		return fsys.openFilesWr, 0
-	case fsys.openDirs.InRange(fh):
-		return fsys.openDirs, 0
-	}
-	return nil, -fuse.EBADF
-}
-
-// Get the underlying handle from the file handle
-func (fsys *FS) getHandleFromFh(fh uint64) (handle vfs.Noder, errc int) {
-	of, errc := fsys.getOpenFilesFromFh(fh)
-	if errc != 0 {
-		return nil, errc
-	}
-	return of.Get(fh)
-}
-
 // get a node from the path or from the fh if not fhUnset
 func (fsys *FS) getNode(path string, fh uint64) (node vfs.Node, errc int) {
 	if fh == fhUnset {
 		node, errc = fsys.lookupNode(path)
 	} else {
-		var n vfs.Noder
-		n, errc = fsys.getHandleFromFh(fh)
+		var n vfs.Handle
+		n, errc = fsys.getHandle(fh)
 		if errc == 0 {
 			node = n.Node()
 		}
@@ -196,19 +147,14 @@ func (fsys *FS) getNode(path string, fh uint64) (node vfs.Node, errc int) {
 
 // stat fills up the stat block for Node
 func (fsys *FS) stat(node vfs.Node, stat *fuse.Stat_t) (errc int) {
-	var Size uint64
-	var Blocks uint64
-	var modTime time.Time
-	var Mode os.FileMode
-	switch x := node.(type) {
-	case *vfs.Dir:
-		modTime = x.ModTime()
-		Mode = fsys.VFS.Opt.DirPerms | fuse.S_IFDIR
-	case *vfs.File:
-		modTime = x.ModTime()
-		Size = uint64(x.Size())
-		Blocks = (Size + 511) / 512
-		Mode = fsys.VFS.Opt.FilePerms | fuse.S_IFREG
+	Size := uint64(node.Size())
+	Blocks := (Size + 511) / 512
+	modTime := node.ModTime()
+	Mode := node.Mode().Perm()
+	if node.IsDir() {
+		Mode |= fuse.S_IFDIR
+	} else {
+		Mode |= fuse.S_IFREG
 	}
 	//stat.Dev = 1
 	stat.Ino = node.Inode() // FIXME do we need to set the inode number?
@@ -255,13 +201,11 @@ func (fsys *FS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 // Opendir opens path as a directory
 func (fsys *FS) Opendir(path string) (errc int, fh uint64) {
 	defer fs.Trace(path, "")("errc=%d, fh=0x%X", &errc, &fh)
-	dir, errc := fsys.lookupDir(path)
-	if errc == 0 {
-		fh = fsys.openDirs.Open(dir)
-	} else {
-		fh = fhUnset
+	handle, err := fsys.VFS.OpenFile(path, os.O_RDONLY, 0777)
+	if errc != 0 {
+		return translateError(err), fhUnset
 	}
-	return
+	return 0, fsys.openHandle(handle)
 }
 
 // Readdir reads the directory at dirPath
@@ -272,17 +216,12 @@ func (fsys *FS) Readdir(dirPath string,
 	itemsRead := -1
 	defer fs.Trace(dirPath, "ofst=%d, fh=0x%X", ofst, fh)("items=%d, errc=%d", &itemsRead, &errc)
 
-	node, errc := fsys.openDirs.Get(fh)
+	node, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
 	}
 
-	dir, ok := node.(*vfs.Dir)
-	if !ok {
-		return -fuse.ENOTDIR
-	}
-
-	items, err := dir.ReadDirAll()
+	items, err := node.Readdir(-1)
 	if err != nil {
 		return translateError(err)
 	}
@@ -303,8 +242,11 @@ func (fsys *FS) Readdir(dirPath string,
 	fill(".", nil, 0)
 	fill("..", nil, 0)
 	for _, item := range items {
-		name := path.Base(item.DirEntry().Remote())
-		fill(name, nil, 0)
+		node, ok := item.(vfs.Node)
+		if ok {
+			name := path.Base(node.DirEntry().Remote())
+			fill(name, nil, 0)
+		}
 	}
 	itemsRead = len(items)
 	return 0
@@ -313,7 +255,7 @@ func (fsys *FS) Readdir(dirPath string,
 // Releasedir finished reading the directory
 func (fsys *FS) Releasedir(path string, fh uint64) (errc int) {
 	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
-	return fsys.openDirs.Close(fh)
+	return fsys.closeHandle(fh)
 }
 
 // Statfs reads overall stats on the filessystem
@@ -346,14 +288,7 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 		return translateError(err), fhUnset
 	}
 
-	switch fh := handle.(type) {
-	case *vfs.WriteFileHandle:
-		return 0, fsys.openFilesWr.Open(fh)
-	case *vfs.ReadFileHandle:
-		return 0, fsys.openFilesRd.Open(fh)
-	}
-
-	return -fuse.EPERM, fhUnset
+	return 0, fsys.openHandle(handle)
 }
 
 // Create creates and opens a file.
@@ -367,7 +302,7 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 	if err != nil {
 		return translateError(err), fhUnset
 	}
-	return 0, fsys.openFilesWr.Open(handle)
+	return 0, fsys.openHandle(handle)
 }
 
 // Truncate truncates a file to size
@@ -377,12 +312,8 @@ func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 	if errc != 0 {
 		return errc
 	}
-	file, ok := node.(*vfs.File)
-	if !ok {
-		return -fuse.EIO
-	}
 	// Read the size so far
-	currentSize := file.Size()
+	currentSize := node.Size()
 	fs.Debugf(path, "truncate to %d, currentSize %d", size, currentSize)
 	if int64(currentSize) != size {
 		fs.Errorf(path, "Can't truncate files")
@@ -391,10 +322,10 @@ func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 	return 0
 }
 
+// Read data from file handle
 func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	defer fs.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
-	// FIXME detect seek
-	handle, errc := fsys.openFilesRd.Get(fh)
+	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
 	}
@@ -407,19 +338,14 @@ func (fsys *FS) Read(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	return n
 }
 
+// Write data to file handle
 func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 	defer fs.Trace(path, "ofst=%d, fh=0x%X", ofst, fh)("n=%d", &n)
-	// FIXME detect seek
-	handle, errc := fsys.openFilesWr.Get(fh)
+	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
 	}
-	wfh, ok := handle.(*vfs.WriteFileHandle)
-	if !ok {
-		// Can only write to write file handle
-		return -fuse.EIO
-	}
-	n, err := wfh.WriteAt(buff, ofst)
+	n, err := handle.WriteAt(buff, ofst)
 	if err != nil {
 		return translateError(err)
 	}
@@ -429,44 +355,22 @@ func (fsys *FS) Write(path string, buff []byte, ofst int64, fh uint64) (n int) {
 // Flush flushes an open file descriptor or path
 func (fsys *FS) Flush(path string, fh uint64) (errc int) {
 	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
-	handle, errc := fsys.getHandleFromFh(fh)
+	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
 	}
-	var err error
-	switch x := handle.(type) {
-	case *vfs.ReadFileHandle:
-		err = x.Flush()
-	case *vfs.WriteFileHandle:
-		err = x.Flush()
-	default:
-		return -fuse.EIO
-	}
-	return translateError(err)
+	return translateError(handle.Flush())
 }
 
 // Release closes the file if still open
 func (fsys *FS) Release(path string, fh uint64) (errc int) {
 	defer fs.Trace(path, "fh=0x%X", fh)("errc=%d", &errc)
-	of, errc := fsys.getOpenFilesFromFh(fh)
+	handle, errc := fsys.getHandle(fh)
 	if errc != 0 {
 		return errc
 	}
-	handle, errc := of.Get(fh)
-	if errc != 0 {
-		return errc
-	}
-	_ = of.Close(fh)
-	var err error
-	switch x := handle.(type) {
-	case *vfs.ReadFileHandle:
-		err = x.Release()
-	case *vfs.WriteFileHandle:
-		err = x.Release()
-	default:
-		return -fuse.EIO
-	}
-	return translateError(err)
+	_ = fsys.closeHandle(fh)
+	return translateError(handle.Release())
 }
 
 // Unlink removes a file.
@@ -503,15 +407,7 @@ func (fsys *FS) Rmdir(dirPath string) (errc int) {
 // Rename renames a file.
 func (fsys *FS) Rename(oldPath string, newPath string) (errc int) {
 	defer fs.Trace(oldPath, "newPath=%q", newPath)("errc=%d", &errc)
-	oldLeaf, oldParentDir, errc := fsys.lookupParentDir(oldPath)
-	if errc != 0 {
-		return errc
-	}
-	newLeaf, newParentDir, errc := fsys.lookupParentDir(newPath)
-	if errc != 0 {
-		return errc
-	}
-	return translateError(oldParentDir.Rename(oldLeaf, newLeaf, newParentDir))
+	return translateError(fsys.VFS.Rename(oldPath, newPath))
 }
 
 // Utimens changes the access and modification times of a file.
@@ -527,14 +423,7 @@ func (fsys *FS) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	} else {
 		t = tmsp[1].Time()
 	}
-	var err error
-	switch x := node.(type) {
-	case *vfs.Dir:
-		err = x.SetModTime(t)
-	case *vfs.File:
-		err = x.SetModTime(t)
-	}
-	return translateError(err)
+	return translateError(node.SetModTime(t))
 }
 
 // Mknod creates a file node.
