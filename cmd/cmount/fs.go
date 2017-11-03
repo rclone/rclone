@@ -515,10 +515,14 @@ func translateError(err error) (errc int) {
 		return 0
 	case vfs.ENOENT:
 		return -fuse.ENOENT
-	case vfs.ENOTEMPTY:
-		return -fuse.ENOTEMPTY
 	case vfs.EEXIST:
 		return -fuse.EEXIST
+	case vfs.EPERM:
+		return -fuse.EPERM
+	case vfs.ECLOSED:
+		return -fuse.EBADF
+	case vfs.ENOTEMPTY:
+		return -fuse.ENOTEMPTY
 	case vfs.ESPIPE:
 		return -fuse.ESPIPE
 	case vfs.EBADF:
@@ -527,8 +531,6 @@ func translateError(err error) (errc int) {
 		return -fuse.EROFS
 	case vfs.ENOSYS:
 		return -fuse.ENOSYS
-	case vfs.EPERM:
-		return -fuse.EPERM
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return -fuse.EIO

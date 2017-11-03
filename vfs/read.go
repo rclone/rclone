@@ -175,7 +175,7 @@ func (fh *ReadFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 	// fs.Debugf(fh.o, "ReadFileHandle.Read size %d offset %d", reqSize, off)
 	if fh.closed {
 		fs.Errorf(fh.o, "ReadFileHandle.Read error: %v", EBADF)
-		return 0, EBADF
+		return 0, ECLOSED
 	}
 	doSeek := off != fh.offset
 	if doSeek && fh.noSeek {
@@ -305,7 +305,7 @@ func (fh *ReadFileHandle) Read(p []byte) (n int, err error) {
 // Must be called with fh.mu held
 func (fh *ReadFileHandle) close() error {
 	if fh.closed {
-		return EBADF
+		return ECLOSED
 	}
 	fh.closed = true
 

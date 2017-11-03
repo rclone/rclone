@@ -74,10 +74,14 @@ func translateError(err error) error {
 		return nil
 	case vfs.ENOENT:
 		return fuse.ENOENT
-	case vfs.ENOTEMPTY:
-		return fuse.Errno(syscall.ENOTEMPTY)
 	case vfs.EEXIST:
 		return fuse.EEXIST
+	case vfs.EPERM:
+		return fuse.EPERM
+	case vfs.ECLOSED:
+		return fuse.Errno(syscall.EBADF)
+	case vfs.ENOTEMPTY:
+		return fuse.Errno(syscall.ENOTEMPTY)
 	case vfs.ESPIPE:
 		return fuse.Errno(syscall.ESPIPE)
 	case vfs.EBADF:
@@ -86,8 +90,6 @@ func translateError(err error) error {
 		return fuse.Errno(syscall.EROFS)
 	case vfs.ENOSYS:
 		return fuse.ENOSYS
-	case vfs.EPERM:
-		return fuse.EPERM
 	}
 	return err
 }

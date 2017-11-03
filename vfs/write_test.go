@@ -61,7 +61,7 @@ func TestWriteFileHandleMethods(t *testing.T) {
 
 	// Check double close
 	err = fh.Close()
-	assert.Equal(t, EBADF, err)
+	assert.Equal(t, ECLOSED, err)
 
 	// check vfs
 	root, err := vfs.Root()
@@ -105,7 +105,7 @@ func TestWriteFileHandleWriteAt(t *testing.T) {
 
 	// Check can't write on closed handle
 	n, err = fh.WriteAt([]byte("hello"), 0)
-	assert.Equal(t, EBADF, err)
+	assert.Equal(t, ECLOSED, err)
 	assert.Equal(t, 0, n)
 
 	// check vfs

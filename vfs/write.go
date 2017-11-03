@@ -88,7 +88,7 @@ func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
 	defer fh.mu.Unlock()
 	if fh.closed {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", EBADF)
-		return 0, EBADF
+		return 0, ECLOSED
 	}
 	if fh.offset != off {
 		fs.Errorf(fh.remote, "WriteFileHandle.Write can't seek in file")
@@ -129,7 +129,7 @@ func (fh *WriteFileHandle) Offset() (offset int64) {
 // Must be called with fh.mu held
 func (fh *WriteFileHandle) close() error {
 	if fh.closed {
-		return EBADF
+		return ECLOSED
 	}
 	fh.closed = true
 	fh.file.addWriters(-1)

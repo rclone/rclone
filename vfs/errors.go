@@ -7,7 +7,7 @@ import (
 	"os"
 )
 
-// Error describes low level errors in a cross platform way
+// Error describes low level errors in a cross platform way.
 type Error byte
 
 // NB if changing errors translateError in cmd/mount/fs.go, cmd/cmount/fs.go
@@ -27,6 +27,7 @@ var (
 	ENOENT = os.ErrNotExist
 	EEXIST = os.ErrExist
 	EPERM  = os.ErrPermission
+	// ECLOSED see errors_{old,new}.go
 )
 
 var errorNames = []string{

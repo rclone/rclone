@@ -76,7 +76,7 @@ func TestReadFileHandleMethods(t *testing.T) {
 	assert.True(t, fh.closed)
 
 	// Close again
-	assert.Equal(t, EBADF, fh.Close())
+	assert.Equal(t, ECLOSED, fh.Close())
 }
 
 func TestReadFileHandleSeek(t *testing.T) {
@@ -177,7 +177,7 @@ func TestReadFileHandleReadAt(t *testing.T) {
 	// check reading on closed file
 	fh.noSeek = true
 	n, err = fh.ReadAt(buf, 100)
-	assert.Equal(t, EBADF, err)
+	assert.Equal(t, ECLOSED, err)
 }
 
 func TestReadFileHandleFlush(t *testing.T) {

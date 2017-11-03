@@ -11,6 +11,11 @@
 // use paths with slashes in.
 //
 // It also includes directory caching
+//
+// The vfs package returns Error values to signal precisely which
+// error conditions have ocurred.  It may also return general errors
+// it receives.  It tries to use os Error values (eg os.ErrExist)
+// where possible.
 package vfs
 
 import (
