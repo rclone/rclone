@@ -111,3 +111,4 @@ Contributors
   * Jason Rose <jason@jro.io>
   * Andrew Starr-Bochicchio <a.starr.b@gmail.com>
   * John Leach <john@johnleach.co.uk>
+  * Corban Raun <craun@instructure.com>
