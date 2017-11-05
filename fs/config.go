@@ -104,6 +104,7 @@ var (
 	disableFeatures       = StringP("disable", "", "", "Disable a comma separated list of features.  Use help to see a list.")
 	userAgent             = StringP("user-agent", "", "rclone/"+Version, "Set the user-agent to a specified string. The default is rclone/ version")
 	immutable             = BoolP("immutable", "", false, "Do not modify files. Fail if existing files have been modified.")
+	autoConfirm           = BoolP("auto-confirm", "", false, "If enabled, do not request console confirmation.")
 	streamingUploadCutoff = SizeSuffix(100 * 1024)
 	logLevel              = LogLevelNotice
 	statsLogLevel         = LogLevelInfo
@@ -243,6 +244,7 @@ type ConfigInfo struct {
 	BindAddr              net.IP
 	DisableFeatures       []string
 	Immutable             bool
+	AutoConfirm           bool
 	StreamingUploadCutoff SizeSuffix
 }
 
@@ -383,6 +385,7 @@ func LoadConfig() {
 	Config.TPSLimit = *tpsLimit
 	Config.TPSLimitBurst = *tpsLimitBurst
 	Config.Immutable = *immutable
+	Config.AutoConfirm = *autoConfirm
 	Config.BufferSize = bufferSize
 	Config.StreamingUploadCutoff = streamingUploadCutoff
 
@@ -805,6 +808,9 @@ func Command(commands []string) byte {
 
 // Confirm asks the user for Yes or No and returns true or false
 func Confirm() bool {
+	if Config.AutoConfirm {
+		return true
+	}
 	return Command([]string{"yYes", "nNo"}) == 'y'
 }
 
@@ -1016,6 +1022,8 @@ func UpdateRemote(name string, keyValues []string) error {
 // parameters which are key, value pairs.  If update is set then it
 // adds the new keys rather than replacing all of them.
 func CreateRemote(name string, provider string, keyValues []string) error {
+	// Suppress Confirm
+	Config.AutoConfirm = true
 	// Delete the old config if it exists
 	configData.DeleteSection(name)
 	// Set the type
