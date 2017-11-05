@@ -772,7 +772,7 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	if o.size != info.Size() {
 		o.size = info.Size()
 	}
-	if o.modTime != info.ModTime() {
+	if !o.modTime.Equal(info.ModTime()) {
 		o.modTime = info.ModTime()
 	}
 	if o.mode != info.Mode() {
