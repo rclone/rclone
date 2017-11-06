@@ -132,20 +132,22 @@ func (mode NameEncryptionMode) String() (out string) {
 }
 
 type cipher struct {
-	dataKey    [32]byte                  // Key for secretbox
-	nameKey    [32]byte                  // 16,24 or 32 bytes
-	nameTweak  [nameCipherBlockSize]byte // used to tweak the name crypto
-	block      gocipher.Block
-	mode       NameEncryptionMode
-	buffers    sync.Pool // encrypt/decrypt buffers
-	cryptoRand io.Reader // read crypto random numbers from here
+	dataKey        [32]byte                  // Key for secretbox
+	nameKey        [32]byte                  // 16,24 or 32 bytes
+	nameTweak      [nameCipherBlockSize]byte // used to tweak the name crypto
+	block          gocipher.Block
+	mode           NameEncryptionMode
+	buffers        sync.Pool // encrypt/decrypt buffers
+	cryptoRand     io.Reader // read crypto random numbers from here
+	dirNameEncrypt bool
 }
 
 // newCipher initialises the cipher.  If salt is "" then it uses a built in salt val
-func newCipher(mode NameEncryptionMode, password, salt string) (*cipher, error) {
+func newCipher(mode NameEncryptionMode, password, salt string, dirNameEncrypt bool) (*cipher, error) {
 	c := &cipher{
-		mode:       mode,
-		cryptoRand: rand.Reader,
+		mode:           mode,
+		cryptoRand:     rand.Reader,
+		dirNameEncrypt: dirNameEncrypt,
 	}
 	c.buffers.New = func() interface{} {
 		return make([]byte, blockSize)
@@ -469,6 +471,11 @@ func (c *cipher) deobfuscateSegment(ciphertext string) (string, error) {
 func (c *cipher) encryptFileName(in string) string {
 	segments := strings.Split(in, "/")
 	for i := range segments {
+		// Skip directory name encryption if the user chose to
+		// leave them intact
+		if !c.dirNameEncrypt && i != (len(segments)-1) {
+			continue
+		}
 		if c.mode == NameEncryptionStandard {
 			segments[i] = c.encryptSegment(segments[i])
 		} else {
@@ -488,7 +495,7 @@ func (c *cipher) EncryptFileName(in string) string {
 
 // EncryptDirName encrypts a directory path
 func (c *cipher) EncryptDirName(in string) string {
-	if c.mode == NameEncryptionOff {
+	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in
 	}
 	return c.encryptFileName(in)
@@ -499,6 +506,11 @@ func (c *cipher) decryptFileName(in string) (string, error) {
 	segments := strings.Split(in, "/")
 	for i := range segments {
 		var err error
+		// Skip directory name decryption if the user chose to
+		// leave them intact
+		if !c.dirNameEncrypt && i != (len(segments)-1) {
+			continue
+		}
 		if c.mode == NameEncryptionStandard {
 			segments[i], err = c.decryptSegment(segments[i])
 		} else {
@@ -526,7 +538,7 @@ func (c *cipher) DecryptFileName(in string) (string, error) {
 
 // DecryptDirName decrypts a directory path
 func (c *cipher) DecryptDirName(in string) (string, error) {
-	if c.mode == NameEncryptionOff {
+	if c.mode == NameEncryptionOff || !c.dirNameEncrypt {
 		return in, nil
 	}
 	return c.decryptFileName(in)

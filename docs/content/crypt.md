@@ -74,6 +74,13 @@ Choose a number from below, or type in your own value
  3 / Very simple filename obfuscation.
    \ "obfuscate"
 filename_encryption> 2
+Option to either encrypt directory names or leave them intact.
+Choose a number from below, or type in your own value
+ 1 / Encrypt directory names.
+   \ "true"
+ 2 / Don't encrypt directory names, leave them intact.
+   \ "false"
+filename_encryption> 1
 Password or pass phrase for encryption.
 y) Yes type in my own password
 g) Generate random password
@@ -255,6 +262,25 @@ characters in length then you should be OK on all providers.
 
 There may be an even more secure file name encryption mode in the
 future which will address the long file name problem.
+
+### Directory name encryption ###
+Crypt offers the option of encrypting dir names or leaving them intact.
+There are two options:
+
+True
+
+Encrypts the whole file path including directory names
+Example:
+`1/12/123.txt` is encrypted to
+`p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng/qgm4avr35m5loi1th53ato71v0`
+
+False
+
+Only encrypts file names, skips directory names
+Example:
+`1/12/123/txt` is encrypted to
+`1/12/qgm4avr35m5loi1th53ato71v0`
+
 
 ### Modified time and hashes ###
 
