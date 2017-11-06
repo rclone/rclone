@@ -266,15 +266,18 @@ func (vfs *VFS) StatParent(name string) (dir *Dir, leaf string, err error) {
 func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
 	node, err := vfs.Stat(name)
 	if err != nil {
-		if err == ENOENT && flags&os.O_CREATE != 0 {
-			dir, leaf, err := vfs.StatParent(name)
-			if err != nil {
-				return nil, err
-			}
-			_, fd, err = dir.Create(leaf)
-			return fd, err
+		if err != ENOENT || flags&os.O_CREATE == 0 {
+			return nil, err
 		}
-		return nil, err
+		// If not found and O_CREATE then create the file
+		dir, leaf, err := vfs.StatParent(name)
+		if err != nil {
+			return nil, err
+		}
+		node, err = dir.Create(leaf)
+		if err != nil {
+			return nil, err
+		}
 	}
 	return node.Open(flags)
 }

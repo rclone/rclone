@@ -278,9 +278,12 @@ func TestDirCreate(t *testing.T) {
 	defer r.Finalise()
 	vfs, dir, _ := dirCreate(t, r)
 
-	file, fd, err := dir.Create("potato")
+	file, err := dir.Create("potato")
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), file.Size())
+
+	fd, err := file.Open(os.O_WRONLY)
+	require.NoError(t, err)
 
 	// FIXME Note that this fails with the current implementation
 	// until the file has been opened.
@@ -300,7 +303,7 @@ func TestDirCreate(t *testing.T) {
 	assert.Equal(t, int64(5), file2.Size())
 
 	vfs.Opt.ReadOnly = true
-	_, _, err = dir.Create("sausage")
+	_, err = dir.Create("sausage")
 	assert.Equal(t, EROFS, err)
 }
 

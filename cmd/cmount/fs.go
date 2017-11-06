@@ -298,7 +298,11 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 	if errc != 0 {
 		return errc, fhUnset
 	}
-	_, handle, err := parentDir.Create(leaf)
+	file, err := parentDir.Create(leaf)
+	if err != nil {
+		return translateError(err), fhUnset
+	}
+	handle, err := file.Open(flags)
 	if err != nil {
 		return translateError(err), fhUnset
 	}

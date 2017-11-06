@@ -316,23 +316,14 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 	return newDirHandle(d), nil
 }
 
-// Create makes a new file
-func (d *Dir) Create(name string) (*File, *WriteFileHandle, error) {
-	if d.vfs.Opt.ReadOnly {
-		return nil, nil, EROFS
-	}
-	path := path.Join(d.path, name)
+// Create makes a new file node
+func (d *Dir) Create(name string) (*File, error) {
 	// fs.Debugf(path, "Dir.Create")
-	src := newCreateInfo(d.f, path)
-	// This gets added to the directory when the file is written
-	file := newFile(d, nil, name)
-	fh, err := newWriteFileHandle(d, file, src)
-	if err != nil {
-		fs.Errorf(d, "Dir.Create error: %v", err)
-		return nil, nil, err
+	if d.vfs.Opt.ReadOnly {
+		return nil, EROFS
 	}
-	// fs.Debugf(path, "Dir.Create OK")
-	return file, fh, nil
+	// This gets added to the directory when the file is written
+	return newFile(d, nil, name), nil
 }
 
 // Mkdir creates a new directory

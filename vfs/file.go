@@ -33,12 +33,17 @@ func newFile(d *Dir, o fs.Object, leaf string) *File {
 	}
 }
 
+// path returns the full path of the file
+func (f *File) path() string {
+	return path.Join(f.d.path, f.leaf)
+}
+
 // String converts it to printable
 func (f *File) String() string {
 	if f == nil {
 		return "<nil *File>"
 	}
-	return path.Join(f.d.path, f.leaf)
+	return f.path()
 }
 
 // IsFile returns true for File - satisfies Node interface
@@ -228,14 +233,9 @@ func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
 	if f.d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
-	// if o is nil it isn't valid yet
-	o, err := f.waitForValidObject()
-	if err != nil {
-		return nil, err
-	}
 	// fs.Debugf(o, "File.OpenWrite")
 
-	src := newCreateInfo(f.d.f, o.Remote())
+	src := newCreateInfo(f.d.f, f.path())
 	fh, err = newWriteFileHandle(f.d, f, src)
 	err = errors.Wrap(err, "open for write")
 
