@@ -235,8 +235,7 @@ func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
 	}
 	// fs.Debugf(o, "File.OpenWrite")
 
-	src := newCreateInfo(f.d.f, f.path())
-	fh, err = newWriteFileHandle(f.d, f, src)
+	fh, err = newWriteFileHandle(f.d, f, f.path())
 	err = errors.Wrap(err, "open for write")
 
 	if err != nil {

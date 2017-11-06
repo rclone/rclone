@@ -30,9 +30,9 @@ var (
 	_ io.Closer   = (*WriteFileHandle)(nil)
 )
 
-func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, error) {
+func newWriteFileHandle(d *Dir, f *File, remote string) (*WriteFileHandle, error) {
 	fh := &WriteFileHandle{
-		remote: src.Remote(),
+		remote: remote,
 		result: make(chan error, 1),
 		file:   f,
 	}
@@ -40,7 +40,7 @@ func newWriteFileHandle(d *Dir, f *File, src fs.ObjectInfo) (*WriteFileHandle, e
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
 		// NB Rcat deals with Stats.Transferring etc
-		o, err := fs.Rcat(d.f, src.Remote(), pipeReader, time.Now())
+		o, err := fs.Rcat(d.f, remote, pipeReader, time.Now())
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
