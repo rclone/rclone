@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/ncw/rclone/fs"
@@ -42,6 +43,19 @@ func init() {
 				},
 			},
 		}, {
+			Name: "directory_name_encryption",
+			Help: "Option to either encrypt directory names or leave them intact.",
+			Examples: []fs.OptionExample{
+				{
+					Value: "true",
+					Help:  "Encrypt directory names.",
+				},
+				{
+					Value: "false",
+					Help:  "Don't encrypt directory names, leave them intact.",
+				},
+			},
+		}, {
 			Name:       "password",
 			Help:       "Password or pass phrase for encryption.",
 			IsPassword: true,
@@ -60,6 +74,10 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
+	dirNameEncrypt, err := strconv.ParseBool(fs.ConfigFileGet(name, "directory_name_encryption", "true"))
+	if err != nil {
+		return nil, err
+	}
 	password := fs.ConfigFileGet(name, "password", "")
 	if password == "" {
 		return nil, errors.New("password not set in config file")
@@ -75,7 +93,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 			return nil, errors.Wrap(err, "failed to decrypt password2")
 		}
 	}
-	cipher, err := newCipher(mode, password, salt)
+	cipher, err := newCipher(mode, password, salt, dirNameEncrypt)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
