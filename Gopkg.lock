@@ -41,7 +41,7 @@
   branch = "master"
   name = "github.com/a8m/tree"
   packages = ["."]
-  revision = "4b871cd428eeab064e45ff2bf65054bb7eb10d6c"
+  revision = "5554ed4554293f11a726accc1ebf2bd3342742f8"
 
 [[projects]]
   branch = "master"
