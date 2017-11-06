@@ -36,6 +36,8 @@ type syncCopyMove struct {
 	dstFilesResult chan error          // error result of dst listing
 	dstEmptyDirsMu sync.Mutex          // protect dstEmptyDirs
 	dstEmptyDirs   []DirEntry          // potentially empty directories
+	srcEmptyDirsMu sync.Mutex          // protect srcEmptyDirs
+	srcEmptyDirs   []DirEntry          // potentially empty directories
 	checkerWg      sync.WaitGroup      // wait for checkers
 	toBeChecked    ObjectPairChan      // checkers channel
 	transfersWg    sync.WaitGroup      // wait for transfers
@@ -694,6 +696,20 @@ func (s *syncCopyMove) run() error {
 			s.processError(deleteEmptyDirectories(s.fdst, s.dstEmptyDirs))
 		}
 	}
+
+	// if DoMove, delete fsrc directory after
+	if s.DoMove {
+		//first delete any subdirectories in fsrc
+		s.processError(deleteEmptyDirectories(s.fsrc, s.srcEmptyDirs))
+		//delete fsrc dir
+		s.processError(func() error {
+			err := TryRmdir(s.fsrc, "")
+			if err != nil {
+				Debugf(logDirName(s.fsrc, ""), "Failed to Rmdir: %v", err)
+			}
+			return nil
+		}())
+	}
 	return s.currentError()
 }
 
@@ -747,6 +763,10 @@ func (s *syncCopyMove) SrcOnly(src DirEntry) (recurse bool) {
 		}
 	case Directory:
 		// Do the same thing to the entire contents of the directory
+		// Record the directory for deletion
+		s.srcEmptyDirsMu.Lock()
+		s.srcEmptyDirs = append(s.srcEmptyDirs, src)
+		s.srcEmptyDirsMu.Unlock()
 		return true
 	default:
 		panic("Bad object in DirEntries")
@@ -774,6 +794,10 @@ func (s *syncCopyMove) Match(dst, src DirEntry) (recurse bool) {
 		// Do the same thing to the entire contents of the directory
 		_, ok := dst.(Directory)
 		if ok {
+			// Record the src directory for deletion
+			s.srcEmptyDirsMu.Lock()
+			s.srcEmptyDirs = append(s.srcEmptyDirs, src)
+			s.srcEmptyDirsMu.Unlock()
 			return true
 		}
 		// FIXME src is dir, dst is file
