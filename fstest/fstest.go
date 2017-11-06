@@ -262,6 +262,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
+
 		gotListing = makeListingFromObjects(objs)
 		listingOK = wantListing1 == gotListing || wantListing2 == gotListing
 		if listingOK && (expectedDirs == nil || len(dirs) == len(expectedDirs)) {
@@ -318,6 +319,16 @@ func CheckListing(t *testing.T, f fs.Fs, items []Item) {
 // using a precision of fs.Config.ModifyWindow
 func CheckItems(t *testing.T, f fs.Fs, items ...Item) {
 	CheckListingWithPrecision(t, f, items, nil, fs.Config.ModifyWindow)
+}
+
+// CheckRootDir checks the fs to see if the root dir exists or not
+func CheckRootDir(t *testing.T, f fs.Fs, shouldExist bool) {
+	_, _, err := fs.WalkGetAll(f, "", true, -1)
+	if shouldExist {
+		require.NoError(t, err)
+	} else {
+		assert.EqualError(t, err, fs.ErrorDirNotFound.Error())
+	}
 }
 
 // Time parses a time string or logs a fatal error

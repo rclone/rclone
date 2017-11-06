@@ -824,7 +824,7 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
 	if withFilter {
 		fstest.CheckItems(t, r.Fremote, file2)
 	} else {
-		fstest.CheckItems(t, r.Fremote)
+		fstest.CheckRootDir(t, r.Fremote, false)
 	}
 	fstest.CheckItems(t, FremoteMove, file2, file1, file3u)
 
@@ -843,7 +843,7 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
 		fstest.CheckItems(t, FremoteMove, file2)
 	} else {
 		fstest.CheckItems(t, FremoteMove2, file2, file1, file3u)
-		fstest.CheckItems(t, FremoteMove)
+		fstest.CheckRootDir(t, FremoteMove, false)
 	}
 }
 
