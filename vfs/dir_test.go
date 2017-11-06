@@ -282,7 +282,7 @@ func TestDirCreate(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, int64(0), file.Size())
 
-	fd, err := file.Open(os.O_WRONLY)
+	fd, err := file.Open(os.O_WRONLY | os.O_CREATE)
 	require.NoError(t, err)
 
 	// FIXME Note that this fails with the current implementation

@@ -306,9 +306,12 @@ func (d *Dir) ReadDirAll() (items Nodes, err error) {
 	return items, nil
 }
 
+// accessModeMask masks off the read modes from the flags
+const accessModeMask = (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
+
 // Open the directory according to the flags provided
 func (d *Dir) Open(flags int) (fd Handle, err error) {
-	rdwrMode := flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
+	rdwrMode := flags & accessModeMask
 	if rdwrMode != os.O_RDONLY {
 		fs.Errorf(d, "Can only open directories read only")
 		return nil, EPERM
@@ -497,4 +500,9 @@ func (d *Dir) Fsync() error {
 // VFS returns the instance of the VFS
 func (d *Dir) VFS() *VFS {
 	return d.vfs
+}
+
+// Truncate changes the size of the named file.
+func (d *Dir) Truncate(size int64) error {
+	return ENOSYS
 }

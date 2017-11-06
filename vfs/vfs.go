@@ -27,21 +27,25 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.6
 )
 
 // DefaultOpt is the default values uses for Opt
 var DefaultOpt = Options{
-	NoModTime:    false,
-	NoChecksum:   false,
-	NoSeek:       false,
-	DirCacheTime: 5 * 60 * time.Second,
-	PollInterval: time.Minute,
-	ReadOnly:     false,
-	Umask:        0,
-	UID:          ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
-	GID:          ^uint32(0), // overriden for non windows in mount_unix.go
-	DirPerms:     os.FileMode(0777) | os.ModeDir,
-	FilePerms:    os.FileMode(0666),
+	NoModTime:         false,
+	NoChecksum:        false,
+	NoSeek:            false,
+	DirCacheTime:      5 * 60 * time.Second,
+	PollInterval:      time.Minute,
+	ReadOnly:          false,
+	Umask:             0,
+	UID:               ^uint32(0), // these values instruct WinFSP-FUSE to use the current user
+	GID:               ^uint32(0), // overriden for non windows in mount_unix.go
+	DirPerms:          os.FileMode(0777) | os.ModeDir,
+	FilePerms:         os.FileMode(0666),
+	CacheMode:         CacheModeOff,
+	CacheMaxAge:       3600 * time.Second,
+	CachePollInterval: 60 * time.Second,
 }
 
 // Node represents either a directory (*Dir) or a file (*File)
@@ -56,6 +60,7 @@ type Node interface {
 	DirEntry() fs.DirEntry
 	VFS() *VFS
 	Open(flags int) (Handle, error)
+	Truncate(size int64) error
 }
 
 // Check interfaces
@@ -84,12 +89,12 @@ var (
 	_ Noder = (*Dir)(nil)
 	_ Noder = (*ReadFileHandle)(nil)
 	_ Noder = (*WriteFileHandle)(nil)
+	_ Noder = (*RWFileHandle)(nil)
 	_ Noder = (*DirHandle)(nil)
 )
 
-// Handle is the interface statisified by open files or directories.
-// It is the methods on *os.File.  Not all of them are supported.
-type Handle interface {
+// OsFiler is the methods on *os.File
+type OsFiler interface {
 	Chdir() error
 	Chmod(mode os.FileMode) error
 	Chown(uid, gid int) error
@@ -107,10 +112,18 @@ type Handle interface {
 	Write(b []byte) (n int, err error)
 	WriteAt(b []byte, off int64) (n int, err error)
 	WriteString(s string) (n int, err error)
+}
+
+// Handle is the interface statisified by open files or directories.
+// It is the methods on *os.File, plus a few more useful for FUSE
+// filingsystems.  Not all of them are supported.
+type Handle interface {
+	OsFiler
 	// Additional methods useful for FUSE filesystems
 	Flush() error
 	Release() error
 	Node() Node
+	//	Size() int64
 }
 
 // baseHandle implements all the missing methods
@@ -137,34 +150,42 @@ func (h baseHandle) Flush() (err error)                                   { retu
 func (h baseHandle) Release() (err error)                                 { return ENOSYS }
 func (h baseHandle) Node() Node                                           { return nil }
 
+//func (h baseHandle) Size() int64                                          { return 0 }
+
 // Check interfaces
 var (
-	_ Handle = (*baseHandle)(nil)
-	_ Handle = (*ReadFileHandle)(nil)
-	_ Handle = (*WriteFileHandle)(nil)
-	_ Handle = (*DirHandle)(nil)
+	_ OsFiler = (*os.File)(nil)
+	_ Handle  = (*baseHandle)(nil)
+	_ Handle  = (*ReadFileHandle)(nil)
+	_ Handle  = (*WriteFileHandle)(nil)
+	_ Handle  = (*DirHandle)(nil)
 )
 
 // VFS represents the top level filing system
 type VFS struct {
-	f    fs.Fs
-	root *Dir
-	Opt  Options
+	f      fs.Fs
+	root   *Dir
+	Opt    Options
+	cache  *cache
+	cancel context.CancelFunc
 }
 
 // Options is options for creating the vfs
 type Options struct {
-	NoSeek       bool          // don't allow seeking if set
-	NoChecksum   bool          // don't check checksums if set
-	ReadOnly     bool          // if set VFS is read only
-	NoModTime    bool          // don't read mod times for files
-	DirCacheTime time.Duration // how long to consider directory listing cache valid
-	PollInterval time.Duration
-	Umask        int
-	UID          uint32
-	GID          uint32
-	DirPerms     os.FileMode
-	FilePerms    os.FileMode
+	NoSeek            bool          // don't allow seeking if set
+	NoChecksum        bool          // don't check checksums if set
+	ReadOnly          bool          // if set VFS is read only
+	NoModTime         bool          // don't read mod times for files
+	DirCacheTime      time.Duration // how long to consider directory listing cache valid
+	PollInterval      time.Duration
+	Umask             int
+	UID               uint32
+	GID               uint32
+	DirPerms          os.FileMode
+	FilePerms         os.FileMode
+	CacheMode         CacheMode
+	CacheMaxAge       time.Duration
+	CachePollInterval time.Duration
 }
 
 // New creates a new VFS and root directory.  If opt is nil, then
@@ -200,7 +221,30 @@ func New(f fs.Fs, opt *Options) *VFS {
 			fs.Logf(f, "poll-interval is not supported by this remote")
 		}
 	}
+
+	// Create the cache
+	ctx, cancel := context.WithCancel(context.Background())
+	vfs.cancel = cancel
+	cache, err := newCache(ctx, f, &vfs.Opt) // FIXME pass on context or get from Opt?
+	if err != nil {
+		// FIXME
+		panic(fmt.Sprintf("failed to create local cache: %v", err))
+	}
+	vfs.cache = cache
 	return vfs
+}
+
+// Shutdown stops any background go-routines
+func (vfs *VFS) Shutdown() {
+	if vfs.cancel != nil {
+		vfs.cancel()
+		vfs.cancel = nil
+	}
+}
+
+// CleanUp deletes the contents of the cache
+func (vfs *VFS) CleanUp() error {
+	return vfs.cache.cleanUp()
 }
 
 // Root returns the root node

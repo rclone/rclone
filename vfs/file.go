@@ -189,7 +189,7 @@ func (f *File) setObject(o fs.Object) {
 }
 
 // Wait for f.o to become non nil for a short time returning it or an
-// error
+// error.  Use when opening a read handle.
 //
 // Call without the mutex held
 func (f *File) waitForValidObject() (o fs.Object, err error) {
@@ -219,9 +219,8 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 	// fs.Debugf(o, "File.OpenRead")
 
 	fh, err = newReadFileHandle(f, o)
-	err = errors.Wrap(err, "open for read")
-
 	if err != nil {
+		err = errors.Wrap(err, "open for read")
 		fs.Errorf(f, "File.OpenRead failed: %v", err)
 		return nil, err
 	}
@@ -236,10 +235,27 @@ func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
 	// fs.Debugf(o, "File.OpenWrite")
 
 	fh, err = newWriteFileHandle(f.d, f, f.path())
-	err = errors.Wrap(err, "open for write")
-
 	if err != nil {
+		err = errors.Wrap(err, "open for write")
 		fs.Errorf(f, "File.OpenWrite failed: %v", err)
+		return nil, err
+	}
+	return fh, nil
+}
+
+// OpenRW open the file for read and write using a temporay file
+//
+// It uses the open flags passed in.
+func (f *File) OpenRW(flags int) (fh *RWFileHandle, err error) {
+	if flags&accessModeMask != os.O_RDONLY && f.d.vfs.Opt.ReadOnly {
+		return nil, EROFS
+	}
+	// fs.Debugf(o, "File.OpenRW")
+
+	fh, err = newRWFileHandle(f.d, f, f.path(), flags)
+	if err != nil {
+		err = errors.Wrap(err, "open for read write")
+		fs.Errorf(f, "File.OpenRW failed: %v", err)
 		return nil, err
 	}
 	return fh, nil
@@ -290,25 +306,85 @@ func (f *File) VFS() *VFS {
 }
 
 // Open a file according to the flags provided
+//
+//   O_RDONLY open the file read-only.
+//   O_WRONLY open the file write-only.
+//   O_RDWR   open the file read-write.
+//
+//   O_APPEND append data to the file when writing.
+//   O_CREATE create a new file if none exists.
+//   O_EXCL   used with O_CREATE, file must not exist
+//   O_SYNC   open for synchronous I/O.
+//   O_TRUNC  if possible, truncate file when opene
+//
+// We ignore O_SYNC and O_EXCL
 func (f *File) Open(flags int) (fd Handle, err error) {
-	rdwrMode := flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
-	var read bool
+	var (
+		write    bool // if set need write support
+		read     bool // if set need read support
+		rdwrMode = flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
+	)
+
+	// Figure out the read/write intents
 	switch {
 	case rdwrMode == os.O_RDONLY:
 		read = true
-	case rdwrMode == os.O_WRONLY || (rdwrMode == os.O_RDWR && (flags&os.O_TRUNC) != 0):
-		read = false
+	case rdwrMode == os.O_WRONLY:
+		write = true
 	case rdwrMode == os.O_RDWR:
-		fs.Errorf(f, "Can't open for Read and Write")
-		return nil, EPERM
+		read = true
+		write = true
 	default:
 		fs.Errorf(f, "Can't figure out how to open with flags: 0x%X", flags)
 		return nil, EPERM
 	}
-	if read {
-		fd, err = f.OpenRead()
+
+	// If append is set then set read to force OpenRW
+	if flags&os.O_APPEND != 0 {
+		read = true
+	}
+
+	// If truncate is set then set write to force OpenRW
+	if flags&os.O_TRUNC != 0 {
+		write = true
+	}
+
+	// FIXME discover if file is in cache or not?
+
+	// Open the correct sort of handle
+	CacheMode := f.d.vfs.Opt.CacheMode
+	if read && write {
+		if CacheMode >= CacheModeMinimal {
+			fd, err = f.OpenRW(flags)
+		} else if flags&os.O_TRUNC != 0 {
+			fd, err = f.OpenWrite()
+		} else {
+			fs.Errorf(f, "Can't open for read and write without cache")
+			return nil, EPERM
+		}
+	} else if write {
+		if CacheMode >= CacheModeWrites {
+			fd, err = f.OpenRW(flags)
+		} else {
+			fd, err = f.OpenWrite()
+		}
+	} else if read {
+		if CacheMode >= CacheModeFull {
+			fd, err = f.OpenRW(flags)
+		} else {
+			fd, err = f.OpenRead()
+		}
 	} else {
-		fd, err = f.OpenWrite()
+		fs.Errorf(f, "Can't figure out how to open with flags: 0x%X", flags)
+		return nil, EPERM
 	}
 	return fd, err
+}
+
+// Truncate changes the size of the named file.
+func (f *File) Truncate(size int64) error {
+	if f.d.vfs.Opt.CacheMode >= CacheModeWrites {
+	}
+	// FIXME
+	return ENOSYS
 }

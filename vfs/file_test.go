@@ -160,18 +160,12 @@ func TestFileOpen(t *testing.T) {
 	_, file, _ := fileCreate(t, r)
 
 	fd, err := file.Open(os.O_RDONLY)
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	_, ok := fd.(*ReadFileHandle)
 	assert.True(t, ok)
 	require.NoError(t, fd.Close())
 
 	fd, err = file.Open(os.O_WRONLY)
-	assert.NoError(t, err)
-	_, ok = fd.(*WriteFileHandle)
-	assert.True(t, ok)
-	require.NoError(t, fd.Close())
-
-	fd, err = file.Open(os.O_RDWR | os.O_TRUNC)
 	assert.NoError(t, err)
 	_, ok = fd.(*WriteFileHandle)
 	assert.True(t, ok)
