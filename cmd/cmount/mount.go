@@ -78,10 +78,10 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	if mountlib.WritebackCache {
 		// FIXME? options = append(options, "-o", WritebackCache())
 	}
-	for _, option := range *mountlib.ExtraOptions {
+	for _, option := range mountlib.ExtraOptions {
 		options = append(options, "-o", option)
 	}
-	for _, option := range *mountlib.ExtraFlags {
+	for _, option := range mountlib.ExtraFlags {
 		options = append(options, option)
 	}
 	return options
