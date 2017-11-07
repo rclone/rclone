@@ -100,6 +100,8 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 	}
 
 	unmount := func() error {
+		// Shutdown the VFS
+		filesys.VFS.Shutdown()
 		return fuse.Unmount(mountpoint)
 	}
 

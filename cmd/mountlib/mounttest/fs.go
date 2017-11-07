@@ -19,6 +19,7 @@ import (
 	_ "github.com/ncw/rclone/fs/all" // import all the file systems
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
+	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -38,9 +39,25 @@ var (
 func TestMain(m *testing.M, fn MountFn) {
 	mountFn = fn
 	flag.Parse()
-	run = newRun()
-	rc := m.Run()
-	run.Finalise()
+	var rc int
+	cacheModes := []vfs.CacheMode{
+		vfs.CacheModeOff,
+		vfs.CacheModeMinimal,
+		vfs.CacheModeWrites,
+		vfs.CacheModeFull,
+	}
+	for _, cacheMode := range cacheModes {
+		vfsflags.Opt.CacheMode = cacheMode
+		log.Printf("Starting test run with cache mode %v", cacheMode)
+		run = newRun()
+		rc = m.Run()
+		run.Finalise()
+		log.Printf("Finished test run with cache mode %v", cacheMode)
+		if rc != 0 {
+			break
+		}
+	}
+	vfsflags.Opt.CacheMode = vfs.DefaultOpt.CacheMode
 	os.Exit(rc)
 }
 
@@ -146,6 +163,12 @@ func (r *Run) umount() {
 	err = <-r.umountResult
 	if err != nil {
 		log.Fatalf("umount failed: %v", err)
+	}
+
+	// Cleanup the VFS cache - umount has called Shutdown
+	err = r.vfs.CleanUp()
+	if err != nil {
+		log.Printf("Failed to cleanup the VFS cache: %v", err)
 	}
 }
 

@@ -129,6 +129,8 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 
 	// unmount
 	unmount := func() error {
+		// Shutdown the VFS
+		fsys.VFS.Shutdown()
 		fs.Debugf(nil, "Calling host.Unmount")
 		if host.Unmount() {
 			fs.Debugf(nil, "host.Unmount succeeded")
