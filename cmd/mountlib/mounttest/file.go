@@ -28,6 +28,11 @@ func TestFileModTime(t *testing.T) {
 	run.rm(t, "file")
 }
 
+// os.Create without opening for write too
+func osCreate(name string) (*os.File, error) {
+	return os.OpenFile(name, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0666)
+}
+
 // TestFileModTimeWithOpenWriters tests mod time on open files
 func TestFileModTimeWithOpenWriters(t *testing.T) {
 	run.skipIfNoFUSE(t)
@@ -35,7 +40,7 @@ func TestFileModTimeWithOpenWriters(t *testing.T) {
 	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
 	filepath := run.path("cp-archive-test")
 
-	f, err := os.Create(filepath)
+	f, err := osCreate(filepath)
 	require.NoError(t, err)
 
 	_, err = f.Write([]byte{104, 105})

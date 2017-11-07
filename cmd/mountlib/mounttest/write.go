@@ -1,7 +1,6 @@
 package mounttest
 
 import (
-	"os"
 	"testing"
 	"time"
 
@@ -13,7 +12,7 @@ import (
 func TestWriteFileNoWrite(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
-	fd, err := os.Create(run.path("testnowrite"))
+	fd, err := osCreate(run.path("testnowrite"))
 	assert.NoError(t, err)
 
 	err = fd.Close()
@@ -31,7 +30,7 @@ func TestWriteFileNoWrite(t *testing.T) {
 func FIXMETestWriteOpenFileInDirListing(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
-	fd, err := os.Create(run.path("testnowrite"))
+	fd, err := osCreate(run.path("testnowrite"))
 	assert.NoError(t, err)
 
 	run.checkDir(t, "testnowrite 0")
@@ -70,7 +69,7 @@ func TestWriteFileOverwrite(t *testing.T) {
 // NB the code for this is in file.go rather than write.go
 func TestWriteFileFsync(t *testing.T) {
 	filepath := run.path("to be synced")
-	fd, err := os.Create(filepath)
+	fd, err := osCreate(filepath)
 	require.NoError(t, err)
 	_, err = fd.Write([]byte("hello"))
 	require.NoError(t, err)

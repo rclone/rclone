@@ -3,7 +3,6 @@
 package mounttest
 
 import (
-	"os"
 	"syscall"
 	"testing"
 
@@ -14,7 +13,7 @@ import (
 func TestWriteFileDoubleClose(t *testing.T) {
 	run.skipIfNoFUSE(t)
 
-	out, err := os.Create(run.path("testdoubleclose"))
+	out, err := osCreate(run.path("testdoubleclose"))
 	assert.NoError(t, err)
 	fd := out.Fd()
 
