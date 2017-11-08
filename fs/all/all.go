@@ -15,11 +15,10 @@ import (
 	_ "github.com/ncw/rclone/hubic"
 	_ "github.com/ncw/rclone/local"
 	_ "github.com/ncw/rclone/onedrive"
-	_ "github.com/ncw/rclone/pcloud"
 	_ "github.com/ncw/rclone/qingstor"
 	_ "github.com/ncw/rclone/s3"
 	_ "github.com/ncw/rclone/sftp"
 	_ "github.com/ncw/rclone/swift"
-	_ "github.com/ncw/rclone/webdav"
 	_ "github.com/ncw/rclone/yandex"
+	_ "github.com/ncw/rclone/oss"
 )
