@@ -406,22 +406,51 @@ func (f *Filter) ListContainsExcludeFile(entries DirEntries) bool {
 	return false
 }
 
-// IncludeDirectory returns whether this directory should be included
-// in the sync or not.
-func (f *Filter) IncludeDirectory(remote string) bool {
-	remote = strings.Trim(remote, "/")
-	// filesFrom takes precedence
-	if f.files != nil {
-		_, include := f.dirs[remote]
-		return include
+// IncludeDirectory returns a function which checks whether this
+// directory should be included in the sync or not.
+func (f *Filter) IncludeDirectory(fs Fs) func(string) (bool, error) {
+	return func(remote string) (bool, error) {
+		remote = strings.Trim(remote, "/")
+		// first check if we need to remove directory based on
+		// the exclude file
+		excl, err := f.DirContainsExcludeFile(fs, remote)
+		if err != nil {
+			return false, err
+		}
+		if excl {
+			return false, nil
+		}
+
+		// filesFrom takes precedence
+		if f.files != nil {
+			_, include := f.dirs[remote]
+			return include, nil
+		}
+		remote += "/"
+		for _, rule := range f.dirRules.rules {
+			if rule.Match(remote) {
+				return rule.Include, nil
+			}
+		}
+
+		return true, nil
 	}
-	remote += "/"
-	for _, rule := range f.dirRules.rules {
-		if rule.Match(remote) {
-			return rule.Include
+}
+
+// DirContainsExcludeFile checks if exclude file is present in a
+// directroy. If fs is nil, it works properly if ExcludeFile is an
+// empty string (for testing).
+func (f *Filter) DirContainsExcludeFile(fs Fs, remote string) (bool, error) {
+	if len(Config.Filter.ExcludeFile) > 0 {
+		exists, err := FileExists(fs, path.Join(remote, Config.Filter.ExcludeFile))
+		if err != nil {
+			return false, err
+		}
+		if exists {
+			return true, nil
 		}
 	}
-	return true
+	return false, nil
 }
 
 // Include returns whether this object should be included into the

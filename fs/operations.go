@@ -622,17 +622,20 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 	if err != nil {
 		return nil, err
 	}
+	// This should happen only if exclude files lives in the
+	// starting directory, otherwise ListDirSorted should not be
+	// called.
 	if !includeAll && Config.Filter.ListContainsExcludeFile(entries) {
-		Debugf(dir, "Excluded from sync (and deletion) based on exclude file")
+		Debugf(dir, "Excluded from sync (and deletion)")
 		return nil, nil
 	}
-	return filterAndSortDir(entries, includeAll, dir, Config.Filter.IncludeObject, Config.Filter.IncludeDirectory)
+	return filterAndSortDir(entries, includeAll, dir, Config.Filter.IncludeObject, Config.Filter.IncludeDirectory(fs))
 }
 
 // filter (if required) and check the entries, then sort them
 func filterAndSortDir(entries DirEntries, includeAll bool, dir string,
 	IncludeObject func(o Object) bool,
-	IncludeDirectory func(remote string) bool) (newEntries DirEntries, err error) {
+	IncludeDirectory func(remote string) (bool, error)) (newEntries DirEntries, err error) {
 	newEntries = entries[:0] // in place filter
 	prefix := ""
 	if dir != "" {
@@ -649,9 +652,15 @@ func filterAndSortDir(entries DirEntries, includeAll bool, dir string,
 				Debugf(x, "Excluded from sync (and deletion)")
 			}
 		case Directory:
-			if !includeAll && !IncludeDirectory(x.Remote()) {
-				ok = false
-				Debugf(x, "Excluded from sync (and deletion)")
+			if !includeAll {
+				include, err := IncludeDirectory(x.Remote())
+				if err != nil {
+					return nil, err
+				}
+				if !include {
+					ok = false
+					Debugf(x, "Excluded from sync (and deletion)")
+				}
 			}
 		default:
 			return nil, errors.Errorf("unknown object type %T", entry)

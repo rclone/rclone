@@ -164,7 +164,8 @@ type includeDirTest struct {
 
 func testDirInclude(t *testing.T, f *Filter, tests []includeDirTest) {
 	for _, test := range tests {
-		got := f.IncludeDirectory(test.in)
+		got, err := f.IncludeDirectory(nil)(test.in)
+		require.NoError(t, err)
 		assert.Equal(t, test.want, got, test.in)
 	}
 }
