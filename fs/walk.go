@@ -347,10 +347,10 @@ func (dt DirTree) String() string {
 	return out.String()
 }
 
-func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listR ListRFn) (DirTree, error) {
+func walkRDirTree(f Fs, startPath string, includeAll bool, maxLevel int, listR ListRFn) (DirTree, error) {
 	dirs := make(DirTree)
 	var mu sync.Mutex
-	err := listR(path, func(entries DirEntries) error {
+	err := listR(startPath, func(entries DirEntries) error {
 		mu.Lock()
 		defer mu.Unlock()
 		for _, entry := range entries {
@@ -367,7 +367,7 @@ func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listR ListRF
 						for ; slashes > maxLevel-1; slashes-- {
 							dirPath = parentDir(dirPath)
 						}
-						dirs.checkParent(path, dirPath)
+						dirs.checkParent(startPath, dirPath)
 					}
 				} else {
 					Debugf(x, "Excluded from sync (and deletion)")
@@ -394,9 +394,9 @@ func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listR ListRF
 	if err != nil {
 		return nil, err
 	}
-	dirs.checkParents(path)
+	dirs.checkParents(startPath)
 	if len(dirs) == 0 {
-		dirs[path] = nil
+		dirs[startPath] = nil
 	}
 	dirs.Sort()
 	return dirs, nil
