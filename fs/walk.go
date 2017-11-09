@@ -349,6 +349,10 @@ func (dt DirTree) String() string {
 
 func walkRDirTree(f Fs, startPath string, includeAll bool, maxLevel int, listR ListRFn) (DirTree, error) {
 	dirs := make(DirTree)
+	// Entries can come in arbitrary order. We use toPrune to keep
+	// all directories to exclude later.
+	toPrune := make(map[string]bool)
+	includeDirectory := Config.Filter.IncludeDirectory(f)
 	var mu sync.Mutex
 	err := listR(startPath, func(entries DirEntries) error {
 		mu.Lock()
@@ -372,8 +376,21 @@ func walkRDirTree(f Fs, startPath string, includeAll bool, maxLevel int, listR L
 				} else {
 					Debugf(x, "Excluded from sync (and deletion)")
 				}
+				// Check if we need to prune a directory later.
+				if !includeAll && len(Config.Filter.ExcludeFile) > 0 {
+					basename := path.Base(x.Remote())
+					if basename == Config.Filter.ExcludeFile {
+						excludeDir := parentDir(x.Remote())
+						toPrune[excludeDir] = true
+						Debugf(basename, "Excluded from sync (and deletion) based on exclude file")
+					}
+				}
 			case Directory:
-				if includeAll || Config.Filter.IncludeDirectory(x.Remote()) {
+				inc, err := includeDirectory(x.Remote())
+				if err != nil {
+					return err
+				}
+				if includeAll || inc {
 					if maxLevel < 0 || slashes <= maxLevel-1 {
 						if slashes == maxLevel-1 {
 							// Just add the object if at maxLevel
@@ -397,6 +414,10 @@ func walkRDirTree(f Fs, startPath string, includeAll bool, maxLevel int, listR L
 	dirs.checkParents(startPath)
 	if len(dirs) == 0 {
 		dirs[startPath] = nil
+	}
+	err = dirs.Prune(toPrune)
+	if err != nil {
+		return nil, err
 	}
 	dirs.Sort()
 	return dirs, nil

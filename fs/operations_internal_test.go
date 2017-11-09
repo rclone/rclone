@@ -22,8 +22,8 @@ func TestFilterAndSortIncludeAll(t *testing.T) {
 	includeObject := func(o Object) bool {
 		return o != oB
 	}
-	includeDirectory := func(remote string) bool {
-		return remote != "c"
+	includeDirectory := func(remote string) (bool, error) {
+		return remote != "c", nil
 	}
 	// no filter
 	newEntries, err := filterAndSortDir(entries, true, "", includeObject, includeDirectory)
