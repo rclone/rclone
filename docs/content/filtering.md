@@ -421,3 +421,24 @@ In Windows the expansion is done by the command not the shell so this
 should work fine
 
   * `--include *.jpg`
+
+## Exclude directory based on a file ##
+
+It is possible to exclude a directory based on a file, which is
+present in this directory. Filename should be specified using the
+`--exclude-if-present` flag. This flag has a priority over the other
+filtering flags.
+
+Imagine, you have the following directory structure:
+
+    dir1/file1
+    dir1/dir2/file2
+    dir1/dir2/dir3/file3
+    dir1/dir2/dir3/.ignore
+
+You can exclude `dir3` from sync by running the following command:
+
+    rclone sync --exclude-if-present .ignore dir1 remote:backup
+
+Currently only one filename is supported, i.e. `--exclude-if-present`
+should not be used multiple times.
