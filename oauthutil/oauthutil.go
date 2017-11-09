@@ -438,7 +438,7 @@ func (s *authServer) Start() {
 			fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found returned by remote server.")
 		}
 		if s.code != nil {
-			s.code <-code
+			s.code <- code
 		}
 	})
 
