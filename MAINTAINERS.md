@@ -4,6 +4,7 @@ Current active maintainers of rclone are
 
   * Nick Craig-Wood
   * Stefan Breunig
+  * Ishuah Kariuki
 
 **This is a work in progress Draft**
 
