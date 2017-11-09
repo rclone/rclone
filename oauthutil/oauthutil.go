@@ -428,17 +428,18 @@ func (s *authServer) Start() {
 				fs.Debugf(nil, "Successfully got code")
 				if s.code != nil {
 					fmt.Fprintf(w, "<h1>Success</h1>\n<p>Go back to rclone to continue</p>")
-					s.code <- code
 				} else {
 					fmt.Fprintf(w, "<h1>Success</h1>\n<p>Cut and paste this code into rclone: <code>%s</code></p>", code)
 				}
 			}
-			return
+		} else {
+			fs.Debugf(nil, "No code found on request")
+			w.WriteHeader(500)
+			fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found returned by remote server.")
 		}
-		fs.Debugf(nil, "No code found on request")
-		w.WriteHeader(500)
-		fmt.Fprintf(w, "<h1>Failed!</h1>\nNo code found returned by remote server.")
-
+		if s.code != nil {
+			s.code <-code
+		}
 	})
 
 	var err error
