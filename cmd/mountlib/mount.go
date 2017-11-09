@@ -1,11 +1,14 @@
 package mountlib
 
 import (
+	"io"
 	"log"
+	"os"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -21,6 +24,31 @@ var (
 	ExtraOptions       *[]string
 	ExtraFlags         *[]string
 )
+
+// Check is folder is empty
+func checkMountEmpty(mountpoint string) error {
+	fp, fpErr := os.Open(mountpoint)
+
+	if fpErr != nil {
+		return errors.Wrap(fpErr, "Can not open: "+mountpoint)
+	}
+	defer fs.CheckClose(fp, &fpErr)
+
+	_, fpErr = fp.Readdirnames(1)
+
+	// directory is not empty
+	if fpErr != io.EOF {
+		var e error
+		var errorMsg = "Directory is not empty: " + mountpoint + " If you want to mount it anyway use: --allow-non-empty option"
+		if fpErr == nil {
+			e = errors.New(errorMsg)
+		} else {
+			e = errors.Wrap(fpErr, errorMsg)
+		}
+		return e
+	}
+	return nil
+}
 
 // NewMountCommand makes a mount command with the given name and Mount function
 func NewMountCommand(commandName string, Mount func(f fs.Fs, mountpoint string) error) *cobra.Command {
@@ -136,6 +164,13 @@ like this:
 			if cmd.ShowStats() {
 				stopStats := cmd.StartStats()
 				defer close(stopStats)
+			}
+
+			if !AllowNonEmpty {
+				err := checkMountEmpty(args[1])
+				if err != nil {
+					log.Fatalf("Fatal error: %v", err)
+				}
 			}
 
 			err := Mount(fdst, args[1])
