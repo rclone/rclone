@@ -743,6 +743,8 @@ func TestListDirSorted(t *testing.T) {
 		r.WriteObject("zend.txt", "hello", t1),
 		r.WriteObject("sub dir/hello world", "hello world", t1),
 		r.WriteObject("sub dir/hello world2", "hello world", t1),
+		r.WriteObject("sub dir/ignore dir/.ignore", "", t1),
+		r.WriteObject("sub dir/ignore dir/should be ignored", "to ignore", t1),
 		r.WriteObject("sub dir/sub sub dir/hello world3", "hello world", t1),
 	}
 	fstest.CheckItems(t, r.Fremote, files...)
@@ -779,15 +781,42 @@ func TestListDirSorted(t *testing.T) {
 
 	items, err = fs.ListDirSorted(r.Fremote, true, "sub dir")
 	require.NoError(t, err)
-	require.Len(t, items, 3)
+	require.Len(t, items, 4)
 	assert.Equal(t, "sub dir/hello world", str(0))
 	assert.Equal(t, "sub dir/hello world2", str(1))
-	assert.Equal(t, "sub dir/sub sub dir/", str(2))
+	assert.Equal(t, "sub dir/ignore dir/", str(2))
+	assert.Equal(t, "sub dir/sub sub dir/", str(3))
+
+	items, err = fs.ListDirSorted(r.Fremote, false, "sub dir")
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+	assert.Equal(t, "sub dir/ignore dir/", str(0))
+	assert.Equal(t, "sub dir/sub sub dir/", str(1))
+
+	// testing ignore file
+	fs.Config.Filter.ExcludeFile = ".ignore"
 
 	items, err = fs.ListDirSorted(r.Fremote, false, "sub dir")
 	require.NoError(t, err)
 	require.Len(t, items, 1)
 	assert.Equal(t, "sub dir/sub sub dir/", str(0))
+
+	items, err = fs.ListDirSorted(r.Fremote, false, "sub dir/ignore dir")
+	require.NoError(t, err)
+	require.Len(t, items, 0)
+
+	items, err = fs.ListDirSorted(r.Fremote, true, "sub dir/ignore dir")
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+	assert.Equal(t, "sub dir/ignore dir/.ignore", str(0))
+	assert.Equal(t, "sub dir/ignore dir/should be ignored", str(1))
+
+	fs.Config.Filter.ExcludeFile = ""
+	items, err = fs.ListDirSorted(r.Fremote, false, "sub dir/ignore dir")
+	require.NoError(t, err)
+	require.Len(t, items, 2)
+	assert.Equal(t, "sub dir/ignore dir/.ignore", str(0))
+	assert.Equal(t, "sub dir/ignore dir/should be ignored", str(1))
 }
 
 type byteReader struct {

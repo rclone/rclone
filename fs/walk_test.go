@@ -588,3 +588,76 @@ a/
 		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
 	}
 }
+
+func TestWalkRDirTreeExclude(t *testing.T) {
+	for _, test := range []struct {
+		entries     DirEntries
+		want        string
+		err         error
+		root        string
+		level       int
+		excludeFile string
+		includeAll  bool
+	}{
+		{DirEntries{mockObject("a"), mockObject("ignore")}, "", nil, "", -1, "ignore", false},
+		{DirEntries{mockObject("a")}, `/
+  a
+`, nil, "", -1, "ignore", false},
+		{DirEntries{
+			mockObject("a"),
+			mockObject("b/b"),
+			mockObject("b/.ignore"),
+		}, `/
+  a
+`, nil, "", -1, ".ignore", false},
+		{DirEntries{
+			mockObject("a"),
+			mockObject("b/.ignore"),
+			mockObject("b/b"),
+		}, `/
+  a
+  b/
+b/
+  .ignore
+  b
+`, nil, "", -1, ".ignore", true},
+		{DirEntries{
+			mockObject("a"),
+			mockObject("b/b"),
+			mockObject("b/c/d/e"),
+			mockObject("b/c/ign"),
+			mockObject("b/c/x"),
+		}, `/
+  a
+  b/
+b/
+  b
+`, nil, "", -1, "ign", false},
+		{DirEntries{
+			mockObject("a"),
+			mockObject("b/b"),
+			mockObject("b/c/d/e"),
+			mockObject("b/c/ign"),
+			mockObject("b/c/x"),
+		}, `/
+  a
+  b/
+b/
+  b
+  c/
+b/c/
+  d/
+  ign
+  x
+b/c/d/
+  e
+`, nil, "", -1, "ign", true},
+	} {
+		Config.Filter.ExcludeFile = test.excludeFile
+		r, err := walkRDirTree(nil, test.root, test.includeAll, test.level, makeListRCallback(test.entries, test.err))
+		assert.Equal(t, test.err, err, fmt.Sprintf("%+v", test))
+		assert.Equal(t, test.want, r.String(), fmt.Sprintf("%+v", test))
+	}
+	// Set to default value, to avoid side effects
+	Config.Filter.ExcludeFile = ""
+}
