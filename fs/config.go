@@ -20,6 +20,7 @@ import (
 	"os/user"
 	"path/filepath"
 	"regexp"
+	"runtime"
 	"sort"
 	"strconv"
 	"strings"
@@ -60,10 +61,18 @@ const (
 var (
 	// configData is the config file data structure
 	configData *goconfig.ConfigFile
+
 	// ConfigPath points to the config file
 	ConfigPath = makeConfigPath()
+
+	// CacheDir points to the cache directory.  Users of this
+	// should make a subdirectory and use MkdirAll() to create it
+	// and any parents.
+	CacheDir = makeCacheDir()
+
 	// Config is the global config
 	Config = &ConfigInfo{}
+
 	// Flags
 	verbose               = CountP("verbose", "v", "Print lots more stuff (repeat for more)")
 	quiet                 = BoolP("quiet", "q", false, "Print as little stuff as possible")
@@ -71,6 +80,7 @@ var (
 	checkers              = IntP("checkers", "", 8, "Number of checkers to run in parallel.")
 	transfers             = IntP("transfers", "", 4, "Number of file transfers to run in parallel.")
 	configFile            = StringP("config", "", ConfigPath, "Config file.")
+	cacheDir              = StringP("cache-dir", "", CacheDir, "Directory rclone will use for caching.")
 	checkSum              = BoolP("checksum", "c", false, "Skip based on checksum & size, not mod-time & size")
 	sizeOnly              = BoolP("size-only", "", false, "Skip based on size only, not mod-time or checksum")
 	ignoreTimes           = BoolP("ignore-times", "I", false, "Don't skip files that match size and time - transfer all files")
@@ -1408,4 +1418,45 @@ func ConfigDump() error {
 		return errors.Wrap(err, "failed to write config dump")
 	}
 	return nil
+}
+
+// makeCacheDir returns a directory to use for caching.
+//
+// Code borrowed from go stdlib until it is made public
+func makeCacheDir() (dir string) {
+	// Compute default location.
+	switch runtime.GOOS {
+	case "windows":
+		dir = os.Getenv("LocalAppData")
+
+	case "darwin":
+		dir = os.Getenv("HOME")
+		if dir != "" {
+			dir += "/Library/Caches"
+		}
+
+	case "plan9":
+		dir = os.Getenv("home")
+		if dir != "" {
+			// Plan 9 has no established per-user cache directory,
+			// but $home/lib/xyz is the usual equivalent of $HOME/.xyz on Unix.
+			dir += "/lib/cache"
+		}
+
+	default: // Unix
+		// https://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+		dir = os.Getenv("XDG_CACHE_HOME")
+		if dir == "" {
+			dir = os.Getenv("HOME")
+			if dir != "" {
+				dir += "/.cache"
+			}
+		}
+	}
+
+	// if no dir found then use TempDir - we will have a cachedir!
+	if dir == "" {
+		dir = os.TempDir()
+	}
+	return filepath.Join(dir, "rclone")
 }
