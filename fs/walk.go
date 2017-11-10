@@ -385,6 +385,8 @@ func walkRDirTree(f Fs, path string, includeAll bool, maxLevel int, listR ListRF
 				} else {
 					Debugf(x, "Excluded from sync (and deletion)")
 				}
+			default:
+				return errors.Errorf("unknown object type %T", entry)
 			}
 		}
 		return nil
