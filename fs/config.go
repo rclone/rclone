@@ -1005,6 +1005,7 @@ func ChooseOption(o *Option) string {
 // UpdateRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
 func UpdateRemote(name string, keyValues []string) error {
+	var value string
 	if len(keyValues)%2 != 0 {
 		return errors.New("found key without value")
 	}
