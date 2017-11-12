@@ -1010,7 +1010,11 @@ func UpdateRemote(name string, keyValues []string) error {
 	}
 	// Set the config
 	for i := 0; i < len(keyValues); i += 2 {
-		configData.SetValue(name, keyValues[i], keyValues[i+1])
+		value = keyValues[i+1]
+		if strings.HasPrefix(keyValues[i], "pass") {
+			value = MustObscure(keyValues[i+1])
+		}
+		configData.SetValue(name, keyValues[i], value)
 	}
 	RemoteConfig(name)
 	ShowRemote(name)
