@@ -123,6 +123,11 @@ var (
 			SubDir:   false,
 			FastList: false,
 		},
+		{
+			Name:     "TestCache:",
+			SubDir:   true,
+			FastList: true,
+		},
 	}
 	binary = "fs.test"
 	// Flags

@@ -5,6 +5,7 @@ import (
 	// Active commands
 	_ "github.com/ncw/rclone/cmd"
 	_ "github.com/ncw/rclone/cmd/authorize"
+	_ "github.com/ncw/rclone/cmd/cachestats"
 	_ "github.com/ncw/rclone/cmd/cat"
 	_ "github.com/ncw/rclone/cmd/check"
 	_ "github.com/ncw/rclone/cmd/cleanup"
