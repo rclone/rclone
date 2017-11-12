@@ -55,6 +55,7 @@ Features
   * [Check](/commands/rclone_check/) mode to check for file hash equality
   * Can sync to and from network, eg two different cloud accounts
   * Optional encryption ([Crypt](/crypt/))
+  * Optional cache ([Cache](/cache/))
   * Optional FUSE mount ([rclone mount](/commands/rclone_mount/))
 
 Links

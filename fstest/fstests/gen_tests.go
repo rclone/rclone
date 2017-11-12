@@ -66,7 +66,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest/fstests"
 	"github.com/ncw/rclone/{{ .FsName }}"
-{{ if eq .FsName "crypt" }}	_ "github.com/ncw/rclone/local"
+{{ if (or (eq .FsName "crypt") (eq .FsName "cache")) }}	_ "github.com/ncw/rclone/local"
 {{end}})
 
 func TestSetup{{ .Suffix }}(t *testing.T)() {
@@ -166,5 +166,6 @@ func main() {
 	generateTestProgram(t, fns, "AzureBlob", buildConstraint("go1.7"))
 	generateTestProgram(t, fns, "Pcloud")
 	generateTestProgram(t, fns, "Webdav")
+	generateTestProgram(t, fns, "Cache", buildConstraint("!plan9"))
 	log.Printf("Done")
 }

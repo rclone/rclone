@@ -3,3 +3,5 @@ _junk/
 rclone
 build
 docs/public
+rclone.iml
+.idea

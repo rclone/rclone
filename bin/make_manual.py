@@ -25,6 +25,7 @@ docs = [
     "s3.md",
     "b2.md",
     "box.md",
+    "cache.md",
     "crypt.md",
     "dropbox.md",
     "ftp.md",

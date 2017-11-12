@@ -23,6 +23,7 @@ See the following for detailed instructions for
   * [Amazon S3](/s3/)
   * [Backblaze B2](/b2/)
   * [Box](/box/)
+  * [Cache](/cache/)
   * [Crypt](/crypt/) - to encrypt other remotes
   * [DigitalOcean Spaces](/s3/#digitalocean-spaces)
   * [Dropbox](/dropbox/)

@@ -6,6 +6,7 @@ import (
 	_ "github.com/ncw/rclone/azureblob"
 	_ "github.com/ncw/rclone/b2"
 	_ "github.com/ncw/rclone/box"
+	_ "github.com/ncw/rclone/cache"
 	_ "github.com/ncw/rclone/crypt"
 	_ "github.com/ncw/rclone/drive"
 	_ "github.com/ncw/rclone/dropbox"
