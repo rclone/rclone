@@ -56,6 +56,12 @@
   version = "v1.0.3"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/coreos/bbolt"
+  packages = ["."]
+  revision = "a148de800f91fe6cbd8b2a472bbfdc09c4b6568f"
+
+[[projects]]
   name = "github.com/cpuguy83/go-md2man"
   packages = ["md2man"]
   revision = "1d903dcb749992f3741d744c0f8376b4bd7eb3e1"
@@ -149,6 +155,12 @@
   packages = ["check","convert","json","yaml"]
   revision = "454950d6a0782c34427d4f29b46c6bf447256f20"
   version = "v0.0.8"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/patrickmn/go-cache"
+  packages = ["."]
+  revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
 
 [[projects]]
   branch = "master"

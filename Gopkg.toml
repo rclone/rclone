@@ -136,3 +136,11 @@
 [[constraint]]
   branch = "master"
   name = "github.com/yunify/qingstor-sdk-go"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/coreos/bbolt"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/patrickmn/go-cache"
