@@ -733,3 +733,16 @@ func CheckClose(c io.Closer, err *error) {
 		*err = cerr
 	}
 }
+
+// FileExists returns true if a file remote exists.
+// If remote is a directory, FileExists returns false.
+func FileExists(fs Fs, remote string) (bool, error) {
+	_, err := fs.NewObject(remote)
+	if err != nil {
+		if err == ErrorObjectNotFound || err == ErrorNotAFile {
+			return false, nil
+		}
+		return false, err
+	}
+	return true, nil
+}
