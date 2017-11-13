@@ -36,9 +36,10 @@ remote over HTTP via the webdav protocol. This can be viewed with a
 webdav client or you can make a remote of type webdav to read and
 write it.
 
-FIXME at the moment each directory listing reads the start of each
-file which is undesirable
-`,
+NB at the moment each directory listing reads the start of each file
+which is undesirable: see https://github.com/golang/go/issues/22577
+
+` + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)

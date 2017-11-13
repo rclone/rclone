@@ -8,6 +8,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -142,21 +143,6 @@ uploads.  This might happen in the future, but for the moment rclone
 Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
-### Directory Cache ###
-
-Using the ` + "`--dir-cache-time`" + ` flag, you can set how long a
-directory should be considered up to date and not refreshed from the
-backend. Changes made locally in the mount may appear immediately or
-invalidate the cache. However, changes done on the remote will only
-be picked up once the cache expires.
-
-Alternatively, you can send a ` + "`SIGHUP`" + ` signal to rclone for
-it to flush all directory caches, regardless of how old they are.
-Assuming only one rclone instance is running, you can reset the cache
-like this:
-
-    kill -SIGHUP $(pidof rclone)
-
 ### systemd ###
 
 When running rclone ` + commandName + ` as a systemd service, it is possible
@@ -164,7 +150,7 @@ to use Type=notify. In this case the service will enter the started state
 after the mountpoint has been successfully set up.
 Units having the rclone ` + commandName + ` service specified as a requirement
 will see all files and folders immediately in this mode.
-`,
+` + vfs.Help,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)
 			fdst := cmd.NewFsDst(args)
