@@ -131,15 +131,16 @@ func (fsys *FS) lookupFile(path string) (file *vfs.File, errc int) {
 	return file, 0
 }
 
-// get a node from the path or from the fh if not fhUnset
-func (fsys *FS) getNode(path string, fh uint64) (node vfs.Node, errc int) {
+// get a node and handle from the path or from the fh if not fhUnset
+//
+// handle may be nil
+func (fsys *FS) getNode(path string, fh uint64) (node vfs.Node, handle vfs.Handle, errc int) {
 	if fh == fhUnset {
 		node, errc = fsys.lookupNode(path)
 	} else {
-		var n vfs.Handle
-		n, errc = fsys.getHandle(fh)
+		handle, errc = fsys.getHandle(fh)
 		if errc == 0 {
-			node = n.Node()
+			node = handle.Node()
 		}
 	}
 	return
@@ -191,7 +192,7 @@ func (fsys *FS) Destroy() {
 // Getattr reads the attributes for path
 func (fsys *FS) Getattr(path string, stat *fuse.Stat_t, fh uint64) (errc int) {
 	defer fs.Trace(path, "fh=0x%X", fh)("errc=%v", &errc)
-	node, errc := fsys.getNode(path, fh)
+	node, _, errc := fsys.getNode(path, fh)
 	if errc == 0 {
 		errc = fsys.stat(node, stat)
 	}
@@ -312,16 +313,32 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 // Truncate truncates a file to size
 func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 	defer fs.Trace(path, "size=%d, fh=0x%X", size, fh)("errc=%d", &errc)
-	node, errc := fsys.getNode(path, fh)
+	node, handle, errc := fsys.getNode(path, fh)
 	if errc != 0 {
 		return errc
 	}
 	// Read the size so far
-	currentSize := node.Size()
+	var currentSize int64
+	if handle != nil {
+		fi, err := handle.Stat()
+		if err != nil {
+			return translateError(err)
+		}
+		currentSize = fi.Size()
+	} else {
+		currentSize = node.Size()
+	}
 	fs.Debugf(path, "truncate to %d, currentSize %d", size, currentSize)
-	if int64(currentSize) != size {
-		fs.Errorf(path, "Can't truncate files")
-		return -fuse.EPERM
+	if currentSize != size {
+		var err error
+		if handle != nil {
+			err = handle.Truncate(size)
+		} else {
+			err = node.Truncate(size)
+		}
+		if err != nil {
+			return translateError(err)
+		}
 	}
 	return 0
 }
