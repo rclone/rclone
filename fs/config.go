@@ -1005,12 +1005,17 @@ func ChooseOption(o *Option) string {
 // UpdateRemote adds the keyValues passed in to the remote of name.
 // keyValues should be key, value pairs.
 func UpdateRemote(name string, keyValues []string) error {
+	var value string
 	if len(keyValues)%2 != 0 {
 		return errors.New("found key without value")
 	}
 	// Set the config
 	for i := 0; i < len(keyValues); i += 2 {
-		configData.SetValue(name, keyValues[i], keyValues[i+1])
+		value = keyValues[i+1]
+		if strings.HasPrefix(keyValues[i], "pass") {
+			value = MustObscure(keyValues[i+1])
+		}
+		configData.SetValue(name, keyValues[i], value)
 	}
 	RemoteConfig(name)
 	ShowRemote(name)
