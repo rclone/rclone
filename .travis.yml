@@ -1,6 +1,6 @@
 language: go
-sudo: false
-osx_image: xcode7.3
+sudo: required
+dist: trusty
 os:
 - linux
 go:
@@ -10,6 +10,9 @@ go:
 - 1.9.3
 - "1.10"
 - tip
+before_install:
+- if [[ $TRAVIS_OS_NAME == linux ]]; then sudo modprobe fuse ; sudo chmod 666 /dev/fuse ; sudo chown root:$USER /etc/fuse.conf ; fi
+- if [[ $TRAVIS_OS_NAME == osx ]]; then brew update && brew tap caskroom/cask && brew cask install osxfuse ; fi
 install:
 - git fetch --unshallow --tags
 - make vars
@@ -30,6 +33,7 @@ addons:
     - fuse
     - libfuse-dev
     - rpm
+    - pkg-config
 matrix:
   allow_failures:
   - go: tip
@@ -44,4 +48,4 @@ deploy:
   on:
     all_branches: true
     go: "1.10"
-    condition: "`uname` == 'Linux' && $TRAVIS_PULL_REQUEST == 'false'"
+    condition: $TRAVIS_OS_NAME == linux && $TRAVIS_PULL_REQUEST == false
