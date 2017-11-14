@@ -306,8 +306,45 @@ func (vfs *VFS) StatParent(name string) (dir *Dir, leaf string, err error) {
 	return dir, leaf, nil
 }
 
+// decodeOpenFlags returns a string representing the open flags
+func decodeOpenFlags(flags int) string {
+	var out []string
+	rdwrMode := flags & accessModeMask
+	switch rdwrMode {
+	case os.O_RDONLY:
+		out = append(out, "O_RDONLY")
+	case os.O_WRONLY:
+		out = append(out, "O_WRONLY")
+	case os.O_RDWR:
+		out = append(out, "O_RDWR")
+	default:
+		out = append(out, fmt.Sprintf("0x%X", rdwrMode))
+	}
+	if flags&os.O_APPEND != 0 {
+		out = append(out, "O_APPEND")
+	}
+	if flags&os.O_CREATE != 0 {
+		out = append(out, "O_CREATE")
+	}
+	if flags&os.O_EXCL != 0 {
+		out = append(out, "O_EXCL")
+	}
+	if flags&os.O_SYNC != 0 {
+		out = append(out, "O_SYNC")
+	}
+	if flags&os.O_TRUNC != 0 {
+		out = append(out, "O_TRUNC")
+	}
+	flags &^= accessModeMask | os.O_APPEND | os.O_CREATE | os.O_EXCL | os.O_SYNC | os.O_TRUNC
+	if flags != 0 {
+		out = append(out, fmt.Sprintf("0x%X", flags))
+	}
+	return strings.Join(out, "|")
+}
+
 // OpenFile a file according to the flags and perm provided
 func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
+	defer fs.Trace(name, "flags=%s, perm=%v", decodeOpenFlags(flags), perm)("fd=%v, err=%v", &fd, &err)
 	node, err := vfs.Stat(name)
 	if err != nil {
 		if err != ENOENT || flags&os.O_CREATE == 0 {

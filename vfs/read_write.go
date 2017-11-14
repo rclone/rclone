@@ -95,8 +95,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	if rdwrMode != os.O_RDONLY {
 		fh.file.addWriters(1)
 	}
-
-	fs.Debugf(fh.remote, "Opening cached copy with flags=0x%02X", fh.flags)
+	fs.Debugf(fh.remote, "Opening cached copy with flags=%s", decodeOpenFlags(fh.flags))
 	fd, err := os.OpenFile(fh.osPath, fh.flags|os.O_CREATE, 0600)
 	if err != nil {
 		return errors.Wrap(err, "cache open file failed")

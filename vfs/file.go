@@ -319,6 +319,7 @@ func (f *File) VFS() *VFS {
 //
 // We ignore O_SYNC and O_EXCL
 func (f *File) Open(flags int) (fd Handle, err error) {
+	defer fs.Trace(f, "flags=%s", decodeOpenFlags(flags))("fd=%v, err=%v", &fd, &err)
 	var (
 		write    bool // if set need write support
 		read     bool // if set need read support
