@@ -885,7 +885,7 @@ func MoveDir(fdst, fsrc Fs) error {
 			Infof(fdst, "Server side directory move succeeded")
 			return nil
 		default:
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(fdst, "Server side directory move failed: %v", err)
 			return err
 		}

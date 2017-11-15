@@ -72,7 +72,7 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 		underlyingDst := cryptDst.UnWrap()
 		underlyingHash, err := underlyingDst.Hash(hashType)
 		if err != nil {
-			fs.Stats.Error()
+			fs.Stats.Error(err)
 			fs.Errorf(dst, "Error reading hash from underlying %v: %v", underlyingDst, err)
 			return true, false
 		}
@@ -81,7 +81,7 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 		}
 		cryptHash, err := fcrypt.ComputeHash(cryptDst, src, hashType)
 		if err != nil {
-			fs.Stats.Error()
+			fs.Stats.Error(err)
 			fs.Errorf(dst, "Error computing hash: %v", err)
 			return true, false
 		}
@@ -89,8 +89,9 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 			return false, true
 		}
 		if cryptHash != underlyingHash {
-			fs.Stats.Error()
-			fs.Errorf(src, "hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
+			err = errors.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
+			fs.Stats.Error(err)
+			fs.Errorf(src, err.Error())
 			return true, false
 		}
 		fs.Debugf(src, "OK")

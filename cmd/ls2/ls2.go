@@ -27,7 +27,7 @@ var commandDefintion = &cobra.Command{
 		cmd.Run(false, false, command, func() error {
 			return fs.Walk(fsrc, "", false, fs.ConfigMaxDepth(recurse), func(path string, entries fs.DirEntries, err error) error {
 				if err != nil {
-					fs.Stats.Error()
+					fs.Stats.Error(err)
 					fs.Errorf(path, "error listing: %v", err)
 					return nil
 				}

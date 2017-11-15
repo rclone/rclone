@@ -85,7 +85,7 @@ can be processed line by line as each item is written one to a line.
 			first := true
 			err := fs.Walk(fsrc, "", false, fs.ConfigMaxDepth(recurse), func(dirPath string, entries fs.DirEntries, err error) error {
 				if err != nil {
-					fs.Stats.Error()
+					fs.Stats.Error(err)
 					fs.Errorf(dirPath, "error listing: %v", err)
 					return nil
 				}

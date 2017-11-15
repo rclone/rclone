@@ -134,7 +134,7 @@ func walk(f Fs, path string, includeAll bool, maxLevel int, fn WalkFunc, listDir
 					// NB once we have passed entries to fn we mustn't touch it again
 					if err != nil && err != ErrorSkipDir {
 						traversing.Done()
-						Stats.Error()
+						Stats.Error(err)
 						Errorf(job.remote, "error listing: %v", err)
 						closeQuit()
 						// Send error to error channel if space

@@ -73,7 +73,7 @@ func CheckHashes(src ObjectInfo, dst Object) (equal bool, hash HashType, err err
 	hash = common.GetOne()
 	srcHash, err := src.Hash(hash)
 	if err != nil {
-		Stats.Error()
+		Stats.Error(err)
 		Errorf(src, "Failed to calculate src hash: %v", err)
 		return false, hash, err
 	}
@@ -82,7 +82,7 @@ func CheckHashes(src ObjectInfo, dst Object) (equal bool, hash HashType, err err
 	}
 	dstHash, err := dst.Hash(hash)
 	if err != nil {
-		Stats.Error()
+		Stats.Error(err)
 		Errorf(dst, "Failed to calculate dst hash: %v", err)
 		return false, hash, err
 	}
@@ -199,7 +199,7 @@ func equal(src ObjectInfo, dst Object, sizeOnly, checkSum bool) bool {
 				}
 				return false
 			} else if err != nil {
-				Stats.Error()
+				Stats.Error(err)
 				Errorf(dst, "Failed to set modification time: %v", err)
 			} else {
 				Infof(src, "Updated modification time in destination")
@@ -345,16 +345,16 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		break
 	}
 	if err != nil {
-		Stats.Error()
+		Stats.Error(err)
 		Errorf(src, "Failed to copy: %v", err)
 		return err
 	}
 
 	// Verify sizes are the same after transfer
 	if !Config.IgnoreSize && src.Size() != dst.Size() {
-		Stats.Error()
 		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
 		Errorf(dst, "%v", err)
+		Stats.Error(err)
 		removeFailedCopy(dst)
 		return err
 	}
@@ -366,18 +366,18 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		var srcSum string
 		srcSum, err = src.Hash(hashType)
 		if err != nil {
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(src, "Failed to read src hash: %v", err)
 		} else if srcSum != "" {
 			var dstSum string
 			dstSum, err = dst.Hash(hashType)
 			if err != nil {
-				Stats.Error()
+				Stats.Error(err)
 				Errorf(dst, "Failed to read hash: %v", err)
 			} else if !Config.IgnoreChecksum && !HashEquals(srcSum, dstSum) {
-				Stats.Error()
 				err = errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, srcSum, dstSum)
 				Errorf(dst, "%v", err)
+				Stats.Error(err)
 				removeFailedCopy(dst)
 				return err
 			}
@@ -413,7 +413,7 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 		case ErrorCantMove:
 			Debugf(src, "Can't move, switching to copy")
 		default:
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(src, "Couldn't move: %v", err)
 			return err
 		}
@@ -464,7 +464,7 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 		err = dst.Remove()
 	}
 	if err != nil {
-		Stats.Error()
+		Stats.Error(err)
 		Errorf(dst, "Couldn't %s: %v", action, err)
 	} else if !Config.DryRun {
 		Infof(dst, actioned)
@@ -730,8 +730,9 @@ func checkIdentical(dst, src Object) (differ bool, noHash bool) {
 		return false, true
 	}
 	if !same {
-		Stats.Error()
-		Errorf(src, "%v differ", hash)
+		err = errors.Errorf("%v differ", hash)
+		Errorf(src, "%v", err)
+		Stats.Error(err)
 		return true, false
 	}
 	return false, false
@@ -755,8 +756,9 @@ type checkMarch struct {
 func (c *checkMarch) DstOnly(dst DirEntry) (recurse bool) {
 	switch dst.(type) {
 	case Object:
-		Stats.Error()
-		Errorf(dst, "File not in %v", c.fsrc)
+		err := errors.Errorf("File not in %v", c.fsrc)
+		Errorf(dst, "%v", err)
+		Stats.Error(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.srcFilesMissing, 1)
 	case Directory:
@@ -772,8 +774,9 @@ func (c *checkMarch) DstOnly(dst DirEntry) (recurse bool) {
 func (c *checkMarch) SrcOnly(src DirEntry) (recurse bool) {
 	switch src.(type) {
 	case Object:
-		Stats.Error()
-		Errorf(src, "File not in %v", c.fdst)
+		err := errors.Errorf("File not in %v", c.fdst)
+		Errorf(src, "%v", err)
+		Stats.Error(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.dstFilesMissing, 1)
 	case Directory:
@@ -790,8 +793,9 @@ func (c *checkMarch) checkIdentical(dst, src Object) (differ bool, noHash bool) 
 	Stats.Checking(src.Remote())
 	defer Stats.DoneChecking(src.Remote())
 	if !Config.IgnoreSize && src.Size() != dst.Size() {
-		Stats.Error()
-		Errorf(src, "Sizes differ")
+		err := errors.Errorf("Sizes differ")
+		Errorf(src, "%v", err)
+		Stats.Error(err)
 		return true, false
 	}
 	if Config.SizeOnly {
@@ -816,8 +820,9 @@ func (c *checkMarch) Match(dst, src DirEntry) (recurse bool) {
 				atomic.AddInt32(&c.noHashes, 1)
 			}
 		} else {
-			Stats.Error()
-			Errorf(src, "is file on %v but directory on %v", c.fsrc, c.fdst)
+			err := errors.Errorf("is file on %v but directory on %v", c.fsrc, c.fdst)
+			Errorf(src, "%v", err)
+			Stats.Error(err)
 			atomic.AddInt32(&c.differences, 1)
 			atomic.AddInt32(&c.dstFilesMissing, 1)
 		}
@@ -827,8 +832,9 @@ func (c *checkMarch) Match(dst, src DirEntry) (recurse bool) {
 		if ok {
 			return true
 		}
-		Stats.Error()
-		Errorf(dst, "is file on %v but directory on %v", c.fdst, c.fsrc)
+		err := errors.Errorf("is file on %v but directory on %v", c.fdst, c.fsrc)
+		Errorf(dst, "%v", err)
+		Stats.Error(err)
 		atomic.AddInt32(&c.differences, 1)
 		atomic.AddInt32(&c.srcFilesMissing, 1)
 
@@ -952,7 +958,7 @@ func CheckDownload(fdst, fsrc Fs) error {
 	check := func(a, b Object) (differ bool, noHash bool) {
 		differ, err := CheckIdentical(a, b)
 		if err != nil {
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(a, "Failed to download: %v", err)
 			return true, true
 		}
@@ -1108,7 +1114,7 @@ func Mkdir(f Fs, dir string) error {
 	Debugf(logDirName(f, dir), "Making directory")
 	err := f.Mkdir(dir)
 	if err != nil {
-		Stats.Error()
+		Stats.Error(err)
 		return err
 	}
 	return nil
@@ -1129,7 +1135,7 @@ func TryRmdir(f Fs, dir string) error {
 func Rmdir(f Fs, dir string) error {
 	err := TryRmdir(f, dir)
 	if err != nil {
-		Stats.Error()
+		Stats.Error(err)
 		return err
 	}
 	return err
@@ -1159,7 +1165,7 @@ func Purge(f Fs) error {
 		err = Rmdirs(f, "")
 	}
 	if err != nil {
-		Stats.Error()
+		Stats.Error(err)
 		return err
 	}
 	return nil
@@ -1198,7 +1204,7 @@ func dedupeRename(remote string, objs []Object) {
 		if !Config.DryRun {
 			newObj, err := doMove(o, newName)
 			if err != nil {
-				Stats.Error()
+				Stats.Error(err)
 				Errorf(o, "Failed to rename: %v", err)
 				continue
 			}
@@ -1469,8 +1475,9 @@ func listToChan(f Fs) ObjectsChan {
 				if err == ErrorDirNotFound {
 					return nil
 				}
-				Stats.Error()
-				Errorf(nil, "Failed to list: %v", err)
+				err = errors.Errorf("Failed to list: %v", err)
+				Stats.Error(err)
+				Errorf(nil, "%v", err)
 				return nil
 			}
 			entries.ForObject(func(obj Object) {
@@ -1535,7 +1542,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 		}
 		in, err := o.Open(options...)
 		if err != nil {
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(o, "Failed to open: %v", err)
 			return
 		}
@@ -1550,7 +1557,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 		defer func() {
 			err = in.Close()
 			if err != nil {
-				Stats.Error()
+				Stats.Error(err)
 				Errorf(o, "Failed to close: %v", err)
 			}
 		}()
@@ -1559,7 +1566,7 @@ func Cat(f Fs, w io.Writer, offset, count int64) error {
 		defer mu.Unlock()
 		_, err = io.Copy(w, in)
 		if err != nil {
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(o, "Failed to send to output: %v", err)
 		}
 	})
@@ -1586,8 +1593,8 @@ func Rcat(fdst Fs, dstFileName string, in0 io.ReadCloser, modTime time.Time) (ds
 	compare := func(dst Object) error {
 		src := NewStaticObjectInfo(dstFileName, modTime, int64(readCounter.BytesRead()), false, hash.Sums(), fdst)
 		if !Equal(src, dst) {
-			Stats.Error()
 			err = errors.Errorf("corrupted on transfer")
+			Stats.Error(err)
 			Errorf(dst, "%v", err)
 			return err
 		}
@@ -1659,7 +1666,7 @@ func Rmdirs(f Fs, dir string) error {
 	dirEmpty[""] = true
 	err := Walk(f, dir, true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(f, "Failed to list %q: %v", dirPath, err)
 			return nil
 		}
@@ -1706,7 +1713,7 @@ func Rmdirs(f Fs, dir string) error {
 		dir := toDelete[i]
 		err := TryRmdir(f, dir)
 		if err != nil {
-			Stats.Error()
+			Stats.Error(err)
 			Errorf(dir, "Failed to rmdir: %v", err)
 			return err
 		}

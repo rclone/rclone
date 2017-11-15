@@ -580,7 +580,7 @@ func TestSyncAfterRemovingAFileAndAddingAFileSubDirWithErrors(t *testing.T) {
 	)
 
 	fs.Stats.ResetCounters()
-	fs.Stats.Error()
+	fs.Stats.Error(nil)
 	err := fs.Sync(r.Fremote, r.Flocal)
 	assert.Equal(t, fs.ErrorNotDeleting, err)
 
