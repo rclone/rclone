@@ -177,8 +177,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	config := dropbox.Config{
-		Verbose: false,       // enables verbose logging in the SDK
-		Client:  oAuthClient, // maybe???
+		LogLevel: dropbox.LogOff, // logging in the SDK: LogOff, LogDebug, LogInfo
+		Client:   oAuthClient,    // maybe???
 	}
 	srv := files.New(config)
 
