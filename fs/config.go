@@ -1044,11 +1044,11 @@ func PasswordRemote(name string, keyValues []string) error {
 	Config.AutoConfirm = true
 	passwd := MustObscure(keyValues[1])
 	if passwd != "" {
-	   configData.SetValue(name, keyValues[0], passwd)
-	   RemoteConfig(name)
-	   ShowRemote(name)
-	   SaveConfig()
-    }
+		configData.SetValue(name, keyValues[0], passwd)
+		RemoteConfig(name)
+		ShowRemote(name)
+		SaveConfig()
+	}
 	return nil
 }
 
