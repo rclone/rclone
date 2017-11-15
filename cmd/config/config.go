@@ -16,6 +16,7 @@ func init() {
 	configCommand.AddCommand(configCreateCommand)
 	configCommand.AddCommand(configUpdateCommand)
 	configCommand.AddCommand(configDeleteCommand)
+	configCommand.AddCommand(configPasswordCommand)
 }
 
 var configCommand = &cobra.Command{
@@ -119,5 +120,22 @@ var configDeleteCommand = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fs.DeleteRemote(args[0])
+	},
+}
+
+var configPasswordCommand = &cobra.Command{
+	Use:   "password <name> [<key> <value>]+",
+	Short: `Update password in an existing remote.`,
+	Long: `
+Update an existing remote's password. The password
+should be passed in in pairs of <key> <value>.
+
+For example to set password of a remote of name myremote you would do:
+
+    rclone config password myremote fieldname mypassword
+`,
+	RunE: func(command *cobra.Command, args []string) error {
+		cmd.CheckArgs(3, 256, command, args)
+		return fs.PasswordRemote(args[0], args[1:])
 	},
 }

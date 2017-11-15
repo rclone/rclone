@@ -1034,6 +1034,24 @@ func CreateRemote(name string, provider string, keyValues []string) error {
 	return UpdateRemote(name, keyValues)
 }
 
+// PasswordRemote adds the keyValues passed in to the remote of name.
+// keyValues should be key, value pairs.
+func PasswordRemote(name string, keyValues []string) error {
+	if len(keyValues) != 2 {
+		return errors.New("found key without value")
+	}
+	// Suppress Confirm
+	Config.AutoConfirm = true
+	passwd := MustObscure(keyValues[1])
+	if passwd != "" {
+		configData.SetValue(name, keyValues[0], passwd)
+		RemoteConfig(name)
+		ShowRemote(name)
+		SaveConfig()
+	}
+	return nil
+}
+
 // JSONListProviders prints all the providers and options in JSON format
 func JSONListProviders() error {
 	b, err := json.MarshalIndent(fsRegistry, "", "    ")
