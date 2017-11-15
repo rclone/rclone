@@ -169,6 +169,7 @@ type StatsInfo struct {
 	lock         sync.RWMutex
 	bytes        int64
 	errors       int64
+	lastError    error
 	checks       int64
 	checking     stringSet
 	transfers    int64
@@ -251,6 +252,13 @@ func (s *StatsInfo) GetErrors() int64 {
 	return s.errors
 }
 
+// GetLastError returns the lastError
+func (s *StatsInfo) GetLastError() error {
+	s.lock.RLock()
+	defer s.lock.RUnlock()
+	return s.lastError
+}
+
 // ResetCounters sets the counters (bytes, checks, errors, transfers) to 0
 func (s *StatsInfo) ResetCounters() {
 	s.lock.RLock()
@@ -275,11 +283,12 @@ func (s *StatsInfo) Errored() bool {
 	return s.errors != 0
 }
 
-// Error adds a single error into the stats
-func (s *StatsInfo) Error() {
+// Error adds a single error into the stats and assigns lastError
+func (s *StatsInfo) Error(err error) {
 	s.lock.Lock()
 	defer s.lock.Unlock()
 	s.errors++
+	s.lastError = err
 }
 
 // Checking adds a check into the stats

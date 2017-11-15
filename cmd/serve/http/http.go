@@ -142,7 +142,7 @@ type indexData struct {
 
 // error returns an http.StatusInternalServerError and logs the error
 func internalError(what interface{}, w http.ResponseWriter, text string, err error) {
-	fs.Stats.Error()
+	fs.Stats.Error(err)
 	fs.Errorf(what, "%s: %v", text, err)
 	http.Error(w, text+".", http.StatusInternalServerError)
 }
