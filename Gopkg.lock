@@ -151,16 +151,16 @@
   revision = "4ed959e0540971545eddb8c75514973d670cf739"
 
 [[projects]]
-  name = "github.com/pengsrc/go-shared"
-  packages = ["check","convert","json","yaml"]
-  revision = "454950d6a0782c34427d4f29b46c6bf447256f20"
-  version = "v0.0.8"
-
-[[projects]]
   branch = "master"
   name = "github.com/patrickmn/go-cache"
   packages = ["."]
   revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
+
+[[projects]]
+  name = "github.com/pengsrc/go-shared"
+  packages = ["check","convert","json","yaml"]
+  revision = "454950d6a0782c34427d4f29b46c6bf447256f20"
+  version = "v0.0.8"
 
 [[projects]]
   branch = "master"
@@ -297,6 +297,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "36add5572ff5b8d3d70f232be42e11e600a769fdc6f3cd94a73845f20c988f4d"
+  inputs-digest = "63cb991f1167ff9f656f36bf3bb59831cde5402d70729a5709088ae73388c69e"
   solver-name = "gps-cdcl"
   solver-version = 1
