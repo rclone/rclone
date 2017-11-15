@@ -195,3 +195,15 @@ func NewTeamSharingPolicies(SharedFolderMemberPolicy *SharedFolderMemberPolicy, 
 	s.SharedLinkCreatePolicy = SharedLinkCreatePolicy
 	return s
 }
+
+// TwoStepVerificationPolicy : has no documentation (yet)
+type TwoStepVerificationPolicy struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for TwoStepVerificationPolicy
+const (
+	TwoStepVerificationPolicyRequireTfaEnable  = "require_tfa_enable"
+	TwoStepVerificationPolicyRequireTfaDisable = "require_tfa_disable"
+	TwoStepVerificationPolicyOther             = "other"
+)

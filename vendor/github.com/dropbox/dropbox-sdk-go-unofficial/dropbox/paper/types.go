@@ -161,7 +161,9 @@ type DocLookupError struct {
 
 // Valid tag values for DocLookupError
 const (
-	DocLookupErrorDocNotFound = "doc_not_found"
+	DocLookupErrorInsufficientPermissions = "insufficient_permissions"
+	DocLookupErrorOther                   = "other"
+	DocLookupErrorDocNotFound             = "doc_not_found"
 )
 
 // DocSubscriptionLevel : The subscription level of a Paper doc.
@@ -423,8 +425,10 @@ type ListUsersCursorError struct {
 
 // Valid tag values for ListUsersCursorError
 const (
-	ListUsersCursorErrorDocNotFound = "doc_not_found"
-	ListUsersCursorErrorCursorError = "cursor_error"
+	ListUsersCursorErrorInsufficientPermissions = "insufficient_permissions"
+	ListUsersCursorErrorOther                   = "other"
+	ListUsersCursorErrorDocNotFound             = "doc_not_found"
+	ListUsersCursorErrorCursorError             = "cursor_error"
 )
 
 // UnmarshalJSON deserializes into a ListUsersCursorError instance
@@ -619,10 +623,12 @@ type PaperDocCreateError struct {
 
 // Valid tag values for PaperDocCreateError
 const (
-	PaperDocCreateErrorContentMalformed  = "content_malformed"
-	PaperDocCreateErrorFolderNotFound    = "folder_not_found"
-	PaperDocCreateErrorDocLengthExceeded = "doc_length_exceeded"
-	PaperDocCreateErrorImageSizeExceeded = "image_size_exceeded"
+	PaperDocCreateErrorInsufficientPermissions = "insufficient_permissions"
+	PaperDocCreateErrorOther                   = "other"
+	PaperDocCreateErrorContentMalformed        = "content_malformed"
+	PaperDocCreateErrorFolderNotFound          = "folder_not_found"
+	PaperDocCreateErrorDocLengthExceeded       = "doc_length_exceeded"
+	PaperDocCreateErrorImageSizeExceeded       = "image_size_exceeded"
 )
 
 // PaperDocCreateUpdateResult : has no documentation (yet)
@@ -739,12 +745,15 @@ type PaperDocUpdateError struct {
 
 // Valid tag values for PaperDocUpdateError
 const (
-	PaperDocUpdateErrorContentMalformed  = "content_malformed"
-	PaperDocUpdateErrorRevisionMismatch  = "revision_mismatch"
-	PaperDocUpdateErrorDocLengthExceeded = "doc_length_exceeded"
-	PaperDocUpdateErrorImageSizeExceeded = "image_size_exceeded"
-	PaperDocUpdateErrorDocArchived       = "doc_archived"
-	PaperDocUpdateErrorDocDeleted        = "doc_deleted"
+	PaperDocUpdateErrorInsufficientPermissions = "insufficient_permissions"
+	PaperDocUpdateErrorOther                   = "other"
+	PaperDocUpdateErrorDocNotFound             = "doc_not_found"
+	PaperDocUpdateErrorContentMalformed        = "content_malformed"
+	PaperDocUpdateErrorRevisionMismatch        = "revision_mismatch"
+	PaperDocUpdateErrorDocLengthExceeded       = "doc_length_exceeded"
+	PaperDocUpdateErrorImageSizeExceeded       = "image_size_exceeded"
+	PaperDocUpdateErrorDocArchived             = "doc_archived"
+	PaperDocUpdateErrorDocDeleted              = "doc_deleted"
 )
 
 // PaperDocUpdatePolicy : has no documentation (yet)
@@ -810,7 +819,10 @@ type SharingPublicPolicyType struct {
 
 // Valid tag values for SharingPublicPolicyType
 const (
-	SharingPublicPolicyTypeDisabled = "disabled"
+	SharingPublicPolicyTypePeopleWithLinkCanEdit           = "people_with_link_can_edit"
+	SharingPublicPolicyTypePeopleWithLinkCanViewAndComment = "people_with_link_can_view_and_comment"
+	SharingPublicPolicyTypeInviteOnly                      = "invite_only"
+	SharingPublicPolicyTypeDisabled                        = "disabled"
 )
 
 // UserInfoWithPermissionLevel : has no documentation (yet)

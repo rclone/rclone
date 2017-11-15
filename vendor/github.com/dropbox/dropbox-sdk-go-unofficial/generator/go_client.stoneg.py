@@ -107,7 +107,7 @@ class GoClientBackend(CodeBackend):
 
         body = 'nil'
         if not is_void_type(route.arg_data_type):
-            out('dbx.Config.TryLog("arg: %v", arg)')
+            out('dbx.Config.LogDebug("arg: %v", arg)')
 
             out('b, err := json.Marshal(arg)')
             with self.block('if err != nil'):
@@ -144,7 +144,7 @@ class GoClientBackend(CodeBackend):
         with self.block('if err != nil'):
             out('return')
 
-        out('dbx.Config.TryLog("req: %v", req)')
+        out('dbx.Config.LogInfo("req: %v", req)')
 
         out()
 
@@ -157,7 +157,7 @@ class GoClientBackend(CodeBackend):
             out('return')
         out()
 
-        out('dbx.Config.TryLog("resp: %v", resp)')
+        out('dbx.Config.LogInfo("resp: %v", resp)')
 
     def _generate_response(self, route):
         out = self.emit
@@ -172,11 +172,19 @@ class GoClientBackend(CodeBackend):
                 out('return')
             out()
 
-        out('dbx.Config.TryLog("body: %v", body)')
+        out('dbx.Config.LogDebug("body: %v", body)')
 
     def _generate_error_handling(self, route):
         out = self.emit
+        style = route.attrs.get('style', 'rpc')
         with self.block('if resp.StatusCode == http.StatusConflict'):
+            # If style was download, body was assigned to a header.
+            # Need to re-read the response body to parse the error
+            if style == 'download':
+                out('defer resp.Body.Close()')
+                with self.block('body, err = ioutil.ReadAll(resp.Body);'
+                                'if err != nil'):
+                    out('return')
             out('var apiError %sAPIError' % fmt_var(route.name))
             with self.block('err = json.Unmarshal(body, &apiError);'
                             'if err != nil'):

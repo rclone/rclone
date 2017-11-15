@@ -72,12 +72,39 @@ func (u *LaunchResultBase) UnmarshalJSON(body []byte) error {
 // the job, no additional information is returned.
 type LaunchEmptyResult struct {
 	dropbox.Tagged
+	// AsyncJobId : This response indicates that the processing is asynchronous.
+	// The string is an id that can be used to obtain the status of the
+	// asynchronous job.
+	AsyncJobId string `json:"async_job_id,omitempty"`
 }
 
 // Valid tag values for LaunchEmptyResult
 const (
-	LaunchEmptyResultComplete = "complete"
+	LaunchEmptyResultAsyncJobId = "async_job_id"
+	LaunchEmptyResultComplete   = "complete"
 )
+
+// UnmarshalJSON deserializes into a LaunchEmptyResult instance
+func (u *LaunchEmptyResult) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "async_job_id":
+		err = json.Unmarshal(body, &u.AsyncJobId)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // PollArg : Arguments for methods that poll the status of an asynchronous job.
 type PollArg struct {
@@ -115,7 +142,8 @@ type PollEmptyResult struct {
 
 // Valid tag values for PollEmptyResult
 const (
-	PollEmptyResultComplete = "complete"
+	PollEmptyResultInProgress = "in_progress"
+	PollEmptyResultComplete   = "complete"
 )
 
 // PollError : Error returned by methods for polling the status of asynchronous

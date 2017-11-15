@@ -1342,7 +1342,11 @@ type GetSharedLinkFileError struct {
 
 // Valid tag values for GetSharedLinkFileError
 const (
-	GetSharedLinkFileErrorSharedLinkIsDirectory = "shared_link_is_directory"
+	GetSharedLinkFileErrorSharedLinkNotFound     = "shared_link_not_found"
+	GetSharedLinkFileErrorSharedLinkAccessDenied = "shared_link_access_denied"
+	GetSharedLinkFileErrorUnsupportedLinkType    = "unsupported_link_type"
+	GetSharedLinkFileErrorOther                  = "other"
+	GetSharedLinkFileErrorSharedLinkIsDirectory  = "shared_link_is_directory"
 )
 
 // GetSharedLinkMetadataArg : has no documentation (yet)
@@ -1660,8 +1664,9 @@ type JobStatus struct {
 
 // Valid tag values for JobStatus
 const (
-	JobStatusComplete = "complete"
-	JobStatusFailed   = "failed"
+	JobStatusInProgress = "in_progress"
+	JobStatusComplete   = "complete"
+	JobStatusFailed     = "failed"
 )
 
 // UnmarshalJSON deserializes into a JobStatus instance
@@ -2537,8 +2542,12 @@ type ModifySharedLinkSettingsError struct {
 
 // Valid tag values for ModifySharedLinkSettingsError
 const (
-	ModifySharedLinkSettingsErrorSettingsError    = "settings_error"
-	ModifySharedLinkSettingsErrorEmailNotVerified = "email_not_verified"
+	ModifySharedLinkSettingsErrorSharedLinkNotFound     = "shared_link_not_found"
+	ModifySharedLinkSettingsErrorSharedLinkAccessDenied = "shared_link_access_denied"
+	ModifySharedLinkSettingsErrorUnsupportedLinkType    = "unsupported_link_type"
+	ModifySharedLinkSettingsErrorOther                  = "other"
+	ModifySharedLinkSettingsErrorSettingsError          = "settings_error"
+	ModifySharedLinkSettingsErrorEmailNotVerified       = "email_not_verified"
 )
 
 // UnmarshalJSON deserializes into a ModifySharedLinkSettingsError instance
@@ -3014,8 +3023,9 @@ type RemoveMemberJobStatus struct {
 
 // Valid tag values for RemoveMemberJobStatus
 const (
-	RemoveMemberJobStatusComplete = "complete"
-	RemoveMemberJobStatusFailed   = "failed"
+	RemoveMemberJobStatusInProgress = "in_progress"
+	RemoveMemberJobStatusComplete   = "complete"
+	RemoveMemberJobStatusFailed     = "failed"
 )
 
 // UnmarshalJSON deserializes into a RemoveMemberJobStatus instance
@@ -3077,6 +3087,9 @@ type ResolvedVisibility struct {
 
 // Valid tag values for ResolvedVisibility
 const (
+	ResolvedVisibilityPublic           = "public"
+	ResolvedVisibilityTeamOnly         = "team_only"
+	ResolvedVisibilityPassword         = "password"
 	ResolvedVisibilityTeamAndPassword  = "team_and_password"
 	ResolvedVisibilitySharedFolderOnly = "shared_folder_only"
 	ResolvedVisibilityOther            = "other"
@@ -3102,7 +3115,11 @@ type RevokeSharedLinkError struct {
 
 // Valid tag values for RevokeSharedLinkError
 const (
-	RevokeSharedLinkErrorSharedLinkMalformed = "shared_link_malformed"
+	RevokeSharedLinkErrorSharedLinkNotFound     = "shared_link_not_found"
+	RevokeSharedLinkErrorSharedLinkAccessDenied = "shared_link_access_denied"
+	RevokeSharedLinkErrorUnsupportedLinkType    = "unsupported_link_type"
+	RevokeSharedLinkErrorOther                  = "other"
+	RevokeSharedLinkErrorSharedLinkMalformed    = "shared_link_malformed"
 )
 
 // ShareFolderArgBase : has no documentation (yet)
@@ -3197,12 +3214,43 @@ func (u *ShareFolderErrorBase) UnmarshalJSON(body []byte) error {
 // ShareFolderError : has no documentation (yet)
 type ShareFolderError struct {
 	dropbox.Tagged
+	// BadPath : `ShareFolderArg.path` is invalid.
+	BadPath *SharePathError `json:"bad_path,omitempty"`
 }
 
 // Valid tag values for ShareFolderError
 const (
-	ShareFolderErrorNoPermission = "no_permission"
+	ShareFolderErrorEmailUnverified                 = "email_unverified"
+	ShareFolderErrorBadPath                         = "bad_path"
+	ShareFolderErrorTeamPolicyDisallowsMemberPolicy = "team_policy_disallows_member_policy"
+	ShareFolderErrorDisallowedSharedLinkPolicy      = "disallowed_shared_link_policy"
+	ShareFolderErrorOther                           = "other"
+	ShareFolderErrorNoPermission                    = "no_permission"
 )
+
+// UnmarshalJSON deserializes into a ShareFolderError instance
+func (u *ShareFolderError) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// BadPath : `ShareFolderArg.path` is invalid.
+		BadPath json.RawMessage `json:"bad_path,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "bad_path":
+		err = json.Unmarshal(w.BadPath, &u.BadPath)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // ShareFolderJobStatus : has no documentation (yet)
 type ShareFolderJobStatus struct {
@@ -3216,8 +3264,9 @@ type ShareFolderJobStatus struct {
 
 // Valid tag values for ShareFolderJobStatus
 const (
-	ShareFolderJobStatusComplete = "complete"
-	ShareFolderJobStatusFailed   = "failed"
+	ShareFolderJobStatusInProgress = "in_progress"
+	ShareFolderJobStatusComplete   = "complete"
+	ShareFolderJobStatusFailed     = "failed"
 )
 
 // UnmarshalJSON deserializes into a ShareFolderJobStatus instance
@@ -3256,13 +3305,18 @@ func (u *ShareFolderJobStatus) UnmarshalJSON(body []byte) error {
 // ShareFolderLaunch : has no documentation (yet)
 type ShareFolderLaunch struct {
 	dropbox.Tagged
+	// AsyncJobId : This response indicates that the processing is asynchronous.
+	// The string is an id that can be used to obtain the status of the
+	// asynchronous job.
+	AsyncJobId string `json:"async_job_id,omitempty"`
 	// Complete : has no documentation (yet)
 	Complete *SharedFolderMetadata `json:"complete,omitempty"`
 }
 
 // Valid tag values for ShareFolderLaunch
 const (
-	ShareFolderLaunchComplete = "complete"
+	ShareFolderLaunchAsyncJobId = "async_job_id"
+	ShareFolderLaunchComplete   = "complete"
 )
 
 // UnmarshalJSON deserializes into a ShareFolderLaunch instance
@@ -3279,6 +3333,12 @@ func (u *ShareFolderLaunch) UnmarshalJSON(body []byte) error {
 	}
 	u.Tag = w.Tag
 	switch u.Tag {
+	case "async_job_id":
+		err = json.Unmarshal(body, &u.AsyncJobId)
+
+		if err != nil {
+			return err
+		}
 	case "complete":
 		err = json.Unmarshal(body, &u.Complete)
 
@@ -3368,7 +3428,7 @@ func NewSharedContentLinkMetadata(AudienceOptions []*LinkAudience, CurrentAudien
 // part of the results for `listFileMembersBatch`.
 type SharedFileMembers struct {
 	// Users : The list of user members of the shared file.
-	Users []*UserMembershipInfo `json:"users"`
+	Users []*UserFileMembershipInfo `json:"users"`
 	// Groups : The list of group members of the shared file.
 	Groups []*GroupMembershipInfo `json:"groups"`
 	// Invitees : The list of invited members of a file, but have not logged in
@@ -3381,7 +3441,7 @@ type SharedFileMembers struct {
 }
 
 // NewSharedFileMembers returns a new SharedFileMembers instance
-func NewSharedFileMembers(Users []*UserMembershipInfo, Groups []*GroupMembershipInfo, Invitees []*InviteeMembershipInfo) *SharedFileMembers {
+func NewSharedFileMembers(Users []*UserFileMembershipInfo, Groups []*GroupMembershipInfo, Invitees []*InviteeMembershipInfo) *SharedFileMembers {
 	s := new(SharedFileMembers)
 	s.Users = Users
 	s.Groups = Groups
@@ -4106,6 +4166,41 @@ func (u *UpdateFolderPolicyError) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// UserMembershipInfo : The information about a user member of the shared
+// content.
+type UserMembershipInfo struct {
+	MembershipInfo
+	// User : The account information for the membership user.
+	User *UserInfo `json:"user"`
+}
+
+// NewUserMembershipInfo returns a new UserMembershipInfo instance
+func NewUserMembershipInfo(AccessType *AccessLevel, User *UserInfo) *UserMembershipInfo {
+	s := new(UserMembershipInfo)
+	s.AccessType = AccessType
+	s.User = User
+	s.IsInherited = false
+	return s
+}
+
+// UserFileMembershipInfo : The information about a user member of the shared
+// content with an appended last seen timestamp.
+type UserFileMembershipInfo struct {
+	UserMembershipInfo
+	// TimeLastSeen : The UTC timestamp of when the user has last seen the
+	// content, if they have.
+	TimeLastSeen time.Time `json:"time_last_seen,omitempty"`
+}
+
+// NewUserFileMembershipInfo returns a new UserFileMembershipInfo instance
+func NewUserFileMembershipInfo(AccessType *AccessLevel, User *UserInfo) *UserFileMembershipInfo {
+	s := new(UserFileMembershipInfo)
+	s.AccessType = AccessType
+	s.User = User
+	s.IsInherited = false
+	return s
+}
+
 // UserInfo : Basic information about a user. Use `usersAccount` and
 // `usersAccountBatch` to obtain more detailed information.
 type UserInfo struct {
@@ -4123,23 +4218,6 @@ func NewUserInfo(AccountId string, SameTeam bool) *UserInfo {
 	s := new(UserInfo)
 	s.AccountId = AccountId
 	s.SameTeam = SameTeam
-	return s
-}
-
-// UserMembershipInfo : The information about a user member of the shared
-// content.
-type UserMembershipInfo struct {
-	MembershipInfo
-	// User : The account information for the membership user.
-	User *UserInfo `json:"user"`
-}
-
-// NewUserMembershipInfo returns a new UserMembershipInfo instance
-func NewUserMembershipInfo(AccessType *AccessLevel, User *UserInfo) *UserMembershipInfo {
-	s := new(UserMembershipInfo)
-	s.AccessType = AccessType
-	s.User = User
-	s.IsInherited = false
 	return s
 }
 

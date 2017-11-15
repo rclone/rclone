@@ -137,7 +137,9 @@ class GoTypesBackend(CodeBackend):
     def _generate_union_helper(self, u):
         name = u.name
         namespace = u.namespace
-        fields = u.fields
+        # Unions can be inherited, but don't need to be polymorphic.
+        # So let's flatten out all the inherited fields.
+        fields = u.all_fields
         if is_struct_type(u) and u.has_enumerated_subtypes():
             name = fmt_var(name, export=False) + 'Union'
             fields = u.get_enumerated_subtypes()

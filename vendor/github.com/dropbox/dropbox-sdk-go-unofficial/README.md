@@ -43,7 +43,10 @@ import "github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 import "github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users"
 
 func main() {
-  config := dropbox.Config{Token: token, Verbose: true} // second arg enables verbose logging in the SDK
+  config := dropbox.Config{
+      Token: token,
+      LogLevel: dropbox.LogInfo, // if needed, set the desired logging level. Default is off
+  }
   dbx := users.New(config)
   // start making API calls
 }

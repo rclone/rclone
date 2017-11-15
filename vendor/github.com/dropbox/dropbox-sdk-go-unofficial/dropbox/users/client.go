@@ -54,7 +54,7 @@ type GetAccountAPIError struct {
 func (dbx *apiImpl) GetAccount(arg *GetAccountArg) (res *BasicAccount, err error) {
 	cli := dbx.Client
 
-	dbx.Config.TryLog("arg: %v", arg)
+	dbx.Config.LogDebug("arg: %v", arg)
 	b, err := json.Marshal(arg)
 	if err != nil {
 		return
@@ -71,21 +71,21 @@ func (dbx *apiImpl) GetAccount(arg *GetAccountArg) (res *BasicAccount, err error
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -126,7 +126,7 @@ type GetAccountBatchAPIError struct {
 func (dbx *apiImpl) GetAccountBatch(arg *GetAccountBatchArg) (res []*BasicAccount, err error) {
 	cli := dbx.Client
 
-	dbx.Config.TryLog("arg: %v", arg)
+	dbx.Config.LogDebug("arg: %v", arg)
 	b, err := json.Marshal(arg)
 	if err != nil {
 		return
@@ -143,21 +143,21 @@ func (dbx *apiImpl) GetAccountBatch(arg *GetAccountBatchArg) (res []*BasicAccoun
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -207,21 +207,21 @@ func (dbx *apiImpl) GetCurrentAccount() (res *FullAccount, err error) {
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -271,21 +271,21 @@ func (dbx *apiImpl) GetSpaceUsage() (res *SpaceUsage, err error) {
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {

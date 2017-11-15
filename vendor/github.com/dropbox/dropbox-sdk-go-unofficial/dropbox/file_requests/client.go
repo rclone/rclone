@@ -54,7 +54,7 @@ type CreateAPIError struct {
 func (dbx *apiImpl) Create(arg *CreateFileRequestArgs) (res *FileRequest, err error) {
 	cli := dbx.Client
 
-	dbx.Config.TryLog("arg: %v", arg)
+	dbx.Config.LogDebug("arg: %v", arg)
 	b, err := json.Marshal(arg)
 	if err != nil {
 		return
@@ -71,21 +71,21 @@ func (dbx *apiImpl) Create(arg *CreateFileRequestArgs) (res *FileRequest, err er
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -126,7 +126,7 @@ type GetAPIError struct {
 func (dbx *apiImpl) Get(arg *GetFileRequestArgs) (res *FileRequest, err error) {
 	cli := dbx.Client
 
-	dbx.Config.TryLog("arg: %v", arg)
+	dbx.Config.LogDebug("arg: %v", arg)
 	b, err := json.Marshal(arg)
 	if err != nil {
 		return
@@ -143,21 +143,21 @@ func (dbx *apiImpl) Get(arg *GetFileRequestArgs) (res *FileRequest, err error) {
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -207,21 +207,21 @@ func (dbx *apiImpl) List() (res *ListFileRequestsResult, err error) {
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {
@@ -262,7 +262,7 @@ type UpdateAPIError struct {
 func (dbx *apiImpl) Update(arg *UpdateFileRequestArgs) (res *FileRequest, err error) {
 	cli := dbx.Client
 
-	dbx.Config.TryLog("arg: %v", arg)
+	dbx.Config.LogDebug("arg: %v", arg)
 	b, err := json.Marshal(arg)
 	if err != nil {
 		return
@@ -279,21 +279,21 @@ func (dbx *apiImpl) Update(arg *UpdateFileRequestArgs) (res *FileRequest, err er
 	if err != nil {
 		return
 	}
-	dbx.Config.TryLog("req: %v", req)
+	dbx.Config.LogInfo("req: %v", req)
 
 	resp, err := cli.Do(req)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("resp: %v", resp)
+	dbx.Config.LogInfo("resp: %v", resp)
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return
 	}
 
-	dbx.Config.TryLog("body: %v", body)
+	dbx.Config.LogDebug("body: %v", body)
 	if resp.StatusCode == http.StatusOK {
 		err = json.Unmarshal(body, &res)
 		if err != nil {

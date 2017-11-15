@@ -1213,9 +1213,6 @@ func NewDomainVerificationAddDomainSuccessDetails(DomainNames []string) *DomainV
 type DomainVerificationRemoveDomainDetails struct {
 	// DomainNames : Domain names.
 	DomainNames []string `json:"domain_names"`
-	// VerificationMethod : Domain name verification method. Might be missing
-	// due to historical data gap.
-	VerificationMethod string `json:"verification_method,omitempty"`
 }
 
 // NewDomainVerificationRemoveDomainDetails returns a new DomainVerificationRemoveDomainDetails instance
@@ -1856,6 +1853,8 @@ type EventDetails struct {
 	// ShmodelVisibilityTeamOnlyDetails : Made a file/folder visible only to
 	// team members with the link.
 	ShmodelVisibilityTeamOnlyDetails *ShmodelVisibilityTeamOnlyDetails `json:"shmodel_visibility_team_only_details,omitempty"`
+	// SsoAddCertDetails : Added the X.509 certificate for SSO.
+	SsoAddCertDetails *SsoAddCertDetails `json:"sso_add_cert_details,omitempty"`
 	// SsoAddLoginUrlDetails : Added sign-in URL for SSO.
 	SsoAddLoginUrlDetails *SsoAddLoginUrlDetails `json:"sso_add_login_url_details,omitempty"`
 	// SsoAddLogoutUrlDetails : Added sign-out URL for SSO.
@@ -1869,6 +1868,8 @@ type EventDetails struct {
 	// SsoChangeSamlIdentityModeDetails : Changed the SAML identity mode for
 	// SSO.
 	SsoChangeSamlIdentityModeDetails *SsoChangeSamlIdentityModeDetails `json:"sso_change_saml_identity_mode_details,omitempty"`
+	// SsoRemoveCertDetails : Removed the X.509 certificate for SSO.
+	SsoRemoveCertDetails *SsoRemoveCertDetails `json:"sso_remove_cert_details,omitempty"`
 	// SsoRemoveLoginUrlDetails : Removed the sign-in URL for SSO.
 	SsoRemoveLoginUrlDetails *SsoRemoveLoginUrlDetails `json:"sso_remove_login_url_details,omitempty"`
 	// SsoRemoveLogoutUrlDetails : Removed single sign-on logout URL.
@@ -1968,6 +1969,9 @@ type EventDetails struct {
 	// PaperChangeDeploymentPolicyDetails : Changed whether Dropbox Paper, when
 	// enabled, is deployed to all teams or to specific members of the team.
 	PaperChangeDeploymentPolicyDetails *PaperChangeDeploymentPolicyDetails `json:"paper_change_deployment_policy_details,omitempty"`
+	// PaperChangeMemberLinkPolicyDetails : Changed whether non team members can
+	// view Paper documents using a link.
+	PaperChangeMemberLinkPolicyDetails *PaperChangeMemberLinkPolicyDetails `json:"paper_change_member_link_policy_details,omitempty"`
 	// PaperChangeMemberPolicyDetails : Changed whether team members can share
 	// Paper documents externally (i.e. outside the team), and if so, whether
 	// they should be accessible only by team members or anyone by default.
@@ -2013,6 +2017,9 @@ type EventDetails struct {
 	// TeamProfileAddLogoDetails : Added a team logo to be displayed on shared
 	// link headers.
 	TeamProfileAddLogoDetails *TeamProfileAddLogoDetails `json:"team_profile_add_logo_details,omitempty"`
+	// TeamProfileChangeDefaultLanguageDetails : Changed the default language
+	// for the team.
+	TeamProfileChangeDefaultLanguageDetails *TeamProfileChangeDefaultLanguageDetails `json:"team_profile_change_default_language_details,omitempty"`
 	// TeamProfileChangeLogoDetails : Changed the team logo to be displayed on
 	// shared link headers.
 	TeamProfileChangeLogoDetails *TeamProfileChangeLogoDetails `json:"team_profile_change_logo_details,omitempty"`
@@ -2249,12 +2256,14 @@ const (
 	EventDetailsShmodelVisibilityPasswordDetails                = "shmodel_visibility_password_details"
 	EventDetailsShmodelVisibilityPublicDetails                  = "shmodel_visibility_public_details"
 	EventDetailsShmodelVisibilityTeamOnlyDetails                = "shmodel_visibility_team_only_details"
+	EventDetailsSsoAddCertDetails                               = "sso_add_cert_details"
 	EventDetailsSsoAddLoginUrlDetails                           = "sso_add_login_url_details"
 	EventDetailsSsoAddLogoutUrlDetails                          = "sso_add_logout_url_details"
 	EventDetailsSsoChangeCertDetails                            = "sso_change_cert_details"
 	EventDetailsSsoChangeLoginUrlDetails                        = "sso_change_login_url_details"
 	EventDetailsSsoChangeLogoutUrlDetails                       = "sso_change_logout_url_details"
 	EventDetailsSsoChangeSamlIdentityModeDetails                = "sso_change_saml_identity_mode_details"
+	EventDetailsSsoRemoveCertDetails                            = "sso_remove_cert_details"
 	EventDetailsSsoRemoveLoginUrlDetails                        = "sso_remove_login_url_details"
 	EventDetailsSsoRemoveLogoutUrlDetails                       = "sso_remove_logout_url_details"
 	EventDetailsTeamFolderChangeStatusDetails                   = "team_folder_change_status_details"
@@ -2289,6 +2298,7 @@ const (
 	EventDetailsMicrosoftOfficeAddinChangePolicyDetails         = "microsoft_office_addin_change_policy_details"
 	EventDetailsNetworkControlChangePolicyDetails               = "network_control_change_policy_details"
 	EventDetailsPaperChangeDeploymentPolicyDetails              = "paper_change_deployment_policy_details"
+	EventDetailsPaperChangeMemberLinkPolicyDetails              = "paper_change_member_link_policy_details"
 	EventDetailsPaperChangeMemberPolicyDetails                  = "paper_change_member_policy_details"
 	EventDetailsPaperChangePolicyDetails                        = "paper_change_policy_details"
 	EventDetailsPermanentDeleteChangePolicyDetails              = "permanent_delete_change_policy_details"
@@ -2304,6 +2314,7 @@ const (
 	EventDetailsWebSessionsChangeFixedLengthPolicyDetails       = "web_sessions_change_fixed_length_policy_details"
 	EventDetailsWebSessionsChangeIdleLengthPolicyDetails        = "web_sessions_change_idle_length_policy_details"
 	EventDetailsTeamProfileAddLogoDetails                       = "team_profile_add_logo_details"
+	EventDetailsTeamProfileChangeDefaultLanguageDetails         = "team_profile_change_default_language_details"
 	EventDetailsTeamProfileChangeLogoDetails                    = "team_profile_change_logo_details"
 	EventDetailsTeamProfileChangeNameDetails                    = "team_profile_change_name_details"
 	EventDetailsTeamProfileRemoveLogoDetails                    = "team_profile_remove_logo_details"
@@ -2813,6 +2824,8 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// ShmodelVisibilityTeamOnlyDetails : Made a file/folder visible only to
 		// team members with the link.
 		ShmodelVisibilityTeamOnlyDetails json.RawMessage `json:"shmodel_visibility_team_only_details,omitempty"`
+		// SsoAddCertDetails : Added the X.509 certificate for SSO.
+		SsoAddCertDetails json.RawMessage `json:"sso_add_cert_details,omitempty"`
 		// SsoAddLoginUrlDetails : Added sign-in URL for SSO.
 		SsoAddLoginUrlDetails json.RawMessage `json:"sso_add_login_url_details,omitempty"`
 		// SsoAddLogoutUrlDetails : Added sign-out URL for SSO.
@@ -2826,6 +2839,8 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// SsoChangeSamlIdentityModeDetails : Changed the SAML identity mode for
 		// SSO.
 		SsoChangeSamlIdentityModeDetails json.RawMessage `json:"sso_change_saml_identity_mode_details,omitempty"`
+		// SsoRemoveCertDetails : Removed the X.509 certificate for SSO.
+		SsoRemoveCertDetails json.RawMessage `json:"sso_remove_cert_details,omitempty"`
 		// SsoRemoveLoginUrlDetails : Removed the sign-in URL for SSO.
 		SsoRemoveLoginUrlDetails json.RawMessage `json:"sso_remove_login_url_details,omitempty"`
 		// SsoRemoveLogoutUrlDetails : Removed single sign-on logout URL.
@@ -2932,6 +2947,9 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// when enabled, is deployed to all teams or to specific members of the
 		// team.
 		PaperChangeDeploymentPolicyDetails json.RawMessage `json:"paper_change_deployment_policy_details,omitempty"`
+		// PaperChangeMemberLinkPolicyDetails : Changed whether non team members
+		// can view Paper documents using a link.
+		PaperChangeMemberLinkPolicyDetails json.RawMessage `json:"paper_change_member_link_policy_details,omitempty"`
 		// PaperChangeMemberPolicyDetails : Changed whether team members can
 		// share Paper documents externally (i.e. outside the team), and if so,
 		// whether they should be accessible only by team members or anyone by
@@ -2979,6 +2997,9 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// TeamProfileAddLogoDetails : Added a team logo to be displayed on
 		// shared link headers.
 		TeamProfileAddLogoDetails json.RawMessage `json:"team_profile_add_logo_details,omitempty"`
+		// TeamProfileChangeDefaultLanguageDetails : Changed the default
+		// language for the team.
+		TeamProfileChangeDefaultLanguageDetails json.RawMessage `json:"team_profile_change_default_language_details,omitempty"`
 		// TeamProfileChangeLogoDetails : Changed the team logo to be displayed
 		// on shared link headers.
 		TeamProfileChangeLogoDetails json.RawMessage `json:"team_profile_change_logo_details,omitempty"`
@@ -4224,6 +4245,12 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
+	case "sso_add_cert_details":
+		err = json.Unmarshal(body, &u.SsoAddCertDetails)
+
+		if err != nil {
+			return err
+		}
 	case "sso_add_login_url_details":
 		err = json.Unmarshal(body, &u.SsoAddLoginUrlDetails)
 
@@ -4256,6 +4283,12 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		}
 	case "sso_change_saml_identity_mode_details":
 		err = json.Unmarshal(body, &u.SsoChangeSamlIdentityModeDetails)
+
+		if err != nil {
+			return err
+		}
+	case "sso_remove_cert_details":
+		err = json.Unmarshal(body, &u.SsoRemoveCertDetails)
 
 		if err != nil {
 			return err
@@ -4464,6 +4497,12 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
+	case "paper_change_member_link_policy_details":
+		err = json.Unmarshal(body, &u.PaperChangeMemberLinkPolicyDetails)
+
+		if err != nil {
+			return err
+		}
 	case "paper_change_member_policy_details":
 		err = json.Unmarshal(body, &u.PaperChangeMemberPolicyDetails)
 
@@ -4550,6 +4589,12 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		}
 	case "team_profile_add_logo_details":
 		err = json.Unmarshal(body, &u.TeamProfileAddLogoDetails)
+
+		if err != nil {
+			return err
+		}
+	case "team_profile_change_default_language_details":
+		err = json.Unmarshal(body, &u.TeamProfileChangeDefaultLanguageDetails)
 
 		if err != nil {
 			return err
@@ -4832,12 +4877,14 @@ const (
 	EventTypeShmodelVisibilityPassword                = "shmodel_visibility_password"
 	EventTypeShmodelVisibilityPublic                  = "shmodel_visibility_public"
 	EventTypeShmodelVisibilityTeamOnly                = "shmodel_visibility_team_only"
+	EventTypeSsoAddCert                               = "sso_add_cert"
 	EventTypeSsoAddLoginUrl                           = "sso_add_login_url"
 	EventTypeSsoAddLogoutUrl                          = "sso_add_logout_url"
 	EventTypeSsoChangeCert                            = "sso_change_cert"
 	EventTypeSsoChangeLoginUrl                        = "sso_change_login_url"
 	EventTypeSsoChangeLogoutUrl                       = "sso_change_logout_url"
 	EventTypeSsoChangeSamlIdentityMode                = "sso_change_saml_identity_mode"
+	EventTypeSsoRemoveCert                            = "sso_remove_cert"
 	EventTypeSsoRemoveLoginUrl                        = "sso_remove_login_url"
 	EventTypeSsoRemoveLogoutUrl                       = "sso_remove_logout_url"
 	EventTypeTeamFolderChangeStatus                   = "team_folder_change_status"
@@ -4872,6 +4919,7 @@ const (
 	EventTypeMicrosoftOfficeAddinChangePolicy         = "microsoft_office_addin_change_policy"
 	EventTypeNetworkControlChangePolicy               = "network_control_change_policy"
 	EventTypePaperChangeDeploymentPolicy              = "paper_change_deployment_policy"
+	EventTypePaperChangeMemberLinkPolicy              = "paper_change_member_link_policy"
 	EventTypePaperChangeMemberPolicy                  = "paper_change_member_policy"
 	EventTypePaperChangePolicy                        = "paper_change_policy"
 	EventTypePermanentDeleteChangePolicy              = "permanent_delete_change_policy"
@@ -4887,6 +4935,7 @@ const (
 	EventTypeWebSessionsChangeFixedLengthPolicy       = "web_sessions_change_fixed_length_policy"
 	EventTypeWebSessionsChangeIdleLengthPolicy        = "web_sessions_change_idle_length_policy"
 	EventTypeTeamProfileAddLogo                       = "team_profile_add_logo"
+	EventTypeTeamProfileChangeDefaultLanguage         = "team_profile_change_default_language"
 	EventTypeTeamProfileChangeLogo                    = "team_profile_change_logo"
 	EventTypeTeamProfileChangeName                    = "team_profile_change_name"
 	EventTypeTeamProfileRemoveLogo                    = "team_profile_remove_logo"
@@ -5639,9 +5688,9 @@ func NewGroupChangeMemberRoleDetails(IsGroupOwner bool) *GroupChangeMemberRoleDe
 
 // GroupCreateDetails : Created a group.
 type GroupCreateDetails struct {
-	// IsAdminManaged : Is admin managed group. Might be missing due to
+	// IsCompanyManaged : Is company managed group. Might be missing due to
 	// historical data gap.
-	IsAdminManaged bool `json:"is_admin_managed,omitempty"`
+	IsCompanyManaged bool `json:"is_company_managed,omitempty"`
 	// JoinPolicy : Group join policy.
 	JoinPolicy *GroupJoinPolicy `json:"join_policy"`
 }
@@ -5655,9 +5704,9 @@ func NewGroupCreateDetails(JoinPolicy *GroupJoinPolicy) *GroupCreateDetails {
 
 // GroupDeleteDetails : Deleted a group.
 type GroupDeleteDetails struct {
-	// IsAdminManaged : Is admin managed group. Might be missing due to
+	// IsCompanyManaged : Is company managed group. Might be missing due to
 	// historical data gap.
-	IsAdminManaged bool `json:"is_admin_managed,omitempty"`
+	IsCompanyManaged bool `json:"is_company_managed,omitempty"`
 }
 
 // NewGroupDeleteDetails returns a new GroupDeleteDetails instance
@@ -6408,6 +6457,20 @@ type PaperChangeDeploymentPolicyDetails struct {
 // NewPaperChangeDeploymentPolicyDetails returns a new PaperChangeDeploymentPolicyDetails instance
 func NewPaperChangeDeploymentPolicyDetails(NewValue *team_policies.PaperDeploymentPolicy) *PaperChangeDeploymentPolicyDetails {
 	s := new(PaperChangeDeploymentPolicyDetails)
+	s.NewValue = NewValue
+	return s
+}
+
+// PaperChangeMemberLinkPolicyDetails : Changed whether non team members can
+// view Paper documents using a link.
+type PaperChangeMemberLinkPolicyDetails struct {
+	// NewValue : New paper external link accessibility policy.
+	NewValue *PaperMemberPolicy `json:"new_value"`
+}
+
+// NewPaperChangeMemberLinkPolicyDetails returns a new PaperChangeMemberLinkPolicyDetails instance
+func NewPaperChangeMemberLinkPolicyDetails(NewValue *PaperMemberPolicy) *PaperChangeMemberLinkPolicyDetails {
+	s := new(PaperChangeMemberLinkPolicyDetails)
 	s.NewValue = NewValue
 	return s
 }
@@ -8543,6 +8606,19 @@ const (
 	SpaceLimitsStatusOther       = "other"
 )
 
+// SsoAddCertDetails : Added the X.509 certificate for SSO.
+type SsoAddCertDetails struct {
+	// CertificateDetails : SSO certificate details.
+	CertificateDetails *Certificate `json:"certificate_details"`
+}
+
+// NewSsoAddCertDetails returns a new SsoAddCertDetails instance
+func NewSsoAddCertDetails(CertificateDetails *Certificate) *SsoAddCertDetails {
+	s := new(SsoAddCertDetails)
+	s.CertificateDetails = CertificateDetails
+	return s
+}
+
 // SsoAddLoginUrlDetails : Added sign-in URL for SSO.
 type SsoAddLoginUrlDetails struct {
 	// NewValue : New single sign-on login URL.
@@ -8571,14 +8647,16 @@ func NewSsoAddLogoutUrlDetails() *SsoAddLogoutUrlDetails {
 
 // SsoChangeCertDetails : Changed the X.509 certificate for SSO.
 type SsoChangeCertDetails struct {
-	// CertificateDetails : SSO certificate details.
-	CertificateDetails *Certificate `json:"certificate_details"`
+	// PreviousCertificateDetails : Previous SSO certificate details.
+	PreviousCertificateDetails *Certificate `json:"previous_certificate_details,omitempty"`
+	// NewCertificateDetails : New SSO certificate details.
+	NewCertificateDetails *Certificate `json:"new_certificate_details"`
 }
 
 // NewSsoChangeCertDetails returns a new SsoChangeCertDetails instance
-func NewSsoChangeCertDetails(CertificateDetails *Certificate) *SsoChangeCertDetails {
+func NewSsoChangeCertDetails(NewCertificateDetails *Certificate) *SsoChangeCertDetails {
 	s := new(SsoChangeCertDetails)
-	s.CertificateDetails = CertificateDetails
+	s.NewCertificateDetails = NewCertificateDetails
 	return s
 }
 
@@ -8656,6 +8734,16 @@ type SsoLoginFailDetails struct {
 func NewSsoLoginFailDetails(ErrorDetails *FailureDetailsLogInfo) *SsoLoginFailDetails {
 	s := new(SsoLoginFailDetails)
 	s.ErrorDetails = ErrorDetails
+	return s
+}
+
+// SsoRemoveCertDetails : Removed the X.509 certificate for SSO.
+type SsoRemoveCertDetails struct {
+}
+
+// NewSsoRemoveCertDetails returns a new SsoRemoveCertDetails instance
+func NewSsoRemoveCertDetails() *SsoRemoveCertDetails {
+	s := new(SsoRemoveCertDetails)
 	return s
 }
 
@@ -8917,6 +9005,23 @@ func NewTeamProfileAddLogoDetails() *TeamProfileAddLogoDetails {
 	return s
 }
 
+// TeamProfileChangeDefaultLanguageDetails : Changed the default language for
+// the team.
+type TeamProfileChangeDefaultLanguageDetails struct {
+	// NewValue : New team's default language.
+	NewValue string `json:"new_value"`
+	// PreviousValue : Previous team's default language.
+	PreviousValue string `json:"previous_value"`
+}
+
+// NewTeamProfileChangeDefaultLanguageDetails returns a new TeamProfileChangeDefaultLanguageDetails instance
+func NewTeamProfileChangeDefaultLanguageDetails(NewValue string, PreviousValue string) *TeamProfileChangeDefaultLanguageDetails {
+	s := new(TeamProfileChangeDefaultLanguageDetails)
+	s.NewValue = NewValue
+	s.PreviousValue = PreviousValue
+	return s
+}
+
 // TeamProfileChangeLogoDetails : Changed the team logo to be displayed on
 // shared link headers.
 type TeamProfileChangeLogoDetails struct {
@@ -8989,14 +9094,14 @@ func NewTfaChangeBackupPhoneDetails() *TfaChangeBackupPhoneDetails {
 // TfaChangePolicyDetails : Change two-step verification policy for the team.
 type TfaChangePolicyDetails struct {
 	// NewValue : New change policy.
-	NewValue *TfaPolicy `json:"new_value"`
+	NewValue *team_policies.TwoStepVerificationPolicy `json:"new_value"`
 	// PreviousValue : Previous change policy. Might be missing due to
 	// historical data gap.
-	PreviousValue *TfaPolicy `json:"previous_value,omitempty"`
+	PreviousValue *team_policies.TwoStepVerificationPolicy `json:"previous_value,omitempty"`
 }
 
 // NewTfaChangePolicyDetails returns a new TfaChangePolicyDetails instance
-func NewTfaChangePolicyDetails(NewValue *TfaPolicy) *TfaChangePolicyDetails {
+func NewTfaChangePolicyDetails(NewValue *team_policies.TwoStepVerificationPolicy) *TfaChangePolicyDetails {
 	s := new(TfaChangePolicyDetails)
 	s.NewValue = NewValue
 	return s
@@ -9035,18 +9140,6 @@ const (
 	TfaConfigurationSms           = "sms"
 	TfaConfigurationAuthenticator = "authenticator"
 	TfaConfigurationOther         = "other"
-)
-
-// TfaPolicy : Two factor authentication policy
-type TfaPolicy struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for TfaPolicy
-const (
-	TfaPolicyAllowDisable = "allow_disable"
-	TfaPolicyStickyEnable = "sticky_enable"
-	TfaPolicyOther        = "other"
 )
 
 // TfaRemoveBackupPhoneDetails : Removed the backup phone for two-step

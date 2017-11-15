@@ -19,8 +19,7 @@
 // THE SOFTWARE.
 
 // Package file_requests : This namespace contains endpoints and data types for
-// file request operations. Warning: This namespace is in beta and is subject to
-// backwards-incompatible changes.
+// file request operations.
 package file_requests
 
 import (
@@ -75,6 +74,8 @@ type FileRequestError struct {
 
 // Valid tag values for FileRequestError
 const (
+	FileRequestErrorDisabledForTeam = "disabled_for_team"
+	FileRequestErrorOther           = "other"
 	FileRequestErrorNotFound        = "not_found"
 	FileRequestErrorNotAFolder      = "not_a_folder"
 	FileRequestErrorAppLacksAccess  = "app_lacks_access"
@@ -90,6 +91,14 @@ type CreateFileRequestError struct {
 
 // Valid tag values for CreateFileRequestError
 const (
+	CreateFileRequestErrorDisabledForTeam = "disabled_for_team"
+	CreateFileRequestErrorOther           = "other"
+	CreateFileRequestErrorNotFound        = "not_found"
+	CreateFileRequestErrorNotAFolder      = "not_a_folder"
+	CreateFileRequestErrorAppLacksAccess  = "app_lacks_access"
+	CreateFileRequestErrorNoPermission    = "no_permission"
+	CreateFileRequestErrorEmailUnverified = "email_unverified"
+	CreateFileRequestErrorValidationError = "validation_error"
 	CreateFileRequestErrorInvalidLocation = "invalid_location"
 	CreateFileRequestErrorRateLimit       = "rate_limit"
 )
@@ -167,7 +176,16 @@ type GetFileRequestError struct {
 }
 
 // Valid tag values for GetFileRequestError
-const ()
+const (
+	GetFileRequestErrorDisabledForTeam = "disabled_for_team"
+	GetFileRequestErrorOther           = "other"
+	GetFileRequestErrorNotFound        = "not_found"
+	GetFileRequestErrorNotAFolder      = "not_a_folder"
+	GetFileRequestErrorAppLacksAccess  = "app_lacks_access"
+	GetFileRequestErrorNoPermission    = "no_permission"
+	GetFileRequestErrorEmailUnverified = "email_unverified"
+	GetFileRequestErrorValidationError = "validation_error"
+)
 
 // GracePeriod : has no documentation (yet)
 type GracePeriod struct {
@@ -190,7 +208,10 @@ type ListFileRequestsError struct {
 }
 
 // Valid tag values for ListFileRequestsError
-const ()
+const (
+	ListFileRequestsErrorDisabledForTeam = "disabled_for_team"
+	ListFileRequestsErrorOther           = "other"
+)
 
 // ListFileRequestsResult : Result for `list`.
 type ListFileRequestsResult struct {
@@ -274,4 +295,13 @@ type UpdateFileRequestError struct {
 }
 
 // Valid tag values for UpdateFileRequestError
-const ()
+const (
+	UpdateFileRequestErrorDisabledForTeam = "disabled_for_team"
+	UpdateFileRequestErrorOther           = "other"
+	UpdateFileRequestErrorNotFound        = "not_found"
+	UpdateFileRequestErrorNotAFolder      = "not_a_folder"
+	UpdateFileRequestErrorAppLacksAccess  = "app_lacks_access"
+	UpdateFileRequestErrorNoPermission    = "no_permission"
+	UpdateFileRequestErrorEmailUnverified = "email_unverified"
+	UpdateFileRequestErrorValidationError = "validation_error"
+)

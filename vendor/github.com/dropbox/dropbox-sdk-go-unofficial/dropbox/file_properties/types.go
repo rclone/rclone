@@ -95,12 +95,17 @@ func (u *TemplateError) UnmarshalJSON(body []byte) error {
 // PropertiesError : has no documentation (yet)
 type PropertiesError struct {
 	dropbox.Tagged
+	// TemplateNotFound : Template does not exist for the given identifier.
+	TemplateNotFound string `json:"template_not_found,omitempty"`
 	// Path : has no documentation (yet)
 	Path *LookupError `json:"path,omitempty"`
 }
 
 // Valid tag values for PropertiesError
 const (
+	PropertiesErrorTemplateNotFound  = "template_not_found"
+	PropertiesErrorRestrictedContent = "restricted_content"
+	PropertiesErrorOther             = "other"
 	PropertiesErrorPath              = "path"
 	PropertiesErrorUnsupportedFolder = "unsupported_folder"
 )
@@ -119,6 +124,12 @@ func (u *PropertiesError) UnmarshalJSON(body []byte) error {
 	}
 	u.Tag = w.Tag
 	switch u.Tag {
+	case "template_not_found":
+		err = json.Unmarshal(body, &u.TemplateNotFound)
+
+		if err != nil {
+			return err
+		}
 	case "path":
 		err = json.Unmarshal(w.Path, &u.Path)
 
@@ -132,23 +143,103 @@ func (u *PropertiesError) UnmarshalJSON(body []byte) error {
 // InvalidPropertyGroupError : has no documentation (yet)
 type InvalidPropertyGroupError struct {
 	dropbox.Tagged
+	// TemplateNotFound : Template does not exist for the given identifier.
+	TemplateNotFound string `json:"template_not_found,omitempty"`
+	// Path : has no documentation (yet)
+	Path *LookupError `json:"path,omitempty"`
 }
 
 // Valid tag values for InvalidPropertyGroupError
 const (
+	InvalidPropertyGroupErrorTemplateNotFound      = "template_not_found"
+	InvalidPropertyGroupErrorRestrictedContent     = "restricted_content"
+	InvalidPropertyGroupErrorOther                 = "other"
+	InvalidPropertyGroupErrorPath                  = "path"
+	InvalidPropertyGroupErrorUnsupportedFolder     = "unsupported_folder"
 	InvalidPropertyGroupErrorPropertyFieldTooLarge = "property_field_too_large"
 	InvalidPropertyGroupErrorDoesNotFitTemplate    = "does_not_fit_template"
 )
 
+// UnmarshalJSON deserializes into a InvalidPropertyGroupError instance
+func (u *InvalidPropertyGroupError) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// Path : has no documentation (yet)
+		Path json.RawMessage `json:"path,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "template_not_found":
+		err = json.Unmarshal(body, &u.TemplateNotFound)
+
+		if err != nil {
+			return err
+		}
+	case "path":
+		err = json.Unmarshal(w.Path, &u.Path)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // AddPropertiesError : has no documentation (yet)
 type AddPropertiesError struct {
 	dropbox.Tagged
+	// TemplateNotFound : Template does not exist for the given identifier.
+	TemplateNotFound string `json:"template_not_found,omitempty"`
+	// Path : has no documentation (yet)
+	Path *LookupError `json:"path,omitempty"`
 }
 
 // Valid tag values for AddPropertiesError
 const (
+	AddPropertiesErrorTemplateNotFound           = "template_not_found"
+	AddPropertiesErrorRestrictedContent          = "restricted_content"
+	AddPropertiesErrorOther                      = "other"
+	AddPropertiesErrorPath                       = "path"
+	AddPropertiesErrorUnsupportedFolder          = "unsupported_folder"
+	AddPropertiesErrorPropertyFieldTooLarge      = "property_field_too_large"
+	AddPropertiesErrorDoesNotFitTemplate         = "does_not_fit_template"
 	AddPropertiesErrorPropertyGroupAlreadyExists = "property_group_already_exists"
 )
+
+// UnmarshalJSON deserializes into a AddPropertiesError instance
+func (u *AddPropertiesError) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// Path : has no documentation (yet)
+		Path json.RawMessage `json:"path,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "template_not_found":
+		err = json.Unmarshal(body, &u.TemplateNotFound)
+
+		if err != nil {
+			return err
+		}
+	case "path":
+		err = json.Unmarshal(w.Path, &u.Path)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // PropertyGroupTemplate : Defines how a property group may be structured.
 type PropertyGroupTemplate struct {
@@ -306,15 +397,42 @@ func (u *LookupError) UnmarshalJSON(body []byte) error {
 // ModifyTemplateError : has no documentation (yet)
 type ModifyTemplateError struct {
 	dropbox.Tagged
+	// TemplateNotFound : Template does not exist for the given identifier.
+	TemplateNotFound string `json:"template_not_found,omitempty"`
 }
 
 // Valid tag values for ModifyTemplateError
 const (
+	ModifyTemplateErrorTemplateNotFound          = "template_not_found"
+	ModifyTemplateErrorRestrictedContent         = "restricted_content"
+	ModifyTemplateErrorOther                     = "other"
 	ModifyTemplateErrorConflictingPropertyNames  = "conflicting_property_names"
 	ModifyTemplateErrorTooManyProperties         = "too_many_properties"
 	ModifyTemplateErrorTooManyTemplates          = "too_many_templates"
 	ModifyTemplateErrorTemplateAttributeTooLarge = "template_attribute_too_large"
 )
+
+// UnmarshalJSON deserializes into a ModifyTemplateError instance
+func (u *ModifyTemplateError) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "template_not_found":
+		err = json.Unmarshal(body, &u.TemplateNotFound)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
 
 // OverwritePropertyGroupArg : has no documentation (yet)
 type OverwritePropertyGroupArg struct {
@@ -584,12 +702,21 @@ func NewRemovePropertiesArg(Path string, PropertyTemplateIds []string) *RemovePr
 // RemovePropertiesError : has no documentation (yet)
 type RemovePropertiesError struct {
 	dropbox.Tagged
+	// TemplateNotFound : Template does not exist for the given identifier.
+	TemplateNotFound string `json:"template_not_found,omitempty"`
+	// Path : has no documentation (yet)
+	Path *LookupError `json:"path,omitempty"`
 	// PropertyGroupLookup : has no documentation (yet)
 	PropertyGroupLookup *LookUpPropertiesError `json:"property_group_lookup,omitempty"`
 }
 
 // Valid tag values for RemovePropertiesError
 const (
+	RemovePropertiesErrorTemplateNotFound    = "template_not_found"
+	RemovePropertiesErrorRestrictedContent   = "restricted_content"
+	RemovePropertiesErrorOther               = "other"
+	RemovePropertiesErrorPath                = "path"
+	RemovePropertiesErrorUnsupportedFolder   = "unsupported_folder"
 	RemovePropertiesErrorPropertyGroupLookup = "property_group_lookup"
 )
 
@@ -597,6 +724,8 @@ const (
 func (u *RemovePropertiesError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// Path : has no documentation (yet)
+		Path json.RawMessage `json:"path,omitempty"`
 		// PropertyGroupLookup : has no documentation (yet)
 		PropertyGroupLookup json.RawMessage `json:"property_group_lookup,omitempty"`
 	}
@@ -607,6 +736,18 @@ func (u *RemovePropertiesError) UnmarshalJSON(body []byte) error {
 	}
 	u.Tag = w.Tag
 	switch u.Tag {
+	case "template_not_found":
+		err = json.Unmarshal(body, &u.TemplateNotFound)
+
+		if err != nil {
+			return err
+		}
+	case "path":
+		err = json.Unmarshal(w.Path, &u.Path)
+
+		if err != nil {
+			return err
+		}
 	case "property_group_lookup":
 		err = json.Unmarshal(w.PropertyGroupLookup, &u.PropertyGroupLookup)
 
@@ -688,19 +829,32 @@ func NewUpdatePropertiesArg(Path string, UpdatePropertyGroups []*PropertyGroupUp
 // UpdatePropertiesError : has no documentation (yet)
 type UpdatePropertiesError struct {
 	dropbox.Tagged
+	// TemplateNotFound : Template does not exist for the given identifier.
+	TemplateNotFound string `json:"template_not_found,omitempty"`
+	// Path : has no documentation (yet)
+	Path *LookupError `json:"path,omitempty"`
 	// PropertyGroupLookup : has no documentation (yet)
 	PropertyGroupLookup *LookUpPropertiesError `json:"property_group_lookup,omitempty"`
 }
 
 // Valid tag values for UpdatePropertiesError
 const (
-	UpdatePropertiesErrorPropertyGroupLookup = "property_group_lookup"
+	UpdatePropertiesErrorTemplateNotFound      = "template_not_found"
+	UpdatePropertiesErrorRestrictedContent     = "restricted_content"
+	UpdatePropertiesErrorOther                 = "other"
+	UpdatePropertiesErrorPath                  = "path"
+	UpdatePropertiesErrorUnsupportedFolder     = "unsupported_folder"
+	UpdatePropertiesErrorPropertyFieldTooLarge = "property_field_too_large"
+	UpdatePropertiesErrorDoesNotFitTemplate    = "does_not_fit_template"
+	UpdatePropertiesErrorPropertyGroupLookup   = "property_group_lookup"
 )
 
 // UnmarshalJSON deserializes into a UpdatePropertiesError instance
 func (u *UpdatePropertiesError) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
+		// Path : has no documentation (yet)
+		Path json.RawMessage `json:"path,omitempty"`
 		// PropertyGroupLookup : has no documentation (yet)
 		PropertyGroupLookup json.RawMessage `json:"property_group_lookup,omitempty"`
 	}
@@ -711,6 +865,18 @@ func (u *UpdatePropertiesError) UnmarshalJSON(body []byte) error {
 	}
 	u.Tag = w.Tag
 	switch u.Tag {
+	case "template_not_found":
+		err = json.Unmarshal(body, &u.TemplateNotFound)
+
+		if err != nil {
+			return err
+		}
+	case "path":
+		err = json.Unmarshal(w.Path, &u.Path)
+
+		if err != nil {
+			return err
+		}
 	case "property_group_lookup":
 		err = json.Unmarshal(w.PropertyGroupLookup, &u.PropertyGroupLookup)
 

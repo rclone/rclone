@@ -83,7 +83,7 @@
   branch = "master"
   name = "github.com/dropbox/dropbox-sdk-go-unofficial"
   packages = ["dropbox","dropbox/async","dropbox/file_properties","dropbox/files"]
-  revision = "98997935f6b3ff4f4fa46275abaa23b02537178d"
+  revision = "9a536e3b58ed271dc9d1f21681db990ca601a551"
 
 [[projects]]
   name = "github.com/go-ini/ini"
