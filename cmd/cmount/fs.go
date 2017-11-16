@@ -282,8 +282,8 @@ func (fsys *FS) Statfs(path string, stat *fuse.Statfs_t) (errc int) {
 func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 	defer fs.Trace(path, "flags=0x%X", flags)("errc=%d, fh=0x%X", &errc, &fh)
 
-	// fuse flags are based off syscall flags as are os flags, so
-	// should be compatible
+	// translate the fuse flags to os flags
+	flags = translateOpenFlags(flags)
 	handle, err := fsys.VFS.OpenFile(path, flags, 0777)
 	if errc != 0 {
 		return translateError(err), fhUnset
@@ -303,6 +303,8 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 	if err != nil {
 		return translateError(err), fhUnset
 	}
+	// translate the fuse flags to os flags
+	flags = translateOpenFlags(flags)
 	handle, err := file.Open(flags)
 	if err != nil {
 		return translateError(err), fhUnset
@@ -555,4 +557,30 @@ func translateError(err error) (errc int) {
 	}
 	fs.Errorf(nil, "IO error: %v", err)
 	return -fuse.EIO
+}
+
+// Translate Open Flags from FUSE to os (as used in the vfs layer)
+func translateOpenFlags(inFlags int) (outFlags int) {
+	switch inFlags & fuse.O_ACCMODE {
+	case fuse.O_RDONLY:
+		outFlags = os.O_RDONLY
+	case fuse.O_WRONLY:
+		outFlags = os.O_WRONLY
+	case fuse.O_RDWR:
+		outFlags = os.O_RDWR
+	}
+	if inFlags&fuse.O_APPEND != 0 {
+		outFlags |= os.O_APPEND
+	}
+	if inFlags&fuse.O_CREAT != 0 {
+		outFlags |= os.O_CREATE
+	}
+	if inFlags&fuse.O_EXCL != 0 {
+		outFlags |= os.O_EXCL
+	}
+	if inFlags&fuse.O_TRUNC != 0 {
+		outFlags |= os.O_TRUNC
+	}
+	// NB O_SYNC isn't defined by fuse
+	return outFlags
 }
