@@ -385,6 +385,23 @@ func (f *Filter) includeRemote(remote string) bool {
 	return true
 }
 
+// ListContainsExcludeFile checks if exclude file is present in the list.
+func (f *Filter) ListContainsExcludeFile(entries DirEntries) bool {
+	if len(f.ExcludeFile) == 0 {
+		return false
+	}
+	for _, entry := range entries {
+		obj, ok := entry.(Object)
+		if ok {
+			basename := path.Base(obj.Remote())
+			if basename == f.ExcludeFile {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // IncludeDirectory returns whether this directory should be included
 // in the sync or not.
 func (f *Filter) IncludeDirectory(remote string) bool {
