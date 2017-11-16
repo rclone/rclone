@@ -622,6 +622,10 @@ func ListDirSorted(fs Fs, includeAll bool, dir string) (entries DirEntries, err 
 	if err != nil {
 		return nil, err
 	}
+	if !includeAll && Config.Filter.ListContainsExcludeFile(entries) {
+		Debugf(dir, "Excluded from sync (and deletion) based on exclude file")
+		return nil, nil
+	}
 	return filterAndSortDir(entries, includeAll, dir, Config.Filter.IncludeObject, Config.Filter.IncludeDirectory)
 }
 
