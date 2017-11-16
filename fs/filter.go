@@ -23,6 +23,7 @@ var (
 	filterFrom     = StringArrayP("filter-from", "", nil, "Read filtering patterns from a file")
 	excludeRule    = StringArrayP("exclude", "", nil, "Exclude files matching pattern")
 	excludeFrom    = StringArrayP("exclude-from", "", nil, "Read exclude patterns from file")
+	excludeFile    = StringP("exclude-if-present", "", "", "Exclude directories if filename is present")
 	includeRule    = StringArrayP("include", "", nil, "Include files matching pattern")
 	includeFrom    = StringArrayP("include-from", "", nil, "Read include patterns from file")
 	filesFrom      = StringArrayP("files-from", "", nil, "Read list of source-file names from file")
@@ -105,6 +106,7 @@ type Filter struct {
 	ModTimeTo      time.Time
 	fileRules      rules
 	dirRules       rules
+	ExcludeFile    string
 	files          FilesMap // files if filesFrom
 	dirs           FilesMap // dirs from filesFrom
 }
@@ -221,6 +223,7 @@ func NewFilter() (f *Filter, err error) {
 			}
 		}
 	}
+	f.ExcludeFile = *excludeFile
 	if addImplicitExclude {
 		err = f.Add(false, "/**")
 		if err != nil {
@@ -372,7 +375,8 @@ func (f *Filter) InActive() bool {
 		f.MinSize < 0 &&
 		f.MaxSize < 0 &&
 		f.fileRules.len() == 0 &&
-		f.dirRules.len() == 0)
+		f.dirRules.len() == 0 &&
+		len(f.ExcludeFile) == 0)
 }
 
 // includeRemote returns whether this remote passes the filter rules.
