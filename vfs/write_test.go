@@ -56,6 +56,15 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	assert.Equal(t, int64(5), fi.Size())
 	assert.Equal(t, "file1", fi.Name())
 
+	// Read
+	var buf = make([]byte, 16)
+	_, err = fh.Read(buf)
+	assert.Equal(t, EPERM, err)
+
+	// ReadAt
+	_, err = fh.ReadAt(buf, 0)
+	assert.Equal(t, EPERM, err)
+
 	// Close
 	assert.NoError(t, fh.Close())
 

@@ -382,11 +382,11 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	if read && write {
 		if CacheMode >= CacheModeMinimal {
 			fd, err = f.OpenRW(flags)
-		} else if flags&os.O_TRUNC != 0 {
-			fd, err = f.OpenWrite()
 		} else {
-			fs.Errorf(f, "Can't open for read and write without cache")
-			return nil, EPERM
+			// Open write only and hope the user doesn't
+			// want to read.  If they do they will get an
+			// EPERM plus an Error log.
+			fd, err = f.OpenWrite()
 		}
 	} else if write {
 		if CacheMode >= CacheModeWrites {

@@ -172,7 +172,9 @@ func TestFileOpen(t *testing.T) {
 	require.NoError(t, fd.Close())
 
 	fd, err = file.Open(os.O_RDWR)
-	assert.Equal(t, EPERM, err)
+	assert.NoError(t, err)
+	_, ok = fd.(*WriteFileHandle)
+	assert.True(t, ok)
 
 	fd, err = file.Open(3)
 	assert.Equal(t, EPERM, err)

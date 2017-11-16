@@ -248,3 +248,17 @@ func (fh *WriteFileHandle) Truncate(size int64) (err error) {
 	// File is correct size
 	return nil
 }
+
+// Read reads up to len(p) bytes into p.
+func (fh *WriteFileHandle) Read(p []byte) (n int, err error) {
+	fs.Errorf(fh.remote, "Read: Can't read and write to file without cache")
+	return 0, EPERM
+}
+
+// ReadAt reads len(p) bytes into p starting at offset off in the
+// underlying input source. It returns the number of bytes read (0 <=
+// n <= len(p)) and any error encountered.
+func (fh *WriteFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
+	fs.Errorf(fh.remote, "ReadAt: Can't read and write to file without cache")
+	return 0, EPERM
+}
