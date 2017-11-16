@@ -52,6 +52,12 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 		flags:  flags,
 		osPath: osPath,
 	}
+
+	rdwrMode := fh.flags & accessModeMask
+	if rdwrMode != os.O_RDONLY {
+		fh.file.addWriter(fh)
+	}
+
 	return fh, nil
 }
 
@@ -62,8 +68,6 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	if fh.opened {
 		return nil
 	}
-
-	rdwrMode := fh.flags & accessModeMask
 
 	// if not truncating the file, need to read it first
 	if fh.flags&os.O_TRUNC == 0 && !truncate {
@@ -92,9 +96,6 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		fh.file.setSize(0)
 	}
 
-	if rdwrMode != os.O_RDONLY {
-		fh.file.addWriters(1)
-	}
 	fs.Debugf(fh.remote, "Opening cached copy with flags=%s", decodeOpenFlags(fh.flags))
 	fd, err := os.OpenFile(fh.osPath, fh.flags|os.O_CREATE, 0600)
 	if err != nil {
@@ -140,6 +141,9 @@ func (fh *RWFileHandle) close() (err error) {
 	}
 	fh.closed = true
 	rdwrMode := fh.flags & accessModeMask
+	if rdwrMode != os.O_RDONLY {
+		fh.file.delWriter(fh)
+	}
 	if !fh.opened {
 		// If read only then return
 		if rdwrMode == os.O_RDONLY {
@@ -157,7 +161,6 @@ func (fh *RWFileHandle) close() (err error) {
 		}
 	}
 	if rdwrMode != os.O_RDONLY {
-		fh.file.addWriters(-1)
 		fi, err := fh.File.Stat()
 		if err != nil {
 			fs.Errorf(fh.remote, "Failed to stat cache file: %v", err)

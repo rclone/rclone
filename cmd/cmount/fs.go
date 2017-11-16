@@ -319,28 +319,14 @@ func (fsys *FS) Truncate(path string, size int64, fh uint64) (errc int) {
 	if errc != 0 {
 		return errc
 	}
-	// Read the size so far
-	var currentSize int64
+	var err error
 	if handle != nil {
-		fi, err := handle.Stat()
-		if err != nil {
-			return translateError(err)
-		}
-		currentSize = fi.Size()
+		err = handle.Truncate(size)
 	} else {
-		currentSize = node.Size()
+		err = node.Truncate(size)
 	}
-	fs.Debugf(path, "truncate to %d, currentSize %d", size, currentSize)
-	if currentSize != size {
-		var err error
-		if handle != nil {
-			err = handle.Truncate(size)
-		} else {
-			err = node.Truncate(size)
-		}
-		if err != nil {
-			return translateError(err)
-		}
+	if err != nil {
+		return translateError(err)
 	}
 	return 0
 }

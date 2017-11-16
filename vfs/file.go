@@ -19,7 +19,7 @@ type File struct {
 	mu             sync.RWMutex // protects the following
 	o              fs.Object    // NB o may be nil if file is being written
 	leaf           string       // leaf name of the object
-	writers        int          // number of writers for this file
+	writers        []Handle     // writers for this file
 	pendingModTime time.Time    // will be applied once o becomes available, i.e. after file was written
 }
 
@@ -90,10 +90,28 @@ func (f *File) rename(d *Dir, o fs.Object) {
 	f.mu.Unlock()
 }
 
-// addWriters increments or decrements the writers
-func (f *File) addWriters(n int) {
+// addWriter adds a write handle to the file
+func (f *File) addWriter(h Handle) {
 	f.mu.Lock()
-	f.writers += n
+	f.writers = append(f.writers, h)
+	f.mu.Unlock()
+}
+
+// delWriter removes a write handle from the file
+func (f *File) delWriter(h Handle) {
+	f.mu.Lock()
+	var found = -1
+	for i := range f.writers {
+		if f.writers[i] == h {
+			found = i
+			break
+		}
+	}
+	if found >= 0 {
+		f.writers = append(f.writers[:found], f.writers[found+1:]...)
+	} else {
+		fs.Debugf(f.o, "File.delWriter couldn't find handle")
+	}
 	f.mu.Unlock()
 }
 
@@ -106,7 +124,7 @@ func (f *File) ModTime() (modTime time.Time) {
 
 	if !f.d.vfs.Opt.NoModTime {
 		// if o is nil it isn't valid yet or there are writers, so return the size so far
-		if f.o == nil || f.writers != 0 {
+		if f.o == nil || len(f.writers) != 0 {
 			if !f.pendingModTime.IsZero() {
 				return f.pendingModTime
 			}
@@ -124,7 +142,7 @@ func (f *File) Size() int64 {
 	defer f.mu.Unlock()
 
 	// if o is nil it isn't valid yet or there are writers, so return the size so far
-	if f.o == nil || f.writers != 0 {
+	if f.o == nil || len(f.writers) != 0 {
 		return atomic.LoadInt64(&f.size)
 	}
 	return f.o.Size()
@@ -188,6 +206,13 @@ func (f *File) setObject(o fs.Object) {
 	f.d.addObject(f)
 }
 
+// exists returns whether the file exists already
+func (f *File) exists() bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.o != nil
+}
+
 // Wait for f.o to become non nil for a short time returning it or an
 // error.  Use when opening a read handle.
 //
@@ -196,12 +221,12 @@ func (f *File) waitForValidObject() (o fs.Object, err error) {
 	for i := 0; i < 50; i++ {
 		f.mu.Lock()
 		o = f.o
-		writers := f.writers
+		nwriters := len(f.writers)
 		f.mu.Unlock()
 		if o != nil {
 			return o, nil
 		}
-		if writers == 0 {
+		if nwriters == 0 {
 			return nil, errors.New("can't open file - writer failed")
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -383,9 +408,40 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 }
 
 // Truncate changes the size of the named file.
-func (f *File) Truncate(size int64) error {
-	if f.d.vfs.Opt.CacheMode >= CacheModeWrites {
+func (f *File) Truncate(size int64) (err error) {
+	// make a copy of fh.writers with the lock held then unlock so
+	// we can call other file methods.
+	f.mu.Lock()
+	writers := make([]Handle, len(f.writers))
+	copy(writers, f.writers)
+	f.mu.Unlock()
+
+	// If have writers then call truncate for each writer
+	if len(writers) != 0 {
+		fs.Debugf(f.o, "Truncating %d file handles", len(writers))
+		for _, h := range writers {
+			truncateErr := h.Truncate(size)
+			if truncateErr != nil {
+				err = truncateErr
+			}
+		}
+		return err
 	}
-	// FIXME
-	return ENOSYS
+	fs.Debugf(f.o, "Truncating file")
+
+	// Otherwise if no writers then truncate the file by opening
+	// the file and truncating it.
+	flags := os.O_WRONLY
+	if size == 0 {
+		flags |= os.O_TRUNC
+	}
+	fh, err := f.Open(flags)
+	if err != nil {
+		return err
+	}
+	defer fs.CheckClose(fh, &err)
+	if size != 0 {
+		return fh.Truncate(size)
+	}
+	return nil
 }

@@ -49,7 +49,7 @@ func newWriteFileHandle(d *Dir, f *File, remote string) (*WriteFileHandle, error
 		fh.o = o
 		fh.result <- err
 	}()
-	fh.file.addWriters(1)
+	fh.file.addWriter(fh)
 	fh.file.setSize(0)
 	return fh, nil
 }
@@ -129,6 +129,11 @@ func (fh *WriteFileHandle) Write(p []byte) (n int, err error) {
 	return fh.writeAt(p, fh.offset)
 }
 
+// WriteString a string to the file
+func (fh *WriteFileHandle) WriteString(s string) (n int, err error) {
+	return fh.Write([]byte(s))
+}
+
 // Offset returns the offset of the file pointer
 func (fh *WriteFileHandle) Offset() (offset int64) {
 	fh.mu.Lock()
@@ -145,7 +150,7 @@ func (fh *WriteFileHandle) close() error {
 		return ECLOSED
 	}
 	fh.closed = true
-	fh.file.addWriters(-1)
+	fh.file.delWriter(fh)
 	writeCloseErr := fh.pipeWriter.Close()
 	err := <-fh.result
 	if err == nil {
@@ -227,4 +232,19 @@ func (fh *WriteFileHandle) Stat() (os.FileInfo, error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	return fh.file, nil
+}
+
+// Truncate file to given size
+func (fh *WriteFileHandle) Truncate(size int64) (err error) {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	if fh.closed {
+		return ECLOSED
+	}
+	if size != fh.offset {
+		fs.Errorf(fh.remote, "Truncate: Can't change size without cache")
+		return EPERM
+	}
+	// File is correct size
+	return nil
 }
