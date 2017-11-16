@@ -4,6 +4,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"runtime"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
@@ -166,7 +167,9 @@ like this:
 				defer close(stopStats)
 			}
 
-			if !AllowNonEmpty {
+			// Skip checkMountEmpty if --allow-non-empty flag is used or if
+			// the Operating System is Windows
+			if !AllowNonEmpty && runtime.GOOS != "windows" {
 				err := checkMountEmpty(args[1])
 				if err != nil {
 					log.Fatalf("Fatal error: %v", err)
