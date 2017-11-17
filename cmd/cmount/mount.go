@@ -92,6 +92,20 @@ func mountOptions(device string, mountpoint string) (options []string) {
 	return options
 }
 
+// waitFor runs fn() until it returns true or the timeout expires
+func waitFor(fn func() bool) (ok bool) {
+	const totalWait = 10 * time.Second
+	const individualWait = 10 * time.Millisecond
+	for i := 0; i < int(totalWait/individualWait); i++ {
+		ok = fn()
+		if ok {
+			return ok
+		}
+		time.Sleep(individualWait)
+	}
+	return false
+}
+
 // mount the file system
 //
 // The mount point will be ready when this returns.
@@ -139,6 +153,14 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 		fs.Debugf(nil, "Calling host.Unmount")
 		if host.Unmount() {
 			fs.Debugf(nil, "host.Unmount succeeded")
+			if runtime.GOOS == "windows" {
+				if !waitFor(func() bool {
+					_, err := os.Stat(mountpoint)
+					return err != nil
+				}) {
+					fs.Errorf(nil, "mountpoint %q didn't disappear after unmount - continuing anyway", mountpoint)
+				}
+			}
 			return nil
 		}
 		fs.Debugf(nil, "host.Unmount failed")
@@ -157,17 +179,12 @@ func mount(f fs.Fs, mountpoint string) (*vfs.VFS, <-chan error, func() error, er
 	// Wait for the mount point to be available on Windows
 	// On Windows the Init signal comes slightly before the mount is ready
 	if runtime.GOOS == "windows" {
-		const totalWait = 10 * time.Second
-		const individualWait = 10 * time.Millisecond
-		for i := 0; i < int(totalWait/individualWait); i++ {
+		if !waitFor(func() bool {
 			_, err := os.Stat(mountpoint)
-			if err == nil {
-				goto found
-			}
-			time.Sleep(10 * time.Millisecond)
+			return err == nil
+		}) {
+			fs.Errorf(nil, "mountpoint %q didn't became available on mount - continuing anyway", mountpoint)
 		}
-		fs.Errorf(nil, "mountpoint %q didn't became available after %v - continuing anyway", mountpoint, totalWait)
-	found:
 	}
 
 	return fsys.VFS, errChan, unmount, nil
