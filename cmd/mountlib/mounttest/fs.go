@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"reflect"
 	"runtime"
 	"strings"
 	"testing"
@@ -257,14 +258,27 @@ func (r *Run) readRemote(t *testing.T, dir dirMap, filepath string) {
 
 // checkDir checks the local and remote against the string passed in
 func (r *Run) checkDir(t *testing.T, dirString string) {
-	dm := newDirMap(dirString)
-	localDm := make(dirMap)
-	r.readLocal(t, localDm, "")
-	remoteDm := make(dirMap)
-	r.readRemote(t, remoteDm, "")
-	// Ignore directories for remote compare
-	assert.Equal(t, dm.filesOnly(), remoteDm.filesOnly(), "expected vs remote")
-	assert.Equal(t, dm, localDm, "expected vs fuse mount")
+	var retries = *fstest.ListRetries
+	sleep := time.Second / 2
+	var remoteOK, fuseOK bool
+	for i := 1; i <= retries; i++ {
+		dm := newDirMap(dirString)
+		localDm := make(dirMap)
+		r.readLocal(t, localDm, "")
+		remoteDm := make(dirMap)
+		r.readRemote(t, remoteDm, "")
+		// Ignore directories for remote compare
+		remoteOK = reflect.DeepEqual(dm.filesOnly(), remoteDm.filesOnly())
+		fuseOK = reflect.DeepEqual(dm, localDm)
+		if remoteOK && fuseOK {
+			return
+		}
+		sleep *= 2
+		t.Logf("Sleeping for %v for list eventual consistency: %d/%d", sleep, i, retries)
+		time.Sleep(sleep)
+	}
+	assert.True(t, remoteOK, "expected vs remote")
+	assert.True(t, fuseOK, "expected vs fuse mount")
 }
 
 func (r *Run) createFile(t *testing.T, filepath string, contents string) {
