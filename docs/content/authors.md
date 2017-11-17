@@ -114,3 +114,4 @@ Contributors
   * Corban Raun <craun@instructure.com>
   * Pierre Carlson <mpcarl@us.ibm.com>
   * Ernest Borowski <er.borowski@gmail.com>
+  * Remus Bunduc <remus.bunduc@gmail.com>
