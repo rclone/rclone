@@ -115,3 +115,4 @@ Contributors
   * Pierre Carlson <mpcarl@us.ibm.com>
   * Ernest Borowski <er.borowski@gmail.com>
   * Remus Bunduc <remus.bunduc@gmail.com>
+  * Iakov Davydov <iakov.davydov@unil.ch>
