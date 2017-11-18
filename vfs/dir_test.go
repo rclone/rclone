@@ -46,6 +46,9 @@ func TestDirMethods(t *testing.T) {
 	// Name
 	assert.Equal(t, "dir", dir.Name())
 
+	// Path
+	assert.Equal(t, "dir", dir.Path())
+
 	// Sys
 	assert.Equal(t, nil, dir.Sys())
 

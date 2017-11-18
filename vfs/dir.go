@@ -70,6 +70,11 @@ func (d *Dir) Name() (name string) {
 	return name
 }
 
+// Path of the directory - satisfies Node interface
+func (d *Dir) Path() (name string) {
+	return d.path
+}
+
 // Sys returns underlying data source (can be nil) - satisfies Node interface
 func (d *Dir) Sys() interface{} {
 	return nil
@@ -325,7 +330,7 @@ func (d *Dir) Create(name string) (*File, error) {
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
-	// This gets added to the directory when the file is written
+	// This gets added to the directory when the file is opened for write
 	return newFile(d, nil, name), nil
 }
 
@@ -390,7 +395,7 @@ func (d *Dir) RemoveAll() error {
 	for _, node := range nodes {
 		err = node.RemoveAll()
 		if err != nil {
-			fs.Errorf(node.DirEntry(), "Dir.RemoveAll failed to remove: %v", err)
+			fs.Errorf(node.Path(), "Dir.RemoveAll failed to remove: %v", err)
 			return err
 		}
 	}
@@ -432,6 +437,9 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		return err
 	}
 	switch x := oldNode.DirEntry().(type) {
+	case nil:
+		fs.Errorf(oldPath, "Dir.Rename cant rename open file")
+		return EPERM
 	case fs.Object:
 		oldObject := x
 		// FIXME: could Copy then Delete if Move not available
@@ -450,7 +458,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		// Update the node with the new details
 		if oldNode != nil {
 			if oldFile, ok := oldNode.(*File); ok {
-				fs.Debugf(oldNode.DirEntry(), "Updating file with %v %p", newObject, oldFile)
+				fs.Debugf(x, "Updating file with %v %p", newObject, oldFile)
 				oldFile.rename(destDir, newObject)
 			}
 		}
@@ -472,7 +480,7 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 		// Update the node with the new details
 		if oldNode != nil {
 			if oldDir, ok := oldNode.(*Dir); ok {
-				fs.Debugf(oldNode.DirEntry(), "Updating dir with %v %p", newDir, oldDir)
+				fs.Debugf(x, "Updating dir with %v %p", newDir, oldDir)
 				oldDir.rename(destDir, newDir)
 			}
 		}

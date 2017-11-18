@@ -171,9 +171,8 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 
 	var out entries
 	for _, node := range dirEntries {
-		obj := node.DirEntry()
-		remote := strings.Trim(obj.Remote(), "/")
-		leaf := path.Base(remote)
+		remote := node.Path()
+		leaf := node.Name()
 		urlRemote := leaf
 		if node.IsDir() {
 			leaf += "/"
@@ -212,7 +211,12 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 		http.Error(w, "Not a file", http.StatusNotFound)
 		return
 	}
-	obj := node.DirEntry().(fs.Object)
+	entry := node.DirEntry()
+	if entry == nil {
+		http.Error(w, "Can't open file being written", http.StatusNotFound)
+		return
+	}
+	obj := entry.(fs.Object)
 	file := node.(*vfs.File)
 
 	// Set content length since we know how long the object is

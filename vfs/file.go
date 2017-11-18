@@ -33,17 +33,12 @@ func newFile(d *Dir, o fs.Object, leaf string) *File {
 	}
 }
 
-// path returns the full path of the file
-func (f *File) path() string {
-	return path.Join(f.d.path, f.leaf)
-}
-
 // String converts it to printable
 func (f *File) String() string {
 	if f == nil {
 		return "<nil *File>"
 	}
-	return f.path()
+	return f.Path()
 }
 
 // IsFile returns true for File - satisfies Node interface
@@ -64,6 +59,11 @@ func (f *File) Mode() (mode os.FileMode) {
 // Name (base) of the directory - satisfies Node interface
 func (f *File) Name() (name string) {
 	return f.leaf
+}
+
+// Path returns the full path of the file
+func (f *File) Path() string {
+	return path.Join(f.d.path, f.leaf)
 }
 
 // Sys returns underlying data source (can be nil) - satisfies Node interface
@@ -197,7 +197,7 @@ func (f *File) setSize(n int64) {
 	atomic.StoreInt64(&f.size, n)
 }
 
-// Update the object when written
+// Update the object when written and add it to the directory
 func (f *File) setObject(o fs.Object) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -259,7 +259,7 @@ func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
 	}
 	// fs.Debugf(o, "File.OpenWrite")
 
-	fh, err = newWriteFileHandle(f.d, f, f.path())
+	fh, err = newWriteFileHandle(f.d, f, f.Path())
 	if err != nil {
 		err = errors.Wrap(err, "open for write")
 		fs.Errorf(f, "File.OpenWrite failed: %v", err)
@@ -277,7 +277,7 @@ func (f *File) OpenRW(flags int) (fh *RWFileHandle, err error) {
 	}
 	// fs.Debugf(o, "File.OpenRW")
 
-	fh, err = newRWFileHandle(f.d, f, f.path(), flags)
+	fh, err = newRWFileHandle(f.d, f, f.Path(), flags)
 	if err != nil {
 		err = errors.Wrap(err, "open for read write")
 		fs.Errorf(f, "File.OpenRW failed: %v", err)

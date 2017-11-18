@@ -4,7 +4,6 @@ package mount
 
 import (
 	"os"
-	"path"
 	"time"
 
 	"bazil.org/fuse"
@@ -93,23 +92,14 @@ func (d *Dir) ReadDirAll(ctx context.Context) (dirents []fuse.Dirent, err error)
 	if err != nil {
 		return nil, translateError(err)
 	}
-	for _, item := range items {
-		var dirent fuse.Dirent
-		switch x := item.DirEntry().(type) {
-		case fs.Object:
-			dirent = fuse.Dirent{
-				// Inode FIXME ???
-				Type: fuse.DT_File,
-				Name: path.Base(x.Remote()),
-			}
-		case fs.Directory:
-			dirent = fuse.Dirent{
-				// Inode FIXME ???
-				Type: fuse.DT_Dir,
-				Name: path.Base(x.Remote()),
-			}
-		default:
-			return nil, errors.Errorf("unknown type %T", item)
+	for _, node := range items {
+		var dirent = fuse.Dirent{
+			// Inode FIXME ???
+			Type: fuse.DT_File,
+			Name: node.Name(),
+		}
+		if node.IsDir() {
+			dirent.Type = fuse.DT_Dir
 		}
 		dirents = append(dirents, dirent)
 	}

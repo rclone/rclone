@@ -61,6 +61,7 @@ type Node interface {
 	VFS() *VFS
 	Open(flags int) (Handle, error)
 	Truncate(size int64) error
+	Path() string
 }
 
 // Check interfaces
@@ -75,7 +76,7 @@ type Nodes []Node
 // Sort functions
 func (ns Nodes) Len() int           { return len(ns) }
 func (ns Nodes) Swap(i, j int)      { ns[i], ns[j] = ns[j], ns[i] }
-func (ns Nodes) Less(i, j int) bool { return ns[i].DirEntry().Remote() < ns[j].DirEntry().Remote() }
+func (ns Nodes) Less(i, j int) bool { return ns[i].Path() < ns[j].Path() }
 
 // Noder represents something which can return a node
 type Noder interface {

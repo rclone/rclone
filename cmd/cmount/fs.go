@@ -245,8 +245,7 @@ func (fsys *FS) Readdir(dirPath string,
 	for _, item := range items {
 		node, ok := item.(vfs.Node)
 		if ok {
-			name := path.Base(node.DirEntry().Remote())
-			fill(name, nil, 0)
+			fill(node.Name(), nil, 0)
 		}
 	}
 	itemsRead = len(items)

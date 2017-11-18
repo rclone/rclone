@@ -44,6 +44,9 @@ func TestFileMethods(t *testing.T) {
 	// Name
 	assert.Equal(t, "file1", file.Name())
 
+	// Path
+	assert.Equal(t, "dir/file1", file.Path())
+
 	// Sys
 	assert.Equal(t, nil, file.Sys())
 
