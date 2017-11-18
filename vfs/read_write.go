@@ -80,9 +80,9 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 			notFound := cause == fs.ErrorObjectNotFound || cause == fs.ErrorDirNotFound
 			if notFound {
 				// Remove cached item if there is one
-				err = os.Remove(fh.osPath)
-				if err != nil && !os.IsNotExist(err) {
-					return errors.Wrap(err, "open RW handle failed to delete stale cache file")
+				rmErr := os.Remove(fh.osPath)
+				if rmErr != nil && !os.IsNotExist(rmErr) {
+					return errors.Wrap(rmErr, "open RW handle failed to delete stale cache file")
 				}
 			}
 			if notFound && fh.flags&os.O_CREATE != 0 {
