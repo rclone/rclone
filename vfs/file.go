@@ -115,6 +115,13 @@ func (f *File) delWriter(h Handle) {
 	f.mu.Unlock()
 }
 
+// activeWriters returns the number of writers on the file
+func (f *File) activeWriters() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.writers)
+}
+
 // ModTime returns the modified time of the file
 //
 // if NoModTime is set then it returns the mod time of the directory

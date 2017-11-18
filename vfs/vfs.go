@@ -248,6 +248,48 @@ func (vfs *VFS) CleanUp() error {
 	return vfs.cache.cleanUp()
 }
 
+
+// WaitForWriters sleeps until all writers have finished or
+// time.Duration has elapsed
+func (vfs *VFS) WaitForWriters(timeout time.Duration) {
+	defer fs.Trace(nil, "timeout=%v", timeout)("")
+	const tickTime = 1 * time.Second
+	deadline := time.NewTimer(timeout)
+	defer deadline.Stop()
+	tick := time.NewTimer(tickTime)
+	defer tick.Stop()
+	tick.Stop()
+	for {
+		writers := 0
+		vfs.root.walk("", func(d *Dir) {
+			fs.Debugf(d.path, "Looking for writers")
+			// NB d.mu is held by walk() here
+			for leaf, item := range d.items {
+				fs.Debugf(leaf, "reading active writers")
+				if file, ok := item.(*File); ok {
+					n := file.activeWriters()
+					if n != 0 {
+						fs.Debugf(file, "active writers %d", n)
+					}
+					writers += n
+				}
+			}
+		})
+		if writers == 0 {
+			return
+		}
+		fs.Debugf(nil, "Still %d writers active, waiting %v", writers, tickTime)
+		tick.Reset(tickTime)
+		select {
+		case <-tick.C:
+			break
+		case <-deadline.C:
+			fs.Errorf(nil, "Exiting even though %d writers are active after %v", writers, timeout)
+			return
+		}
+	}
+}
+
 // Root returns the root node
 func (vfs *VFS) Root() (*Dir, error) {
 	// fs.Debugf(vfs.f, "Root()")
