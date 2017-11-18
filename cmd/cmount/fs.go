@@ -282,7 +282,7 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 	defer fs.Trace(path, "flags=0x%X", flags)("errc=%d, fh=0x%X", &errc, &fh)
 
 	// translate the fuse flags to os flags
-	flags = translateOpenFlags(flags)
+	flags = translateOpenFlags(flags) | os.O_CREATE
 	handle, err := fsys.VFS.OpenFile(path, flags, 0777)
 	if errc != 0 {
 		return translateError(err), fhUnset
@@ -303,7 +303,7 @@ func (fsys *FS) Create(filePath string, flags int, mode uint32) (errc int, fh ui
 		return translateError(err), fhUnset
 	}
 	// translate the fuse flags to os flags
-	flags = translateOpenFlags(flags)
+	flags = translateOpenFlags(flags) | os.O_CREATE
 	handle, err := file.Open(flags)
 	if err != nil {
 		return translateError(err), fhUnset

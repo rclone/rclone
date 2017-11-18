@@ -3,6 +3,7 @@
 package mount
 
 import (
+	"os"
 	"time"
 
 	"bazil.org/fuse"
@@ -64,7 +65,10 @@ func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenR
 
 	// fuse flags are based off syscall flags as are os flags, so
 	// should be compatible
-	handle, err := f.File.Open(int(req.Flags))
+	//
+	// we seem to be missing O_CREATE here so add it in to allow
+	// file creation
+	handle, err := f.File.Open(int(req.Flags) | os.O_CREATE)
 	if err != nil {
 		return nil, translateError(err)
 	}

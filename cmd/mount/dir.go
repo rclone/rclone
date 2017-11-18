@@ -116,7 +116,7 @@ func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.Cr
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
-	fh, err := file.Open(int(req.Flags))
+	fh, err := file.Open(int(req.Flags) | os.O_CREATE)
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
