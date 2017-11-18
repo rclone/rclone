@@ -104,6 +104,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	fh.File = fd
 	fh.opened = true
 	fh.d.vfs.cache.open(fh.osPath)
+	fh.d.addObject(fh.file) // make sure the directory has this object in it now
 	return nil
 }
 

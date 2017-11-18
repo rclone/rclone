@@ -51,6 +51,7 @@ func newWriteFileHandle(d *Dir, f *File, remote string) (*WriteFileHandle, error
 	}()
 	fh.file.addWriter(fh)
 	fh.file.setSize(0)
+	d.addObject(fh.file) // make sure the directory has this object in it now
 	return fh, nil
 }
 
