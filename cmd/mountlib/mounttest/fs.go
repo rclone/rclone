@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/exec"
 	"path"
+	"path/filepath"
 	"reflect"
 	"runtime"
 	"strings"
@@ -20,7 +21,6 @@ import (
 	_ "github.com/ncw/rclone/fs/all" // import all the file systems
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
-	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,18 +47,17 @@ func TestMain(m *testing.M, fn MountFn) {
 		vfs.CacheModeWrites,
 		vfs.CacheModeFull,
 	}
+	run = newRun()
 	for _, cacheMode := range cacheModes {
-		vfsflags.Opt.CacheMode = cacheMode
+		run.cacheMode(cacheMode)
 		log.Printf("Starting test run with cache mode %v", cacheMode)
-		run = newRun()
 		rc = m.Run()
-		run.Finalise()
 		log.Printf("Finished test run with cache mode %v", cacheMode)
 		if rc != 0 {
 			break
 		}
 	}
-	vfsflags.Opt.CacheMode = vfs.DefaultOpt.CacheMode
+	run.Finalise()
 	os.Exit(rc)
 }
 
@@ -173,6 +172,28 @@ func (r *Run) umount() {
 	}
 }
 
+// cacheMode flushes the VFS and changes the CacheMode
+func (r *Run) cacheMode(cacheMode vfs.CacheMode) {
+	// Wait for writers to finish
+	r.vfs.WaitForWriters(30 * time.Second)
+	// Empty and remake the remote
+	r.cleanRemote()
+	err := r.fremote.Mkdir("")
+	if err != nil {
+		log.Fatalf("Failed to open mkdir %q: %v", *fstest.RemoteName, err)
+	}
+	// Empty the cache
+	err = r.vfs.CleanUp()
+	if err != nil {
+		log.Printf("Failed to cleanup the VFS cache: %v", err)
+	}
+	// Reset the cache mode
+	r.vfs.Opt.CacheMode = cacheMode
+	// Flush the directory cache
+	r.vfs.FlushDirCache()
+
+}
+
 func (r *Run) skipIfNoFUSE(t *testing.T) {
 	if r.skip {
 		t.Skip("FUSE not found so skipping test")
@@ -189,12 +210,13 @@ func (r *Run) Finalise() {
 	}
 }
 
-func (r *Run) path(filepath string) string {
-	// return windows drive letter root as E:/
-	if filepath == "" && runtime.GOOS == "windows" {
-		return run.mountPath + "/"
+// path returns an OS local path for filepath
+func (r *Run) path(filePath string) string {
+	// return windows drive letter root as E:\
+	if filePath == "" && runtime.GOOS == "windows" {
+		return run.mountPath + `\`
 	}
-	return path.Join(run.mountPath, filepath)
+	return filepath.Join(run.mountPath, filepath.FromSlash(filePath))
 }
 
 type dirMap map[string]struct{}
@@ -222,12 +244,12 @@ func (dm dirMap) filesOnly() dirMap {
 }
 
 // reads the local tree into dir
-func (r *Run) readLocal(t *testing.T, dir dirMap, filepath string) {
-	realPath := r.path(filepath)
+func (r *Run) readLocal(t *testing.T, dir dirMap, filePath string) {
+	realPath := r.path(filePath)
 	files, err := ioutil.ReadDir(realPath)
 	require.NoError(t, err)
 	for _, fi := range files {
-		name := path.Join(filepath, fi.Name())
+		name := path.Join(filePath, fi.Name())
 		if fi.IsDir() {
 			dir[name+"/"] = struct{}{}
 			r.readLocal(t, dir, name)
@@ -259,13 +281,14 @@ func (r *Run) readRemote(t *testing.T, dir dirMap, filepath string) {
 // checkDir checks the local and remote against the string passed in
 func (r *Run) checkDir(t *testing.T, dirString string) {
 	var retries = *fstest.ListRetries
-	sleep := time.Second / 2
+	sleep := time.Second / 5
 	var remoteOK, fuseOK bool
+	var dm, localDm, remoteDm dirMap
 	for i := 1; i <= retries; i++ {
-		dm := newDirMap(dirString)
-		localDm := make(dirMap)
+		dm = newDirMap(dirString)
+		localDm = make(dirMap)
 		r.readLocal(t, localDm, "")
-		remoteDm := make(dirMap)
+		remoteDm = make(dirMap)
 		r.readRemote(t, remoteDm, "")
 		// Ignore directories for remote compare
 		remoteOK = reflect.DeepEqual(dm.filesOnly(), remoteDm.filesOnly())
@@ -277,8 +300,8 @@ func (r *Run) checkDir(t *testing.T, dirString string) {
 		t.Logf("Sleeping for %v for list eventual consistency: %d/%d", sleep, i, retries)
 		time.Sleep(sleep)
 	}
-	assert.True(t, remoteOK, "expected vs remote")
-	assert.True(t, fuseOK, "expected vs fuse mount")
+	assert.Equal(t, dm.filesOnly(), remoteDm.filesOnly(), "expected vs remote")
+	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 }
 
 func (r *Run) createFile(t *testing.T, filepath string, contents string) {
