@@ -243,11 +243,15 @@ func (vfs *VFS) Shutdown() {
 	}
 }
 
-// CleanUp deletes the contents of the cache
+// CleanUp deletes the contents of the on disk cache
 func (vfs *VFS) CleanUp() error {
 	return vfs.cache.cleanUp()
 }
 
+// FlushDirCache empties the directory cache
+func (vfs *VFS) FlushDirCache() {
+	vfs.root.ForgetAll()
+}
 
 // WaitForWriters sleeps until all writers have finished or
 // time.Duration has elapsed
