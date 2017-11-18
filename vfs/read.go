@@ -214,9 +214,6 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 			if reqSize > 0 {
 				fh.readCalled = true
 			}
-			// One exception to the above is if we fail to fully populate a
-			// page cache page; a read into page cache is always page aligned.
-			// Make sure we never serve a partial read, to avoid that.
 			n, err = io.ReadFull(fh.r, p)
 			newOffset = fh.offset + int64(n)
 			// if err == nil && rand.Intn(10) == 0 {
