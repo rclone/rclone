@@ -131,10 +131,11 @@ func (r *Run) mount() {
 	var err error
 	r.vfs, r.umountResult, r.umountFn, err = mountFn(r.fremote, r.mountPath)
 	if err != nil {
-		log.Printf("mount failed: %v", err)
+		log.Printf("mount FAILED: %v", err)
 		r.skip = true
+	} else {
+		log.Printf("mount OK")
 	}
-	log.Printf("mount OK")
 }
 
 func (r *Run) umount() {
@@ -174,6 +175,10 @@ func (r *Run) umount() {
 
 // cacheMode flushes the VFS and changes the CacheMode
 func (r *Run) cacheMode(cacheMode vfs.CacheMode) {
+	if r.skip {
+		log.Printf("FUSE not found so skipping cacheMode")
+		return
+	}
 	// Wait for writers to finish
 	r.vfs.WaitForWriters(30 * time.Second)
 	// Empty and remake the remote
