@@ -339,6 +339,9 @@ func (r *Run) rmdir(t *testing.T, filepath string) {
 // is in the mount output
 func TestMount(t *testing.T) {
 	run.skipIfNoFUSE(t)
+	if runtime.GOOS == "windows" {
+		t.Skip("not running on windows")
+	}
 
 	out, err := exec.Command("mount").Output()
 	require.NoError(t, err)
