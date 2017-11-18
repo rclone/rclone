@@ -45,5 +45,6 @@ func TestWriteFileDoubleClose(t *testing.T) {
 	err = syscall.Close(fd2)
 	assert.NoError(t, err)
 
+	run.waitForWriters()
 	run.rm(t, "testdoubleclose")
 }

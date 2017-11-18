@@ -52,6 +52,8 @@ func TestFileModTimeWithOpenWriters(t *testing.T) {
 	err = f.Close()
 	require.NoError(t, err)
 
+	run.waitForWriters()
+
 	info, err := os.Stat(filepath)
 	require.NoError(t, err)
 

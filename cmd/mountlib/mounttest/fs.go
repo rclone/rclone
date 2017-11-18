@@ -304,10 +304,16 @@ func (r *Run) checkDir(t *testing.T, dirString string) {
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 }
 
+// wait for any files being written to be released by fuse
+func (r *Run) waitForWriters() {
+	run.vfs.WaitForWriters(10 * time.Second)
+}
+
 func (r *Run) createFile(t *testing.T, filepath string, contents string) {
 	filepath = r.path(filepath)
 	err := ioutil.WriteFile(filepath, []byte(contents), 0600)
 	require.NoError(t, err)
+	r.waitForWriters()
 }
 
 func (r *Run) readFile(t *testing.T, filepath string) string {
