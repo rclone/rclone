@@ -338,6 +338,16 @@ func (r *Run) rm(t *testing.T, filepath string) {
 	filepath = r.path(filepath)
 	err := os.Remove(filepath)
 	require.NoError(t, err)
+
+	// Wait for file to disappear from listing
+	for i := 0; i < 10; i++ {
+		_, err := os.Stat(filepath)
+		if os.IsNotExist(err) {
+			return
+		}
+		time.Sleep(100 * time.Millisecond)
+	}
+	assert.Fail(t, "failed to delete file", filepath)
 }
 
 func (r *Run) rmdir(t *testing.T, filepath string) {
