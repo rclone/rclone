@@ -151,7 +151,8 @@ func (fh *WriteFileHandle) close() error {
 		return ECLOSED
 	}
 	fh.closed = true
-	fh.file.delWriter(fh)
+	// leave writer open until file is transferred
+	defer fh.file.delWriter(fh)
 	writeCloseErr := fh.pipeWriter.Close()
 	err := <-fh.result
 	if err == nil {

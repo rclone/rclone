@@ -143,7 +143,8 @@ func (fh *RWFileHandle) close() (err error) {
 	fh.closed = true
 	rdwrMode := fh.flags & accessModeMask
 	if rdwrMode != os.O_RDONLY {
-		fh.file.delWriter(fh)
+		// leave writer open until file is transferred
+		defer fh.file.delWriter(fh)
 	}
 	if !fh.opened {
 		// If read only then return
