@@ -62,8 +62,8 @@ func TestFileMethods(t *testing.T) {
 	// Size
 	assert.Equal(t, int64(14), file.Size())
 
-	// Fsync
-	assert.NoError(t, file.Fsync())
+	// Sync
+	assert.NoError(t, file.Sync())
 
 	// DirEntry
 	assert.Equal(t, file.o, file.DirEntry())

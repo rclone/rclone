@@ -264,3 +264,10 @@ func (fh *WriteFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
 	fs.Errorf(fh.remote, "ReadAt: Can't read and write to file without cache")
 	return 0, EPERM
 }
+
+// Sync commits the current contents of the file to stable storage. Typically,
+// this means flushing the file system's in-memory copy of recently written
+// data to disk.
+func (fh *WriteFileHandle) Sync() error {
+	return nil
+}

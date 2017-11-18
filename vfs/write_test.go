@@ -65,6 +65,10 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	_, err = fh.ReadAt(buf, 0)
 	assert.Equal(t, EPERM, err)
 
+	// Sync
+	err = fh.Sync()
+	assert.NoError(t, err)
+
 	// Close
 	assert.NoError(t, fh.Close())
 

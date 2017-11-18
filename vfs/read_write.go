@@ -408,3 +408,18 @@ func (fh *RWFileHandle) Truncate(size int64) (err error) {
 	fh.file.setSize(size)
 	return fh.File.Truncate(size)
 }
+
+// Sync commits the current contents of the file to stable storage. Typically,
+// this means flushing the file system's in-memory copy of recently written
+// data to disk.
+func (fh *RWFileHandle) Sync() error {
+	fh.mu.Lock()
+	defer fh.mu.Unlock()
+	if fh.closed {
+		return ECLOSED
+	}
+	if !fh.opened {
+		return nil
+	}
+	return fh.File.Sync()
+}

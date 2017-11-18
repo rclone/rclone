@@ -78,6 +78,10 @@ func TestRWFileHandleMethodsRead(t *testing.T) {
 	_, err := fh.Read(buf)
 	assert.Equal(t, io.EOF, err)
 
+	// Sync
+	err = fh.Sync()
+	assert.NoError(t, err)
+
 	// Stat
 	var fi os.FileInfo
 	fi, err = fh.Stat()

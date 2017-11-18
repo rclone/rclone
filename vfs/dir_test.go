@@ -64,8 +64,8 @@ func TestDirMethods(t *testing.T) {
 	// Size
 	assert.Equal(t, int64(0), dir.Size())
 
-	// Fsync
-	assert.NoError(t, dir.Fsync())
+	// Sync
+	assert.NoError(t, dir.Sync())
 
 	// DirEntry
 	assert.Equal(t, dir.entry, dir.DirEntry())

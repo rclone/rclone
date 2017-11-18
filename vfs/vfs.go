@@ -54,7 +54,7 @@ type Node interface {
 	IsFile() bool
 	Inode() uint64
 	SetModTime(modTime time.Time) error
-	Fsync() error
+	Sync() error
 	Remove() error
 	RemoveAll() error
 	DirEntry() fs.DirEntry

@@ -293,10 +293,10 @@ func (f *File) OpenRW(flags int) (fh *RWFileHandle, err error) {
 	return fh, nil
 }
 
-// Fsync the file
+// Sync the file
 //
 // Note that we don't do anything except return OK
-func (f *File) Fsync() error {
+func (f *File) Sync() error {
 	return nil
 }
 

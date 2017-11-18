@@ -498,10 +498,10 @@ func (d *Dir) Rename(oldName, newName string, destDir *Dir) error {
 	return nil
 }
 
-// Fsync the directory
+// Sync the directory
 //
 // Note that we don't do anything except return OK
-func (d *Dir) Fsync() error {
+func (d *Dir) Sync() error {
 	return nil
 }
 

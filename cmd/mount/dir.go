@@ -174,7 +174,7 @@ var _ fusefs.NodeFsyncer = (*Dir)(nil)
 // Fsync the directory
 func (d *Dir) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
 	defer fs.Trace(d, "")("err=%v", &err)
-	err = d.Dir.Fsync()
+	err = d.Dir.Sync()
 	if err != nil {
 		return translateError(err)
 	}
