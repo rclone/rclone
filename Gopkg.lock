@@ -152,6 +152,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/okzk/sdnotify"
+  packages = ["."]
+  revision = "ed8ca104421a21947710335006107540e3ecb335"
+
+[[projects]]
+  branch = "master"
   name = "github.com/patrickmn/go-cache"
   packages = ["."]
   revision = "a3647f8e31d79543b2d0f0ae2fe5c379d72cedc0"
@@ -297,6 +303,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "63cb991f1167ff9f656f36bf3bb59831cde5402d70729a5709088ae73388c69e"
+  inputs-digest = "f53d8d2a21862f225ba86e4575a68ce73db8957959ca507e5eded837c5dbcf73"
   solver-name = "gps-cdcl"
   solver-version = 1
