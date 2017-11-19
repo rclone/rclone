@@ -116,3 +116,4 @@ Contributors
   * Ernest Borowski <er.borowski@gmail.com>
   * Remus Bunduc <remus.bunduc@gmail.com>
   * Iakov Davydov <iakov.davydov@unil.ch>
+  * Fabian Möller <f.moeller@nynex.de>
