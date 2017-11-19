@@ -144,3 +144,7 @@
 [[constraint]]
   branch = "master"
   name = "github.com/patrickmn/go-cache"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/okzk/sdnotify"

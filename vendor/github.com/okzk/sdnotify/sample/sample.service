@@ -1,0 +1,11 @@
+[Unit]
+Description=sample
+
+[Service]
+Type=notify
+ExecStart=/path/to/sample
+ExecStop=/bin/kill -SIGTERM $MAINPID
+ExecReload=/bin/kill -SIGHUP $MAINPID
+
+[Install]
+WantedBy = multi-user.target
