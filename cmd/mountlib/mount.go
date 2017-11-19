@@ -156,6 +156,14 @@ Assuming only one rclone instance is running, you can reset the cache
 like this:
 
     kill -SIGHUP $(pidof rclone)
+
+### systemd ###
+
+When running rclone ` + commandName + ` as a systemd service, it is possible
+to use Type=notify. In this case the service will enter the started state 
+after the mountpoint has been successfully set up.
+Units having the rclone ` + commandName + ` service specified as a requirement
+will see all files and folders immediately in this mode.
 `,
 		Run: func(command *cobra.Command, args []string) {
 			cmd.CheckArgs(2, 2, command, args)

@@ -15,6 +15,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
+	"github.com/okzk/sdnotify"
 	"github.com/pkg/errors"
 )
 
@@ -126,6 +127,10 @@ func Mount(f fs.Fs, mountpoint string) error {
 	sigHup := make(chan os.Signal, 1)
 	signal.Notify(sigHup, syscall.SIGHUP)
 
+	if err := sdnotify.SdNotifyReady(); err != nil && err != sdnotify.SdNotifyNoSocket {
+		return errors.Wrap(err, "failed to notify systemd")
+	}
+
 waitloop:
 	for {
 		select {
@@ -147,6 +152,7 @@ waitloop:
 		}
 	}
 
+	_ = sdnotify.SdNotifyStopping()
 	if err != nil {
 		return errors.Wrap(err, "failed to umount FUSE fs")
 	}
