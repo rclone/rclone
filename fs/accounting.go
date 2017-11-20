@@ -561,7 +561,7 @@ func (acc *Account) ETA() (eta time.Duration, ok bool) {
 // String produces stats for this file
 func (acc *Account) String() string {
 	a, b := acc.Progress()
-	_, cur := acc.Speed()
+	bps, cur := acc.Speed()
 	eta, etaok := acc.ETA()
 	etas := "-"
 	if etaok {
@@ -581,13 +581,16 @@ func (acc *Account) String() string {
 		cur = cur * 8
 	}
 
-	done := ""
+	done := fmt.Sprintf("%2s/%s", SizeSuffix(a), SizeSuffix(b))
 	if b > 0 {
-		done = fmt.Sprintf("%2d%% done, ", int(100*float64(a)/float64(b)))
+		done += fmt.Sprintf(" %2d%% done, ", int(100*float64(a)/float64(b)))
+	} else {
+		done += " 0%% done, "
 	}
-	return fmt.Sprintf("%45s: %s%s, ETA: %s",
+	return fmt.Sprintf("%45s: %s%s / %s, ETA: %s",
 		string(name),
 		done,
+		SizeSuffix(bps).Unit(strings.Title(Config.DataRateUnit)+"/s"),
 		SizeSuffix(cur).Unit(strings.Title(Config.DataRateUnit)+"/s"),
 		etas,
 	)
