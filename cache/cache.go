@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -45,7 +46,7 @@ const (
 // Globals
 var (
 	// Flags
-	cacheDbPath        = fs.StringP("cache-db-path", "", path.Join(path.Dir(fs.ConfigPath), "cache"), "Directory to cache DB")
+	cacheDbPath        = fs.StringP("cache-db-path", "", filepath.Join(fs.CacheDir, "cache-backend"), "Directory to cache DB")
 	cacheDbPurge       = fs.BoolP("cache-db-purge", "", false, "Purge the cache DB before")
 	cacheChunkSize     = fs.StringP("cache-chunk-size", "", DefCacheChunkSize, "The size of a chunk")
 	cacheInfoAge       = fs.StringP("cache-info-age", "", DefCacheInfoAge, "How much time should object info be stored in cache")
@@ -313,15 +314,15 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	f.rateLimiter = rate.NewLimiter(rate.Limit(float64(*cacheRps)), f.totalWorkers)
 
 	dbPath := *cacheDbPath
-	if path.Ext(dbPath) != "" {
-		dbPath = path.Dir(dbPath)
+	if filepath.Ext(dbPath) != "" {
+		dbPath = filepath.Dir(dbPath)
 	}
 	err = os.MkdirAll(dbPath, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cache directory %v", dbPath)
 	}
 
-	dbPath = path.Join(dbPath, name+".db")
+	dbPath = filepath.Join(dbPath, name+".db")
 	fs.Infof(name, "Storage DB path: %v", dbPath)
 	f.cache = GetPersistent(dbPath, *cacheDbPurge)
 	if err != nil {

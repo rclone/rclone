@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"path"
+	"path/filepath"
 	"strconv"
 	"sync"
 	"testing"
@@ -42,7 +43,7 @@ func TestInternalInit(t *testing.T) {
 	var err error
 
 	// delete the default path
-	dbPath := path.Join(path.Dir(fs.ConfigPath), "cache", *RemoteName+".db")
+	dbPath := filepath.Join(fs.CacheDir, "cache-backend", *RemoteName+".db")
 	boltDb = cache.GetPersistent(dbPath, true)
 	fstest.Initialise()
 
