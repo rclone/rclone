@@ -888,14 +888,20 @@ here which are used for testing.  These start with remote name eg
 
 Write CPU profile to file.  This can be analysed with `go tool pprof`.
 
-### --dump-auth ###
+#### --dump flag,flag,flag ####
 
-Dump HTTP headers - will contain sensitive info such as
-`Authorization:` headers - use `--dump-headers` to dump without
-`Authorization:` headers.  Can be very verbose.  Useful for debugging
+The `--dump` flag takes a comma separated list of flags to dump info
+about.  These are:
+
+#### --dump headers ####
+
+Dump HTTP headers with `Authorization:` lines removed. May still
+contain sensitive info.  Can be very verbose.  Useful for debugging
 only.
 
-### --dump-bodies ###
+Use `--dump auth` if you do want the `Authorization:` headers.
+
+#### --dump bodies ####
 
 Dump HTTP headers and bodies - may contain sensitive info.  Can be
 very verbose.  Useful for debugging only.
@@ -903,18 +909,27 @@ very verbose.  Useful for debugging only.
 Note that the bodies are buffered in memory so don't use this for
 enormous files.
 
-### --dump-filters ###
+#### --dump requests ####
+
+Like `--dump bodies` but dumps the request bodies and the response
+headers.  Useful for debugging download problems.
+
+#### --dump responses ####
+
+Like `--dump bodies` but dumps the response bodies and the request
+headers. Useful for debugging upload problems.
+
+#### --dump auth ####
+
+Dump HTTP headers - will contain sensitive info such as
+`Authorization:` headers - use `--dump headers` to dump without
+`Authorization:` headers.  Can be very verbose.  Useful for debugging
+only.
+
+#### --dump filters ####
 
 Dump the filters to the output.  Useful to see exactly what include
 and exclude options are filtering on.
-
-### --dump-headers ###
-
-Dump HTTP headers with `Authorization:` lines removed. May still
-contain sensitive info.  Can be very verbose.  Useful for debugging
-only.
-
-Use `--dump-auth` if you do want the `Authorization:` headers.
 
 ### --memprofile=FILE ###
 
@@ -969,7 +984,7 @@ For the filtering options
   * `--max-size`
   * `--min-age`
   * `--max-age`
-  * `--dump-filters`
+  * `--dump filters`
 
 See the [filtering section](/filtering/).
 

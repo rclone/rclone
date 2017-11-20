@@ -400,7 +400,7 @@ these are now excluded from the sync.
 
 Always test first with `--dry-run` and `-v` before using this flag.
 
-### `--dump-filters` - dump the filters to the output ###
+### `--dump filters` - dump the filters to the output ###
 
 This dumps the defined filters to the output as regular expressions.
 

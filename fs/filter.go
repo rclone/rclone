@@ -31,7 +31,6 @@ var (
 	maxAge         = StringP("max-age", "", "", "Don't transfer any file older than this in s or suffix ms|s|m|h|d|w|M|y")
 	minSize        = SizeSuffix(-1)
 	maxSize        = SizeSuffix(-1)
-	dumpFilters    = BoolP("dump-filters", "", false, "Dump the filters to the output")
 	//cvsExclude     = BoolP("cvs-exclude", "C", false, "Exclude files in the same way CVS does")
 )
 
@@ -249,7 +248,7 @@ func NewFilter() (f *Filter, err error) {
 		}
 		Debugf(nil, "--max-age %v to %v", duration, f.ModTimeFrom)
 	}
-	if *dumpFilters {
+	if Config.Dump&DumpFilters != 0 {
 		fmt.Println("--- start filters ---")
 		fmt.Println(f.DumpFilters())
 		fmt.Println("--- end filters ---")

@@ -59,8 +59,12 @@ func Initialise() {
 	if *Verbose {
 		fs.Config.LogLevel = fs.LogLevelDebug
 	}
-	fs.Config.DumpHeaders = *DumpHeaders
-	fs.Config.DumpBodies = *DumpBodies
+	if *DumpHeaders {
+		fs.Config.Dump |= fs.DumpHeaders
+	}
+	if *DumpBodies {
+		fs.Config.Dump |= fs.DumpBodies
+	}
 	fs.Config.LowLevelRetries = *LowLevelRetries
 	fs.Config.UseListR = *UseListR
 }

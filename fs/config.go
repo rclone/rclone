@@ -90,7 +90,6 @@ var (
 	timeout               = DurationP("timeout", "", 5*60*time.Second, "IO idle timeout")
 	dumpHeaders           = BoolP("dump-headers", "", false, "Dump HTTP headers - may contain sensitive info")
 	dumpBodies            = BoolP("dump-bodies", "", false, "Dump HTTP headers and bodies - may contain sensitive info")
-	dumpAuth              = BoolP("dump-auth", "", false, "Dump HTTP headers with auth info")
 	skipVerify            = BoolP("no-check-certificate", "", false, "Do not verify the server SSL certificate. Insecure.")
 	AskPassword           = BoolP("ask-password", "", true, "Allow prompt for password for encrypted configuration.")
 	deleteBefore          = BoolP("delete-before", "", false, "When synchronizing, delete files on destination before transfering")
@@ -116,6 +115,7 @@ var (
 	immutable             = BoolP("immutable", "", false, "Do not modify files. Fail if existing files have been modified.")
 	autoConfirm           = BoolP("auto-confirm", "", false, "If enabled, do not request console confirmation.")
 	streamingUploadCutoff = SizeSuffix(100 * 1024)
+	dump                  DumpFlags
 	logLevel              = LogLevelNotice
 	statsLogLevel         = LogLevelInfo
 	bwLimit               BwTimetable
@@ -132,6 +132,7 @@ func init() {
 	VarP(&bwLimit, "bwlimit", "", "Bandwidth limit in kBytes/s, or use suffix b|k|M|G or a full timetable.")
 	VarP(&bufferSize, "buffer-size", "", "Buffer size when copying files.")
 	VarP(&streamingUploadCutoff, "streaming-upload-cutoff", "", "Cutoff for switching to chunked upload if file size is unknown. Upload starts after reaching cutoff or when file ends.")
+	VarP(&dump, "dump", "", "List of items to dump from: "+dumpFlagsList)
 }
 
 // crypt internals
@@ -229,9 +230,7 @@ type ConfigInfo struct {
 	Transfers             int
 	ConnectTimeout        time.Duration // Connect timeout
 	Timeout               time.Duration // Data channel timeout
-	DumpHeaders           bool
-	DumpBodies            bool
-	DumpAuth              bool
+	Dump                  DumpFlags
 	Filter                *Filter
 	InsecureSkipVerify    bool // Skip server certificate verification
 	DeleteMode            DeleteMode
@@ -377,9 +376,6 @@ func LoadConfig() {
 	Config.SizeOnly = *sizeOnly
 	Config.IgnoreTimes = *ignoreTimes
 	Config.IgnoreExisting = *ignoreExisting
-	Config.DumpHeaders = *dumpHeaders
-	Config.DumpBodies = *dumpBodies
-	Config.DumpAuth = *dumpAuth
 	Config.InsecureSkipVerify = *skipVerify
 	Config.LowLevelRetries = *lowLevelRetries
 	Config.UpdateOlder = *updateOlder
@@ -398,6 +394,15 @@ func LoadConfig() {
 	Config.AutoConfirm = *autoConfirm
 	Config.BufferSize = bufferSize
 	Config.StreamingUploadCutoff = streamingUploadCutoff
+	Config.Dump = dump
+	if *dumpHeaders {
+		Config.Dump |= DumpHeaders
+		Infof(nil, "--dump-headers is obsolete - please use --dump headers instead")
+	}
+	if *dumpBodies {
+		Config.Dump |= DumpBodies
+		Infof(nil, "--dump-bodies is obsolete - please use --dump bodies instead")
+	}
 
 	Config.TrackRenames = *trackRenames
 
@@ -1460,3 +1465,87 @@ func makeCacheDir() (dir string) {
 	}
 	return filepath.Join(dir, "rclone")
 }
+
+// DumpFlags describes the Dump options in force
+type DumpFlags int
+
+// DumpFlags definitions
+const (
+	DumpHeaders DumpFlags = 1 << iota
+	DumpBodies
+	DumpRequests
+	DumpResponses
+	DumpAuth
+	DumpFilters
+)
+
+var dumpFlags = []struct {
+	flag DumpFlags
+	name string
+}{
+	{DumpHeaders, "headers"},
+	{DumpBodies, "bodies"},
+	{DumpRequests, "requests"},
+	{DumpResponses, "responses"},
+	{DumpAuth, "auth"},
+	{DumpFilters, "filters"},
+}
+
+// list of dump flags used in the help
+var dumpFlagsList string
+
+func init() {
+	// calculate the dump flags list
+	var out []string
+	for _, info := range dumpFlags {
+		out = append(out, info.name)
+	}
+	dumpFlagsList = strings.Join(out, ",")
+}
+
+// String turns a DumpFlags into a string
+func (f DumpFlags) String() string {
+	var out []string
+	for _, info := range dumpFlags {
+		if f&info.flag != 0 {
+			out = append(out, info.name)
+			f &^= info.flag
+		}
+	}
+	if f != 0 {
+		out = append(out, fmt.Sprintf("Unknown-0x%X", int(f)))
+	}
+	return strings.Join(out, ",")
+}
+
+// Set a DumpFlags as a comma separated list of flags
+func (f *DumpFlags) Set(s string) error {
+	var flags DumpFlags
+	parts := strings.Split(s, ",")
+	for _, part := range parts {
+		found := false
+		part = strings.ToLower(strings.TrimSpace(part))
+		if part == "" {
+			continue
+		}
+		for _, info := range dumpFlags {
+			if part == info.name {
+				found = true
+				flags |= info.flag
+			}
+		}
+		if !found {
+			return errors.Errorf("Unknown dump flag %q", part)
+		}
+	}
+	*f = flags
+	return nil
+}
+
+// Type of the value
+func (f *DumpFlags) Type() string {
+	return "string"
+}
+
+// Check it satisfies the interface
+var _ pflag.Value = (*DumpFlags)(nil)
