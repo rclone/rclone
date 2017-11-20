@@ -42,16 +42,19 @@ func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
 // Check interface satisfied
 var _ fusefs.NodeSetattrer = (*File)(nil)
 
-// Setattr handles attribute changes from FUSE. Currently supports ModTime only.
+// Setattr handles attribute changes from FUSE. Currently supports ModTime and Size only
 func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
 	defer fs.Trace(f, "a=%+v", req)("err=%v", &err)
-	if f.VFS().Opt.NoModTime {
-		return nil
+	if !f.VFS().Opt.NoModTime {
+		if req.Valid.MtimeNow() {
+			err = f.File.SetModTime(time.Now())
+		}
+		if req.Valid.Mtime() {
+			err = f.File.SetModTime(req.Mtime)
+		}
 	}
-	if req.Valid.MtimeNow() {
-		err = f.File.SetModTime(time.Now())
-	} else if req.Valid.Mtime() {
-		err = f.File.SetModTime(req.Mtime)
+	if req.Valid.Size() {
+		err = f.File.Truncate(int64(req.Size))
 	}
 	return translateError(err)
 }
