@@ -17,6 +17,7 @@ type ReadFileHandle struct {
 	r          *fs.Account
 	o          fs.Object
 	readCalled bool  // set if read has been called
+	size       int64 // size of the object
 	offset     int64 // offset of read of o
 	roffset    int64 // offset of Read() calls
 	noSeek     bool
@@ -48,6 +49,7 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 		noSeek: f.d.vfs.Opt.NoSeek,
 		file:   f,
 		hash:   hash,
+		size:   o.Size(),
 	}
 	return fh, nil
 }
@@ -135,7 +137,7 @@ func (fh *ReadFileHandle) Seek(offset int64, whence int) (n int64, err error) {
 	if fh.noSeek {
 		return 0, ESPIPE
 	}
-	size := fh.o.Size()
+	size := fh.size
 	switch whence {
 	case 0:
 		fh.roffset = 0
@@ -201,8 +203,8 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 			// Are we attempting to seek beyond the end of the
 			// file - if so just return EOF leaving the underlying
 			// file in an unchanged state.
-			if off >= fh.o.Size() {
-				fs.Debugf(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", off, fh.o.Size())
+			if off >= fh.size {
+				fs.Debugf(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", off, fh.size)
 				return 0, io.EOF
 			}
 			// Otherwise do the seek
@@ -221,7 +223,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 			// }
 			if err == nil {
 				break
-			} else if (err == io.ErrUnexpectedEOF || err == io.EOF) && newOffset == fh.o.Size() {
+			} else if (err == io.ErrUnexpectedEOF || err == io.EOF) && newOffset == fh.size {
 				// Have read to end of file - reset error
 				err = nil
 				break
@@ -258,7 +260,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 }
 
 func (fh *ReadFileHandle) checkHash() error {
-	if fh.hash == nil || !fh.readCalled || fh.offset < fh.o.Size() {
+	if fh.hash == nil || !fh.readCalled || fh.offset < fh.size {
 		return nil
 	}
 
@@ -301,7 +303,7 @@ func (fh *ReadFileHandle) checkHash() error {
 func (fh *ReadFileHandle) Read(p []byte) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	if fh.roffset >= fh.o.Size() {
+	if fh.roffset >= fh.size {
 		return 0, io.EOF
 	}
 	n, err = fh.readAt(p, fh.roffset)
@@ -390,7 +392,7 @@ func (fh *ReadFileHandle) Release() error {
 func (fh *ReadFileHandle) Size() int64 {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
-	return fh.o.Size()
+	return fh.size
 }
 
 // Stat returns info about the file
