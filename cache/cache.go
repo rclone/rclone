@@ -269,7 +269,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to understand duration", chunkAge)
 	}
-	metaAge := fs.ConfigFileGet(name, "warmup_age", DefCacheChunkAge)
+	metaAge := fs.ConfigFileGet(name, "warmup_age", DefCacheMetaAge)
 	if *cacheMetaAge != DefCacheMetaAge {
 		metaAge = *cacheMetaAge
 	}
