@@ -464,6 +464,8 @@ func TestInternalCacheWrites(t *testing.T) {
 }
 
 func TestInternalExpiredChunkRemoved(t *testing.T) {
+	t.Skip("FIXME disabled because it is unreliable")
+
 	if *SkipTimeouts {
 		t.Skip("--skip-waits set")
 	}
