@@ -117,3 +117,4 @@ Contributors
   * Remus Bunduc <remus.bunduc@gmail.com>
   * Iakov Davydov <iakov.davydov@unil.ch>
   * Fabian Möller <f.moeller@nynex.de>
+  * Jakub Tasiemski <tasiemski@gmail.com>
