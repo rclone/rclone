@@ -232,6 +232,8 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 }
 
 func TestInternalLargeWrittenContentMatches(t *testing.T) {
+	t.Skip("FIXME disabled because it is unreliable")
+
 	cfs, err := getCacheFs(rootFs)
 	require.NoError(t, err)
 	chunkSize := cfs.ChunkSize()
