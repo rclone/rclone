@@ -52,7 +52,8 @@ This will mean some operations are not possible
 
   * Files can't be opened for both read AND write
   * Files opened for write can't be seeked
-  * Files open for read/write with O_TRUNC will be opened write only
+  * Existing files opened for write must have O_TRUNC set
+  * Files open for read with O_TRUNC will be opened write only
   * Files open for write only will behave as if O_TRUNC was supplied
   * Open modes O_APPEND, O_TRUNC are ignored
   * If an upload fails it can't be retried
@@ -66,7 +67,7 @@ write will be a lot more compatible, but uses the minimal disk space.
 These operations are not possible
 
   * Files opened for write only can't be seeked
-  * Files open for write only will behave as if O_TRUNC was supplied
+  * Existing files opened for write must have O_TRUNC set
   * Files opened for write only will ignore O_APPEND, O_TRUNC
   * If an upload fails it can't be retried
 

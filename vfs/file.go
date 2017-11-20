@@ -260,13 +260,13 @@ func (f *File) OpenRead() (fh *ReadFileHandle, err error) {
 }
 
 // OpenWrite open the file for write
-func (f *File) OpenWrite() (fh *WriteFileHandle, err error) {
+func (f *File) OpenWrite(flags int) (fh *WriteFileHandle, err error) {
 	if f.d.vfs.Opt.ReadOnly {
 		return nil, EROFS
 	}
 	// fs.Debugf(o, "File.OpenWrite")
 
-	fh, err = newWriteFileHandle(f.d, f, f.Path())
+	fh, err = newWriteFileHandle(f.d, f, f.Path(), flags)
 	if err != nil {
 		err = errors.Wrap(err, "open for write")
 		fs.Errorf(f, "File.OpenWrite failed: %v", err)
@@ -393,13 +393,13 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 			// Open write only and hope the user doesn't
 			// want to read.  If they do they will get an
 			// EPERM plus an Error log.
-			fd, err = f.OpenWrite()
+			fd, err = f.OpenWrite(flags)
 		}
 	} else if write {
 		if CacheMode >= CacheModeWrites {
 			fd, err = f.OpenRW(flags)
 		} else {
-			fd, err = f.OpenWrite()
+			fd, err = f.OpenWrite(flags)
 		}
 	} else if read {
 		if CacheMode >= CacheModeFull {

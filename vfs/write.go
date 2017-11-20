@@ -21,6 +21,9 @@ type WriteFileHandle struct {
 	file        *File
 	writeCalled bool // set the first time Write() is called
 	offset      int64
+	opened      bool
+	flags       int
+	truncated   bool
 }
 
 // Check interfaces
@@ -30,17 +33,38 @@ var (
 	_ io.Closer   = (*WriteFileHandle)(nil)
 )
 
-func newWriteFileHandle(d *Dir, f *File, remote string) (*WriteFileHandle, error) {
+func newWriteFileHandle(d *Dir, f *File, remote string, flags int) (*WriteFileHandle, error) {
 	fh := &WriteFileHandle{
 		remote: remote,
+		flags:  flags,
 		result: make(chan error, 1),
 		file:   f,
+	}
+	fh.file.addWriter(fh)
+	return fh, nil
+}
+
+// returns whether it is OK to truncate the file
+func (fh *WriteFileHandle) safeToTruncate() bool {
+	return fh.truncated || fh.flags&os.O_TRUNC != 0 || !fh.file.exists()
+}
+
+// openPending opens the file if there is a pending open
+//
+// call with the lock held
+func (fh *WriteFileHandle) openPending() (err error) {
+	if fh.opened {
+		return nil
+	}
+	if !fh.safeToTruncate() {
+		fs.Errorf(fh.remote, "WriteFileHandle: Can't open for write without O_TRUNC on existing file without cache-mode >= writes")
+		return EPERM
 	}
 	var pipeReader *io.PipeReader
 	pipeReader, fh.pipeWriter = io.Pipe()
 	go func() {
 		// NB Rcat deals with Stats.Transferring etc
-		o, err := fs.Rcat(d.f, remote, pipeReader, time.Now())
+		o, err := fs.Rcat(fh.file.d.f, fh.remote, pipeReader, time.Now())
 		if err != nil {
 			fs.Errorf(fh.remote, "WriteFileHandle.New Rcat failed: %v", err)
 		}
@@ -49,10 +73,11 @@ func newWriteFileHandle(d *Dir, f *File, remote string) (*WriteFileHandle, error
 		fh.o = o
 		fh.result <- err
 	}()
-	fh.file.addWriter(fh)
 	fh.file.setSize(0)
-	d.addObject(fh.file) // make sure the directory has this object in it now
-	return fh, nil
+	fh.truncated = true
+	fh.file.d.addObject(fh.file) // make sure the directory has this object in it now
+	fh.opened = true
+	return nil
 }
 
 // String converts it to printable
@@ -97,12 +122,15 @@ func (fh *WriteFileHandle) WriteAt(p []byte, off int64) (n int, err error) {
 func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 	// fs.Debugf(fh.remote, "WriteFileHandle.Write len=%d", len(p))
 	if fh.closed {
-		fs.Errorf(fh.remote, "WriteFileHandle.Write error: %v", EBADF)
+		fs.Errorf(fh.remote, "WriteFileHandle.Write: error: %v", EBADF)
 		return 0, ECLOSED
 	}
 	if fh.offset != off {
-		fs.Errorf(fh.remote, "WriteFileHandle.Write can't seek in file")
+		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without cache-mode >= writes")
 		return 0, ESPIPE
+	}
+	if err = fh.openPending(); err != nil {
+		return 0, err
 	}
 	fh.writeCalled = true
 	n, err = fh.pipeWriter.Write(p)
@@ -146,15 +174,22 @@ func (fh *WriteFileHandle) Offset() (offset int64) {
 // closed already.
 //
 // Must be called with fh.mu held
-func (fh *WriteFileHandle) close() error {
+func (fh *WriteFileHandle) close() (err error) {
 	if fh.closed {
 		return ECLOSED
 	}
 	fh.closed = true
 	// leave writer open until file is transferred
 	defer fh.file.delWriter(fh)
+	// If file not opened and not safe to truncate then then leave file intact
+	if !fh.opened && !fh.safeToTruncate() {
+		return nil
+	}
+	if err = fh.openPending(); err != nil {
+		return err
+	}
 	writeCloseErr := fh.pipeWriter.Close()
-	err := <-fh.result
+	err = <-fh.result
 	if err == nil {
 		fh.file.setObject(fh.o)
 		err = writeCloseErr
@@ -244,16 +279,19 @@ func (fh *WriteFileHandle) Truncate(size int64) (err error) {
 		return ECLOSED
 	}
 	if size != fh.offset {
-		fs.Errorf(fh.remote, "Truncate: Can't change size without cache")
+		fs.Errorf(fh.remote, "WriteFileHandle: Truncate: Can't change size without cache")
 		return EPERM
 	}
 	// File is correct size
+	if size == 0 {
+		fh.truncated = true
+	}
 	return nil
 }
 
 // Read reads up to len(p) bytes into p.
 func (fh *WriteFileHandle) Read(p []byte) (n int, err error) {
-	fs.Errorf(fh.remote, "Read: Can't read and write to file without cache")
+	fs.Errorf(fh.remote, "WriteFileHandle: Read: Can't read and write to file without cache")
 	return 0, EPERM
 }
 
@@ -261,7 +299,7 @@ func (fh *WriteFileHandle) Read(p []byte) (n int, err error) {
 // underlying input source. It returns the number of bytes read (0 <=
 // n <= len(p)) and any error encountered.
 func (fh *WriteFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
-	fs.Errorf(fh.remote, "ReadAt: Can't read and write to file without cache")
+	fs.Errorf(fh.remote, "WriteFileHandle: ReadAt: Can't read and write to file without cache")
 	return 0, EPERM
 }
 

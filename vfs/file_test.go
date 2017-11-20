@@ -111,7 +111,7 @@ func TestFileOpenWrite(t *testing.T) {
 	defer r.Finalise()
 	vfs, file, _ := fileCreate(t, r)
 
-	fd, err := file.OpenWrite()
+	fd, err := file.OpenWrite(os.O_WRONLY | os.O_TRUNC)
 	require.NoError(t, err)
 
 	newContents := []byte("this is some new contents")
@@ -123,7 +123,7 @@ func TestFileOpenWrite(t *testing.T) {
 	assert.Equal(t, int64(25), file.Size())
 
 	vfs.Opt.ReadOnly = true
-	_, err = file.OpenWrite()
+	_, err = file.OpenWrite(os.O_WRONLY | os.O_TRUNC)
 	assert.Equal(t, EROFS, err)
 }
 

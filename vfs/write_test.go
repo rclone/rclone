@@ -69,6 +69,12 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	err = fh.Sync()
 	assert.NoError(t, err)
 
+	// Truncate - can only truncate where the file pointer is
+	err = fh.Truncate(5)
+	assert.NoError(t, err)
+	err = fh.Truncate(6)
+	assert.Equal(t, EPERM, err)
+
 	// Close
 	assert.NoError(t, fh.Close())
 
@@ -83,6 +89,35 @@ func TestWriteFileHandleMethods(t *testing.T) {
 	// check the underlying r.Fremote but not the modtime
 	file1 := fstest.NewItem("file1", "hello", t1)
 	fstest.CheckListingWithPrecision(t, r.Fremote, []fstest.Item{file1}, []string{}, fs.ModTimeNotSupported)
+
+	// Check trying to open the file now it exists then closing it
+	// immediately is OK
+	h, err := vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err)
+	assert.NoError(t, h.Close())
+	checkListing(t, root, []string{"file1,5,false"})
+
+	// Check trying to open the file and writing it now it exists
+	// returns an error
+	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE, 0777)
+	_, err = h.Write([]byte("hello1"))
+	require.Equal(t, EPERM, err)
+	assert.NoError(t, h.Close())
+	checkListing(t, root, []string{"file1,5,false"})
+
+	// Check opening the file with O_TRUNC does actually truncate
+	// it even if we don't write to it
+	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	require.NoError(t, err)
+	assert.NoError(t, h.Close())
+	checkListing(t, root, []string{"file1,0,false"})
+
+	// Check opening the file with O_TRUNC and writing does work
+	h, err = vfs.OpenFile("file1", os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0777)
+	_, err = h.WriteString("hello12")
+	require.NoError(t, err)
+	assert.NoError(t, h.Close())
+	checkListing(t, root, []string{"file1,7,false"})
 }
 
 func TestWriteFileHandleWriteAt(t *testing.T) {
