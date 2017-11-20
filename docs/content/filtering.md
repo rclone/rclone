@@ -167,6 +167,9 @@ type.
   * `--filter`
   * `--filter-from`
 
+**Important** You should not use `--include*` together with `--exclude*`. 
+It may produce different results than you expected. In that case try to use: `--filter*`.
+
 Note that all the options of the same type are processed together in
 the order above, regardless of what order they were placed on the
 command line.
