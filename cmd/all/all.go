@@ -43,6 +43,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/sha1sum"
 	_ "github.com/ncw/rclone/cmd/size"
 	_ "github.com/ncw/rclone/cmd/sync"
+	_ "github.com/ncw/rclone/cmd/touch"
 	_ "github.com/ncw/rclone/cmd/tree"
 	_ "github.com/ncw/rclone/cmd/version"
 )
