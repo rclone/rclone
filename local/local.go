@@ -576,7 +576,7 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
-		o.hashes, err = fs.HashStream(in)
+		o.hashes, err = fs.HashStream(in, o.size)
 		closeErr := in.Close()
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to read")
@@ -694,7 +694,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		// don't attempt to make checksums
 		return fd, err
 	}
-	hash, err := fs.NewMultiHasherTypes(hashes)
+	hash, err := fs.NewMultiHasherTypes(hashes, o.size)
 	if err != nil {
 		return nil, err
 	}
@@ -734,7 +734,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	// Calculate the hash of the object we are reading as we go along
-	hash, err := fs.NewMultiHasherTypes(hashes)
+	hash, err := fs.NewMultiHasherTypes(hashes, src.Size())
 	if err != nil {
 		return err
 	}

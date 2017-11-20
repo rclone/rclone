@@ -1592,7 +1592,7 @@ func Rcat(fdst Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst
 	}()
 
 	hashOption := &HashesOption{Hashes: fdst.Hashes()}
-	hash, err := NewMultiHasherTypes(fdst.Hashes())
+	hash, err := NewMultiHasherTypes(fdst.Hashes(), -1)
 	if err != nil {
 		return nil, err
 	}

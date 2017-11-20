@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ncw/rclone/dropbox/dbhash"
+	"github.com/ncw/rclone/s3/s3etag"
 	"github.com/pkg/errors"
 )
 
@@ -31,29 +32,34 @@ const (
 	// https://www.dropbox.com/developers/reference/content-hash
 	HashDropbox
 
+	// HashS3ETag indicates S3 special hash
+	// http://permalink.gmane.org/gmane.comp.file-systems.s3.s3tools/583
+	HashS3ETag
+
 	// HashNone indicates no hashes are supported
 	HashNone HashType = 0
 )
 
 // SupportedHashes returns a set of all the supported hashes by
 // HashStream and MultiHasher.
-var SupportedHashes = NewHashSet(HashMD5, HashSHA1, HashDropbox)
+var SupportedHashes = NewHashSet(HashMD5, HashSHA1, HashDropbox, HashS3ETag)
 
 // HashWidth returns the width in characters for any HashType
 var HashWidth = map[HashType]int{
 	HashMD5:     32,
 	HashSHA1:    40,
 	HashDropbox: 64,
+	HashS3ETag:  36,
 }
 
 // HashStream will calculate hashes of all supported hash types.
-func HashStream(r io.Reader) (map[HashType]string, error) {
-	return HashStreamTypes(r, SupportedHashes)
+func HashStream(r io.Reader, streamSize int64) (map[HashType]string, error) {
+	return HashStreamTypes(r, SupportedHashes, streamSize)
 }
 
 // HashStreamTypes will calculate hashes of the requested hash types.
-func HashStreamTypes(r io.Reader, set HashSet) (map[HashType]string, error) {
-	hashers, err := hashFromTypes(set)
+func HashStreamTypes(r io.Reader, set HashSet, streamSize int64) (map[HashType]string, error) {
+	hashers, err := hashFromTypes(set, streamSize)
 	if err != nil {
 		return nil, err
 	}
@@ -81,6 +87,8 @@ func (h HashType) String() string {
 		return "SHA-1"
 	case HashDropbox:
 		return "DropboxHash"
+	case HashS3ETag:
+		return "S3ETag"
 	default:
 		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
 		panic(err)
@@ -90,7 +98,7 @@ func (h HashType) String() string {
 // hashFromTypes will return hashers for all the requested types.
 // The types must be a subset of SupportedHashes,
 // and this function must support all types.
-func hashFromTypes(set HashSet) (map[HashType]hash.Hash, error) {
+func hashFromTypes(set HashSet, streamSize int64) (map[HashType]hash.Hash, error) {
 	if !set.SubsetOf(SupportedHashes) {
 		return nil, errors.Errorf("requested set %08x contains unknown hash types", int(set))
 	}
@@ -104,6 +112,8 @@ func hashFromTypes(set HashSet) (map[HashType]hash.Hash, error) {
 			hashers[t] = sha1.New()
 		case HashDropbox:
 			hashers[t] = dbhash.New()
+		case HashS3ETag:
+			hashers[t] = s3etag.New(streamSize)
 		default:
 			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
 			panic(err)
@@ -134,8 +144,8 @@ type MultiHasher struct {
 
 // NewMultiHasher will return a hash writer that will write all
 // supported hash types.
-func NewMultiHasher() *MultiHasher {
-	h, err := NewMultiHasherTypes(SupportedHashes)
+func NewMultiHasher(streamSize int64) *MultiHasher {
+	h, err := NewMultiHasherTypes(SupportedHashes, streamSize)
 	if err != nil {
 		panic("internal error: could not create multihasher")
 	}
@@ -144,8 +154,8 @@ func NewMultiHasher() *MultiHasher {
 
 // NewMultiHasherTypes will return a hash writer that will write
 // the requested hash types.
-func NewMultiHasherTypes(set HashSet) (*MultiHasher, error) {
-	hashers, err := hashFromTypes(set)
+func NewMultiHasherTypes(set HashSet, streamSize int64) (*MultiHasher, error) {
+	hashers, err := hashFromTypes(set, streamSize)
 	if err != nil {
 		return nil, err
 	}

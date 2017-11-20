@@ -89,7 +89,7 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 			return false, true
 		}
 		if cryptHash != underlyingHash {
-			err = errors.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fdst.Name(), fdst.Root(), cryptHash, fsrc.Name(), fsrc.Root(), underlyingHash)
+			err = errors.Errorf("hashes differ (%s:%s) %q vs (%s:%s) %q", fsrc.Name(), fsrc.Root(), cryptHash, fdst.Name(), fdst.Root(), underlyingHash)
 			fs.Stats.Error(err)
 			fs.Errorf(src, err.Error())
 			return true, false
