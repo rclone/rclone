@@ -2,13 +2,14 @@
 
 Current active maintainers of rclone are
 
-  * Nick Craig-Wood
-  * Stefan Breunig
-  * Ishuah Kariuki
+  * Nick Craig-Wood @ncw
+  * Stefan Breunig @breunigs
+  * Ishuah Kariuki @ishuah
+  * Remus Bunduc @remusb - cache subsystem maintainer
 
 **This is a work in progress Draft**
 
-This is a guide for how to be an rclone maintainer.
+This is a guide for how to be an rclone maintainer.  This is mostly a writeup of what I (@ncw) attempt to do.
 
 ## Triaging Tickets ##
 
