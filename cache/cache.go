@@ -731,6 +731,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	do := f.Fs.Features().Copy
 	if do == nil {
+		fs.Errorf(src, "source remote (%v) doesn't support Copy", src.Fs())
 		return nil, fs.ErrorCantCopy
 	}
 
@@ -770,6 +771,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	do := f.Fs.Features().Move
 	if do == nil {
+		fs.Errorf(src, "source remote (%v) doesn't support Move", src.Fs())
 		return nil, fs.ErrorCantMove
 	}
 
