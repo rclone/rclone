@@ -97,7 +97,7 @@ func init() {
 					Help:  "24 hours",
 				}, {
 					Value: "48h",
-					Help:  "24 hours",
+					Help:  "48 hours",
 				},
 			},
 			Optional: true,
