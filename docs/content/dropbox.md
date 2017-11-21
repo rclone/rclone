@@ -113,8 +113,13 @@ system.
 
 #### --dropbox-chunk-size=SIZE ####
 
-Upload chunk size. Max 150M. The default is 128MB.  Note that this
-isn't buffered into memory.
+Any files larger than this will be uploaded in chunks of this
+size. The default is 48MB. The maximum is 150MB.
+
+Note that chunks are buffered in memory (one at a time) so rclone can
+deal with retries.  Setting this larger will increase the speed
+slightly (at most 10% for 128MB in tests) at the cost of using more
+memory.  It can be set smaller if you are tight on memory.
 
 ### Limitations ###
 

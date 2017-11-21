@@ -66,8 +66,29 @@ var (
 	// See https://www.dropbox.com/en/help/145 - Ignored files
 	ignoredFiles = regexp.MustCompile(`(?i)(^|/)(desktop\.ini|thumbs\.db|\.ds_store|icon\r|\.dropbox|\.dropbox.attr)$`)
 	// Upload chunk size - setting too small makes uploads slow.
-	// Chunks aren't buffered into memory though so can set large.
-	uploadChunkSize    = fs.SizeSuffix(128 * 1024 * 1024)
+	// Chunks are buffered into memory for retries.
+	//
+	// Speed vs chunk size uploading a 1 GB file on 2017-11-22
+	//
+	// Chunk Size MB, Speed Mbyte/s, % of max
+	// 1	1.364	11%
+	// 2	2.443	19%
+	// 4	4.288	33%
+	// 8	6.79	52%
+	// 16	8.916	69%
+	// 24	10.195	79%
+	// 32	10.427	81%
+	// 40	10.96	85%
+	// 48	11.828	91%
+	// 56	11.763	91%
+	// 64	12.047	93%
+	// 96	12.302	95%
+	// 128	12.945	100%
+	//
+	// Choose 48MB which is 91% of Maximum speed.  rclone by
+	// default does 4 transfers so this should use 4*48MB = 192MB
+	// by default.
+	uploadChunkSize    = fs.SizeSuffix(48 * 1024 * 1024)
 	maxUploadChunkSize = fs.SizeSuffix(150 * 1024 * 1024)
 )
 
