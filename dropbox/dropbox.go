@@ -868,7 +868,8 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 				return false, nil
 			}
 			err = o.fs.srv.UploadSessionAppendV2(&appendArg, chunk)
-			return shouldRetry(err)
+			// after the first chunk is uploaded, we retry everything
+			return err != nil, err
 		})
 		if err != nil {
 			return nil, err
@@ -890,7 +891,8 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 			return false, nil
 		}
 		entry, err = o.fs.srv.UploadSessionFinish(args, chunk)
-		return shouldRetry(err)
+		// after the first chunk is uploaded, we retry everything
+		return err != nil, err
 	})
 	if err != nil {
 		return nil, err
