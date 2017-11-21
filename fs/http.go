@@ -195,10 +195,8 @@ func checkServerTime(req *http.Request, resp *http.Response) {
 	checkedHostMu.Unlock()
 }
 
-var authBuf = []byte("Authorization: ")
-
-// cleanAuth gets rid of one Authorization: header within the first 4k
-func cleanAuth(buf []byte) []byte {
+// cleanAuth gets rid of one authBuf header within the first 4k
+func cleanAuth(buf, authBuf []byte) []byte {
 	// Find how much buffer to check
 	n := 4096
 	if len(buf) < n {
@@ -227,6 +225,19 @@ func cleanAuth(buf []byte) []byte {
 	return buf[:i+n]
 }
 
+var authBufs = [][]byte{
+	[]byte("Authorization: "),
+	[]byte("X-Auth-Token: "),
+}
+
+// cleanAuths gets rid of all the possible Auth headers
+func cleanAuths(buf []byte) []byte {
+	for _, authBuf := range authBufs {
+		buf = cleanAuth(buf, authBuf)
+	}
+	return buf
+}
+
 // RoundTrip implements the RoundTripper interface.
 func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error) {
 	// Get transactions per second token first if limiting
@@ -242,7 +253,7 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	if t.dump&(DumpHeaders|DumpBodies|DumpAuth|DumpRequests|DumpResponses) != 0 {
 		buf, _ := httputil.DumpRequestOut(req, t.dump&(DumpBodies|DumpRequests) != 0)
 		if t.dump&DumpAuth == 0 {
-			buf = cleanAuth(buf)
+			buf = cleanAuths(buf)
 		}
 		Debugf(nil, "%s", separatorReq)
 		Debugf(nil, "%s (req %p)", "HTTP REQUEST", req)
