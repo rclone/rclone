@@ -14,6 +14,9 @@ import (
 
 	"os"
 
+	"os/signal"
+	"syscall"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
@@ -195,6 +198,9 @@ type Storage interface {
 
 	// Purge will flush the entire cache
 	Purge()
+
+	// Close should be called when the program ends gracefully
+	Close()
 }
 
 // Fs represents a wrapped fs.Fs
@@ -328,6 +334,16 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
+	// Trap SIGINT and SIGTERM to close the DB handle gracefully
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	go func() {
+		s := <-c
+		fs.Debugf(f, "Got signal: %v", s)
+		if s == syscall.SIGINT || s == syscall.SIGTERM {
+			f.cache.Close()
+		}
+	}()
 
 	fs.Infof(name, "Chunk Memory: %v", f.chunkMemory)
 	fs.Infof(name, "Chunk Size: %v", fs.SizeSuffix(f.chunkSize))

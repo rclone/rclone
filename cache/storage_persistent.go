@@ -739,6 +739,14 @@ func (b *Persistent) iterateBuckets(buk *bolt.Bucket, bucketFn func(name string)
 	return err
 }
 
+// Close should be called when the program ends gracefully
+func (b *Persistent) Close() {
+	err := b.db.Close()
+	if err != nil {
+		fs.Errorf(b, "closing handle: %v", err)
+	}
+}
+
 // itob returns an 8-byte big endian representation of v.
 func itob(v int64) []byte {
 	b := make([]byte, 8)
