@@ -29,6 +29,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/defaults"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -48,7 +49,7 @@ func init() {
 		// AWS endpoints: http://docs.amazonwebservices.com/general/latest/gr/rande.html#s3_region
 		Options: []fs.Option{{
 			Name: "env_auth",
-			Help: "Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.",
+			Help: "Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.",
 			Examples: []fs.OptionExample{
 				{
 					Value: "false",
@@ -317,6 +318,10 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		SessionToken:    fs.ConfigFileGet(name, "session_token"),
 	}
 
+	lowTimeoutClient := &http.Client{Timeout: 1 * time.Second} // low timeout to ec2 metadata service
+	def := defaults.Get()
+	def.Config.HTTPClient = lowTimeoutClient
+
 	// first provider to supply a credential set "wins"
 	providers := []credentials.Provider{
 		// use static credentials if they're present (checked by provider)
@@ -326,10 +331,13 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		// * Secret Access Key: AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY
 		&credentials.EnvProvider{},
 
+		// Pick up IAM role if we're in an ECS task
+		defaults.RemoteCredProvider(*def.Config, def.Handlers),
+
 		// Pick up IAM role in case we're on EC2
 		&ec2rolecreds.EC2RoleProvider{
 			Client: ec2metadata.New(session.New(), &aws.Config{
-				HTTPClient: &http.Client{Timeout: 1 * time.Second}, // low timeout to ec2 metadata service
+				HTTPClient: lowTimeoutClient,
 			}),
 			ExpiryWindow: 3,
 		},
