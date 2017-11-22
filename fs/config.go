@@ -462,6 +462,9 @@ func LoadConfig() {
 		Debugf(nil, "Using config file from %q", ConfigPath)
 	}
 
+	// Load cache directory from flags
+	CacheDir = *cacheDir
+
 	// Load filters
 	Config.Filter, err = NewFilter()
 	if err != nil {
