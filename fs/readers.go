@@ -63,3 +63,34 @@ func (r *RepeatableReader) Read(b []byte) (n int, err error) {
 func NewRepeatableReader(r io.Reader) *RepeatableReader {
 	return &RepeatableReader{in: r}
 }
+
+// NewRepeatableReaderSized create new repeatable reader from Reader r
+// with an initial buffer of size.
+func NewRepeatableReaderSized(r io.Reader, size int) *RepeatableReader {
+	return &RepeatableReader{
+		in: r,
+		b:  make([]byte, 0, size),
+	}
+}
+
+// NewRepeatableLimitReader create new repeatable reader from Reader r
+// with an initial buffer of size wrapped in a io.LimitReader to read
+// only size.
+func NewRepeatableLimitReader(r io.Reader, size int) *RepeatableReader {
+	return NewRepeatableReaderSized(io.LimitReader(r, int64(size)), size)
+}
+
+// NewRepeatableReaderBuffer create new repeatable reader from Reader r
+// using the buffer passed in.
+func NewRepeatableReaderBuffer(r io.Reader, buf []byte) *RepeatableReader {
+	return &RepeatableReader{
+		in: r,
+		b:  buf[:0],
+	}
+}
+
+// NewRepeatableLimitReaderBuffer create new repeatable reader from
+// Reader r and buf wrapped in a io.LimitReader to read only size.
+func NewRepeatableLimitReaderBuffer(r io.Reader, buf []byte, size int64) *RepeatableReader {
+	return NewRepeatableReaderBuffer(io.LimitReader(r, int64(size)), buf)
+}

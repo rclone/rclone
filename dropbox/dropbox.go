@@ -832,6 +832,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 		chunks = int(size/chunkSize) + 1
 	}
 	in := fs.NewCountingReader(in0)
+	buf := make([]byte, int(chunkSize))
 
 	fmtChunk := func(cur int, last bool) {
 		if chunks == 0 && last {
@@ -846,7 +847,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	// write the first chunk
 	fmtChunk(1, false)
 	var res *files.UploadSessionStartResult
-	chunk := fs.NewRepeatableReader(&io.LimitedReader{R: in, N: chunkSize})
+	chunk := fs.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		// seek to the start in case this is a retry
 		if _, err = chunk.Seek(0, 0); err != nil {
@@ -882,7 +883,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 		}
 		cursor.Offset = in.BytesRead()
 		fmtChunk(currentChunk, false)
-		chunk = fs.NewRepeatableReader(&io.LimitedReader{R: in, N: chunkSize})
+		chunk = fs.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
 			if _, err = chunk.Seek(0, 0); err != nil {
@@ -905,7 +906,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 		Commit: commitInfo,
 	}
 	fmtChunk(currentChunk, true)
-	chunk = fs.NewRepeatableReader(in)
+	chunk = fs.NewRepeatableReaderBuffer(in, buf)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		// seek to the start in case this is a retry
 		if _, err = chunk.Seek(0, 0); err != nil {

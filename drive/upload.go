@@ -195,12 +195,13 @@ func (rx *resumableUpload) Upload() (*drive.File, error) {
 	start := int64(0)
 	var StatusCode int
 	var err error
+	buf := make([]byte, int(chunkSize))
 	for start < rx.ContentLength {
 		reqSize := rx.ContentLength - start
 		if reqSize >= int64(chunkSize) {
 			reqSize = int64(chunkSize)
 		}
-		chunk := fs.NewRepeatableReader(io.LimitReader(rx.Media, reqSize))
+		chunk := fs.NewRepeatableLimitReaderBuffer(rx.Media, buf, reqSize)
 
 		// Transfer the chunk
 		err = rx.f.pacer.Call(func() (bool, error) {
