@@ -697,18 +697,10 @@ func (s *syncCopyMove) run() error {
 		}
 	}
 
-	// if DoMove, delete fsrc directory after
+	// if DoMove, delete empty fsrc subdirectories after
 	if s.DoMove {
-		//first delete any subdirectories in fsrc
+		//delete empty subdirectories that were part of the move
 		s.processError(deleteEmptyDirectories(s.fsrc, s.srcEmptyDirs))
-		//delete fsrc dir
-		s.processError(func() error {
-			err := TryRmdir(s.fsrc, "")
-			if err != nil {
-				Debugf(logDirName(s.fsrc, ""), "Failed to Rmdir: %v", err)
-			}
-			return nil
-		}())
 	}
 	return s.currentError()
 }
