@@ -1150,12 +1150,12 @@ func EditRemote(fs *RegInfo, name string) {
 				configData.SetValue(name, key, newValue)
 			}
 		}
-		RemoteConfig(name)
 		if OkRemote(name) {
 			break
 		}
 	}
 	SaveConfig()
+	RemoteConfig(name)
 }
 
 // DeleteRemote gets the user to delete a remote
