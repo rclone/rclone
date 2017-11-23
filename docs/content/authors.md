@@ -118,3 +118,4 @@ Contributors
   * Iakov Davydov <iakov.davydov@unil.ch>
   * Fabian Möller <f.moeller@nynex.de>
   * Jakub Tasiemski <tasiemski@gmail.com>
+  * David Minor <dminor@saymedia.com>
