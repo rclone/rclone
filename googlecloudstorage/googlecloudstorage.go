@@ -280,7 +280,7 @@ func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
-	ctxWithSpecialClient := oauthutil.Context()
+	ctxWithSpecialClient := oauthutil.Context(fs.Config.Client())
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 

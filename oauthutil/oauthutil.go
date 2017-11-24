@@ -189,8 +189,8 @@ func (ts *TokenSource) OnExpiry() <-chan time.Time {
 var _ oauth2.TokenSource = (*TokenSource)(nil)
 
 // Context returns a context with our HTTP Client baked in for oauth2
-func Context() context.Context {
-	return context.WithValue(context.Background(), oauth2.HTTPClient, fs.Config.Client())
+func Context(client *http.Client) context.Context {
+	return context.WithValue(context.Background(), oauth2.HTTPClient, client)
 }
 
 // overrideCredentials sets the ClientID and ClientSecret from the
@@ -224,9 +224,11 @@ func overrideCredentials(name string, origConfig *oauth2.Config) (config *oauth2
 	return config, changed
 }
 
-// NewClient gets a token from the config file and configures a Client
-// with it.  It returns the client and a TokenSource which Invalidate may need to be called on
-func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, error) {
+// NewClientWithBaseClient gets a token from the config file and
+// configures a Client with it.  It returns the client and a
+// TokenSource which Invalidate may need to be called on.  It uses the
+// httpClient passed in as the base client.
+func NewClientWithBaseClient(name string, config *oauth2.Config, baseClient *http.Client) (*http.Client, *TokenSource, error) {
 	config, _ = overrideCredentials(name, config)
 	token, err := GetToken(name)
 	if err != nil {
@@ -234,7 +236,7 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, 
 	}
 
 	// Set our own http client in the context
-	ctx := Context()
+	ctx := Context(baseClient)
 
 	// Wrap the TokenSource in our TokenSource which saves changed
 	// tokens in the config file
@@ -246,6 +248,12 @@ func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, 
 	}
 	return oauth2.NewClient(ctx, ts), ts, nil
 
+}
+
+// NewClient gets a token from the config file and configures a Client
+// with it.  It returns the client and a TokenSource which Invalidate may need to be called on
+func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, error) {
+	return NewClientWithBaseClient(name, config, fs.Config.Client())
 }
 
 // Config does the initial creation of the token
