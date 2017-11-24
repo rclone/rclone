@@ -146,7 +146,8 @@ func (ci *ConfigInfo) Client() *http.Client {
 // * Does logging
 type Transport struct {
 	*http.Transport
-	dump DumpFlags
+	dump          DumpFlags
+	filterRequest func(req *http.Request)
 }
 
 // NewTransport wraps the http.Transport passed in and logs all
@@ -156,6 +157,11 @@ func NewTransport(transport *http.Transport, dump DumpFlags) *Transport {
 		Transport: transport,
 		dump:      dump,
 	}
+}
+
+// SetRequestFilter sets a filter to be used on each request
+func (t *Transport) SetRequestFilter(f func(req *http.Request)) {
+	t.filterRequest = f
 }
 
 // A mutex to protect this map
@@ -249,6 +255,10 @@ func (t *Transport) RoundTrip(req *http.Request) (resp *http.Response, err error
 	}
 	// Force user agent
 	req.Header.Set("User-Agent", *userAgent)
+	// Filter the request if required
+	if t.filterRequest != nil {
+		t.filterRequest(req)
+	}
 	// Logf request
 	if t.dump&(DumpHeaders|DumpBodies|DumpAuth|DumpRequests|DumpResponses) != 0 {
 		buf, _ := httputil.DumpRequestOut(req, t.dump&(DumpBodies|DumpRequests) != 0)
