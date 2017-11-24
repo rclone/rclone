@@ -38,11 +38,14 @@ Print cache stats for a remote in JSON format
 		}
 
 		fsrc := cmd.NewFsSrc(args)
-		cmd.Run(true, true, command, func() error {
+		cmd.Run(false, false, command, func() error {
 			var fsCache *cache.Fs
 			fsCache, ok := fsrc.(*cache.Fs)
 			if !ok {
-				fsCache, ok = fsrc.Features().UnWrap().(*cache.Fs)
+				unwrap := fsrc.Features().UnWrap
+				if unwrap != nil {
+					fsCache, ok = unwrap().(*cache.Fs)
+				}
 				if !ok {
 					return errors.Errorf("%s: is not a cache remote", fsrc.Name())
 				}
