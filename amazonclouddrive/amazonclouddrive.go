@@ -174,10 +174,34 @@ func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
+// If query parameters contain X-Amz-Algorithm remove Authorization header
+//
+// This happens when ACD redirects to S3 for the download.  The oauth
+// transport puts an Authorization header in which we need to remove
+// otherwise we get this message from AWS
+//
+// Only one auth mechanism allowed; only the X-Amz-Algorithm query
+// parameter, Signature query string parameter or the Authorization
+// header should be specified
+func filterRequest(req *http.Request) {
+	if req.URL.Query().Get("X-Amz-Algorithm") != "" {
+		fs.Debugf(nil, "Removing Authorization: header after redirect to S3")
+		req.Header.Del("Authorization")
+	}
+}
+
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
-	oAuthClient, ts, err := oauthutil.NewClient(name, acdConfig)
+	baseClient := fs.Config.Client()
+	if do, ok := baseClient.Transport.(interface {
+		SetRequestFilter(f func(req *http.Request))
+	}); ok {
+		do.SetRequestFilter(filterRequest)
+	} else {
+		fs.Debugf(name+":", "Couldn't add request filter - large file downloads will fail")
+	}
+	oAuthClient, ts, err := oauthutil.NewClientWithBaseClient(name, acdConfig, baseClient)
 	if err != nil {
 		log.Fatalf("Failed to configure Amazon Drive: %v", err)
 	}
