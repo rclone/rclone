@@ -49,7 +49,7 @@ transfer.
 
 		cmd.Run(true, true, command, func() error {
 			if srcFileName == "" {
-				return fs.MoveDir(fdst, fsrc)
+				return fs.MoveDir(fdst, fsrc, false)
 			}
 			return fs.MoveFile(fdst, fsrc, dstFileName, srcFileName)
 		})

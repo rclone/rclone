@@ -26,6 +26,8 @@ move will be used, otherwise it will copy it (server side if possible)
 into `dest:path` then delete the original (if no errors on copy) in
 `source:path`.
 
+If you want to delete empty source directories after move, use the --delete-empty-source-dirs flag.
+
 **Important**: Since this can cause data loss, test first with the
 --dry-run flag.
 
@@ -37,7 +39,8 @@ rclone move source:path dest:path [flags]
 ### Options
 
 ```
-  -h, --help   help for move
+      --delete-empty-src-dirs   Delete empty dirs after move
+  -h, --help                help for move
 ```
 
 ### Options inherited from parent commands

@@ -16,11 +16,12 @@ var oldSyncMethod = BoolP("old-sync-method", "", false, "Deprecated - use --fast
 
 type syncCopyMove struct {
 	// parameters
-	fdst       Fs
-	fsrc       Fs
-	deleteMode DeleteMode // how we are doing deletions
-	DoMove     bool
-	dir        string
+	fdst               Fs
+	fsrc               Fs
+	deleteMode         DeleteMode // how we are doing deletions
+	DoMove             bool
+	deleteEmptySrcDirs bool
+	dir                string
 	// internal state
 	ctx            context.Context     // internal context for controlling go-routines
 	cancel         func()              // cancel the context
@@ -58,24 +59,25 @@ type syncCopyMove struct {
 	suffix         string              // suffix to add to files placed in backupDir
 }
 
-func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) (*syncCopyMove, error) {
+func newSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool, deleteEmptySrcDirs bool) (*syncCopyMove, error) {
 	s := &syncCopyMove{
-		fdst:           fdst,
-		fsrc:           fsrc,
-		deleteMode:     deleteMode,
-		DoMove:         DoMove,
-		dir:            "",
-		srcFilesChan:   make(chan Object, Config.Checkers+Config.Transfers),
-		srcFilesResult: make(chan error, 1),
-		dstFilesResult: make(chan error, 1),
-		noTraverse:     Config.NoTraverse,
-		toBeChecked:    make(ObjectPairChan, Config.Transfers),
-		toBeUploaded:   make(ObjectPairChan, Config.Transfers),
-		deleteFilesCh:  make(chan Object, Config.Checkers),
-		trackRenames:   Config.TrackRenames,
-		commonHash:     fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
-		toBeRenamed:    make(ObjectPairChan, Config.Transfers),
-		trackRenamesCh: make(chan Object, Config.Checkers),
+		fdst:               fdst,
+		fsrc:               fsrc,
+		deleteMode:         deleteMode,
+		DoMove:             DoMove,
+		deleteEmptySrcDirs: deleteEmptySrcDirs,
+		dir:                "",
+		srcFilesChan:       make(chan Object, Config.Checkers+Config.Transfers),
+		srcFilesResult:     make(chan error, 1),
+		dstFilesResult:     make(chan error, 1),
+		noTraverse:         Config.NoTraverse,
+		toBeChecked:        make(ObjectPairChan, Config.Transfers),
+		toBeUploaded:       make(ObjectPairChan, Config.Transfers),
+		deleteFilesCh:      make(chan Object, Config.Checkers),
+		trackRenames:       Config.TrackRenames,
+		commonHash:         fsrc.Hashes().Overlap(fdst.Hashes()).GetOne(),
+		toBeRenamed:        make(ObjectPairChan, Config.Transfers),
+		trackRenamesCh:     make(chan Object, Config.Checkers),
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 	if s.noTraverse && s.deleteMode != DeleteModeOff {
@@ -697,8 +699,9 @@ func (s *syncCopyMove) run() error {
 		}
 	}
 
-	// if DoMove, delete empty fsrc subdirectories after
-	if s.DoMove {
+	// Delete empty fsrc subdirectories
+	// if DoMove and --delete-empty-src-dirs flag is set
+	if s.DoMove && s.deleteEmptySrcDirs {
 		//delete empty subdirectories that were part of the move
 		s.processError(deleteEmptyDirectories(s.fsrc, s.srcEmptyDirs))
 	}
@@ -809,7 +812,7 @@ func (s *syncCopyMove) Match(dst, src DirEntry) (recurse bool) {
 // If DoMove is true then files will be moved instead of copied
 //
 // dir is the start directory, "" for root
-func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
+func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool, deleteEmptySrcDirs bool) error {
 	if *oldSyncMethod {
 		return FatalError(errors.New("--old-sync-method is deprecated use --fast-list instead"))
 	}
@@ -822,7 +825,7 @@ func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
 			return FatalError(errors.New("can't use --delete-before with --track-renames"))
 		}
 		// only delete stuff during in this pass
-		do, err := newSyncCopyMove(fdst, fsrc, DeleteModeOnly, false)
+		do, err := newSyncCopyMove(fdst, fsrc, DeleteModeOnly, false, deleteEmptySrcDirs)
 		if err != nil {
 			return err
 		}
@@ -833,7 +836,7 @@ func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
 		// Next pass does a copy only
 		deleteMode = DeleteModeOff
 	}
-	do, err := newSyncCopyMove(fdst, fsrc, deleteMode, DoMove)
+	do, err := newSyncCopyMove(fdst, fsrc, deleteMode, DoMove, deleteEmptySrcDirs)
 	if err != nil {
 		return err
 	}
@@ -842,21 +845,21 @@ func runSyncCopyMove(fdst, fsrc Fs, deleteMode DeleteMode, DoMove bool) error {
 
 // Sync fsrc into fdst
 func Sync(fdst, fsrc Fs) error {
-	return runSyncCopyMove(fdst, fsrc, Config.DeleteMode, false)
+	return runSyncCopyMove(fdst, fsrc, Config.DeleteMode, false, false)
 }
 
 // CopyDir copies fsrc into fdst
 func CopyDir(fdst, fsrc Fs) error {
-	return runSyncCopyMove(fdst, fsrc, DeleteModeOff, false)
+	return runSyncCopyMove(fdst, fsrc, DeleteModeOff, false, false)
 }
 
 // moveDir moves fsrc into fdst
-func moveDir(fdst, fsrc Fs) error {
-	return runSyncCopyMove(fdst, fsrc, DeleteModeOff, true)
+func moveDir(fdst, fsrc Fs, deleteEmptySrcDirs bool) error {
+	return runSyncCopyMove(fdst, fsrc, DeleteModeOff, true, deleteEmptySrcDirs)
 }
 
 // MoveDir moves fsrc into fdst
-func MoveDir(fdst, fsrc Fs) error {
+func MoveDir(fdst, fsrc Fs, deleteEmptySrcDirs bool) error {
 	if Same(fdst, fsrc) {
 		Errorf(fdst, "Nothing to do as source and destination are the same")
 		return nil
@@ -891,5 +894,5 @@ func MoveDir(fdst, fsrc Fs) error {
 	}
 
 	// Otherwise move the files one by one
-	return moveDir(fdst, fsrc)
+	return moveDir(fdst, fsrc, deleteEmptySrcDirs)
 }
