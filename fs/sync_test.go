@@ -798,7 +798,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 }
 
 // Test a server side move if possible, or the backup path if not
-func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
+func testServerSideMove(t *testing.T, r *fstest.Run, withFilter, testDeleteEmptyDirs bool) {
 	FremoteMove, _, finaliseMove, err := fstest.RandomRemote(*fstest.RemoteName, *fstest.SubDir)
 	require.NoError(t, err)
 	defer finaliseMove()
@@ -806,6 +806,11 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
 	file1 := r.WriteBoth("potato2", "------------------------------------------------------------", t1)
 	file2 := r.WriteBoth("empty space", "", t2)
 	file3u := r.WriteBoth("potato3", "------------------------------------------------------------ UPDATED", t2)
+
+	if testDeleteEmptyDirs {
+		err := fs.Mkdir(r.Fremote, "tomatoDir")
+		require.NoError(t, err)
+	}
 
 	fstest.CheckItems(t, r.Fremote, file2, file1, file3u)
 
@@ -818,7 +823,7 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
 
 	// Do server side move
 	fs.Stats.ResetCounters()
-	err = fs.MoveDir(FremoteMove, r.Fremote)
+	err = fs.MoveDir(FremoteMove, r.Fremote, testDeleteEmptyDirs)
 	require.NoError(t, err)
 
 	if withFilter {
@@ -826,6 +831,11 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
 	} else {
 		fstest.CheckItems(t, r.Fremote)
 	}
+
+	if testDeleteEmptyDirs {
+		fstest.CheckListingWithPrecision(t, r.Fremote, nil, []string{}, fs.Config.ModifyWindow)
+	}
+
 	fstest.CheckItems(t, FremoteMove, file2, file1, file3u)
 
 	// Create a new empty remote for stuff to be moved into
@@ -833,9 +843,14 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
 	require.NoError(t, err)
 	defer finaliseMove2()
 
+	if testDeleteEmptyDirs {
+		err := fs.Mkdir(FremoteMove, "tomatoDir")
+		require.NoError(t, err)
+	}
+
 	// Move it back to a new empty remote, dst does not exist this time
 	fs.Stats.ResetCounters()
-	err = fs.MoveDir(FremoteMove2, FremoteMove)
+	err = fs.MoveDir(FremoteMove2, FremoteMove, testDeleteEmptyDirs)
 	require.NoError(t, err)
 
 	if withFilter {
@@ -845,13 +860,17 @@ func testServerSideMove(t *testing.T, r *fstest.Run, withFilter bool) {
 		fstest.CheckItems(t, FremoteMove2, file2, file1, file3u)
 		fstest.CheckItems(t, FremoteMove)
 	}
+
+	if testDeleteEmptyDirs {
+		fstest.CheckListingWithPrecision(t, FremoteMove, nil, []string{}, fs.Config.ModifyWindow)
+	}
 }
 
 // Test a server side move if possible, or the backup path if not
 func TestServerSideMove(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	testServerSideMove(t, r, false)
+	testServerSideMove(t, r, false, false)
 }
 
 // Test a server side move if possible, or the backup path if not
@@ -864,7 +883,14 @@ func TestServerSideMoveWithFilter(t *testing.T) {
 		fs.Config.Filter.MinSize = -1
 	}()
 
-	testServerSideMove(t, r, true)
+	testServerSideMove(t, r, true, false)
+}
+
+// Test a server side move if possible
+func TestServerSideMoveDeleteEmptySourceDirs(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	testServerSideMove(t, r, false, true)
 }
 
 // Test a server side move with overlap
@@ -884,7 +910,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 
 	// Subdir move with no filters should return ErrorCantMoveOverlapping
-	err = fs.MoveDir(FremoteMove, r.Fremote)
+	err = fs.MoveDir(FremoteMove, r.Fremote, false)
 	assert.EqualError(t, err, fs.ErrorCantMoveOverlapping.Error())
 
 	// Now try with a filter which should also fail with ErrorCantMoveOverlapping
@@ -892,7 +918,7 @@ func TestServerSideMoveOverlap(t *testing.T) {
 	defer func() {
 		fs.Config.Filter.MinSize = -1
 	}()
-	err = fs.MoveDir(FremoteMove, r.Fremote)
+	err = fs.MoveDir(FremoteMove, r.Fremote, false)
 	assert.EqualError(t, err, fs.ErrorCantMoveOverlapping.Error())
 }
 
