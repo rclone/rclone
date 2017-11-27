@@ -181,6 +181,17 @@ func (c *cache) close(name string) {
 	c.itemMu.Unlock()
 }
 
+// remove should be called if name is deleted
+func (c *cache) remove(name string) {
+	osPath := filepath.Join(c.root, filepath.FromSlash(name))
+	err := os.Remove(osPath)
+	if err != nil && !os.IsNotExist(err) {
+		fs.Errorf(name, "Failed to remove from cache: %v", err)
+	} else {
+		fs.Debugf(name, "Removed from cache")
+	}
+}
+
 // cleanUp empties the cache of everything
 func (c *cache) cleanUp() error {
 	return os.RemoveAll(c.root)
@@ -219,13 +230,7 @@ func (c *cache) purgeOld(maxAge time.Duration) {
 		dt := item.atime.Sub(cutoff)
 		// fs.Debugf(name, "atime=%v cutoff=%v, dt=%v", item.atime, cutoff, dt)
 		if item.opens == 0 && dt < 0 {
-			osPath := filepath.Join(c.root, filepath.FromSlash(name))
-			err := os.Remove(osPath)
-			if err != nil {
-				fs.Errorf(name, "Failed to remove from cache: %v", err)
-			} else {
-				fs.Debugf(name, "Removed from cache")
-			}
+			c.remove(name)
 			// Remove the entry
 			delete(c.item, name)
 		}

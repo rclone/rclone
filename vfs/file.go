@@ -314,6 +314,10 @@ func (f *File) Remove() error {
 	}
 	// Remove the item from the directory listing
 	f.d.delObject(f.Name())
+	// Remove the object from the cache
+	if f.d.vfs.Opt.CacheMode >= CacheModeMinimal {
+		f.d.vfs.cache.remove(f.Path())
+	}
 	return nil
 }
 
