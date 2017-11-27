@@ -3,6 +3,7 @@ package vfs
 import (
 	"io"
 	"os"
+	"runtime"
 	"sync"
 
 	"github.com/ncw/rclone/fs"
@@ -44,6 +45,11 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 		return nil, errors.Wrap(err, "open RW handle failed to make cache directory")
 	}
 
+	// if O_CREATE and O_EXCL are set and if path already exists, then return EEXIST
+	if flags&(os.O_CREATE|os.O_EXCL) == os.O_CREATE|os.O_EXCL && f.exists() {
+		return nil, EEXIST
+	}
+
 	fh = &RWFileHandle{
 		o:      f.o,
 		file:   f,
@@ -69,6 +75,8 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		return nil
 	}
 
+	cacheFileOpenFlags := fh.flags
+
 	// if not truncating the file, need to read it first
 	if fh.flags&os.O_TRUNC == 0 && !truncate {
 		// Fetch the file if it hasn't changed
@@ -92,12 +100,30 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 			}
 		}
 	} else {
-		// Set the size to 0 since we are truncating
+		// Set the size to 0 since we are truncating and flag we need to write it back
 		fh.file.setSize(0)
+		fh.writeCalled = true
+		if fh.flags&os.O_CREATE != 0 && fh.file.exists() {
+			// create and empty file if it exists on the source
+			cacheFileOpenFlags |= os.O_CREATE
+		}
+		// Windows doesn't seem to deal well with O_TRUNC and
+		// certain access modes so so truncate the file if it
+		// exists in these cases.
+		if runtime.GOOS == "windows" && (fh.flags&accessModeMask == os.O_RDONLY || fh.flags|os.O_APPEND != 0) {
+			cacheFileOpenFlags &^= os.O_TRUNC
+			_, err = os.Stat(fh.osPath)
+			if err == nil {
+				err = os.Truncate(fh.osPath, 0)
+				if err != nil {
+					return errors.Wrap(err, "cache open failed to truncate")
+				}
+			}
+		}
 	}
 
 	fs.Debugf(fh.remote, "Opening cached copy with flags=%s", decodeOpenFlags(fh.flags))
-	fd, err := os.OpenFile(fh.osPath, fh.flags|os.O_CREATE, 0600)
+	fd, err := os.OpenFile(fh.osPath, cacheFileOpenFlags, 0600)
 	if err != nil {
 		return errors.Wrap(err, "cache open file failed")
 	}
@@ -180,8 +206,8 @@ func (fh *RWFileHandle) close() (err error) {
 
 	// FIXME measure whether we actually did any writes or not -
 	// no writes means no transfer?
-	if rdwrMode == os.O_RDONLY {
-		fs.Debugf(fh.remote, "read only so not transferring")
+	if rdwrMode == os.O_RDONLY && fh.flags&os.O_TRUNC == 0 {
+		fs.Debugf(fh.remote, "read only and not truncating so not transferring")
 		return nil
 	}
 
@@ -302,30 +328,35 @@ func (fh *RWFileHandle) Stat() (os.FileInfo, error) {
 	return fh.file, nil
 }
 
-// Read bytes from the file
-func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
+// readFn is a general purpose read function - pass in a closure to do
+// the actual read
+func (fh *RWFileHandle) readFn(read func() (int, error)) (n int, err error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if fh.closed {
 		return 0, ECLOSED
 	}
+	if fh.flags&accessModeMask == os.O_WRONLY {
+		return 0, EBADF
+	}
 	if err = fh.openPending(false); err != nil {
 		return n, err
 	}
-	return fh.File.Read(b)
+	return read()
+}
+
+// Read bytes from the file
+func (fh *RWFileHandle) Read(b []byte) (n int, err error) {
+	return fh.readFn(func() (int, error) {
+		return fh.File.Read(b)
+	})
 }
 
 // ReadAt bytes from the file at off
 func (fh *RWFileHandle) ReadAt(b []byte, off int64) (n int, err error) {
-	fh.mu.Lock()
-	defer fh.mu.Unlock()
-	if fh.closed {
-		return 0, ECLOSED
-	}
-	if err = fh.openPending(false); err != nil {
-		return n, err
-	}
-	return fh.File.ReadAt(b, off)
+	return fh.readFn(func() (int, error) {
+		return fh.File.ReadAt(b, off)
+	})
 }
 
 // Seek to new file position
@@ -349,6 +380,9 @@ func (fh *RWFileHandle) writeFn(write func() error) (err error) {
 	defer fh.mu.Unlock()
 	if fh.closed {
 		return ECLOSED
+	}
+	if fh.flags&accessModeMask == os.O_RDONLY {
+		return EBADF
 	}
 	if err = fh.openPending(false); err != nil {
 		return err
@@ -419,6 +453,9 @@ func (fh *RWFileHandle) Sync() error {
 		return ECLOSED
 	}
 	if !fh.opened {
+		return nil
+	}
+	if fh.flags&accessModeMask == os.O_RDONLY {
 		return nil
 	}
 	return fh.File.Sync()

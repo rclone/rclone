@@ -2,6 +2,7 @@ package vfs
 
 import (
 	"io"
+	"io/ioutil"
 	"os"
 	"testing"
 
@@ -286,6 +287,10 @@ func TestRWFileHandleMethodsWrite(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, 7, n)
 
+	// Sync
+	err = fh.Sync()
+	assert.NoError(t, err)
+
 	// Stat
 	var fi os.FileInfo
 	fi, err = fh.Stat()
@@ -433,4 +438,88 @@ func TestRWFileHandleReleaseWrite(t *testing.T) {
 	err = fh.Release()
 	assert.NoError(t, err)
 	assert.True(t, fh.closed)
+}
+
+func testRWFileHandleOpenTest(t *testing.T, vfs *VFS, test *openTest) {
+	fileName := "open-test-file"
+
+	// first try with file not existing
+	_, err := vfs.Stat(fileName)
+	require.True(t, os.IsNotExist(err), test.what)
+
+	f, openNonExistentErr := vfs.OpenFile(fileName, test.flags, 0666)
+
+	var readNonExistentErr error
+	var writeNonExistentErr error
+	if openNonExistentErr == nil {
+		// read some bytes
+		buf := []byte{0, 0}
+		_, readNonExistentErr = f.Read(buf)
+
+		// write some bytes
+		_, writeNonExistentErr = f.Write([]byte("hello"))
+
+		// close
+		err = f.Close()
+		require.NoError(t, err, test.what)
+	}
+
+	// write the file
+	f, err = vfs.OpenFile(fileName, os.O_WRONLY|os.O_CREATE, 0777)
+	require.NoError(t, err, test.what)
+	_, err = f.Write([]byte("hello"))
+	require.NoError(t, err, test.what)
+	err = f.Close()
+	require.NoError(t, err, test.what)
+
+	// then open file and try with file existing
+
+	f, openExistingErr := vfs.OpenFile(fileName, test.flags, 0666)
+	var readExistingErr error
+	var writeExistingErr error
+	if openExistingErr == nil {
+		// read some bytes
+		buf := []byte{0, 0}
+		_, readExistingErr = f.Read(buf)
+
+		// write some bytes
+		_, writeExistingErr = f.Write([]byte("HEL"))
+
+		// close
+		err = f.Close()
+		require.NoError(t, err, test.what)
+	}
+
+	// read the file
+	f, err = vfs.OpenFile(fileName, os.O_RDONLY, 0)
+	require.NoError(t, err, test.what)
+	buf, err := ioutil.ReadAll(f)
+	require.NoError(t, err, test.what)
+	err = f.Close()
+	require.NoError(t, err, test.what)
+	contents := string(buf)
+
+	// remove file
+	node, err := vfs.Stat(fileName)
+	require.NoError(t, err, test.what)
+	err = node.Remove()
+	require.NoError(t, err, test.what)
+
+	// check
+	assert.Equal(t, test.readNonExistentErr, readNonExistentErr, "readNonExistentErr: %s: want=%v, got=%v", test.what, test.readNonExistentErr, readNonExistentErr)
+	assert.Equal(t, test.writeNonExistentErr, writeNonExistentErr, "writeNonExistentErr: %s: want=%v, got=%v", test.what, test.writeNonExistentErr, writeNonExistentErr)
+	assert.Equal(t, test.readExistingErr, readExistingErr, "readExistingErr: %s: want=%v, got=%v", test.what, test.readExistingErr, readExistingErr)
+	assert.Equal(t, test.writeExistingErr, writeExistingErr, "writeExistingErr: %s: want=%v, got=%v", test.what, test.writeExistingErr, writeExistingErr)
+	assert.Equal(t, test.contents, contents, test.what)
+}
+
+func TestRWFileHandleOpenTests(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	vfs := New(r.Fremote, nil)
+	vfs.Opt.CacheMode = CacheModeFull
+	for _, test := range openTests {
+		testRWFileHandleOpenTest(t, vfs, &test)
+	}
 }
