@@ -129,7 +129,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	}
 	fh.File = fd
 	fh.opened = true
-	fh.d.vfs.cache.open(fh.osPath)
+	fh.d.vfs.cache.open(fh.remote)
 	fh.d.addObject(fh.file) // make sure the directory has this object in it now
 	return nil
 }
@@ -196,7 +196,7 @@ func (fh *RWFileHandle) close() (err error) {
 			fh.file.setSize(fi.Size())
 		}
 	}
-	fh.d.vfs.cache.close(fh.osPath)
+	fh.d.vfs.cache.close(fh.remote)
 
 	// Close the underlying file
 	err = fh.File.Close()

@@ -8,6 +8,7 @@ import (
 	"path"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -66,18 +67,19 @@ type cache struct {
 	opt    *Options              // vfs Options
 	root   string                // root of the cache directory
 	itemMu sync.Mutex            // protects the next two maps
-	item   map[string]*cacheItem // files in the cache
+	item   map[string]*cacheItem // files/directories in the cache
 }
 
 // cacheItem is stored in the item map
 type cacheItem struct {
-	opens int       // number of times file is open
-	atime time.Time // last time file was accessed
+	opens  int       // number of times file is open
+	atime  time.Time // last time file was accessed
+	isFile bool      // if this is a file or a directory
 }
 
 // newCacheItem returns an item for the cache
-func newCacheItem() *cacheItem {
-	return &cacheItem{atime: time.Now()}
+func newCacheItem(isFile bool) *cacheItem {
+	return &cacheItem{atime: time.Now(), isFile: isFile}
 }
 
 // newCache creates a new cache heirachy for f
@@ -112,47 +114,65 @@ func newCache(ctx context.Context, f fs.Fs, opt *Options) (*cache, error) {
 	return c, nil
 }
 
+// findParent returns the parent directory of name, or "" for the root
+func findParent(name string) string {
+	parent := path.Dir(name)
+	if parent == "." || parent == "/" {
+		parent = ""
+	}
+	return parent
+}
+
+// toOSPath turns a remote relative name into an OS path in the cache
+func (c *cache) toOSPath(name string) string {
+	return filepath.Join(c.root, filepath.FromSlash(name))
+}
+
 // mkdir makes the directory for name in the cache and returns an os
 // path for the file
 func (c *cache) mkdir(name string) (string, error) {
-	parent := path.Dir(name)
-	if parent == "." {
-		parent = ""
-	}
+	parent := findParent(name)
 	leaf := path.Base(name)
-	parentPath := filepath.Join(c.root, filepath.FromSlash(parent))
+	parentPath := c.toOSPath(parent)
 	err := os.MkdirAll(parentPath, 0700)
 	if err != nil {
 		return "", errors.Wrap(err, "make cache directory failed")
 	}
+	c.cacheDir(parent)
 	return filepath.Join(parentPath, leaf), nil
 }
 
 // _get gets name from the cache or creates a new one
 //
+// name should be a remote path not an osPath
+//
 // must be called with itemMu held
-func (c *cache) _get(name string) *cacheItem {
+func (c *cache) _get(isFile bool, name string) *cacheItem {
 	item := c.item[name]
 	if item == nil {
-		item = newCacheItem()
+		item = newCacheItem(isFile)
 		c.item[name] = item
 	}
 	return item
 }
 
 // get gets name from the cache or creates a new one
+//
+// name should be a remote path not an osPath
 func (c *cache) get(name string) *cacheItem {
 	c.itemMu.Lock()
-	item := c._get(name)
+	item := c._get(true, name)
 	c.itemMu.Unlock()
 	return item
 }
 
 // updateTime sets the atime of the name to that passed in if it is
 // newer than the existing or there isn't an existing time.
+//
+// name should be a remote path not an osPath
 func (c *cache) updateTime(name string, when time.Time) {
 	c.itemMu.Lock()
-	item := c._get(name)
+	item := c._get(true, name)
 	if when.Sub(item.atime) > 0 {
 		fs.Debugf(name, "updateTime: setting atime to %v", when)
 		item.atime = when
@@ -160,30 +180,79 @@ func (c *cache) updateTime(name string, when time.Time) {
 	c.itemMu.Unlock()
 }
 
+// _open marks name as open, must be called with the lock held
+//
+// name should be a remote path not an osPath
+func (c *cache) _open(isFile bool, name string) {
+	for {
+		item := c._get(isFile, name)
+		item.opens++
+		item.atime = time.Now()
+		if name == "" {
+			break
+		}
+		isFile = false
+		name = findParent(name)
+	}
+}
+
 // open marks name as open
+//
+// name should be a remote path not an osPath
 func (c *cache) open(name string) {
 	c.itemMu.Lock()
-	item := c._get(name)
-	item.opens++
-	item.atime = time.Now()
+	c._open(true, name)
 	c.itemMu.Unlock()
 }
 
+// cacheDir marks a directory and its parents as being in the cache
+//
+// name should be a remote path not an osPath
+func (c *cache) cacheDir(name string) {
+	c.itemMu.Lock()
+	defer c.itemMu.Unlock()
+	for {
+		item := c.item[name]
+		if item != nil {
+			break
+		}
+		c.item[name] = newCacheItem(false)
+		if name == "" {
+			break
+		}
+		name = findParent(name)
+	}
+}
+
+// _close marks name as closed - must be called with the lock held
+func (c *cache) _close(isFile bool, name string) {
+	for {
+		item := c._get(isFile, name)
+		item.opens--
+		item.atime = time.Now()
+		if item.opens < 0 {
+			fs.Errorf(name, "cache: double close")
+		}
+		if name == "" {
+			break
+		}
+		isFile = false
+		name = findParent(name)
+	}
+}
+
 // close marks name as closed
+//
+// name should be a remote path not an osPath
 func (c *cache) close(name string) {
 	c.itemMu.Lock()
-	item := c._get(name)
-	item.opens--
-	item.atime = time.Now()
-	if item.opens < 0 {
-		fs.Errorf(name, "cache: double close")
-	}
+	c._close(true, name)
 	c.itemMu.Unlock()
 }
 
 // remove should be called if name is deleted
 func (c *cache) remove(name string) {
-	osPath := filepath.Join(c.root, filepath.FromSlash(name))
+	osPath := c.toOSPath(name)
 	err := os.Remove(osPath)
 	if err != nil && !os.IsNotExist(err) {
 		fs.Errorf(name, "Failed to remove from cache: %v", err)
@@ -192,29 +261,55 @@ func (c *cache) remove(name string) {
 	}
 }
 
+// removeDir should be called if dir is deleted and returns true if
+// the directory is gone.
+func (c *cache) removeDir(dir string) bool {
+	osPath := c.toOSPath(dir)
+	err := os.Remove(osPath)
+	if err == nil || os.IsNotExist(err) {
+		return true
+	}
+	if !os.IsExist(err) {
+		fs.Errorf(dir, "Failed to remove cached dir: %v", err)
+	}
+	return false
+}
+
 // cleanUp empties the cache of everything
 func (c *cache) cleanUp() error {
 	return os.RemoveAll(c.root)
 }
 
-// updateAtimes walks the cache updating any atimes it finds
-func (c *cache) updateAtimes() error {
+// walk walks the cache calling the function
+func (c *cache) walk(fn func(osPath string, fi os.FileInfo, name string) error) error {
 	return filepath.Walk(c.root, func(osPath string, fi os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if !fi.IsDir() {
-			// Find path relative to the cache root
-			name, err := filepath.Rel(c.root, osPath)
-			if err != nil {
-				return errors.Wrap(err, "filepath.Rel failed in updatAtimes")
-			}
-			// And convert into slashes
-			name = filepath.ToSlash(name)
+		// Find path relative to the cache root
+		name, err := filepath.Rel(c.root, osPath)
+		if err != nil {
+			return errors.Wrap(err, "filepath.Rel failed in walk")
+		}
+		if name == "." {
+			name = ""
+		}
+		// And convert into slashes
+		name = filepath.ToSlash(name)
 
+		return fn(osPath, fi, name)
+	})
+}
+
+// updateAtimes walks the cache updating any atimes it finds
+func (c *cache) updateAtimes() error {
+	return c.walk(func(osPath string, fi os.FileInfo, name string) error {
+		if !fi.IsDir() {
 			// Update the atime with that of the file
 			atime := times.Get(fi).AccessTime()
 			c.updateTime(name, atime)
+		} else {
+			c.cacheDir(name)
 		}
 		return nil
 	})
@@ -222,17 +317,39 @@ func (c *cache) updateAtimes() error {
 
 // purgeOld gets rid of any files that are over age
 func (c *cache) purgeOld(maxAge time.Duration) {
+	c._purgeOld(maxAge, c.remove, c.removeDir)
+}
+
+func (c *cache) _purgeOld(maxAge time.Duration, remove func(name string), removeDir func(name string) bool) {
 	c.itemMu.Lock()
 	defer c.itemMu.Unlock()
 	cutoff := time.Now().Add(-maxAge)
 	for name, item := range c.item {
-		// If not locked and access time too long ago - delete the file
-		dt := item.atime.Sub(cutoff)
-		// fs.Debugf(name, "atime=%v cutoff=%v, dt=%v", item.atime, cutoff, dt)
-		if item.opens == 0 && dt < 0 {
-			c.remove(name)
-			// Remove the entry
-			delete(c.item, name)
+		if item.isFile && item.opens == 0 {
+			// If not locked and access time too long ago - delete the file
+			dt := item.atime.Sub(cutoff)
+			// fs.Debugf(name, "atime=%v cutoff=%v, dt=%v", item.atime, cutoff, dt)
+			if dt < 0 {
+				remove(name)
+				// Remove the entry
+				delete(c.item, name)
+			}
+		}
+	}
+	// now find any empty directories
+	var dirs []string
+	for name, item := range c.item {
+		if !item.isFile && item.opens == 0 {
+			dirs = append(dirs, name)
+		}
+	}
+	// remove empty directories in reverse alphabetical order
+	sort.Strings(dirs)
+	for i := len(dirs) - 1; i >= 0; i-- {
+		dir := dirs[i]
+		// Remove the entry
+		if removeDir(dir) {
+			delete(c.item, dir)
 		}
 	}
 }
@@ -253,14 +370,9 @@ func (c *cache) clean() {
 		fs.Errorf(nil, "Error traversing cache %q: %v", c.root, err)
 	}
 
-	// Now remove any files that are over age
+	// Now remove any files that are over age and any empty
+	// directories
 	c.purgeOld(c.opt.CacheMaxAge)
-
-	// Now tidy up any empty directories
-	err = fs.Rmdirs(c.f, "")
-	if err != nil {
-		fs.Errorf(c.f, "Failed to remove empty directories from cache: %v", err)
-	}
 }
 
 // cleaner calls clean at regular intervals
