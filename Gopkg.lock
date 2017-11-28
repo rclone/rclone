@@ -59,7 +59,7 @@
   branch = "master"
   name = "github.com/coreos/bbolt"
   packages = ["."]
-  revision = "a148de800f91fe6cbd8b2a472bbfdc09c4b6568f"
+  revision = "b4364696a62b73f08f0c9f97a9f1f2897577e114"
 
 [[projects]]
   name = "github.com/cpuguy83/go-md2man"
@@ -309,6 +309,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9d4dcfb143037fc27aa71f0eb309c9754ba348ff7585a39e575fba28265cac7d"
+  inputs-digest = "4dfe75b3ebfff3e7b40e2983d8c014f9e4d98fed08c3fe454f1dc890589e6960"
   solver-name = "gps-cdcl"
   solver-version = 1
