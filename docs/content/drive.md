@@ -65,6 +65,8 @@ Google Application Client Id - leave blank normally.
 client_id>
 Google Application Client Secret - leave blank normally.
 client_secret>
+Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
+service_account_file>
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -112,6 +114,25 @@ List all the files in your drive
 To copy a local directory to a drive directory called backup
 
     rclone copy /home/source remote:backup
+
+### Service Account support ###
+
+You can set up rclone with Google Drive in an unattended mode,
+i.e. not tied to a specific end-user Google account. This is useful
+when you want to synchronise files onto machines that don't have
+actively logged-in users, for example build machines.
+
+To create a service account and obtain its credentials, go to the
+[Google Developer Console](https://console.developers.google.com) and
+use the "Create Credentials" button. After creating an account, a JSON
+file containing the Service Account's credentials will be downloaded
+onto your machine. These credentials are what rclone will use for
+authentication.
+
+To use a Service Account instead of OAuth2 token flow, enter the path
+to your Service Account credentials at the `service_account_file`
+prompt and rclone won't use the browser based authentication
+flow.
 
 ### Team drives ###
 

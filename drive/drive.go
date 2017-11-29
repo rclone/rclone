@@ -10,8 +10,10 @@ package drive
 import (
 	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"sort"
 	"strconv"
@@ -96,9 +98,12 @@ func init() {
 		Description: "Google Drive",
 		NewFs:       NewFs,
 		Config: func(name string) {
-			err := oauthutil.Config("drive", name, driveConfig)
-			if err != nil {
-				log.Fatalf("Failed to configure token: %v", err)
+			var err error
+			if fs.ConfigFileGet(name, "service_account_file") == "" {
+				err = oauthutil.Config("drive", name, driveConfig)
+				if err != nil {
+					log.Fatalf("Failed to configure token: %v", err)
+				}
 			}
 			err = configTeamDrive(name)
 			if err != nil {
@@ -111,6 +116,9 @@ func init() {
 		}, {
 			Name: fs.ConfigClientSecret,
 			Help: "Google Application Client Secret - leave blank normally.",
+		}, {
+			Name: "service_account_file",
+			Help: "Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.",
 		}},
 	})
 	fs.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
@@ -338,9 +346,9 @@ func configTeamDrive(name string) error {
 	if !fs.Confirm() {
 		return nil
 	}
-	client, _, err := oauthutil.NewClient(name, driveConfig)
+	client, err := authenticate(name)
 	if err != nil {
-		return errors.Wrap(err, "config team drive failed to make oauth client")
+		return errors.Wrap(err, "config team drive failed to authenticate")
 	}
 	svc, err := drive.New(client)
 	if err != nil {
@@ -382,6 +390,39 @@ func newPacer() *pacer.Pacer {
 	return pacer.New().SetMinSleep(minSleep).SetPacer(pacer.GoogleDrivePacer)
 }
 
+func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
+	data, err := ioutil.ReadFile(os.ExpandEnv(keyJsonfilePath))
+	if err != nil {
+		return nil, errors.Wrap(err, "error opening credentials file")
+	}
+	conf, err := google.JWTConfigFromJSON(data, driveConfig.Scopes...)
+	if err != nil {
+		return nil, errors.Wrap(err, "error processing credentials")
+	}
+	ctxWithSpecialClient := oauthutil.Context(fs.Config.Client())
+	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
+}
+
+func authenticate(name string) (*http.Client, error) {
+	var oAuthClient *http.Client
+	var err error
+
+	serviceAccountPath := fs.ConfigFileGet(name, "service_account_file")
+	if serviceAccountPath != "" {
+		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to configure drive Service Account")
+		}
+	} else {
+		oAuthClient, _, err = oauthutil.NewClient(name, driveConfig)
+		if err != nil {
+			return nil, errors.Wrap(err, "Failed to configure drive")
+		}
+	}
+
+	return oAuthClient, nil
+}
+
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, path string) (fs.Fs, error) {
 	if !isPowerOfTwo(int64(chunkSize)) {
@@ -391,10 +432,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, errors.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
 	}
 
-	oAuthClient, _, err := oauthutil.NewClient(name, driveConfig)
-	if err != nil {
-		log.Fatalf("Failed to configure drive: %v", err)
-	}
+	oAuthClient, _ := authenticate(name)
 
 	root, err := parseDrivePath(path)
 	if err != nil {
