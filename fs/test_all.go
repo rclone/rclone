@@ -401,6 +401,7 @@ func main() {
 	duration := time.Since(start)
 
 	// Summarise results
+	log.Printf("SUMMARY")
 	if len(failed) == 0 {
 		log.Printf("PASS: All tests finished OK in %v", duration)
 	} else {
