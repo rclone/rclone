@@ -135,6 +135,7 @@ var (
 	runTests = flag.String("remotes", "", "Comma separated list of remotes to test, eg 'TestSwift:,TestS3'")
 	clean    = flag.Bool("clean", false, "Instead of testing, clean all left over test directories")
 	runOnly  = flag.String("run-only", "", "Run only those tests matching the regexp supplied")
+	timeout  = flag.Duration("timeout", 30*time.Minute, "Maximum time to run each test for before giving up")
 )
 
 // test holds info about a running test
@@ -155,7 +156,7 @@ func newTest(remote string, subdir bool, fastlist bool) *test {
 	t := &test{
 		remote:  remote,
 		subdir:  subdir,
-		cmdLine: []string{"./" + binary, "-remote", remote},
+		cmdLine: []string{"./" + binary, "-test.timeout", (*timeout).String(), "-remote", remote},
 		try:     1,
 	}
 	if *fstest.Verbose {
