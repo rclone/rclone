@@ -30,27 +30,23 @@ const (
 )
 
 var boltMap = make(map[string]*Persistent)
-var boltMapMx sync.RWMutex
+var boltMapMx sync.Mutex
 
 // GetPersistent returns a single instance for the specific store
-func GetPersistent(dbPath string, refreshDb bool) *Persistent {
-	// read lock to check if it exists
-	boltMapMx.RLock()
-	if b, ok := boltMap[dbPath]; ok {
-		boltMapMx.RUnlock()
-		return b
-	}
-	boltMapMx.RUnlock()
-
-	// write lock to create one but let's check a 2nd time
+func GetPersistent(dbPath string, refreshDb bool) (*Persistent, error) {
+	// write lock to create one
 	boltMapMx.Lock()
 	defer boltMapMx.Unlock()
 	if b, ok := boltMap[dbPath]; ok {
-		return b
+		return b, nil
 	}
 
-	boltMap[dbPath] = newPersistent(dbPath, refreshDb)
-	return boltMap[dbPath]
+	bb, err := newPersistent(dbPath, refreshDb)
+	if err != nil {
+		return nil, err
+	}
+	boltMap[dbPath] = bb
+	return boltMap[dbPath], nil
 }
 
 // Persistent is a wrapper of persistent storage for a bolt.DB file
@@ -64,7 +60,7 @@ type Persistent struct {
 }
 
 // newPersistent builds a new wrapper and connects to the bolt.DB file
-func newPersistent(dbPath string, refreshDb bool) *Persistent {
+func newPersistent(dbPath string, refreshDb bool) (*Persistent, error) {
 	dataPath := strings.TrimSuffix(dbPath, filepath.Ext(dbPath))
 
 	b := &Persistent{
@@ -74,10 +70,11 @@ func newPersistent(dbPath string, refreshDb bool) *Persistent {
 
 	err := b.Connect(refreshDb)
 	if err != nil {
-		fs.Errorf(dbPath, "error opening storage cache: %v", err)
+		fs.Errorf(dbPath, "Error opening storage cache. Is there another rclone running on the same remote? %v", err)
+		return nil, err
 	}
 
-	return b
+	return b, nil
 }
 
 // String will return a human friendly string for this DB (currently the dbPath)

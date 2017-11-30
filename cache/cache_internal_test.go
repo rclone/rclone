@@ -44,7 +44,8 @@ func TestInternalInit(t *testing.T) {
 
 	// delete the default path
 	dbPath := filepath.Join(fs.CacheDir, "cache-backend", *RemoteName+".db")
-	boltDb = cache.GetPersistent(dbPath, true)
+	boltDb, err = cache.GetPersistent(dbPath, true)
+	require.NoError(t, err)
 	fstest.Initialise()
 
 	if len(*WrapRemote) == 0 {

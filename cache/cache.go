@@ -330,9 +330,9 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 
 	dbPath = filepath.Join(dbPath, name+".db")
 	fs.Infof(name, "Storage DB path: %v", dbPath)
-	f.cache = GetPersistent(dbPath, *cacheDbPurge)
+	f.cache, err = GetPersistent(dbPath, *cacheDbPurge)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to start cache db")
 	}
 	// Trap SIGINT and SIGTERM to close the DB handle gracefully
 	c := make(chan os.Signal, 1)
