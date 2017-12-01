@@ -1622,17 +1622,8 @@ func Rcat(fdst Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst
 	buf := make([]byte, Config.StreamingUploadCutoff)
 	if n, err := io.ReadFull(trackingIn, buf); err == io.EOF || err == io.ErrUnexpectedEOF {
 		Debugf(fdst, "File to upload is small (%d bytes), uploading instead of streaming", n)
-		in := ioutil.NopCloser(bytes.NewReader(buf[:n]))
-		objInfo := NewStaticObjectInfo(dstFileName, modTime, int64(n), false, nil, nil)
-		if Config.DryRun {
-			Logf("stdin", "Not uploading as --dry-run")
-			return nil, nil
-		}
-		dst, err := fdst.Put(in, objInfo, hashOption)
-		if err != nil {
-			return dst, err
-		}
-		return dst, compare(dst)
+		src := NewMemoryObject(dstFileName, modTime, buf[:n])
+		return Copy(fdst, nil, dstFileName, src)
 	}
 
 	// Make a new ReadCloser with the bits we've already read
@@ -1673,6 +1664,7 @@ func Rcat(fdst Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst
 		return dst, err
 	}
 	if !canStream {
+		// copy dst (which is the local object we have just streamed to) to the remote
 		return Copy(fdst, nil, dstFileName, dst)
 	}
 	return dst, nil
