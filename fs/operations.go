@@ -273,10 +273,14 @@ var _ MimeTyper = (*overrideRemoteObject)(nil)
 
 // Copy src object to dst or f if nil.  If dst is nil then it uses
 // remote as the name of the new object.
-func Copy(f Fs, dst Object, remote string, src Object) (err error) {
+//
+// It returns the destination object if possible.  Note that this may
+// be nil.
+func Copy(f Fs, dst Object, remote string, src Object) (newDst Object, err error) {
+	newDst = dst
 	if Config.DryRun {
 		Logf(src, "Not copying as --dry-run")
-		return nil
+		return newDst, nil
 	}
 	maxTries := Config.LowLevelRetries
 	tries := 0
@@ -298,7 +302,6 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		// is same underlying remote
 		actionTaken = "Copied (server side copy)"
 		if doCopy := f.Features().Copy; doCopy != nil && SameConfig(src.Fs(), f) {
-			var newDst Object
 			newDst, err = doCopy(src, remote)
 			if err == nil {
 				dst = newDst
@@ -328,6 +331,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 				}
 				closeErr := in.Close()
 				if err == nil {
+					newDst = dst
 					err = closeErr
 				}
 			}
@@ -347,7 +351,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 	if err != nil {
 		Stats.Error(err)
 		Errorf(src, "Failed to copy: %v", err)
-		return err
+		return newDst, err
 	}
 
 	// Verify sizes are the same after transfer
@@ -356,7 +360,7 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 		Errorf(dst, "%v", err)
 		Stats.Error(err)
 		removeFailedCopy(dst)
-		return err
+		return newDst, err
 	}
 
 	// Verify hashes are the same after transfer - ignoring blank hashes
@@ -379,21 +383,25 @@ func Copy(f Fs, dst Object, remote string, src Object) (err error) {
 				Errorf(dst, "%v", err)
 				Stats.Error(err)
 				removeFailedCopy(dst)
-				return err
+				return newDst, err
 			}
 		}
 	}
 
 	Infof(src, actionTaken)
-	return err
+	return newDst, err
 }
 
 // Move src object to dst or fdst if nil.  If dst is nil then it uses
 // remote as the name of the new object.
-func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
+//
+// It returns the destination object if possible.  Note that this may
+// be nil.
+func Move(fdst Fs, dst Object, remote string, src Object) (newDst Object, err error) {
+	newDst = dst
 	if Config.DryRun {
 		Logf(src, "Not moving as --dry-run")
-		return nil
+		return newDst, nil
 	}
 	// See if we have Move available
 	if doMove := fdst.Features().Move; doMove != nil && SameConfig(src.Fs(), fdst) {
@@ -401,31 +409,31 @@ func Move(fdst Fs, dst Object, remote string, src Object) (err error) {
 		if dst != nil {
 			err = DeleteFile(dst)
 			if err != nil {
-				return err
+				return newDst, err
 			}
 		}
 		// Move dst <- src
-		_, err := doMove(src, remote)
+		newDst, err = doMove(src, remote)
 		switch err {
 		case nil:
 			Infof(src, "Moved (server side)")
-			return nil
+			return newDst, nil
 		case ErrorCantMove:
 			Debugf(src, "Can't move, switching to copy")
 		default:
 			Stats.Error(err)
 			Errorf(src, "Couldn't move: %v", err)
-			return err
+			return newDst, err
 		}
 	}
 	// Move not found or didn't work so copy dst <- src
-	err = Copy(fdst, dst, remote, src)
+	newDst, err = Copy(fdst, dst, remote, src)
 	if err != nil {
 		Errorf(src, "Not deleting source as copy failed: %v", err)
-		return err
+		return newDst, err
 	}
 	// Delete src if no error on copy
-	return DeleteFile(src)
+	return newDst, DeleteFile(src)
 }
 
 // CanServerSideMove returns true if fdst support server side moves or
@@ -458,7 +466,7 @@ func deleteFileWithBackupDir(dst Object, backupDir Fs) (err error) {
 		} else {
 			remoteWithSuffix := dst.Remote() + Config.Suffix
 			overwritten, _ := backupDir.NewObject(remoteWithSuffix)
-			err = Move(backupDir, overwritten, remoteWithSuffix, dst)
+			_, err = Move(backupDir, overwritten, remoteWithSuffix, dst)
 		}
 	} else {
 		err = dst.Remove()
@@ -1665,7 +1673,7 @@ func Rcat(fdst Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst
 		return dst, err
 	}
 	if !canStream {
-		return dst, Copy(fdst, nil, dstFileName, dst)
+		return Copy(fdst, nil, dstFileName, dst)
 	}
 	return dst, nil
 }
@@ -1763,7 +1771,7 @@ func moveOrCopyFile(fdst Fs, fsrc Fs, dstFileName string, srcFileName string, cp
 
 	if NeedTransfer(dstObj, srcObj) {
 		Stats.Transferring(srcFileName)
-		err = Op(fdst, dstObj, dstFileName, srcObj)
+		_, err = Op(fdst, dstObj, dstFileName, srcObj)
 		Stats.DoneTransferring(srcFileName, err == nil)
 	} else {
 		Stats.Checking(srcFileName)

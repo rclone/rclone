@@ -277,7 +277,7 @@ func (s *syncCopyMove) pairChecker(in ObjectPairChan, out ObjectPairChan, wg *sy
 						if pair.dst != nil && s.backupDir != nil {
 							remoteWithSuffix := pair.dst.Remote() + s.suffix
 							overwritten, _ := s.backupDir.NewObject(remoteWithSuffix)
-							err := Move(s.backupDir, overwritten, remoteWithSuffix, pair.dst)
+							_, err := Move(s.backupDir, overwritten, remoteWithSuffix, pair.dst)
 							if err != nil {
 								s.processError(err)
 							} else {
@@ -344,9 +344,9 @@ func (s *syncCopyMove) pairCopyOrMove(in ObjectPairChan, fdst Fs, wg *sync.WaitG
 			src := pair.src
 			Stats.Transferring(src.Remote())
 			if s.DoMove {
-				err = Move(fdst, pair.dst, src.Remote(), src)
+				_, err = Move(fdst, pair.dst, src.Remote(), src)
 			} else {
-				err = Copy(fdst, pair.dst, src.Remote(), src)
+				_, err = Copy(fdst, pair.dst, src.Remote(), src)
 			}
 			s.processError(err)
 			Stats.DoneTransferring(src.Remote(), err == nil)
@@ -624,7 +624,7 @@ func (s *syncCopyMove) tryRename(src Object) bool {
 	dstOverwritten, _ := s.fdst.NewObject(src.Remote())
 
 	// Rename dst to have name src.Remote()
-	err := Move(s.fdst, dstOverwritten, src.Remote(), dst)
+	_, err := Move(s.fdst, dstOverwritten, src.Remote(), dst)
 	if err != nil {
 		Debugf(src, "Failed to rename to %q: %v", dst.Remote(), err)
 		return false
