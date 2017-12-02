@@ -57,7 +57,7 @@ func (fh *WriteFileHandle) openPending() (err error) {
 		return nil
 	}
 	if !fh.safeToTruncate() {
-		fs.Errorf(fh.remote, "WriteFileHandle: Can't open for write without O_TRUNC on existing file without cache-mode >= writes")
+		fs.Errorf(fh.remote, "WriteFileHandle: Can't open for write without O_TRUNC on existing file without --vfs-cache-mode >= writes")
 		return EPERM
 	}
 	var pipeReader *io.PipeReader
@@ -126,7 +126,7 @@ func (fh *WriteFileHandle) writeAt(p []byte, off int64) (n int, err error) {
 		return 0, ECLOSED
 	}
 	if fh.offset != off {
-		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without cache-mode >= writes")
+		fs.Errorf(fh.remote, "WriteFileHandle.Write: can't seek in file without --vfs-cache-mode >= writes")
 		return 0, ESPIPE
 	}
 	if err = fh.openPending(); err != nil {

@@ -22,19 +22,27 @@ like this:
 
 **NB** File caching is **EXPERIMENTAL** - use with care!
 
-These flags control the file caching options.
+These flags control the VFS file caching options.  The VFS layer is
+used by rclone mount to make a cloud storage systm work more like a
+normal file system.
 
-    --cache-dir string               Directory rclone will use for caching.
-    --cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
-    --cache-mode string              Cache mode off|minimal|writes|full (default "off")
-    --cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+You'll need to enable VFS caching if you want, for example, to read
+and write simultaneously to a file.  See below for more details.
+
+Note that the VFS cache works in addition to the cache backend and you
+may find that you need one or the other or both.
+
+    --vfs-cache-dir string               Directory rclone will use for caching.
+    --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
+    --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
+    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
 
 If run with ` + "`-vv`" + ` rclone will print the location of the file cache.  The
 files are stored in the user cache file area which is OS dependent but
 can be controlled with ` + "`--cache-dir`" + ` or setting the appropriate
 environment variable.
 
-The cache has 4 different modes selected by ` + "`--cache-mode`" + `.
+The cache has 4 different modes selected by ` + "`--vfs-cache-mode`" + `.
 The higher the cache mode the more compatible rclone becomes at the
 cost of using disk space.
 
@@ -43,7 +51,7 @@ closed so if rclone is quit or dies with open files then these won't
 get written back to the remote.  However they will still be in the on
 disk cache.
 
-#### --cache-mode off ####
+#### --vfs-cache-mode off ####
 
 In this mode the cache will read directly from the remote and write
 directly to the remote without caching anything on disk.
@@ -58,7 +66,7 @@ This will mean some operations are not possible
   * Open modes O_APPEND, O_TRUNC are ignored
   * If an upload fails it can't be retried
 
-#### --cache-mode minimal ####
+#### --vfs-cache-mode minimal ####
 
 This is very similar to "off" except that files opened for read AND
 write will be buffered to disks.  This means that files opened for
@@ -71,7 +79,7 @@ These operations are not possible
   * Files opened for write only will ignore O_APPEND, O_TRUNC
   * If an upload fails it can't be retried
 
-#### --cache-mode writes ####
+#### --vfs-cache-mode writes ####
 
 In this mode files opened for read only are still read directly from
 the remote, write only and read/write files are buffered to disk
@@ -81,14 +89,18 @@ This mode should support all normal file system operations.
 
 If an upload fails it will be retried up to --low-level-retries times.
 
-#### --cache-mode full ####
+#### --vfs-cache-mode full ####
 
 In this mode all reads and writes are buffered to and from disk.  When
 a file is opened for read it will be downloaded in its entirety first.
 
+This may be appropriate for your needs, or you may prefer to look at
+the cache backend which does a much more sophisticated job of caching,
+including caching directory heirachies and chunks of files.q
+
 In this mode, unlike the others, when a file is written to the disk,
 it will be kept on the disk after it is written to the remote.  It
-will be purged on a schedule according to ` + "`--cache-max-age`" + `.
+will be purged on a schedule according to ` + "`--vfs-cache-max-age`" + `.
 
 This mode should support all normal file system operations.
 

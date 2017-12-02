@@ -20,8 +20,8 @@ func AddFlags(flags *pflag.FlagSet) {
 	fs.DurationVarP(flags, &Opt.DirCacheTime, "dir-cache-time", "", Opt.DirCacheTime, "Time to cache directory entries for.")
 	fs.DurationVarP(flags, &Opt.PollInterval, "poll-interval", "", Opt.PollInterval, "Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable.")
 	fs.BoolVarP(flags, &Opt.ReadOnly, "read-only", "", Opt.ReadOnly, "Mount read-only.")
-	fs.FlagsVarP(flags, &Opt.CacheMode, "cache-mode", "", "Cache mode off|minimal|writes|full")
-	fs.DurationVarP(flags, &Opt.CachePollInterval, "cache-poll-interval", "", Opt.CachePollInterval, "Interval to poll the cache for stale objects.")
-	fs.DurationVarP(flags, &Opt.CacheMaxAge, "cache-max-age", "", Opt.CacheMaxAge, "Max age of objects in the cache.")
+	fs.FlagsVarP(flags, &Opt.CacheMode, "vfs-cache-mode", "", "Cache mode off|minimal|writes|full")
+	fs.DurationVarP(flags, &Opt.CachePollInterval, "vfs-cache-poll-interval", "", Opt.CachePollInterval, "Interval to poll the cache for stale objects.")
+	fs.DurationVarP(flags, &Opt.CacheMaxAge, "vfs-cache-max-age", "", Opt.CacheMaxAge, "Max age of objects in the cache.")
 	platformFlags(flags)
 }
