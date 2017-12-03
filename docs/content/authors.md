@@ -120,3 +120,4 @@ Contributors
   * Jakub Tasiemski <tasiemski@gmail.com>
   * David Minor <dminor@saymedia.com>
   * Tim Cooijmans <cooijmans.tim@gmail.com>
+  * Laurence <liuxy6@gmail.com>
