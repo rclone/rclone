@@ -206,6 +206,7 @@ type Storage interface {
 // Fs represents a wrapped fs.Fs
 type Fs struct {
 	fs.Fs
+	wrapper fs.Fs
 
 	name     string
 	root     string
@@ -379,7 +380,9 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		PutStream:               f.PutStream,
 		CleanUp:                 f.CleanUp,
 		UnWrap:                  f.UnWrap,
-	}).Fill(f).Mask(wrappedFs)
+		WrapFs:                  f.WrapFs,
+		SetWrapper:              f.SetWrapper,
+	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
 
 	return f, wrapErr
 }
@@ -938,6 +941,16 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// WrapFs returns the Fs that is wrapping this Fs
+func (f *Fs) WrapFs() fs.Fs {
+	return f.wrapper
+}
+
+// SetWrapper sets the Fs that is wrapping this Fs
+func (f *Fs) SetWrapper(wrapper fs.Fs) {
+	f.wrapper = wrapper
+}
+
 // DirCacheFlush flushes the dir cache
 func (f *Fs) DirCacheFlush() {
 	_ = f.cache.RemoveDir("")
@@ -963,5 +976,6 @@ var (
 	_ fs.PutStreamer    = (*Fs)(nil)
 	_ fs.CleanUpper     = (*Fs)(nil)
 	_ fs.UnWrapper      = (*Fs)(nil)
+	_ fs.Wrapper        = (*Fs)(nil)
 	_ fs.ListRer        = (*Fs)(nil)
 )
