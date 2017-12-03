@@ -14,7 +14,7 @@ func init() {
 
 var commandDefintion = &cobra.Command{
 	Use:   "dbhashsum remote:path",
-	Short: `Produces a Dropbbox hash file for all the objects in the path.`,
+	Short: `Produces a Dropbox hash file for all the objects in the path.`,
 	Long: `
 Produces a Dropbox hash file for all the objects in the path.  The
 hashes are calculated according to [Dropbox content hash
