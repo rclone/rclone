@@ -127,7 +127,7 @@ func NewRun(t *testing.T) *Run {
 		*r = *oneRun
 		r.cleanRemote = func() {
 			var toDelete dirsToRemove
-			require.NoError(t, fs.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
+			err := fs.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
 				if err != nil {
 					if err == fs.ErrorDirNotFound {
 						return nil
@@ -146,7 +146,11 @@ func NewRun(t *testing.T) *Run {
 					}
 				}
 				return nil
-			}))
+			})
+			if err == fs.ErrorDirNotFound {
+				return
+			}
+			require.NoError(t, err)
 			sort.Sort(toDelete)
 			for _, dir := range toDelete {
 				err := r.Fremote.Rmdir(dir)
