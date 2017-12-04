@@ -19,6 +19,16 @@ See below for some expanded Linux / macOS instructions.
 See the [Usage section](/docs/) of the docs for how to use rclone, or
 run `rclone -h`.
 
+## Script installation ##
+
+To install rclone on Linux/MacOs/BSD systems, run:
+
+    curl https://rclone.org/install.sh | sudo bash
+
+For beta installation, run:
+
+    curl https://rclone.org/install.sh | sudo bash -s beta
+
 ## Linux installation from precompiled binary ##
 
 Fetch and unpack
