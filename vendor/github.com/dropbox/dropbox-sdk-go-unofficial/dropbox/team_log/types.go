@@ -554,11 +554,11 @@ type Certificate struct {
 	// Sha1Fingerprint : Certificate sha1 fingerprint.
 	Sha1Fingerprint string `json:"sha1_fingerprint"`
 	// CommonName : Certificate common name.
-	CommonName string `json:"common_name"`
+	CommonName string `json:"common_name,omitempty"`
 }
 
 // NewCertificate returns a new Certificate instance
-func NewCertificate(Subject string, Issuer string, IssueDate string, ExpirationDate string, SerialNumber string, Sha1Fingerprint string, CommonName string) *Certificate {
+func NewCertificate(Subject string, Issuer string, IssueDate string, ExpirationDate string, SerialNumber string, Sha1Fingerprint string) *Certificate {
 	s := new(Certificate)
 	s.Subject = Subject
 	s.Issuer = Issuer
@@ -566,7 +566,6 @@ func NewCertificate(Subject string, Issuer string, IssueDate string, ExpirationD
 	s.ExpirationDate = ExpirationDate
 	s.SerialNumber = SerialNumber
 	s.Sha1Fingerprint = Sha1Fingerprint
-	s.CommonName = CommonName
 	return s
 }
 
@@ -1286,13 +1285,16 @@ func NewEmmCreateUsageReportDetails() *EmmCreateUsageReportDetails {
 	return s
 }
 
-// EmmLoginSuccessDetails : Signed in using the Dropbox EMM app.
-type EmmLoginSuccessDetails struct {
+// EmmErrorDetails : Failed to sign in via EMM.
+type EmmErrorDetails struct {
+	// ErrorDetails : Error details.
+	ErrorDetails *FailureDetailsLogInfo `json:"error_details"`
 }
 
-// NewEmmLoginSuccessDetails returns a new EmmLoginSuccessDetails instance
-func NewEmmLoginSuccessDetails() *EmmLoginSuccessDetails {
-	s := new(EmmLoginSuccessDetails)
+// NewEmmErrorDetails returns a new EmmErrorDetails instance
+func NewEmmErrorDetails(ErrorDetails *FailureDetailsLogInfo) *EmmErrorDetails {
+	s := new(EmmErrorDetails)
+	s.ErrorDetails = ErrorDetails
 	return s
 }
 
@@ -1534,10 +1536,10 @@ type EventDetails struct {
 	FileSaveCopyReferenceDetails *FileSaveCopyReferenceDetails `json:"file_save_copy_reference_details,omitempty"`
 	// FileRequestAddDeadlineDetails : Added a deadline to a file request.
 	FileRequestAddDeadlineDetails *FileRequestAddDeadlineDetails `json:"file_request_add_deadline_details,omitempty"`
+	// FileRequestChangeDetails : Change a file request.
+	FileRequestChangeDetails *FileRequestChangeDetails `json:"file_request_change_details,omitempty"`
 	// FileRequestChangeFolderDetails : Changed the file request folder.
 	FileRequestChangeFolderDetails *FileRequestChangeFolderDetails `json:"file_request_change_folder_details,omitempty"`
-	// FileRequestChangeTitleDetails : Change the file request title.
-	FileRequestChangeTitleDetails *FileRequestChangeTitleDetails `json:"file_request_change_title_details,omitempty"`
 	// FileRequestCloseDetails : Closed a file request.
 	FileRequestCloseDetails *FileRequestCloseDetails `json:"file_request_close_details,omitempty"`
 	// FileRequestCreateDetails : Created a file request.
@@ -1571,14 +1573,14 @@ type EventDetails struct {
 	GroupRemoveMemberDetails *GroupRemoveMemberDetails `json:"group_remove_member_details,omitempty"`
 	// GroupRenameDetails : Renamed a group.
 	GroupRenameDetails *GroupRenameDetails `json:"group_rename_details,omitempty"`
-	// EmmLoginSuccessDetails : Signed in using the Dropbox EMM app.
-	EmmLoginSuccessDetails *EmmLoginSuccessDetails `json:"emm_login_success_details,omitempty"`
+	// EmmErrorDetails : Failed to sign in via EMM.
+	EmmErrorDetails *EmmErrorDetails `json:"emm_error_details,omitempty"`
+	// LoginFailDetails : Failed to sign in.
+	LoginFailDetails *LoginFailDetails `json:"login_fail_details,omitempty"`
+	// LoginSuccessDetails : Signed in.
+	LoginSuccessDetails *LoginSuccessDetails `json:"login_success_details,omitempty"`
 	// LogoutDetails : Signed out.
 	LogoutDetails *LogoutDetails `json:"logout_details,omitempty"`
-	// PasswordLoginFailDetails : Failed to sign in using a password.
-	PasswordLoginFailDetails *PasswordLoginFailDetails `json:"password_login_fail_details,omitempty"`
-	// PasswordLoginSuccessDetails : Signed in using a password.
-	PasswordLoginSuccessDetails *PasswordLoginSuccessDetails `json:"password_login_success_details,omitempty"`
 	// ResellerSupportSessionEndDetails : Ended reseller support session.
 	ResellerSupportSessionEndDetails *ResellerSupportSessionEndDetails `json:"reseller_support_session_end_details,omitempty"`
 	// ResellerSupportSessionStartDetails : Started reseller support session.
@@ -1587,8 +1589,8 @@ type EventDetails struct {
 	SignInAsSessionEndDetails *SignInAsSessionEndDetails `json:"sign_in_as_session_end_details,omitempty"`
 	// SignInAsSessionStartDetails : Started admin sign-in-as session.
 	SignInAsSessionStartDetails *SignInAsSessionStartDetails `json:"sign_in_as_session_start_details,omitempty"`
-	// SsoLoginFailDetails : Failed to sign in using SSO.
-	SsoLoginFailDetails *SsoLoginFailDetails `json:"sso_login_fail_details,omitempty"`
+	// SsoErrorDetails : Failed to sign in via SSO.
+	SsoErrorDetails *SsoErrorDetails `json:"sso_error_details,omitempty"`
 	// MemberAddNameDetails : Set team member name when joining team.
 	MemberAddNameDetails *MemberAddNameDetails `json:"member_add_name_details,omitempty"`
 	// MemberChangeAdminRoleDetails : Change the admin role belonging to team
@@ -1951,8 +1953,8 @@ type EventDetails struct {
 	// MemberSpaceLimitsAddExceptionDetails : Added an exception for one or more
 	// team members to bypass space limits imposed by policy.
 	MemberSpaceLimitsAddExceptionDetails *MemberSpaceLimitsAddExceptionDetails `json:"member_space_limits_add_exception_details,omitempty"`
-	// MemberSpaceLimitsChangePolicyDetails : Changed the storage limits applied
-	// to team members by policy.
+	// MemberSpaceLimitsChangePolicyDetails : Changed the team default limit
+	// level.
 	MemberSpaceLimitsChangePolicyDetails *MemberSpaceLimitsChangePolicyDetails `json:"member_space_limits_change_policy_details,omitempty"`
 	// MemberSpaceLimitsRemoveExceptionDetails : Removed an exception for one or
 	// more team members to bypass space limits imposed by policy.
@@ -2120,8 +2122,8 @@ const (
 	EventDetailsFileRollbackChangesDetails                      = "file_rollback_changes_details"
 	EventDetailsFileSaveCopyReferenceDetails                    = "file_save_copy_reference_details"
 	EventDetailsFileRequestAddDeadlineDetails                   = "file_request_add_deadline_details"
+	EventDetailsFileRequestChangeDetails                        = "file_request_change_details"
 	EventDetailsFileRequestChangeFolderDetails                  = "file_request_change_folder_details"
-	EventDetailsFileRequestChangeTitleDetails                   = "file_request_change_title_details"
 	EventDetailsFileRequestCloseDetails                         = "file_request_close_details"
 	EventDetailsFileRequestCreateDetails                        = "file_request_create_details"
 	EventDetailsFileRequestReceiveFileDetails                   = "file_request_receive_file_details"
@@ -2138,15 +2140,15 @@ const (
 	EventDetailsGroupRemoveExternalIdDetails                    = "group_remove_external_id_details"
 	EventDetailsGroupRemoveMemberDetails                        = "group_remove_member_details"
 	EventDetailsGroupRenameDetails                              = "group_rename_details"
-	EventDetailsEmmLoginSuccessDetails                          = "emm_login_success_details"
+	EventDetailsEmmErrorDetails                                 = "emm_error_details"
+	EventDetailsLoginFailDetails                                = "login_fail_details"
+	EventDetailsLoginSuccessDetails                             = "login_success_details"
 	EventDetailsLogoutDetails                                   = "logout_details"
-	EventDetailsPasswordLoginFailDetails                        = "password_login_fail_details"
-	EventDetailsPasswordLoginSuccessDetails                     = "password_login_success_details"
 	EventDetailsResellerSupportSessionEndDetails                = "reseller_support_session_end_details"
 	EventDetailsResellerSupportSessionStartDetails              = "reseller_support_session_start_details"
 	EventDetailsSignInAsSessionEndDetails                       = "sign_in_as_session_end_details"
 	EventDetailsSignInAsSessionStartDetails                     = "sign_in_as_session_start_details"
-	EventDetailsSsoLoginFailDetails                             = "sso_login_fail_details"
+	EventDetailsSsoErrorDetails                                 = "sso_error_details"
 	EventDetailsMemberAddNameDetails                            = "member_add_name_details"
 	EventDetailsMemberChangeAdminRoleDetails                    = "member_change_admin_role_details"
 	EventDetailsMemberChangeEmailDetails                        = "member_change_email_details"
@@ -2498,10 +2500,10 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		FileSaveCopyReferenceDetails json.RawMessage `json:"file_save_copy_reference_details,omitempty"`
 		// FileRequestAddDeadlineDetails : Added a deadline to a file request.
 		FileRequestAddDeadlineDetails json.RawMessage `json:"file_request_add_deadline_details,omitempty"`
+		// FileRequestChangeDetails : Change a file request.
+		FileRequestChangeDetails json.RawMessage `json:"file_request_change_details,omitempty"`
 		// FileRequestChangeFolderDetails : Changed the file request folder.
 		FileRequestChangeFolderDetails json.RawMessage `json:"file_request_change_folder_details,omitempty"`
-		// FileRequestChangeTitleDetails : Change the file request title.
-		FileRequestChangeTitleDetails json.RawMessage `json:"file_request_change_title_details,omitempty"`
 		// FileRequestCloseDetails : Closed a file request.
 		FileRequestCloseDetails json.RawMessage `json:"file_request_close_details,omitempty"`
 		// FileRequestCreateDetails : Created a file request.
@@ -2535,14 +2537,14 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		GroupRemoveMemberDetails json.RawMessage `json:"group_remove_member_details,omitempty"`
 		// GroupRenameDetails : Renamed a group.
 		GroupRenameDetails json.RawMessage `json:"group_rename_details,omitempty"`
-		// EmmLoginSuccessDetails : Signed in using the Dropbox EMM app.
-		EmmLoginSuccessDetails json.RawMessage `json:"emm_login_success_details,omitempty"`
+		// EmmErrorDetails : Failed to sign in via EMM.
+		EmmErrorDetails json.RawMessage `json:"emm_error_details,omitempty"`
+		// LoginFailDetails : Failed to sign in.
+		LoginFailDetails json.RawMessage `json:"login_fail_details,omitempty"`
+		// LoginSuccessDetails : Signed in.
+		LoginSuccessDetails json.RawMessage `json:"login_success_details,omitempty"`
 		// LogoutDetails : Signed out.
 		LogoutDetails json.RawMessage `json:"logout_details,omitempty"`
-		// PasswordLoginFailDetails : Failed to sign in using a password.
-		PasswordLoginFailDetails json.RawMessage `json:"password_login_fail_details,omitempty"`
-		// PasswordLoginSuccessDetails : Signed in using a password.
-		PasswordLoginSuccessDetails json.RawMessage `json:"password_login_success_details,omitempty"`
 		// ResellerSupportSessionEndDetails : Ended reseller support session.
 		ResellerSupportSessionEndDetails json.RawMessage `json:"reseller_support_session_end_details,omitempty"`
 		// ResellerSupportSessionStartDetails : Started reseller support
@@ -2552,8 +2554,8 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		SignInAsSessionEndDetails json.RawMessage `json:"sign_in_as_session_end_details,omitempty"`
 		// SignInAsSessionStartDetails : Started admin sign-in-as session.
 		SignInAsSessionStartDetails json.RawMessage `json:"sign_in_as_session_start_details,omitempty"`
-		// SsoLoginFailDetails : Failed to sign in using SSO.
-		SsoLoginFailDetails json.RawMessage `json:"sso_login_fail_details,omitempty"`
+		// SsoErrorDetails : Failed to sign in via SSO.
+		SsoErrorDetails json.RawMessage `json:"sso_error_details,omitempty"`
 		// MemberAddNameDetails : Set team member name when joining team.
 		MemberAddNameDetails json.RawMessage `json:"member_add_name_details,omitempty"`
 		// MemberChangeAdminRoleDetails : Change the admin role belonging to
@@ -2927,8 +2929,8 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		// MemberSpaceLimitsAddExceptionDetails : Added an exception for one or
 		// more team members to bypass space limits imposed by policy.
 		MemberSpaceLimitsAddExceptionDetails json.RawMessage `json:"member_space_limits_add_exception_details,omitempty"`
-		// MemberSpaceLimitsChangePolicyDetails : Changed the storage limits
-		// applied to team members by policy.
+		// MemberSpaceLimitsChangePolicyDetails : Changed the team default limit
+		// level.
 		MemberSpaceLimitsChangePolicyDetails json.RawMessage `json:"member_space_limits_change_policy_details,omitempty"`
 		// MemberSpaceLimitsRemoveExceptionDetails : Removed an exception for
 		// one or more team members to bypass space limits imposed by policy.
@@ -3429,14 +3431,14 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
-	case "file_request_change_folder_details":
-		err = json.Unmarshal(body, &u.FileRequestChangeFolderDetails)
+	case "file_request_change_details":
+		err = json.Unmarshal(body, &u.FileRequestChangeDetails)
 
 		if err != nil {
 			return err
 		}
-	case "file_request_change_title_details":
-		err = json.Unmarshal(body, &u.FileRequestChangeTitleDetails)
+	case "file_request_change_folder_details":
+		err = json.Unmarshal(body, &u.FileRequestChangeFolderDetails)
 
 		if err != nil {
 			return err
@@ -3537,26 +3539,26 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
-	case "emm_login_success_details":
-		err = json.Unmarshal(body, &u.EmmLoginSuccessDetails)
+	case "emm_error_details":
+		err = json.Unmarshal(body, &u.EmmErrorDetails)
+
+		if err != nil {
+			return err
+		}
+	case "login_fail_details":
+		err = json.Unmarshal(body, &u.LoginFailDetails)
+
+		if err != nil {
+			return err
+		}
+	case "login_success_details":
+		err = json.Unmarshal(body, &u.LoginSuccessDetails)
 
 		if err != nil {
 			return err
 		}
 	case "logout_details":
 		err = json.Unmarshal(body, &u.LogoutDetails)
-
-		if err != nil {
-			return err
-		}
-	case "password_login_fail_details":
-		err = json.Unmarshal(body, &u.PasswordLoginFailDetails)
-
-		if err != nil {
-			return err
-		}
-	case "password_login_success_details":
-		err = json.Unmarshal(body, &u.PasswordLoginSuccessDetails)
 
 		if err != nil {
 			return err
@@ -3585,8 +3587,8 @@ func (u *EventDetails) UnmarshalJSON(body []byte) error {
 		if err != nil {
 			return err
 		}
-	case "sso_login_fail_details":
-		err = json.Unmarshal(body, &u.SsoLoginFailDetails)
+	case "sso_error_details":
+		err = json.Unmarshal(body, &u.SsoErrorDetails)
 
 		if err != nil {
 			return err
@@ -4741,8 +4743,8 @@ const (
 	EventTypeFileRollbackChanges                      = "file_rollback_changes"
 	EventTypeFileSaveCopyReference                    = "file_save_copy_reference"
 	EventTypeFileRequestAddDeadline                   = "file_request_add_deadline"
+	EventTypeFileRequestChange                        = "file_request_change"
 	EventTypeFileRequestChangeFolder                  = "file_request_change_folder"
-	EventTypeFileRequestChangeTitle                   = "file_request_change_title"
 	EventTypeFileRequestClose                         = "file_request_close"
 	EventTypeFileRequestCreate                        = "file_request_create"
 	EventTypeFileRequestReceiveFile                   = "file_request_receive_file"
@@ -4759,15 +4761,15 @@ const (
 	EventTypeGroupRemoveExternalId                    = "group_remove_external_id"
 	EventTypeGroupRemoveMember                        = "group_remove_member"
 	EventTypeGroupRename                              = "group_rename"
-	EventTypeEmmLoginSuccess                          = "emm_login_success"
+	EventTypeEmmError                                 = "emm_error"
+	EventTypeLoginFail                                = "login_fail"
+	EventTypeLoginSuccess                             = "login_success"
 	EventTypeLogout                                   = "logout"
-	EventTypePasswordLoginFail                        = "password_login_fail"
-	EventTypePasswordLoginSuccess                     = "password_login_success"
 	EventTypeResellerSupportSessionEnd                = "reseller_support_session_end"
 	EventTypeResellerSupportSessionStart              = "reseller_support_session_start"
 	EventTypeSignInAsSessionEnd                       = "sign_in_as_session_end"
 	EventTypeSignInAsSessionStart                     = "sign_in_as_session_start"
-	EventTypeSsoLoginFail                             = "sso_login_fail"
+	EventTypeSsoError                                 = "sso_error"
 	EventTypeMemberAddName                            = "member_add_name"
 	EventTypeMemberChangeAdminRole                    = "member_change_admin_role"
 	EventTypeMemberChangeEmail                        = "member_change_email"
@@ -4997,16 +4999,13 @@ func NewFailureDetailsLogInfo() *FailureDetailsLogInfo {
 
 // FileAddCommentDetails : Added a file comment.
 type FileAddCommentDetails struct {
-	// TargetAssetIndex : Target asset position in the Assets list.
-	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileAddCommentDetails returns a new FileAddCommentDetails instance
-func NewFileAddCommentDetails(TargetAssetIndex uint64) *FileAddCommentDetails {
+func NewFileAddCommentDetails() *FileAddCommentDetails {
 	s := new(FileAddCommentDetails)
-	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -5023,8 +5022,6 @@ func NewFileAddDetails() *FileAddDetails {
 // FileChangeCommentSubscriptionDetails : Subscribed to or unsubscribed from
 // comment notifications for file.
 type FileChangeCommentSubscriptionDetails struct {
-	// TargetAssetIndex : Target asset position in the Assets list.
-	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// NewValue : New file comment subscription.
 	NewValue *FileCommentNotificationPolicy `json:"new_value"`
 	// PreviousValue : Previous file comment subscription. Might be missing due
@@ -5033,9 +5030,8 @@ type FileChangeCommentSubscriptionDetails struct {
 }
 
 // NewFileChangeCommentSubscriptionDetails returns a new FileChangeCommentSubscriptionDetails instance
-func NewFileChangeCommentSubscriptionDetails(TargetAssetIndex uint64, NewValue *FileCommentNotificationPolicy) *FileChangeCommentSubscriptionDetails {
+func NewFileChangeCommentSubscriptionDetails(NewValue *FileCommentNotificationPolicy) *FileChangeCommentSubscriptionDetails {
 	s := new(FileChangeCommentSubscriptionDetails)
-	s.TargetAssetIndex = TargetAssetIndex
 	s.NewValue = NewValue
 	return s
 }
@@ -5096,16 +5092,13 @@ func NewFileCopyDetails(RelocateActionDetails []*RelocateAssetReferencesLogInfo)
 
 // FileDeleteCommentDetails : Deleted a file comment.
 type FileDeleteCommentDetails struct {
-	// TargetAssetIndex : Target asset position in the Assets list.
-	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileDeleteCommentDetails returns a new FileDeleteCommentDetails instance
-func NewFileDeleteCommentDetails(TargetAssetIndex uint64) *FileDeleteCommentDetails {
+func NewFileDeleteCommentDetails() *FileDeleteCommentDetails {
 	s := new(FileDeleteCommentDetails)
-	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -5151,16 +5144,13 @@ func NewFileGetCopyReferenceDetails() *FileGetCopyReferenceDetails {
 
 // FileLikeCommentDetails : Liked a file comment.
 type FileLikeCommentDetails struct {
-	// TargetAssetIndex : Target asset position in the Assets list.
-	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileLikeCommentDetails returns a new FileLikeCommentDetails instance
-func NewFileLikeCommentDetails(TargetAssetIndex uint64) *FileLikeCommentDetails {
+func NewFileLikeCommentDetails() *FileLikeCommentDetails {
 	s := new(FileLikeCommentDetails)
-	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -5241,6 +5231,9 @@ func NewFileRenameDetails(RelocateActionDetails []*RelocateAssetReferencesLogInf
 
 // FileRequestAddDeadlineDetails : Added a deadline to a file request.
 type FileRequestAddDeadlineDetails struct {
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
 	// RequestTitle : File request title.
 	RequestTitle string `json:"request_title,omitempty"`
 }
@@ -5251,8 +5244,30 @@ func NewFileRequestAddDeadlineDetails() *FileRequestAddDeadlineDetails {
 	return s
 }
 
+// FileRequestChangeDetails : Change a file request.
+type FileRequestChangeDetails struct {
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
+	// PreviousDetails : Previous file request details. Might be missing due to
+	// historical data gap.
+	PreviousDetails *FileRequestDetails `json:"previous_details,omitempty"`
+	// NewDetails : New file request details.
+	NewDetails *FileRequestDetails `json:"new_details"`
+}
+
+// NewFileRequestChangeDetails returns a new FileRequestChangeDetails instance
+func NewFileRequestChangeDetails(NewDetails *FileRequestDetails) *FileRequestChangeDetails {
+	s := new(FileRequestChangeDetails)
+	s.NewDetails = NewDetails
+	return s
+}
+
 // FileRequestChangeFolderDetails : Changed the file request folder.
 type FileRequestChangeFolderDetails struct {
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
 	// RequestTitle : File request title.
 	RequestTitle string `json:"request_title,omitempty"`
 }
@@ -5263,22 +5278,14 @@ func NewFileRequestChangeFolderDetails() *FileRequestChangeFolderDetails {
 	return s
 }
 
-// FileRequestChangeTitleDetails : Change the file request title.
-type FileRequestChangeTitleDetails struct {
-	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title,omitempty"`
-}
-
-// NewFileRequestChangeTitleDetails returns a new FileRequestChangeTitleDetails instance
-func NewFileRequestChangeTitleDetails() *FileRequestChangeTitleDetails {
-	s := new(FileRequestChangeTitleDetails)
-	return s
-}
-
 // FileRequestCloseDetails : Closed a file request.
 type FileRequestCloseDetails struct {
-	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title,omitempty"`
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
+	// PreviousDetails : Previous file request details. Might be missing due to
+	// historical data gap.
+	PreviousDetails *FileRequestDetails `json:"previous_details,omitempty"`
 }
 
 // NewFileRequestCloseDetails returns a new FileRequestCloseDetails instance
@@ -5289,8 +5296,12 @@ func NewFileRequestCloseDetails() *FileRequestCloseDetails {
 
 // FileRequestCreateDetails : Created a file request.
 type FileRequestCreateDetails struct {
-	// RequestTitle : File request title.
-	RequestTitle string `json:"request_title,omitempty"`
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
+	// RequestDetails : File request details. Might be missing due to historical
+	// data gap.
+	RequestDetails *FileRequestDetails `json:"request_details,omitempty"`
 }
 
 // NewFileRequestCreateDetails returns a new FileRequestCreateDetails instance
@@ -5299,8 +5310,29 @@ func NewFileRequestCreateDetails() *FileRequestCreateDetails {
 	return s
 }
 
+// FileRequestDetails : File request details
+type FileRequestDetails struct {
+	// RequestTitle : File request title.
+	RequestTitle string `json:"request_title,omitempty"`
+	// AssetIndex : Asset position in the Assets list.
+	AssetIndex uint64 `json:"asset_index"`
+	// Deadline : File request deadline. Might be missing due to historical data
+	// gap.
+	Deadline time.Time `json:"deadline,omitempty"`
+}
+
+// NewFileRequestDetails returns a new FileRequestDetails instance
+func NewFileRequestDetails(AssetIndex uint64) *FileRequestDetails {
+	s := new(FileRequestDetails)
+	s.AssetIndex = AssetIndex
+	return s
+}
+
 // FileRequestReceiveFileDetails : Received files for a file request.
 type FileRequestReceiveFileDetails struct {
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
 	// RequestTitle : File request title.
 	RequestTitle string `json:"request_title,omitempty"`
 	// SubmittedFileNames : Submitted file names.
@@ -5316,6 +5348,9 @@ func NewFileRequestReceiveFileDetails(SubmittedFileNames []string) *FileRequestR
 
 // FileRequestRemoveDeadlineDetails : Removed the file request deadline.
 type FileRequestRemoveDeadlineDetails struct {
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
 	// RequestTitle : File request title.
 	RequestTitle string `json:"request_title,omitempty"`
 }
@@ -5328,6 +5363,9 @@ func NewFileRequestRemoveDeadlineDetails() *FileRequestRemoveDeadlineDetails {
 
 // FileRequestSendDetails : Sent file request to users via email.
 type FileRequestSendDetails struct {
+	// FileRequestId : File request id. Might be missing due to historical data
+	// gap.
+	FileRequestId string `json:"file_request_id,omitempty"`
 	// RequestTitle : File request title.
 	RequestTitle string `json:"request_title,omitempty"`
 }
@@ -5389,16 +5427,13 @@ const (
 
 // FileResolveCommentDetails : Resolved a file comment.
 type FileResolveCommentDetails struct {
-	// TargetAssetIndex : Target asset position in the Assets list.
-	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileResolveCommentDetails returns a new FileResolveCommentDetails instance
-func NewFileResolveCommentDetails(TargetAssetIndex uint64) *FileResolveCommentDetails {
+func NewFileResolveCommentDetails() *FileResolveCommentDetails {
 	s := new(FileResolveCommentDetails)
-	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -5447,31 +5482,25 @@ func NewFileSaveCopyReferenceDetails(RelocateActionDetails []*RelocateAssetRefer
 
 // FileUnlikeCommentDetails : Unliked a file comment.
 type FileUnlikeCommentDetails struct {
-	// TargetAssetIndex : Target asset position in the Assets list.
-	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileUnlikeCommentDetails returns a new FileUnlikeCommentDetails instance
-func NewFileUnlikeCommentDetails(TargetAssetIndex uint64) *FileUnlikeCommentDetails {
+func NewFileUnlikeCommentDetails() *FileUnlikeCommentDetails {
 	s := new(FileUnlikeCommentDetails)
-	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
 // FileUnresolveCommentDetails : Unresolved a file comment.
 type FileUnresolveCommentDetails struct {
-	// TargetAssetIndex : Target asset position in the Assets list.
-	TargetAssetIndex uint64 `json:"target_asset_index"`
 	// CommentText : Comment text. Might be missing due to historical data gap.
 	CommentText string `json:"comment_text,omitempty"`
 }
 
 // NewFileUnresolveCommentDetails returns a new FileUnresolveCommentDetails instance
-func NewFileUnresolveCommentDetails(TargetAssetIndex uint64) *FileUnresolveCommentDetails {
+func NewFileUnresolveCommentDetails() *FileUnresolveCommentDetails {
 	s := new(FileUnresolveCommentDetails)
-	s.TargetAssetIndex = TargetAssetIndex
 	return s
 }
 
@@ -5798,42 +5827,16 @@ func NewGroupRenameDetails(PreviousValue string, NewValue string) *GroupRenameDe
 // GroupUserManagementChangePolicyDetails : Changed who can create groups.
 type GroupUserManagementChangePolicyDetails struct {
 	// NewValue : New group users management policy.
-	NewValue *GroupUserManagementPolicy `json:"new_value"`
+	NewValue *team_policies.GroupCreation `json:"new_value"`
 	// PreviousValue : Previous group users management policy. Might be missing
 	// due to historical data gap.
-	PreviousValue *GroupUserManagementPolicy `json:"previous_value,omitempty"`
+	PreviousValue *team_policies.GroupCreation `json:"previous_value,omitempty"`
 }
 
 // NewGroupUserManagementChangePolicyDetails returns a new GroupUserManagementChangePolicyDetails instance
-func NewGroupUserManagementChangePolicyDetails(NewValue *GroupUserManagementPolicy) *GroupUserManagementChangePolicyDetails {
+func NewGroupUserManagementChangePolicyDetails(NewValue *team_policies.GroupCreation) *GroupUserManagementChangePolicyDetails {
 	s := new(GroupUserManagementChangePolicyDetails)
 	s.NewValue = NewValue
-	return s
-}
-
-// GroupUserManagementPolicy : has no documentation (yet)
-type GroupUserManagementPolicy struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for GroupUserManagementPolicy
-const (
-	GroupUserManagementPolicyAdminsOnly = "admins_only"
-	GroupUserManagementPolicyAllUsers   = "all_users"
-	GroupUserManagementPolicyOther      = "other"
-)
-
-// HostLogInfo : Host details.
-type HostLogInfo struct {
-	// HostId : Host ID. Might be missing due to historical data gap.
-	HostId uint64 `json:"host_id,omitempty"`
-	// HostName : Host name. Might be missing due to historical data gap.
-	HostName string `json:"host_name,omitempty"`
-}
-
-// NewHostLogInfo returns a new HostLogInfo instance
-func NewHostLogInfo() *HostLogInfo {
-	s := new(HostLogInfo)
 	return s
 }
 
@@ -5869,6 +5872,54 @@ const (
 	LinkAudienceMembers = "members"
 	LinkAudienceOther   = "other"
 )
+
+// LoginFailDetails : Failed to sign in.
+type LoginFailDetails struct {
+	// IsEmmManaged : Tells if the login device is EMM managed. Might be missing
+	// due to historical data gap.
+	IsEmmManaged bool `json:"is_emm_managed,omitempty"`
+	// LoginMethod : Login method.
+	LoginMethod *LoginMethod `json:"login_method"`
+	// ErrorDetails : Error details.
+	ErrorDetails *FailureDetailsLogInfo `json:"error_details"`
+}
+
+// NewLoginFailDetails returns a new LoginFailDetails instance
+func NewLoginFailDetails(LoginMethod *LoginMethod, ErrorDetails *FailureDetailsLogInfo) *LoginFailDetails {
+	s := new(LoginFailDetails)
+	s.LoginMethod = LoginMethod
+	s.ErrorDetails = ErrorDetails
+	return s
+}
+
+// LoginMethod : has no documentation (yet)
+type LoginMethod struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for LoginMethod
+const (
+	LoginMethodPassword                = "password"
+	LoginMethodTwoFactorAuthentication = "two_factor_authentication"
+	LoginMethodSaml                    = "saml"
+	LoginMethodOther                   = "other"
+)
+
+// LoginSuccessDetails : Signed in.
+type LoginSuccessDetails struct {
+	// IsEmmManaged : Tells if the login device is EMM managed. Might be missing
+	// due to historical data gap.
+	IsEmmManaged bool `json:"is_emm_managed,omitempty"`
+	// LoginMethod : Login method.
+	LoginMethod *LoginMethod `json:"login_method"`
+}
+
+// NewLoginSuccessDetails returns a new LoginSuccessDetails instance
+func NewLoginSuccessDetails(LoginMethod *LoginMethod) *LoginSuccessDetails {
+	s := new(LoginSuccessDetails)
+	s.LoginMethod = LoginMethod
+	return s
+}
 
 // LogoutDetails : Signed out.
 type LogoutDetails struct {
@@ -6031,20 +6082,19 @@ func NewMemberSpaceLimitsAddExceptionDetails() *MemberSpaceLimitsAddExceptionDet
 	return s
 }
 
-// MemberSpaceLimitsChangePolicyDetails : Changed the storage limits applied to
-// team members by policy.
+// MemberSpaceLimitsChangePolicyDetails : Changed the team default limit level.
 type MemberSpaceLimitsChangePolicyDetails struct {
-	// PreviousValue : Previous storage limits policy.
-	PreviousValue *SpaceLimitsLevel `json:"previous_value"`
-	// NewValue : New storage limits policy.
-	NewValue *SpaceLimitsLevel `json:"new_value"`
+	// PreviousValue : Previous team default limit value in bytes. Might be
+	// missing due to historical data gap.
+	PreviousValue uint64 `json:"previous_value,omitempty"`
+	// NewValue : New team default limit value in bytes. Might be missing due to
+	// historical data gap.
+	NewValue uint64 `json:"new_value,omitempty"`
 }
 
 // NewMemberSpaceLimitsChangePolicyDetails returns a new MemberSpaceLimitsChangePolicyDetails instance
-func NewMemberSpaceLimitsChangePolicyDetails(PreviousValue *SpaceLimitsLevel, NewValue *SpaceLimitsLevel) *MemberSpaceLimitsChangePolicyDetails {
+func NewMemberSpaceLimitsChangePolicyDetails() *MemberSpaceLimitsChangePolicyDetails {
 	s := new(MemberSpaceLimitsChangePolicyDetails)
-	s.PreviousValue = PreviousValue
-	s.NewValue = NewValue
 	return s
 }
 
@@ -6408,8 +6458,6 @@ func NewOpenNoteSharedDetails() *OpenNoteSharedDetails {
 type OriginLogInfo struct {
 	// GeoLocation : Geographic location details.
 	GeoLocation *GeoLocationLogInfo `json:"geo_location,omitempty"`
-	// Host : Host details.
-	Host *HostLogInfo `json:"host,omitempty"`
 	// AccessMethod : The method that was used to perform the action.
 	AccessMethod *AccessMethodLogInfo `json:"access_method"`
 }
@@ -7157,29 +7205,6 @@ func NewPasswordChangeDetails() *PasswordChangeDetails {
 	return s
 }
 
-// PasswordLoginFailDetails : Failed to sign in using a password.
-type PasswordLoginFailDetails struct {
-	// ErrorDetails : Login failure details.
-	ErrorDetails *FailureDetailsLogInfo `json:"error_details"`
-}
-
-// NewPasswordLoginFailDetails returns a new PasswordLoginFailDetails instance
-func NewPasswordLoginFailDetails(ErrorDetails *FailureDetailsLogInfo) *PasswordLoginFailDetails {
-	s := new(PasswordLoginFailDetails)
-	s.ErrorDetails = ErrorDetails
-	return s
-}
-
-// PasswordLoginSuccessDetails : Signed in using a password.
-type PasswordLoginSuccessDetails struct {
-}
-
-// NewPasswordLoginSuccessDetails returns a new PasswordLoginSuccessDetails instance
-func NewPasswordLoginSuccessDetails() *PasswordLoginSuccessDetails {
-	s := new(PasswordLoginSuccessDetails)
-	return s
-}
-
 // PasswordResetAllDetails : Reset all team member passwords.
 type PasswordResetAllDetails struct {
 }
@@ -7267,15 +7292,15 @@ func NewRelocateAssetReferencesLogInfo(SrcAssetIndex uint64, DestAssetIndex uint
 type ResellerLogInfo struct {
 	// ResellerName : Reseller name.
 	ResellerName string `json:"reseller_name"`
-	// ResellerId : Reseller ID.
-	ResellerId string `json:"reseller_id"`
+	// ResellerEmail : Reseller email.
+	ResellerEmail string `json:"reseller_email"`
 }
 
 // NewResellerLogInfo returns a new ResellerLogInfo instance
-func NewResellerLogInfo(ResellerName string, ResellerId string) *ResellerLogInfo {
+func NewResellerLogInfo(ResellerName string, ResellerEmail string) *ResellerLogInfo {
 	s := new(ResellerLogInfo)
 	s.ResellerName = ResellerName
-	s.ResellerId = ResellerId
+	s.ResellerEmail = ResellerEmail
 	return s
 }
 
@@ -8499,14 +8524,13 @@ func NewSignInAsSessionStartDetails() *SignInAsSessionStartDetails {
 // members.
 type SmartSyncChangePolicyDetails struct {
 	// NewValue : New smart sync policy.
-	NewValue *SmartSyncPolicy `json:"new_value"`
-	// PreviousValue : Previous smart sync policy. Might be missing due to
-	// historical data gap.
-	PreviousValue *SmartSyncPolicy `json:"previous_value,omitempty"`
+	NewValue *team_policies.SmartSyncPolicy `json:"new_value"`
+	// PreviousValue : Previous smart sync policy.
+	PreviousValue *team_policies.SmartSyncPolicy `json:"previous_value,omitempty"`
 }
 
 // NewSmartSyncChangePolicyDetails returns a new SmartSyncChangePolicyDetails instance
-func NewSmartSyncChangePolicyDetails(NewValue *SmartSyncPolicy) *SmartSyncChangePolicyDetails {
+func NewSmartSyncChangePolicyDetails(NewValue *team_policies.SmartSyncPolicy) *SmartSyncChangePolicyDetails {
 	s := new(SmartSyncChangePolicyDetails)
 	s.NewValue = NewValue
 	return s
@@ -8567,32 +8591,6 @@ const (
 	SmartSyncOptOutPolicyOther    = "other"
 )
 
-// SmartSyncPolicy : has no documentation (yet)
-type SmartSyncPolicy struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for SmartSyncPolicy
-const (
-	SmartSyncPolicyLocalOnly = "local_only"
-	SmartSyncPolicySynced    = "synced"
-	SmartSyncPolicyOther     = "other"
-)
-
-// SpaceLimitsLevel : has no documentation (yet)
-type SpaceLimitsLevel struct {
-	dropbox.Tagged
-}
-
-// Valid tag values for SpaceLimitsLevel
-const (
-	SpaceLimitsLevelGenerous = "generous"
-	SpaceLimitsLevelModerate = "moderate"
-	SpaceLimitsLevelNoLimit  = "no_limit"
-	SpaceLimitsLevelStrict   = "strict"
-	SpaceLimitsLevelOther    = "other"
-)
-
 // SpaceLimitsStatus : has no documentation (yet)
 type SpaceLimitsStatus struct {
 	dropbox.Tagged
@@ -8647,7 +8645,8 @@ func NewSsoAddLogoutUrlDetails() *SsoAddLogoutUrlDetails {
 
 // SsoChangeCertDetails : Changed the X.509 certificate for SSO.
 type SsoChangeCertDetails struct {
-	// PreviousCertificateDetails : Previous SSO certificate details.
+	// PreviousCertificateDetails : Previous SSO certificate details. Might be
+	// missing due to historical data gap.
 	PreviousCertificateDetails *Certificate `json:"previous_certificate_details,omitempty"`
 	// NewCertificateDetails : New SSO certificate details.
 	NewCertificateDetails *Certificate `json:"new_certificate_details"`
@@ -8724,15 +8723,15 @@ func NewSsoChangeSamlIdentityModeDetails(PreviousValue int64, NewValue int64) *S
 	return s
 }
 
-// SsoLoginFailDetails : Failed to sign in using SSO.
-type SsoLoginFailDetails struct {
-	// ErrorDetails : Login failure details.
+// SsoErrorDetails : Failed to sign in via SSO.
+type SsoErrorDetails struct {
+	// ErrorDetails : Error details.
 	ErrorDetails *FailureDetailsLogInfo `json:"error_details"`
 }
 
-// NewSsoLoginFailDetails returns a new SsoLoginFailDetails instance
-func NewSsoLoginFailDetails(ErrorDetails *FailureDetailsLogInfo) *SsoLoginFailDetails {
-	s := new(SsoLoginFailDetails)
+// NewSsoErrorDetails returns a new SsoErrorDetails instance
+func NewSsoErrorDetails(ErrorDetails *FailureDetailsLogInfo) *SsoErrorDetails {
+	s := new(SsoErrorDetails)
 	s.ErrorDetails = ErrorDetails
 	return s
 }

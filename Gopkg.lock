@@ -89,7 +89,7 @@
   branch = "master"
   name = "github.com/dropbox/dropbox-sdk-go-unofficial"
   packages = ["dropbox","dropbox/async","dropbox/file_properties","dropbox/files"]
-  revision = "9a536e3b58ed271dc9d1f21681db990ca601a551"
+  revision = "9befe8c89b6e17667716dedd2f62327bae374bf2"
 
 [[projects]]
   name = "github.com/go-ini/ini"
@@ -309,6 +309,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "9d4dcfb143037fc27aa71f0eb309c9754ba348ff7585a39e575fba28265cac7d"
+  inputs-digest = "4dfe75b3ebfff3e7b40e2983d8c014f9e4d98fed08c3fe454f1dc890589e6960"
   solver-name = "gps-cdcl"
   solver-version = 1

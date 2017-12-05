@@ -40,7 +40,7 @@ class GoClientBackend(CodeBackend):
             for route in namespace.routes:
                 self._generate_route(namespace, route)
             self.emit('// New returns a Client implementation for this namespace')
-            with self.block('func New(c dropbox.Config) *apiImpl'):
+            with self.block('func New(c dropbox.Config) Client'):
                 self.emit('ctx := apiImpl(dropbox.NewContext(c))')
                 self.emit('return &ctx')
 
@@ -192,7 +192,8 @@ class GoClientBackend(CodeBackend):
             out('err = apiError')
             out('return')
         out('var apiError dropbox.APIError')
-        with self.block('if resp.StatusCode == http.StatusBadRequest'):
+        with self.block("if resp.StatusCode == http.StatusBadRequest || "
+                        "resp.StatusCode == http.StatusInternalServerError"):
             out('apiError.ErrorSummary = string(body)')
             out('err = apiError')
             out('return')
