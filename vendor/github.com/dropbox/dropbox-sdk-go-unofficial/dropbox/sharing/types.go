@@ -2976,6 +2976,7 @@ const (
 	RemoveFolderMemberErrorGroupAccess  = "group_access"
 	RemoveFolderMemberErrorTeamFolder   = "team_folder"
 	RemoveFolderMemberErrorNoPermission = "no_permission"
+	RemoveFolderMemberErrorTooManyFiles = "too_many_files"
 	RemoveFolderMemberErrorOther        = "other"
 )
 

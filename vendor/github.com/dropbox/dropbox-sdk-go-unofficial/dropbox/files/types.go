@@ -44,6 +44,10 @@ type GetMetadataArg struct {
 	// flag for each file indicating whether or not  that file has any explicit
 	// members.
 	IncludeHasExplicitSharedMembers bool `json:"include_has_explicit_shared_members"`
+	// IncludePropertyGroups : If set to a valid list of template IDs,
+	// `FileMetadata.property_groups` is set if there exists property data
+	// associated with the file and each of the listed templates.
+	IncludePropertyGroups *file_properties.TemplateFilterBase `json:"include_property_groups,omitempty"`
 }
 
 // NewGetMetadataArg returns a new GetMetadataArg instance
@@ -177,6 +181,8 @@ type CommitInfo struct {
 	// tells the clients that this modification shouldn't result in a user
 	// notification.
 	Mute bool `json:"mute"`
+	// PropertyGroups : List of custom properties to add to file.
+	PropertyGroups []*file_properties.PropertyGroup `json:"property_groups,omitempty"`
 }
 
 // NewCommitInfo returns a new CommitInfo instance
@@ -192,8 +198,6 @@ func NewCommitInfo(Path string) *CommitInfo {
 // CommitInfoWithProperties : has no documentation (yet)
 type CommitInfoWithProperties struct {
 	CommitInfo
-	// PropertyGroups : List of custom properties to add to file.
-	PropertyGroups []*file_properties.PropertyGroup `json:"property_groups,omitempty"`
 }
 
 // NewCommitInfoWithProperties returns a new CommitInfoWithProperties instance
@@ -848,7 +852,9 @@ type FolderMetadata struct {
 	// shared folder mount point.
 	SharingInfo *FolderSharingInfo `json:"sharing_info,omitempty"`
 	// PropertyGroups : Additional information if the file has custom properties
-	// with the property template specified.
+	// with the property template specified. Note that only properties
+	// associated with user-owned templates, not team-owned templates, can be
+	// attached to folders.
 	PropertyGroups []*file_properties.PropertyGroup `json:"property_groups,omitempty"`
 }
 
@@ -1172,6 +1178,10 @@ type ListFolderArg struct {
 	// present, `ListFolderArg.path` will be relative to root of the shared
 	// link. Only non-recursive mode is supported for shared link.
 	SharedLink *SharedLink `json:"shared_link,omitempty"`
+	// IncludePropertyGroups : If set to a valid list of template IDs,
+	// `FileMetadata.property_groups` is set if there exists property data
+	// associated with the file and each of the listed templates.
+	IncludePropertyGroups *file_properties.TemplateFilterBase `json:"include_property_groups,omitempty"`
 }
 
 // NewListFolderArg returns a new ListFolderArg instance
@@ -1772,6 +1782,7 @@ const (
 	RelocationErrorTooManyFiles             = "too_many_files"
 	RelocationErrorDuplicatedOrNestedPaths  = "duplicated_or_nested_paths"
 	RelocationErrorCantTransferOwnership    = "cant_transfer_ownership"
+	RelocationErrorInsufficientQuota        = "insufficient_quota"
 	RelocationErrorOther                    = "other"
 )
 
@@ -1837,6 +1848,7 @@ const (
 	RelocationBatchErrorTooManyFiles             = "too_many_files"
 	RelocationBatchErrorDuplicatedOrNestedPaths  = "duplicated_or_nested_paths"
 	RelocationBatchErrorCantTransferOwnership    = "cant_transfer_ownership"
+	RelocationBatchErrorInsufficientQuota        = "insufficient_quota"
 	RelocationBatchErrorOther                    = "other"
 	RelocationBatchErrorTooManyWriteOperations   = "too_many_write_operations"
 )

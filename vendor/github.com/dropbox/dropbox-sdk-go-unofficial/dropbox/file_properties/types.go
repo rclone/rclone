@@ -30,7 +30,18 @@
 // possible key names and value types are explicitly enumerated using
 // `PropertyFieldTemplate` objects.  You can think of a property group template
 // as a class definition for a particular key/value metadata object, and the
-// property groups themselves as the instantiations of these objects.
+// property groups themselves as the instantiations of these objects.  Templates
+// are owned either by a user/app pair or team/app pair. Templates and their
+// associated properties can't be accessed by any app other than the app that
+// created them, and even then, only when the app is linked with the owner of
+// the template (either a user or team).  User-owned templates are accessed via
+// the user-auth template/*_for_user endpoints, while team-owned templates are
+// accessed via the team-auth template/*_for_team endpoints. Properties
+// associated with either type of template can be accessed via the user-auth
+// properties/* endpoints.  Finally, properties can be accessed from a number of
+// endpoints that return metadata, including `files/get_metadata`, and
+// `files/list_folder`. Properties can also be added during upload, using
+// `files/upload`.
 package file_properties
 
 import (
@@ -467,6 +478,31 @@ func NewPropertiesSearchArg(Queries []*PropertiesSearchQuery) *PropertiesSearchA
 	return s
 }
 
+// PropertiesSearchContinueArg : has no documentation (yet)
+type PropertiesSearchContinueArg struct {
+	// Cursor : The cursor returned by your last call to `propertiesSearch` or
+	// `propertiesSearchContinue`.
+	Cursor string `json:"cursor"`
+}
+
+// NewPropertiesSearchContinueArg returns a new PropertiesSearchContinueArg instance
+func NewPropertiesSearchContinueArg(Cursor string) *PropertiesSearchContinueArg {
+	s := new(PropertiesSearchContinueArg)
+	s.Cursor = Cursor
+	return s
+}
+
+// PropertiesSearchContinueError : has no documentation (yet)
+type PropertiesSearchContinueError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for PropertiesSearchContinueError
+const (
+	PropertiesSearchContinueErrorReset = "reset"
+	PropertiesSearchContinueErrorOther = "other"
+)
+
 // PropertiesSearchError : has no documentation (yet)
 type PropertiesSearchError struct {
 	dropbox.Tagged
@@ -510,15 +546,18 @@ type PropertiesSearchMatch struct {
 	Id string `json:"id"`
 	// Path : The path for the matched file or folder.
 	Path string `json:"path"`
+	// IsDeleted : Whether the file or folder is deleted.
+	IsDeleted bool `json:"is_deleted"`
 	// PropertyGroups : List of custom property groups associated with the file.
 	PropertyGroups []*PropertyGroup `json:"property_groups"`
 }
 
 // NewPropertiesSearchMatch returns a new PropertiesSearchMatch instance
-func NewPropertiesSearchMatch(Id string, Path string, PropertyGroups []*PropertyGroup) *PropertiesSearchMatch {
+func NewPropertiesSearchMatch(Id string, Path string, IsDeleted bool, PropertyGroups []*PropertyGroup) *PropertiesSearchMatch {
 	s := new(PropertiesSearchMatch)
 	s.Id = Id
 	s.Path = Path
+	s.IsDeleted = IsDeleted
 	s.PropertyGroups = PropertyGroups
 	return s
 }
@@ -581,6 +620,10 @@ func NewPropertiesSearchQuery(Query string, Mode *PropertiesSearchMode) *Propert
 type PropertiesSearchResult struct {
 	// Matches : A list (possibly empty) of matches for the query.
 	Matches []*PropertiesSearchMatch `json:"matches"`
+	// Cursor : Pass the cursor into `propertiesSearchContinue` to continue to
+	// receive search results. Cursor will be null when there are no more
+	// results.
+	Cursor string `json:"cursor,omitempty"`
 }
 
 // NewPropertiesSearchResult returns a new PropertiesSearchResult instance
@@ -758,6 +801,59 @@ func (u *RemovePropertiesError) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
+// RemoveTemplateArg : has no documentation (yet)
+type RemoveTemplateArg struct {
+	// TemplateId : An identifier for a template created by
+	// `templatesAddForUser` or `templatesAddForTeam`.
+	TemplateId string `json:"template_id"`
+}
+
+// NewRemoveTemplateArg returns a new RemoveTemplateArg instance
+func NewRemoveTemplateArg(TemplateId string) *RemoveTemplateArg {
+	s := new(RemoveTemplateArg)
+	s.TemplateId = TemplateId
+	return s
+}
+
+// TemplateFilterBase : has no documentation (yet)
+type TemplateFilterBase struct {
+	dropbox.Tagged
+	// FilterSome : Only templates with an ID in the supplied list will be
+	// returned (a subset of templates will be returned).
+	FilterSome []string `json:"filter_some,omitempty"`
+}
+
+// Valid tag values for TemplateFilterBase
+const (
+	TemplateFilterBaseFilterSome = "filter_some"
+	TemplateFilterBaseOther      = "other"
+)
+
+// UnmarshalJSON deserializes into a TemplateFilterBase instance
+func (u *TemplateFilterBase) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+		// FilterSome : Only templates with an ID in the supplied list will be
+		// returned (a subset of templates will be returned).
+		FilterSome json.RawMessage `json:"filter_some,omitempty"`
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "filter_some":
+		err = json.Unmarshal(body, &u.FilterSome)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 // TemplateFilter : has no documentation (yet)
 type TemplateFilter struct {
 	dropbox.Tagged
@@ -768,9 +864,9 @@ type TemplateFilter struct {
 
 // Valid tag values for TemplateFilter
 const (
-	TemplateFilterFilterNone = "filter_none"
 	TemplateFilterFilterSome = "filter_some"
 	TemplateFilterOther      = "other"
+	TemplateFilterFilterNone = "filter_none"
 )
 
 // UnmarshalJSON deserializes into a TemplateFilter instance

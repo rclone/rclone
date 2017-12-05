@@ -36,6 +36,17 @@ const (
 	EmmStateOther    = "other"
 )
 
+// GroupCreation : has no documentation (yet)
+type GroupCreation struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for GroupCreation
+const (
+	GroupCreationAdminsAndMembers = "admins_and_members"
+	GroupCreationAdminsOnly       = "admins_only"
+)
+
 // OfficeAddInPolicy : has no documentation (yet)
 type OfficeAddInPolicy struct {
 	dropbox.Tagged
@@ -136,6 +147,18 @@ const (
 	SharedLinkCreatePolicyDefaultTeamOnly = "default_team_only"
 	SharedLinkCreatePolicyTeamOnly        = "team_only"
 	SharedLinkCreatePolicyOther           = "other"
+)
+
+// SmartSyncPolicy : has no documentation (yet)
+type SmartSyncPolicy struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for SmartSyncPolicy
+const (
+	SmartSyncPolicyLocal    = "local"
+	SmartSyncPolicyOnDemand = "on_demand"
+	SmartSyncPolicyOther    = "other"
 )
 
 // SsoPolicy : has no documentation (yet)

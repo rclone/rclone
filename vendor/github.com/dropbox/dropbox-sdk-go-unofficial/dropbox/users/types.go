@@ -26,6 +26,7 @@ import (
 	"encoding/json"
 
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
+	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/common"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/team_policies"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/users_common"
 )
@@ -107,10 +108,12 @@ type FullAccount struct {
 	IsPaired bool `json:"is_paired"`
 	// AccountType : What type of account this user has.
 	AccountType *users_common.AccountType `json:"account_type"`
+	// RootInfo : The root info for this account.
+	RootInfo common.IsRootInfo `json:"root_info"`
 }
 
 // NewFullAccount returns a new FullAccount instance
-func NewFullAccount(AccountId string, Name *Name, Email string, EmailVerified bool, Disabled bool, Locale string, ReferralLink string, IsPaired bool, AccountType *users_common.AccountType) *FullAccount {
+func NewFullAccount(AccountId string, Name *Name, Email string, EmailVerified bool, Disabled bool, Locale string, ReferralLink string, IsPaired bool, AccountType *users_common.AccountType, RootInfo common.IsRootInfo) *FullAccount {
 	s := new(FullAccount)
 	s.AccountId = AccountId
 	s.Name = Name
@@ -121,6 +124,7 @@ func NewFullAccount(AccountId string, Name *Name, Email string, EmailVerified bo
 	s.ReferralLink = ReferralLink
 	s.IsPaired = IsPaired
 	s.AccountType = AccountType
+	s.RootInfo = RootInfo
 	return s
 }
 

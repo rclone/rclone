@@ -187,7 +187,7 @@ func (u *BaseTeamFolderError) UnmarshalJSON(body []byte) error {
 	return nil
 }
 
-// CustomQuotaError : Error returned by setting member custom quota.
+// CustomQuotaError : Error returned when getting member custom quota.
 type CustomQuotaError struct {
 	dropbox.Tagged
 }
@@ -377,6 +377,126 @@ func NewDevicesActive(Windows []uint64, Macos []uint64, Linux []uint64, Ios []ui
 	return s
 }
 
+// ExcludedUsersListArg : Excluded users list argument.
+type ExcludedUsersListArg struct {
+	// Limit : Number of results to return per call.
+	Limit uint32 `json:"limit"`
+}
+
+// NewExcludedUsersListArg returns a new ExcludedUsersListArg instance
+func NewExcludedUsersListArg() *ExcludedUsersListArg {
+	s := new(ExcludedUsersListArg)
+	s.Limit = 1000
+	return s
+}
+
+// ExcludedUsersListContinueArg : Excluded users list continue argument.
+type ExcludedUsersListContinueArg struct {
+	// Cursor : Indicates from what point to get the next set of users.
+	Cursor string `json:"cursor"`
+}
+
+// NewExcludedUsersListContinueArg returns a new ExcludedUsersListContinueArg instance
+func NewExcludedUsersListContinueArg(Cursor string) *ExcludedUsersListContinueArg {
+	s := new(ExcludedUsersListContinueArg)
+	s.Cursor = Cursor
+	return s
+}
+
+// ExcludedUsersListContinueError : Excluded users list continue error.
+type ExcludedUsersListContinueError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for ExcludedUsersListContinueError
+const (
+	ExcludedUsersListContinueErrorInvalidCursor = "invalid_cursor"
+	ExcludedUsersListContinueErrorOther         = "other"
+)
+
+// ExcludedUsersListError : Excluded users list error.
+type ExcludedUsersListError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for ExcludedUsersListError
+const (
+	ExcludedUsersListErrorListError = "list_error"
+	ExcludedUsersListErrorOther     = "other"
+)
+
+// ExcludedUsersListResult : Excluded users list result.
+type ExcludedUsersListResult struct {
+	// Users : has no documentation (yet)
+	Users []*MemberProfile `json:"users"`
+	// Cursor : Pass the cursor into
+	// `memberSpaceLimitsExcludedUsersListContinue` to obtain additional
+	// excluded users.
+	Cursor string `json:"cursor,omitempty"`
+	// HasMore : Is true if there are additional excluded users that have not
+	// been returned yet. An additional call to
+	// `memberSpaceLimitsExcludedUsersListContinue` can retrieve them.
+	HasMore bool `json:"has_more"`
+}
+
+// NewExcludedUsersListResult returns a new ExcludedUsersListResult instance
+func NewExcludedUsersListResult(Users []*MemberProfile, HasMore bool) *ExcludedUsersListResult {
+	s := new(ExcludedUsersListResult)
+	s.Users = Users
+	s.HasMore = HasMore
+	return s
+}
+
+// ExcludedUsersUpdateArg : Argument of excluded users update operation. Should
+// include a list of users to add/remove (according to endpoint), Maximum size
+// of the list is 1000 users.
+type ExcludedUsersUpdateArg struct {
+	// Users : List of users to be added/removed.
+	Users []*UserSelectorArg `json:"users,omitempty"`
+}
+
+// NewExcludedUsersUpdateArg returns a new ExcludedUsersUpdateArg instance
+func NewExcludedUsersUpdateArg() *ExcludedUsersUpdateArg {
+	s := new(ExcludedUsersUpdateArg)
+	return s
+}
+
+// ExcludedUsersUpdateError : Excluded users update error.
+type ExcludedUsersUpdateError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for ExcludedUsersUpdateError
+const (
+	ExcludedUsersUpdateErrorUsersNotInTeam = "users_not_in_team"
+	ExcludedUsersUpdateErrorTooManyUsers   = "too_many_users"
+	ExcludedUsersUpdateErrorOther          = "other"
+)
+
+// ExcludedUsersUpdateResult : Excluded users update result.
+type ExcludedUsersUpdateResult struct {
+	// Status : Update status.
+	Status *ExcludedUsersUpdateStatus `json:"status"`
+}
+
+// NewExcludedUsersUpdateResult returns a new ExcludedUsersUpdateResult instance
+func NewExcludedUsersUpdateResult(Status *ExcludedUsersUpdateStatus) *ExcludedUsersUpdateResult {
+	s := new(ExcludedUsersUpdateResult)
+	s.Status = Status
+	return s
+}
+
+// ExcludedUsersUpdateStatus : Excluded users update operation status.
+type ExcludedUsersUpdateStatus struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for ExcludedUsersUpdateStatus
+const (
+	ExcludedUsersUpdateStatusSuccess = "success"
+	ExcludedUsersUpdateStatusOther   = "other"
+)
+
 // Feature : A set of features that Dropbox for Business account support.
 type Feature struct {
 	dropbox.Tagged
@@ -386,6 +506,7 @@ type Feature struct {
 const (
 	FeatureUploadApiRateLimit   = "upload_api_rate_limit"
 	FeatureHasTeamSharedDropbox = "has_team_shared_dropbox"
+	FeatureHasTeamFileEvents    = "has_team_file_events"
 	FeatureOther                = "other"
 )
 
@@ -397,12 +518,15 @@ type FeatureValue struct {
 	UploadApiRateLimit *UploadApiRateLimitValue `json:"upload_api_rate_limit,omitempty"`
 	// HasTeamSharedDropbox : has no documentation (yet)
 	HasTeamSharedDropbox *HasTeamSharedDropboxValue `json:"has_team_shared_dropbox,omitempty"`
+	// HasTeamFileEvents : has no documentation (yet)
+	HasTeamFileEvents *HasTeamFileEventsValue `json:"has_team_file_events,omitempty"`
 }
 
 // Valid tag values for FeatureValue
 const (
 	FeatureValueUploadApiRateLimit   = "upload_api_rate_limit"
 	FeatureValueHasTeamSharedDropbox = "has_team_shared_dropbox"
+	FeatureValueHasTeamFileEvents    = "has_team_file_events"
 	FeatureValueOther                = "other"
 )
 
@@ -414,6 +538,8 @@ func (u *FeatureValue) UnmarshalJSON(body []byte) error {
 		UploadApiRateLimit json.RawMessage `json:"upload_api_rate_limit,omitempty"`
 		// HasTeamSharedDropbox : has no documentation (yet)
 		HasTeamSharedDropbox json.RawMessage `json:"has_team_shared_dropbox,omitempty"`
+		// HasTeamFileEvents : has no documentation (yet)
+		HasTeamFileEvents json.RawMessage `json:"has_team_file_events,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -430,6 +556,12 @@ func (u *FeatureValue) UnmarshalJSON(body []byte) error {
 		}
 	case "has_team_shared_dropbox":
 		err = json.Unmarshal(w.HasTeamSharedDropbox, &u.HasTeamSharedDropbox)
+
+		if err != nil {
+			return err
+		}
+	case "has_team_file_events":
+		err = json.Unmarshal(w.HasTeamFileEvents, &u.HasTeamFileEvents)
 
 		if err != nil {
 			return err
@@ -1356,6 +1488,41 @@ func (u *GroupsSelector) UnmarshalJSON(body []byte) error {
 		}
 	case "group_external_ids":
 		err = json.Unmarshal(body, &u.GroupExternalIds)
+
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// HasTeamFileEventsValue : The value for `Feature.has_team_file_events`.
+type HasTeamFileEventsValue struct {
+	dropbox.Tagged
+	// Enabled : Does this team have file events.
+	Enabled bool `json:"enabled,omitempty"`
+}
+
+// Valid tag values for HasTeamFileEventsValue
+const (
+	HasTeamFileEventsValueEnabled = "enabled"
+	HasTeamFileEventsValueOther   = "other"
+)
+
+// UnmarshalJSON deserializes into a HasTeamFileEventsValue instance
+func (u *HasTeamFileEventsValue) UnmarshalJSON(body []byte) error {
+	type wrap struct {
+		dropbox.Tagged
+	}
+	var w wrap
+	var err error
+	if err = json.Unmarshal(body, &w); err != nil {
+		return err
+	}
+	u.Tag = w.Tag
+	switch u.Tag {
+	case "enabled":
+		err = json.Unmarshal(body, &u.Enabled)
 
 		if err != nil {
 			return err
@@ -2868,6 +3035,18 @@ func NewSetCustomQuotaArg(UsersAndQuotas []*UserCustomQuotaArg) *SetCustomQuotaA
 	s.UsersAndQuotas = UsersAndQuotas
 	return s
 }
+
+// SetCustomQuotaError : Error returned when setting member custom quota.
+type SetCustomQuotaError struct {
+	dropbox.Tagged
+}
+
+// Valid tag values for SetCustomQuotaError
+const (
+	SetCustomQuotaErrorTooManyUsers         = "too_many_users"
+	SetCustomQuotaErrorOther                = "other"
+	SetCustomQuotaErrorSomeUsersAreExcluded = "some_users_are_excluded"
+)
 
 // StorageBucket : Describes the number of users in a specific storage bucket.
 type StorageBucket struct {
