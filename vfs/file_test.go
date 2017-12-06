@@ -96,7 +96,7 @@ func TestFileOpenRead(t *testing.T) {
 	defer r.Finalise()
 	_, file, _ := fileCreate(t, r)
 
-	fd, err := file.OpenRead()
+	fd, err := file.openRead()
 	require.NoError(t, err)
 
 	contents, err := ioutil.ReadAll(fd)
@@ -111,7 +111,7 @@ func TestFileOpenWrite(t *testing.T) {
 	defer r.Finalise()
 	vfs, file, _ := fileCreate(t, r)
 
-	fd, err := file.OpenWrite(os.O_WRONLY | os.O_TRUNC)
+	fd, err := file.openWrite(os.O_WRONLY | os.O_TRUNC)
 	require.NoError(t, err)
 
 	newContents := []byte("this is some new contents")
@@ -123,7 +123,7 @@ func TestFileOpenWrite(t *testing.T) {
 	assert.Equal(t, int64(25), file.Size())
 
 	vfs.Opt.ReadOnly = true
-	_, err = file.OpenWrite(os.O_WRONLY | os.O_TRUNC)
+	_, err = file.openWrite(os.O_WRONLY | os.O_TRUNC)
 	assert.Equal(t, EROFS, err)
 }
 
