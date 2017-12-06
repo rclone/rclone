@@ -5,6 +5,7 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"os"
 	"path"
 	"strconv"
 	"strings"
@@ -247,7 +248,7 @@ func (s *server) serveFile(w http.ResponseWriter, r *http.Request, remote string
 	}
 
 	// open the object
-	in, err := file.OpenRead()
+	in, err := file.Open(os.O_RDONLY)
 	if err != nil {
 		internalError(remote, w, "Failed to open file", err)
 		return
