@@ -301,6 +301,12 @@ type Features struct {
 	// UnWrap returns the Fs that this Fs is wrapping
 	UnWrap func() Fs
 
+	// WrapFs returns the Fs that is wrapping this Fs
+	WrapFs func() Fs
+
+	// SetWrapper sets the Fs that is wrapping this Fs
+	SetWrapper func(f Fs)
+
 	// DirCacheFlush resets the directory cache - used in testing
 	// as an optional interface
 	DirCacheFlush func()
@@ -413,6 +419,10 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(UnWrapper); ok {
 		ft.UnWrap = do.UnWrap
 	}
+	if do, ok := f.(Wrapper); ok {
+		ft.WrapFs = do.WrapFs
+		ft.SetWrapper = do.SetWrapper
+	}
 	if do, ok := f.(DirCacheFlusher); ok {
 		ft.DirCacheFlush = do.DirCacheFlush
 	}
@@ -438,7 +448,7 @@ func (ft *Features) Fill(f Fs) *Features {
 //
 // Only optional features which are implemented in both the original
 // Fs AND the one passed in will be advertised.  Any features which
-// aren't in both will be set to false/nil, except for UnWrap which
+// aren't in both will be set to false/nil, except for UnWrap/Wrap which
 // will be left untouched.
 func (ft *Features) Mask(f Fs) *Features {
 	mask := f.Features()
@@ -487,7 +497,7 @@ func (ft *Features) Mask(f Fs) *Features {
 	return ft.DisableList(Config.DisableFeatures)
 }
 
-// Wrap makes a Copy of the features passed in, overriding the UnWrap
+// Wrap makes a Copy of the features passed in, overriding the UnWrap/Wrap
 // method only if available in f.
 func (ft *Features) Wrap(f Fs) *Features {
 	copy := new(Features)
@@ -495,7 +505,20 @@ func (ft *Features) Wrap(f Fs) *Features {
 	if do, ok := f.(UnWrapper); ok {
 		copy.UnWrap = do.UnWrap
 	}
+	if do, ok := f.(Wrapper); ok {
+		copy.WrapFs = do.WrapFs
+		copy.SetWrapper = do.SetWrapper
+	}
 	return copy
+}
+
+// WrapsFs adds extra information between `f` which wraps `w`
+func (ft *Features) WrapsFs(f Fs, w Fs) *Features {
+	wFeatures := w.Features()
+	if wFeatures.WrapFs != nil && wFeatures.SetWrapper != nil {
+		wFeatures.SetWrapper(f)
+	}
+	return ft
 }
 
 // Purger is an optional interfaces for Fs
@@ -562,6 +585,14 @@ type DirChangeNotifier interface {
 type UnWrapper interface {
 	// UnWrap returns the Fs that this Fs is wrapping
 	UnWrap() Fs
+}
+
+// Wrapper is an optional interfaces for Fs
+type Wrapper interface {
+	// Wrap returns the Fs that is wrapping this Fs
+	WrapFs() Fs
+	// SetWrapper sets the Fs that is wrapping this Fs
+	SetWrapper(f Fs)
 }
 
 // DirCacheFlusher is an optional interface for Fs
