@@ -326,7 +326,7 @@ func (d *Dir) Open(flags int) (fd Handle, err error) {
 }
 
 // Create makes a new file node
-func (d *Dir) Create(name string) (*File, error) {
+func (d *Dir) Create(name string, flags int) (*File, error) {
 	// fs.Debugf(path, "Dir.Create")
 	if d.vfs.Opt.ReadOnly {
 		return nil, EROFS
