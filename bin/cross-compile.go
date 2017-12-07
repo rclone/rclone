@@ -6,6 +6,8 @@ package main
 
 import (
 	"flag"
+	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"os/exec"
@@ -197,6 +199,10 @@ func main() {
 	err := os.Chdir("build")
 	if err != nil {
 		log.Fatalf("Couldn't cd into build dir: %v", err)
+	}
+	err = ioutil.WriteFile("version.txt", []byte(fmt.Sprintf("rclone %s\n", version)), 0666)
+	if err != nil {
+		log.Fatalf("Couldn't write version.txt: %v", err)
 	}
 	compile(version)
 }
