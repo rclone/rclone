@@ -403,7 +403,7 @@ func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, e
 		if err != nil {
 			return nil, err
 		}
-		node, err = dir.Create(leaf)
+		node, err = dir.Create(leaf, flags)
 		if err != nil {
 			return nil, err
 		}

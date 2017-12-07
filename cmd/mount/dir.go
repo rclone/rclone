@@ -112,7 +112,7 @@ var _ fusefs.NodeCreater = (*Dir)(nil)
 // Create makes a new file
 func (d *Dir) Create(ctx context.Context, req *fuse.CreateRequest, resp *fuse.CreateResponse) (node fusefs.Node, handle fusefs.Handle, err error) {
 	defer log.Trace(d, "name=%q", req.Name)("node=%v, handle=%v, err=%v", &node, &handle, &err)
-	file, err := d.Dir.Create(req.Name)
+	file, err := d.Dir.Create(req.Name, int(req.Flags))
 	if err != nil {
 		return nil, nil, translateError(err)
 	}
