@@ -121,3 +121,4 @@ Contributors
   * David Minor <dminor@saymedia.com>
   * Tim Cooijmans <cooijmans.tim@gmail.com>
   * Laurence <liuxy6@gmail.com>
+  * Giovanni Pizzi <gio.piz@gmail.com>
