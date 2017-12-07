@@ -932,24 +932,27 @@ func Rmdir(f fs.Fs, dir string) error {
 	return err
 }
 
-// Purge removes a container and all of its contents
-func Purge(f fs.Fs) error {
+// Purge removes a directory and all of its contents
+func Purge(f fs.Fs, dir string) error {
 	doFallbackPurge := true
 	var err error
-	if doPurge := f.Features().Purge; doPurge != nil {
-		doFallbackPurge = false
-		if fs.Config.DryRun {
-			fs.Logf(f, "Not purging as --dry-run set")
-		} else {
-			err = doPurge()
-			if err == fs.ErrorCantPurge {
-				doFallbackPurge = true
+	if dir == "" {
+		// FIXME change the Purge interface so it takes a dir - see #1891
+		if doPurge := f.Features().Purge; doPurge != nil {
+			doFallbackPurge = false
+			if fs.Config.DryRun {
+				fs.Logf(f, "Not purging as --dry-run set")
+			} else {
+				err = doPurge()
+				if err == fs.ErrorCantPurge {
+					doFallbackPurge = true
+				}
 			}
 		}
 	}
 	if doFallbackPurge {
 		// DeleteFiles and Rmdir observe --dry-run
-		err = DeleteFiles(listToChan(f))
+		err = DeleteFiles(listToChan(f, dir))
 		if err != nil {
 			return err
 		}
@@ -1257,11 +1260,11 @@ func Deduplicate(f fs.Fs, mode DeduplicateMode) error {
 // channel.
 //
 // If the error was ErrorDirNotFound then it will be ignored
-func listToChan(f fs.Fs) fs.ObjectsChan {
+func listToChan(f fs.Fs, dir string) fs.ObjectsChan {
 	o := make(fs.ObjectsChan, fs.Config.Checkers)
 	go func() {
 		defer close(o)
-		_ = walk.Walk(f, "", true, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
+		_ = walk.Walk(f, dir, true, fs.Config.MaxDepth, func(dirPath string, entries fs.DirEntries, err error) error {
 			if err != nil {
 				if err == fs.ErrorDirNotFound {
 					return nil
@@ -1411,7 +1414,7 @@ func Rcat(fdst fs.Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (
 			return nil, errors.Wrap(err, "Failed to create temporary local FS to spool file")
 		}
 		defer func() {
-			err := Purge(tmpLocalFs)
+			err := Purge(tmpLocalFs, "")
 			if err != nil {
 				fs.Infof(tmpLocalFs, "Failed to cleanup temporary FS: %v", err)
 			}

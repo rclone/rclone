@@ -22,7 +22,7 @@ you want to selectively delete files.
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDst(args)
 		cmd.Run(true, false, command, func() error {
-			return operations.Purge(fdst)
+			return operations.Purge(fdst, "")
 		})
 	},
 }
