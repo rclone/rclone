@@ -97,6 +97,9 @@ func init() {
 			Name: "storage_url",
 			Help: "Storage URL - optional (OS_STORAGE_URL)",
 		}, {
+			Name: "auth_token",
+			Help: "Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)",
+		}, {
 			Name: "auth_version",
 			Help: "AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)",
 		}, {
@@ -197,7 +200,10 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		TenantId:     fs.ConfigFileGet(name, "tenant_id"),
 		TenantDomain: fs.ConfigFileGet(name, "tenant_domain"),
 		Region:       fs.ConfigFileGet(name, "region"),
-		// StorageUrl is set below
+		// I get the StorageUrl already here, in case the user wants to set it manually
+		// (e.g. when using alternate authentication)
+		StorageUrl:     fs.ConfigFileGet(name, "storage_url"),
+		AuthToken:      fs.ConfigFileGet(name, "auth_token"),
 		AuthVersion:    fs.ConfigFileGetInt(name, "auth_version", 0),
 		EndpointType:   swift.EndpointType(fs.ConfigFileGet(name, "endpoint_type", "public")),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
@@ -210,9 +216,9 @@ func swiftConnection(name string) (*swift.Connection, error) {
 			return nil, errors.Wrap(err, "failed to read environment variables")
 		}
 	}
-	if c.AuthToken == "" {
+	if !c.Authenticated() {
 		if c.UserName == "" && c.UserId == "" {
-			return nil, errors.New("user name or user id not found")
+			return nil, errors.New("user name or user id not found for authentication (and no storage_url+auth_token is provided)")
 		}
 		if c.ApiKey == "" {
 			return nil, errors.New("key not found")
@@ -223,7 +229,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		err := c.Authenticate()
 		if err != nil {
 			return nil, err
-		}	
+		}
 	}
 	return c, nil
 }
