@@ -939,11 +939,11 @@ again:
 func TestObjectPurge(t *testing.T) {
 	skipIfNotOk(t)
 
-	err := operations.Purge(remote)
+	err := operations.Purge(remote, "")
 	require.NoError(t, err)
 	fstest.CheckListing(t, remote, []fstest.Item{})
 
-	err = operations.Purge(remote)
+	err = operations.Purge(remote, "")
 	assert.Error(t, err, "Expecting error after on second purge")
 }
 

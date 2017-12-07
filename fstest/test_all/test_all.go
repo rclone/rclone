@@ -276,7 +276,7 @@ func (t *test) cleanFs() error {
 			if err != nil {
 				return err
 			}
-			return operations.Purge(dir)
+			return operations.Purge(dir, "")
 		}
 		return nil
 	})
