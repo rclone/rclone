@@ -27,7 +27,7 @@ c) Copy remote
 s) Set configuration password
 q) Quit config
 n/r/c/s/q> n
-name> remote
+name> test-cache
 Type of storage to configure.
 Choose a number from below, or type in your own value
 ...
@@ -39,6 +39,19 @@ Remote to cache.
 Normally should contain a ':' and a path, eg "myremote:path/to/dir",
 "myremote:bucket" or maybe "myremote:" (not recommended).
 remote> local:/test
+Optional: The URL of the Plex server
+plex_url> http://127.0.0.1:32400
+Optional: The username of the Plex user
+plex_username> dummyusername
+Optional: The password of the Plex user
+y) Yes type in my own password
+g) Generate random password
+n) No leave this optional password blank
+y/g/n> y
+Enter the password:
+password:
+Confirm the password:
+password:
 The size of a chunk. Lower value good for slow connections but can affect seamless reading.
 Default: 5M
 Choose a number from below, or type in your own value
@@ -60,36 +73,26 @@ Choose a number from below, or type in your own value
  3 / 24 hours
    \ "48h"
 info_age> 2
-How much time should a chunk (file data) be stored in cache.
-Accepted units are: "s", "m", "h".
-Default: 3h
+The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted.
+Default: 10G
 Choose a number from below, or type in your own value
- 1 / 30 seconds
-   \ "30s"
- 2 / 1 minute
-   \ "1m"
- 3 / 1 hour and 30 minutes
-   \ "1h30m"
-chunk_age> 3h
-How much time should data be cached during warm up.
-Accepted units are: "s", "m", "h".
-Default: 24h
-Choose a number from below, or type in your own value
- 1 / 3 hours
-   \ "3h"
- 2 / 6 hours
-   \ "6h"
- 3 / 24 hours
-   \ "24h"
-warmup_age> 3
+ 1 / 500 MB
+   \ "500M"
+ 2 / 1 GB
+   \ "1G"
+ 3 / 10 GB
+   \ "10G"
+chunk_total_size> 3
 Remote config
 --------------------
 [test-cache]
 remote = local:/test
+plex_url = http://127.0.0.1:32400
+plex_username = dummyusername
+plex_password = *** ENCRYPTED ***
 chunk_size = 5M
-info_age = 24h
-chunk_age = 3h
-warmup_age = 24h
+info_age = 48h
+chunk_total_size = 10G
 ```
 
 You can then use it like this,
@@ -126,30 +129,31 @@ and cloud providers, the cache remote can split multiple requests to the
 cloud provider for smaller file chunks and combines them together locally
 where they can be available almost immediately before the reader usually
 needs them.
+
 This is similar to buffering when media files are played online. Rclone
 will stay around the current marker but always try its best to stay ahead
 and prepare the data before.
 
-#### Warmup mode ####
+#### Plex Integration ####
 
-A negative side of running multiple requests on the cloud provider is
-that you can easily reach a limit on how many requests or how much data
-you can download from a cloud provider in a window of time.
-For this reason, a warmup mode is a state where `cache` changes its settings
-to talk less with the cloud provider.
+There is a direct integration with Plex which allows cache to detect during reading
+if the file is in playback or not. This helps cache to adapt how it queries
+the cloud provider depending on what is needed for.
 
-To prevent a ban or a similar action from the cloud provider, `cache` will
-keep track of all the open files and during intensive times when it passes
-a configured threshold, it will change its settings to a warmup mode.
+Scans will have a minimum amount of workers (1) while in a confirmed playback cache
+will deploy the configured number of workers.
 
-It can also be disabled during single file streaming if `cache` sees that we're
-reading the file in sequence and can go load its parts in advance.
+This integration opens the doorway to additional performance improvements
+which will be explored in the near future.
+
+**Note:** If Plex options are not configured, `cache` will function with its
+configured options without adapting any of its settings.
+
+How to enable? Run `rclone config` and add all the Plex options (endpoint, username
+and password) in your remote and it will be automatically enabled.
 
 Affected settings:
-- `cache-chunk-no-memory`: _disabled_
-- `cache-workers`: _1_
-- file chunks will now be cached using `cache-warm-up-age` as a duration instead of the
-regular `cache-chunk-age`
+- `cache-workers`: _Configured value_ during confirmed playback or _1_ all the other times
 
 ### Known issues ###
 
@@ -194,6 +198,22 @@ connections.
 
 **Default**: 5M
 
+#### --cache-total-chunk-size=SIZE ####
+
+The total size that the chunks can take up on the local disk. If `cache`
+exceeds this value then it will start to the delete the oldest chunks until 
+it goes under this value.
+
+**Default**: 10G
+
+#### --cache-chunk-clean-interval=DURATION ####
+
+How often should `cache` perform cleanups of the chunk storage. The default value
+should be ok for most people. If you find that `cache` goes over `cache-total-chunk-size`
+too often then try to lower this value to force it to perform cleanups more often.
+
+**Default**: 1m
+
 #### --cache-info-age=DURATION ####
 
 How long to keep file structure information (directory listings, file size, 
@@ -203,25 +223,6 @@ If all write operations are done through `cache` then you can safely make
 this value very large as the cache store will also be updated in real time.
 
 **Default**: 6h
-
-#### --cache-chunk-age=DURATION ####
-
-How long to keep file chunks (partial data) locally. 
-
-Longer durations will result in larger cache stores as data will be cleared
-less often.
-
-**Default**: 3h
-
-#### --cache-warm-up-age=DURATION ####
-
-How long to keep file chunks (partial data) locally during warmup times.
-
-If `cache` goes through intensive read times when it is scanned for information
-then this setting will allow you to customize higher storage times for that
-data. Otherwise, it's safe to keep the same value as `cache-chunk-age`.
-
-**Default**: 3h
 
 #### --cache-read-retries=RETRIES ####
 
@@ -235,7 +236,7 @@ able to provide file data anymore.
 For really slow connections, increase this to a point where the stream is
 able to provide data but your experience will be very stuttering. 
 
-**Default**: 3
+**Default**: 10
 
 #### --cache-workers=WORKERS ####
 
@@ -247,6 +248,9 @@ This impacts several aspects like the cloud provider API limits, more stress
 on the hardware that rclone runs on but it also means that streams will 
 be more fluid and data will be available much more faster to readers.
 
+**Note**: If the optional Plex integration is enabled then this setting
+will adapt to the type of reading performed and the value specified here will be used
+as a maximum number of workers to use.
 **Default**: 4
 
 #### --cache-chunk-no-memory ####
@@ -268,9 +272,7 @@ available on the local machine.
 
 #### --cache-rps=NUMBER ####
 
-Some of the rclone remotes that `cache` will wrap have back-off or limits
-in place to not reach cloud provider limits. This is similar to that.
-It places a hard limit on the number of requests per second that `cache`
+This setting places a hard limit on the number of requests per second that `cache`
 will be doing to the cloud provider remote and try to respect that value
 by setting waits between reads.
 
@@ -278,27 +280,13 @@ If you find that you're getting banned or limited on the cloud provider
 through cache and know that a smaller number of requests per second will
 allow you to work with it then you can use this setting for that.
 
-A good balance of all the other settings and warmup times should make this
+A good balance of all the other settings should make this
 setting useless but it is available to set for more special cases.
 
 **NOTE**: This will limit the number of requests during streams but other
 API calls to the cloud provider like directory listings will still pass.
 
-**Default**: 4
-
-#### --cache-warm-up-rps=RATE/SECONDS ####
-
-This setting allows `cache` to change its settings for warmup mode or revert
-back from it.
-
-`cache` keeps track of all open files and when there are `RATE` files open
-during `SECONDS` window of time reached it will activate warmup and change
-its settings as explained in the `Warmup mode` section.
-
-When the number of files being open goes under `RATE` in the same amount
-of time, `cache` will disable this mode.
-
-**Default**: 3/20
+**Default**: disabled
 
 #### --cache-writes ####
 

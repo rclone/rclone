@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,go1.7
 
 package cache
 
@@ -58,8 +58,8 @@ func (m *Memory) GetChunk(cachedObject *Object, offset int64) ([]byte, error) {
 }
 
 // AddChunk adds a new chunk of a cached object
-func (m *Memory) AddChunk(cachedObject *Object, data []byte, offset int64) error {
-	return m.AddChunkAhead(cachedObject.abs(), data, offset, time.Second)
+func (m *Memory) AddChunk(fp string, data []byte, offset int64) error {
+	return m.AddChunkAhead(fp, data, offset, time.Second)
 }
 
 // AddChunkAhead adds a new chunk of a cached object
@@ -92,4 +92,9 @@ func (m *Memory) CleanChunksByNeed(offset int64) {
 			m.db.Delete(key)
 		}
 	}
+}
+
+// CleanChunksBySize will cleanup chunks after the total size passes a certain point
+func (m *Memory) CleanChunksBySize(maxSize int64) {
+	// NOOP
 }

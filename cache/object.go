@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,go1.7
 
 package cache
 
@@ -205,16 +205,18 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 	if err := o.refreshFromSource(); err != nil {
 		return nil, err
 	}
-	o.CacheFs.CheckIfWarmupNeeded(o.Remote())
 
+	var err error
 	cacheReader := NewObjectHandle(o)
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
-			_, err := cacheReader.Seek(x.Offset, os.SEEK_SET)
-			if err != nil {
-				return cacheReader, err
-			}
+			_, err = cacheReader.Seek(x.Offset, os.SEEK_SET)
+		case *fs.RangeOption:
+			_, err = cacheReader.Seek(x.Start, os.SEEK_SET)
+		}
+		if err != nil {
+			return cacheReader, err
 		}
 	}
 

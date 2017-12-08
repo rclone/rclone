@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,go1.7
 
 package cache
 
@@ -29,11 +29,16 @@ const (
 	DataTsBucket = "dataTs"
 )
 
+// Features flags for this storage type
+type Features struct {
+	PurgeDb bool // purge the db before starting
+}
+
 var boltMap = make(map[string]*Persistent)
 var boltMapMx sync.Mutex
 
 // GetPersistent returns a single instance for the specific store
-func GetPersistent(dbPath string, refreshDb bool) (*Persistent, error) {
+func GetPersistent(dbPath string, f *Features) (*Persistent, error) {
 	// write lock to create one
 	boltMapMx.Lock()
 	defer boltMapMx.Unlock()
@@ -41,12 +46,18 @@ func GetPersistent(dbPath string, refreshDb bool) (*Persistent, error) {
 		return b, nil
 	}
 
-	bb, err := newPersistent(dbPath, refreshDb)
+	bb, err := newPersistent(dbPath, f)
 	if err != nil {
 		return nil, err
 	}
 	boltMap[dbPath] = bb
 	return boltMap[dbPath], nil
+}
+
+type chunkInfo struct {
+	Path   string
+	Offset int64
+	Size   int64
 }
 
 // Persistent is a wrapper of persistent storage for a bolt.DB file
@@ -57,18 +68,20 @@ type Persistent struct {
 	dataPath   string
 	db         *bolt.DB
 	cleanupMux sync.Mutex
+	features   *Features
 }
 
 // newPersistent builds a new wrapper and connects to the bolt.DB file
-func newPersistent(dbPath string, refreshDb bool) (*Persistent, error) {
+func newPersistent(dbPath string, f *Features) (*Persistent, error) {
 	dataPath := strings.TrimSuffix(dbPath, filepath.Ext(dbPath))
 
 	b := &Persistent{
 		dbPath:   dbPath,
 		dataPath: dataPath,
+		features: f,
 	}
 
-	err := b.Connect(refreshDb)
+	err := b.Connect()
 	if err != nil {
 		fs.Errorf(dbPath, "Error opening storage cache. Is there another rclone running on the same remote? %v", err)
 		return nil, err
@@ -84,11 +97,11 @@ func (b *Persistent) String() string {
 
 // Connect creates a connection to the configured file
 // refreshDb will delete the file before to create an empty DB if it's set to true
-func (b *Persistent) Connect(refreshDb bool) error {
+func (b *Persistent) Connect() error {
 	var db *bolt.DB
 	var err error
 
-	if refreshDb {
+	if b.features.PurgeDb {
 		err := os.Remove(b.dbPath)
 		if err != nil {
 			fs.Errorf(b, "failed to remove cache file: %v", err)
@@ -144,37 +157,6 @@ func (b *Persistent) getBucket(dir string, createIfMissing bool, tx *bolt.Tx) *b
 	}
 
 	return bucket
-}
-
-// updateChunkTs is a convenience method to update a chunk timestamp to mark that it was used recently
-func (b *Persistent) updateChunkTs(tx *bolt.Tx, path string, offset int64, t time.Duration) {
-	tsBucket := tx.Bucket([]byte(DataTsBucket))
-	tsVal := path + "-" + strconv.FormatInt(offset, 10)
-	ts := time.Now().Add(t)
-	found := false
-
-	// delete previous timestamps for the same object
-	c := tsBucket.Cursor()
-	for k, v := c.First(); k != nil; k, v = c.Next() {
-		if bytes.Equal(v, []byte(tsVal)) {
-			if tsInCache := time.Unix(0, btoi(k)); tsInCache.After(ts) && !found {
-				found = true
-				continue
-			}
-			err := c.Delete()
-			if err != nil {
-				fs.Debugf(path, "failed to clean chunk: %v", err)
-			}
-		}
-	}
-	if found {
-		return
-	}
-
-	err := tsBucket.Put(itob(ts.UnixNano()), []byte(tsVal))
-	if err != nil {
-		fs.Debugf(path, "failed to timestamp chunk: %v", err)
-	}
 }
 
 // updateRootTs is a convenience method to update an object timestamp to mark that it was used recently
@@ -433,7 +415,6 @@ func (b *Persistent) HasChunk(cachedObject *Object, offset int64) bool {
 
 // GetChunk will retrieve a single chunk which belongs to a cached object or an error if it doesn't find it
 func (b *Persistent) GetChunk(cachedObject *Object, offset int64) ([]byte, error) {
-	p := cachedObject.abs()
 	var data []byte
 
 	fp := path.Join(b.dataPath, cachedObject.abs(), strconv.FormatInt(offset, 10))
@@ -442,31 +423,11 @@ func (b *Persistent) GetChunk(cachedObject *Object, offset int64) ([]byte, error
 		return nil, err
 	}
 
-	d := cachedObject.CacheFs.chunkAge
-	if cachedObject.CacheFs.InWarmUp() {
-		d = cachedObject.CacheFs.metaAge
-	}
-
-	err = b.db.Update(func(tx *bolt.Tx) error {
-		b.updateChunkTs(tx, p, offset, d)
-		return nil
-	})
-
 	return data, err
 }
 
 // AddChunk adds a new chunk of a cached object
-func (b *Persistent) AddChunk(cachedObject *Object, data []byte, offset int64) error {
-	t := cachedObject.CacheFs.chunkAge
-	if cachedObject.CacheFs.InWarmUp() {
-		t = cachedObject.CacheFs.metaAge
-	}
-	return b.AddChunkAhead(cachedObject.abs(), data, offset, t)
-}
-
-// AddChunkAhead adds a new chunk before caching an Object for it
-// see fs.cacheWrites
-func (b *Persistent) AddChunkAhead(fp string, data []byte, offset int64, t time.Duration) error {
+func (b *Persistent) AddChunk(fp string, data []byte, offset int64) error {
 	_ = os.MkdirAll(path.Join(b.dataPath, fp), os.ModePerm)
 
 	filePath := path.Join(b.dataPath, fp, strconv.FormatInt(offset, 10))
@@ -476,47 +437,101 @@ func (b *Persistent) AddChunkAhead(fp string, data []byte, offset int64, t time.
 	}
 
 	return b.db.Update(func(tx *bolt.Tx) error {
-		b.updateChunkTs(tx, fp, offset, t)
+		tsBucket := tx.Bucket([]byte(DataTsBucket))
+		ts := time.Now()
+		found := false
+
+		// delete (older) timestamps for the same object
+		c := tsBucket.Cursor()
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var ci chunkInfo
+			err = json.Unmarshal(v, &ci)
+			if err != nil {
+				continue
+			}
+			if ci.Path == fp && ci.Offset == offset {
+				if tsInCache := time.Unix(0, btoi(k)); tsInCache.After(ts) && !found {
+					found = true
+					continue
+				}
+				err := c.Delete()
+				if err != nil {
+					fs.Debugf(fp, "failed to clean chunk: %v", err)
+				}
+			}
+		}
+		// don't overwrite if a newer one is already there
+		if found {
+			return nil
+		}
+		enc, err := json.Marshal(chunkInfo{Path: fp, Offset: offset, Size: int64(len(data))})
+		if err != nil {
+			fs.Debugf(fp, "failed to timestamp chunk: %v", err)
+		}
+		err = tsBucket.Put(itob(ts.UnixNano()), enc)
+		if err != nil {
+			fs.Debugf(fp, "failed to timestamp chunk: %v", err)
+		}
 		return nil
 	})
 }
 
 // CleanChunksByAge will cleanup on a cron basis
 func (b *Persistent) CleanChunksByAge(chunkAge time.Duration) {
+	// NOOP
+}
+
+// CleanChunksByNeed is a noop for this implementation
+func (b *Persistent) CleanChunksByNeed(offset int64) {
+	// noop: we want to clean a Bolt DB by time only
+}
+
+// CleanChunksBySize will cleanup chunks after the total size passes a certain point
+func (b *Persistent) CleanChunksBySize(maxSize int64) {
 	b.cleanupMux.Lock()
 	defer b.cleanupMux.Unlock()
 	var cntChunks int
 
 	err := b.db.Update(func(tx *bolt.Tx) error {
-		min := itob(0)
-		max := itob(time.Now().UnixNano())
-
 		dataTsBucket := tx.Bucket([]byte(DataTsBucket))
 		if dataTsBucket == nil {
 			return errors.Errorf("Couldn't open (%v) bucket", DataTsBucket)
 		}
 		// iterate through ts
 		c := dataTsBucket.Cursor()
-		for k, v := c.Seek(min); k != nil && bytes.Compare(k, max) <= 0; k, v = c.Next() {
-			if v == nil {
-				continue
-			}
-			// split to get (abs path - offset)
-			val := string(v[:])
-			sepIdx := strings.LastIndex(val, "-")
-			pathCmp := val[:sepIdx]
-			offsetCmp := val[sepIdx+1:]
-
-			// delete this ts entry
-			err := c.Delete()
+		totalSize := int64(0)
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var ci chunkInfo
+			err := json.Unmarshal(v, &ci)
 			if err != nil {
-				fs.Errorf(pathCmp, "failed deleting chunk ts during cleanup (%v): %v", val, err)
 				continue
 			}
 
-			err = os.Remove(path.Join(b.dataPath, pathCmp, offsetCmp))
-			if err == nil {
-				cntChunks = cntChunks + 1
+			totalSize += ci.Size
+		}
+
+		if totalSize > maxSize {
+			needToClean := totalSize - maxSize
+			for k, v := c.First(); k != nil; k, v = c.Next() {
+				var ci chunkInfo
+				err := json.Unmarshal(v, &ci)
+				if err != nil {
+					continue
+				}
+				// delete this ts entry
+				err = c.Delete()
+				if err != nil {
+					fs.Errorf(ci.Path, "failed deleting chunk ts during cleanup (%v): %v", ci.Offset, err)
+					continue
+				}
+				err = os.Remove(path.Join(b.dataPath, ci.Path, strconv.FormatInt(ci.Offset, 10)))
+				if err == nil {
+					cntChunks++
+					needToClean -= ci.Size
+					if needToClean <= 0 {
+						break
+					}
+				}
 			}
 		}
 		fs.Infof("cache", "deleted (%v) chunks", cntChunks)
@@ -576,11 +591,6 @@ func (b *Persistent) CleanEntriesByAge(entryAge time.Duration) {
 	}
 }
 
-// CleanChunksByNeed is a noop for this implementation
-func (b *Persistent) CleanChunksByNeed(offset int64) {
-	// noop: we want to clean a Bolt DB by time only
-}
-
 // Stats returns a go map with the stats key values
 func (b *Persistent) Stats() (map[string]map[string]interface{}, error) {
 	r := make(map[string]map[string]interface{})
@@ -590,6 +600,7 @@ func (b *Persistent) Stats() (map[string]map[string]interface{}, error) {
 	r["data"]["newest-ts"] = time.Now()
 	r["data"]["newest-file"] = ""
 	r["data"]["total-chunks"] = 0
+	r["data"]["total-size"] = int64(0)
 	r["files"] = make(map[string]interface{})
 	r["files"]["oldest-ts"] = time.Now()
 	r["files"]["oldest-name"] = ""
@@ -612,19 +623,32 @@ func (b *Persistent) Stats() (map[string]map[string]interface{}, error) {
 		r["files"]["total-files"] = totalFiles
 
 		c := dataTsBucket.Cursor()
+
+		totalChunks := 0
+		totalSize := int64(0)
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var ci chunkInfo
+			err := json.Unmarshal(v, &ci)
+			if err != nil {
+				continue
+			}
+			totalChunks++
+			totalSize += ci.Size
+		}
+		r["data"]["total-chunks"] = totalChunks
+		r["data"]["total-size"] = totalSize
+
 		if k, v := c.First(); k != nil {
-			// split to get (abs path - offset)
-			val := string(v[:])
-			p := val[:strings.LastIndex(val, "-")]
+			var ci chunkInfo
+			_ = json.Unmarshal(v, &ci)
 			r["data"]["oldest-ts"] = time.Unix(0, btoi(k))
-			r["data"]["oldest-file"] = p
+			r["data"]["oldest-file"] = ci.Path
 		}
 		if k, v := c.Last(); k != nil {
-			// split to get (abs path - offset)
-			val := string(v[:])
-			p := val[:strings.LastIndex(val, "-")]
+			var ci chunkInfo
+			_ = json.Unmarshal(v, &ci)
 			r["data"]["newest-ts"] = time.Unix(0, btoi(k))
-			r["data"]["newest-file"] = p
+			r["data"]["newest-file"] = ci.Path
 		}
 
 		c = rootTsBucket.Cursor()
@@ -671,13 +695,17 @@ func (b *Persistent) Purge() {
 // GetChunkTs retrieves the current timestamp of this chunk
 func (b *Persistent) GetChunkTs(path string, offset int64) (time.Time, error) {
 	var t time.Time
-	tsVal := path + "-" + strconv.FormatInt(offset, 10)
 
 	err := b.db.View(func(tx *bolt.Tx) error {
 		tsBucket := tx.Bucket([]byte(DataTsBucket))
 		c := tsBucket.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
-			if bytes.Equal(v, []byte(tsVal)) {
+			var ci chunkInfo
+			err := json.Unmarshal(v, &ci)
+			if err != nil {
+				continue
+			}
+			if ci.Path == path && ci.Offset == offset {
 				t = time.Unix(0, btoi(k))
 				return nil
 			}

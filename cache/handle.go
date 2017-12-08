@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,go1.7
 
 package cache
 
@@ -15,21 +15,19 @@ import (
 
 // Handle is managing the read/write/seek operations on an open handle
 type Handle struct {
-	cachedObject  *Object
-	memory        ChunkStorage
-	preloadQueue  chan int64
-	preloadOffset int64
-	offset        int64
-	seenOffsets   map[int64]bool
-	mu            sync.Mutex
+	cachedObject   *Object
+	memory         ChunkStorage
+	preloadQueue   chan int64
+	preloadOffset  int64
+	offset         int64
+	seenOffsets    map[int64]bool
+	mu             sync.Mutex
+	confirmReading chan bool
 
-	ReadRetries  int
-	TotalWorkers int
-	UseMemory    bool
-	workers      []*worker
-	chunkAge     time.Duration
-	warmup       bool
-	closed       bool
+	UseMemory bool
+	workers   []*worker
+	closed    bool
+	reading   bool
 }
 
 // NewObjectHandle returns a new Handle for an existing Object
@@ -39,20 +37,15 @@ func NewObjectHandle(o *Object) *Handle {
 		offset:        0,
 		preloadOffset: -1, // -1 to trigger the first preload
 
-		ReadRetries:  o.CacheFs.readRetries,
-		TotalWorkers: o.CacheFs.totalWorkers,
-		UseMemory:    o.CacheFs.chunkMemory,
-		chunkAge:     o.CacheFs.chunkAge,
-		warmup:       o.CacheFs.InWarmUp(),
+		UseMemory: o.CacheFs.chunkMemory,
+		reading:   false,
 	}
 	r.seenOffsets = make(map[int64]bool)
-	r.memory = NewMemory(o.CacheFs.chunkAge)
-	if o.CacheFs.InWarmUp() {
-		r.chunkAge = o.CacheFs.metaAge
-	}
+	r.memory = NewMemory(-1)
 
 	// create a larger buffer to queue up requests
-	r.preloadQueue = make(chan int64, r.TotalWorkers*10)
+	r.preloadQueue = make(chan int64, o.CacheFs.totalWorkers*10)
+	r.confirmReading = make(chan bool)
 	r.startReadWorkers()
 	return r
 }
@@ -72,34 +65,86 @@ func (r *Handle) String() string {
 	return r.cachedObject.abs()
 }
 
-// InWarmUp says if this handle is in warmup mode
-func (r *Handle) InWarmUp() bool {
-	return r.warmup
-}
-
 // startReadWorkers will start the worker pool
 func (r *Handle) startReadWorkers() {
 	if r.hasAtLeastOneWorker() {
 		return
 	}
-	for i := 0; i < r.TotalWorkers; i++ {
-		w := &worker{
-			r:  r,
-			ch: r.preloadQueue,
-			id: i,
-		}
-		go w.run()
+	r.scaleWorkers(r.cacheFs().totalWorkers)
+}
 
-		r.workers = append(r.workers, w)
+// scaleOutWorkers will increase the worker pool count by the provided amount
+func (r *Handle) scaleWorkers(desired int) {
+	current := len(r.workers)
+	if current == desired {
+		return
 	}
+	if current > desired {
+		// scale in gracefully
+		for i := 0; i < current-desired; i++ {
+			r.preloadQueue <- -1
+		}
+	} else {
+		// scale out
+		for i := 0; i < desired-current; i++ {
+			w := &worker{
+				r:  r,
+				ch: r.preloadQueue,
+				id: current + i,
+			}
+			go w.run()
+
+			r.workers = append(r.workers, w)
+		}
+	}
+	// ignore first scale out from 0
+	if current != 0 {
+		fs.Infof(r, "scale workers to %v", desired)
+	}
+}
+
+func (r *Handle) requestExternalConfirmation() {
+	// if there's no external confirmation available
+	// then we skip this step
+	if len(r.workers) >= r.cacheFs().totalMaxWorkers ||
+		!r.cacheFs().plexConnector.isConnected() {
+		return
+	}
+	go r.cacheFs().plexConnector.isPlayingAsync(r.cachedObject, r.confirmReading)
+}
+
+func (r *Handle) confirmExternalReading() {
+	// if we have a max value of workers
+	// or there's no external confirmation available
+	// then we skip this step
+	if len(r.workers) >= r.cacheFs().totalMaxWorkers ||
+		!r.cacheFs().plexConnector.isConnected() {
+		return
+	}
+
+	select {
+	case confirmed := <-r.confirmReading:
+		if !confirmed {
+			return
+		}
+	default:
+		return
+	}
+
+	fs.Infof(r, "confirmed reading by external reader")
+	r.scaleWorkers(r.cacheFs().totalMaxWorkers)
 }
 
 // queueOffset will send an offset to the workers if it's different from the last one
 func (r *Handle) queueOffset(offset int64) {
 	if offset != r.preloadOffset {
+		// clean past in-memory chunks
+		if r.UseMemory {
+			go r.memory.CleanChunksByNeed(offset)
+		}
+		go r.cacheFs().CleanUpCache(false)
+		r.confirmExternalReading()
 		r.preloadOffset = offset
-		previousChunksCounter := 0
-		maxOffset := r.cacheFs().chunkSize * int64(r.cacheFs().originalSettingWorkers())
 
 		// clear the past seen chunks
 		// they will remain in our persistent storage but will be removed from transient
@@ -107,25 +152,10 @@ func (r *Handle) queueOffset(offset int64) {
 		for k := range r.seenOffsets {
 			if k < offset {
 				r.seenOffsets[k] = false
-
-				// we count how many continuous chunks were seen before
-				if offset >= maxOffset && k >= offset-maxOffset {
-					previousChunksCounter++
-				}
 			}
 		}
 
-		// if we read all the previous chunks that could have been preloaded
-		// we should then disable warm up setting for this handle
-		if r.warmup && previousChunksCounter >= r.cacheFs().originalSettingWorkers() {
-			r.TotalWorkers = r.cacheFs().originalSettingWorkers()
-			r.UseMemory = !r.cacheFs().originalSettingChunkNoMemory()
-			r.chunkAge = r.cacheFs().chunkAge
-			r.warmup = false
-			fs.Infof(r, "disabling warm up")
-		}
-
-		for i := 0; i < r.TotalWorkers; i++ {
+		for i := 0; i < len(r.workers); i++ {
 			o := r.preloadOffset + r.cacheFs().chunkSize*int64(i)
 			if o < 0 || o >= r.cachedObject.Size() {
 				continue
@@ -137,6 +167,8 @@ func (r *Handle) queueOffset(offset int64) {
 			r.seenOffsets[o] = true
 			r.preloadQueue <- o
 		}
+
+		r.requestExternalConfirmation()
 	}
 }
 
@@ -157,12 +189,6 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 	var data []byte
 	var err error
 
-	// we reached the end of the file
-	if chunkStart >= r.cachedObject.Size() {
-		fs.Debugf(r, "reached EOF %v", chunkStart)
-		return nil, io.EOF
-	}
-
 	// we calculate the modulus of the requested offset with the size of a chunk
 	offset := chunkStart % r.cacheFs().chunkSize
 
@@ -171,10 +197,7 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 	r.queueOffset(chunkStart)
 	found := false
 
-	// delete old chunks from memory
 	if r.UseMemory {
-		go r.memory.CleanChunksByNeed(chunkStart)
-
 		data, err = r.memory.GetChunk(r.cachedObject, chunkStart)
 		if err == nil {
 			found = true
@@ -184,16 +207,15 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 	if !found {
 		// we're gonna give the workers a chance to pickup the chunk
 		// and retry a couple of times
-		for i := 0; i < r.ReadRetries; i++ {
+		for i := 0; i < r.cacheFs().readRetries*2; i++ {
 			data, err = r.storage().GetChunk(r.cachedObject, chunkStart)
-
 			if err == nil {
 				found = true
 				break
 			}
 
 			fs.Debugf(r, "%v: chunk retry storage: %v", chunkStart, i)
-			time.Sleep(time.Second)
+			time.Sleep(time.Millisecond * 500)
 		}
 	}
 
@@ -222,17 +244,24 @@ func (r *Handle) Read(p []byte) (n int, err error) {
 	defer r.mu.Unlock()
 	var buf []byte
 
+	// first reading
+	if !r.reading {
+		r.reading = true
+		r.requestExternalConfirmation()
+	}
+	// reached EOF
+	if r.offset >= r.cachedObject.Size() {
+		return 0, io.EOF
+	}
 	currentOffset := r.offset
 	buf, err = r.getChunk(currentOffset)
 	if err != nil && len(buf) == 0 {
+		fs.Errorf(r, "(%v/%v) empty and error (%v) response", currentOffset, r.cachedObject.Size(), err)
 		return 0, io.EOF
 	}
 	readSize := copy(p, buf)
 	newOffset := currentOffset + int64(readSize)
 	r.offset = newOffset
-	if r.offset >= r.cachedObject.Size() {
-		err = io.EOF
-	}
 
 	return readSize, err
 }
@@ -257,6 +286,7 @@ func (r *Handle) Close() error {
 		}
 	}
 
+	go r.cacheFs().CleanUpCache(false)
 	fs.Debugf(r, "cache reader closed %v", r.offset)
 	return nil
 }
@@ -313,7 +343,7 @@ func (w *worker) reader(offset, end int64) (io.ReadCloser, error) {
 	r := w.rc
 	if w.rc == nil {
 		r, err = w.r.cacheFs().OpenRateLimited(func() (io.ReadCloser, error) {
-			return w.r.cachedObject.Object.Open(&fs.RangeOption{Start: offset, End: end}, &fs.SeekOption{Offset: offset})
+			return w.r.cachedObject.Object.Open(&fs.SeekOption{Offset: offset}, &fs.RangeOption{Start: offset, End: end})
 		})
 		if err != nil {
 			return nil, err
@@ -329,7 +359,7 @@ func (w *worker) reader(offset, end int64) (io.ReadCloser, error) {
 
 	_ = w.rc.Close()
 	return w.r.cacheFs().OpenRateLimited(func() (io.ReadCloser, error) {
-		r, err = w.r.cachedObject.Object.Open(&fs.RangeOption{Start: offset, End: end}, &fs.SeekOption{Offset: offset})
+		r, err = w.r.cachedObject.Object.Open(&fs.SeekOption{Offset: offset}, &fs.RangeOption{Start: offset, End: end})
 		if err != nil {
 			return nil, err
 		}
@@ -377,7 +407,7 @@ func (w *worker) run() {
 			// add it in ram if it's in the persistent storage
 			data, err = w.r.storage().GetChunk(w.r.cachedObject, chunkStart)
 			if err == nil {
-				err = w.r.memory.AddChunk(w.r.cachedObject, data, chunkStart)
+				err = w.r.memory.AddChunk(w.r.cachedObject.abs(), data, chunkStart)
 				if err != nil {
 					fs.Errorf(w, "failed caching chunk in ram %v: %v", chunkStart, err)
 				} else {
@@ -395,37 +425,56 @@ func (w *worker) run() {
 		if chunkEnd > w.r.cachedObject.Size() {
 			chunkEnd = w.r.cachedObject.Size()
 		}
-		w.rc, err = w.reader(chunkStart, chunkEnd)
-		// we seem to be getting only errors so we abort
+
+		w.download(chunkStart, chunkEnd, 0)
+	}
+}
+
+func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
+	var err error
+	var data []byte
+
+	// stop retries
+	if retry >= w.r.cacheFs().readRetries {
+		return
+	}
+	// back-off between retries
+	if retry > 0 {
+		time.Sleep(time.Second * time.Duration(retry))
+	}
+
+	w.rc, err = w.reader(chunkStart, chunkEnd)
+	// we seem to be getting only errors so we abort
+	if err != nil {
+		fs.Errorf(w, "object open failed %v: %v", chunkStart, err)
+		w.download(chunkStart, chunkEnd, retry+1)
+		return
+	}
+
+	data = make([]byte, chunkEnd-chunkStart)
+	sourceRead := 0
+	sourceRead, err = io.ReadFull(w.rc, data)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		fs.Errorf(w, "failed to read chunk %v: %v", chunkStart, err)
+		w.download(chunkStart, chunkEnd, retry+1)
+		return
+	}
+	if err == io.ErrUnexpectedEOF {
+		fs.Debugf(w, "partial read chunk %v: %v", chunkStart, err)
+	}
+	data = data[:sourceRead] // reslice to remove extra garbage
+	fs.Debugf(w, "downloaded chunk %v", fs.SizeSuffix(chunkStart))
+
+	if w.r.UseMemory {
+		err = w.r.memory.AddChunk(w.r.cachedObject.abs(), data, chunkStart)
 		if err != nil {
-			fs.Errorf(w, "object open failed %v: %v", chunkStart, err)
-			return
+			fs.Errorf(w, "failed caching chunk in ram %v: %v", chunkStart, err)
 		}
+	}
 
-		data = make([]byte, chunkEnd-chunkStart)
-		sourceRead := 0
-		sourceRead, err = io.ReadFull(w.rc, data)
-		if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
-			fs.Errorf(w, "failed to read chunk %v: %v", chunkStart, err)
-			return
-		}
-		if err == io.ErrUnexpectedEOF {
-			fs.Debugf(w, "partial read chunk %v: %v", chunkStart, err)
-		}
-		data = data[:sourceRead] // reslice to remove extra garbage
-		fs.Debugf(w, "downloaded chunk %v", fs.SizeSuffix(chunkStart))
-
-		if w.r.UseMemory {
-			err = w.r.memory.AddChunk(w.r.cachedObject, data, chunkStart)
-			if err != nil {
-				fs.Errorf(w, "failed caching chunk in ram %v: %v", chunkStart, err)
-			}
-		}
-
-		err = w.r.storage().AddChunkAhead(w.r.cachedObject.abs(), data, chunkStart, w.r.chunkAge)
-		if err != nil {
-			fs.Errorf(w, "failed caching chunk in storage %v: %v", chunkStart, err)
-		}
+	err = w.r.storage().AddChunk(w.r.cachedObject.abs(), data, chunkStart)
+	if err != nil {
+		fs.Errorf(w, "failed caching chunk in storage %v: %v", chunkStart, err)
 	}
 }
 
