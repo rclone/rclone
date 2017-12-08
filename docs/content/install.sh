@@ -9,8 +9,22 @@ if [ -n "$1" ] && [ "$1" != "beta" ]; then
 fi
 
 if [ -n "$1" ]; then
-    install_beta="yes"
+    install_beta="beta "
 fi
+
+#check installed version of rclone to determine if update is necessary
+version=`rclone --version | head -n 1`
+if [ -z "${install_beta}" ]; then
+    current_version=`curl https://downloads.rclone.org/version.txt`
+else
+    current_version=`curl https://beta.rclone.org/version.txt`
+fi
+
+if [ "$version" = "$current_version" ]; then
+    echo && echo "The latest ${install_beta}version of rclone is already installed" && echo
+    exit 1
+fi
+
 
 #detect the platform
 OS="`uname`"
