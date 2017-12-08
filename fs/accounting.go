@@ -561,7 +561,7 @@ func (acc *Account) ETA() (eta time.Duration, ok bool) {
 // String produces stats for this file
 func (acc *Account) String() string {
 	a, b := acc.Progress()
-	bps, cur := acc.Speed()
+	_, cur := acc.Speed()
 	eta, etaok := acc.ETA()
 	etas := "-"
 	if etaok {
@@ -572,8 +572,8 @@ func (acc *Account) String() string {
 		}
 	}
 	name := []rune(acc.name)
-	if len(name) > 45 {
-		where := len(name) - 42
+	if len(name) > 40 {
+		where := len(name) - 37
 		name = append([]rune{'.', '.', '.'}, name[where:]...)
 	}
 
@@ -581,17 +581,17 @@ func (acc *Account) String() string {
 		cur = cur * 8
 	}
 
-	done := fmt.Sprintf("%2s/%s", SizeSuffix(a), SizeSuffix(b))
+	percentageDone := 0
 	if b > 0 {
-		done += fmt.Sprintf(" %2d%% done, ", int(100*float64(a)/float64(b)))
-	} else {
-		done += " 0%% done, "
+		percentageDone = int(100 * float64(a) / float64(b))
 	}
-	return fmt.Sprintf("%45s: %s%s / %s, ETA: %s",
+
+	done := fmt.Sprintf("%2d%% /%s", percentageDone, SizeSuffix(b))
+
+	return fmt.Sprintf("%45s: %s, %s/s, %s",
 		string(name),
 		done,
-		SizeSuffix(bps).Unit(strings.Title(Config.DataRateUnit)+"/s"),
-		SizeSuffix(cur).Unit(strings.Title(Config.DataRateUnit)+"/s"),
+		SizeSuffix(cur),
 		etas,
 	)
 }
