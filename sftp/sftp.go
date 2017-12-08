@@ -57,6 +57,19 @@ func init() {
 			Name:     "key_file",
 			Help:     "Path to unencrypted PEM-encoded private key file, leave blank to use ssh-agent.",
 			Optional: true,
+		}, {
+			Name:     "use_insecure_cipher",
+			Help:     "Enable the user of the aes128-cbc cipher. This cipher is insecure and may allow plaintext data to be recovered by an attacker..",
+			Optional: true,
+			Examples: []fs.OptionExample{
+				{
+					Value: "false",
+					Help:  "Use default Cipher list.",
+				}, {
+					Value: "true",
+					Help:  "Enables the use of the aes128-cbc cipher.",
+				},
+			},
 		}},
 	}
 	fs.Register(fsi)
@@ -232,6 +245,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	port := fs.ConfigFileGet(name, "port")
 	pass := fs.ConfigFileGet(name, "pass")
 	keyFile := fs.ConfigFileGet(name, "key_file")
+	insecureCipher := fs.ConfigFileGetBool(name, "use_insecure_cipher")
 	if user == "" {
 		user = os.Getenv("USER")
 	}
@@ -243,6 +257,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		Auth:            []ssh.AuthMethod{},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
 		Timeout:         fs.Config.ConnectTimeout,
+	}
+
+	if insecureCipher {
+		config.Config.SetDefaults()
+		config.Config.Ciphers = append(config.Config.Ciphers, "aes128-cbc")
 	}
 
 	// Add ssh agent-auth if no password or file specified
