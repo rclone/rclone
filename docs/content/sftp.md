@@ -154,6 +154,13 @@ or `sha1sum` as well as `echo` are in the remote's PATH.
 
 The only ssh agent supported under Windows is Putty's pageant.
 
+The Go SSH library disables the use of the aes128-cbc cipher by
+default, due to security concerns. This can be re-enabled on a
+per-connection basis by setting the `use_insecure_cipher` setting in
+the configuration file to `true`. Further details on the insecurity of
+this cipher can be found [in this paper]
+(http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf).
+
 SFTP isn't supported under plan9 until [this
 issue](https://github.com/pkg/sftp/issues/156) is fixed.
 
