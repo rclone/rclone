@@ -1,4 +1,4 @@
-// +build !plan9
+// +build !plan9,go1.7
 
 package cachestats
 
