@@ -232,6 +232,11 @@ func (r *Handle) getChunk(chunkStart int64) ([]byte, error) {
 
 	// first chunk will be aligned with the start
 	if offset > 0 {
+		if offset >= len(data) {
+			fs.Errorf(r, "unexpected conditions during reading. current position: %v, current chunk position: %v, current chunk size: %v, offset: %v, chunk size: %v, file size: %v",
+				r.offset, chunkStart, len(data), offset, r.cacheFs().chunkSize, r.cachedObject.Size())
+			return nil, io.ErrUnexpectedEOF
+		}
 		data = data[int(offset):]
 	}
 
@@ -256,7 +261,7 @@ func (r *Handle) Read(p []byte) (n int, err error) {
 	currentOffset := r.offset
 	buf, err = r.getChunk(currentOffset)
 	if err != nil && len(buf) == 0 {
-		fs.Errorf(r, "(%v/%v) empty and error (%v) response", currentOffset, r.cachedObject.Size(), err)
+		fs.Errorf(r, "(%v/%v) error (%v) response", currentOffset, r.cachedObject.Size(), err)
 		return 0, io.EOF
 	}
 	readSize := copy(p, buf)
