@@ -1,4 +1,11 @@
 #!/bin/sh
+
+# error codes
+# 0 - exited without problems
+# 1 - parameters not supported were used or some unexpected error occured
+# 2 - OS not supported by this script
+# 3 - installed version of rclone is up to date
+
 set -e
 
 usage() { echo "Usage: curl https://rclone.org/install.sh | sudo bash [-s beta]" 1>&2; exit 1; }
@@ -12,8 +19,13 @@ if [ -n "$1" ]; then
     install_beta="beta "
 fi
 
+
+#create tmp directory and move to it
+tmp_dir=`mktemp -d`; cd $tmp_dir
+
+
 #check installed version of rclone to determine if update is necessary
-version=`rclone --version | head -n 1`
+version=`rclone --version 2>errors | head -n 1`
 if [ -z "${install_beta}" ]; then
     current_version=`curl https://downloads.rclone.org/version.txt`
 else
@@ -21,8 +33,8 @@ else
 fi
 
 if [ "$version" = "$current_version" ]; then
-    echo && echo "The latest ${install_beta}version of rclone is already installed" && echo
-    exit 1
+    echo && echo "The latest ${install_beta}version of rclone ${version} is already installed" && echo
+    exit 3
 fi
 
 
@@ -47,11 +59,11 @@ case $OS in
   SunOS)
     OS='solaris'
     echo 'OS not supported'
-    exit 1
+    exit 2
     ;;
   *)
     echo 'OS not supported'
-    exit 1
+    exit 2
     ;;
 esac
 
@@ -68,12 +80,10 @@ case $OS_type in
     ;;
   *)
     echo 'OS type not supported'
-    exit 1
+    exit 2
     ;;
 esac
 
-#create tmp directory and move to it
-tmp_dir=`mktemp -d`; cd $tmp_dir
 
 #download and unzip
 if [ -z "${install_beta}" ]; then
@@ -122,7 +132,7 @@ case $OS in
     ;;
   *)
     echo 'OS not supported'
-    exit 1
+    exit 2
 esac
 
 
