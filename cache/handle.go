@@ -427,9 +427,10 @@ func (w *worker) run() {
 		}
 
 		chunkEnd := chunkStart + w.r.cacheFs().chunkSize
-		if chunkEnd > w.r.cachedObject.Size() {
-			chunkEnd = w.r.cachedObject.Size()
-		}
+		// TODO: Remove this comment if it proves to be reliable for #1896
+		//if chunkEnd > w.r.cachedObject.Size() {
+		//	chunkEnd = w.r.cachedObject.Size()
+		//}
 
 		w.download(chunkStart, chunkEnd, 0)
 	}
@@ -464,11 +465,12 @@ func (w *worker) download(chunkStart, chunkEnd int64, retry int) {
 		w.download(chunkStart, chunkEnd, retry+1)
 		return
 	}
-	if err == io.ErrUnexpectedEOF {
-		fs.Debugf(w, "partial read chunk %v: %v", chunkStart, err)
-	}
 	data = data[:sourceRead] // reslice to remove extra garbage
-	fs.Debugf(w, "downloaded chunk %v", fs.SizeSuffix(chunkStart))
+	if err == io.ErrUnexpectedEOF {
+		fs.Debugf(w, "partial downloaded chunk %v", fs.SizeSuffix(chunkStart))
+	} else {
+		fs.Debugf(w, "downloaded chunk %v", fs.SizeSuffix(chunkStart))
+	}
 
 	if w.r.UseMemory {
 		err = w.r.memory.AddChunk(w.r.cachedObject.abs(), data, chunkStart)
