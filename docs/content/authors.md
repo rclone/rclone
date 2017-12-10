@@ -123,3 +123,4 @@ Contributors
   * Laurence <liuxy6@gmail.com>
   * Giovanni Pizzi <gio.piz@gmail.com>
   * Filip Bartodziej <filipbartodziej@gmail.com>
+  * Jon Fautley <jon@dead.li>
