@@ -301,14 +301,11 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 
 	f.plexConnector = &plexConnector{}
 	if plexURL != "" {
-		usingPlex := false
-
 		if plexToken != "" {
 			f.plexConnector, err = newPlexConnectorWithToken(f, plexURL, plexToken)
 			if err != nil {
 				return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", plexURL)
 			}
-			usingPlex = true
 		} else {
 			plexUsername := fs.ConfigFileGet(name, "plex_username")
 			plexPassword := fs.ConfigFileGet(name, "plex_password")
@@ -321,19 +318,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 				if err != nil {
 					return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", plexURL)
 				}
-				if f.plexConnector.token != "" {
-					fs.ConfigFileSet(name, "plex_token", f.plexConnector.token)
-					fs.SaveConfig()
-				}
-				usingPlex = true
 			}
-		}
-
-		if usingPlex {
-			fs.Infof(name, "Connected to Plex server: %v", plexURL)
-			// when connected to a Plex server we default to 1 worker (Plex scans all the time)
-			// and leave max workers as a setting to scale out the workers on demand during playback
-			f.totalWorkers = 1
 		}
 	}
 

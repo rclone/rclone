@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"sync"
+
 	"github.com/ncw/rclone/fs"
 )
 
@@ -20,9 +22,12 @@ const (
 
 // plexConnector is managing the cache integration with Plex
 type plexConnector struct {
-	url   *url.URL
-	token string
-	f     *Fs
+	url      *url.URL
+	username string
+	password string
+	token    string
+	f        *Fs
+	mu       sync.Mutex
 }
 
 // newPlexConnector connects to a Plex server and generates a token
@@ -33,14 +38,11 @@ func newPlexConnector(f *Fs, plexURL, username, password string) (*plexConnector
 	}
 
 	pc := &plexConnector{
-		f:     f,
-		url:   u,
-		token: "",
-	}
-
-	err = pc.authenticate(username, password)
-	if err != nil {
-		return nil, err
+		f:        f,
+		url:      u,
+		username: username,
+		password: password,
+		token:    "",
 	}
 
 	return pc, nil
@@ -74,10 +76,13 @@ func (p *plexConnector) fillDefaultHeaders(req *http.Request) {
 }
 
 // authenticate will generate a token based on a username/password
-func (p *plexConnector) authenticate(username, password string) error {
+func (p *plexConnector) authenticate() error {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+
 	form := url.Values{}
-	form.Set("user[login]", username)
-	form.Add("user[password]", password)
+	form.Set("user[login]", p.username)
+	form.Add("user[password]", p.password)
 	req, err := http.NewRequest("POST", defPlexLoginURL, strings.NewReader(form.Encode()))
 	if err != nil {
 		return err
@@ -101,13 +106,23 @@ func (p *plexConnector) authenticate(username, password string) error {
 		return fmt.Errorf("failed to obtain token: %v", data)
 	}
 	p.token = token
+	if p.token != "" {
+		fs.ConfigFileSet(p.f.Name(), "plex_token", p.token)
+		fs.SaveConfig()
+		fs.Infof(p.f.Name(), "Connected to Plex server: %v", p.url.String())
+	}
 
 	return nil
 }
 
-// isConnected checks if this Plex
+// isConnected checks if this rclone is authenticated to Plex
 func (p *plexConnector) isConnected() bool {
 	return p.token != ""
+}
+
+// isConfigured checks if this rclone is configured to use a Plex server
+func (p *plexConnector) isConfigured() bool {
+	return p.url != nil
 }
 
 func (p *plexConnector) isPlaying(co *Object) bool {

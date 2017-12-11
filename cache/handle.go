@@ -70,7 +70,21 @@ func (r *Handle) startReadWorkers() {
 	if r.hasAtLeastOneWorker() {
 		return
 	}
-	r.scaleWorkers(r.cacheFs().totalWorkers)
+	totalWorkers := r.cacheFs().totalWorkers
+
+	if r.cacheFs().plexConnector.isConfigured() {
+		if !r.cacheFs().plexConnector.isConnected() {
+			err := r.cacheFs().plexConnector.authenticate()
+			if err != nil {
+				fs.Infof(r, "failed to authenticate to Plex: %v", err)
+			}
+		}
+		if r.cacheFs().plexConnector.isConnected() {
+			totalWorkers = 1
+		}
+	}
+
+	r.scaleWorkers(totalWorkers)
 }
 
 // scaleOutWorkers will increase the worker pool count by the provided amount
