@@ -1392,7 +1392,7 @@ func (o *Object) Remove() error {
 		return errNotWithVersions
 	}
 	if *b2HardDelete {
-		return o.fs.deleteByID(o.id, o.remote)
+		return o.fs.deleteByID(o.id, o.fs.root+o.remote)
 	}
 	return o.fs.hide(o.fs.root + o.remote)
 }
