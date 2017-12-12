@@ -302,7 +302,7 @@ func (u *UI) move(d int) {
 	}
 
 	// check dirPos.offset in bounds
-	if dirPos.offset < 0 {
+	if entries == 0 || dirPos.offset < 0 {
 		dirPos.offset = 0
 	} else if dirPos.offset >= entries {
 		dirPos.offset = entries - 1
@@ -392,7 +392,7 @@ func (u *UI) setCurrentDir(d *scan.Dir) {
 
 // enters the current entry
 func (u *UI) enter() {
-	if u.d == nil {
+	if u.d == nil || len(u.entries) == 0 {
 		return
 	}
 	dirPos := u.dirPosMap[u.path]
