@@ -1183,7 +1183,7 @@ func Purge(f Fs) error {
 		if err != nil {
 			return err
 		}
-		err = Rmdirs(f, "")
+		err = Rmdirs(f, "", false)
 	}
 	if err != nil {
 		Stats.Error(err)
@@ -1672,9 +1672,9 @@ func Rcat(fdst Fs, dstFileName string, in io.ReadCloser, modTime time.Time) (dst
 
 // Rmdirs removes any empty directories (or directories only
 // containing empty directories) under f, including f.
-func Rmdirs(f Fs, dir string) error {
+func Rmdirs(f Fs, dir string, leaveRoot bool) error {
 	dirEmpty := make(map[string]bool)
-	dirEmpty[""] = true
+	dirEmpty[""] = !leaveRoot
 	err := Walk(f, dir, true, Config.MaxDepth, func(dirPath string, entries DirEntries, err error) error {
 		if err != nil {
 			Stats.Error(err)

@@ -522,7 +522,7 @@ func TestRcat(t *testing.T) {
 	check(false)
 }
 
-func TestRmdirs(t *testing.T) {
+func TestRmdirsNoLeaveRoot(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	r.Mkdir(r.Fremote)
@@ -562,7 +562,7 @@ func TestRmdirs(t *testing.T) {
 		fs.Config.ModifyWindow,
 	)
 
-	require.NoError(t, fs.Rmdirs(r.Fremote, ""))
+	require.NoError(t, fs.Rmdirs(r.Fremote, "", false))
 
 	fstest.CheckListingWithPrecision(
 		t,
@@ -578,6 +578,44 @@ func TestRmdirs(t *testing.T) {
 		fs.Config.ModifyWindow,
 	)
 
+}
+
+func TestRmdirsLeaveRoot(t *testing.T){
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	r.Mkdir(r.Fremote)
+
+	r.ForceMkdir(r.Fremote)
+
+	require.NoError(t, fs.Mkdir(r.Fremote, "A1"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A1/B1"))
+	require.NoError(t, fs.Mkdir(r.Fremote, "A1/B1/C1"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+		},
+		[]string{
+			"A1",
+			"A1/B1",
+			"A1/B1/C1",
+		},
+		fs.Config.ModifyWindow,
+	)
+
+	require.NoError(t, fs.Rmdirs(r.Fremote, "/A1", true))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+		},
+		[]string{
+			"A1",
+		},
+		fs.Config.ModifyWindow,
+	)
 }
 
 func TestMoveFile(t *testing.T) {

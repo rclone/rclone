@@ -457,6 +457,10 @@ This can be useful as an additional layer of protection for immutable
 or append-only data sets (notably backup archives), where modification
 implies corruption and should not be propagated.
 
+## --leave-root ###
+
+During rmdirs it will not remove root directory, even if it's empty.
+
 ### --log-file=FILE ###
 
 Log all of rclone's output to FILE.  This is not active by default.
