@@ -594,8 +594,7 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 	fstest.CheckListingWithPrecision(
 		t,
 		r.Fremote,
-		[]fstest.Item{
-		},
+		[]fstest.Item{},
 		[]string{
 			"A1",
 			"A1/B1",
@@ -609,8 +608,7 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 	fstest.CheckListingWithPrecision(
 		t,
 		r.Fremote,
-		[]fstest.Item{
-		},
+		[]fstest.Item{},
 		[]string{
 			"A1",
 		},
