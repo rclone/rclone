@@ -580,7 +580,7 @@ func TestRmdirsNoLeaveRoot(t *testing.T) {
 
 }
 
-func TestRmdirsLeaveRoot(t *testing.T){
+func TestRmdirsLeaveRoot(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
 	r.Mkdir(r.Fremote)
