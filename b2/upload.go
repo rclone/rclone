@@ -182,9 +182,6 @@ func (up *largeUpload) clearUploadURL() {
 
 // Transfer a chunk
 func (up *largeUpload) transferChunk(part int64, body []byte) error {
-	in := newHashAppendingReader(bytes.NewReader(body), sha1.New())
-	size := int64(len(body)) + int64(in.AdditionalLength())
-
 	err := up.f.pacer.Call(func() (bool, error) {
 		fs.Debugf(up.o, "Sending chunk %d length %d", part, len(body))
 
@@ -193,6 +190,9 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		if err != nil {
 			return false, err
 		}
+
+		in := newHashAppendingReader(bytes.NewReader(body), sha1.New())
+		size := int64(len(body)) + int64(in.AdditionalLength())
 
 		// Authorization
 		//
@@ -238,6 +238,7 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 			upload = nil
 		}
 		up.returnUploadURL(upload)
+		up.sha1s[part-1] = in.HexSum()
 		return retry, err
 	})
 	if err != nil {
@@ -245,7 +246,6 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 	} else {
 		fs.Debugf(up.o, "Done sending chunk %d", part)
 	}
-	up.sha1s[part-1] = in.HexSum()
 	return err
 }
 
