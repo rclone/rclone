@@ -68,6 +68,7 @@ var hashTestSet = []hashTest{
 			fs.HashMD5:     "bf13fc19e5151ac57d4252e0e0f87abe",
 			fs.HashSHA1:    "3ab6543c08a75f292a5ecedac87ec41642d12166",
 			fs.HashDropbox: "214d2fcf3566e94c99ad2f59bd993daca46d8521a0c447adf4b324f53fddc0c7",
+			fs.HashS3ETag:  "bf13fc19e5151ac57d4252e0e0f87abe0001",
 		},
 	},
 	// Empty data set
@@ -77,13 +78,14 @@ var hashTestSet = []hashTest{
 			fs.HashMD5:     "d41d8cd98f00b204e9800998ecf8427e",
 			fs.HashSHA1:    "da39a3ee5e6b4b0d3255bfef95601890afd80709",
 			fs.HashDropbox: "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+			fs.HashS3ETag:  "d41d8cd98f00b204e9800998ecf8427e0001",
 		},
 	},
 }
 
 func TestMultiHasher(t *testing.T) {
 	for _, test := range hashTestSet {
-		mh := fs.NewMultiHasher()
+		mh := fs.NewMultiHasher(int64(len(test.input)))
 		n, err := io.Copy(mh, bytes.NewBuffer(test.input))
 		require.NoError(t, err)
 		assert.Len(t, test.input, int(n))
@@ -105,7 +107,7 @@ func TestMultiHasher(t *testing.T) {
 func TestMultiHasherTypes(t *testing.T) {
 	h := fs.HashSHA1
 	for _, test := range hashTestSet {
-		mh, err := fs.NewMultiHasherTypes(fs.NewHashSet(h))
+		mh, err := fs.NewMultiHasherTypes(fs.NewHashSet(h), int64(len(test.input)))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -120,7 +122,7 @@ func TestMultiHasherTypes(t *testing.T) {
 
 func TestHashStream(t *testing.T) {
 	for _, test := range hashTestSet {
-		sums, err := fs.HashStream(bytes.NewBuffer(test.input))
+		sums, err := fs.HashStream(bytes.NewBuffer(test.input), int64(len(test.input)))
 		require.NoError(t, err)
 		for k, v := range sums {
 			expect, ok := test.output[k]
@@ -139,7 +141,7 @@ func TestHashStream(t *testing.T) {
 func TestHashStreamTypes(t *testing.T) {
 	h := fs.HashSHA1
 	for _, test := range hashTestSet {
-		sums, err := fs.HashStreamTypes(bytes.NewBuffer(test.input), fs.NewHashSet(h))
+		sums, err := fs.HashStreamTypes(bytes.NewBuffer(test.input), fs.NewHashSet(h), int64(len(test.input)))
 		require.NoError(t, err)
 		assert.Len(t, sums, 1)
 		assert.Equal(t, sums[h], test.output[h])

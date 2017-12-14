@@ -14,12 +14,15 @@ What happens if you CTRL-C a multipart upload
 */
 
 import (
+	"encoding/binary"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
 	"net/url"
 	"path"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -36,6 +39,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/s3/s3sizes"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 )
@@ -220,11 +224,10 @@ func init() {
 
 // Constants
 const (
-	metaMtime      = "Mtime"                       // the meta key to store mtime in - eg X-Amz-Meta-Mtime
-	listChunkSize  = 1000                          // number of items to read at once
-	maxRetries     = 10                            // number of retries to make of operations
-	maxSizeForCopy = 5 * 1024 * 1024 * 1024        // The maximum size of object we can COPY
-	maxFileSize    = 5 * 1024 * 1024 * 1024 * 1024 // largest possible upload file size
+	metaMtime      = "Mtime"                // the meta key to store mtime in - eg X-Amz-Meta-Mtime
+	listChunkSize  = 1000                   // number of items to read at once
+	maxRetries     = 10                     // number of retries to make of operations
+	maxSizeForCopy = 5 * 1024 * 1024 * 1024 // The maximum size of object we can COPY
 )
 
 // Globals
@@ -799,7 +802,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+	return fs.HashSet(fs.HashS3ETag)
 }
 
 // ------------------------------------------------------------
@@ -822,20 +825,24 @@ func (o *Object) Remote() string {
 	return o.remote
 }
 
-var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
+var matchETag = regexp.MustCompile(`^([0-9a-f]{32})(?:-([1-9][0-9]{0,3}|10000))?$`)
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
+	if t != fs.HashS3ETag {
 		return "", fs.ErrHashUnsupported
 	}
 	etag := strings.Trim(strings.ToLower(o.etag), `"`)
-	// Check the etag is a valid md5sum
-	if !matchMd5.MatchString(etag) {
-		// fs.Debugf(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
-		return "", nil
+	if found := matchETag.FindStringSubmatch(etag); found != nil {
+		if found[2] == "" {
+			found[2] = `1`
+		}
+		countBytes := make([]byte, 2)
+		countInt, _ := strconv.ParseUint(found[2], 10, 16)
+		binary.BigEndian.PutUint16(countBytes, uint16(countInt))
+		return fmt.Sprintf(`%s%s`, found[1], hex.EncodeToString(countBytes)), nil
 	}
-	return etag, nil
+	return "", nil
 }
 
 // Size returns the size of an object in bytes
@@ -987,20 +994,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		u.Concurrency = 2
 		u.LeavePartsOnError = false
 		u.S3 = o.fs.c
-		u.PartSize = s3manager.MinUploadPartSize
-		size := src.Size()
-
-		if size == -1 {
-			// Make parts as small as possible while still being able to upload to the
-			// S3 file size limit. Rounded up to nearest MB.
-			u.PartSize = (((maxFileSize / s3manager.MaxUploadParts) >> 20) + 1) << 20
-			return
-		}
-		// Adjust PartSize until the number of parts is small enough.
-		if size/u.PartSize >= s3manager.MaxUploadParts {
-			// Calculate partition size rounded up to the nearest MB
-			u.PartSize = (((size / s3manager.MaxUploadParts) >> 20) + 1) << 20
-		}
+		u.PartSize = s3sizes.PartSize(src.Size())
 	})
 
 	// Set the mtime in the meta data

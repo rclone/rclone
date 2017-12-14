@@ -494,7 +494,7 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType fs.HashType) (hash s
 	}
 
 	// pipe into hash
-	m := fs.NewMultiHasher()
+	m := fs.NewMultiHasher(o.UnWrap().Size())
 	_, err = io.Copy(m, out)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to hash data")

@@ -85,8 +85,8 @@ func NewItem(Path, Content string, modTime time.Time) Item {
 		ModTime: modTime,
 		Size:    int64(len(Content)),
 	}
-	hash := fs.NewMultiHasher()
 	buf := bytes.NewBufferString(Content)
+	hash := fs.NewMultiHasher(int64(buf.Len()))
 	_, err := io.Copy(hash, buf)
 	if err != nil {
 		log.Fatalf("Failed to create item: %v", err)

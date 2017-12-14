@@ -210,7 +210,7 @@ func (r *results) checkStreaming() {
 
 	contents := "thinking of test strings is hard"
 	buf := bytes.NewBufferString(contents)
-	hashIn := fs.NewMultiHasher()
+	hashIn := fs.NewMultiHasher(int64(buf.Len()))
 	in := io.TeeReader(buf, hashIn)
 
 	objIn := fs.NewStaticObjectInfo("checkStreamingTest", time.Now(), -1, true, nil, r.f)

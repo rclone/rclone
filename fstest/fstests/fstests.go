@@ -282,7 +282,7 @@ func testPut(t *testing.T, file *fstest.Item) string {
 again:
 	contents := fstest.RandomString(100)
 	buf := bytes.NewBufferString(contents)
-	hash := fs.NewMultiHasher()
+	hash := fs.NewMultiHasher(int64(buf.Len()))
 	in := io.TeeReader(buf, hash)
 
 	file.Size = int64(buf.Len())
@@ -817,7 +817,7 @@ func TestObjectUpdate(t *testing.T) {
 	skipIfNotOk(t)
 	contents := fstest.RandomString(200)
 	buf := bytes.NewBufferString(contents)
-	hash := fs.NewMultiHasher()
+	hash := fs.NewMultiHasher(int64(buf.Len()))
 	in := io.TeeReader(buf, hash)
 
 	file1.Size = int64(buf.Len())
@@ -896,7 +896,7 @@ again:
 	contentSize := 100
 	contents := fstest.RandomString(contentSize)
 	buf := bytes.NewBufferString(contents)
-	hash := fs.NewMultiHasher()
+	hash := fs.NewMultiHasher(int64(buf.Len()))
 	in := io.TeeReader(buf, hash)
 
 	file.Size = -1
