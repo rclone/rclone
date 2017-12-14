@@ -603,7 +603,7 @@ func TestRmdirsLeaveRoot(t *testing.T) {
 		fs.Config.ModifyWindow,
 	)
 
-	require.NoError(t, fs.Rmdirs(r.Fremote, "/A1", true))
+	require.NoError(t, fs.Rmdirs(r.Fremote, "A1", true))
 
 	fstest.CheckListingWithPrecision(
 		t,
