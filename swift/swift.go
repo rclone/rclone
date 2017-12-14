@@ -191,17 +191,15 @@ func parsePath(path string) (container, directory string, err error) {
 func swiftConnection(name string) (*swift.Connection, error) {
 	c := &swift.Connection{
 		// Keep these in the same order as the Config for ease of checking
-		UserName:     fs.ConfigFileGet(name, "user"),
-		ApiKey:       fs.ConfigFileGet(name, "key"),
-		AuthUrl:      fs.ConfigFileGet(name, "auth"),
-		UserId:       fs.ConfigFileGet(name, "user_id"),
-		Domain:       fs.ConfigFileGet(name, "domain"),
-		Tenant:       fs.ConfigFileGet(name, "tenant"),
-		TenantId:     fs.ConfigFileGet(name, "tenant_id"),
-		TenantDomain: fs.ConfigFileGet(name, "tenant_domain"),
-		Region:       fs.ConfigFileGet(name, "region"),
-		// I get the StorageUrl already here, in case the user wants to set it manually
-		// (e.g. when using alternate authentication)
+		UserName:       fs.ConfigFileGet(name, "user"),
+		ApiKey:         fs.ConfigFileGet(name, "key"),
+		AuthUrl:        fs.ConfigFileGet(name, "auth"),
+		UserId:         fs.ConfigFileGet(name, "user_id"),
+		Domain:         fs.ConfigFileGet(name, "domain"),
+		Tenant:         fs.ConfigFileGet(name, "tenant"),
+		TenantId:       fs.ConfigFileGet(name, "tenant_id"),
+		TenantDomain:   fs.ConfigFileGet(name, "tenant_domain"),
+		Region:         fs.ConfigFileGet(name, "region"),
 		StorageUrl:     fs.ConfigFileGet(name, "storage_url"),
 		AuthToken:      fs.ConfigFileGet(name, "auth_token"),
 		AuthVersion:    fs.ConfigFileGetInt(name, "auth_version", 0),
@@ -231,6 +229,11 @@ func swiftConnection(name string) (*swift.Connection, error) {
 			return nil, err
 		}
 	}
+	// Make sure we re-auth with the AuthToken and StorageUrl
+	// provided by wrapping the existing auth
+	if c.StorageUrl != "" || c.AuthToken != "" {
+		c.Auth = newAuth(c.Auth, c.StorageUrl, c.AuthToken)
+	}
 	return c, nil
 }
 
@@ -257,12 +260,6 @@ func NewFsWithConnection(name, root string, c *swift.Connection, noCheckContaine
 		WriteMimeType: true,
 		BucketBased:   true,
 	}).Fill(f)
-	// StorageURL overloading
-	storageURL := fs.ConfigFileGet(name, "storage_url")
-	if storageURL != "" {
-		f.c.StorageUrl = storageURL
-		f.c.Auth = newAuth(f.c.Auth, storageURL)
-	}
 	if f.root != "" {
 		f.root += "/"
 		// Check to see if the object exists - ignoring directory markers
