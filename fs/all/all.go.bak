@@ -19,7 +19,6 @@ import (
 	_ "github.com/ncw/rclone/pcloud"
 	_ "github.com/ncw/rclone/qingstor"
 	_ "github.com/ncw/rclone/s3"
-	_ "github.com/ncw/rclone/oss"
 	_ "github.com/ncw/rclone/sftp"
 	_ "github.com/ncw/rclone/swift"
 	_ "github.com/ncw/rclone/webdav"
