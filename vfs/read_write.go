@@ -39,12 +39,6 @@ var (
 )
 
 func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandle, err error) {
-	// Make a place for the file
-	osPath, err := d.vfs.cache.mkdir(remote)
-	if err != nil {
-		return nil, errors.Wrap(err, "open RW handle failed to make cache directory")
-	}
-
 	// if O_CREATE and O_EXCL are set and if path already exists, then return EEXIST
 	if flags&(os.O_CREATE|os.O_EXCL) == os.O_CREATE|os.O_EXCL && f.exists() {
 		return nil, EEXIST
@@ -56,7 +50,16 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 		d:      d,
 		remote: remote,
 		flags:  flags,
-		osPath: osPath,
+	}
+
+	// mark the file as open in the cache - must be done before the mkdir
+	fh.d.vfs.cache.open(fh.remote)
+
+	// Make a place for the file
+	fh.osPath, err = d.vfs.cache.mkdir(remote)
+	if err != nil {
+		fh.d.vfs.cache.close(fh.remote)
+		return nil, errors.Wrap(err, "open RW handle failed to make cache directory")
 	}
 
 	rdwrMode := fh.flags & accessModeMask
@@ -129,7 +132,6 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	}
 	fh.File = fd
 	fh.opened = true
-	fh.d.vfs.cache.open(fh.remote)
 	fh.d.addObject(fh.file) // make sure the directory has this object in it now
 	return nil
 }
@@ -167,6 +169,7 @@ func (fh *RWFileHandle) close() (err error) {
 		return ECLOSED
 	}
 	fh.closed = true
+	defer fh.d.vfs.cache.close(fh.remote)
 	rdwrMode := fh.flags & accessModeMask
 	if rdwrMode != os.O_RDONLY {
 		// leave writer open until file is transferred
@@ -196,7 +199,6 @@ func (fh *RWFileHandle) close() (err error) {
 			fh.file.setSize(fi.Size())
 		}
 	}
-	fh.d.vfs.cache.close(fh.remote)
 
 	// Close the underlying file
 	err = fh.File.Close()

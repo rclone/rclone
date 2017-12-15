@@ -267,6 +267,9 @@ func (c *cache) removeDir(dir string) bool {
 	osPath := c.toOSPath(dir)
 	err := os.Remove(osPath)
 	if err == nil || os.IsNotExist(err) {
+		if err == nil {
+			fs.Debugf(dir, "Removed empty directory")
+		}
 		return true
 	}
 	if !os.IsExist(err) {
