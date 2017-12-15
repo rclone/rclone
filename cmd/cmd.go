@@ -198,6 +198,8 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 	fsrc, srcFileName = newFsSrc(args[0])
 	// If copying a file...
 	dstRemote := args[1]
+	// If file exists then srcFileName != "", however if the file
+	// doesn't exist then we assume it is a directory...
 	if srcFileName != "" {
 		dstRemote, dstFileName = fs.RemoteSplit(dstRemote)
 		if dstRemote == "" {
@@ -207,7 +209,16 @@ func NewFsSrcDstFiles(args []string) (fsrc fs.Fs, srcFileName string, fdst fs.Fs
 			log.Fatalf("%q is a directory", args[1])
 		}
 	}
-	fdst = newFsDst(dstRemote)
+	fdst, err := fs.NewFs(dstRemote)
+	switch err {
+	case fs.ErrorIsFile:
+		fs.Stats.Error(err)
+		log.Fatalf("Source doesn't exist or is a directory and destination is a file")
+	case nil:
+	default:
+		fs.Stats.Error(err)
+		log.Fatalf("Failed to create file system for destination %q: %v", dstRemote, err)
+	}
 	fs.CalculateModifyWindow(fdst, fsrc)
 	return
 }
