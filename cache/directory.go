@@ -22,12 +22,22 @@ type Directory struct {
 	CacheModTime int64  `json:"modTime"` // modification or creation time - IsZero for unknown
 	CacheSize    int64  `json:"size"`    // size of directory and contents or -1 if unknown
 
-	CacheItems int64  `json:"items"`     // number of objects or -1 for unknown
-	CacheType  string `json:"cacheType"` // object type
+	CacheItems int64      `json:"items"`     // number of objects or -1 for unknown
+	CacheType  string     `json:"cacheType"` // object type
+	CacheTs    *time.Time `json:",omitempty"`
 }
 
 // NewDirectory builds an empty dir which will be used to unmarshal data in it
 func NewDirectory(f *Fs, remote string) *Directory {
+	cd := ShallowDirectory(f, remote)
+	t := time.Now()
+	cd.CacheTs = &t
+
+	return cd
+}
+
+// ShallowDirectory builds an empty dir which will be used to unmarshal data in it
+func ShallowDirectory(f *Fs, remote string) *Directory {
 	var cd *Directory
 	fullRemote := cleanPath(path.Join(f.Root(), remote))
 
@@ -54,6 +64,7 @@ func DirectoryFromOriginal(f *Fs, d fs.Directory) *Directory {
 
 	dir := cleanPath(path.Dir(fullRemote))
 	name := cleanPath(path.Base(fullRemote))
+	t := time.Now()
 	cd = &Directory{
 		Directory:    d,
 		CacheFs:      f,
@@ -63,6 +74,7 @@ func DirectoryFromOriginal(f *Fs, d fs.Directory) *Directory {
 		CacheSize:    d.Size(),
 		CacheItems:   d.Items(),
 		CacheType:    "Directory",
+		CacheTs:      &t,
 	}
 
 	return cd

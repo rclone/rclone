@@ -27,6 +27,7 @@ type Object struct {
 	CacheSize     int64                  `json:"size"`     // size of directory and contents or -1 if unknown
 	CacheStorable bool                   `json:"storable"` // says whether this object can be stored
 	CacheType     string                 `json:"cacheType"`
+	CacheTs       time.Time              `json:"cacheTs"`
 	cacheHashes   map[fs.HashType]string // all supported hashes cached
 
 	refreshMutex sync.Mutex
@@ -45,6 +46,7 @@ func NewObject(f *Fs, remote string) *Object { //0745 379 768
 		CacheSize:     0,
 		CacheStorable: false,
 		CacheType:     "Object",
+		CacheTs:       time.Now(),
 	}
 	return co
 }
@@ -99,6 +101,7 @@ func ObjectFromOriginal(f *Fs, o fs.Object) *Object {
 		Name:      cleanPath(name),
 		Dir:       cleanPath(dir),
 		CacheType: "Object",
+		CacheTs:   time.Now(),
 	}
 	co.updateData(o)
 	return co
@@ -109,6 +112,7 @@ func (o *Object) updateData(source fs.Object) {
 	o.CacheModTime = source.ModTime().UnixNano()
 	o.CacheSize = source.Size()
 	o.CacheStorable = source.Storable()
+	o.CacheTs = time.Now()
 	o.cacheHashes = make(map[fs.HashType]string)
 }
 
@@ -145,6 +149,11 @@ func (o *Object) abs() string {
 func (o *Object) parentRemote() string {
 	absPath := o.abs()
 	return cleanPath(path.Dir(absPath))
+}
+
+// parentDir returns the absolute path parent remote
+func (o *Object) parentDir() *Directory {
+	return NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote())))
 }
 
 // ModTime returns the cached ModTime
