@@ -172,7 +172,7 @@ type Storage interface {
 	RemoveDir(fp string) error
 
 	// remove a directory and all the objects and chunks in it
-	ExpireDir(fp string) error
+	ExpireDir(cd *Directory) error
 
 	// will return an object (file) or error if it doesn't find it
 	GetObject(cachedObject *Object) (err error)
@@ -186,10 +186,6 @@ type Storage interface {
 
 	// Stats returns stats about the cache storage
 	Stats() (map[string]map[string]interface{}, error)
-
-	// if the storage can cleanup on a cron basis
-	// otherwise it can do a noop operation
-	CleanEntriesByAge(entryAge time.Duration)
 
 	// Purge will flush the entire cache
 	Purge()
@@ -219,7 +215,6 @@ type Fs struct {
 	cacheWrites        bool
 
 	lastChunkCleanup time.Time
-	lastRootCleanup  time.Time
 	cleanupMu        sync.Mutex
 	rateLimiter      *rate.Limiter
 	plexConnector    *plexConnector
@@ -231,7 +226,6 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point cache remote at itself - check the value of the remote setting")
 	}
-
 	// Look for a file first
 	remotePath := path.Join(remote, rpath)
 	wrappedFs, wrapErr := fs.NewFs(remotePath)
@@ -291,7 +285,6 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		chunkMemory:        !*cacheChunkNoMemory,
 		cacheWrites:        *cacheStoreWrites,
 		lastChunkCleanup:   time.Now().Truncate(time.Hour * 24 * 30),
-		lastRootCleanup:    time.Now().Truncate(time.Hour * 24 * 30),
 	}
 	if f.chunkTotalSize < (f.chunkSize * int64(f.totalWorkers)) {
 		return nil, errors.Errorf("don't set cache-total-chunk-size(%v) less than cache-chunk-size(%v) * cache-workers(%v)",
@@ -380,7 +373,6 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		Move:                    f.Move,
 		DirMove:                 f.DirMove,
 		DirChangeNotify:         nil,
-		DirCacheFlush:           f.DirCacheFlush,
 		PutUnchecked:            f.PutUnchecked,
 		PutStream:               f.PutStream,
 		CleanUp:                 f.CleanUp,
@@ -388,6 +380,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		WrapFs:                  f.WrapFs,
 		SetWrapper:              f.SetWrapper,
 	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
+	f.features.DirCacheFlush = f.DirCacheFlush
 
 	return f, wrapErr
 }
@@ -421,7 +414,12 @@ func (f *Fs) ChunkSize() int64 {
 func (f *Fs) NewObject(remote string) (fs.Object, error) {
 	co := NewObject(f, remote)
 	err := f.cache.GetObject(co)
-	if err == nil {
+	if err != nil {
+		fs.Debugf(remote, "find: error: %v", err)
+	} else if time.Now().After(co.CacheTs.Add(f.fileAge)) {
+		fs.Debugf(remote, "find: cold object ts: %v", co.CacheTs)
+	} else {
+		fs.Debugf(remote, "find: warm object ts: %v", co.CacheTs)
 		return co, nil
 	}
 	obj, err := f.Fs.NewObject(remote)
@@ -438,13 +436,17 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	// clean cache
 	go f.CleanUpCache(false)
 
-	cd := NewDirectory(f, dir)
+	cd := ShallowDirectory(f, dir)
 	entries, err = f.cache.GetDirEntries(cd)
 	if err != nil {
-		fs.Debugf(dir, "no dir entries in cache: %v", err)
+		fs.Debugf(dir, "list: error: %v", err)
+	} else if time.Now().After(cd.CacheTs.Add(f.fileAge)) {
+		fs.Debugf(dir, "list: cold listing: %v", cd.CacheTs)
 	} else if len(entries) == 0 {
 		// TODO: read empty dirs from source?
+		fs.Debugf(dir, "list: empty listing")
 	} else {
+		fs.Debugf(dir, "list: warm %v from cache for: %v, ts: %v", len(entries), cd.abs(), cd.CacheTs)
 		return entries, nil
 	}
 
@@ -452,6 +454,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	if err != nil {
 		return nil, err
 	}
+	fs.Debugf(dir, "list: read %v from source", len(entries))
 
 	var cachedEntries fs.DirEntries
 	for _, entry := range entries {
@@ -470,6 +473,13 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}
 	if err != nil {
 		fs.Errorf(dir, "err caching listing: %v", err)
+	} else {
+		t := time.Now()
+		cd.CacheTs = &t
+		err := f.cache.AddDir(cd)
+		if err != nil {
+			fs.Errorf(cd, "list: save error: %v", err)
+		}
 	}
 
 	return cachedEntries, nil
@@ -548,8 +558,17 @@ func (f *Fs) Mkdir(dir string) error {
 	}
 	fs.Infof(f, "create dir '%s'", dir)
 
-	// make an empty dir
-	_ = f.cache.AddDir(NewDirectory(f, dir))
+	// expire parent of new dir
+	cd := NewDirectory(f, cleanPath(dir))
+	err = f.cache.AddDir(cd)
+	if err != nil {
+		fs.Errorf(dir, "mkdir: add error: %v", err)
+	}
+	parentCd := NewDirectory(f, cleanPath(path.Dir(dir)))
+	err = f.cache.ExpireDir(parentCd)
+	if err != nil {
+		fs.Errorf(dir, "mkdir: expire error: %v", err)
+	}
 
 	// clean cache
 	go f.CleanUpCache(false)
@@ -562,8 +581,20 @@ func (f *Fs) Rmdir(dir string) error {
 	if err != nil {
 		return err
 	}
+	fs.Infof(f, "rm dir '%s'", dir)
 
-	_ = f.cache.RemoveDir(NewDirectory(f, dir).abs())
+	// remove dir data
+	d := NewDirectory(f, dir)
+	err = f.cache.RemoveDir(d.abs())
+	if err != nil {
+		fs.Errorf(dir, "rmdir: remove error: %v", err)
+	}
+	// expire parent
+	parentCd := NewDirectory(f, cleanPath(path.Dir(dir)))
+	err = f.cache.ExpireDir(parentCd)
+	if err != nil {
+		fs.Errorf(dir, "rmdir: expire error: %v", err)
+	}
 
 	// clean cache
 	go f.CleanUpCache(false)
@@ -593,12 +624,26 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		return err
 	}
 
+	// delete src dir from cache along with all chunks
 	srcDir := NewDirectory(srcFs, srcRemote)
-	// clear any likely dir cached
-	_ = f.cache.ExpireDir(srcDir.parentRemote())
-	_ = f.cache.ExpireDir(NewDirectory(srcFs, dstRemote).parentRemote())
-	// delete src dir
-	_ = f.cache.RemoveDir(srcDir.abs())
+	err = f.cache.RemoveDir(srcDir.abs())
+	if err != nil {
+		fs.Errorf(srcRemote, "dirmove: remove error: %v", err)
+	}
+	// expire src parent
+	srcParent := NewDirectory(f, cleanPath(path.Dir(srcRemote)))
+	err = f.cache.ExpireDir(srcParent)
+	if err != nil {
+		fs.Errorf(srcRemote, "dirmove: expire error: %v", err)
+	}
+
+	// expire parent dir at the destination path
+	dstParent := NewDirectory(f, cleanPath(path.Dir(dstRemote)))
+	err = f.cache.ExpireDir(dstParent)
+	if err != nil {
+		fs.Errorf(dstRemote, "dirmove: expire error: %v", err)
+	}
+	// TODO: precache dst dir and save the chunks
 
 	// clean cache
 	go f.CleanUpCache(false)
@@ -682,12 +727,16 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	} else {
 		obj, err = put(in, src, options...)
 	}
-
 	if err != nil {
 		fs.Errorf(src, "error saving in cache: %v", err)
 		return nil, err
 	}
 	cachedObj := ObjectFromOriginal(f, obj).persist()
+	// expire parent
+	err = f.cache.ExpireDir(cachedObj.parentDir())
+	if err != nil {
+		fs.Errorf(cachedObj, "put: expire error: %v", err)
+	}
 
 	// clean cache
 	go f.CleanUpCache(false)
@@ -696,7 +745,7 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 
 // Put in to the remote path with the modTime given of the given size
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
-	fs.Debugf(f, "put data at '%s'", src.Remote())
+	fs.Infof(f, "put data at '%s'", src.Remote())
 	return f.put(in, src, options, f.Fs.Put)
 }
 
@@ -737,7 +786,6 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Errorf(srcObj, "can't copy - not wrapping same remote types")
 		return nil, fs.ErrorCantCopy
 	}
-
 	fs.Infof(f, "copy obj '%s' -> '%s'", srcObj.abs(), remote)
 
 	// store in cache
@@ -752,12 +800,23 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// persist new
-	cachedObj := ObjectFromOriginal(f, obj).persist()
-	_ = f.cache.ExpireDir(cachedObj.parentRemote())
+	co := ObjectFromOriginal(f, obj).persist()
+	// expire the destination path
+	err = f.cache.ExpireDir(co.parentDir())
+	if err != nil {
+		fs.Errorf(co, "copy: expire error: %v", err)
+	}
+
+	// expire src parent
+	srcParent := NewDirectory(f, cleanPath(path.Dir(src.Remote())))
+	err = f.cache.ExpireDir(srcParent)
+	if err != nil {
+		fs.Errorf(src, "copy: expire error: %v", err)
+	}
 
 	// clean cache
 	go f.CleanUpCache(false)
-	return cachedObj, nil
+	return co, nil
 }
 
 // Move src to this remote using server side move operations.
@@ -773,12 +832,10 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs.Errorf(srcObj, "can't move - not same remote type")
 		return nil, fs.ErrorCantMove
 	}
-
 	if srcObj.CacheFs.Fs.Name() != f.Fs.Name() {
 		fs.Errorf(srcObj, "can't move - not wrapping same remote types")
 		return nil, fs.ErrorCantMove
 	}
-
 	fs.Infof(f, "moving obj '%s' -> %s", srcObj.abs(), remote)
 
 	// save in cache
@@ -793,13 +850,23 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	}
 
 	// remove old
-	_ = f.cache.ExpireDir(srcObj.parentRemote())
-	_ = f.cache.RemoveObject(srcObj.abs())
+	err = f.cache.RemoveObject(srcObj.abs())
+	if err != nil {
+		fs.Errorf(srcObj, "move: remove error: %v", err)
+	}
+	// expire old parent
+	err = f.cache.ExpireDir(srcObj.parentDir())
+	if err != nil {
+		fs.Errorf(srcObj, "move: expire error: %v", err)
+	}
 
 	// persist new
-	cachedObj := ObjectFromOriginal(f, obj)
-	cachedObj.persist()
-	_ = f.cache.ExpireDir(cachedObj.parentRemote())
+	cachedObj := ObjectFromOriginal(f, obj).persist()
+	// expire new parent
+	err = f.cache.ExpireDir(cachedObj.parentDir())
+	if err != nil {
+		fs.Errorf(cachedObj, "move: expire error: %v", err)
+	}
 
 	// clean cache
 	go f.CleanUpCache(false)
@@ -872,11 +939,6 @@ func (f *Fs) CleanUpCache(ignoreLastTs bool) {
 	if ignoreLastTs || time.Now().After(f.lastChunkCleanup.Add(f.chunkCleanInterval)) {
 		f.cache.CleanChunksBySize(f.chunkTotalSize)
 		f.lastChunkCleanup = time.Now()
-	}
-
-	if ignoreLastTs || time.Now().After(f.lastRootCleanup.Add(f.fileAge/4)) {
-		f.cache.CleanEntriesByAge(f.fileAge)
-		f.lastRootCleanup = time.Now()
 	}
 }
 
