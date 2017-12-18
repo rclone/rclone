@@ -9,6 +9,7 @@ import (
 	"hash/fnv"
 	"io/ioutil"
 	"log"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -44,6 +45,8 @@ type meta struct {
 // Ensure that a database can be opened without error.
 func TestOpen(t *testing.T) {
 	path := tempfile()
+	defer os.RemoveAll(path)
+
 	db, err := bolt.Open(path, 0666, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -79,6 +82,7 @@ func TestOpen_ErrNotExists(t *testing.T) {
 // Ensure that opening a file that is not a Bolt database returns ErrInvalid.
 func TestOpen_ErrInvalid(t *testing.T) {
 	path := tempfile()
+	defer os.RemoveAll(path)
 
 	f, err := os.Create(path)
 	if err != nil {
@@ -90,7 +94,6 @@ func TestOpen_ErrInvalid(t *testing.T) {
 	if err := f.Close(); err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(path)
 
 	if _, err := bolt.Open(path, 0666, nil); err != bolt.ErrInvalid {
 		t.Fatalf("unexpected error: %s", err)
@@ -302,15 +305,16 @@ func TestOpen_Size_Large(t *testing.T) {
 // Ensure that a re-opened database is consistent.
 func TestOpen_Check(t *testing.T) {
 	path := tempfile()
+	defer os.RemoveAll(path)
 
 	db, err := bolt.Open(path, 0666, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if err := db.View(func(tx *bolt.Tx) error { return <-tx.Check() }); err != nil {
+	if err = db.View(func(tx *bolt.Tx) error { return <-tx.Check() }); err != nil {
 		t.Fatal(err)
 	}
-	if err := db.Close(); err != nil {
+	if err = db.Close(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -334,18 +338,19 @@ func TestOpen_MetaInitWriteError(t *testing.T) {
 // Ensure that a database that is too small returns an error.
 func TestOpen_FileTooSmall(t *testing.T) {
 	path := tempfile()
+	defer os.RemoveAll(path)
 
 	db, err := bolt.Open(path, 0666, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	pageSize := int64(db.Info().PageSize)
-	if err := db.Close(); err != nil {
+	if err = db.Close(); err != nil {
 		t.Fatal(err)
 	}
 
 	// corrupt the database
-	if err := os.Truncate(path, pageSize); err != nil {
+	if err = os.Truncate(path, pageSize); err != nil {
 		t.Fatal(err)
 	}
 
@@ -415,6 +420,60 @@ func TestDB_Open_InitialMmapSize(t *testing.T) {
 	}
 }
 
+// TestDB_Open_ReadOnly checks a database in read only mode can read but not write.
+func TestDB_Open_ReadOnly(t *testing.T) {
+	// Create a writable db, write k-v and close it.
+	db := MustOpenDB()
+	defer db.MustClose()
+
+	if err := db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucket([]byte("widgets"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := b.Put([]byte("foo"), []byte("bar")); err != nil {
+			t.Fatal(err)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+	if err := db.DB.Close(); err != nil {
+		t.Fatal(err)
+	}
+
+	f := db.f
+	o := &bolt.Options{ReadOnly: true}
+	readOnlyDB, err := bolt.Open(f, 0666, o)
+	if err != nil {
+		panic(err)
+	}
+
+	if !readOnlyDB.IsReadOnly() {
+		t.Fatal("expect db in read only mode")
+	}
+
+	// Read from a read-only transaction.
+	if err := readOnlyDB.View(func(tx *bolt.Tx) error {
+		value := tx.Bucket([]byte("widgets")).Get([]byte("foo"))
+		if !bytes.Equal(value, []byte("bar")) {
+			t.Fatal("expect value 'bar', got", value)
+		}
+		return nil
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	// Can't launch read-write transaction.
+	if _, err := readOnlyDB.Begin(true); err != bolt.ErrDatabaseReadOnly {
+		t.Fatalf("unexpected error: %s", err)
+	}
+
+	if err := readOnlyDB.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
 // TestOpen_BigPage checks the database uses bigger pages when
 // changing PageSize.
 func TestOpen_BigPage(t *testing.T) {
@@ -454,7 +513,7 @@ func TestOpen_RecoverFreeList(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
 
@@ -528,6 +587,65 @@ func TestDB_BeginRW(t *testing.T) {
 	if err := tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
+}
+
+// TestDB_Concurrent_WriteTo checks that issuing WriteTo operations concurrently
+// with commits does not produce corrupted db files.
+func TestDB_Concurrent_WriteTo(t *testing.T) {
+	o := &bolt.Options{NoFreelistSync: false}
+	db := MustOpenWithOption(o)
+	defer db.MustClose()
+
+	var wg sync.WaitGroup
+	wtxs, rtxs := 5, 5
+	wg.Add(wtxs * rtxs)
+	f := func(tx *bolt.Tx) {
+		defer wg.Done()
+		f, err := ioutil.TempFile("", "bolt-")
+		if err != nil {
+			panic(err)
+		}
+		time.Sleep(time.Duration(rand.Intn(20)+1) * time.Millisecond)
+		tx.WriteTo(f)
+		tx.Rollback()
+		f.Close()
+		snap := &DB{nil, f.Name(), o}
+		snap.MustReopen()
+		defer snap.MustClose()
+		snap.MustCheck()
+	}
+
+	tx1, err := db.Begin(true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := tx1.CreateBucket([]byte("abc")); err != nil {
+		t.Fatal(err)
+	}
+	if err := tx1.Commit(); err != nil {
+		t.Fatal(err)
+	}
+
+	for i := 0; i < wtxs; i++ {
+		tx, err := db.Begin(true)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := tx.Bucket([]byte("abc")).Put([]byte{0}, []byte{0}); err != nil {
+			t.Fatal(err)
+		}
+		for j := 0; j < rtxs; j++ {
+			rtx, rerr := db.Begin(false)
+			if rerr != nil {
+				t.Fatal(rerr)
+			}
+			go f(rtx)
+		}
+		if err := tx.Commit(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	wg.Wait()
 }
 
 // Ensure that opening a transaction while the DB is closed returns an error.
@@ -1217,7 +1335,7 @@ func ExampleDB_Begin_ReadOnly() {
 	defer os.Remove(db.Path())
 
 	// Create a bucket using a read-write transaction.
-	if err := db.Update(func(tx *bolt.Tx) error {
+	if err = db.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket([]byte("widgets"))
 		return err
 	}); err != nil {
@@ -1230,16 +1348,16 @@ func ExampleDB_Begin_ReadOnly() {
 		log.Fatal(err)
 	}
 	b := tx.Bucket([]byte("widgets"))
-	if err := b.Put([]byte("john"), []byte("blue")); err != nil {
+	if err = b.Put([]byte("john"), []byte("blue")); err != nil {
 		log.Fatal(err)
 	}
-	if err := b.Put([]byte("abby"), []byte("red")); err != nil {
+	if err = b.Put([]byte("abby"), []byte("red")); err != nil {
 		log.Fatal(err)
 	}
-	if err := b.Put([]byte("zephyr"), []byte("purple")); err != nil {
+	if err = b.Put([]byte("zephyr"), []byte("purple")); err != nil {
 		log.Fatal(err)
 	}
-	if err := tx.Commit(); err != nil {
+	if err = tx.Commit(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -1253,11 +1371,11 @@ func ExampleDB_Begin_ReadOnly() {
 		fmt.Printf("%s likes %s\n", k, v)
 	}
 
-	if err := tx.Rollback(); err != nil {
+	if err = tx.Rollback(); err != nil {
 		log.Fatal(err)
 	}
 
-	if err := db.Close(); err != nil {
+	if err = db.Close(); err != nil {
 		log.Fatal(err)
 	}
 
@@ -1449,15 +1567,7 @@ type DB struct {
 
 // MustOpenDB returns a new, open DB at a temporary location.
 func MustOpenDB() *DB {
-	f := tempfile()
-	db, err := bolt.Open(f, 0666, nil)
-	if err != nil {
-		panic(err)
-	}
-	return &DB{
-		DB: db,
-		f:  f,
-	}
+	return MustOpenWithOption(nil)
 }
 
 // MustOpenDBWithOption returns a new, open DB at a temporary location with given options.

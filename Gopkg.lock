@@ -59,7 +59,7 @@
   branch = "master"
   name = "github.com/coreos/bbolt"
   packages = ["."]
-  revision = "a148de800f91fe6cbd8b2a472bbfdc09c4b6568f"
+  revision = "b4364696a62b73f08f0c9f97a9f1f2897577e114"
 
 [[projects]]
   name = "github.com/cpuguy83/go-md2man"

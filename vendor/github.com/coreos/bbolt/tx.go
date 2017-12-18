@@ -317,7 +317,11 @@ func (tx *Tx) WriteTo(w io.Writer) (n int64, err error) {
 	if err != nil {
 		return 0, err
 	}
-	defer func() { _ = f.Close() }()
+	defer func() {
+		if cerr := f.Close(); err == nil {
+			err = cerr
+		}
+	}()
 
 	// Generate a meta page. We use the same page data for both meta pages.
 	buf := make([]byte, tx.db.pageSize)
@@ -345,7 +349,7 @@ func (tx *Tx) WriteTo(w io.Writer) (n int64, err error) {
 	}
 
 	// Move past the meta pages in the file.
-	if _, err := f.Seek(int64(tx.db.pageSize*2), os.SEEK_SET); err != nil {
+	if _, err := f.Seek(int64(tx.db.pageSize*2), io.SeekStart); err != nil {
 		return n, fmt.Errorf("seek: %s", err)
 	}
 
@@ -356,7 +360,7 @@ func (tx *Tx) WriteTo(w io.Writer) (n int64, err error) {
 		return n, err
 	}
 
-	return n, f.Close()
+	return n, nil
 }
 
 // CopyFile copies the entire database to file at the given path.
@@ -391,6 +395,9 @@ func (tx *Tx) Check() <-chan error {
 }
 
 func (tx *Tx) check(ch chan error) {
+	// Force loading free list if opened in ReadOnly mode.
+	tx.db.loadFreelist()
+
 	// Check if any pages are double freed.
 	freed := make(map[pgid]bool)
 	all := make([]pgid, tx.db.freelist.count())
