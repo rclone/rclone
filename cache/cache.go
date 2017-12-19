@@ -334,12 +334,17 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	}
 	// Trap SIGINT and SIGTERM to close the DB handle gracefully
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
 	go func() {
-		s := <-c
-		fs.Debugf(f, "Got signal: %v", s)
-		if s == syscall.SIGINT || s == syscall.SIGTERM {
-			f.cache.Close()
+		for {
+			s := <-c
+			if s == syscall.SIGINT || s == syscall.SIGTERM {
+				fs.Debugf(f, "Got signal: %v", s)
+				f.cache.Close()
+			} else if s == syscall.SIGHUP {
+				fs.Infof(f, "Clearing cache from signal")
+				f.DirCacheFlush()
+			}
 		}
 	}()
 
