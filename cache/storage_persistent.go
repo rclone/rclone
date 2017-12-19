@@ -272,11 +272,12 @@ func (b *Persistent) RemoveDir(fp string) error {
 
 	// delete chunks on disk
 	// safe to ignore as the files might not have been open
-	if err != nil {
+	if err == nil {
 		_ = os.RemoveAll(path.Join(b.dataPath, fp))
+		_ = os.MkdirAll(b.dataPath, os.ModePerm)
 	}
 
-	return nil
+	return err
 }
 
 // ExpireDir will flush a CachedDirectory and all its objects from the objects
