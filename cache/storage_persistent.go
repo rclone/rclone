@@ -528,6 +528,10 @@ func (b *Persistent) CleanChunksBySize(maxSize int64) {
 	})
 
 	if err != nil {
+		if err == bolt.ErrDatabaseNotOpen {
+			// we're likely a late janitor and we need to end quietly as there's no guarantee of what exists anymore
+			return
+		}
 		fs.Errorf("cache", "cleanup failed: %v", err)
 	}
 }
