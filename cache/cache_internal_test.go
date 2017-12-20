@@ -541,7 +541,8 @@ func cleanupFs(t *testing.T, f fs.Fs, b *cache.Persistent) {
 func newLocalCacheCryptFs(t *testing.T, localRemote, cacheRemote, cryptRemote string, purge bool, cfg map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
 	dbPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote+".db")
-	boltDb, err := cache.GetPersistent(dbPath, &cache.Features{PurgeDb: true})
+	chunkPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote)
+	boltDb, err := cache.GetPersistent(dbPath, chunkPath, &cache.Features{PurgeDb: true})
 	require.NoError(t, err)
 
 	localExists := false
@@ -627,7 +628,8 @@ func newLocalCacheCryptFs(t *testing.T, localRemote, cacheRemote, cryptRemote st
 func newLocalCacheFs(t *testing.T, localRemote, cacheRemote string, cfg map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
 	dbPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote+".db")
-	boltDb, err := cache.GetPersistent(dbPath, &cache.Features{PurgeDb: true})
+	chunkPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote)
+	boltDb, err := cache.GetPersistent(dbPath, chunkPath, &cache.Features{PurgeDb: true})
 	require.NoError(t, err)
 
 	localExists := false
