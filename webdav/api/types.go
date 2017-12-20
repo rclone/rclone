@@ -25,8 +25,40 @@ type Response struct {
 }
 
 // Prop is the properties of a response
+//
+// This is a lazy way of decoding the multiple <s:propstat> in the
+// response.
+//
+// The response might look like this
+//
+// <d:response>
+//   <d:href>/remote.php/webdav/Nextcloud%20Manual.pdf</d:href>
+//   <d:propstat>
+//     <d:prop>
+//       <d:getlastmodified>Tue, 19 Dec 2017 22:02:36 GMT</d:getlastmodified>
+//       <d:getcontentlength>4143665</d:getcontentlength>
+//       <d:resourcetype/>
+//       <d:getetag>"048d7be4437ff7deeae94db50ff3e209"</d:getetag>
+//       <d:getcontenttype>application/pdf</d:getcontenttype>
+//     </d:prop>
+//     <d:status>HTTP/1.1 200 OK</d:status>
+//   </d:propstat>
+//   <d:propstat>
+//     <d:prop>
+//       <d:quota-used-bytes/>
+//       <d:quota-available-bytes/>
+//     </d:prop>
+//     <d:status>HTTP/1.1 404 Not Found</d:status>
+//   </d:propstat>
+// </d:response>
+//
+// So we elide the array of <d:propstat> and within that the array of
+// <d:prop> into one struct.
+//
+// Note that status collects all the status values for which we just
+// check the first is OK.
 type Prop struct {
-	Status   string    `xml:"DAV: status"`
+	Status   []string  `xml:"DAV: status"`
 	Name     string    `xml:"DAV: prop>displayname,omitempty"`
 	Type     *xml.Name `xml:"DAV: prop>resourcetype>collection,omitempty"`
 	Size     int64     `xml:"DAV: prop>getcontentlength,omitempty"`
@@ -38,7 +70,11 @@ var parseStatus = regexp.MustCompile(`^HTTP/[0-9.]+\s+(\d+)\s+(.*)$`)
 
 // StatusOK examines the Status and returns an OK flag
 func (p *Prop) StatusOK() bool {
-	match := parseStatus.FindStringSubmatch(p.Status)
+	// Assume OK if no statuses received
+	if len(p.Status) == 0 {
+		return true
+	}
+	match := parseStatus.FindStringSubmatch(p.Status[0])
 	if len(match) < 3 {
 		return false
 	}
