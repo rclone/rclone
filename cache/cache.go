@@ -48,6 +48,7 @@ const (
 var (
 	// Flags
 	cacheDbPath             = fs.StringP("cache-db-path", "", filepath.Join(fs.CacheDir, "cache-backend"), "Directory to cache DB")
+	cacheChunkPath          = fs.StringP("cache-chunk-path", "", filepath.Join(fs.CacheDir, "cache-backend"), "Directory to cached chunk files")
 	cacheDbPurge            = fs.BoolP("cache-db-purge", "", false, "Purge the cache DB before")
 	cacheChunkSize          = fs.StringP("cache-chunk-size", "", DefCacheChunkSize, "The size of a chunk")
 	cacheTotalChunkSize     = fs.StringP("cache-total-chunk-size", "", DefCacheTotalChunkSize, "The total size which the chunks can take up from the disk")
@@ -316,17 +317,32 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	}
 
 	dbPath := *cacheDbPath
+	chunkPath := *cacheChunkPath
+	// if the dbPath is non default but the chunk path is default, we overwrite the last to follow the same one as dbPath
+	if dbPath != filepath.Join(fs.CacheDir, "cache-backend") &&
+		chunkPath == filepath.Join(fs.CacheDir, "cache-backend") {
+		chunkPath = dbPath
+	}
 	if filepath.Ext(dbPath) != "" {
 		dbPath = filepath.Dir(dbPath)
+	}
+	if filepath.Ext(chunkPath) != "" {
+		chunkPath = filepath.Dir(chunkPath)
 	}
 	err = os.MkdirAll(dbPath, os.ModePerm)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to create cache directory %v", dbPath)
 	}
+	err = os.MkdirAll(chunkPath, os.ModePerm)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to create cache directory %v", chunkPath)
+	}
 
 	dbPath = filepath.Join(dbPath, name+".db")
-	fs.Infof(name, "Storage DB path: %v", dbPath)
-	f.cache, err = GetPersistent(dbPath, &Features{
+	chunkPath = filepath.Join(chunkPath, name)
+	fs.Infof(name, "Cache DB path: %v", dbPath)
+	fs.Infof(name, "Cache chunk path: %v", chunkPath)
+	f.cache, err = GetPersistent(dbPath, chunkPath, &Features{
 		PurgeDb: *cacheDbPurge,
 	})
 	if err != nil {

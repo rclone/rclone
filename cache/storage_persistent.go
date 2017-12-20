@@ -15,7 +15,6 @@ import (
 	"sync"
 
 	"io/ioutil"
-	"path/filepath"
 
 	bolt "github.com/coreos/bbolt"
 	"github.com/ncw/rclone/fs"
@@ -38,7 +37,7 @@ var boltMap = make(map[string]*Persistent)
 var boltMapMx sync.Mutex
 
 // GetPersistent returns a single instance for the specific store
-func GetPersistent(dbPath string, f *Features) (*Persistent, error) {
+func GetPersistent(dbPath, chunkPath string, f *Features) (*Persistent, error) {
 	// write lock to create one
 	boltMapMx.Lock()
 	defer boltMapMx.Unlock()
@@ -46,7 +45,7 @@ func GetPersistent(dbPath string, f *Features) (*Persistent, error) {
 		return b, nil
 	}
 
-	bb, err := newPersistent(dbPath, f)
+	bb, err := newPersistent(dbPath, chunkPath, f)
 	if err != nil {
 		return nil, err
 	}
@@ -72,12 +71,10 @@ type Persistent struct {
 }
 
 // newPersistent builds a new wrapper and connects to the bolt.DB file
-func newPersistent(dbPath string, f *Features) (*Persistent, error) {
-	dataPath := strings.TrimSuffix(dbPath, filepath.Ext(dbPath))
-
+func newPersistent(dbPath, chunkPath string, f *Features) (*Persistent, error) {
 	b := &Persistent{
 		dbPath:   dbPath,
-		dataPath: dataPath,
+		dataPath: chunkPath,
 		features: f,
 	}
 
