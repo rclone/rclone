@@ -554,6 +554,9 @@ func (f *Fs) list(dir string, recurse bool, fn listFn) error {
 		}
 		// Use NextMarker if set, otherwise use last Key
 		if resp.NextMarker == nil || *resp.NextMarker == "" {
+			if len(resp.Contents) == 0 {
+				return errors.New("s3 protocol error: received listing with IsTruncated set, no NextMarker and no Contents")
+			}
 			marker = resp.Contents[len(resp.Contents)-1].Key
 		} else {
 			marker = resp.NextMarker
