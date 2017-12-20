@@ -5,9 +5,7 @@ package cache
 import (
 	"time"
 
-	"os"
 	"path"
-	"strings"
 
 	"github.com/ncw/rclone/fs"
 )
@@ -97,8 +95,10 @@ func (d *Directory) String() string {
 func (d *Directory) Remote() string {
 	p := cleanPath(path.Join(d.Dir, d.Name))
 	if d.CacheFs.Root() != "" {
-		p = strings.Replace(p, d.CacheFs.Root(), "", 1)
-		p = strings.TrimPrefix(p, string(os.PathSeparator))
+		p = p[len(d.CacheFs.Root()):] // trim out root
+		if len(p) > 0 {               // remove first separator
+			p = p[1:]
+		}
 	}
 
 	return p

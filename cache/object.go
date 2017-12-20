@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path"
-	"strings"
 	"sync"
 	"time"
 
@@ -133,8 +132,10 @@ func (o *Object) String() string {
 func (o *Object) Remote() string {
 	p := path.Join(o.Dir, o.Name)
 	if o.CacheFs.Root() != "" {
-		p = strings.Replace(p, o.CacheFs.Root(), "", 1)
-		p = strings.TrimPrefix(p, string(os.PathSeparator))
+		p = p[len(o.CacheFs.Root()):] // trim out root
+		if len(p) > 0 {               // remove first separator
+			p = p[1:]
+		}
 	}
 
 	return p
