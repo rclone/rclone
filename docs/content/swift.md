@@ -66,7 +66,7 @@ Choose a number from below, or type in your own value
    \ "swift"
 16 / Pcloud
    \ "pcloud"
-17 / QingClound Object Storage
+17 / QingCloud Object Storage
    \ "qingstor"
 18 / SSH/SFTP Connection
    \ "sftp"
@@ -85,9 +85,9 @@ Choose a number from below, or type in your own value
    \ "true"
 env_auth> true
 User name to log in (OS_USERNAME).
-user> 
+user>
 API key or password (OS_PASSWORD).
-key> 
+key>
 Authentication URL for server (OS_AUTH_URL).
 Choose a number from below, or type in your own value
  1 / Rackspace US
@@ -102,25 +102,25 @@ Choose a number from below, or type in your own value
    \ "https://auth.storage.memset.com/v2.0"
  6 / OVH
    \ "https://auth.cloud.ovh.net/v2.0"
-auth> 
+auth>
 User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
-user_id> 
+user_id>
 User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
-domain> 
+domain>
 Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)
-tenant> 
+tenant>
 Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)
-tenant_id> 
+tenant_id>
 Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME)
-tenant_domain> 
+tenant_domain>
 Region name - optional (OS_REGION_NAME)
-region> 
+region>
 Storage URL - optional (OS_STORAGE_URL)
-storage_url> 
+storage_url>
 Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)
-auth_token> 
+auth_token>
 AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)
-auth_version> 
+auth_version>
 Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE)
 Choose a number from below, or type in your own value
  1 / Public (default, choose this if not sure)
@@ -129,24 +129,24 @@ Choose a number from below, or type in your own value
    \ "internal"
  3 / Admin
    \ "admin"
-endpoint_type> 
+endpoint_type>
 Remote config
 --------------------
 [test]
 env_auth = true
-user = 
-key = 
-auth = 
-user_id = 
-domain = 
-tenant = 
-tenant_id = 
-tenant_domain = 
-region = 
-storage_url = 
-auth_token = 
-auth_version = 
-endpoint_type = 
+user =
+key =
+auth =
+user_id =
+domain =
+tenant =
+tenant_id =
+tenant_domain =
+region =
+storage_url =
+auth_token =
+auth_version =
+endpoint_type =
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -222,12 +222,12 @@ in the docs for the swift library.
 ### Using an alternate authentication method ###
 
 If your OpenStack installation uses a non-standard authentication method
-that might not be yet supported by rclone or the underlying swift library, 
-you can authenticate externally (e.g. calling manually the `openstack` 
-commands to get a token). Then, you just need to pass the two 
-configuration variables ``auth_token`` and ``storage_url``. 
-If they are both provided, the other variables are ignored. rclone will 
-not try to authenticate but instead assume it is already authenticated 
+that might not be yet supported by rclone or the underlying swift library,
+you can authenticate externally (e.g. calling manually the `openstack`
+commands to get a token). Then, you just need to pass the two
+configuration variables ``auth_token`` and ``storage_url``.
+If they are both provided, the other variables are ignored. rclone will
+not try to authenticate but instead assume it is already authenticated
 and use these two variables to access the OpenStack installation.
 
 #### Using rclone without a config file ####

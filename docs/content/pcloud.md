@@ -59,7 +59,7 @@ Choose a number from below, or type in your own value
    \ "swift"
 15 / Pcloud
    \ "pcloud"
-16 / QingClound Object Storage
+16 / QingCloud Object Storage
    \ "qingstor"
 17 / SSH/SFTP Connection
    \ "sftp"
@@ -69,9 +69,9 @@ Choose a number from below, or type in your own value
    \ "http"
 Storage> pcloud
 Pcloud App Client Id - leave blank normally.
-client_id> 
+client_id>
 Pcloud App Client Secret - leave blank normally.
-client_secret> 
+client_secret>
 Remote config
 Use auto config?
  * Say Y if not sure
@@ -85,8 +85,8 @@ Waiting for code...
 Got code
 --------------------
 [remote]
-client_id = 
-client_secret = 
+client_id =
+client_secret =
 token = {"access_token":"XXX","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}
 --------------------
 y) Yes this is OK
