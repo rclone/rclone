@@ -125,3 +125,4 @@ Contributors
   * Filip Bartodziej <filipbartodziej@gmail.com>
   * Jon Fautley <jon@dead.li>
   * lewapm <32110057+lewapm@users.noreply.github.com>
+  * Yassine Imounachen <yassine256@gmail.com>
