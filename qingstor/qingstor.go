@@ -27,7 +27,7 @@ import (
 func init() {
 	fs.Register(&fs.RegInfo{
 		Name:        "qingstor",
-		Description: "QingClound Object Storage",
+		Description: "QingCloud Object Storage",
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "env_auth",
