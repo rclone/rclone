@@ -17,7 +17,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
 	"path"
 	"regexp"
 	"strings"
@@ -36,6 +35,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/rest"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 )
@@ -786,7 +786,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 	srcFs := srcObj.fs
 	key := f.root + remote
-	source := url.QueryEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
+	source := rest.URLEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
 	req := s3.CopyObjectInput{
 		Bucket:            &f.bucket,
 		Key:               &key,
@@ -935,7 +935,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 		ACL:               &o.fs.acl,
 		Key:               &key,
 		ContentType:       &mimeType,
-		CopySource:        aws.String(url.QueryEscape(sourceKey)),
+		CopySource:        aws.String(rest.URLEscape(sourceKey)),
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
 	}
