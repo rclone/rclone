@@ -4,7 +4,7 @@ description: "Rclone docs for cache remote"
 date: "2017-09-03"
 ---
 
-<i class="fa fa-archive"></i> Cache
+<i class="fa fa-archive"></i> Cache (BETA)
 -----------------------------------------
 
 The `cache` remote wraps another existing remote and stores file structure
@@ -156,6 +156,40 @@ Affected settings:
 - `cache-workers`: _Configured value_ during confirmed playback or _1_ all the other times
 
 ### Known issues ###
+
+#### Windows support - Experimental ####
+
+There are a couple of issues with Windows `mount` functionality that still require some investigations.
+It should be considered as experimental thus far as fixes come in for this OS.
+
+Most of the issues seem to be related to the difference between filesystems
+on Linux flavors and Windows as cache is heavily dependant on them.
+
+Any reports or feedback on how cache behaves on this OS is greatly appreciated.
+ 
+- https://github.com/ncw/rclone/issues/1935
+- https://github.com/ncw/rclone/issues/1907
+- https://github.com/ncw/rclone/issues/1834 
+
+#### Risk of throttling ####
+
+Future iterations of the cache backend will make use of the pooling functionality
+of the cloud provider to synchronize and at the same time make writing through it
+more tolerant to failures. 
+
+There are a couple of enhancements in track to add these but in the meantime
+there is a valid concern that the expiring cache listings can lead to cloud provider
+throttles or bans due to repeated queries on it for very large mounts.
+
+Some recommendations:
+- don't use a very small interval for entry informations (`--cache-info-age`)
+- while writes aren't yet optimised, you can still write through `cache` which gives you the advantage
+of adding the file in the cache at the same time if configured to do so.
+
+Future enhancements:
+
+- https://github.com/ncw/rclone/issues/1937
+- https://github.com/ncw/rclone/issues/1936 
 
 #### cache and crypt ####
 
