@@ -60,7 +60,6 @@ ifdef GO_LATEST
 	go get -u github.com/kisielk/errcheck
 	go get -u golang.org/x/tools/cmd/goimports
 	go get -u github.com/golang/lint/golint
-	go get -u github.com/golang/mock/gomock
 	go get -u github.com/inconshreveable/mousetrap
 	go get -u github.com/tools/godep
 endif
