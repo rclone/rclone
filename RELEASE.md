@@ -15,6 +15,7 @@ Making a release
   * make retag
   * # Set the GOPATH for a current stable go compiler
   * make cross
+  * git checkout docs/content/commands # to undo date changes in commands
   * git push --tags origin master
   * git push --tags origin master:stable # update the stable branch for packager.io
   * # Wait for the appveyor and travis builds to complete then fetch the windows binaries from appveyor
