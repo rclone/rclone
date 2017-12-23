@@ -11,7 +11,6 @@ Making a release
   * edit docs/content/changelog.md
   * make doc
   * git status - to check for new man pages - git add them
-  * # Update version number in snapcraft.yml
   * git commit -a -v -m "Version v1.XX"
   * make retag
   * # Set the GOPATH for a current stable go compiler

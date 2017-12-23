@@ -1,6 +1,6 @@
 rclone(1) User Manual
 Nick Craig-Wood
-Sep 30, 2017
+Dec 23, 2017
 
 
 
@@ -17,6 +17,7 @@ from:
 -   Backblaze B2
 -   Box
 -   Ceph
+-   DigitalOcean Spaces
 -   Dreamhost
 -   Dropbox
 -   FTP
@@ -28,13 +29,18 @@ from:
 -   Microsoft Azure Blob Storage
 -   Microsoft OneDrive
 -   Minio
+-   Nextloud
 -   OVH
 -   Openstack Swift
 -   Oracle Cloud Storage
+-   Ownloud
+-   pCloud
+-   put.io
 -   QingStor
 -   Rackspace Cloud Files
 -   SFTP
 -   Wasabi
+-   WebDAV
 -   Yandex Disk
 -   The local filesystem
 
@@ -48,6 +54,7 @@ Features
 -   Check mode to check for file hash equality
 -   Can sync to and from network, eg two different cloud accounts
 -   Optional encryption (Crypt)
+-   Optional cache (Cache)
 -   Optional FUSE mount (rclone mount)
 
 Links
@@ -76,6 +83,20 @@ See below for some expanded Linux / macOS instructions.
 
 See the Usage section of the docs for how to use rclone, or run
 rclone -h.
+
+
+Script installation
+
+To install rclone on Linux/MacOs/BSD systems, run:
+
+    curl https://rclone.org/install.sh | sudo bash
+
+For beta installation, run:
+
+    curl https://rclone.org/install.sh | sudo bash -s beta
+
+Note that this script checks the version of rclone installed first and
+won't re-download if not needed.
 
 
 Linux installation from precompiled binary
@@ -176,7 +197,9 @@ See the following for detailed instructions for
 -   Amazon S3
 -   Backblaze B2
 -   Box
+-   Cache
 -   Crypt - to encrypt other remotes
+-   DigitalOcean Spaces
 -   Dropbox
 -   FTP
 -   Google Cloud Storage
@@ -186,8 +209,10 @@ See the following for detailed instructions for
 -   Microsoft Azure Blob Storage
 -   Microsoft OneDrive
 -   Openstack Swift / Rackspace Cloudfiles / Memset Memstore
+-   Pcloud
 -   QingStor
 -   SFTP
+-   WebDAV
 -   Yandex Disk
 -   The local filesystem
 
@@ -222,17 +247,11 @@ Enter an interactive configuration session.
 
 Synopsis
 
-rclone config enters an interactive configuration sessions where you can
-setup new remotes and manage existing ones. You may also set or remove a
-password to protect your configuration.
+Enter an interactive configuration session where you can setup new
+remotes and manage existing ones. You may also set or remove a password
+to protect your configuration.
 
-Additional functions:
-
--   rclone config edit – same as above
--   rclone config file – show path of configuration file in use
--   rclone config show – print (decrypted) config file
-
-    rclone config [function] [flags]
+    rclone config [flags]
 
 Options
 
@@ -341,6 +360,9 @@ this will move it into dest:path. If possible a server side move will be
 used, otherwise it will copy it (server side if possible) into dest:path
 then delete the original (if no errors on copy) in source:path.
 
+If you want to delete empty source directories after move, use the
+--delete-empty-src-dirs flag.
+
 IMPORTANT: Since this can cause data loss, test first with the --dry-run
 flag.
 
@@ -348,7 +370,8 @@ flag.
 
 Options
 
-      -h, --help   help for move
+          --delete-empty-src-dirs   Delete empty source dirs after move
+      -h, --help                    help for move
 
 
 rclone delete
@@ -580,7 +603,7 @@ Options
 
 rclone dedupe
 
-Interactively find duplicate files delete/rename them.
+Interactively find duplicate files and delete/rename them.
 
 Synopsis
 
@@ -694,6 +717,21 @@ Options
       -h, --help   help for authorize
 
 
+rclone cachestats
+
+Print cache stats for a remote
+
+Synopsis
+
+Print cache stats for a remote in JSON format
+
+    rclone cachestats source: [flags]
+
+Options
+
+      -h, --help   help for cachestats
+
+
 rclone cat
 
 Concatenates any files and sends them to stdout.
@@ -729,6 +767,160 @@ Options
       -h, --help         help for cat
           --offset int   Start printing at offset N (or from end if -ve).
           --tail int     Only print the last N characters.
+
+
+rclone config create
+
+Create a new remote with name, type and options.
+
+Synopsis
+
+Create a new remote of with and options. The options should be passed in
+in pairs of .
+
+For example to make a swift remote of name myremote using auto config
+you would do:
+
+    rclone config create myremote swift env_auth true
+
+    rclone config create <name> <type> [<key> <value>]* [flags]
+
+Options
+
+      -h, --help   help for create
+
+
+rclone config delete
+
+Delete an existing remote .
+
+Synopsis
+
+Delete an existing remote .
+
+    rclone config delete <name> [flags]
+
+Options
+
+      -h, --help   help for delete
+
+
+rclone config dump
+
+Dump the config file as JSON.
+
+Synopsis
+
+Dump the config file as JSON.
+
+    rclone config dump [flags]
+
+Options
+
+      -h, --help   help for dump
+
+
+rclone config edit
+
+Enter an interactive configuration session.
+
+Synopsis
+
+Enter an interactive configuration session where you can setup new
+remotes and manage existing ones. You may also set or remove a password
+to protect your configuration.
+
+    rclone config edit [flags]
+
+Options
+
+      -h, --help   help for edit
+
+
+rclone config file
+
+Show path of configuration file in use.
+
+Synopsis
+
+Show path of configuration file in use.
+
+    rclone config file [flags]
+
+Options
+
+      -h, --help   help for file
+
+
+rclone config password
+
+Update password in an existing remote.
+
+Synopsis
+
+Update an existing remote's password. The password should be passed in
+in pairs of .
+
+For example to set password of a remote of name myremote you would do:
+
+    rclone config password myremote fieldname mypassword
+
+    rclone config password <name> [<key> <value>]+ [flags]
+
+Options
+
+      -h, --help   help for password
+
+
+rclone config providers
+
+List in JSON format all the providers and options.
+
+Synopsis
+
+List in JSON format all the providers and options.
+
+    rclone config providers [flags]
+
+Options
+
+      -h, --help   help for providers
+
+
+rclone config show
+
+Print (decrypted) config file, or the config for a single remote.
+
+Synopsis
+
+Print (decrypted) config file, or the config for a single remote.
+
+    rclone config show [<remote>] [flags]
+
+Options
+
+      -h, --help   help for show
+
+
+rclone config update
+
+Update options in an existing remote.
+
+Synopsis
+
+Update an existing remote's options. The options should be passed in in
+pairs of .
+
+For example to update the env_auth field of a remote of name myremote
+you would do:
+
+    rclone config update myremote swift env_auth true
+
+    rclone config update <name> [<key> <value>]+ [flags]
+
+Options
+
+      -h, --help   help for update
 
 
 rclone copyto
@@ -827,7 +1019,7 @@ Options
 
 rclone dbhashsum
 
-Produces a Dropbbox hash file for all the objects in the path.
+Produces a Dropbox hash file for all the objects in the path.
 
 Synopsis
 
@@ -1068,6 +1260,14 @@ Filters
 Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
+systemd
+
+When running rclone mount as a systemd service, it is possible to use
+Type=notify. In this case the service will enter the started state after
+the mountpoint has been successfully set up. Units having the rclone
+mount service specified as a requirement will see all files and folders
+immediately in this mode.
+
 Directory Cache
 
 Using the --dir-cache-time flag, you can set how long a directory should
@@ -1082,29 +1282,120 @@ rclone instance is running, you can reset the cache like this:
 
     kill -SIGHUP $(pidof rclone)
 
+File Caching
+
+NB File caching is EXPERIMENTAL - use with care!
+
+These flags control the VFS file caching options. The VFS layer is used
+by rclone mount to make a cloud storage systm work more like a normal
+file system.
+
+You'll need to enable VFS caching if you want, for example, to read and
+write simultaneously to a file. See below for more details.
+
+Note that the VFS cache works in addition to the cache backend and you
+may find that you need one or the other or both.
+
+    --vfs-cache-dir string               Directory rclone will use for caching.
+    --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
+    --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
+    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+
+If run with -vv rclone will print the location of the file cache. The
+files are stored in the user cache file area which is OS dependent but
+can be controlled with --cache-dir or setting the appropriate
+environment variable.
+
+The cache has 4 different modes selected by --vfs-cache-mode. The higher
+the cache mode the more compatible rclone becomes at the cost of using
+disk space.
+
+Note that files are written back to the remote only when they are closed
+so if rclone is quit or dies with open files then these won't get
+written back to the remote. However they will still be in the on disk
+cache.
+
+--vfs-cache-mode off
+
+In this mode the cache will read directly from the remote and write
+directly to the remote without caching anything on disk.
+
+This will mean some operations are not possible
+
+-   Files can't be opened for both read AND write
+-   Files opened for write can't be seeked
+-   Existing files opened for write must have O_TRUNC set
+-   Files open for read with O_TRUNC will be opened write only
+-   Files open for write only will behave as if O_TRUNC was supplied
+-   Open modes O_APPEND, O_TRUNC are ignored
+-   If an upload fails it can't be retried
+
+--vfs-cache-mode minimal
+
+This is very similar to "off" except that files opened for read AND
+write will be buffered to disks. This means that files opened for write
+will be a lot more compatible, but uses the minimal disk space.
+
+These operations are not possible
+
+-   Files opened for write only can't be seeked
+-   Existing files opened for write must have O_TRUNC set
+-   Files opened for write only will ignore O_APPEND, O_TRUNC
+-   If an upload fails it can't be retried
+
+--vfs-cache-mode writes
+
+In this mode files opened for read only are still read directly from the
+remote, write only and read/write files are buffered to disk first.
+
+This mode should support all normal file system operations.
+
+If an upload fails it will be retried up to --low-level-retries times.
+
+--vfs-cache-mode full
+
+In this mode all reads and writes are buffered to and from disk. When a
+file is opened for read it will be downloaded in its entirety first.
+
+This may be appropriate for your needs, or you may prefer to look at the
+cache backend which does a much more sophisticated job of caching,
+including caching directory heirachies and chunks of files.q
+
+In this mode, unlike the others, when a file is written to the disk, it
+will be kept on the disk after it is written to the remote. It will be
+purged on a schedule according to --vfs-cache-max-age.
+
+This mode should support all normal file system operations.
+
+If an upload or download fails it will be retried up to
+--low-level-retries times.
+
     rclone mount remote:path /path/to/mountpoint [flags]
 
 Options
 
-          --allow-non-empty           Allow mounting over a non-empty directory.
-          --allow-other               Allow access to other users.
-          --allow-root                Allow access to root user.
-          --debug-fuse                Debug the FUSE internals - needs -v.
-          --default-permissions       Makes kernel enforce access control based on the file mode.
-          --dir-cache-time duration   Time to cache directory entries for. (default 5m0s)
-          --fuse-flag stringArray     Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.
-          --gid uint32                Override the gid field set by the filesystem. (default 502)
-      -h, --help                      help for mount
-          --max-read-ahead int        The number of bytes that can be prefetched for sequential reads. (default 128k)
-          --no-checksum               Don't compare checksums on up/download.
-          --no-modtime                Don't read/write the modification time (can speed things up).
-          --no-seek                   Don't allow seeking in files.
-      -o, --option stringArray        Option for libfuse/WinFsp. Repeat if required.
-          --poll-interval duration    Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
-          --read-only                 Mount read-only.
-          --uid uint32                Override the uid field set by the filesystem. (default 502)
-          --umask int                 Override the permission bits set by the filesystem.
-          --write-back-cache          Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.
+          --allow-non-empty                    Allow mounting over a non-empty directory.
+          --allow-other                        Allow access to other users.
+          --allow-root                         Allow access to root user.
+          --debug-fuse                         Debug the FUSE internals - needs -v.
+          --default-permissions                Makes kernel enforce access control based on the file mode.
+          --dir-cache-time duration            Time to cache directory entries for. (default 5m0s)
+          --fuse-flag stringArray              Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.
+          --gid uint32                         Override the gid field set by the filesystem. (default 502)
+      -h, --help                               help for mount
+          --max-read-ahead int                 The number of bytes that can be prefetched for sequential reads. (default 128k)
+          --no-checksum                        Don't compare checksums on up/download.
+          --no-modtime                         Don't read/write the modification time (can speed things up).
+          --no-seek                            Don't allow seeking in files.
+      -o, --option stringArray                 Option for libfuse/WinFsp. Repeat if required.
+          --poll-interval duration             Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
+          --read-only                          Mount read-only.
+          --uid uint32                         Override the uid field set by the filesystem. (default 502)
+          --umask int                          Override the permission bits set by the filesystem.
+          --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
+          --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
+          --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+          --write-back-cache                   Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.
 
 
 rclone moveto
@@ -1245,6 +1536,9 @@ This removes any empty directories (or directories that only contain
 empty directories) under the path that it finds, including the path if
 it has nothing in.
 
+If you supply the --leave-root flag, it will not remove the root
+directory.
+
 This is useful for tidying up remotes that rclone has left a lot of
 empty directories in.
 
@@ -1252,7 +1546,324 @@ empty directories in.
 
 Options
 
-      -h, --help   help for rmdirs
+      -h, --help         help for rmdirs
+          --leave-root   Do not remove root directory if empty
+
+
+rclone serve
+
+Serve a remote over a protocol.
+
+Synopsis
+
+rclone serve is used to serve a remote over a given protocol. This
+command requires the use of a subcommand to specify the protocol, eg
+
+    rclone serve http remote:
+
+Each subcommand has its own options which you can see in their help.
+
+    rclone serve <protocol> [opts] <remote> [flags]
+
+Options
+
+      -h, --help   help for serve
+
+
+rclone serve http
+
+Serve the remote over HTTP.
+
+Synopsis
+
+rclone serve http implements a basic web server to serve the remote over
+HTTP. This can be viewed in a web browser or you can make a remote of
+type http read from it.
+
+Use --addr to specify which IP address and port the server should listen
+on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all IPs. By
+default it only listens on localhost.
+
+You can use the filter flags (eg --include, --exclude) to control what
+is served.
+
+The server will log errors. Use -v to see access logs.
+
+--bwlimit will be respected for file transfers. Use --stats to control
+the stats printing.
+
+Directory Cache
+
+Using the --dir-cache-time flag, you can set how long a directory should
+be considered up to date and not refreshed from the backend. Changes
+made locally in the mount may appear immediately or invalidate the
+cache. However, changes done on the remote will only be picked up once
+the cache expires.
+
+Alternatively, you can send a SIGHUP signal to rclone for it to flush
+all directory caches, regardless of how old they are. Assuming only one
+rclone instance is running, you can reset the cache like this:
+
+    kill -SIGHUP $(pidof rclone)
+
+File Caching
+
+NB File caching is EXPERIMENTAL - use with care!
+
+These flags control the VFS file caching options. The VFS layer is used
+by rclone mount to make a cloud storage systm work more like a normal
+file system.
+
+You'll need to enable VFS caching if you want, for example, to read and
+write simultaneously to a file. See below for more details.
+
+Note that the VFS cache works in addition to the cache backend and you
+may find that you need one or the other or both.
+
+    --vfs-cache-dir string               Directory rclone will use for caching.
+    --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
+    --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
+    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+
+If run with -vv rclone will print the location of the file cache. The
+files are stored in the user cache file area which is OS dependent but
+can be controlled with --cache-dir or setting the appropriate
+environment variable.
+
+The cache has 4 different modes selected by --vfs-cache-mode. The higher
+the cache mode the more compatible rclone becomes at the cost of using
+disk space.
+
+Note that files are written back to the remote only when they are closed
+so if rclone is quit or dies with open files then these won't get
+written back to the remote. However they will still be in the on disk
+cache.
+
+--vfs-cache-mode off
+
+In this mode the cache will read directly from the remote and write
+directly to the remote without caching anything on disk.
+
+This will mean some operations are not possible
+
+-   Files can't be opened for both read AND write
+-   Files opened for write can't be seeked
+-   Existing files opened for write must have O_TRUNC set
+-   Files open for read with O_TRUNC will be opened write only
+-   Files open for write only will behave as if O_TRUNC was supplied
+-   Open modes O_APPEND, O_TRUNC are ignored
+-   If an upload fails it can't be retried
+
+--vfs-cache-mode minimal
+
+This is very similar to "off" except that files opened for read AND
+write will be buffered to disks. This means that files opened for write
+will be a lot more compatible, but uses the minimal disk space.
+
+These operations are not possible
+
+-   Files opened for write only can't be seeked
+-   Existing files opened for write must have O_TRUNC set
+-   Files opened for write only will ignore O_APPEND, O_TRUNC
+-   If an upload fails it can't be retried
+
+--vfs-cache-mode writes
+
+In this mode files opened for read only are still read directly from the
+remote, write only and read/write files are buffered to disk first.
+
+This mode should support all normal file system operations.
+
+If an upload fails it will be retried up to --low-level-retries times.
+
+--vfs-cache-mode full
+
+In this mode all reads and writes are buffered to and from disk. When a
+file is opened for read it will be downloaded in its entirety first.
+
+This may be appropriate for your needs, or you may prefer to look at the
+cache backend which does a much more sophisticated job of caching,
+including caching directory heirachies and chunks of files.q
+
+In this mode, unlike the others, when a file is written to the disk, it
+will be kept on the disk after it is written to the remote. It will be
+purged on a schedule according to --vfs-cache-max-age.
+
+This mode should support all normal file system operations.
+
+If an upload or download fails it will be retried up to
+--low-level-retries times.
+
+    rclone serve http remote:path [flags]
+
+Options
+
+          --addr string                        IPaddress:Port to bind server to. (default "localhost:8080")
+          --dir-cache-time duration            Time to cache directory entries for. (default 5m0s)
+          --gid uint32                         Override the gid field set by the filesystem. (default 502)
+      -h, --help                               help for http
+          --no-checksum                        Don't compare checksums on up/download.
+          --no-modtime                         Don't read/write the modification time (can speed things up).
+          --no-seek                            Don't allow seeking in files.
+          --poll-interval duration             Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
+          --read-only                          Mount read-only.
+          --uid uint32                         Override the uid field set by the filesystem. (default 502)
+          --umask int                          Override the permission bits set by the filesystem. (default 2)
+          --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
+          --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
+          --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+
+
+rclone serve webdav
+
+Serve remote:path over webdav.
+
+Synopsis
+
+rclone serve webdav implements a basic webdav server to serve the remote
+over HTTP via the webdav protocol. This can be viewed with a webdav
+client or you can make a remote of type webdav to read and write it.
+
+NB at the moment each directory listing reads the start of each file
+which is undesirable: see https://github.com/golang/go/issues/22577
+
+Directory Cache
+
+Using the --dir-cache-time flag, you can set how long a directory should
+be considered up to date and not refreshed from the backend. Changes
+made locally in the mount may appear immediately or invalidate the
+cache. However, changes done on the remote will only be picked up once
+the cache expires.
+
+Alternatively, you can send a SIGHUP signal to rclone for it to flush
+all directory caches, regardless of how old they are. Assuming only one
+rclone instance is running, you can reset the cache like this:
+
+    kill -SIGHUP $(pidof rclone)
+
+File Caching
+
+NB File caching is EXPERIMENTAL - use with care!
+
+These flags control the VFS file caching options. The VFS layer is used
+by rclone mount to make a cloud storage systm work more like a normal
+file system.
+
+You'll need to enable VFS caching if you want, for example, to read and
+write simultaneously to a file. See below for more details.
+
+Note that the VFS cache works in addition to the cache backend and you
+may find that you need one or the other or both.
+
+    --vfs-cache-dir string               Directory rclone will use for caching.
+    --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
+    --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
+    --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+
+If run with -vv rclone will print the location of the file cache. The
+files are stored in the user cache file area which is OS dependent but
+can be controlled with --cache-dir or setting the appropriate
+environment variable.
+
+The cache has 4 different modes selected by --vfs-cache-mode. The higher
+the cache mode the more compatible rclone becomes at the cost of using
+disk space.
+
+Note that files are written back to the remote only when they are closed
+so if rclone is quit or dies with open files then these won't get
+written back to the remote. However they will still be in the on disk
+cache.
+
+--vfs-cache-mode off
+
+In this mode the cache will read directly from the remote and write
+directly to the remote without caching anything on disk.
+
+This will mean some operations are not possible
+
+-   Files can't be opened for both read AND write
+-   Files opened for write can't be seeked
+-   Existing files opened for write must have O_TRUNC set
+-   Files open for read with O_TRUNC will be opened write only
+-   Files open for write only will behave as if O_TRUNC was supplied
+-   Open modes O_APPEND, O_TRUNC are ignored
+-   If an upload fails it can't be retried
+
+--vfs-cache-mode minimal
+
+This is very similar to "off" except that files opened for read AND
+write will be buffered to disks. This means that files opened for write
+will be a lot more compatible, but uses the minimal disk space.
+
+These operations are not possible
+
+-   Files opened for write only can't be seeked
+-   Existing files opened for write must have O_TRUNC set
+-   Files opened for write only will ignore O_APPEND, O_TRUNC
+-   If an upload fails it can't be retried
+
+--vfs-cache-mode writes
+
+In this mode files opened for read only are still read directly from the
+remote, write only and read/write files are buffered to disk first.
+
+This mode should support all normal file system operations.
+
+If an upload fails it will be retried up to --low-level-retries times.
+
+--vfs-cache-mode full
+
+In this mode all reads and writes are buffered to and from disk. When a
+file is opened for read it will be downloaded in its entirety first.
+
+This may be appropriate for your needs, or you may prefer to look at the
+cache backend which does a much more sophisticated job of caching,
+including caching directory heirachies and chunks of files.q
+
+In this mode, unlike the others, when a file is written to the disk, it
+will be kept on the disk after it is written to the remote. It will be
+purged on a schedule according to --vfs-cache-max-age.
+
+This mode should support all normal file system operations.
+
+If an upload or download fails it will be retried up to
+--low-level-retries times.
+
+    rclone serve webdav remote:path [flags]
+
+Options
+
+          --addr string                        IPaddress:Port to bind server to. (default "localhost:8081")
+          --dir-cache-time duration            Time to cache directory entries for. (default 5m0s)
+          --gid uint32                         Override the gid field set by the filesystem. (default 502)
+      -h, --help                               help for webdav
+          --no-checksum                        Don't compare checksums on up/download.
+          --no-modtime                         Don't read/write the modification time (can speed things up).
+          --no-seek                            Don't allow seeking in files.
+          --poll-interval duration             Time to wait between polling for changes. Must be smaller than dir-cache-time. Only on supported remotes. Set to 0 to disable. (default 1m0s)
+          --read-only                          Mount read-only.
+          --uid uint32                         Override the uid field set by the filesystem. (default 502)
+          --umask int                          Override the permission bits set by the filesystem. (default 2)
+          --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
+          --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
+          --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
+
+
+rclone touch
+
+Create new file or change file modification time.
+
+Synopsis
+
+Create new file or change file modification time.
+
+    rclone touch remote:path [flags]
+
+Options
+
+      -h, --help               help for touch
+      -C, --no-create          Do not create the file if it does not exist.
+      -t, --timestamp string   Change the modification times to the specified time instead of the current time of day. The argument is of the form 'YYMMDD' (ex. 17.10.30) or 'YYYY-MM-DDTHH:MM:SS' (ex. 2006-01-02T15:04:05)
 
 
 rclone tree
@@ -1467,8 +2078,8 @@ might want to pass --suffix with today's date.
 
 Local address to bind to for outgoing connections. This can be an IPv4
 address (1.2.3.4), an IPv6 address (1234::789A) or host name. If the
-host name doesn't resolve or resoves to more than one IP address it will
-give an error.
+host name doesn't resolve or resolves to more than one IP address it
+will give an error.
 
 --bwlimit=BANDWIDTH_SPEC
 
@@ -1666,6 +2277,11 @@ This can be useful as an additional layer of protection for immutable or
 append-only data sets (notably backup archives), where modification
 implies corruption and should not be propagated.
 
+
+--leave-root
+
+During rmdirs it will not remove root directory, even if it's empty.
+
 --log-file=FILE
 
 Log all of rclone's output to FILE. This is not active by default. This
@@ -1674,7 +2290,7 @@ the -v flag. See the Logging section for more info.
 
 --log-level LEVEL
 
-This sets the log level for rclone. The default log level is INFO.
+This sets the log level for rclone. The default log level is NOTICE.
 
 DEBUG is equivalent to -vv. It outputs lots of debug info - useful for
 bug reports and really finding out what rclone is doing.
@@ -2081,13 +2697,19 @@ which are used for testing. These start with remote name eg
 
 Write CPU profile to file. This can be analysed with go tool pprof.
 
---dump-auth
+--dump flag,flag,flag
 
-Dump HTTP headers - will contain sensitive info such as Authorization:
-headers - use --dump-headers to dump without Authorization: headers. Can
-be very verbose. Useful for debugging only.
+The --dump flag takes a comma separated list of flags to dump info
+about. These are:
 
---dump-bodies
+--dump headers
+
+Dump HTTP headers with Authorization: lines removed. May still contain
+sensitive info. Can be very verbose. Useful for debugging only.
+
+Use --dump auth if you do want the Authorization: headers.
+
+--dump bodies
 
 Dump HTTP headers and bodies - may contain sensitive info. Can be very
 verbose. Useful for debugging only.
@@ -2095,17 +2717,26 @@ verbose. Useful for debugging only.
 Note that the bodies are buffered in memory so don't use this for
 enormous files.
 
---dump-filters
+--dump requests
+
+Like --dump bodies but dumps the request bodies and the response
+headers. Useful for debugging download problems.
+
+--dump responses
+
+Like --dump bodies but dumps the response bodies and the request
+headers. Useful for debugging upload problems.
+
+--dump auth
+
+Dump HTTP headers - will contain sensitive info such as Authorization:
+headers - use --dump headers to dump without Authorization: headers. Can
+be very verbose. Useful for debugging only.
+
+--dump filters
 
 Dump the filters to the output. Useful to see exactly what include and
 exclude options are filtering on.
-
---dump-headers
-
-Dump HTTP headers with Authorization: lines removed. May still contain
-sensitive info. Can be very verbose. Useful for debugging only.
-
-Use --dump-auth if you do want the Authorization: headers.
 
 --memprofile=FILE
 
@@ -2159,7 +2790,7 @@ For the filtering options
 -   --max-size
 -   --min-age
 -   --max-age
--   --dump-filters
+-   --dump filters
 
 See the filtering section.
 
@@ -2214,6 +2845,19 @@ so the user can see that any previous error messages may not be valid
 after the retry. If rclone has done a retry it will log a high priority
 message if the retry was successful.
 
+List of exit codes
+
+-   0 - success
+-   1 - Syntax or usage error
+-   2 - Error not otherwise categorised
+-   3 - Directory not found
+-   4 - File not found
+-   5 - Temporary error (one that more retries might fix) (Retry errors)
+-   6 - Less serious errors (like 461 errors from dropbox)
+    (NoRetry errors)
+-   7 - Fatal error (one that more retries won't fix, like
+    account suspended) (Fatal errors)
+
 
 Environment Variables
 
@@ -2248,8 +2892,8 @@ the values are (the config file can be found by looking at the help for
 --config in rclone help).
 
 To find the name of the environment variable, you need to set, take
-RCLONE_ + name of remote + _ + name of config file option and make it
-all uppercase.
+RCLONE_CONFIG_ + name of remote + _ + name of config file option and
+make it all uppercase.
 
 For example, to configure an S3 remote named mys3: without a config file
 (using unix ways of setting environment variables):
@@ -2423,7 +3067,7 @@ A [ and ] together make a a character class, such as [a-z] or [aeiou] or
              - doesn't match "hullo"
 
 A { and } define a choice between elements. It should contain a comma
-seperated list of patterns, any of which might match. These patterns can
+separated list of patterns, any of which might match. These patterns can
 contain wildcards.
 
     {one,two}_potato - matches "one_potato"
@@ -2519,6 +3163,10 @@ type.
 -   --exclude-from
 -   --filter
 -   --filter-from
+
+IMPORTANT You should not use --include* together with --exclude*. It may
+produce different results than you expected. In that case try to use:
+--filter*.
 
 Note that all the options of the same type are processed together in the
 order above, regardless of what order they were placed on the command
@@ -2751,7 +3399,7 @@ are now excluded from the sync.
 
 Always test first with --dry-run and -v before using this flag.
 
---dump-filters - dump the filters to the output
+--dump filters - dump the filters to the output
 
 This dumps the defined filters to the output as regular expressions.
 
@@ -2775,11 +3423,33 @@ should work fine
 -   --include *.jpg
 
 
+Exclude directory based on a file
+
+It is possible to exclude a directory based on a file, which is present
+in this directory. Filename should be specified using the
+--exclude-if-present flag. This flag has a priority over the other
+filtering flags.
+
+Imagine, you have the following directory structure:
+
+    dir1/file1
+    dir1/dir2/file2
+    dir1/dir2/dir3/file3
+    dir1/dir2/dir3/.ignore
+
+You can exclude dir3 from sync by running the following command:
+
+    rclone sync --exclude-if-present .ignore dir1 remote:backup
+
+Currently only one filename is supported, i.e. --exclude-if-present
+should not be used multiple times.
+
+
 
 OVERVIEW OF CLOUD STORAGE SYSTEMS
 
 
-Each cloud storage system is slighly different. Rclone attempts to
+Each cloud storage system is slightly different. Rclone attempts to
 provide a unified interface to them, but some underlying differences
 show through.
 
@@ -2803,8 +3473,10 @@ Here is an overview of the major features of each cloud storage system.
   Microsoft Azure Blob Storage        MD5         Yes            No                No             R/W
   Microsoft OneDrive                 SHA1         Yes           Yes                No              R
   Openstack Swift                     MD5         Yes            No                No             R/W
+  pCloud                           MD5, SHA1      Yes            No                No              W
   QingStor                            MD5         No             No                No             R/W
   SFTP                            MD5, SHA1 ‡     Yes         Depends              No              -
+  WebDAV                               -        Yes ††        Depends              No              -
   Yandex Disk                         MD5         Yes            No                No             R/W
   The local filesystem                All         Yes         Depends              No              -
 
@@ -2823,6 +3495,8 @@ of all the 4MB block SHA256s.
 
 ‡ SFTP supports checksums if the same login has shell access and md5sum
 or sha1sum as well as echo are in the remote's PATH.
+
+†† WebDAV supports modtimes when used with Owncloud and Nextcloud only.
 
 ModTime
 
@@ -2902,8 +3576,10 @@ more efficient.
   Microsoft Azure Blob Storage     Yes    Yes     No      No        No       Yes         No
   Microsoft OneDrive               Yes    Yes    Yes    No #197   No #575    No          No
   Openstack Swift                 Yes †   Yes     No      No        No       Yes        Yes
+  pCloud                           Yes    Yes    Yes      Yes       Yes      No          No
   QingStor                         No     Yes     No      No        No       Yes         No
   SFTP                             No      No    Yes      Yes       No       No         Yes
+  WebDAV                           Yes    Yes    Yes      Yes       No       No        Yes ‡
   Yandex Disk                      Yes     No     No      No        Yes      Yes        Yes
   The local filesystem             Yes     No    Yes      Yes       No       No         Yes
 
@@ -2915,6 +3591,8 @@ directory.
 † Note Swift and Hubic implement this in order to delete directory
 markers but they don't actually have a quicker way of deleting files
 other than deleting them individually.
+
+‡ StreamUpload is not supported with Nextcloud
 
 Copy
 
@@ -3215,7 +3893,7 @@ This will guide you through an interactive setup process.
     13 / Yandex Disk
        \ "yandex"
     Storage> 2
-    Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+    Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
     Choose a number from below, or type in your own value
      1 / Enter AWS credentials in the next step
        \ "false"
@@ -3412,6 +4090,7 @@ order of precedence:
     -   Access Key ID: AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY
     -   Secret Access Key: AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY
     -   Session Token: AWS_SESSION_TOKEN
+-   Running rclone in an ECS task with an IAM role
 -   Running rclone on an EC2 instance with an IAM role
 
 If none of these option actually end up providing rclone with AWS
@@ -3519,7 +4198,7 @@ blank access_key_id and secret_access_key. Eg
     10) s3
     11) yandex
     type> 10
-    Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+    Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
     Choose a number from below, or type in your own value
      * Enter AWS credentials in the next step
      1) false
@@ -3572,6 +4251,54 @@ removed).
 
 Because this is a json dump, it is encoding the / as \/, so if you use
 the secret key as xxxxxx/xxxx it will work fine.
+
+DigitalOcean Spaces
+
+Spaces is an S3-interoperable object storage service from cloud provider
+DigitalOcean.
+
+To connect to DigitalOcean Spaces you will need an access key and secret
+key. These can be retrieved on the "Applications & API" page of the
+DigitalOcean control panel. They will be needed when promted by
+rclone config for your access_key_id and secret_access_key.
+
+When prompted for a region or location_constraint, press enter to use
+the default value. The region must be included in the endpoint setting
+(e.g. nyc3.digitaloceanspaces.com). The defualt values can be used for
+other settings.
+
+Going through the whole process of creating a new remote by running
+rclone config, each prompt should be answered as shown below:
+
+    Storage> 2
+    env_auth> 1
+    access_key_id> YOUR_ACCESS_KEY
+    secret_access_key> YOUR_SECRET_KEY
+    region> 
+    endpoint> nyc3.digitaloceanspaces.com
+    location_constraint> 
+    acl> 
+    storage_class> 
+
+The resulting configuration file should look like:
+
+    [spaces]
+    type = s3
+    env_auth = false
+    access_key_id = YOUR_ACCESS_KEY
+    secret_access_key = YOUR_SECRET_KEY
+    region = 
+    endpoint = nyc3.digitaloceanspaces.com
+    location_constraint = 
+    acl = 
+    server_side_encryption = 
+    storage_class = 
+
+Once configured, you can create a new Space and begin copying files. For
+example:
+
+    rclone mkdir spaces:my-new-space
+    rclone copy /path/to/files spaces:my-new-space
 
 Minio
 
@@ -3655,7 +4382,7 @@ rclone like this.
        \ "s3"
     [snip]
     Storage> s3
-    Get AWS credentials from runtime (environment variables or EC2 meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+    Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
     Choose a number from below, or type in your own value
      1 / Enter AWS credentials in the next step
        \ "false"
@@ -3850,13 +4577,26 @@ SHA1 checksums
 The SHA1 checksums of the files are checked on upload and download and
 will be used in the syncing process.
 
-Large files which are uploaded in chunks will store their SHA1 on the
-object as X-Bz-Info-large_file_sha1 as recommended by Backblaze.
+Large files (bigger than the limit in --b2-upload-cutoff) which are
+uploaded in chunks will store their SHA1 on the object as
+X-Bz-Info-large_file_sha1 as recommended by Backblaze.
+
+For a large file to be uploaded with an SHA1 checksum, the source needs
+to support SHA1 checksums. The local disk supports SHA1 checksums so
+large file transfers from local disk will have an SHA1. See the overview
+for exactly which remotes support SHA1.
+
+Sources which don't support SHA1, in particular crypt will upload large
+files without SHA1 checksums. This may be fixed in the future (see
+#1767).
+
+Files sizes below --b2-upload-cutoff will always have an SHA1 regardless
+of the source.
 
 Transfers
 
 Backblaze recommends that you do lots of transfers simultaneously for
-maximum speed. In tests from my SSD equiped laptop the optimum setting
+maximum speed. In tests from my SSD equipped laptop the optimum setting
 is about --transfers 32 though higher numbers may be used for a slight
 speed improvement. The optimum number for you may vary depending on your
 hardware, how big the files are, how much you want to load your
@@ -3890,8 +4630,8 @@ deleted then the bucket will be deleted.
 However delete will cause the current versions of the files to become
 hidden old versions.
 
-Here is a session showing the listing and and retreival of an old
-version followed by a cleanup of the old versions.
+Here is a session showing the listing and retrieval of an old version
+followed by a cleanup of the old versions.
 
 Show current version and all the versions with --b2-versions flag.
 
@@ -3904,7 +4644,7 @@ Show current version and all the versions with --b2-versions flag.
            16 one-v2016-07-04-141003-000.txt
            15 one-v2016-07-02-155621-000.txt
 
-Retreive an old verson
+Retrieve an old version
 
     $ rclone -q --b2-versions copy b2:cleanup-test/one-v2016-07-04-141003-000.txt /tmp
 
@@ -3952,15 +4692,6 @@ start and finish the upload) and another 2 requests for each chunk:
     /b2api/v1/b2_get_upload_part_url
     /b2api/v1/b2_upload_part/
     /b2api/v1/b2_finish_large_file
-
-B2 with crypt
-
-When using B2 with crypt files are encrypted into a temporary location
-and streamed from there. This is required to calculate the encrypted
-file's checksum before beginning the upload. On Windows the %TMPDIR%
-environment variable is used as the temporary location. If the file
-requires chunking, both the chunking and encryption will take place in
-memory.
 
 Specific options
 
@@ -4247,6 +4978,345 @@ from an identical looking unicode equivalent ＼.
 Box only supports filenames up to 255 characters in length.
 
 
+Cache (BETA)
+
+The cache remote wraps another existing remote and stores file structure
+and its data for long running tasks like rclone mount.
+
+To get started you just need to have an existing remote which can be
+configured with cache.
+
+Here is an example of how to make a remote called test-cache. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    r) Rename remote
+    c) Copy remote
+    s) Set configuration password
+    q) Quit config
+    n/r/c/s/q> n
+    name> test-cache
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+    ...
+     5 / Cache a remote
+       \ "cache"
+    ...
+    Storage> 5
+    Remote to cache.
+    Normally should contain a ':' and a path, eg "myremote:path/to/dir",
+    "myremote:bucket" or maybe "myremote:" (not recommended).
+    remote> local:/test
+    Optional: The URL of the Plex server
+    plex_url> http://127.0.0.1:32400
+    Optional: The username of the Plex user
+    plex_username> dummyusername
+    Optional: The password of the Plex user
+    y) Yes type in my own password
+    g) Generate random password
+    n) No leave this optional password blank
+    y/g/n> y
+    Enter the password:
+    password:
+    Confirm the password:
+    password:
+    The size of a chunk. Lower value good for slow connections but can affect seamless reading.
+    Default: 5M
+    Choose a number from below, or type in your own value
+     1 / 1MB
+       \ "1m"
+     2 / 5 MB
+       \ "5M"
+     3 / 10 MB
+       \ "10M"
+    chunk_size> 2
+    How much time should object info (file size, file hashes etc) be stored in cache. Use a very high value if you don't plan on changing the source FS from outside the cache.
+    Accepted units are: "s", "m", "h".
+    Default: 5m
+    Choose a number from below, or type in your own value
+     1 / 1 hour
+       \ "1h"
+     2 / 24 hours
+       \ "24h"
+     3 / 24 hours
+       \ "48h"
+    info_age> 2
+    The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted.
+    Default: 10G
+    Choose a number from below, or type in your own value
+     1 / 500 MB
+       \ "500M"
+     2 / 1 GB
+       \ "1G"
+     3 / 10 GB
+       \ "10G"
+    chunk_total_size> 3
+    Remote config
+    --------------------
+    [test-cache]
+    remote = local:/test
+    plex_url = http://127.0.0.1:32400
+    plex_username = dummyusername
+    plex_password = *** ENCRYPTED ***
+    chunk_size = 5M
+    info_age = 48h
+    chunk_total_size = 10G
+
+You can then use it like this,
+
+List directories in top level of your drive
+
+    rclone lsd test-cache:
+
+List all the files in your drive
+
+    rclone ls test-cache:
+
+To start a cached mount
+
+    rclone mount --allow-other test-cache: /var/tmp/test-cache
+
+Write Support
+
+Writes are supported through cache. One caveat is that a mounted cache
+remote does not add any retry or fallback mechanism to the upload
+operation. This will depend on the implementation of the wrapped remote.
+
+One special case is covered with cache-writes which will cache the file
+data at the same time as the upload when it is enabled making it
+available from the cache store immediately once the upload is finished.
+
+Read Features
+
+Multiple connections
+
+To counter the high latency between a local PC where rclone is running
+and cloud providers, the cache remote can split multiple requests to the
+cloud provider for smaller file chunks and combines them together
+locally where they can be available almost immediately before the reader
+usually needs them.
+
+This is similar to buffering when media files are played online. Rclone
+will stay around the current marker but always try its best to stay
+ahead and prepare the data before.
+
+Plex Integration
+
+There is a direct integration with Plex which allows cache to detect
+during reading if the file is in playback or not. This helps cache to
+adapt how it queries the cloud provider depending on what is needed for.
+
+Scans will have a minimum amount of workers (1) while in a confirmed
+playback cache will deploy the configured number of workers.
+
+This integration opens the doorway to additional performance
+improvements which will be explored in the near future.
+
+NOTE: If Plex options are not configured, cache will function with its
+configured options without adapting any of its settings.
+
+How to enable? Run rclone config and add all the Plex options (endpoint,
+username and password) in your remote and it will be automatically
+enabled.
+
+Affected settings: - cache-workers: _Configured value_ during confirmed
+playback or _1_ all the other times
+
+Known issues
+
+Windows support - Experimental
+
+There are a couple of issues with Windows mount functionality that still
+require some investigations. It should be considered as experimental
+thus far as fixes come in for this OS.
+
+Most of the issues seem to be related to the difference between
+filesystems on Linux flavors and Windows as cache is heavily dependant
+on them.
+
+Any reports or feedback on how cache behaves on this OS is greatly
+appreciated.
+
+-   https://github.com/ncw/rclone/issues/1935
+-   https://github.com/ncw/rclone/issues/1907
+-   https://github.com/ncw/rclone/issues/1834
+
+Risk of throttling
+
+Future iterations of the cache backend will make use of the pooling
+functionality of the cloud provider to synchronize and at the same time
+make writing through it more tolerant to failures.
+
+There are a couple of enhancements in track to add these but in the
+meantime there is a valid concern that the expiring cache listings can
+lead to cloud provider throttles or bans due to repeated queries on it
+for very large mounts.
+
+Some recommendations: - don't use a very small interval for entry
+informations (--cache-info-age) - while writes aren't yet optimised, you
+can still write through cache which gives you the advantage of adding
+the file in the cache at the same time if configured to do so.
+
+Future enhancements:
+
+-   https://github.com/ncw/rclone/issues/1937
+-   https://github.com/ncw/rclone/issues/1936
+
+cache and crypt
+
+One common scenario is to keep your data encrypted in the cloud provider
+using the crypt remote. crypt uses a similar technique to wrap around an
+existing remote and handles this translation in a seamless way.
+
+There is an issue with wrapping the remotes in this order: CLOUD REMOTE
+-> CRYPT -> CACHE
+
+During testing, I experienced a lot of bans with the remotes in this
+order. I suspect it might be related to how crypt opens files on the
+cloud provider which makes it think we're downloading the full file
+instead of small chunks. Organizing the remotes in this order yelds
+better results: CLOUD REMOTE -> CACHE -> CRYPT
+
+Specific options
+
+Here are the command line options specific to this cloud storage system.
+
+--cache-chunk-path=PATH
+
+Path to where partial file data (chunks) is stored locally. The remote
+name is appended to the final path.
+
+This config follows the --cache-db-path. If you specify a custom
+location for --cache-db-path and don't specify one for
+--cache-chunk-path then --cache-chunk-path will use the same path as
+--cache-db-path.
+
+DEFAULT: /cache-backend/ EXAMPLE: /.cache/cache-backend/test-cache
+
+--cache-db-path=PATH
+
+Path to where the file structure metadata (DB) is stored locally. The
+remote name is used as the DB file name.
+
+DEFAULT: /cache-backend/ EXAMPLE: /.cache/cache-backend/test-cache
+
+--cache-db-purge
+
+Flag to clear all the cached data for this remote before.
+
+DEFAULT: not set
+
+--cache-chunk-size=SIZE
+
+The size of a chunk (partial file data). Use lower numbers for slower
+connections.
+
+DEFAULT: 5M
+
+--cache-total-chunk-size=SIZE
+
+The total size that the chunks can take up on the local disk. If cache
+exceeds this value then it will start to the delete the oldest chunks
+until it goes under this value.
+
+DEFAULT: 10G
+
+--cache-chunk-clean-interval=DURATION
+
+How often should cache perform cleanups of the chunk storage. The
+default value should be ok for most people. If you find that cache goes
+over cache-total-chunk-size too often then try to lower this value to
+force it to perform cleanups more often.
+
+DEFAULT: 1m
+
+--cache-info-age=DURATION
+
+How long to keep file structure information (directory listings, file
+size, mod times etc) locally.
+
+If all write operations are done through cache then you can safely make
+this value very large as the cache store will also be updated in real
+time.
+
+DEFAULT: 6h
+
+--cache-read-retries=RETRIES
+
+How many times to retry a read from a cache storage.
+
+Since reading from a cache stream is independent from downloading file
+data, readers can get to a point where there's no more data in the
+cache. Most of the times this can indicate a connectivity issue if cache
+isn't able to provide file data anymore.
+
+For really slow connections, increase this to a point where the stream
+is able to provide data but your experience will be very stuttering.
+
+DEFAULT: 10
+
+--cache-workers=WORKERS
+
+How many workers should run in parallel to download chunks.
+
+Higher values will mean more parallel processing (better CPU needed) and
+more concurrent requests on the cloud provider. This impacts several
+aspects like the cloud provider API limits, more stress on the hardware
+that rclone runs on but it also means that streams will be more fluid
+and data will be available much more faster to readers.
+
+NOTE: If the optional Plex integration is enabled then this setting will
+adapt to the type of reading performed and the value specified here will
+be used as a maximum number of workers to use. DEFAULT: 4
+
+--cache-chunk-no-memory
+
+By default, cache will keep file data during streaming in RAM as well to
+provide it to readers as fast as possible.
+
+This transient data is evicted as soon as it is read and the number of
+chunks stored doesn't exceed the number of workers. However, depending
+on other settings like cache-chunk-size and cache-workers this footprint
+can increase if there are parallel streams too (multiple files being
+read at the same time).
+
+If the hardware permits it, use this feature to provide an overall
+better performance during streaming but it can also be disabled if RAM
+is not available on the local machine.
+
+DEFAULT: not set
+
+--cache-rps=NUMBER
+
+This setting places a hard limit on the number of requests per second
+that cache will be doing to the cloud provider remote and try to respect
+that value by setting waits between reads.
+
+If you find that you're getting banned or limited on the cloud provider
+through cache and know that a smaller number of requests per second will
+allow you to work with it then you can use this setting for that.
+
+A good balance of all the other settings should make this setting
+useless but it is available to set for more special cases.
+
+NOTE: This will limit the number of requests during streams but other
+API calls to the cloud provider like directory listings will still pass.
+
+DEFAULT: disabled
+
+--cache-writes
+
+If you need to read files immediately after you upload them through
+cache you can enable this flag to have their data stored in the cache
+store at the same time during upload.
+
+DEFAULT: not set
+
+
 Crypt
 
 The crypt remote encrypts and decrypts another remote.
@@ -4315,6 +5385,13 @@ differentiate it from the remote.
      3 / Very simple filename obfuscation.
        \ "obfuscate"
     filename_encryption> 2
+    Option to either encrypt directory names or leave them intact.
+    Choose a number from below, or type in your own value
+     1 / Encrypt directory names.
+       \ "true"
+     2 / Don't encrypt directory names, leave them intact.
+       \ "false"
+    filename_encryption> 1
     Password or pass phrase for encryption.
     y) Yes type in my own password
     g) Generate random password
@@ -4455,7 +5532,7 @@ Standard
 -   file names encrypted
 -   file names can't be as long (~156 characters)
 -   can use sub paths and copy single files
--   directory structure visibile
+-   directory structure visible
 -   identical files names will have identical uploaded names
 -   can use shortcuts to shorten the directory recursion
 
@@ -4477,7 +5554,7 @@ equivalents. You can not rely on this for strong protection.
 -   file names very lightly obfuscated
 -   file names can be longer than standard encryption
 -   can use sub paths and copy single files
--   directory structure visibile
+-   directory structure visible
 -   identical files names will have identical uploaded names
 
 Cloud storage systems have various limits on file name length and total
@@ -4487,6 +5564,22 @@ length then you should be OK on all providers.
 
 There may be an even more secure file name encryption mode in the future
 which will address the long file name problem.
+
+Directory name encryption
+
+Crypt offers the option of encrypting dir names or leaving them intact.
+There are two options:
+
+True
+
+Encrypts the whole file path including directory names Example:
+1/12/123.txt is encrypted to
+p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng/qgm4avr35m5loi1th53ato71v0
+
+False
+
+Only encrypts file names, skips directory names Example: 1/12/123/txt is
+encrypted to 1/12/qgm4avr35m5loi1th53ato71v0
 
 Modified time and hashes
 
@@ -4525,7 +5618,7 @@ This will have the following advantages
 
 -   rclone sync will check the checksums while copying
 -   you can use rclone check between the encrypted remotes
--   you don't decrypt and encrypt unecessarily
+-   you don't decrypt and encrypt unnecessarily
 
 For example, let's say you have your original remote at remote: with the
 encrypted version at eremote: with path remote:crypt. You would then set
@@ -4554,9 +5647,9 @@ Header
 -   24 bytes Nonce (IV)
 
 The initial nonce is generated from the operating systems crypto strong
-random number genrator. The nonce is incremented for each chunk read
+random number generator. The nonce is incremented for each chunk read
 making sure each nonce is unique for each block written. The chance of a
-nonce being re-used is miniscule. If you wrote an exabyte of data (10¹⁸
+nonce being re-used is minuscule. If you wrote an exabyte of data (10¹⁸
 bytes) you would have a probability of approximately 2×10⁻³² of re-using
 a nonce.
 
@@ -4608,7 +5701,7 @@ They are then encrypted with EME using AES with 256 bit key. EME
 (ECB-Mix-ECB) is a wide-block encryption mode presented in the 2003
 paper "A Parallelizable Enciphering Mode" by Halevi and Rogaway.
 
-This makes for determinstic encryption which is what we want - the same
+This makes for deterministic encryption which is what we want - the same
 filename must encrypt to the same thing otherwise we can't find it on
 the cloud storage system.
 
@@ -4632,13 +5725,13 @@ used on case insensitive remotes (eg Windows, Amazon Drive).
 
 Key derivation
 
-Rclone uses scrypt with parameters N=16384, r=8, p=1 with a an optional
+Rclone uses scrypt with parameters N=16384, r=8, p=1 with an optional
 user supplied salt (password2) to derive the 32+32+16 = 80 bytes of key
 material required. If the user doesn't supply a salt then rclone uses an
 internal one.
 
 scrypt makes it impractical to mount a dictionary attack on rclone
-encrypted data. For full protection agains this you should always use a
+encrypted data. For full protection against this you should always use a
 salt.
 
 
@@ -4744,8 +5837,13 @@ Here are the command line options specific to this cloud storage system.
 
 --dropbox-chunk-size=SIZE
 
-Upload chunk size. Max 150M. The default is 128MB. Note that this isn't
-buffered into memory.
+Any files larger than this will be uploaded in chunks of this size. The
+default is 48MB. The maximum is 150MB.
+
+Note that chunks are buffered in memory (one at a time) so rclone can
+deal with retries. Setting this larger will increase the speed slightly
+(at most 10% for 128MB in tests) at the cost of using more memory. It
+can be set smaller if you are tight on memory.
 
 Limitations
 
@@ -5162,6 +6260,8 @@ This will guide you through an interactive setup process:
     client_id>
     Google Application Client Secret - leave blank normally.
     client_secret>
+    Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
+    service_account_file>
     Remote config
     Use auto config?
      * Say Y if not sure
@@ -5208,6 +6308,23 @@ List all the files in your drive
 To copy a local directory to a drive directory called backup
 
     rclone copy /home/source remote:backup
+
+Service Account support
+
+You can set up rclone with Google Drive in an unattended mode, i.e. not
+tied to a specific end-user Google account. This is useful when you want
+to synchronise files onto machines that don't have actively logged-in
+users, for example build machines.
+
+To create a service account and obtain its credentials, go to the Google
+Developer Console and use the "Create Credentials" button. After
+creating an account, a JSON file containing the Service Account's
+credentials will be downloaded onto your machine. These credentials are
+what rclone will use for authentication.
+
+To use a Service Account instead of OAuth2 token flow, enter the path to
+your Service Account credentials at the service_account_file prompt and
+rclone won't use the browser based authentication flow.
 
 Team drives
 
@@ -5501,13 +6618,13 @@ Here is how to create your own Google Drive client ID for rclone:
 
 2.  Select a project or create a new project.
 
-3.  Under Overview, Google APIs, Google Apps APIs, click "Drive API",
-    then "Enable".
+3.  Under "ENABLE APIS AND SERVICES" search for "Drive", and enable the
+    then "Google Drive API".
 
-4.  Click "Credentials" in the left-side panel (not "Go to credentials",
-    which opens the wizard), then "Create credentials", then "OAuth
-    client ID". It will prompt you to set the OAuth consent screen
-    product name, if you haven't set one already.
+4.  Click "Credentials" in the left-side panel (not "Create
+    credentials", which opens the wizard), then "Create credentials",
+    then "OAuth client ID". It will prompt you to set the OAuth consent
+    screen product name, if you haven't set one already.
 
 5.  Choose an application type of "other", and click "Create". (the
     default name is fine)
@@ -6246,6 +7363,7 @@ that being:
 -   Memset Memstore
 -   OVH Object Storage
 -   Oracle Cloud Storage
+-   IBM Bluemix Cloud ObjectStorage Swift
 
 Paths are specified as remote:container (or remote: for the lsd
 command.) You may put subdirectories in too, eg
@@ -6273,33 +7391,39 @@ This will guide you through an interactive setup process.
        \ "b2"
      4 / Box
        \ "box"
-     5 / Dropbox
+     5 / Cache a remote
+       \ "cache"
+     6 / Dropbox
        \ "dropbox"
-     6 / Encrypt/Decrypt a remote
+     7 / Encrypt/Decrypt a remote
        \ "crypt"
-     7 / FTP Connection
+     8 / FTP Connection
        \ "ftp"
-     8 / Google Cloud Storage (this is not Google Drive)
+     9 / Google Cloud Storage (this is not Google Drive)
        \ "google cloud storage"
-     9 / Google Drive
+    10 / Google Drive
        \ "drive"
-    10 / Hubic
+    11 / Hubic
        \ "hubic"
-    11 / Local Disk
+    12 / Local Disk
        \ "local"
-    12 / Microsoft Azure Blob Storage
+    13 / Microsoft Azure Blob Storage
        \ "azureblob"
-    13 / Microsoft OneDrive
+    14 / Microsoft OneDrive
        \ "onedrive"
-    14 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+    15 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
        \ "swift"
-    15 / QingClound Object Storage
+    16 / Pcloud
+       \ "pcloud"
+    17 / QingCloud Object Storage
        \ "qingstor"
-    16 / SSH/SFTP Connection
+    18 / SSH/SFTP Connection
        \ "sftp"
-    17 / Yandex Disk
+    19 / Webdav
+       \ "webdav"
+    20 / Yandex Disk
        \ "yandex"
-    18 / http Connection
+    21 / http Connection
        \ "http"
     Storage> swift
     Get swift credentials from environment variables in standard OpenStack form.
@@ -6308,12 +7432,12 @@ This will guide you through an interactive setup process.
        \ "false"
      2 / Get swift credentials from environment vars. Leave other fields blank if using this.
        \ "true"
-    env_auth> 1
-    User name to log in.
-    user> user_name
-    API key or password.
-    key> password_or_api_key
-    Authentication URL for server.
+    env_auth> true
+    User name to log in (OS_USERNAME).
+    user> 
+    API key or password (OS_PASSWORD).
+    key> 
+    Authentication URL for server (OS_AUTH_URL).
     Choose a number from below, or type in your own value
      1 / Rackspace US
        \ "https://auth.api.rackspacecloud.com/v1.0"
@@ -6327,20 +7451,26 @@ This will guide you through an interactive setup process.
        \ "https://auth.storage.memset.com/v2.0"
      6 / OVH
        \ "https://auth.cloud.ovh.net/v2.0"
-    auth> 1
-    User domain - optional (v3 auth)
-    domain> Default
-    Tenant name - optional for v1 auth, required otherwise
-    tenant> tenant_name
-    Tenant domain - optional (v3 auth)
-    tenant_domain>
-    Region name - optional
-    region>
-    Storage URL - optional
-    storage_url>
-    AuthVersion - optional - set to (1,2,3) if your auth URL has no version
-    auth_version>
-    Endpoint type to choose from the service catalogue
+    auth> 
+    User ID to log in - optional - most swift systems use user and leave this blank (v3 auth) (OS_USER_ID).
+    user_id> 
+    User domain - optional (v3 auth) (OS_USER_DOMAIN_NAME)
+    domain> 
+    Tenant name - optional for v1 auth, this or tenant_id required otherwise (OS_TENANT_NAME or OS_PROJECT_NAME)
+    tenant> 
+    Tenant ID - optional for v1 auth, this or tenant required otherwise (OS_TENANT_ID)
+    tenant_id> 
+    Tenant domain - optional (v3 auth) (OS_PROJECT_DOMAIN_NAME)
+    tenant_domain> 
+    Region name - optional (OS_REGION_NAME)
+    region> 
+    Storage URL - optional (OS_STORAGE_URL)
+    storage_url> 
+    Auth Token from alternate authentication - optional (OS_AUTH_TOKEN)
+    auth_token> 
+    AuthVersion - optional - set to (1,2,3) if your auth URL has no version (ST_AUTH_VERSION)
+    auth_version> 
+    Endpoint type to choose from the service catalogue (OS_ENDPOINT_TYPE)
     Choose a number from below, or type in your own value
      1 / Public (default, choose this if not sure)
        \ "public"
@@ -6348,21 +7478,24 @@ This will guide you through an interactive setup process.
        \ "internal"
      3 / Admin
        \ "admin"
-    endpoint_type>
+    endpoint_type> 
     Remote config
     --------------------
-    [remote]
-    env_auth = false
-    user = user_name
-    key = password_or_api_key
-    auth = https://auth.api.rackspacecloud.com/v1.0
-    domain = Default
-    tenant =
-    tenant_domain =
-    region =
-    storage_url =
-    auth_version =
-    endpoint_type =
+    [test]
+    env_auth = true
+    user = 
+    key = 
+    auth = 
+    user_id = 
+    domain = 
+    tenant = 
+    tenant_id = 
+    tenant_domain = 
+    region = 
+    storage_url = 
+    auth_token = 
+    auth_version = 
+    endpoint_type = 
     --------------------
     y) Yes this is OK
     e) Edit this remote
@@ -6425,9 +7558,20 @@ of OpenStack environment variables.
 When you run through the config, make sure you choose true for env_auth
 and leave everything else blank.
 
-rclone will then set any empty config parameters from the enviroment
+rclone will then set any empty config parameters from the environment
 using standard OpenStack environment variables. There is a list of the
 variables in the docs for the swift library.
+
+Using an alternate authentication method
+
+If your OpenStack installation uses a non-standard authentication method
+that might not be yet supported by rclone or the underlying swift
+library, you can authenticate externally (e.g. calling manually the
+openstack commands to get a token). Then, you just need to pass the two
+configuration variables auth_token and storage_url. If they are both
+provided, the other variables are ignored. rclone will not try to
+authenticate but instead assume it is already authenticated and use
+these two variables to access the OpenStack installation.
 
 Using rclone without a config file
 
@@ -6488,6 +7632,134 @@ This is most likely caused by forgetting to specify your tenant when
 setting up a swift remote.
 
 
+pCloud
+
+Paths are specified as remote:path
+
+Paths may be as deep as required, eg remote:directory/subdirectory.
+
+The initial setup for pCloud involves getting a token from pCloud which
+you need to do in your browser. rclone config walks you through it.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    q) Quit config
+    n/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Box
+       \ "box"
+     5 / Dropbox
+       \ "dropbox"
+     6 / Encrypt/Decrypt a remote
+       \ "crypt"
+     7 / FTP Connection
+       \ "ftp"
+     8 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     9 / Google Drive
+       \ "drive"
+    10 / Hubic
+       \ "hubic"
+    11 / Local Disk
+       \ "local"
+    12 / Microsoft Azure Blob Storage
+       \ "azureblob"
+    13 / Microsoft OneDrive
+       \ "onedrive"
+    14 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    15 / Pcloud
+       \ "pcloud"
+    16 / QingCloud Object Storage
+       \ "qingstor"
+    17 / SSH/SFTP Connection
+       \ "sftp"
+    18 / Yandex Disk
+       \ "yandex"
+    19 / http Connection
+       \ "http"
+    Storage> pcloud
+    Pcloud App Client Id - leave blank normally.
+    client_id> 
+    Pcloud App Client Secret - leave blank normally.
+    client_secret> 
+    Remote config
+    Use auto config?
+     * Say Y if not sure
+     * Say N if you are working on a remote or headless machine
+    y) Yes
+    n) No
+    y/n> y
+    If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+    Log in and authorize rclone for access
+    Waiting for code...
+    Got code
+    --------------------
+    [remote]
+    client_id = 
+    client_secret = 
+    token = {"access_token":"XXX","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+See the remote setup docs for how to set it up on a machine with no
+Internet browser available.
+
+Note that rclone runs a webserver on your local machine to collect the
+token as returned from pCloud. This only runs from the moment it opens
+your browser to the moment you get back the verification code. This is
+on http://127.0.0.1:53682/ and this it may require you to unblock it
+temporarily if you are running a host firewall.
+
+Once configured you can then use rclone like this,
+
+List directories in top level of your pCloud
+
+    rclone lsd remote:
+
+List all the files in your pCloud
+
+    rclone ls remote:
+
+To copy a local directory to an pCloud directory called backup
+
+    rclone copy /home/source remote:backup
+
+Modified time and hashes
+
+pCloud allows modification times to be set on objects accurate to 1
+second. These will be used to detect whether objects need syncing or
+not. In order to set a Modification time pCloud requires the object be
+re-uploaded.
+
+pCloud supports MD5 and SHA1 type hashes, so you can use the --checksum
+flag.
+
+Deleting files
+
+Deleted files will be moved to the trash. Your subscription level will
+determine how long items stay in the trash. rclone cleanup can be used
+to empty the trash.
+
+
 SFTP
 
 SFTP is the Secure (or SSH) File Transfer Protocol.
@@ -6496,9 +7768,9 @@ It runs over SSH v2 and is standard with most modern SSH installations.
 
 Paths are specified as remote:path. If the path does not begin with a /
 it is relative to the home directory of the user. An empty path remote:
-refers to the users home directory.
+refers to the user's home directory.
 
-Here is an example of making a SFTP configuration. First run
+Here is an example of making an SFTP configuration. First run
 
     rclone config
 
@@ -6573,7 +7845,7 @@ This will guide you through an interactive setup process.
     d) Delete this remote
     y/e/d> y
 
-This remote is called remote and can now be used like this
+This remote is called remote and can now be used like this:
 
 See all directories in the home directory
 
@@ -6594,7 +7866,7 @@ files in the directory.
 
 SSH Authentication
 
-The SFTP remote supports 3 authentication methods
+The SFTP remote supports three authentication methods:
 
 -   Password
 -   Key file
@@ -6603,8 +7875,8 @@ The SFTP remote supports 3 authentication methods
 Key files should be unencrypted PEM-encoded private key files. For
 instance /home/$USER/.ssh/id_rsa.
 
-If you don't specify pass or key_file then it will attempt to contact an
-ssh-agent.
+If you don't specify pass or key_file then rclone will attempt to
+contact an ssh-agent.
 
 ssh-agent on macOS
 
@@ -6631,7 +7903,13 @@ Limitations
 SFTP supports checksums if the same login has shell access and md5sum or
 sha1sum as well as echo are in the remote's PATH.
 
-The only ssh agent supported under Windows is Putty's pagent.
+The only ssh agent supported under Windows is Putty's pageant.
+
+The Go SSH library disables the use of the aes128-cbc cipher by default,
+due to security concerns. This can be re-enabled on a per-connection
+basis by setting the use_insecure_cipher setting in the configuration
+file to true. Further details on the insecurity of this cipher can be
+found [in this paper] (http://www.isg.rhul.ac.uk/~kp/SandPfinal.pdf).
 
 SFTP isn't supported under plan9 until this issue is fixed.
 
@@ -6639,6 +7917,167 @@ Note that since SFTP isn't HTTP based the following flags don't work
 with it: --dump-headers, --dump-bodies, --dump-auth
 
 Note that --timeout isn't supported (but --contimeout is).
+
+
+WebDAV
+
+Paths are specified as remote:path
+
+Paths may be as deep as required, eg remote:directory/subdirectory.
+
+To configure the WebDAV remote you will need to have a URL for it, and a
+username and password. If you know what kind of system you are
+connecting to then rclone can enable extra features.
+
+Here is an example of how to make a remote called remote. First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+    No remotes found - make a new one
+    n) New remote
+    s) Set configuration password
+    q) Quit config
+    n/s/q> n
+    name> remote
+    Type of storage to configure.
+    Choose a number from below, or type in your own value
+     1 / Amazon Drive
+       \ "amazon cloud drive"
+     2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+       \ "s3"
+     3 / Backblaze B2
+       \ "b2"
+     4 / Box
+       \ "box"
+     5 / Dropbox
+       \ "dropbox"
+     6 / Encrypt/Decrypt a remote
+       \ "crypt"
+     7 / FTP Connection
+       \ "ftp"
+     8 / Google Cloud Storage (this is not Google Drive)
+       \ "google cloud storage"
+     9 / Google Drive
+       \ "drive"
+    10 / Hubic
+       \ "hubic"
+    11 / Local Disk
+       \ "local"
+    12 / Microsoft Azure Blob Storage
+       \ "azureblob"
+    13 / Microsoft OneDrive
+       \ "onedrive"
+    14 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+       \ "swift"
+    15 / Pcloud
+       \ "pcloud"
+    16 / QingCloud Object Storage
+       \ "qingstor"
+    17 / SSH/SFTP Connection
+       \ "sftp"
+    18 / WebDAV
+       \ "webdav"
+    19 / Yandex Disk
+       \ "yandex"
+    20 / http Connection
+       \ "http"
+    Storage> webdav
+    URL of http host to connect to
+    Choose a number from below, or type in your own value
+     1 / Connect to example.com
+       \ "https://example.com"
+    url> https://example.com/remote.php/webdav/
+    Name of the WebDAV site/service/software you are using
+    Choose a number from below, or type in your own value
+     1 / Nextcloud
+       \ "nextcloud"
+     2 / Owncloud
+       \ "owncloud"
+     3 / Other site/service or software
+       \ "other"
+    vendor> 1
+    User name
+    user> user
+    Password.
+    y) Yes type in my own password
+    g) Generate random password
+    n) No leave this optional password blank
+    y/g/n> y
+    Enter the password:
+    password:
+    Confirm the password:
+    password:
+    Remote config
+    --------------------
+    [remote]
+    url = https://example.com/remote.php/webdav/
+    vendor = nextcloud
+    user = user
+    pass = *** ENCRYPTED ***
+    --------------------
+    y) Yes this is OK
+    e) Edit this remote
+    d) Delete this remote
+    y/e/d> y
+
+Once configured you can then use rclone like this,
+
+List directories in top level of your WebDAV
+
+    rclone lsd remote:
+
+List all the files in your WebDAV
+
+    rclone ls remote:
+
+To copy a local directory to an WebDAV directory called backup
+
+    rclone copy /home/source remote:backup
+
+Modified time and hashes
+
+Plain WebDAV does not support modified times. However when used with
+Owncloud or Nextcloud rclone will support modified times.
+
+Hashes are not supported.
+
+Owncloud
+
+Click on the settings cog in the bottom right of the page and this will
+show the WebDAV URL that rclone needs in the config step. It will look
+something like https://example.com/remote.php/webdav/.
+
+Owncloud supports modified times using the X-OC-Mtime header.
+
+Nextcloud
+
+This is configured in an identical way to Owncloud. Note that Nextcloud
+does not support streaming of files (rcat) whereas Owncloud does. This
+may be fixed in the future.
+
+
+Put.io
+
+put.io can be accessed in a read only way using webdav.
+
+Configure the url as https://webdav.put.io and use your normal account
+username and password for user and pass. Set the vendor to other.
+
+Your config file should end up looking like this:
+
+    [putio]
+    type = webdav
+    url = https://webdav.put.io
+    vendor = other
+    user = YourUserName
+    pass = encryptedpassword
+
+If you are using put.io with rclone mount then use the --read-only flag
+to signal to the OS that it can't write to the mount.
+
+For more help see the put.io webdav docs.
 
 
 Yandex Disk
@@ -6793,9 +8232,9 @@ old Linux filesystem with non UTF-8 file names (eg latin1) then you can
 use the convmv tool to convert the filesystem to UTF-8. This tool is
 available in most distributions' package managers.
 
-If an invalid (non-UTF8) filename is read, the invalid caracters will be
-replaced with the unicode replacement character, '�'. rclone will emit a
-debug message in this case (use -v to see), eg
+If an invalid (non-UTF8) filename is read, the invalid characters will
+be replaced with the unicode replacement character, '�'. rclone will
+emit a debug message in this case (use -v to see), eg
 
     Local file system at .: Replacing invalid UTF-8 characters in "gro\xdf"
 
@@ -6880,7 +8319,7 @@ routine instead.
 This tells rclone to stay in the filesystem specified by the root and
 not to recurse into different file systems.
 
-For example if you have a directory heirachy like this
+For example if you have a directory hierarchy like this
 
     root
     ├── disk1     - disk1 mounted on the root
@@ -6917,6 +8356,102 @@ points, as you explicitly acknowledge that they should be skipped.
 
 Changelog
 
+-   v1.39 - 2017-12-23
+    -   New backends
+    -   WebDAV
+        -   tested with nextcloud, owncloud, put.io and others!
+    -   Pcloud
+    -   cache - wraps a cache around other backends (Remus Bunduc)
+        -   useful in combination with mount
+        -   NB this feature is in beta so use with care
+    -   New commands
+    -   serve command with subcommands:
+        -   serve webdav: this implements a webdav server for any
+            rclone remote.
+        -   serve http: command to serve a remote over HTTP
+    -   config: add sub commands for full config file management
+        -   create/delete/dump/edit/file/password/providers/show/update
+    -   touch: to create or update the timestamp of a file
+        (Jakub Tasiemski)
+    -   New Features
+    -   curl install for rclone (Filip Bartodziej)
+    -   --stats now shows percentage, size, rate and ETA in condensed
+        form (Ishuah Kariuki)
+    -   --exclude-if-present to exclude a directory if a file is present
+        (Iakov Davydov)
+    -   rmdirs: add --leave-root flag (lewpam)
+    -   move: add --delete-empty-src-dirs flag to remove dirs after move
+        (Ishuah Kariuki)
+    -   Add --dump flag, introduce --dump requests, responses and remove
+        --dump-auth, --dump-filters
+        -   Obscure X-Auth-Token: from headers when dumping too
+    -   Document and implement exit codes for different failure modes
+        (Ishuah Kariuki)
+    -   Compile
+    -   Bug Fixes
+    -   Retry lots more different types of errors to make multipart
+        transfers more reliable
+    -   Save the config before asking for a token, fixes disappearing
+        oauth config
+    -   Warn the user if --include and --exclude are used together
+        (Ernest Borowski)
+    -   Fix duplicate files (eg on Google drive) causing spurious copies
+    -   Allow trailing and leading whitespace for passwords (Jason Rose)
+    -   ncdu: fix crashes on empty directories
+    -   rcat: fix goroutine leak
+    -   moveto/copyto: Fix to allow copying to the same name
+    -   Mount
+    -   --vfs-cache mode to make writes into mounts more reliable.
+        -   this requires caching files on the disk (see --cache-dir)
+        -   As this is a new feature, use with care
+    -   Use sdnotify to signal systemd the mount is ready
+        (Fabian Möller)
+    -   Check if directory is not empty before mounting
+        (Ernest Borowski)
+    -   Local
+    -   Add error message for cross file system moves
+    -   Fix equality check for times
+    -   Dropbox
+    -   Rework multipart upload
+        -   buffer the chunks when uploading large files so they can be
+            retried
+        -   change default chunk size to 48MB now we are buffering them
+            in memory
+        -   retry every error after the first chunk is done successfully
+    -   Fix error when renaming directories
+    -   Swift
+    -   Fix crash on bad authentication
+    -   Google Drive
+    -   Add service account support (Tim Cooijmans)
+    -   S3
+    -   Make it work properly with Digital Ocean Spaces
+        (Andrew Starr-Bochicchio)
+    -   Fix crash if a bad listing is received
+    -   Add support for ECS task IAM roles (David Minor)
+    -   Backblaze B2
+    -   Fix multipart upload retries
+    -   Fix --hard-delete to make it work 100% of the time
+    -   Swift
+    -   Allow authentication with storage URL and auth key
+        (Giovanni Pizzi)
+    -   Add new fields for swift configuration to support IBM Bluemix
+        Swift (Pierre Carlson)
+    -   Add OS_TENANT_ID and OS_USER_ID to config
+    -   Allow configs with user id instead of user name
+    -   Check if swift segments container exists before creating
+        (John Leach)
+    -   Fix memory leak in swift transfers (upstream fix)
+    -   SFTP
+    -   Add option to enable the use of aes128-cbc cipher (Jon Fautley)
+    -   Amazon cloud drive
+    -   Fix download of large files failing with "Only one auth
+        mechanism allowed"
+    -   crypt
+    -   Option to encrypt directory names or leave them intact
+    -   Implement DirChangeNotify (Fabian Möller)
+    -   onedrive
+    -   Add option to choose resourceURL during setup of OneDrive
+        Business account if more than one is available for user
 -   v1.38 - 2017-09-30
     -   New backends
     -   Azure Blob Storage (thanks Andrei Dragomir)
@@ -8102,6 +9637,28 @@ Contributors
 -   Girish Ramakrishnan girish@cloudron.io
 -   LingMan LingMan@users.noreply.github.com
 -   Jacob McNamee jacobmcnamee@gmail.com
+-   jersou jertux@gmail.com
+-   thierry thierry@substantiel.fr
+-   Simon Leinen simon.leinen@gmail.com ubuntu@s3-test.novalocal
+-   Dan Dascalescu ddascalescu+github@gmail.com
+-   Jason Rose jason@jro.io
+-   Andrew Starr-Bochicchio a.starr.b@gmail.com
+-   John Leach john@johnleach.co.uk
+-   Corban Raun craun@instructure.com
+-   Pierre Carlson mpcarl@us.ibm.com
+-   Ernest Borowski er.borowski@gmail.com
+-   Remus Bunduc remus.bunduc@gmail.com
+-   Iakov Davydov iakov.davydov@unil.ch
+-   Fabian Möller f.moeller@nynex.de
+-   Jakub Tasiemski tasiemski@gmail.com
+-   David Minor dminor@saymedia.com
+-   Tim Cooijmans cooijmans.tim@gmail.com
+-   Laurence liuxy6@gmail.com
+-   Giovanni Pizzi gio.piz@gmail.com
+-   Filip Bartodziej filipbartodziej@gmail.com
+-   Jon Fautley jon@dead.li
+-   lewapm 32110057+lewapm@users.noreply.github.com
+-   Yassine Imounachen yassine256@gmail.com
 
 
 
@@ -8134,7 +9691,7 @@ Rclone has a Google+ page which announcements are posted to
 
 Twitter
 
-You can also follow me on twitter for rclone announcments
+You can also follow me on twitter for rclone announcements
 
 -   [@njcw](https://twitter.com/njcw)
 

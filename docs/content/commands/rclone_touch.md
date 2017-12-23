@@ -1,29 +1,28 @@
 ---
 date: 2017-12-23T13:05:26Z
-title: "rclone md5sum"
-slug: rclone_md5sum
-url: /commands/rclone_md5sum/
+title: "rclone touch"
+slug: rclone_touch
+url: /commands/rclone_touch/
 ---
-## rclone md5sum
+## rclone touch
 
-Produces an md5sum file for all the objects in the path.
+Create new file or change file modification time.
 
 ### Synopsis
 
 
-
-Produces an md5sum file for all the objects in the path.  This
-is in the same format as the standard md5sum tool produces.
-
+Create new file or change file modification time.
 
 ```
-rclone md5sum remote:path [flags]
+rclone touch remote:path [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for md5sum
+  -h, --help               help for touch
+  -C, --no-create          Do not create the file if it does not exist.
+  -t, --timestamp string   Change the modification times to the specified time instead of the current time of day. The argument is of the form 'YYMMDD' (ex. 17.10.30) or 'YYYY-MM-DDTHH:MM:SS' (ex. 2006-01-02T15:04:05)
 ```
 
 ### Options inherited from parent commands

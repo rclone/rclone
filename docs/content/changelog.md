@@ -1,12 +1,88 @@
 ---
 title: "Documentation"
 description: "Rclone Changelog"
-date: "2017-09-30"
+date: "2017-12-23"
 ---
 
 Changelog
 ---------
 
+  * v1.39 - 2017-12-23
+    * New backends
+      * WebDAV
+        * tested with nextcloud, owncloud, put.io and others!
+      * Pcloud
+      * cache - wraps a cache around other backends (Remus Bunduc)
+        * useful in combination with mount
+        * NB this feature is in beta so use with care
+    * New commands
+      * serve command with subcommands:
+        * serve webdav: this implements a webdav server for any rclone remote.
+        * serve http: command to serve a remote over HTTP
+      * config: add sub commands for full config file management
+        * create/delete/dump/edit/file/password/providers/show/update
+      * touch: to create or update the timestamp of a file (Jakub Tasiemski)
+    * New Features
+      * curl install for rclone (Filip Bartodziej)
+      * --stats now shows percentage, size, rate and ETA in condensed form (Ishuah Kariuki)
+      * --exclude-if-present to exclude a directory if a file is present (Iakov Davydov)
+      * rmdirs: add --leave-root flag (lewpam)
+      * move: add --delete-empty-src-dirs flag to remove dirs after move (Ishuah Kariuki)
+      * Add --dump flag, introduce --dump requests, responses and remove --dump-auth, --dump-filters
+        * Obscure X-Auth-Token: from headers when dumping too
+      * Document and implement exit codes for different failure modes (Ishuah Kariuki)
+    * Compile
+    * Bug Fixes
+      * Retry lots more different types of errors to make multipart transfers more reliable
+      * Save the config before asking for a token, fixes disappearing oauth config
+      * Warn the user if --include and --exclude are used together (Ernest Borowski)
+      * Fix duplicate files (eg on Google drive) causing spurious copies
+      * Allow trailing and leading whitespace for passwords (Jason Rose)
+      * ncdu: fix crashes on empty directories
+      * rcat: fix goroutine leak
+      * moveto/copyto: Fix to allow copying to the same name
+    * Mount
+      * --vfs-cache mode to make writes into mounts more reliable.
+        * this requires caching files on the disk (see --cache-dir)
+        * As this is a new feature, use with care
+      * Use sdnotify to signal systemd the mount is ready (Fabian Möller)
+      * Check if directory is not empty before mounting (Ernest Borowski)
+    * Local
+      * Add error message for cross file system moves
+      * Fix equality check for times
+    * Dropbox
+      * Rework multipart upload
+        * buffer the chunks when uploading large files so they can be retried
+        * change default chunk size to 48MB now we are buffering them in memory
+        * retry every error after the first chunk is done successfully
+      * Fix error when renaming directories
+    * Swift
+      * Fix crash on bad authentication
+    * Google Drive
+      * Add service account support (Tim Cooijmans)
+    * S3
+      * Make it work properly with Digital Ocean Spaces (Andrew Starr-Bochicchio)
+      * Fix crash if a bad listing is received
+      * Add support for ECS task IAM roles (David Minor)
+    * Backblaze B2
+      * Fix multipart upload retries
+      * Fix --hard-delete to make it work 100% of the time
+    * Swift
+      * Allow authentication with storage URL and auth key (Giovanni Pizzi)
+      * Add new fields for swift configuration to support IBM Bluemix Swift (Pierre Carlson)
+      * Add OS_TENANT_ID and OS_USER_ID to config
+      * Allow configs with user id instead of user name
+      * Check if swift segments container exists before creating (John Leach)
+      * Fix memory leak in swift transfers (upstream fix)
+    * SFTP
+      * Add option to enable the use of aes128-cbc cipher (Jon Fautley)
+    * Amazon cloud drive
+      * Fix download of large files failing with "Only one auth mechanism allowed"
+    * crypt
+      * Option to encrypt directory names or leave them intact
+      * Implement DirChangeNotify (Fabian Möller)
+    * onedrive
+      * Add option to choose resourceURL during setup of OneDrive Business account if more than one is available for user
   * v1.38 - 2017-09-30
     * New backends
       * Azure Blob Storage (thanks Andrei Dragomir)
