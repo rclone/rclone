@@ -1,29 +1,28 @@
 ---
 date: 2017-12-23T13:05:26Z
-title: "rclone md5sum"
-slug: rclone_md5sum
-url: /commands/rclone_md5sum/
+title: "rclone cachestats"
+slug: rclone_cachestats
+url: /commands/rclone_cachestats/
 ---
-## rclone md5sum
+## rclone cachestats
 
-Produces an md5sum file for all the objects in the path.
+Print cache stats for a remote
 
 ### Synopsis
 
 
 
-Produces an md5sum file for all the objects in the path.  This
-is in the same format as the standard md5sum tool produces.
+Print cache stats for a remote in JSON format
 
 
 ```
-rclone md5sum remote:path [flags]
+rclone cachestats source: [flags]
 ```
 
 ### Options
 
 ```
-  -h, --help   help for md5sum
+  -h, --help   help for cachestats
 ```
 
 ### Options inherited from parent commands
