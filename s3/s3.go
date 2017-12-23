@@ -840,14 +840,9 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 			return "", err
 		}
 
-		if md5sum, ok := o.meta[metaMD5Hash]; ok {
-			md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sum)
-			if err != nil {
-				return "", err
-			}
-			hash = hex.EncodeToString(md5sumBytes)
-		} else {
-			hash = ""
+		hash, err = o.hashMD5FromMeta(o.meta)
+		if err != nil {
+			return "", err
 		}
 	}
 	return hash, nil
@@ -1024,14 +1019,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	if size > uploader.PartSize {
-		hash, err := src.Hash(fs.HashMD5)
-
-		if err == nil && matchMd5.MatchString(hash) {
-			hashBytes, err := hex.DecodeString(hash)
-
-			if err == nil {
-				metadata[metaMD5Hash] = aws.String(base64.StdEncoding.EncodeToString(hashBytes))
-			}
+		hashMD5, err := o.hashMD5FromSrc(src)
+		if err == nil {
+			metadata[metaMD5Hash] = aws.String(hashMD5)
 		}
 	}
 
@@ -1063,6 +1053,39 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	o.meta = nil // wipe old metadata
 	err = o.readMetaData()
 	return err
+}
+
+func (o *Object) hashMD5FromSrc(src fs.ObjectInfo) (md5 string, err error) {
+	value, err := src.Hash(fs.HashMD5)
+	if err != nil {
+		return "", err
+	}
+
+	if !matchMd5.MatchString(value) {
+		return "", errors.New("invalid MD5-sum format")
+	}
+
+	hashBytes, err := hex.DecodeString(value)
+	if err != nil {
+		return "", err
+	}
+
+	return base64.StdEncoding.EncodeToString(hashBytes), nil
+}
+
+func (o *Object) hashMD5FromMeta(meta map[string]*string) (md5 string, err error) {
+	var hash string
+	if value, ok := meta[metaMD5Hash]; ok {
+		hashBytes, err := base64.StdEncoding.DecodeString(*value)
+		if err != nil {
+			return "", err
+		}
+		hash = hex.EncodeToString(hashBytes)
+	} else {
+		hash = ""
+	}
+
+	return hash, nil
 }
 
 // Remove an object
