@@ -2,7 +2,8 @@ package lsf
 
 import (
 	"fmt"
-	"strconv"
+	"io"
+	"os"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
@@ -28,52 +29,50 @@ func init() {
 
 var commandDefintion = &cobra.Command{
 	Use:   "lsf remote:path",
-	Short: `List all the objects in the path with modification time, size and path in specific format: 'p' - path, 's' - size, 't' - modification time, ex. 'tsp'.`,
+	Short: `List all the objects in the path with modification time, size and path in specific format: 'p' - path, 's' - size, 't' - modification time, ex. 'tsp'. Default output contains only path. If format is empty, dir-slash flag is always true.`,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return fs.Walk(fsrc, "", false, fs.ConfigMaxDepth(recurse), func(path string, entries fs.DirEntries, err error) error {
-				if err != nil {
-					fs.Stats.Error(err)
-					fs.Errorf(path, "error listing: %v", err)
-					return nil
-				}
-				for _, char := range format {
-					switch char {
-					case
-						'p',
-						't',
-						's':
-						continue
-					default:
-						return errors.Wrap(err, "failed to parse date/time argument")
-					}
-				}
-				if separator == "" {
-					separator = ";"
-				}
-				for _, entry := range entries {
-					_, isDir := entry.(fs.Directory)
-					var pathInformation string
-					for _, char := range format {
-						switch char {
-						case 'p':
-							pathInformation += entry.Remote()
-							if isDir && dirSlash {
-								pathInformation += "/"
-							}
-							pathInformation += separator
-						case 't':
-							pathInformation += entry.ModTime().Format("2006-01-02 15:04:05") + separator
-						case 's':
-							pathInformation += strconv.FormatInt(entry.Size(), 10) + separator
-						}
-					}
-					fmt.Println(pathInformation[:len(pathInformation)-len(separator)])
-				}
-				return nil
-			})
+			return Lsf(fsrc, os.Stdout)
 		})
 	},
+}
+
+//Lsf lists all the objects in the path with modification time, size and path in specific format.
+func Lsf(fsrc fs.Fs, out io.Writer) error {
+	return fs.Walk(fsrc, "", false, fs.ConfigMaxDepth(recurse), func(path string, entries fs.DirEntries, err error) error {
+		if err != nil {
+			fs.Stats.Error(err)
+			fs.Errorf(path, "error listing: %v", err)
+			return nil
+		}
+		if format == "" {
+			format = "p"
+			dirSlash = true
+		}
+		if separator == "" {
+			separator = ";"
+		}
+		var list fs.ListFormat
+		list.SetSeparator(separator)
+		list.SetDirSlash(dirSlash)
+
+		for _, char := range format {
+			switch char {
+			case 'p':
+				list.AddPath()
+			case 't':
+				list.AddModTime()
+			case 's':
+				list.AddSize()
+			default:
+				return errors.Wrap(err, "failed to parse format argument")
+			}
+		}
+		for _, entry := range entries {
+			fmt.Fprintln(out, fs.ListFormatted(&entry, &list))
+		}
+		return nil
+	})
 }
