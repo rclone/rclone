@@ -28,7 +28,6 @@ type syncCopyMove struct {
 	// internal state
 	ctx            context.Context        // internal context for controlling go-routines
 	cancel         func()                 // cancel the context
-	noTraverse     bool                   // if set don't trafevers the dst
 	deletersWg     sync.WaitGroup         // for delete before go routine
 	deleteFilesCh  chan fs.Object         // channel to receive deletes if delete before
 	trackRenames   bool                   // set if we should do server side renames
@@ -73,7 +72,6 @@ func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 		srcFilesChan:       make(chan fs.Object, fs.Config.Checkers+fs.Config.Transfers),
 		srcFilesResult:     make(chan error, 1),
 		dstFilesResult:     make(chan error, 1),
-		noTraverse:         fs.Config.NoTraverse,
 		toBeChecked:        make(fs.ObjectPairChan, fs.Config.Transfers),
 		toBeUploaded:       make(fs.ObjectPairChan, fs.Config.Transfers),
 		deleteFilesCh:      make(chan fs.Object, fs.Config.Checkers),
@@ -83,10 +81,6 @@ func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 		trackRenamesCh:     make(chan fs.Object, fs.Config.Checkers),
 	}
 	s.ctx, s.cancel = context.WithCancel(context.Background())
-	if s.noTraverse && s.deleteMode != fs.DeleteModeOff {
-		fs.Errorf(nil, "Ignoring --no-traverse with sync")
-		s.noTraverse = false
-	}
 	if s.trackRenames {
 		// Don't track renames for remotes without server-side move support.
 		if !operations.CanServerSideMove(fdst) {
@@ -102,10 +96,6 @@ func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 		// track renames needs delete after
 		if s.deleteMode != fs.DeleteModeOff {
 			s.deleteMode = fs.DeleteModeAfter
-		}
-		if s.noTraverse {
-			fs.Errorf(nil, "Ignoring --no-traverse with --track-renames")
-			s.noTraverse = false
 		}
 	}
 	// Make Fs for --backup-dir if required

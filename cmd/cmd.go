@@ -179,8 +179,6 @@ func newFsSrc(remote string) (fs.Fs, string) {
 			fs.CountError(err)
 			log.Fatalf("Failed to limit to single file %q: %v", remote, err)
 		}
-		// Set --no-traverse as only one file
-		fs.Config.NoTraverse = true
 	}
 	return f, fileName
 }
