@@ -114,6 +114,7 @@ var (
 	userAgent             = StringP("user-agent", "", "rclone/"+Version, "Set the user-agent to a specified string. The default is rclone/ version")
 	immutable             = BoolP("immutable", "", false, "Do not modify files. Fail if existing files have been modified.")
 	autoConfirm           = BoolP("auto-confirm", "", false, "If enabled, do not request console confirmation.")
+	statsFileNameLength   = IntP("stats-file-name-length", "", 40, "Max file name length in stats. 0 for no limit")
 	streamingUploadCutoff = SizeSuffix(100 * 1024)
 	dump                  DumpFlags
 	logLevel              = LogLevelNotice
@@ -255,6 +256,7 @@ type ConfigInfo struct {
 	Immutable             bool
 	AutoConfirm           bool
 	StreamingUploadCutoff SizeSuffix
+	StatsFileNameLength   int
 }
 
 // Return the path to the configuration file
@@ -392,6 +394,7 @@ func LoadConfig() {
 	Config.TPSLimitBurst = *tpsLimitBurst
 	Config.Immutable = *immutable
 	Config.AutoConfirm = *autoConfirm
+	Config.StatsFileNameLength = *statsFileNameLength
 	Config.BufferSize = bufferSize
 	Config.StreamingUploadCutoff = streamingUploadCutoff
 	Config.Dump = dump
