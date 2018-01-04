@@ -812,14 +812,16 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	if err != nil {
 		return errors.Wrap(err, "SetModTime")
 	}
-	err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
-	o.fs.putSftpConnection(&c, err)
-	if err != nil {
-		return errors.Wrap(err, "SetModTime failed")
+	if fs.ConfigFileGetBool(o.fs.name, "set_modtime", true) {
+		err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
+		o.fs.putSftpConnection(&c, err)
+		if err != nil {
+			return errors.Wrap(err, "SetModTime failed")
+		}
 	}
 	err = o.stat()
 	if err != nil {
-		return errors.Wrap(err, "SetModTime failed")
+		return errors.Wrap(err, "SetModTime stat failed")
 	}
 	return nil
 }

@@ -147,6 +147,11 @@ Modified times are stored on the server to 1 second precision.
 
 Modified times are used in syncing and are fully supported.
 
+Some SFTP servers disable setting/modifying the file modification time after
+upload (for example, certain configurations of ProFTPd with mod_sftp). If you
+are using one of these servers, you can set the option `set_modtime = false` in
+your RClone backend configuration to disable this behaviour.
+
 ### Limitations ###
 
 SFTP supports checksums if the same login has shell access and `md5sum`
