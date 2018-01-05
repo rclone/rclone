@@ -308,7 +308,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 func (f *Fs) readMetaDataForPath(path string) (info *api.Item, resp *http.Response, err error) {
 	opts := rest.Opts{
 		Method: "GET",
-		Path:   "/root:/" + rest.URLEscape(replaceReservedChars(path)),
+		Path:   "/root:/" + rest.URLPathEscape(replaceReservedChars(path)),
 	}
 	err = f.pacer.Call(func() (bool, error) {
 		resp, err = f.srv.CallJSON(&opts, nil, &info)
@@ -1024,7 +1024,7 @@ func (o *Object) ModTime() time.Time {
 func (o *Object) setModTime(modTime time.Time) (*api.Item, error) {
 	opts := rest.Opts{
 		Method: "PATCH",
-		Path:   "/root:/" + rest.URLEscape(o.srvPath()),
+		Path:   "/root:/" + rest.URLPathEscape(o.srvPath()),
 	}
 	update := api.SetFileSystemInfo{
 		FileSystemInfo: api.FileSystemInfoFacet{
@@ -1079,7 +1079,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func (o *Object) createUploadSession() (response *api.CreateUploadResponse, err error) {
 	opts := rest.Opts{
 		Method: "POST",
-		Path:   "/root:/" + rest.URLEscape(o.srvPath()) + ":/upload.createSession",
+		Path:   "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/upload.createSession",
 	}
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
@@ -1185,7 +1185,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		var resp *http.Response
 		opts := rest.Opts{
 			Method:        "PUT",
-			Path:          "/root:/" + rest.URLEscape(o.srvPath()) + ":/content",
+			Path:          "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
 			ContentLength: &size,
 			Body:          in,
 		}

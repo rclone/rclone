@@ -89,7 +89,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	u, err := rest.URLJoin(base, rest.URLEscape(root))
+	u, err := rest.URLJoin(base, rest.URLPathEscape(root))
 	if err != nil {
 		return nil, err
 	}
@@ -186,7 +186,7 @@ func (f *Fs) NewObject(remote string) (fs.Object, error) {
 
 // Join's the remote onto the base URL
 func (f *Fs) url(remote string) string {
-	return f.endpointURL + rest.URLEscape(remote)
+	return f.endpointURL + rest.URLPathEscape(remote)
 }
 
 func parseInt64(s string) int64 {

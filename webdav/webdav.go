@@ -232,7 +232,7 @@ func addSlash(s string) string {
 
 // filePath returns a file path (f.root, file)
 func (f *Fs) filePath(file string) string {
-	return rest.URLEscape(path.Join(f.root, file))
+	return rest.URLPathEscape(path.Join(f.root, file))
 }
 
 // dirPath returns a directory path (f.root, dir)

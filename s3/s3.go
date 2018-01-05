@@ -786,7 +786,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 	srcFs := srcObj.fs
 	key := f.root + remote
-	source := rest.URLEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
+	source := rest.URLPathEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
 	req := s3.CopyObjectInput{
 		Bucket:            &f.bucket,
 		Key:               &key,
@@ -935,7 +935,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 		ACL:               &o.fs.acl,
 		Key:               &key,
 		ContentType:       &mimeType,
-		CopySource:        aws.String(rest.URLEscape(sourceKey)),
+		CopySource:        aws.String(rest.URLPathEscape(sourceKey)),
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
 	}
