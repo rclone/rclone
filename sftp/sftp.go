@@ -70,6 +70,10 @@ func init() {
 					Help:  "Enables the use of the aes128-cbc cipher.",
 				},
 			},
+		}, {
+			Name:     "disable_hashcheck",
+			Help:     "Disable the exectution of SSH commands to determine if remote file hashing is available, leave blank unless you know what you are doing.",
+			Optional: true,
 		}},
 	}
 	fs.Register(fsi)
@@ -611,6 +615,11 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 func (f *Fs) Hashes() fs.HashSet {
 	if f.cachedHashes != nil {
 		return *f.cachedHashes
+	}
+
+	hashcheckDisabled := fs.ConfigFileGetBool(f.name, "disable_hashcheck")
+	if hashcheckDisabled {
+		return fs.HashSet(fs.HashNone)
 	}
 
 	c, err := f.getSftpConnection()
