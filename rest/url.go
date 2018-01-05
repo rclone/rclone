@@ -17,10 +17,10 @@ func URLJoin(base *url.URL, path string) (*url.URL, error) {
 	return base.ResolveReference(rel), nil
 }
 
-// URLEscape escapes URL path the in string using URL escaping rules
+// URLPathEscape escapes URL path the in string using URL escaping rules
 //
 // This mimics url.PathEscape which only available from go 1.8
-func URLEscape(in string) string {
+func URLPathEscape(in string) string {
 	var u url.URL
 	u.Path = in
 	return u.String()

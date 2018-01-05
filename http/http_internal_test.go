@@ -223,7 +223,7 @@ func TestParseName(t *testing.T) {
 		{"http://example.com/dir/", "subdir/potato", false, ""},
 		{"http://example.com/dir/", "With percent %25.txt", true, "With percent %.txt"},
 		{"http://example.com/dir/", "With colon :", false, ""},
-		{"http://example.com/dir/", rest.URLEscape("With colon :"), true, "With colon :"},
+		{"http://example.com/dir/", rest.URLPathEscape("With colon :"), true, "With colon :"},
 	} {
 		u, err := url.Parse(test.base)
 		require.NoError(t, err)

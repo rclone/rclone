@@ -30,7 +30,7 @@ func TestURLJoin(t *testing.T) {
 		{"http://example.com/dir/", "subdir/potato", true, "http://example.com/dir/subdir/potato"},
 		{"http://example.com/dir/", "With percent %25.txt", true, "http://example.com/dir/With%20percent%20%25.txt"},
 		{"http://example.com/dir/", "With colon :", false, ""},
-		{"http://example.com/dir/", URLEscape("With colon :"), true, "http://example.com/dir/With%20colon%20:"},
+		{"http://example.com/dir/", URLPathEscape("With colon :"), true, "http://example.com/dir/With%20colon%20:"},
 	} {
 		u, err := url.Parse(test.base)
 		require.NoError(t, err)
@@ -46,7 +46,7 @@ func TestURLJoin(t *testing.T) {
 	}
 }
 
-func TestURLEscape(t *testing.T) {
+func TestURLPathEscape(t *testing.T) {
 	for i, test := range []struct {
 		path string
 		want string
@@ -57,7 +57,7 @@ func TestURLEscape(t *testing.T) {
 		{"With Colon:", "./With%20Colon:"},
 		{"With Percent%", "With%20Percent%25"},
 	} {
-		got := URLEscape(test.path)
+		got := URLPathEscape(test.path)
 		assert.Equal(t, test.want, got, fmt.Sprintf("Test %d path = %q", i, test.path))
 	}
 }
