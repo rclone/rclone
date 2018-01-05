@@ -11,6 +11,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/rest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -117,6 +118,22 @@ type entry struct {
 // entries represents a directory
 type entries []entry
 
+// addEntry adds an entry to that directory
+func (es *entries) addEntry(node interface {
+	Path() string
+	Name() string
+	IsDir() bool
+}) {
+	remote := node.Path()
+	leaf := node.Name()
+	urlRemote := leaf
+	if node.IsDir() {
+		leaf += "/"
+		urlRemote += "/"
+	}
+	*es = append(*es, entry{remote: remote, URL: rest.URLPathEscape(urlRemote), Leaf: leaf})
+}
+
 // indexPage is a directory listing template
 var indexPage = `<!DOCTYPE html>
 <html lang="en">
@@ -171,14 +188,7 @@ func (s *server) serveDir(w http.ResponseWriter, r *http.Request, dirRemote stri
 
 	var out entries
 	for _, node := range dirEntries {
-		remote := node.Path()
-		leaf := node.Name()
-		urlRemote := leaf
-		if node.IsDir() {
-			leaf += "/"
-			urlRemote += "/"
-		}
-		out = append(out, entry{remote: remote, URL: urlRemote, Leaf: leaf})
+		out.addEntry(node)
 	}
 
 	// Account the transfer
