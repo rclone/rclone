@@ -151,6 +151,10 @@ Modified times are used in syncing and are fully supported.
 
 SFTP supports checksums if the same login has shell access and `md5sum`
 or `sha1sum` as well as `echo` are in the remote's PATH.
+This remote check can be disabled by setting the configuration option
+`disable_hashcheck`. This may be required if you're connecting to SFTP servers
+which are not under your control, and to which the execution of remote commands
+is prohibited.
 
 The only ssh agent supported under Windows is Putty's pageant.
 
