@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/ls/lshelp"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -21,15 +22,36 @@ var (
 func init() {
 	cmd.Root.AddCommand(commandDefintion)
 	flags := commandDefintion.Flags()
-	flags.StringVarP(&format, "format", "F", "", "Output format.")
-	flags.StringVarP(&separator, "separator", "s", "", "Separator.")
-	flags.BoolVarP(&dirSlash, "dir-slash", "d", false, "Dir name contains slash one the end.")
+	flags.StringVarP(&format, "format", "F", "p", "Output format - see  help for details")
+	flags.StringVarP(&separator, "separator", "s", ";", "Separator for the items in the format.")
+	flags.BoolVarP(&dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
 	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
 var commandDefintion = &cobra.Command{
 	Use:   "lsf remote:path",
-	Short: `List all the objects in the path with modification time, size and path in specific format: 'p' - path, 's' - size, 't' - modification time, ex. 'tsp'. Default output contains only path. If format is empty, dir-slash flag is always true.`,
+	Short: `List directories and objects in remote:path formatted for parsing`,
+	Long: `
+List the contents of the source path (directories and objects) to
+standard output in a form which is easy to parse by scripts.  By
+default this will just be the names of the objects and directories,
+one per line.  The directories will have a / suffix.
+
+Use the --format option to control what gets listed.  By default this
+is just the path, but you can use these parameters to control the
+output:
+
+    p - path
+    s - size
+    t - modification time
+
+So if you wanted the path, size and modification time, you would use
+--format "pst", or maybe --format "tsp" to put the path last.
+
+By default the separator is ";" this can be changed with the
+--separator flag.  Note that separators aren't escaped in the path so
+putting it last is a good strategy.
+` + lshelp.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
@@ -39,36 +61,31 @@ var commandDefintion = &cobra.Command{
 	},
 }
 
-//Lsf lists all the objects in the path with modification time, size and path in specific format.
+// Lsf lists all the objects in the path with modification time, size
+// and path in specific format.
 func Lsf(fsrc fs.Fs, out io.Writer) error {
+	var list fs.ListFormat
+	list.SetSeparator(separator)
+	list.SetDirSlash(dirSlash)
+
+	for _, char := range format {
+		switch char {
+		case 'p':
+			list.AddPath()
+		case 't':
+			list.AddModTime()
+		case 's':
+			list.AddSize()
+		default:
+			return errors.Errorf("Unknown format character %q", char)
+		}
+	}
+
 	return fs.Walk(fsrc, "", false, fs.ConfigMaxDepth(recurse), func(path string, entries fs.DirEntries, err error) error {
 		if err != nil {
 			fs.Stats.Error(err)
 			fs.Errorf(path, "error listing: %v", err)
 			return nil
-		}
-		if format == "" {
-			format = "p"
-			dirSlash = true
-		}
-		if separator == "" {
-			separator = ";"
-		}
-		var list fs.ListFormat
-		list.SetSeparator(separator)
-		list.SetDirSlash(dirSlash)
-
-		for _, char := range format {
-			switch char {
-			case 'p':
-				list.AddPath()
-			case 't':
-				list.AddModTime()
-			case 's':
-				list.AddSize()
-			default:
-				return errors.Wrap(err, "failed to parse format argument")
-			}
 		}
 		for _, entry := range entries {
 			fmt.Fprintln(out, fs.ListFormatted(&entry, &list))

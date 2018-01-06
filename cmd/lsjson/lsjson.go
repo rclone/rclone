@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/ls/lshelp"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -76,7 +77,7 @@ The time is in RFC3339 format with nanosecond precision.
 
 The whole output can be processed as a JSON blob, or alternatively it
 can be processed line by line as each item is written one to a line.
-`,
+` + lshelp.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
