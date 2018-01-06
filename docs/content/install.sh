@@ -5,8 +5,12 @@
 # 1 - parameters not supported were used or some unexpected error occured
 # 2 - OS not supported by this script
 # 3 - installed version of rclone is up to date
+# 4 - supported unzip tools are not available
 
 set -e
+
+#when adding a tool to the list make sure to also add it's corresponding command further in the script
+unzip_tools_list=('unzip' '7z')
 
 usage() { echo "Usage: curl https://rclone.org/install.sh | sudo bash [-s beta]" 1>&2; exit 1; }
 
@@ -24,8 +28,26 @@ fi
 tmp_dir=`mktemp -d`; cd $tmp_dir
 
 
+#make sure unzip tool is available and choose one to work with
+set +e
+for tool in ${unzip_tools_list[*]}; do
+    trash=`hash $tool 2>>errors`
+    if [ "$?" -eq 0 ]; then
+        unzip_tool="$tool"
+        break
+    fi
+done  
+set -e
+
+# exit if no unzip tools available
+if [ -z "${unzip_tool}" ]; then
+    printf "\nNone of the supported tools for extracting zip archives (${unzip_tools_list[*]}) were found. "
+    printf "Please install one of them and try again.\n\n"
+    exit 4
+fi
+
 #check installed version of rclone to determine if update is necessary
-version=`rclone --version 2>errors | head -n 1`
+version=`rclone --version 2>>errors | head -n 1`
 if [ -z "${install_beta}" ]; then
     current_version=`curl https://downloads.rclone.org/version.txt`
 else
@@ -33,9 +55,10 @@ else
 fi
 
 if [ "$version" = "$current_version" ]; then
-    echo && echo "The latest ${install_beta}version of rclone ${version} is already installed" && echo
+    printf "\nThe latest ${install_beta}version of rclone ${version} is already installed.\n\n"
     exit 3
 fi
+
 
 
 #detect the platform
@@ -96,8 +119,18 @@ fi
 
 curl -O $download_link
 unzip_dir="tmp_unzip_dir_for_rclone"
-unzip -a $rclone_zip -d $unzip_dir 
+# there should be an entry in this switch for each element of unzip_tools_list
+case $unzip_tool in
+  'unzip')
+    unzip -a $rclone_zip -d $unzip_dir
+    ;;
+  '7z')
+    7z x $rclone_zip -o$unzip_dir
+    ;;
+esac
+    
 cd $unzip_dir/*
+
 
 #mounting rclone to enviroment
 
@@ -136,7 +169,5 @@ case $OS in
 esac
 
 
-echo
-echo 'Now run "rclone config" for setup. Check https://rclone.org/docs/ for more details.'
-echo
+printf '\nNow run "rclone config" for setup. Check https://rclone.org/docs/ for more details.\n\n'
 exit 0
