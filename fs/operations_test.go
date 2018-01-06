@@ -958,3 +958,45 @@ func TestCheckEqualReaders(t *testing.T) {
 	assert.Equal(t, myErr, err)
 	assert.Equal(t, differ, true)
 }
+
+func TestListFormat(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	file1 := r.WriteObject("a", "a", t1)
+	file2 := r.WriteObject("subdir/b", "b", t1)
+
+	fstest.CheckItems(t, r.Fremote, file1, file2)
+
+	items, _ := fs.ListDirSorted(r.Fremote, true, "")
+	var list fs.ListFormat
+	list.AddPath()
+	list.SetDirSlash(false)
+	assert.Equal(t, "subdir", fs.ListFormatted(&items[1], &list))
+
+	list.SetDirSlash(true)
+	assert.Equal(t, "subdir/", fs.ListFormatted(&items[1], &list))
+
+	list.SetOutput(nil)
+	assert.Equal(t, "", fs.ListFormatted(&items[1], &list))
+
+	list.AppendOutput(func() string { return "a" })
+	list.AppendOutput(func() string { return "b" })
+	assert.Equal(t, "ab", fs.ListFormatted(&items[1], &list))
+	list.SetSeparator(":::")
+	assert.Equal(t, "a:::b", fs.ListFormatted(&items[1], &list))
+
+	list.SetOutput(nil)
+	list.AddModTime()
+	assert.Equal(t, items[0].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[0], &list))
+
+	list.SetOutput(nil)
+	list.AddSize()
+	assert.Equal(t, "1", fs.ListFormatted(&items[0], &list))
+
+	list.AddPath()
+	list.AddModTime()
+	list.SetDirSlash(true)
+	list.SetSeparator("__SEP__")
+	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[0], &list))
+	assert.Equal(t, "-1__SEP__subdir/__SEP__"+items[1].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[1], &list))
+}
