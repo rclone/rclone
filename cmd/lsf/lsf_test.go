@@ -113,6 +113,26 @@ subdir
 `, buf.String())
 
 	buf = new(bytes.Buffer)
+	format = "p"
+	filesOnly = true
+	err = Lsf(f, buf)
+	require.NoError(t, err)
+	assert.Equal(t, `file1
+file2
+file3
+`, buf.String())
+	filesOnly = false
+
+	buf = new(bytes.Buffer)
+	format = "p"
+	dirsOnly = true
+	err = Lsf(f, buf)
+	require.NoError(t, err)
+	assert.Equal(t, `subdir
+`, buf.String())
+	dirsOnly = false
+
+	buf = new(bytes.Buffer)
 	format = "t"
 	err = Lsf(f, buf)
 	require.NoError(t, err)
