@@ -998,5 +998,5 @@ func TestListFormat(t *testing.T) {
 	list.SetDirSlash(true)
 	list.SetSeparator("__SEP__")
 	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[0], &list))
-	assert.Equal(t, "-1__SEP__subdir/__SEP__"+items[1].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[1], &list))
+	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"__SEP__subdir/__SEP__"+items[1].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[1], &list))
 }
