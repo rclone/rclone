@@ -23,7 +23,6 @@ import (
 	_ "github.com/ncw/rclone/cmd/info"
 	_ "github.com/ncw/rclone/cmd/listremotes"
 	_ "github.com/ncw/rclone/cmd/ls"
-	_ "github.com/ncw/rclone/cmd/ls2"
 	_ "github.com/ncw/rclone/cmd/lsd"
 	_ "github.com/ncw/rclone/cmd/lsf"
 	_ "github.com/ncw/rclone/cmd/lsjson"
