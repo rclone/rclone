@@ -18,6 +18,8 @@ var (
 	dirSlash  bool
 	recurse   bool
 	hashType  = fs.HashMD5
+	filesOnly bool
+	dirsOnly  bool
 )
 
 func init() {
@@ -27,6 +29,8 @@ func init() {
 	flags.StringVarP(&separator, "separator", "s", ";", "Separator for the items in the format.")
 	flags.BoolVarP(&dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
 	flags.VarP(&hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
+	flags.BoolVarP(&filesOnly, "files-only", "", false, "Only list files.")
+	flags.BoolVarP(&dirsOnly, "dirs-only", "", false, "Only list directories.")
 	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
@@ -57,6 +61,12 @@ can be returned as an empty string if it isn't available on the object
 (and for directories), "ERROR" if there was an error reading it from
 the object and "UNSUPPORTED" if that object does not support that hash
 type.
+
+For example to emulate the md5sum command you can use
+
+    rclone lsf -R --hash MD5 --format hp --separator "  " --files-only .
+
+(Though "rclone md5sum ." is an easier way of typing this.)
 
 By default the separator is ";" this can be changed with the
 --separator flag.  Note that separators aren't escaped in the path so
@@ -100,6 +110,16 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 			return nil
 		}
 		for _, entry := range entries {
+			_, isDir := entry.(fs.Directory)
+			if isDir {
+				if filesOnly {
+					continue
+				}
+			} else {
+				if dirsOnly {
+					continue
+				}
+			}
 			fmt.Fprintln(out, fs.ListFormatted(&entry, &list))
 		}
 		return nil
