@@ -999,4 +999,20 @@ func TestListFormat(t *testing.T) {
 	list.SetSeparator("__SEP__")
 	assert.Equal(t, "1__SEP__a__SEP__"+items[0].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[0], &list))
 	assert.Equal(t, fmt.Sprintf("%d", items[1].Size())+"__SEP__subdir/__SEP__"+items[1].ModTime().Format("2006-01-02 15:04:05"), fs.ListFormatted(&items[1], &list))
+
+	for _, test := range []struct {
+		ht   fs.HashType
+		want string
+	}{
+		{fs.HashMD5, "0cc175b9c0f1b6a831c399e269772661"},
+		{fs.HashSHA1, "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8"},
+		{fs.HashDropbox, "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8"},
+	} {
+		list.SetOutput(nil)
+		list.AddHash(test.ht)
+		got := fs.ListFormatted(&items[0], &list)
+		if got != "UNSUPPORTED" {
+			assert.Equal(t, test.want, got)
+		}
+	}
 }

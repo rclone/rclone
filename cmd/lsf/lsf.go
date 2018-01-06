@@ -17,6 +17,7 @@ var (
 	separator string
 	dirSlash  bool
 	recurse   bool
+	hashType  = fs.HashMD5
 )
 
 func init() {
@@ -25,6 +26,7 @@ func init() {
 	flags.StringVarP(&format, "format", "F", "p", "Output format - see  help for details")
 	flags.StringVarP(&separator, "separator", "s", ";", "Separator for the items in the format.")
 	flags.BoolVarP(&dirSlash, "dir-slash", "d", true, "Append a slash to directory names.")
+	flags.VarP(&hashType, "hash", "", "Use this hash when `h` is used in the format MD5|SHA-1|DropboxHash")
 	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
 }
 
@@ -44,9 +46,17 @@ output:
     p - path
     s - size
     t - modification time
+    h - hash
 
 So if you wanted the path, size and modification time, you would use
 --format "pst", or maybe --format "tsp" to put the path last.
+
+If you specify "h" in the format you will get the MD5 hash by default,
+use the "--hash" flag to change which hash you want.  Note that this
+can be returned as an empty string if it isn't available on the object
+(and for directories), "ERROR" if there was an error reading it from
+the object and "UNSUPPORTED" if that object does not support that hash
+type.
 
 By default the separator is ";" this can be changed with the
 --separator flag.  Note that separators aren't escaped in the path so
@@ -76,6 +86,8 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 			list.AddModTime()
 		case 's':
 			list.AddSize()
+		case 'h':
+			list.AddHash(hashType)
 		default:
 			return errors.Errorf("Unknown format character %q", char)
 		}
