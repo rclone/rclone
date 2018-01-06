@@ -103,6 +103,16 @@ subdir
 `, buf.String())
 
 	buf = new(bytes.Buffer)
+	format = "hp"
+	err = Lsf(f, buf)
+	require.NoError(t, err)
+	assert.Equal(t, `d41d8cd98f00b204e9800998ecf8427e;file1
+409d6c19451dd39d4a94e42d2ff2c834;file2
+9b4c8a5e36d3be7e2c4b1d75ded8c8a1;file3
+;subdir
+`, buf.String())
+
+	buf = new(bytes.Buffer)
 	format = "t"
 	err = Lsf(f, buf)
 	require.NoError(t, err)

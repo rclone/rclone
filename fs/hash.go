@@ -11,6 +11,7 @@ import (
 
 	"github.com/ncw/rclone/dropbox/dbhash"
 	"github.com/pkg/errors"
+	"github.com/spf13/pflag"
 )
 
 // HashType indicates a standard hashing algorithm
@@ -86,6 +87,31 @@ func (h HashType) String() string {
 		panic(err)
 	}
 }
+
+// Set a HashType from a flag
+func (h *HashType) Set(s string) error {
+	switch s {
+	case "None":
+		*h = HashNone
+	case "MD5":
+		*h = HashMD5
+	case "SHA-1":
+		*h = HashSHA1
+	case "DropboxHash":
+		*h = HashDropbox
+	default:
+		return errors.Errorf("Unknown hash type %q", s)
+	}
+	return nil
+}
+
+// Type of the value
+func (h HashType) Type() string {
+	return "string"
+}
+
+// Check it satisfies the interface
+var _ pflag.Value = (*HashType)(nil)
 
 // hashFromTypes will return hashers for all the requested types.
 // The types must be a subset of SupportedHashes,

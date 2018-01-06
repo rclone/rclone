@@ -1068,17 +1068,24 @@ func DropboxHashSum(f Fs, w io.Writer) error {
 	return hashLister(HashDropbox, f, w)
 }
 
+// hashSum returns the human readable hash for ht passed in.  This may
+// be UNSUPPORTED or ERROR.
+func hashSum(ht HashType, o Object) string {
+	Stats.Checking(o.Remote())
+	sum, err := o.Hash(ht)
+	Stats.DoneChecking(o.Remote())
+	if err == ErrHashUnsupported {
+		sum = "UNSUPPORTED"
+	} else if err != nil {
+		Debugf(o, "Failed to read %v: %v", ht, err)
+		sum = "ERROR"
+	}
+	return sum
+}
+
 func hashLister(ht HashType, f Fs, w io.Writer) error {
 	return ListFn(f, func(o Object) {
-		Stats.Checking(o.Remote())
-		sum, err := o.Hash(ht)
-		Stats.DoneChecking(o.Remote())
-		if err == ErrHashUnsupported {
-			sum = "UNSUPPORTED"
-		} else if err != nil {
-			Debugf(o, "Failed to read %v: %v", ht, err)
-			sum = "ERROR"
-		}
+		sum := hashSum(ht, o)
 		syncFprintf(w, "%*s  %s\n", HashWidth[ht], sum, o.Remote())
 	})
 }
@@ -1792,6 +1799,7 @@ type ListFormat struct {
 	dirSlash  bool
 	output    []func() string
 	entry     DirEntry
+	hash      bool
 }
 
 // SetSeparator changes separator in struct
@@ -1816,7 +1824,9 @@ func (l *ListFormat) AddModTime() {
 
 // AddSize adds file's size to output
 func (l *ListFormat) AddSize() {
-	l.AppendOutput(func() string { return strconv.FormatInt(l.entry.Size(), 10) })
+	l.AppendOutput(func() string {
+		return strconv.FormatInt(l.entry.Size(), 10)
+	})
 }
 
 // AddPath adds path to file to output
@@ -1828,6 +1838,17 @@ func (l *ListFormat) AddPath() {
 			return l.entry.Remote() + "/"
 		}
 		return l.entry.Remote()
+	})
+}
+
+// AddHash adds the hash of the type given to the output
+func (l *ListFormat) AddHash(ht HashType) {
+	l.AppendOutput(func() string {
+		o, ok := l.entry.(Object)
+		if !ok {
+			return ""
+		}
+		return hashSum(ht, o)
 	})
 }
 
