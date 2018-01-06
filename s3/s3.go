@@ -14,6 +14,8 @@ What happens if you CTRL-C a multipart upload
 */
 
 import (
+	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"net/http"
@@ -221,6 +223,7 @@ func init() {
 // Constants
 const (
 	metaMtime      = "Mtime"                       // the meta key to store mtime in - eg X-Amz-Meta-Mtime
+	metaMD5Hash    = "Md5chksum"                   // the meta key to store md5hash in
 	listChunkSize  = 1000                          // number of items to read at once
 	maxRetries     = 10                            // number of retries to make of operations
 	maxSizeForCopy = 5 * 1024 * 1024 * 1024        // The maximum size of object we can COPY
@@ -832,13 +835,25 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 	if t != fs.HashMD5 {
 		return "", fs.ErrHashUnsupported
 	}
-	etag := strings.Trim(strings.ToLower(o.etag), `"`)
+	hash := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
-	if !matchMd5.MatchString(etag) {
-		// fs.Debugf(o, "Invalid md5sum (probably multipart uploaded) - ignoring: %q", etag)
-		return "", nil
+	if !matchMd5.MatchString(hash) {
+		err := o.readMetaData()
+		if err != nil {
+			return "", err
+		}
+
+		if md5sum, ok := o.meta[metaMD5Hash]; ok {
+			md5sumBytes, err := base64.StdEncoding.DecodeString(*md5sum)
+			if err != nil {
+				return "", err
+			}
+			hash = hex.EncodeToString(md5sumBytes)
+		} else {
+			hash = ""
+		}
 	}
-	return etag, nil
+	return hash, nil
 }
 
 // Size returns the size of an object in bytes
@@ -985,13 +1000,13 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		return err
 	}
 	modTime := src.ModTime()
+	size := src.Size()
 
 	uploader := s3manager.NewUploader(o.fs.ses, func(u *s3manager.Uploader) {
 		u.Concurrency = 2
 		u.LeavePartsOnError = false
 		u.S3 = o.fs.c
 		u.PartSize = s3manager.MinUploadPartSize
-		size := src.Size()
 
 		if size == -1 {
 			// Make parts as small as possible while still being able to upload to the
@@ -1009,6 +1024,18 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	// Set the mtime in the meta data
 	metadata := map[string]*string{
 		metaMtime: aws.String(swift.TimeToFloatString(modTime)),
+	}
+
+	if size > uploader.PartSize {
+		hash, err := src.Hash(fs.HashMD5)
+
+		if err == nil && matchMd5.MatchString(hash) {
+			hashBytes, err := hex.DecodeString(hash)
+
+			if err == nil {
+				metadata[metaMD5Hash] = aws.String(base64.StdEncoding.EncodeToString(hashBytes))
+			}
+		}
 	}
 
 	// Guess the content type
