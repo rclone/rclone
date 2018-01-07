@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"os"
+	"os/user"
 	"path"
 	"regexp"
 	"strings"
@@ -27,6 +28,10 @@ const (
 	connectionsPerSecond = 10 // don't make more than this many ssh connections/s
 )
 
+var (
+	currentUser = readCurrentUser()
+)
+
 func init() {
 	fsi := &fs.RegInfo{
 		Name:        "sftp",
@@ -42,7 +47,7 @@ func init() {
 			}},
 		}, {
 			Name:     "user",
-			Help:     "SSH username, leave blank for current username, " + os.Getenv("USER"),
+			Help:     "SSH username, leave blank for current username, " + currentUser,
 			Optional: true,
 		}, {
 			Name:     "port",
@@ -110,6 +115,20 @@ type Object struct {
 type ObjectReader struct {
 	object   *Object
 	sftpFile *sftp.File
+}
+
+// readCurrentUser finds the current user name or "" if not found
+func readCurrentUser() (userName string) {
+	usr, err := user.Current()
+	if err == nil {
+		return usr.Username
+	}
+	// Fall back to reading $HOME then $LOGNAME
+	userName = os.Getenv("HOME")
+	if userName != "" {
+		return userName
+	}
+	return os.Getenv("LOGNAME")
 }
 
 // Dial starts a client connection to the given SSH server. It is a
@@ -251,7 +270,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	keyFile := fs.ConfigFileGet(name, "key_file")
 	insecureCipher := fs.ConfigFileGetBool(name, "use_insecure_cipher")
 	if user == "" {
-		user = os.Getenv("USER")
+		user = currentUser
 	}
 	if port == "" {
 		port = "22"
