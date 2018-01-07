@@ -127,3 +127,4 @@ Contributors
   * lewapm <32110057+lewapm@users.noreply.github.com>
   * Yassine Imounachen <yassine256@gmail.com>
   * Chris Redekop <chris-redekop@users.noreply.github.com>
+  * Jon Fautley <jon@adenoid.appstal.co.uk>
