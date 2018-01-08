@@ -445,6 +445,11 @@ func (f *Fs) UnWrap() fs.Fs {
 	return f.Fs
 }
 
+// EncryptFileName returns an encrypted file name
+func (f *Fs) EncryptFileName(fileName string) string {
+	return f.cipher.EncryptFileName(fileName)
+}
+
 // DecryptFileName returns a decrypted file name
 func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 	return f.cipher.DecryptFileName(encryptedFileName)
