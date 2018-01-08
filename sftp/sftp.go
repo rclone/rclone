@@ -123,8 +123,8 @@ func readCurrentUser() (userName string) {
 	if err == nil {
 		return usr.Username
 	}
-	// Fall back to reading $HOME then $LOGNAME
-	userName = os.Getenv("HOME")
+	// Fall back to reading $USER then $LOGNAME
+	userName = os.Getenv("USER")
 	if userName != "" {
 		return userName
 	}
