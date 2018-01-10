@@ -592,12 +592,18 @@ show at default log level `NOTICE`.  Use `--stats-log-level NOTICE` or
 `-v` to make them show.  See the [Logging section](#logging) for more
 info on log levels.
 
+### --stats-file-name-length integer ###
+By default, the `--stats` output will truncate file names and paths longer 
+than 40 characters.  This is equivalent to providing 
+`--stats-file-name-length 40`. Use `--stats-file-name-length 0` to disable 
+any truncation of file names printed by stats.
+
 ### --stats-log-level string ###
 
 Log level to show `--stats` output at.  This can be `DEBUG`, `INFO`,
 `NOTICE`, or `ERROR`.  The default is `INFO`.  This means at the
 default level of logging which is `NOTICE` the stats won't show - if
-you want them to then use `-stats-log-level NOTICE`.  See the [Logging
+you want them to then use `--stats-log-level NOTICE`.  See the [Logging
 section](#logging) for more info on log levels.
 
 ### --stats-unit=bits|bytes ###
