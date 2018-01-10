@@ -572,9 +572,11 @@ func (acc *Account) String() string {
 		}
 	}
 	name := []rune(acc.name)
-	if len(name) > 40 {
-		where := len(name) - 37
-		name = append([]rune{'.', '.', '.'}, name[where:]...)
+	if Config.StatsFileNameLength > 0 {
+		if len(name) > Config.StatsFileNameLength {
+			where := len(name) - Config.StatsFileNameLength
+			name = append([]rune{'.', '.', '.'}, name[where:]...)
+		}
 	}
 
 	if Config.DataRateUnit == "bits" {
