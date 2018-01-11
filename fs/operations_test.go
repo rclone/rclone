@@ -1011,7 +1011,7 @@ func TestListFormat(t *testing.T) {
 		list.SetOutput(nil)
 		list.AddHash(test.ht)
 		got := fs.ListFormatted(&items[0], &list)
-		if got != "UNSUPPORTED" {
+		if got != "UNSUPPORTED" && got != "" {
 			assert.Equal(t, test.want, got)
 		}
 	}
