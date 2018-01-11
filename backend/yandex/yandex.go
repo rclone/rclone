@@ -16,6 +16,8 @@ import (
 	yandex "github.com/ncw/rclone/backend/yandex/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/lib/oauthutil"
+	"github.com/ncw/rclone/oauthutil"
+	yandex "github.com/ncw/rclone/yandex/api"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )

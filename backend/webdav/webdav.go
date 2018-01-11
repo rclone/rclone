@@ -32,6 +32,9 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/rest"
+	"github.com/ncw/rclone/pacer"
+	"github.com/ncw/rclone/rest"
+	"github.com/ncw/rclone/webdav/api"
 	"github.com/pkg/errors"
 )
 

@@ -15,11 +15,16 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/backend/onedrive/api"
+	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/rest"
+	"github.com/ncw/rclone/oauthutil"
+	"github.com/ncw/rclone/onedrive/api"
+	"github.com/ncw/rclone/pacer"
+	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
