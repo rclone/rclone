@@ -15,7 +15,7 @@ import (
 
 	"github.com/ncw/rclone/backend/swift"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/oauthutil"
+	"github.com/ncw/rclone/lib/oauthutil"
 	swiftLib "github.com/ncw/swift"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"

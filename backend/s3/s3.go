@@ -37,7 +37,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/rest"
+	"github.com/ncw/rclone/lib/rest"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 )

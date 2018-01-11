@@ -23,7 +23,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/pacer"
+	"github.com/ncw/rclone/lib/pacer"
 	"github.com/pkg/errors"
 )
 

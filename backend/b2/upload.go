@@ -16,7 +16,7 @@ import (
 
 	"github.com/ncw/rclone/backend/b2/api"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/rest"
+	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
 )
 
