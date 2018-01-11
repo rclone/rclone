@@ -22,6 +22,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/backend/box/api"
+	"github.com/ncw/rclone/box/api"
+	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
