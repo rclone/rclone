@@ -17,8 +17,8 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/ncw/rclone/backend/all" // import all the backends
 	"github.com/ncw/rclone/fs"
-	_ "github.com/ncw/rclone/fs/all" // import all the file systems
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/stretchr/testify/assert"

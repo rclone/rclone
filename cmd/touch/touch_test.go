@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	_ "github.com/ncw/rclone/local"
+	_ "github.com/ncw/rclone/backend/local"
 )
 
 func TestTouch(t *testing.T) {
