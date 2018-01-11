@@ -554,7 +554,7 @@ func (o *Object) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(hash fs.HashType) (string, error) {
-	return "", nil
+	return "", fs.ErrHashUnsupported
 }
 
 // UnWrap returns the wrapped Object
