@@ -1,8 +1,8 @@
 package cryptcheck
 
 import (
+	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/crypt"
 	"github.com/ncw/rclone/fs"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

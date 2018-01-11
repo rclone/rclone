@@ -12,8 +12,8 @@ import (
 	"os/exec"
 	"testing"
 
+	_ "github.com/ncw/rclone/backend/local"
 	"github.com/ncw/rclone/fstest"
-	_ "github.com/ncw/rclone/local"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -37,7 +37,7 @@ func TestWebDav(t *testing.T) {
 	// FIXME shut it down somehow?
 
 	// Change directory to run the tests
-	err = os.Chdir("../../../webdav")
+	err = os.Chdir("../../../backend/webdav")
 	assert.NoError(t, err, "failed to cd to webdav remote")
 
 	// Run the webdav tests with an on the fly remote

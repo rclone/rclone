@@ -12,8 +12,8 @@ import (
 	"testing"
 	"time"
 
+	_ "github.com/ncw/rclone/backend/local"
 	"github.com/ncw/rclone/fs"
-	_ "github.com/ncw/rclone/local"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
