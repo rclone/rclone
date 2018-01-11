@@ -20,10 +20,10 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/oauthutil"
-	"github.com/ncw/rclone/pacer"
+	"github.com/ncw/rclone/lib/dircache"
+	"github.com/ncw/rclone/lib/oauthutil"
+	"github.com/ncw/rclone/lib/pacer"
 	"github.com/pkg/errors"
 	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
