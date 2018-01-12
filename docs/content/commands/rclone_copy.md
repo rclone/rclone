@@ -48,10 +48,6 @@ written a trailing / - meaning "copy the contents of this directory".
 This applies to all commands and whether you are talking about the
 source or destination.
 
-See the `--no-traverse` option for controlling whether rclone lists
-the destination directory or not.
-
-
 ```
 rclone copy source:path dest:path [flags]
 ```
@@ -149,7 +145,6 @@ rclone copy source:path dest:path [flags]
       --modify-window duration              Max time diff to be considered the same (default 1ns)
       --no-check-certificate                Do not verify the server SSL certificate. Insecure.
       --no-gzip-encoding                    Don't set Accept-Encoding: gzip.
-      --no-traverse                         Don't traverse destination file system on copy.
       --no-update-modtime                   Don't update destination mod-time if files identical.
       --old-sync-method                     Deprecated - use --fast-list instead
   -x, --one-file-system                     Don't cross filesystem boundaries.

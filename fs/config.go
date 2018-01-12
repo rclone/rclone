@@ -102,7 +102,6 @@ var (
 	maxDepth              = IntP("max-depth", "", -1, "If set limits the recursion depth to this.")
 	ignoreSize            = BoolP("ignore-size", "", false, "Ignore size when skipping use mod-time or checksum.")
 	ignoreChecksum        = BoolP("ignore-checksum", "", false, "Skip post copy check of checksums.")
-	noTraverse            = BoolP("no-traverse", "", false, "Don't traverse destination file system on copy.")
 	noUpdateModTime       = BoolP("no-update-modtime", "", false, "Don't update destination mod-time if files identical.")
 	backupDir             = StringP("backup-dir", "", "", "Make backups into hierarchy based in DIR.")
 	suffix                = StringP("suffix", "", "", "Suffix for use with --backup-dir.")
@@ -242,7 +241,6 @@ type ConfigInfo struct {
 	MaxDepth              int
 	IgnoreSize            bool
 	IgnoreChecksum        bool
-	NoTraverse            bool
 	NoUpdateModTime       bool
 	DataRateUnit          string
 	BackupDir             string
@@ -385,7 +383,6 @@ func LoadConfig() {
 	Config.MaxDepth = *maxDepth
 	Config.IgnoreSize = *ignoreSize
 	Config.IgnoreChecksum = *ignoreChecksum
-	Config.NoTraverse = *noTraverse
 	Config.NoUpdateModTime = *noUpdateModTime
 	Config.BackupDir = *backupDir
 	Config.Suffix = *suffix

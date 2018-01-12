@@ -195,7 +195,6 @@ destpath/two.txt</code></pre>
 <pre><code>destpath/sourcepath/one.txt
 destpath/sourcepath/two.txt</code></pre>
 <p>If you are familiar with <code>rsync</code>, rclone always works as if you had written a trailing / - meaning &quot;copy the contents of this directory&quot;. This applies to all commands and whether you are talking about the source or destination.</p>
-<p>See the <code>--no-traverse</code> option for controlling whether rclone lists the destination directory or not.</p>
 <pre><code>rclone copy source:path dest:path [flags]</code></pre>
 <h3 id="options-1">Options</h3>
 <pre><code>  -h, --help   help for copy</code></pre>
@@ -972,7 +971,7 @@ ffmpeg - | rclone rcat --checksum remote:path/to/file</code></pre>
 <pre><code>rclone copy remote:test.jpg /tmp/download</code></pre>
 <p>The file <code>test.jpg</code> will be placed inside <code>/tmp/download</code>.</p>
 <p>This is equivalent to specifying</p>
-<pre><code>rclone copy --no-traverse --files-from /tmp/files remote: /tmp/download</code></pre>
+<pre><code>rclone copy --files-from /tmp/files remote: /tmp/download</code></pre>
 <p>Where <code>/tmp/files</code> contains the single line</p>
 <pre><code>test.jpg</code></pre>
 <p>It is recommended to use <code>copy</code> when copying individual files, not <code>sync</code>. They have pretty much the same effect but <code>copy</code> will use a lot less memory.</p>
@@ -1162,7 +1161,7 @@ rclone sync /path/to/files remote:current-backup</code></pre>
 <p>If you use this flag, and the remote supports server side copy or server side move, and the source and destination have a compatible hash, then this will track renames during <code>sync</code>, <code>copy</code>, and <code>move</code> operations and perform renaming server-side.</p>
 <p>Files will be matched by size and hash - if both match then a rename will be considered.</p>
 <p>If the destination does not support server-side copy or move, rclone will fall back to the default behaviour and log an error level message to the console.</p>
-<p>Note that <code>--track-renames</code> is incompatible with <code>--no-traverse</code> and that it uses extra memory to keep track of all the rename candidates.</p>
+<p>Note that <code>--track-renames</code> uses extra memory to keep track of all the rename candidates.</p>
 <p>Note also that <code>--track-renames</code> is incompatible with <code>--delete-before</code> and will select <code>--delete-after</code> instead of <code>--delete-during</code>.</p>
 <h3 id="delete-beforeduringafter">--delete-(before,during,after)</h3>
 <p>This option allows you to specify when files on your destination are deleted when you sync folders.</p>
@@ -1266,11 +1265,6 @@ export RCLONE_CONFIG_PASS</code></pre>
 <p><code>--no-check-certificate</code> controls whether a client verifies the server's certificate chain and host name. If <code>--no-check-certificate</code> is true, TLS accepts any certificate presented by the server and any host name in that certificate. In this mode, TLS is susceptible to man-in-the-middle attacks.</p>
 <p>This option defaults to <code>false</code>.</p>
 <p><strong>This should be used only for testing.</strong></p>
-<h3 id="no-traverse">--no-traverse</h3>
-<p>The <code>--no-traverse</code> flag controls whether the destination file system is traversed when using the <code>copy</code> or <code>move</code> commands. <code>--no-traverse</code> is not compatible with <code>sync</code> and will be ignored if you supply it with <code>sync</code>.</p>
-<p>If you are only copying a small number of files and/or have a large number of files on the destination then <code>--no-traverse</code> will stop rclone listing the destination and save time.</p>
-<p>However, if you are copying a large number of files, especially if you are doing a copy where lots of the files haven't changed and won't need copying then you shouldn't use <code>--no-traverse</code>.</p>
-<p>It can also be used to reduce the memory usage of rclone when copying - <code>rclone --no-traverse copy src dst</code> won't load either the source or destination listings into memory so will use the minimum amount of memory.</p>
 <h2 id="filtering">Filtering</h2>
 <p>For the filtering options</p>
 <ul>
