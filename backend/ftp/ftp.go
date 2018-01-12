@@ -13,6 +13,8 @@ import (
 
 	"github.com/jlaffaye/ftp"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
 
@@ -160,33 +162,33 @@ func (f *Fs) putFtpConnection(pc **ftp.ServerConn, err error) {
 func NewFs(name, root string) (ff fs.Fs, err error) {
 	// defer fs.Trace(nil, "name=%q, root=%q", name, root)("fs=%v, err=%v", &ff, &err)
 	// FIXME Convert the old scheme used for the first beta - remove after release
-	if ftpURL := fs.ConfigFileGet(name, "url"); ftpURL != "" {
+	if ftpURL := config.FileGet(name, "url"); ftpURL != "" {
 		fs.Infof(name, "Converting old configuration")
 		u, err := url.Parse(ftpURL)
 		if err != nil {
 			return nil, errors.Wrapf(err, "Failed to parse old url %q", ftpURL)
 		}
 		parts := strings.Split(u.Host, ":")
-		fs.ConfigFileSet(name, "host", parts[0])
+		config.FileSet(name, "host", parts[0])
 		if len(parts) > 1 {
-			fs.ConfigFileSet(name, "port", parts[1])
+			config.FileSet(name, "port", parts[1])
 		}
-		fs.ConfigFileSet(name, "host", u.Host)
-		fs.ConfigFileSet(name, "user", fs.ConfigFileGet(name, "username"))
-		fs.ConfigFileSet(name, "pass", fs.ConfigFileGet(name, "password"))
-		fs.ConfigFileDeleteKey(name, "username")
-		fs.ConfigFileDeleteKey(name, "password")
-		fs.ConfigFileDeleteKey(name, "url")
-		fs.SaveConfig()
+		config.FileSet(name, "host", u.Host)
+		config.FileSet(name, "user", config.FileGet(name, "username"))
+		config.FileSet(name, "pass", config.FileGet(name, "password"))
+		config.FileDeleteKey(name, "username")
+		config.FileDeleteKey(name, "password")
+		config.FileDeleteKey(name, "url")
+		config.SaveConfig()
 		if u.Path != "" && u.Path != "/" {
 			fs.Errorf(name, "Path %q in FTP URL no longer supported - put it on the end of the remote %s:%s", u.Path, name, u.Path)
 		}
 	}
-	host := fs.ConfigFileGet(name, "host")
-	user := fs.ConfigFileGet(name, "user")
-	pass := fs.ConfigFileGet(name, "pass")
-	port := fs.ConfigFileGet(name, "port")
-	pass, err = fs.Reveal(pass)
+	host := config.FileGet(name, "host")
+	user := config.FileGet(name, "user")
+	pass := config.FileGet(name, "pass")
+	port := config.FileGet(name, "port")
+	pass, err = config.Reveal(pass)
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFS decrypt password")
 	}
@@ -346,7 +348,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 }
 
 // Hashes are not supported
-func (f *Fs) Hashes() fs.HashSet {
+func (f *Fs) Hashes() hash.Set {
 	return 0
 }
 
@@ -565,8 +567,8 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the hash of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	return "", hash.ErrHashUnsupported
 }
 
 // Size returns the size of an object in bytes

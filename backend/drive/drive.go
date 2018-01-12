@@ -21,11 +21,15 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
 	"google.golang.org/api/drive/v2"
@@ -46,13 +50,13 @@ const (
 // Globals
 var (
 	// Flags
-	driveAuthOwnerOnly = fs.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
-	driveUseTrash      = fs.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
-	driveSkipGdocs     = fs.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
-	driveSharedWithMe  = fs.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
-	driveTrashedOnly   = fs.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
-	driveExtensions    = fs.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
-	driveListChunk     = pflag.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
+	driveAuthOwnerOnly = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
+	driveUseTrash      = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
+	driveSkipGdocs     = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
+	driveSharedWithMe  = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
+	driveTrashedOnly   = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
+	driveExtensions    = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
+	driveListChunk     = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
@@ -62,7 +66,7 @@ var (
 		Scopes:       []string{"https://www.googleapis.com/auth/drive"},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 	mimeTypeToExtension = map[string]string{
@@ -99,7 +103,7 @@ func init() {
 		NewFs:       NewFs,
 		Config: func(name string) {
 			var err error
-			if fs.ConfigFileGet(name, "service_account_file") == "" {
+			if config.FileGet(name, "service_account_file") == "" {
 				err = oauthutil.Config("drive", name, driveConfig)
 				if err != nil {
 					log.Fatalf("Failed to configure token: %v", err)
@@ -111,18 +115,18 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Google Application Client Id - leave blank normally.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Google Application Client Secret - leave blank normally.",
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.",
 		}},
 	})
-	fs.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	fs.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
+	flags.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
+	flags.VarP(&chunkSize, "drive-chunk-size", "", "Upload chunk size. Must a power of 2 >= 256k.")
 
 	// Invert mimeTypeToExtension
 	extensionToMimeType = make(map[string]string, len(mimeTypeToExtension))
@@ -185,7 +189,7 @@ func (f *Fs) Features() *fs.Features {
 func shouldRetry(err error) (again bool, errOut error) {
 	again = false
 	if err != nil {
-		if fs.ShouldRetry(err) {
+		if fserrors.ShouldRetry(err) {
 			again = true
 		} else {
 			switch gerr := err.(type) {
@@ -337,13 +341,13 @@ func (f *Fs) parseExtensions(extensions string) error {
 
 // Figure out if the user wants to use a team drive
 func configTeamDrive(name string) error {
-	teamDrive := fs.ConfigFileGet(name, "team_drive")
+	teamDrive := config.FileGet(name, "team_drive")
 	if teamDrive == "" {
 		fmt.Printf("Configure this as a team drive?\n")
 	} else {
 		fmt.Printf("Change current team drive ID %q?\n", teamDrive)
 	}
-	if !fs.Confirm() {
+	if !config.Confirm() {
 		return nil
 	}
 	client, err := authenticate(name)
@@ -379,9 +383,9 @@ func configTeamDrive(name string) error {
 	if len(driveIDs) == 0 {
 		fmt.Printf("No team drives found in your account")
 	} else {
-		driveID = fs.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
+		driveID = config.Choose("Enter a Team Drive ID", driveIDs, driveNames, true)
 	}
-	fs.ConfigFileSet(name, "team_drive", driveID)
+	config.FileSet(name, "team_drive", driveID)
 	return nil
 }
 
@@ -399,7 +403,7 @@ func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
-	ctxWithSpecialClient := oauthutil.Context(fs.Config.Client())
+	ctxWithSpecialClient := oauthutil.Context(fshttp.NewClient(fs.Config))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
@@ -407,7 +411,7 @@ func authenticate(name string) (*http.Client, error) {
 	var oAuthClient *http.Client
 	var err error
 
-	serviceAccountPath := fs.ConfigFileGet(name, "service_account_file")
+	serviceAccountPath := config.FileGet(name, "service_account_file")
 	if serviceAccountPath != "" {
 		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
 		if err != nil {
@@ -444,7 +448,7 @@ func NewFs(name, path string) (fs.Fs, error) {
 		root:  root,
 		pacer: newPacer(),
 	}
-	f.teamDriveID = fs.ConfigFileGet(name, "team_drive")
+	f.teamDriveID = config.FileGet(name, "team_drive")
 	f.isTeamDrive = f.teamDriveID != ""
 	f.features = (&fs.Features{
 		DuplicateFiles:          true,
@@ -1188,8 +1192,8 @@ func (f *Fs) DirCacheFlush() {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
 }
 
 // ------------------------------------------------------------
@@ -1213,9 +1217,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	return o.md5sum, nil
 }

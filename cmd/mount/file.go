@@ -8,7 +8,7 @@ import (
 
 	"bazil.org/fuse"
 	fusefs "bazil.org/fuse/fs"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
 	"golang.org/x/net/context"
 )
@@ -23,7 +23,7 @@ var _ fusefs.Node = (*File)(nil)
 
 // Attr fills out the attributes for the file
 func (f *File) Attr(ctx context.Context, a *fuse.Attr) (err error) {
-	defer fs.Trace(f, "")("a=%+v, err=%v", a, &err)
+	defer log.Trace(f, "")("a=%+v, err=%v", a, &err)
 	modTime := f.File.ModTime()
 	Size := uint64(f.File.Size())
 	Blocks := (Size + 511) / 512
@@ -44,7 +44,7 @@ var _ fusefs.NodeSetattrer = (*File)(nil)
 
 // Setattr handles attribute changes from FUSE. Currently supports ModTime and Size only
 func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
-	defer fs.Trace(f, "a=%+v", req)("err=%v", &err)
+	defer log.Trace(f, "a=%+v", req)("err=%v", &err)
 	if !f.VFS().Opt.NoModTime {
 		if req.Valid.MtimeNow() {
 			err = f.File.SetModTime(time.Now())
@@ -64,7 +64,7 @@ var _ fusefs.NodeOpener = (*File)(nil)
 
 // Open the file for read or write
 func (f *File) Open(ctx context.Context, req *fuse.OpenRequest, resp *fuse.OpenResponse) (fh fusefs.Handle, err error) {
-	defer fs.Trace(f, "flags=%v", req.Flags)("fh=%v, err=%v", &fh, &err)
+	defer log.Trace(f, "flags=%v", req.Flags)("fh=%v, err=%v", &fh, &err)
 
 	// fuse flags are based off syscall flags as are os flags, so
 	// should be compatible
@@ -91,6 +91,6 @@ var _ fusefs.NodeFsyncer = (*File)(nil)
 //
 // Note that we don't do anything except return OK
 func (f *File) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
-	defer fs.Trace(f, "")("err=%v", &err)
+	defer log.Trace(f, "")("err=%v", &err)
 	return nil
 }

@@ -30,11 +30,12 @@ import (
 
 	"github.com/ncw/rclone/backend/webdav/api"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/rest"
-	"github.com/ncw/rclone/pacer"
-	"github.com/ncw/rclone/rest"
-	"github.com/ncw/rclone/webdav/api"
 	"github.com/pkg/errors"
 )
 
@@ -159,7 +160,7 @@ var retryErrorCodes = []int{
 // shouldRetry returns a boolean as to whether this resp and err
 // deserve to be retried.  It returns the err as a convenience
 func shouldRetry(resp *http.Response, err error) (bool, error) {
-	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // itemIsDir returns true if the item is a directory
@@ -250,21 +251,21 @@ func (o *Object) filePath() string {
 
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
-	endpoint := fs.ConfigFileGet(name, "url")
+	endpoint := config.FileGet(name, "url")
 	if !strings.HasSuffix(endpoint, "/") {
 		endpoint += "/"
 	}
 
-	user := fs.ConfigFileGet(name, "user")
-	pass := fs.ConfigFileGet(name, "pass")
+	user := config.FileGet(name, "user")
+	pass := config.FileGet(name, "pass")
 	if pass != "" {
 		var err error
-		pass, err = fs.Reveal(pass)
+		pass, err = config.Reveal(pass)
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't decrypt password")
 		}
 	}
-	vendor := fs.ConfigFileGet(name, "vendor")
+	vendor := config.FileGet(name, "vendor")
 
 	// Parse the endpoint
 	u, err := url.Parse(endpoint)
@@ -277,7 +278,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		root:        root,
 		endpoint:    u,
 		endpointURL: u.String(),
-		srv:         rest.NewClient(fs.Config.Client()).SetRoot(u.String()).SetUserPass(user, pass),
+		srv:         rest.NewClient(fshttp.NewClient(fs.Config)).SetRoot(u.String()).SetUserPass(user, pass),
 		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		user:        user,
 		pass:        pass,
@@ -765,8 +766,8 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashNone)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashNone)
 }
 
 // ------------------------------------------------------------
@@ -790,9 +791,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashSHA1 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashSHA1 {
+		return "", hash.ErrHashUnsupported
 	}
 	return o.sha1, nil
 }

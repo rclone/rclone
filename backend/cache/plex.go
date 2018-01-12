@@ -13,6 +13,7 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 )
 
 const (
@@ -107,8 +108,8 @@ func (p *plexConnector) authenticate() error {
 	}
 	p.token = token
 	if p.token != "" {
-		fs.ConfigFileSet(p.f.Name(), "plex_token", p.token)
-		fs.SaveConfig()
+		config.FileSet(p.f.Name(), "plex_token", p.token)
+		config.SaveConfig()
 		fs.Infof(p.f.Name(), "Connected to Plex server: %v", p.url.String())
 	}
 

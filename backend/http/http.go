@@ -17,6 +17,9 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
 	"golang.org/x/net/html"
@@ -79,7 +82,7 @@ func statusError(res *http.Response, err error) error {
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string) (fs.Fs, error) {
-	endpoint := fs.ConfigFileGet(name, "url")
+	endpoint := config.FileGet(name, "url")
 	if !strings.HasSuffix(endpoint, "/") {
 		endpoint += "/"
 	}
@@ -94,7 +97,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 
-	client := fs.Config.Client()
+	client := fshttp.NewClient(fs.Config)
 
 	var isFile = false
 	if !strings.HasSuffix(u.String(), "/") {
@@ -363,8 +366,8 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns "" since HTTP (in Go or OpenSSH) doesn't support remote calculation of hashes
-func (o *Object) Hash(r fs.HashType) (string, error) {
-	return "", fs.ErrHashUnsupported
+func (o *Object) Hash(r hash.Type) (string, error) {
+	return "", hash.ErrHashUnsupported
 }
 
 // Size returns the size in bytes of the remote http file
@@ -434,9 +437,9 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	return res.Body, nil
 }
 
-// Hashes returns fs.HashNone to indicate remote hashing is unavailable
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashNone)
+// Hashes returns hash.HashNone to indicate remote hashing is unavailable
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashNone)
 }
 
 // Mkdir makes the root directory of the Fs object

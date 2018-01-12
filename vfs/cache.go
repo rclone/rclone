@@ -15,6 +15,7 @@ import (
 
 	"github.com/djherbis/times"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 )
@@ -94,7 +95,7 @@ func newCache(ctx context.Context, f fs.Fs, opt *Options) (*cache, error) {
 		}
 		fRoot = strings.Replace(fRoot, ":", "", -1)
 	}
-	root := filepath.Join(fs.CacheDir, "vfs", f.Name(), fRoot)
+	root := filepath.Join(config.CacheDir, "vfs", f.Name(), fRoot)
 	fs.Debugf(nil, "vfs cache root is %q", root)
 
 	f, err := fs.NewFs(root)

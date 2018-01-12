@@ -24,6 +24,11 @@ import (
 
 	"github.com/ncw/go-acd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
@@ -46,7 +51,7 @@ const (
 var (
 	// Flags
 	tempLinkThreshold = fs.SizeSuffix(9 << 30) // Download files bigger than this via the tempLink
-	uploadWaitPerGB   = fs.DurationP("acd-upload-wait-per-gb", "", 180*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
+	uploadWaitPerGB   = flags.DurationP("acd-upload-wait-per-gb", "", 180*time.Second, "Additional time per GB to wait after a failed complete upload to see if it appears.")
 	// Description of how to auth for this app
 	acdConfig = &oauth2.Config{
 		Scopes: []string{"clouddrive:read_all", "clouddrive:write"},
@@ -73,20 +78,20 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Amazon Application Client Id - required.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Amazon Application Client Secret - required.",
 		}, {
-			Name: fs.ConfigAuthURL,
+			Name: config.ConfigAuthURL,
 			Help: "Auth server URL - leave blank to use Amazon's.",
 		}, {
-			Name: fs.ConfigTokenURL,
+			Name: config.ConfigTokenURL,
 			Help: "Token server url - leave blank to use Amazon's.",
 		}},
 	})
-	fs.VarP(&tempLinkThreshold, "acd-templink-threshold", "", "Files >= this size will be downloaded via their tempLink.")
+	flags.VarP(&tempLinkThreshold, "acd-templink-threshold", "", "Files >= this size will be downloaded via their tempLink.")
 }
 
 // Fs represents a remote acd server
@@ -171,7 +176,7 @@ func (f *Fs) shouldRetry(resp *http.Response, err error) (bool, error) {
 			return true, err
 		}
 	}
-	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // If query parameters contain X-Amz-Algorithm remove Authorization header
@@ -193,7 +198,7 @@ func filterRequest(req *http.Request) {
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	root = parsePath(root)
-	baseClient := fs.Config.Client()
+	baseClient := fshttp.NewClient(fs.Config)
 	if do, ok := baseClient.Transport.(interface {
 		SetRequestFilter(f func(req *http.Request))
 	}); ok {
@@ -212,7 +217,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		root:         root,
 		c:            c,
 		pacer:        pacer.New().SetMinSleep(minSleep).SetPacer(pacer.AmazonCloudDrivePacer),
-		noAuthClient: fs.Config.Client(),
+		noAuthClient: fshttp.NewClient(fs.Config),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         true,
@@ -472,7 +477,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 		if iErr != nil {
 			return nil, iErr
 		}
-		if fs.IsRetryError(err) {
+		if fserrors.IsRetryError(err) {
 			fs.Debugf(f, "Directory listing error for %q: %v - low level retry %d/%d", dir, err, tries, maxTries)
 			continue
 		}
@@ -875,8 +880,8 @@ func (f *Fs) Precision() time.Duration {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
 }
 
 // Copy src to this remote using server side copy operations.
@@ -932,9 +937,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	if o.info.ContentProperties != nil && o.info.ContentProperties.Md5 != nil {
 		return *o.info.ContentProperties.Md5, nil

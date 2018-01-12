@@ -1,17 +1,10 @@
-// Logging for rclone
-
 package fs
 
 import (
 	"fmt"
 	"log"
-	"os"
-	"reflect"
-	"runtime"
-	"strings"
 
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
 // LogLevel describes rclone's logs.  These are a subset of the syslog log levels.
@@ -74,35 +67,25 @@ func (l *LogLevel) Type() string {
 	return "string"
 }
 
-// Check it satisfies the interface
-var _ pflag.Value = (*LogLevel)(nil)
-
-// Flags
-var (
-	logFile        = StringP("log-file", "", "", "Log everything to this file")
-	useSyslog      = BoolP("syslog", "", false, "Use Syslog for logging")
-	syslogFacility = StringP("syslog-facility", "", "DAEMON", "Facility for syslog, eg KERN,USER,...")
-)
-
-// logPrint sends the text to the logger of level
-var logPrint = func(level LogLevel, text string) {
+// LogPrint sends the text to the logger of level
+var LogPrint = func(level LogLevel, text string) {
 	text = fmt.Sprintf("%-6s: %s", level, text)
 	log.Print(text)
 }
 
-// logPrintf produces a log string from the arguments passed in
-func logPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
+// LogPrintf produces a log string from the arguments passed in
+func LogPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
 	out := fmt.Sprintf(text, args...)
 	if o != nil {
 		out = fmt.Sprintf("%v: %s", o, out)
 	}
-	logPrint(level, out)
+	LogPrint(level, out)
 }
 
 // LogLevelPrintf writes logs at the given level
 func LogLevelPrintf(level LogLevel, o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= level {
-		logPrintf(level, o, text, args...)
+		LogPrintf(level, o, text, args...)
 	}
 }
 
@@ -110,7 +93,7 @@ func LogLevelPrintf(level LogLevel, o interface{}, text string, args ...interfac
 // should always be seen by the user.
 func Errorf(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelError {
-		logPrintf(LogLevelError, o, text, args...)
+		LogPrintf(LogLevelError, o, text, args...)
 	}
 }
 
@@ -121,7 +104,7 @@ func Errorf(o interface{}, text string, args ...interface{}) {
 // out with the -q flag.
 func Logf(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelNotice {
-		logPrintf(LogLevelNotice, o, text, args...)
+		LogPrintf(LogLevelNotice, o, text, args...)
 	}
 }
 
@@ -130,7 +113,7 @@ func Logf(o interface{}, text string, args ...interface{}) {
 // appear with the -v flag.
 func Infof(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelInfo {
-		logPrintf(LogLevelInfo, o, text, args...)
+		LogPrintf(LogLevelInfo, o, text, args...)
 	}
 }
 
@@ -138,75 +121,15 @@ func Infof(o interface{}, text string, args ...interface{}) {
 // debug only.  The user must have to specify -vv to see this.
 func Debugf(o interface{}, text string, args ...interface{}) {
 	if Config.LogLevel >= LogLevelDebug {
-		logPrintf(LogLevelDebug, o, text, args...)
+		LogPrintf(LogLevelDebug, o, text, args...)
 	}
 }
 
-// fnName returns the name of the calling +2 function
-func fnName() string {
-	pc, _, _, ok := runtime.Caller(2)
-	name := "*Unknown*"
-	if ok {
-		name = runtime.FuncForPC(pc).Name()
-		dot := strings.LastIndex(name, ".")
-		if dot >= 0 {
-			name = name[dot+1:]
-		}
+// LogDirName returns an object for the logger, logging a root
+// directory which would normally be "" as the Fs
+func LogDirName(f Fs, dir string) interface{} {
+	if dir != "" {
+		return dir
 	}
-	return name
-}
-
-// Trace debugs the entry and exit of the calling function
-//
-// It is designed to be used in a defer statement so it returns a
-// function that logs the exit parameters.
-//
-// Any pointers in the exit function will be dereferenced
-func Trace(o interface{}, format string, a ...interface{}) func(string, ...interface{}) {
-	if Config.LogLevel < LogLevelDebug {
-		return func(format string, a ...interface{}) {}
-	}
-	name := fnName()
-	logPrintf(LogLevelDebug, o, name+": "+format, a...)
-	return func(format string, a ...interface{}) {
-		for i := range a {
-			// read the values of the pointed to items
-			typ := reflect.TypeOf(a[i])
-			if typ.Kind() == reflect.Ptr {
-				value := reflect.ValueOf(a[i])
-				if value.IsNil() {
-					a[i] = nil
-				} else {
-					pointedToValue := reflect.Indirect(value)
-					a[i] = pointedToValue.Interface()
-				}
-			}
-		}
-		logPrintf(LogLevelDebug, o, ">"+name+": "+format, a...)
-	}
-}
-
-// InitLogging start the logging as per the command line flags
-func InitLogging() {
-	// Log file output
-	if *logFile != "" {
-		f, err := os.OpenFile(*logFile, os.O_WRONLY|os.O_CREATE|os.O_APPEND, 0640)
-		if err != nil {
-			log.Fatalf("Failed to open log file: %v", err)
-		}
-		_, err = f.Seek(0, os.SEEK_END)
-		if err != nil {
-			Errorf(nil, "Failed to seek log file to end: %v", err)
-		}
-		log.SetOutput(f)
-		redirectStderr(f)
-	}
-
-	// Syslog output
-	if *useSyslog {
-		if *logFile != "" {
-			log.Fatalf("Can't use --syslog and --log-file together")
-		}
-		startSysLog()
-	}
+	return f
 }

@@ -2,7 +2,7 @@ package cleanup
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -21,7 +21,7 @@ versions. Not supported by all remotes.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(true, false, command, func() error {
-			return fs.CleanUp(fsrc)
+			return operations.CleanUp(fsrc)
 		})
 	},
 }

@@ -9,6 +9,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/spf13/cobra"
@@ -96,7 +97,7 @@ func (w *WebDAV) logRequest(r *http.Request, err error) {
 
 // Mkdir creates a directory
 func (w *WebDAV) Mkdir(ctx context.Context, name string, perm os.FileMode) (err error) {
-	defer fs.Trace(name, "perm=%v", perm)("err = %v", &err)
+	defer log.Trace(name, "perm=%v", perm)("err = %v", &err)
 	dir, leaf, err := w.vfs.StatParent(name)
 	if err != nil {
 		return err
@@ -107,13 +108,13 @@ func (w *WebDAV) Mkdir(ctx context.Context, name string, perm os.FileMode) (err 
 
 // OpenFile opens a file or a directory
 func (w *WebDAV) OpenFile(ctx context.Context, name string, flags int, perm os.FileMode) (file webdav.File, err error) {
-	defer fs.Trace(name, "flags=%v, perm=%v", flags, perm)("err = %v", &err)
+	defer log.Trace(name, "flags=%v, perm=%v", flags, perm)("err = %v", &err)
 	return w.vfs.OpenFile(name, flags, perm)
 }
 
 // RemoveAll removes a file or a directory and its contents
 func (w *WebDAV) RemoveAll(ctx context.Context, name string) (err error) {
-	defer fs.Trace(name, "")("err = %v", &err)
+	defer log.Trace(name, "")("err = %v", &err)
 	node, err := w.vfs.Stat(name)
 	if err != nil {
 		return err
@@ -127,13 +128,13 @@ func (w *WebDAV) RemoveAll(ctx context.Context, name string) (err error) {
 
 // Rename a file or a directory
 func (w *WebDAV) Rename(ctx context.Context, oldName, newName string) (err error) {
-	defer fs.Trace(oldName, "newName=%q", newName)("err = %v", &err)
+	defer log.Trace(oldName, "newName=%q", newName)("err = %v", &err)
 	return w.vfs.Rename(oldName, newName)
 }
 
 // Stat returns info about the file or directory
 func (w *WebDAV) Stat(ctx context.Context, name string) (fi os.FileInfo, err error) {
-	defer fs.Trace(name, "")("fi=%+v, err = %v", &fi, &err)
+	defer log.Trace(name, "")("fi=%+v, err = %v", &fi, &err)
 	return w.vfs.Stat(name)
 }
 

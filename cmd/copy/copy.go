@@ -2,7 +2,7 @@ package copy
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/sync"
 	"github.com/spf13/cobra"
 )
 
@@ -57,7 +57,7 @@ the destination directory or not.
 		cmd.CheckArgs(2, 2, command, args)
 		fsrc, fdst := cmd.NewFsSrcDst(args)
 		cmd.Run(true, true, command, func() error {
-			return fs.CopyDir(fdst, fsrc)
+			return sync.CopyDir(fdst, fsrc)
 		})
 	},
 }

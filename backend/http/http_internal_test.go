@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/stretchr/testify/assert"
@@ -36,12 +37,12 @@ func prepareServer(t *testing.T) func() {
 	ts := httptest.NewServer(fileServer)
 
 	// Configure the remote
-	fs.LoadConfig()
+	config.LoadConfig()
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true
-	fs.ConfigFileSet(remoteName, "type", "http")
-	fs.ConfigFileSet(remoteName, "url", ts.URL)
+	config.FileSet(remoteName, "type", "http")
+	config.FileSet(remoteName, "url", ts.URL)
 
 	// return a function to tidy up
 	return ts.Close

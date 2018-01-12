@@ -9,7 +9,7 @@ import (
 	"bytes"
 	"crypto/sha1"
 	"fmt"
-	"hash"
+	gohash "hash"
 	"io"
 	"net/http"
 	"path"
@@ -21,6 +21,13 @@ import (
 
 	"github.com/ncw/rclone/backend/b2/api"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
@@ -48,9 +55,9 @@ var (
 	minChunkSize       = fs.SizeSuffix(5E6)
 	chunkSize          = fs.SizeSuffix(96 * 1024 * 1024)
 	uploadCutoff       = fs.SizeSuffix(200E6)
-	b2TestMode         = fs.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
-	b2Versions         = fs.BoolP("b2-versions", "", false, "Include old versions in directory listings.")
-	b2HardDelete       = fs.BoolP("b2-hard-delete", "", false, "Permanently delete files on remote removal, otherwise hide files.")
+	b2TestMode         = flags.StringP("b2-test-mode", "", "", "A flag string for X-Bz-Test-Mode header.")
+	b2Versions         = flags.BoolP("b2-versions", "", false, "Include old versions in directory listings.")
+	b2HardDelete       = flags.BoolP("b2-hard-delete", "", false, "Permanently delete files on remote removal, otherwise hide files.")
 	errNotWithVersions = errors.New("can't modify or delete files in --b2-versions mode")
 )
 
@@ -72,8 +79,8 @@ func init() {
 		},
 		},
 	})
-	fs.VarP(&uploadCutoff, "b2-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	fs.VarP(&chunkSize, "b2-chunk-size", "", "Upload chunk size. Must fit in memory.")
+	flags.VarP(&uploadCutoff, "b2-upload-cutoff", "", "Cutoff for switching to chunked upload")
+	flags.VarP(&chunkSize, "b2-chunk-size", "", "Upload chunk size. Must fit in memory.")
 }
 
 // Fs represents a remote b2 server
@@ -186,7 +193,7 @@ func (f *Fs) shouldRetryNoReauth(resp *http.Response, err error) (bool, error) {
 		}
 		return true, err
 	}
-	return fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // shouldRetry returns a boolean as to whether this resp and err
@@ -236,15 +243,15 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	account := fs.ConfigFileGet(name, "account")
+	account := config.FileGet(name, "account")
 	if account == "" {
 		return nil, errors.New("account not found")
 	}
-	key := fs.ConfigFileGet(name, "key")
+	key := config.FileGet(name, "key")
 	if key == "" {
 		return nil, errors.New("key not found")
 	}
-	endpoint := fs.ConfigFileGet(name, "endpoint", defaultEndpoint)
+	endpoint := config.FileGet(name, "endpoint", defaultEndpoint)
 	f := &Fs{
 		name:         name,
 		bucket:       bucket,
@@ -252,7 +259,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		account:      account,
 		key:          key,
 		endpoint:     endpoint,
-		srv:          rest.NewClient(fs.Config.Client()).SetErrorHandler(errorHandler),
+		srv:          rest.NewClient(fshttp.NewClient(fs.Config)).SetErrorHandler(errorHandler),
 		pacer:        pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 		bufferTokens: make(chan []byte, fs.Config.Transfers),
 	}
@@ -615,7 +622,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if f.bucket == "" {
 		return fs.ErrorListBucketRequired
 	}
-	list := fs.NewListRHelper(callback)
+	list := walk.NewListRHelper(callback)
 	last := ""
 	err = f.list(dir, true, "", 0, *b2Versions, func(remote string, object *api.File, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory, &last)
@@ -868,16 +875,16 @@ func (f *Fs) purge(oldOnly bool) error {
 		go func() {
 			defer wg.Done()
 			for object := range toBeDeleted {
-				fs.Stats.Checking(object.Name)
+				accounting.Stats.Checking(object.Name)
 				checkErr(f.deleteByID(object.ID, object.Name))
-				fs.Stats.DoneChecking(object.Name)
+				accounting.Stats.DoneChecking(object.Name)
 			}
 		}()
 	}
 	last := ""
 	checkErr(f.list("", true, "", 0, true, func(remote string, object *api.File, isDirectory bool) error {
 		if !isDirectory {
-			fs.Stats.Checking(remote)
+			accounting.Stats.Checking(remote)
 			if oldOnly && last != remote {
 				if object.Action == "hide" {
 					fs.Debugf(remote, "Deleting current version (id %q) as it is a hide marker", object.ID)
@@ -890,7 +897,7 @@ func (f *Fs) purge(oldOnly bool) error {
 				toBeDeleted <- object
 			}
 			last = remote
-			fs.Stats.DoneChecking(remote)
+			accounting.Stats.DoneChecking(remote)
 		}
 		return nil
 	}))
@@ -914,8 +921,8 @@ func (f *Fs) CleanUp() error {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashSHA1)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashSHA1)
 }
 
 // ------------------------------------------------------------
@@ -939,9 +946,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Sha-1 of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashSHA1 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashSHA1 {
+		return "", hash.ErrHashUnsupported
 	}
 	if o.sha1 == "" {
 		// Error is logged in readMetaData
@@ -1094,7 +1101,7 @@ type openFile struct {
 	o     *Object        // Object we are reading for
 	resp  *http.Response // response of the GET
 	body  io.Reader      // reading from here
-	hash  hash.Hash      // currently accumulating SHA1
+	hash  gohash.Hash    // currently accumulating SHA1
 	bytes int64          // number of bytes read on this connection
 	eof   bool           // whether we have read end of file
 }
@@ -1279,7 +1286,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	modTime := src.ModTime()
 
-	calculatedSha1, _ := src.Hash(fs.HashSHA1)
+	calculatedSha1, _ := src.Hash(hash.HashSHA1)
 	if calculatedSha1 == "" {
 		calculatedSha1 = "hex_digits_at_end"
 		har := newHashAppendingReader(in, sha1.New())

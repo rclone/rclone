@@ -6,6 +6,7 @@ import (
 	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -17,8 +18,8 @@ var (
 
 func init() {
 	cmd.Root.AddCommand(commandDefinition)
-	flags := commandDefinition.Flags()
-	fs.BoolVarP(flags, &Reverse, "reverse", "", Reverse, "Reverse cryptdecode, encrypts filenames")
+	flagSet := commandDefinition.Flags()
+	flags.BoolVarP(flagSet, &Reverse, "reverse", "", Reverse, "Reverse cryptdecode, encrypts filenames")
 }
 
 var commandDefinition = &cobra.Command{

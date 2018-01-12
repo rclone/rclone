@@ -6,6 +6,8 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
 
@@ -14,7 +16,7 @@ type ReadFileHandle struct {
 	baseHandle
 	mu         sync.Mutex
 	closed     bool // set if handle has been closed
-	r          *fs.Account
+	r          *accounting.Account
 	o          fs.Object
 	readCalled bool  // set if read has been called
 	size       int64 // size of the object
@@ -22,7 +24,7 @@ type ReadFileHandle struct {
 	roffset    int64 // offset of Read() calls
 	noSeek     bool
 	file       *File
-	hash       *fs.MultiHasher
+	hash       *hash.MultiHasher
 	opened     bool
 }
 
@@ -35,10 +37,10 @@ var (
 )
 
 func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
-	var hash *fs.MultiHasher
+	var mhash *hash.MultiHasher
 	var err error
 	if !f.d.vfs.Opt.NoChecksum {
-		hash, err = fs.NewMultiHasherTypes(o.Fs().Hashes())
+		mhash, err = hash.NewMultiHasherTypes(o.Fs().Hashes())
 		if err != nil {
 			fs.Errorf(o.Fs(), "newReadFileHandle hash error: %v", err)
 		}
@@ -48,7 +50,7 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 		o:      o,
 		noSeek: f.d.vfs.Opt.NoSeek,
 		file:   f,
-		hash:   hash,
+		hash:   mhash,
 		size:   o.Size(),
 	}
 	return fh, nil
@@ -64,9 +66,9 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	if err != nil {
 		return err
 	}
-	fh.r = fs.NewAccount(r, fh.o).WithBuffer() // account the transfer
+	fh.r = accounting.NewAccount(r, fh.o).WithBuffer() // account the transfer
 	fh.opened = true
-	fs.Stats.Transferring(fh.o.Remote())
+	accounting.Stats.Transferring(fh.o.Remote())
 	return nil
 }
 
@@ -269,7 +271,7 @@ func (fh *ReadFileHandle) checkHash() error {
 		if err != nil {
 			return err
 		}
-		if !fs.HashEquals(dstSum, srcSum) {
+		if !hash.Equals(dstSum, srcSum) {
 			return errors.Errorf("corrupted on transfer: %v hash differ %q vs %q", hashType, dstSum, srcSum)
 		}
 	}
@@ -322,7 +324,7 @@ func (fh *ReadFileHandle) close() error {
 	fh.closed = true
 
 	if fh.opened {
-		fs.Stats.DoneTransferring(fh.o.Remote(), true)
+		accounting.Stats.DoneTransferring(fh.o.Remote(), true)
 		// Close first so that we have hashes
 		err := fh.r.Close()
 		if err != nil {

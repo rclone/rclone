@@ -9,19 +9,21 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"hash"
+	gohash "hash"
 	"io"
 	"strings"
 	"sync"
 
 	"github.com/ncw/rclone/backend/b2/api"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/pkg/errors"
 )
 
 type hashAppendingReader struct {
-	h         hash.Hash
+	h         gohash.Hash
 	in        io.Reader
 	hexSum    string
 	hexReader io.Reader
@@ -58,7 +60,7 @@ func (har *hashAppendingReader) HexSum() string {
 // newHashAppendingReader takes a Reader and a Hash and will append the hex sum
 // after the original reader reaches EOF. The increased size depends on the
 // given hash, which may be queried through AdditionalLength()
-func newHashAppendingReader(in io.Reader, h hash.Hash) *hashAppendingReader {
+func newHashAppendingReader(in io.Reader, h gohash.Hash) *hashAppendingReader {
 	withHash := io.TeeReader(in, h)
 	return &hashAppendingReader{h: h, in: withHash}
 }
@@ -113,7 +115,7 @@ func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *lar
 		},
 	}
 	// Set the SHA1 if known
-	if calculatedSha1, err := src.Hash(fs.HashSHA1); err == nil && calculatedSha1 != "" {
+	if calculatedSha1, err := src.Hash(hash.HashSHA1); err == nil && calculatedSha1 != "" {
 		request.Info[sha1Key] = calculatedSha1
 	}
 	var response api.StartLargeFileResponse
@@ -219,7 +221,7 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		opts := rest.Opts{
 			Method:  "POST",
 			RootURL: upload.UploadURL,
-			Body:    fs.AccountPart(up.o, in),
+			Body:    accounting.AccountPart(up.o, in),
 			ExtraHeaders: map[string]string{
 				"Authorization":    upload.AuthorizationToken,
 				"X-Bz-Part-Number": fmt.Sprintf("%d", part),
@@ -329,7 +331,7 @@ func (up *largeUpload) Stream(initialUploadBlock []byte) (err error) {
 	errs := make(chan error, 1)
 	hasMoreParts := true
 	var wg sync.WaitGroup
-	fs.AccountByPart(up.o) // Cancel whole file accounting before reading
+	accounting.AccountByPart(up.o) // Cancel whole file accounting before reading
 
 	// Transfer initial chunk
 	up.size = int64(len(initialUploadBlock))
@@ -390,7 +392,7 @@ func (up *largeUpload) Upload() error {
 	errs := make(chan error, 1)
 	var wg sync.WaitGroup
 	var err error
-	fs.AccountByPart(up.o) // Cancel whole file accounting before reading
+	accounting.AccountByPart(up.o) // Cancel whole file accounting before reading
 outer:
 	for part := int64(1); part <= up.parts; part++ {
 		// Check any errors

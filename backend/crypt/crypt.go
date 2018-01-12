@@ -10,13 +10,16 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
 
 // Globals
 var (
 	// Flags
-	cryptShowMapping = fs.BoolP("crypt-show-mapping", "", false, "For all files listed show how the names encrypt.")
+	cryptShowMapping = flags.BoolP("crypt-show-mapping", "", false, "For all files listed show how the names encrypt.")
 )
 
 // Register with Fs
@@ -71,25 +74,25 @@ func init() {
 
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, rpath string) (fs.Fs, error) {
-	mode, err := NewNameEncryptionMode(fs.ConfigFileGet(name, "filename_encryption", "standard"))
+	mode, err := NewNameEncryptionMode(config.FileGet(name, "filename_encryption", "standard"))
 	if err != nil {
 		return nil, err
 	}
-	dirNameEncrypt, err := strconv.ParseBool(fs.ConfigFileGet(name, "directory_name_encryption", "true"))
+	dirNameEncrypt, err := strconv.ParseBool(config.FileGet(name, "directory_name_encryption", "true"))
 	if err != nil {
 		return nil, err
 	}
-	password := fs.ConfigFileGet(name, "password", "")
+	password := config.FileGet(name, "password", "")
 	if password == "" {
 		return nil, errors.New("password not set in config file")
 	}
-	password, err = fs.Reveal(password)
+	password, err = config.Reveal(password)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decrypt password")
 	}
-	salt := fs.ConfigFileGet(name, "password2", "")
+	salt := config.FileGet(name, "password2", "")
 	if salt != "" {
-		salt, err = fs.Reveal(salt)
+		salt, err = config.Reveal(salt)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to decrypt password2")
 		}
@@ -98,7 +101,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
-	remote := fs.ConfigFileGet(name, "remote")
+	remote := config.FileGet(name, "remote")
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point crypt remote at itself - check the value of the remote setting")
 	}
@@ -305,8 +308,8 @@ func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashNone)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashNone)
 }
 
 // Mkdir makes the directory (container, bucket)
@@ -459,7 +462,7 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 // src with it, and calcuates the hash given by HashType on the fly
 //
 // Note that we break lots of encapsulation in this function.
-func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType fs.HashType) (hash string, err error) {
+func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
 	// Read the nonce - opening the file is sufficient to read the nonce in
 	in, err := o.Open()
 	if err != nil {
@@ -499,7 +502,7 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType fs.HashType) (hash s
 	}
 
 	// pipe into hash
-	m := fs.NewMultiHasher()
+	m := hash.NewMultiHasher()
 	_, err = io.Copy(m, out)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to hash data")
@@ -558,8 +561,8 @@ func (o *Object) Size() int64 {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *Object) Hash(hash fs.HashType) (string, error) {
-	return "", fs.ErrHashUnsupported
+func (o *Object) Hash(ht hash.Type) (string, error) {
+	return "", hash.ErrHashUnsupported
 }
 
 // UnWrap returns the wrapped Object
@@ -652,7 +655,7 @@ func (o *ObjectInfo) Size() int64 {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *ObjectInfo) Hash(hash fs.HashType) (string, error) {
+func (o *ObjectInfo) Hash(hash hash.Type) (string, error) {
 	return "", nil
 }
 

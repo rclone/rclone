@@ -3,7 +3,6 @@ package tree
 import (
 	"fmt"
 	"io"
-	"log"
 	"os"
 	"path"
 	"path/filepath"
@@ -13,6 +12,8 @@ import (
 	"github.com/a8m/tree"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -88,7 +89,7 @@ The tree command has many options for controlling the listing which
 are compatible with the tree command.  Note that not all of them have
 short options as they conflict with rclone's short options.
 `,
-	Run: func(command *cobra.Command, args []string) {
+	RunE: func(command *cobra.Command, args []string) error {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		outFile := os.Stdout
@@ -96,7 +97,7 @@ short options as they conflict with rclone's short options.
 			var err error
 			outFile, err = os.Create(outFileName)
 			if err != nil {
-				log.Fatalf("Failed to create output file: %v", err)
+				return errors.Errorf("failed to create output file: %v", err)
 			}
 		}
 		opts.VerSort = opts.VerSort || sort == "version"
@@ -110,12 +111,13 @@ short options as they conflict with rclone's short options.
 		cmd.Run(false, false, command, func() error {
 			return Tree(fsrc, outFile, &opts)
 		})
+		return nil
 	},
 }
 
 // Tree lists fsrc to outFile using the Options passed in
 func Tree(fsrc fs.Fs, outFile io.Writer, opts *tree.Options) error {
-	dirs, err := fs.NewDirTree(fsrc, "", false, opts.DeepLevel)
+	dirs, err := walk.NewDirTree(fsrc, "", false, opts.DeepLevel)
 	if err != nil {
 		return err
 	}
@@ -183,22 +185,22 @@ func (to *FileInfo) String() string {
 }
 
 // Fs maps an fs.Fs into a tree.Fs
-type Fs fs.DirTree
+type Fs walk.DirTree
 
 // NewFs creates a new tree
-func NewFs(dirs fs.DirTree) Fs {
+func NewFs(dirs walk.DirTree) Fs {
 	return Fs(dirs)
 }
 
 // Stat returns info about the file
 func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
-	defer fs.Trace(nil, "filePath=%q", filePath)("fi=%+v, err=%v", &fi, &err)
+	defer log.Trace(nil, "filePath=%q", filePath)("fi=%+v, err=%v", &fi, &err)
 	filePath = filepath.ToSlash(filePath)
 	filePath = strings.TrimLeft(filePath, "/")
 	if filePath == "" {
 		return &FileInfo{fs.NewDir("", time.Now())}, nil
 	}
-	_, entry := fs.DirTree(dirs).Find(filePath)
+	_, entry := walk.DirTree(dirs).Find(filePath)
 	if entry == nil {
 		return nil, errors.Errorf("Couldn't find %q in directory cache", filePath)
 	}
@@ -207,7 +209,7 @@ func (dirs Fs) Stat(filePath string) (fi os.FileInfo, err error) {
 
 // ReadDir returns info about the directory and fills up the directory cache
 func (dirs Fs) ReadDir(dir string) (names []string, err error) {
-	defer fs.Trace(nil, "dir=%s", dir)("names=%+v, err=%v", &names, &err)
+	defer log.Trace(nil, "dir=%s", dir)("names=%+v, err=%v", &names, &err)
 	dir = filepath.ToSlash(dir)
 	dir = strings.TrimLeft(dir, "/")
 	entries, ok := dirs[dir]

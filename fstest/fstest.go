@@ -22,6 +22,10 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/text/unicode/norm"
@@ -54,8 +58,8 @@ func Initialise() {
 	// Never ask for passwords, fail instead.
 	// If your local config is encrypted set environment variable
 	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
-	*fs.AskPassword = false
-	fs.LoadConfig()
+	fs.Config.AskPassword = false
+	config.LoadConfig()
 	if *Verbose {
 		fs.Config.LogLevel = fs.LogLevelDebug
 	}
@@ -72,7 +76,7 @@ func Initialise() {
 // Item represents an item for checking
 type Item struct {
 	Path    string
-	Hashes  map[fs.HashType]string
+	Hashes  map[hash.Type]string
 	ModTime time.Time
 	Size    int64
 	WinPath string
@@ -85,7 +89,7 @@ func NewItem(Path, Content string, modTime time.Time) Item {
 		ModTime: modTime,
 		Size:    int64(len(Content)),
 	}
-	hash := fs.NewMultiHasher()
+	hash := hash.NewMultiHasher()
 	buf := bytes.NewBufferString(Content)
 	_, err := io.Copy(hash, buf)
 	if err != nil {
@@ -115,11 +119,11 @@ func (i *Item) CheckModTime(t *testing.T, obj fs.Object, modTime time.Time, prec
 func (i *Item) CheckHashes(t *testing.T, obj fs.Object) {
 	require.NotNil(t, obj)
 	types := obj.Fs().Hashes().Array()
-	for _, hash := range types {
+	for _, Hash := range types {
 		// Check attributes
-		sum, err := obj.Hash(hash)
+		sum, err := obj.Hash(Hash)
 		require.NoError(t, err)
-		assert.True(t, fs.HashEquals(i.Hashes[hash], sum), fmt.Sprintf("%s/%s: %v hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), hash, i.Hashes[hash], sum))
+		assert.True(t, hash.Equals(i.Hashes[Hash], sum), fmt.Sprintf("%s/%s: %v hash incorrect - expecting %q got %q", obj.Fs().String(), obj.Remote(), Hash, i.Hashes[Hash], sum))
 	}
 }
 
@@ -252,7 +256,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 		expectedDirs = filterEmptyDirs(t, items, expectedDirs)
 	}
 	is := NewItems(items)
-	oldErrors := fs.Stats.GetErrors()
+	oldErrors := accounting.Stats.GetErrors()
 	var objs []fs.Object
 	var dirs []fs.Directory
 	var err error
@@ -262,7 +266,7 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	gotListing := "<unset>"
 	listingOK := false
 	for i := 1; i <= retries; i++ {
-		objs, dirs, err = fs.WalkGetAll(f, "", true, -1)
+		objs, dirs, err = walk.GetAll(f, "", true, -1)
 		if err != nil && err != fs.ErrorDirNotFound {
 			t.Fatalf("Error listing: %v", err)
 		}
@@ -294,8 +298,8 @@ func CheckListingWithPrecision(t *testing.T, f fs.Fs, items []Item, expectedDirs
 	}
 	is.Done(t)
 	// Don't notice an error when listing an empty directory
-	if len(items) == 0 && oldErrors == 0 && fs.Stats.GetErrors() == 1 {
-		fs.Stats.ResetErrors()
+	if len(items) == 0 && oldErrors == 0 && accounting.Stats.GetErrors() == 1 {
+		accounting.Stats.ResetErrors()
 	}
 	// Check the directories
 	if expectedDirs != nil {
@@ -418,9 +422,9 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error)
 	}
 
 	finalise := func() {
-		_ = fs.Purge(remote) // ignore error
+		Purge(remote)
 		if parentRemote != nil {
-			err = fs.Purge(parentRemote) // ignore error
+			Purge(parentRemote)
 			if err != nil {
 				log.Printf("Failed to purge %v: %v", parentRemote, err)
 			}
@@ -430,22 +434,48 @@ func RandomRemote(remoteName string, subdir bool) (fs.Fs, string, func(), error)
 	return remote, remoteName, finalise, nil
 }
 
-// TestMkdir tests Mkdir works
-func TestMkdir(t *testing.T, remote fs.Fs) {
-	err := fs.Mkdir(remote, "")
-	require.NoError(t, err)
-	CheckListing(t, remote, []Item{})
-}
-
-// TestPurge tests Purge works
-func TestPurge(t *testing.T, remote fs.Fs) {
-	err := fs.Purge(remote)
-	require.NoError(t, err)
-	CheckListing(t, remote, []Item{})
-}
-
-// TestRmdir tests Rmdir works
-func TestRmdir(t *testing.T, remote fs.Fs) {
-	err := fs.Rmdir(remote, "")
-	require.NoError(t, err)
+// Purge is a simplified re-implementation of operations.Purge for the
+// test routine cleanup to avoid circular dependencies.
+//
+// It logs errors rather than returning them
+func Purge(f fs.Fs) {
+	var err error
+	doFallbackPurge := true
+	if doPurge := f.Features().Purge; doPurge != nil {
+		doFallbackPurge = false
+		err = doPurge()
+		if err == fs.ErrorCantPurge {
+			doFallbackPurge = true
+		}
+	}
+	if doFallbackPurge {
+		var dirs []string
+		err = walk.Walk(f, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
+			if err != nil {
+				log.Printf("purge walk returned error: %v", err)
+				return nil
+			}
+			entries.ForObject(func(obj fs.Object) {
+				err = obj.Remove()
+				if err != nil {
+					log.Printf("purge failed to remove %q: %v", obj.Remote(), err)
+				}
+			})
+			entries.ForDir(func(dir fs.Directory) {
+				dirs = append(dirs, dir.Remote())
+			})
+			return nil
+		})
+		sort.Strings(dirs)
+		for i := len(dirs) - 1; i >= 0; i-- {
+			dir := dirs[i]
+			err := f.Rmdir(dir)
+			if err != nil {
+				log.Printf("purge failed to rmdir %q: %v", dir, err)
+			}
+		}
+	}
+	if err != nil {
+		log.Printf("purge failed: %v", err)
+	}
 }

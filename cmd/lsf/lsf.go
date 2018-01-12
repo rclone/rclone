@@ -8,6 +8,9 @@ import (
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/ls/lshelp"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/operations"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -17,7 +20,7 @@ var (
 	separator string
 	dirSlash  bool
 	recurse   bool
-	hashType  = fs.HashMD5
+	hashType  = hash.HashMD5
 	filesOnly bool
 	dirsOnly  bool
 )
@@ -84,7 +87,7 @@ putting it last is a good strategy.
 // Lsf lists all the objects in the path with modification time, size
 // and path in specific format.
 func Lsf(fsrc fs.Fs, out io.Writer) error {
-	var list fs.ListFormat
+	var list operations.ListFormat
 	list.SetSeparator(separator)
 	list.SetDirSlash(dirSlash)
 
@@ -103,9 +106,9 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 		}
 	}
 
-	return fs.Walk(fsrc, "", false, fs.ConfigMaxDepth(recurse), func(path string, entries fs.DirEntries, err error) error {
+	return walk.Walk(fsrc, "", false, operations.ConfigMaxDepth(recurse), func(path string, entries fs.DirEntries, err error) error {
 		if err != nil {
-			fs.Stats.Error(err)
+			fs.CountError(err)
 			fs.Errorf(path, "error listing: %v", err)
 			return nil
 		}
@@ -120,7 +123,7 @@ func Lsf(fsrc fs.Fs, out io.Writer) error {
 					continue
 				}
 			}
-			fmt.Fprintln(out, fs.ListFormatted(&entry, &list))
+			fmt.Fprintln(out, operations.ListFormatted(&entry, &list))
 		}
 		return nil
 	})

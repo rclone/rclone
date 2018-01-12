@@ -14,6 +14,8 @@ import (
 
 	_ "github.com/ncw/rclone/backend/local"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/filter"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -47,14 +49,14 @@ func startServer(t *testing.T, f fs.Fs) {
 
 func TestInit(t *testing.T) {
 	// Configure the remote
-	fs.LoadConfig()
+	config.LoadConfig()
 	// fs.Config.LogLevel = fs.LogLevelDebug
 	// fs.Config.DumpHeaders = true
 	// fs.Config.DumpBodies = true
 
 	// exclude files called hidden.txt and directories called hidden
-	require.NoError(t, fs.Config.Filter.AddRule("- hidden.txt"))
-	require.NoError(t, fs.Config.Filter.AddRule("- hidden/**"))
+	require.NoError(t, filter.Active.AddRule("- hidden.txt"))
+	require.NoError(t, filter.Active.AddRule("- hidden/**"))
 
 	// Create a test Fs
 	f, err := fs.NewFs("testdata/files")

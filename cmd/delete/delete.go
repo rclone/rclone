@@ -2,7 +2,7 @@ package delete
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +35,7 @@ delete all files bigger than 100MBytes.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(true, false, command, func() error {
-			return fs.Delete(fsrc)
+			return operations.Delete(fsrc)
 		})
 	},
 }

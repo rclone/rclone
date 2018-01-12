@@ -15,16 +15,16 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/backend/onedrive/api"
-	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/ncw/rclone/lib/rest"
-	"github.com/ncw/rclone/oauthutil"
-	"github.com/ncw/rclone/onedrive/api"
-	"github.com/ncw/rclone/pacer"
-	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
@@ -56,7 +56,7 @@ var (
 			TokenURL: "https://login.live.com/oauth20_token.srf",
 		},
 		ClientID:     rclonePersonalClientID,
-		ClientSecret: fs.MustReveal(rclonePersonalEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rclonePersonalEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 
@@ -67,7 +67,7 @@ var (
 			TokenURL: "https://login.microsoftonline.com/common/oauth2/token",
 		},
 		ClientID:     rcloneBusinessClientID,
-		ClientSecret: fs.MustReveal(rcloneBusinessEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneBusinessEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	oauthBusinessResource = oauth2.SetAuthURLParam("resource", discoveryServiceURL)
@@ -87,7 +87,7 @@ func init() {
 			fmt.Printf("Choose OneDrive account type?\n")
 			fmt.Printf(" * Say b for a OneDrive business account\n")
 			fmt.Printf(" * Say p for a personal OneDrive account\n")
-			isPersonal := fs.Command([]string{"bBusiness", "pPersonal"}) == 'p'
+			isPersonal := config.Command([]string{"bBusiness", "pPersonal"}) == 'p'
 
 			if isPersonal {
 				// for personal accounts we don't safe a field about the account
@@ -103,7 +103,7 @@ func init() {
 				}
 
 				// Are we running headless?
-				if fs.ConfigFileGet(name, fs.ConfigAutomatic) != "" {
+				if config.FileGet(name, config.ConfigAutomatic) != "" {
 					// Yes, okay we are done
 					return
 				}
@@ -159,10 +159,10 @@ func init() {
 				} else if len(resourcesID) == 1 {
 					foundService = resourcesID[0]
 				} else {
-					foundService = fs.Choose("Choose resource URL", resourcesID, resourcesURL, false)
+					foundService = config.Choose("Choose resource URL", resourcesID, resourcesURL, false)
 				}
 
-				fs.ConfigFileSet(name, configResourceURL, foundService)
+				config.FileSet(name, configResourceURL, foundService)
 				oauthBusinessResource = oauth2.SetAuthURLParam("resource", foundService)
 
 				// get the token from the inital config
@@ -218,16 +218,16 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Microsoft App Client Id - leave blank normally.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Microsoft App Client Secret - leave blank normally.",
 		}},
 	})
 
-	fs.VarP(&chunkSize, "onedrive-chunk-size", "", "Above this size files will be chunked - must be multiple of 320k.")
-	fs.VarP(&uploadCutoff, "onedrive-upload-cutoff", "", "Cutoff for switching to chunked upload - must be <= 100MB")
+	flags.VarP(&chunkSize, "onedrive-chunk-size", "", "Above this size files will be chunked - must be multiple of 320k.")
+	flags.VarP(&uploadCutoff, "onedrive-upload-cutoff", "", "Cutoff for switching to chunked upload - must be <= 100MB")
 }
 
 // Fs represents a remote one drive
@@ -306,7 +306,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 		authRety = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
-	return authRety || fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return authRety || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // readMetaDataForPath reads the metadata from the path
@@ -339,7 +339,7 @@ func errorHandler(resp *http.Response) error {
 // NewFs constructs an Fs from the path, container:path
 func NewFs(name, root string) (fs.Fs, error) {
 	// get the resource URL from the config file0
-	resourceURL := fs.ConfigFileGet(name, configResourceURL, "")
+	resourceURL := config.FileGet(name, configResourceURL, "")
 	// if we have a resource URL it's a business account otherwise a personal one
 	var rootURL string
 	var oauthConfig *oauth2.Config
@@ -743,10 +743,10 @@ func (f *Fs) waitForJob(location string, o *Object) error {
 		err = f.pacer.Call(func() (bool, error) {
 			resp, err = f.srv.Call(&opts)
 			if err != nil {
-				return fs.ShouldRetry(err), err
+				return fserrors.ShouldRetry(err), err
 			}
 			body, err = rest.ReadBody(resp)
-			return fs.ShouldRetry(err), err
+			return fserrors.ShouldRetry(err), err
 		})
 		if err != nil {
 			return err
@@ -915,8 +915,8 @@ func (f *Fs) DirCacheFlush() {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashSHA1)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashSHA1)
 }
 
 // ------------------------------------------------------------
@@ -945,9 +945,9 @@ func (o *Object) srvPath() string {
 }
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashSHA1 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashSHA1 {
+		return "", hash.ErrHashUnsupported
 	}
 	return o.sha1, nil
 }
@@ -1161,7 +1161,7 @@ func (o *Object) uploadMultipart(in io.Reader, size int64) (err error) {
 		if remaining < n {
 			n = remaining
 		}
-		seg := fs.NewRepeatableReader(io.LimitReader(in, n))
+		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
 		err = o.uploadFragment(uploadURL, position, size, seg, n)
 		if err != nil {

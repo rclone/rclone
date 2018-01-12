@@ -22,16 +22,15 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/backend/pcloud/api"
-	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/ncw/rclone/lib/rest"
-	"github.com/ncw/rclone/oauthutil"
-	"github.com/ncw/rclone/pacer"
-	"github.com/ncw/rclone/pcloud/api"
-	"github.com/ncw/rclone/rest"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
@@ -56,7 +55,7 @@ var (
 			TokenURL: "https://api.pcloud.com/oauth2_token",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	uploadCutoff = fs.SizeSuffix(50 * 1024 * 1024)
@@ -75,14 +74,14 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Pcloud App Client Id - leave blank normally.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Pcloud App Client Secret - leave blank normally.",
 		}},
 	})
-	fs.VarP(&uploadCutoff, "pcloud-upload-cutoff", "", "Cutoff for switching to multipart upload")
+	flags.VarP(&uploadCutoff, "pcloud-upload-cutoff", "", "Cutoff for switching to multipart upload")
 }
 
 // Fs represents a remote pcloud
@@ -174,7 +173,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 		doRetry = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
-	return doRetry || fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return doRetry || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // substitute reserved characters for pcloud
@@ -812,8 +811,8 @@ func (f *Fs) DirCacheFlush() {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5 | fs.HashSHA1)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5 | hash.HashSHA1)
 }
 
 // ------------------------------------------------------------
@@ -859,9 +858,9 @@ func (o *Object) getHashes() (err error) {
 }
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 && t != fs.HashSHA1 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 && t != hash.HashSHA1 {
+		return "", hash.ErrHashUnsupported
 	}
 	if o.md5 == "" && o.sha1 == "" {
 		err := o.getHashes()
@@ -869,7 +868,7 @@ func (o *Object) Hash(t fs.HashType) (string, error) {
 			return "", errors.Wrap(err, "failed to get hash")
 		}
 	}
-	if t == fs.HashMD5 {
+	if t == hash.HashMD5 {
 		return o.md5, nil
 	}
 	return o.sha1, nil

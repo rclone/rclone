@@ -7,6 +7,8 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/log"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
 )
 
@@ -84,7 +86,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	if fh.flags&os.O_TRUNC == 0 && !truncate {
 		// Fetch the file if it hasn't changed
 		// FIXME retries
-		err = fs.CopyFile(fh.d.vfs.cache.f, fh.d.vfs.f, fh.remote, fh.remote)
+		err = operations.CopyFile(fh.d.vfs.cache.f, fh.d.vfs.f, fh.remote, fh.remote)
 		if err != nil {
 			// if the object wasn't found AND O_CREATE is set then...
 			cause := errors.Cause(err)
@@ -164,7 +166,7 @@ func (fh *RWFileHandle) Node() Node {
 // Note that we leave the file around in the cache on error conditions
 // to give the user a chance to recover it.
 func (fh *RWFileHandle) close() (err error) {
-	defer fs.Trace(fh.remote, "")("err=%v", &err)
+	defer log.Trace(fh.remote, "")("err=%v", &err)
 	if fh.closed {
 		return ECLOSED
 	}
@@ -224,9 +226,9 @@ func (fh *RWFileHandle) close() (err error) {
 	// Transfer the temp file to the remote
 	// FIXME retries
 	if fh.d.vfs.Opt.CacheMode < CacheModeFull {
-		err = fs.MoveFile(fh.d.vfs.f, fh.d.vfs.cache.f, fh.remote, fh.remote)
+		err = operations.MoveFile(fh.d.vfs.f, fh.d.vfs.cache.f, fh.remote, fh.remote)
 	} else {
-		err = fs.CopyFile(fh.d.vfs.f, fh.d.vfs.cache.f, fh.remote, fh.remote)
+		err = operations.CopyFile(fh.d.vfs.f, fh.d.vfs.cache.f, fh.remote, fh.remote)
 	}
 	if err != nil {
 		err = errors.Wrap(err, "failed to transfer file from cache to remote")

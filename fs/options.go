@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+
+	"github.com/ncw/rclone/fs/hash"
 )
 
 // OpenOption is an interface describing options for Open
@@ -97,7 +99,7 @@ func (o *HTTPOption) Mandatory() bool {
 // HashesOption defines an option used to tell the local fs to limit
 // the number of hashes it calculates.
 type HashesOption struct {
-	Hashes HashSet
+	Hashes hash.Set
 }
 
 // Header formats the option as an http header

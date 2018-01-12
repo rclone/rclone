@@ -7,7 +7,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fserrors"
 )
 
 // Error describes a B2 error response
@@ -29,7 +29,7 @@ func (e *Error) Fatal() bool {
 	return e.Status == 403 // 403 errors shouldn't be retried
 }
 
-var _ fs.Fataler = (*Error)(nil)
+var _ fserrors.Fataler = (*Error)(nil)
 
 // Account describes a B2 account
 type Account struct {

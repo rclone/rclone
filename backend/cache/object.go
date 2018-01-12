@@ -13,21 +13,22 @@ import (
 	"strconv"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/hash"
 )
 
 // Object is a generic file like object that stores basic information about it
 type Object struct {
 	fs.Object `json:"-"`
 
-	CacheFs       *Fs                    `json:"-"`        // cache fs
-	Name          string                 `json:"name"`     // name of the directory
-	Dir           string                 `json:"dir"`      // abs path of the object
-	CacheModTime  int64                  `json:"modTime"`  // modification or creation time - IsZero for unknown
-	CacheSize     int64                  `json:"size"`     // size of directory and contents or -1 if unknown
-	CacheStorable bool                   `json:"storable"` // says whether this object can be stored
-	CacheType     string                 `json:"cacheType"`
-	CacheTs       time.Time              `json:"cacheTs"`
-	cacheHashes   map[fs.HashType]string // all supported hashes cached
+	CacheFs       *Fs                  `json:"-"`        // cache fs
+	Name          string               `json:"name"`     // name of the directory
+	Dir           string               `json:"dir"`      // abs path of the object
+	CacheModTime  int64                `json:"modTime"`  // modification or creation time - IsZero for unknown
+	CacheSize     int64                `json:"size"`     // size of directory and contents or -1 if unknown
+	CacheStorable bool                 `json:"storable"` // says whether this object can be stored
+	CacheType     string               `json:"cacheType"`
+	CacheTs       time.Time            `json:"cacheTs"`
+	cacheHashes   map[hash.Type]string // all supported hashes cached
 
 	refreshMutex sync.Mutex
 }
@@ -80,10 +81,10 @@ func (o *Object) UnmarshalJSON(b []byte) error {
 		return err
 	}
 
-	o.cacheHashes = make(map[fs.HashType]string)
+	o.cacheHashes = make(map[hash.Type]string)
 	for k, v := range aux.Hashes {
 		ht, _ := strconv.Atoi(k)
-		o.cacheHashes[fs.HashType(ht)] = v
+		o.cacheHashes[hash.Type(ht)] = v
 	}
 
 	return nil
@@ -112,7 +113,7 @@ func (o *Object) updateData(source fs.Object) {
 	o.CacheSize = source.Size()
 	o.CacheStorable = source.Storable()
 	o.CacheTs = time.Now()
-	o.cacheHashes = make(map[fs.HashType]string)
+	o.cacheHashes = make(map[hash.Type]string)
 }
 
 // Fs returns its FS info
@@ -251,7 +252,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	o.CacheModTime = src.ModTime().UnixNano()
 	o.CacheSize = src.Size()
-	o.cacheHashes = make(map[fs.HashType]string)
+	o.cacheHashes = make(map[hash.Type]string)
 	o.persist()
 
 	return nil
@@ -274,9 +275,9 @@ func (o *Object) Remove() error {
 
 // Hash requests a hash of the object and stores in the cache
 // since it might or might not be called, this is lazy loaded
-func (o *Object) Hash(ht fs.HashType) (string, error) {
+func (o *Object) Hash(ht hash.Type) (string, error) {
 	if o.cacheHashes == nil {
-		o.cacheHashes = make(map[fs.HashType]string)
+		o.cacheHashes = make(map[hash.Type]string)
 	}
 
 	cachedHash, found := o.cacheHashes[ht]

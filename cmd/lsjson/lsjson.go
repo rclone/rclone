@@ -10,6 +10,8 @@ import (
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/ls/lshelp"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -84,9 +86,9 @@ can be processed line by line as each item is written one to a line.
 		cmd.Run(false, false, command, func() error {
 			fmt.Println("[")
 			first := true
-			err := fs.Walk(fsrc, "", false, fs.ConfigMaxDepth(recurse), func(dirPath string, entries fs.DirEntries, err error) error {
+			err := walk.Walk(fsrc, "", false, operations.ConfigMaxDepth(recurse), func(dirPath string, entries fs.DirEntries, err error) error {
 				if err != nil {
-					fs.Stats.Error(err)
+					fs.CountError(err)
 					fs.Errorf(dirPath, "error listing: %v", err)
 					return nil
 				}

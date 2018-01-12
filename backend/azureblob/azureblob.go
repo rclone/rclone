@@ -11,7 +11,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"fmt"
-	"hash"
+	gohash "hash"
 	"io"
 	"net/http"
 	"path"
@@ -23,6 +23,12 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/pacer"
 	"github.com/pkg/errors"
 )
@@ -66,8 +72,8 @@ func init() {
 		},
 		},
 	})
-	fs.VarP(&uploadCutoff, "azureblob-upload-cutoff", "", "Cutoff for switching to chunked upload")
-	fs.VarP(&chunkSize, "azureblob-chunk-size", "", "Upload chunk size. Must fit in memory.")
+	flags.VarP(&uploadCutoff, "azureblob-upload-cutoff", "", "Cutoff for switching to chunked upload")
+	flags.VarP(&chunkSize, "azureblob-chunk-size", "", "Upload chunk size. Must fit in memory.")
 }
 
 // Fs represents a remote azure server
@@ -165,7 +171,7 @@ func (f *Fs) shouldRetry(err error) (bool, error) {
 			}
 		}
 	}
-	return fs.ShouldRetry(err), err
+	return fserrors.ShouldRetry(err), err
 }
 
 // NewFs contstructs an Fs from the path, container:path
@@ -180,11 +186,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 	if err != nil {
 		return nil, err
 	}
-	account := fs.ConfigFileGet(name, "account")
+	account := config.FileGet(name, "account")
 	if account == "" {
 		return nil, errors.New("account not found")
 	}
-	key := fs.ConfigFileGet(name, "key")
+	key := config.FileGet(name, "key")
 	if key == "" {
 		return nil, errors.New("key not found")
 	}
@@ -193,13 +199,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, errors.Errorf("malformed storage account key: %v", err)
 	}
 
-	endpoint := fs.ConfigFileGet(name, "endpoint", storage.DefaultBaseURL)
+	endpoint := config.FileGet(name, "endpoint", storage.DefaultBaseURL)
 
 	client, err := storage.NewClient(account, key, endpoint, apiVersion, true)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make azure storage client")
 	}
-	client.HTTPClient = fs.Config.Client()
+	client.HTTPClient = fshttp.NewClient(fs.Config)
 	bc := client.GetBlobService()
 
 	f := &Fs{
@@ -473,7 +479,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if f.container == "" {
 		return fs.ErrorListBucketRequired
 	}
-	list := fs.NewListRHelper(callback)
+	list := walk.NewListRHelper(callback)
 	err = f.list(dir, true, listChunkSize, func(remote string, object *storage.Blob, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
@@ -622,8 +628,8 @@ func (f *Fs) Precision() time.Duration {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
 }
 
 // Purge deletes all the files and directories including the old versions.
@@ -690,9 +696,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the MD5 of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	// Convert base64 encoded md5 into lower case hex
 	if o.md5 == "" {
@@ -834,7 +840,7 @@ type openFile struct {
 	o     *Object        // Object we are reading for
 	resp  *http.Response // response of the GET
 	body  io.Reader      // reading from here
-	hash  hash.Hash      // currently accumulating MD5
+	hash  gohash.Hash    // currently accumulating MD5
 	bytes int64          // number of bytes read on this connection
 	eof   bool           // whether we have read end of file
 }
@@ -1059,7 +1065,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 	blob := o.getBlobWithModTime(src.ModTime())
 	blob.Properties.ContentType = fs.MimeType(o)
-	if sourceMD5, _ := src.Hash(fs.HashMD5); sourceMD5 != "" {
+	if sourceMD5, _ := src.Hash(hash.HashMD5); sourceMD5 != "" {
 		sourceMD5bytes, err := hex.DecodeString(sourceMD5)
 		if err == nil {
 			blob.Properties.ContentMD5 = base64.StdEncoding.EncodeToString(sourceMD5bytes)

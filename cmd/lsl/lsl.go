@@ -5,7 +5,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/ls/lshelp"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -24,7 +24,7 @@ readable format with modification time, size and path. Recurses by default.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return fs.ListLong(fsrc, os.Stdout)
+			return operations.ListLong(fsrc, os.Stdout)
 		})
 	},
 }
