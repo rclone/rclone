@@ -20,6 +20,8 @@ import (
 	//"strings"
 
 	"github.com/ncw/rclone/backend/cache"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/object"
 	//"github.com/ncw/rclone/cmd/mount"
 	//_ "github.com/ncw/rclone/cmd/cmount"
 	//"github.com/ncw/rclone/cmd/mountlib"
@@ -492,7 +494,7 @@ func writeObjectString(t *testing.T, f fs.Fs, remote, content string) fs.Object 
 func writeObjectBytes(t *testing.T, f fs.Fs, remote string, data []byte) fs.Object {
 	in := bytes.NewReader(data)
 	modTime := time.Now()
-	objInfo := fs.NewStaticObjectInfo(remote, modTime, int64(len(data)), true, nil, f)
+	objInfo := object.NewStaticObjectInfo(remote, modTime, int64(len(data)), true, nil, f)
 
 	obj, err := f.Put(in, objInfo)
 	require.NoError(t, err)
@@ -503,8 +505,8 @@ func writeObjectBytes(t *testing.T, f fs.Fs, remote string, data []byte) fs.Obje
 func updateObjectBytes(t *testing.T, f fs.Fs, remote string, data1 []byte, data2 []byte) fs.Object {
 	in1 := bytes.NewReader(data1)
 	in2 := bytes.NewReader(data2)
-	objInfo1 := fs.NewStaticObjectInfo(remote, time.Now(), int64(len(data1)), true, nil, f)
-	objInfo2 := fs.NewStaticObjectInfo(remote, time.Now(), int64(len(data2)), true, nil, f)
+	objInfo1 := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data1)), true, nil, f)
+	objInfo2 := object.NewStaticObjectInfo(remote, time.Now(), int64(len(data2)), true, nil, f)
 
 	obj, err := f.Put(in1, objInfo1)
 	require.NoError(t, err)
@@ -540,15 +542,15 @@ func cleanupFs(t *testing.T, f fs.Fs, b *cache.Persistent) {
 
 func newLocalCacheCryptFs(t *testing.T, localRemote, cacheRemote, cryptRemote string, purge bool, cfg map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
-	dbPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote+".db")
-	chunkPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote)
+	dbPath := filepath.Join(config.CacheDir, "cache-backend", cacheRemote+".db")
+	chunkPath := filepath.Join(config.CacheDir, "cache-backend", cacheRemote)
 	boltDb, err := cache.GetPersistent(dbPath, chunkPath, &cache.Features{PurgeDb: true})
 	require.NoError(t, err)
 
 	localExists := false
 	cacheExists := false
 	cryptExists := false
-	for _, s := range fs.ConfigFileSections() {
+	for _, s := range config.FileSections() {
 		if s == localRemote {
 			localExists = true
 		}
@@ -563,28 +565,28 @@ func newLocalCacheCryptFs(t *testing.T, localRemote, cacheRemote, cryptRemote st
 	localRemoteWrap := ""
 	if !localExists {
 		localRemoteWrap = localRemote + ":/var/tmp/" + localRemote
-		fs.ConfigFileSet(localRemote, "type", "local")
-		fs.ConfigFileSet(localRemote, "nounc", "true")
+		config.FileSet(localRemote, "type", "local")
+		config.FileSet(localRemote, "nounc", "true")
 	}
 
 	if !cacheExists {
-		fs.ConfigFileSet(cacheRemote, "type", "cache")
-		fs.ConfigFileSet(cacheRemote, "remote", localRemoteWrap)
+		config.FileSet(cacheRemote, "type", "cache")
+		config.FileSet(cacheRemote, "remote", localRemoteWrap)
 	}
 	if c, ok := cfg["chunk_size"]; ok {
-		fs.ConfigFileSet(cacheRemote, "chunk_size", c)
+		config.FileSet(cacheRemote, "chunk_size", c)
 	} else {
-		fs.ConfigFileSet(cacheRemote, "chunk_size", "1m")
+		config.FileSet(cacheRemote, "chunk_size", "1m")
 	}
 	if c, ok := cfg["chunk_total_size"]; ok {
-		fs.ConfigFileSet(cacheRemote, "chunk_total_size", c)
+		config.FileSet(cacheRemote, "chunk_total_size", c)
 	} else {
-		fs.ConfigFileSet(cacheRemote, "chunk_total_size", "2m")
+		config.FileSet(cacheRemote, "chunk_total_size", "2m")
 	}
 	if c, ok := cfg["info_age"]; ok {
-		fs.ConfigFileSet(cacheRemote, "info_age", c)
+		config.FileSet(cacheRemote, "info_age", c)
 	} else {
-		fs.ConfigFileSet(cacheRemote, "info_age", infoAge.String())
+		config.FileSet(cacheRemote, "info_age", infoAge.String())
 	}
 
 	if !cryptExists {
@@ -627,14 +629,14 @@ func newLocalCacheCryptFs(t *testing.T, localRemote, cacheRemote, cryptRemote st
 
 func newLocalCacheFs(t *testing.T, localRemote, cacheRemote string, cfg map[string]string) (fs.Fs, *cache.Persistent) {
 	fstest.Initialise()
-	dbPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote+".db")
-	chunkPath := filepath.Join(fs.CacheDir, "cache-backend", cacheRemote)
+	dbPath := filepath.Join(config.CacheDir, "cache-backend", cacheRemote+".db")
+	chunkPath := filepath.Join(config.CacheDir, "cache-backend", cacheRemote)
 	boltDb, err := cache.GetPersistent(dbPath, chunkPath, &cache.Features{PurgeDb: true})
 	require.NoError(t, err)
 
 	localExists := false
 	cacheExists := false
-	for _, s := range fs.ConfigFileSections() {
+	for _, s := range config.FileSections() {
 		if s == localRemote {
 			localExists = true
 		}
@@ -646,28 +648,28 @@ func newLocalCacheFs(t *testing.T, localRemote, cacheRemote string, cfg map[stri
 	localRemoteWrap := ""
 	if !localExists {
 		localRemoteWrap = localRemote + ":/var/tmp/" + localRemote
-		fs.ConfigFileSet(localRemote, "type", "local")
-		fs.ConfigFileSet(localRemote, "nounc", "true")
+		config.FileSet(localRemote, "type", "local")
+		config.FileSet(localRemote, "nounc", "true")
 	}
 
 	if !cacheExists {
-		fs.ConfigFileSet(cacheRemote, "type", "cache")
-		fs.ConfigFileSet(cacheRemote, "remote", localRemoteWrap)
+		config.FileSet(cacheRemote, "type", "cache")
+		config.FileSet(cacheRemote, "remote", localRemoteWrap)
 	}
 	if c, ok := cfg["chunk_size"]; ok {
-		fs.ConfigFileSet(cacheRemote, "chunk_size", c)
+		config.FileSet(cacheRemote, "chunk_size", c)
 	} else {
-		fs.ConfigFileSet(cacheRemote, "chunk_size", "1m")
+		config.FileSet(cacheRemote, "chunk_size", "1m")
 	}
 	if c, ok := cfg["chunk_total_size"]; ok {
-		fs.ConfigFileSet(cacheRemote, "chunk_total_size", c)
+		config.FileSet(cacheRemote, "chunk_total_size", c)
 	} else {
-		fs.ConfigFileSet(cacheRemote, "chunk_total_size", "2m")
+		config.FileSet(cacheRemote, "chunk_total_size", "2m")
 	}
 	if c, ok := cfg["info_age"]; ok {
-		fs.ConfigFileSet(cacheRemote, "info_age", c)
+		config.FileSet(cacheRemote, "info_age", c)
 	} else {
-		fs.ConfigFileSet(cacheRemote, "info_age", infoAge.String())
+		config.FileSet(cacheRemote, "info_age", infoAge.String())
 	}
 
 	if c, ok := cfg["cache-chunk-no-memory"]; ok {

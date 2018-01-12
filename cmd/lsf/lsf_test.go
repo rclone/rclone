@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/list"
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -137,7 +138,7 @@ file3
 	err = Lsf(f, buf)
 	require.NoError(t, err)
 
-	items, _ := fs.ListDirSorted(f, true, "")
+	items, _ := list.DirSorted(f, true, "")
 	var expectedOutput string
 	for _, item := range items {
 		expectedOutput += item.ModTime().Format("2006-01-02 15:04:05") + "\n"
@@ -198,8 +199,8 @@ func TestWholeLsf(t *testing.T) {
 	err = Lsf(f, buf)
 	require.NoError(t, err)
 
-	items, _ := fs.ListDirSorted(f, true, "")
-	itemsInSubdir, _ := fs.ListDirSorted(f, true, "subdir")
+	items, _ := list.DirSorted(f, true, "")
+	itemsInSubdir, _ := list.DirSorted(f, true, "subdir")
 	var expectedOutput []string
 	for _, item := range items {
 		expectedOutput = append(expectedOutput, item.ModTime().Format("2006-01-02 15:04:05"))

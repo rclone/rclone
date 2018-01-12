@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
 	"golang.org/x/net/context"
@@ -54,7 +56,7 @@ type oldToken struct {
 // GetToken returns the token saved in the config file under
 // section name.
 func GetToken(name string) (*oauth2.Token, error) {
-	tokenString := fs.ConfigFileGet(name, fs.ConfigToken)
+	tokenString := config.FileGet(name, config.ConfigToken)
 	if tokenString == "" {
 		return nil, errors.New("empty token found - please run rclone config again")
 	}
@@ -94,9 +96,9 @@ func PutToken(name string, token *oauth2.Token, newSection bool) error {
 		return err
 	}
 	tokenString := string(tokenBytes)
-	old := fs.ConfigFileGet(name, fs.ConfigToken)
+	old := config.FileGet(name, config.ConfigToken)
 	if tokenString != old {
-		err = fs.ConfigSetValueAndSave(name, fs.ConfigToken, tokenString)
+		err = config.SetValueAndSave(name, config.ConfigToken, tokenString)
 		if newSection && err != nil {
 			fs.Debugf(name, "Added new token to config, still needs to be saved")
 		} else if err != nil {
@@ -197,31 +199,31 @@ func Context(client *http.Client) context.Context {
 // config file if they are not blank.
 // If any value is overridden, true is returned.
 // the origConfig is copied
-func overrideCredentials(name string, origConfig *oauth2.Config) (config *oauth2.Config, changed bool) {
-	config = new(oauth2.Config)
-	*config = *origConfig
+func overrideCredentials(name string, origConfig *oauth2.Config) (newConfig *oauth2.Config, changed bool) {
+	newConfig = new(oauth2.Config)
+	*newConfig = *origConfig
 	changed = false
-	ClientID := fs.ConfigFileGet(name, fs.ConfigClientID)
+	ClientID := config.FileGet(name, config.ConfigClientID)
 	if ClientID != "" {
-		config.ClientID = ClientID
+		newConfig.ClientID = ClientID
 		changed = true
 	}
-	ClientSecret := fs.ConfigFileGet(name, fs.ConfigClientSecret)
+	ClientSecret := config.FileGet(name, config.ConfigClientSecret)
 	if ClientSecret != "" {
-		config.ClientSecret = ClientSecret
+		newConfig.ClientSecret = ClientSecret
 		changed = true
 	}
-	AuthURL := fs.ConfigFileGet(name, fs.ConfigAuthURL)
+	AuthURL := config.FileGet(name, config.ConfigAuthURL)
 	if AuthURL != "" {
-		config.Endpoint.AuthURL = AuthURL
+		newConfig.Endpoint.AuthURL = AuthURL
 		changed = true
 	}
-	TokenURL := fs.ConfigFileGet(name, fs.ConfigTokenURL)
+	TokenURL := config.FileGet(name, config.ConfigTokenURL)
 	if TokenURL != "" {
-		config.Endpoint.TokenURL = TokenURL
+		newConfig.Endpoint.TokenURL = TokenURL
 		changed = true
 	}
-	return config, changed
+	return newConfig, changed
 }
 
 // NewClientWithBaseClient gets a token from the config file and
@@ -252,8 +254,8 @@ func NewClientWithBaseClient(name string, config *oauth2.Config, baseClient *htt
 
 // NewClient gets a token from the config file and configures a Client
 // with it.  It returns the client and a TokenSource which Invalidate may need to be called on
-func NewClient(name string, config *oauth2.Config) (*http.Client, *TokenSource, error) {
-	return NewClientWithBaseClient(name, config, fs.Config.Client())
+func NewClient(name string, oauthConfig *oauth2.Config) (*http.Client, *TokenSource, error) {
+	return NewClientWithBaseClient(name, oauthConfig, fshttp.NewClient(fs.Config))
 }
 
 // Config does the initial creation of the token
@@ -269,26 +271,26 @@ func ConfigNoOffline(id, name string, config *oauth2.Config, opts ...oauth2.Auth
 	return doConfig(id, name, config, false, opts)
 }
 
-func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth2.AuthCodeOption) error {
-	config, changed := overrideCredentials(name, config)
-	automatic := fs.ConfigFileGet(name, fs.ConfigAutomatic) != ""
+func doConfig(id, name string, oauthConfig *oauth2.Config, offline bool, opts []oauth2.AuthCodeOption) error {
+	oauthConfig, changed := overrideCredentials(name, oauthConfig)
+	automatic := config.FileGet(name, config.ConfigAutomatic) != ""
 
 	if changed {
-		fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", config.RedirectURL)
+		fmt.Printf("Make sure your Redirect URL is set to %q in your custom config.\n", RedirectURL)
 	}
 
 	// See if already have a token
-	tokenString := fs.ConfigFileGet(name, "token")
+	tokenString := config.FileGet(name, "token")
 	if tokenString != "" {
 		fmt.Printf("Already have a token - refresh?\n")
-		if !fs.Confirm() {
+		if !config.Confirm() {
 			return nil
 		}
 	}
 
 	// Detect whether we should use internal web server
 	useWebServer := false
-	switch config.RedirectURL {
+	switch RedirectURL {
 	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
 		useWebServer = true
 		if automatic {
@@ -297,12 +299,12 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 		fmt.Printf("Use auto config?\n")
 		fmt.Printf(" * Say Y if not sure\n")
 		fmt.Printf(" * Say N if you are working on a remote or headless machine\n")
-		auto := fs.Confirm()
+		auto := config.Confirm()
 		if !auto {
 			fmt.Printf("For this to work, you will need rclone available on a machine that has a web browser available.\n")
 			fmt.Printf("Execute the following on your machine:\n")
 			if changed {
-				fmt.Printf("\trclone authorize %q %q %q\n", id, config.ClientID, config.ClientSecret)
+				fmt.Printf("\trclone authorize %q %q %q\n", id, oauthConfig.ClientID, oauthConfig.ClientSecret)
 			} else {
 				fmt.Printf("\trclone authorize %q\n", id)
 			}
@@ -310,7 +312,7 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 			code := ""
 			for code == "" {
 				fmt.Printf("result> ")
-				code = strings.TrimSpace(fs.ReadLine())
+				code = strings.TrimSpace(config.ReadLine())
 			}
 			token := &oauth2.Token{}
 			err := json.Unmarshal([]byte(code), token)
@@ -325,13 +327,13 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 			fmt.Printf("Use auto config?\n")
 			fmt.Printf(" * Say Y if not sure\n")
 			fmt.Printf(" * Say N if you are working on a remote or headless machine or Y didn't work\n")
-			useWebServer = fs.Confirm()
+			useWebServer = config.Confirm()
 		}
 		if useWebServer {
 			// copy the config and set to use the internal webserver
-			configCopy := *config
-			config = &configCopy
-			config.RedirectURL = RedirectURL
+			configCopy := *oauthConfig
+			oauthConfig = &configCopy
+			oauthConfig.RedirectURL = RedirectURL
 		}
 	}
 
@@ -345,7 +347,7 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 	if offline {
 		opts = append(opts, oauth2.AccessTypeOffline)
 	}
-	authURL := config.AuthCodeURL(state, opts...)
+	authURL := oauthConfig.AuthCodeURL(state, opts...)
 
 	// Prepare webserver
 	server := authServer{
@@ -378,9 +380,9 @@ func doConfig(id, name string, config *oauth2.Config, offline bool, opts []oauth
 	} else {
 		// Read the code, and exchange it for a token.
 		fmt.Printf("Enter verification code> ")
-		authCode = fs.ReadLine()
+		authCode = config.ReadLine()
 	}
-	token, err := config.Exchange(oauth2.NoContext, authCode)
+	token, err := oauthConfig.Exchange(oauth2.NoContext, authCode)
 	if err != nil {
 		return errors.Wrap(err, "failed to get token")
 	}

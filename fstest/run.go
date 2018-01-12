@@ -37,7 +37,9 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/stretchr/testify/assert"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/object"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/stretchr/testify/require"
 )
 
@@ -127,7 +129,7 @@ func NewRun(t *testing.T) *Run {
 		*r = *oneRun
 		r.cleanRemote = func() {
 			var toDelete dirsToRemove
-			err := fs.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
+			err := walk.Walk(r.Fremote, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
 				if err != nil {
 					if err == fs.ErrorDirNotFound {
 						return nil
@@ -231,13 +233,13 @@ func (r *Run) WriteObjectTo(f fs.Fs, remote, content string, modTime time.Time, 
 	const maxTries = 10
 	for tries := 1; ; tries++ {
 		in := bytes.NewBufferString(content)
-		objinfo := fs.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
+		objinfo := object.NewStaticObjectInfo(remote, modTime, int64(len(content)), true, nil, nil)
 		_, err := put(in, objinfo)
 		if err == nil {
 			break
 		}
 		// Retry if err returned a retry error
-		if fs.IsRetryError(err) && tries < maxTries {
+		if fserrors.IsRetryError(err) && tries < maxTries {
 			r.Logf("Retry Put of %q to %v: %d/%d (%v)", remote, f, tries, maxTries, err)
 			time.Sleep(2 * time.Second)
 			continue
@@ -265,14 +267,15 @@ func (r *Run) WriteBoth(remote, content string, modTime time.Time) Item {
 
 // CheckWithDuplicates does a test but allows duplicates
 func (r *Run) CheckWithDuplicates(t *testing.T, items ...Item) {
-	objects, size, err := fs.Count(r.Fremote)
-	require.NoError(t, err)
-	assert.Equal(t, int64(len(items)), objects)
-	wantSize := int64(0)
-	for _, item := range items {
-		wantSize += item.Size
-	}
-	assert.Equal(t, wantSize, size)
+	panic("FIXME")
+	// objects, size, err := operations.Count(r.Fremote)
+	// require.NoError(t, err)
+	// assert.Equal(t, int64(len(items)), objects)
+	// wantSize := int64(0)
+	// for _, item := range items {
+	// 	wantSize += item.Size
+	// }
+	// assert.Equal(t, wantSize, size)
 }
 
 // Clean the temporary directory

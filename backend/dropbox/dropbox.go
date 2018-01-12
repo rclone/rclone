@@ -34,8 +34,13 @@ import (
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox"
 	"github.com/dropbox/dropbox-sdk-go-unofficial/dropbox/files"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
@@ -59,7 +64,7 @@ var (
 		// },
 		Endpoint:     dropbox.OAuthEndpoint(""),
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	// A regexp matching path names for files Dropbox ignores
@@ -112,7 +117,7 @@ func init() {
 			Help: "Dropbox App Secret - leave blank normally.",
 		}},
 	})
-	fs.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
+	flags.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
 }
 
 // Fs represents a remote dropbox server
@@ -170,7 +175,7 @@ func shouldRetry(err error) (bool, error) {
 	if strings.Contains(baseErrString, "too_many_write_operations") || strings.Contains(baseErrString, "too_many_requests") {
 		return true, err
 	}
-	return fs.ShouldRetry(err), err
+	return fserrors.ShouldRetry(err), err
 }
 
 // NewFs contstructs an Fs from the path, container:path
@@ -181,11 +186,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	// Convert the old token if it exists.  The old token was just
 	// just a string, the new one is a JSON blob
-	oldToken := strings.TrimSpace(fs.ConfigFileGet(name, fs.ConfigToken))
+	oldToken := strings.TrimSpace(config.FileGet(name, config.ConfigToken))
 	if oldToken != "" && oldToken[0] != '{' {
 		fs.Infof(name, "Converting token to new format")
 		newToken := fmt.Sprintf(`{"access_token":"%s","token_type":"bearer","expiry":"0001-01-01T00:00:00Z"}`, oldToken)
-		err := fs.ConfigSetValueAndSave(name, fs.ConfigToken, newToken)
+		err := config.SetValueAndSave(name, config.ConfigToken, newToken)
 		if err != nil {
 			return nil, errors.Wrap(err, "NewFS convert token")
 		}
@@ -675,8 +680,8 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashDropbox)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashDropbox)
 }
 
 // ------------------------------------------------------------
@@ -700,9 +705,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the dropbox special hash
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashDropbox {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashDropbox {
+		return "", hash.ErrHashUnsupported
 	}
 	err := o.readMetaData()
 	if err != nil {
@@ -813,7 +818,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	case files.DownloadAPIError:
 		// Don't attempt to retry copyright violation errors
 		if e.EndpointError.Path.Tag == files.LookupErrorRestrictedContent {
-			return nil, fs.NoRetryError(err)
+			return nil, fserrors.NoRetryError(err)
 		}
 	}
 
@@ -831,7 +836,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	if size != -1 {
 		chunks = int(size/chunkSize) + 1
 	}
-	in := fs.NewCountingReader(in0)
+	in := readers.NewCountingReader(in0)
 	buf := make([]byte, int(chunkSize))
 
 	fmtChunk := func(cur int, last bool) {
@@ -847,7 +852,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 	// write the first chunk
 	fmtChunk(1, false)
 	var res *files.UploadSessionStartResult
-	chunk := fs.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+	chunk := readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		// seek to the start in case this is a retry
 		if _, err = chunk.Seek(0, 0); err != nil {
@@ -883,7 +888,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 		}
 		cursor.Offset = in.BytesRead()
 		fmtChunk(currentChunk, false)
-		chunk = fs.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
+		chunk = readers.NewRepeatableLimitReaderBuffer(in, buf, chunkSize)
 		err = o.fs.pacer.Call(func() (bool, error) {
 			// seek to the start in case this is a retry
 			if _, err = chunk.Seek(0, 0); err != nil {
@@ -906,7 +911,7 @@ func (o *Object) uploadChunked(in0 io.Reader, commitInfo *files.CommitInfo, size
 		Commit: commitInfo,
 	}
 	fmtChunk(currentChunk, true)
-	chunk = fs.NewRepeatableReaderBuffer(in, buf)
+	chunk = readers.NewRepeatableReaderBuffer(in, buf)
 	err = o.fs.pacer.Call(func() (bool, error) {
 		// seek to the start in case this is a retry
 		if _, err = chunk.Seek(0, 0); err != nil {

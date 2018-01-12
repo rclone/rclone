@@ -4,7 +4,7 @@ import (
 	"os"
 
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -23,7 +23,7 @@ is in the same format as the standard sha1sum tool produces.
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
 		cmd.Run(false, false, command, func() error {
-			return fs.Sha1sum(fsrc, os.Stdout)
+			return operations.Sha1sum(fsrc, os.Stdout)
 		})
 	},
 }

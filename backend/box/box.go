@@ -22,9 +22,11 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/backend/box/api"
-	"github.com/ncw/rclone/box/api"
-	"github.com/ncw/rclone/dircache"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/ncw/rclone/lib/pacer"
@@ -56,7 +58,7 @@ var (
 			TokenURL: "https://app.box.com/api/oauth2/token",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 	uploadCutoff = fs.SizeSuffix(50 * 1024 * 1024)
@@ -75,14 +77,14 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Box App Client Id - leave blank normally.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Box App Client Secret - leave blank normally.",
 		}},
 	})
-	fs.VarP(&uploadCutoff, "box-upload-cutoff", "", "Cutoff for switching to multipart upload")
+	flags.VarP(&uploadCutoff, "box-upload-cutoff", "", "Cutoff for switching to multipart upload")
 }
 
 // Fs represents a remote box
@@ -160,7 +162,7 @@ func shouldRetry(resp *http.Response, err error) (bool, error) {
 		authRety = true
 		fs.Debugf(nil, "Should retry: %v", err)
 	}
-	return authRety || fs.ShouldRetry(err) || fs.ShouldRetryHTTP(resp, retryErrorCodes), err
+	return authRety || fserrors.ShouldRetry(err) || fserrors.ShouldRetryHTTP(resp, retryErrorCodes), err
 }
 
 // substitute reserved characters for box
@@ -827,8 +829,8 @@ func (f *Fs) DirCacheFlush() {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashSHA1)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashSHA1)
 }
 
 // ------------------------------------------------------------
@@ -857,9 +859,9 @@ func (o *Object) srvPath() string {
 }
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashSHA1 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashSHA1 {
+		return "", hash.ErrHashUnsupported
 	}
 	return o.sha1, nil
 }

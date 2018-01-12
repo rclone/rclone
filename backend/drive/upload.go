@@ -20,6 +20,8 @@ import (
 	"strconv"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"google.golang.org/api/drive/v2"
 	"google.golang.org/api/googleapi"
@@ -201,7 +203,7 @@ func (rx *resumableUpload) Upload() (*drive.File, error) {
 		if reqSize >= int64(chunkSize) {
 			reqSize = int64(chunkSize)
 		}
-		chunk := fs.NewRepeatableLimitReaderBuffer(rx.Media, buf, reqSize)
+		chunk := readers.NewRepeatableLimitReaderBuffer(rx.Media, buf, reqSize)
 
 		// Transfer the chunk
 		err = rx.f.pacer.Call(func() (bool, error) {
@@ -241,7 +243,7 @@ func (rx *resumableUpload) Upload() (*drive.File, error) {
 	// Handle 404 Not Found errors when doing resumable uploads by starting
 	// the entire upload over from the beginning.
 	if rx.ret == nil {
-		return nil, fs.RetryErrorf("Incomplete upload - retry, last error %d", StatusCode)
+		return nil, fserrors.RetryErrorf("Incomplete upload - retry, last error %d", StatusCode)
 	}
 	return rx.ret, nil
 }

@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fserrors"
 )
 
 // Pacer state
@@ -339,7 +340,7 @@ func (p *Pacer) call(fn Paced, retries int) (err error) {
 		fs.Debugf("pacer", "low level retry %d/%d (error %v)", i, retries, err)
 	}
 	if retry {
-		err = fs.RetryError(err)
+		err = fserrors.RetryError(err)
 	}
 	return err
 }

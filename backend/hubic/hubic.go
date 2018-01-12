@@ -15,9 +15,9 @@ import (
 
 	"github.com/ncw/rclone/backend/swift"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/lib/oauthutil"
-	"github.com/ncw/rclone/oauthutil"
-	"github.com/ncw/rclone/swift"
 	swiftLib "github.com/ncw/swift"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -40,7 +40,7 @@ var (
 			TokenURL: "https://api.hubic.com/oauth/token/",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 )
@@ -58,10 +58,10 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Hubic Client Id - leave blank normally.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Hubic Client Secret - leave blank normally.",
 		}},
 	})
@@ -159,7 +159,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		Auth:           newAuth(f),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
-		Transport:      fs.Config.Transport(),
+		Transport:      fshttp.NewTransport(fs.Config),
 	}
 	err = c.Authenticate()
 	if err != nil {

@@ -9,10 +9,11 @@ import (
 	"syscall"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/flags"
 )
 
 var (
-	oneFileSystem = fs.BoolP("one-file-system", "x", false, "Don't cross filesystem boundaries.")
+	oneFileSystem = flags.BoolP("one-file-system", "x", false, "Don't cross filesystem boundaries.")
 )
 
 // readDevice turns a valid os.FileInfo into a device number,

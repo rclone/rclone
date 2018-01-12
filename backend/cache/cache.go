@@ -18,6 +18,10 @@ import (
 
 	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
@@ -47,18 +51,18 @@ const (
 // Globals
 var (
 	// Flags
-	cacheDbPath             = fs.StringP("cache-db-path", "", filepath.Join(fs.CacheDir, "cache-backend"), "Directory to cache DB")
-	cacheChunkPath          = fs.StringP("cache-chunk-path", "", filepath.Join(fs.CacheDir, "cache-backend"), "Directory to cached chunk files")
-	cacheDbPurge            = fs.BoolP("cache-db-purge", "", false, "Purge the cache DB before")
-	cacheChunkSize          = fs.StringP("cache-chunk-size", "", DefCacheChunkSize, "The size of a chunk")
-	cacheTotalChunkSize     = fs.StringP("cache-total-chunk-size", "", DefCacheTotalChunkSize, "The total size which the chunks can take up from the disk")
-	cacheChunkCleanInterval = fs.StringP("cache-chunk-clean-interval", "", DefCacheChunkCleanInterval, "Interval at which chunk cleanup runs")
-	cacheInfoAge            = fs.StringP("cache-info-age", "", DefCacheInfoAge, "How much time should object info be stored in cache")
-	cacheReadRetries        = fs.IntP("cache-read-retries", "", DefCacheReadRetries, "How many times to retry a read from a cache storage")
-	cacheTotalWorkers       = fs.IntP("cache-workers", "", DefCacheTotalWorkers, "How many workers should run in parallel to download chunks")
-	cacheChunkNoMemory      = fs.BoolP("cache-chunk-no-memory", "", DefCacheChunkNoMemory, "Disable the in-memory cache for storing chunks during streaming")
-	cacheRps                = fs.IntP("cache-rps", "", int(DefCacheRps), "Limits the number of requests per second to the source FS. -1 disables the rate limiter")
-	cacheStoreWrites        = fs.BoolP("cache-writes", "", DefCacheWrites, "Will cache file data on writes through the FS")
+	cacheDbPath             = flags.StringP("cache-db-path", "", filepath.Join(config.CacheDir, "cache-backend"), "Directory to cache DB")
+	cacheChunkPath          = flags.StringP("cache-chunk-path", "", filepath.Join(config.CacheDir, "cache-backend"), "Directory to cached chunk files")
+	cacheDbPurge            = flags.BoolP("cache-db-purge", "", false, "Purge the cache DB before")
+	cacheChunkSize          = flags.StringP("cache-chunk-size", "", DefCacheChunkSize, "The size of a chunk")
+	cacheTotalChunkSize     = flags.StringP("cache-total-chunk-size", "", DefCacheTotalChunkSize, "The total size which the chunks can take up from the disk")
+	cacheChunkCleanInterval = flags.StringP("cache-chunk-clean-interval", "", DefCacheChunkCleanInterval, "Interval at which chunk cleanup runs")
+	cacheInfoAge            = flags.StringP("cache-info-age", "", DefCacheInfoAge, "How much time should object info be stored in cache")
+	cacheReadRetries        = flags.IntP("cache-read-retries", "", DefCacheReadRetries, "How many times to retry a read from a cache storage")
+	cacheTotalWorkers       = flags.IntP("cache-workers", "", DefCacheTotalWorkers, "How many workers should run in parallel to download chunks")
+	cacheChunkNoMemory      = flags.BoolP("cache-chunk-no-memory", "", DefCacheChunkNoMemory, "Disable the in-memory cache for storing chunks during streaming")
+	cacheRps                = flags.IntP("cache-rps", "", int(DefCacheRps), "Limits the number of requests per second to the source FS. -1 disables the rate limiter")
+	cacheStoreWrites        = flags.BoolP("cache-writes", "", DefCacheWrites, "Will cache file data on writes through the FS")
 )
 
 // Register with Fs
@@ -223,7 +227,7 @@ type Fs struct {
 
 // NewFs contstructs an Fs from the path, container:path
 func NewFs(name, rpath string) (fs.Fs, error) {
-	remote := fs.ConfigFileGet(name, "remote")
+	remote := config.FileGet(name, "remote")
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point cache remote at itself - check the value of the remote setting")
 	}
@@ -235,10 +239,10 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	}
 	fs.Debugf(name, "wrapped %v:%v at root %v", wrappedFs.Name(), wrappedFs.Root(), rpath)
 
-	plexURL := fs.ConfigFileGet(name, "plex_url")
-	plexToken := fs.ConfigFileGet(name, "plex_token")
+	plexURL := config.FileGet(name, "plex_url")
+	plexToken := config.FileGet(name, "plex_token")
 	var chunkSize fs.SizeSuffix
-	chunkSizeString := fs.ConfigFileGet(name, "chunk_size", DefCacheChunkSize)
+	chunkSizeString := config.FileGet(name, "chunk_size", DefCacheChunkSize)
 	if *cacheChunkSize != DefCacheChunkSize {
 		chunkSizeString = *cacheChunkSize
 	}
@@ -247,7 +251,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		return nil, errors.Wrapf(err, "failed to understand chunk size", chunkSizeString)
 	}
 	var chunkTotalSize fs.SizeSuffix
-	chunkTotalSizeString := fs.ConfigFileGet(name, "chunk_total_size", DefCacheTotalChunkSize)
+	chunkTotalSizeString := config.FileGet(name, "chunk_total_size", DefCacheTotalChunkSize)
 	if *cacheTotalChunkSize != DefCacheTotalChunkSize {
 		chunkTotalSizeString = *cacheTotalChunkSize
 	}
@@ -260,7 +264,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to understand duration %v", chunkCleanIntervalStr)
 	}
-	infoAge := fs.ConfigFileGet(name, "info_age", DefCacheInfoAge)
+	infoAge := config.FileGet(name, "info_age", DefCacheInfoAge)
 	if *cacheInfoAge != DefCacheInfoAge {
 		infoAge = *cacheInfoAge
 	}
@@ -301,10 +305,10 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 				return nil, errors.Wrapf(err, "failed to connect to the Plex API %v", plexURL)
 			}
 		} else {
-			plexUsername := fs.ConfigFileGet(name, "plex_username")
-			plexPassword := fs.ConfigFileGet(name, "plex_password")
+			plexUsername := config.FileGet(name, "plex_username")
+			plexPassword := config.FileGet(name, "plex_password")
 			if plexPassword != "" && plexUsername != "" {
-				decPass, err := fs.Reveal(plexPassword)
+				decPass, err := config.Reveal(plexPassword)
 				if err != nil {
 					decPass = plexPassword
 				}
@@ -319,8 +323,8 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	dbPath := *cacheDbPath
 	chunkPath := *cacheChunkPath
 	// if the dbPath is non default but the chunk path is default, we overwrite the last to follow the same one as dbPath
-	if dbPath != filepath.Join(fs.CacheDir, "cache-backend") &&
-		chunkPath == filepath.Join(fs.CacheDir, "cache-backend") {
+	if dbPath != filepath.Join(config.CacheDir, "cache-backend") &&
+		chunkPath == filepath.Join(config.CacheDir, "cache-backend") {
 		chunkPath = dbPath
 	}
 	if filepath.Ext(dbPath) != "" {
@@ -506,7 +510,7 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	return cachedEntries, nil
 }
 
-func (f *Fs) recurse(dir string, list *fs.ListRHelper) error {
+func (f *Fs) recurse(dir string, list *walk.ListRHelper) error {
 	entries, err := f.List(dir)
 	if err != nil {
 		return err
@@ -558,7 +562,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	}
 
 	// if we're here, we're gonna do a standard recursive traversal and cache everything
-	list := fs.NewListRHelper(callback)
+	list := walk.NewListRHelper(callback)
 	err = f.recurse(dir, list)
 	if err != nil {
 		return err
@@ -895,7 +899,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
+func (f *Fs) Hashes() hash.Set {
 	return f.Fs.Hashes()
 }
 

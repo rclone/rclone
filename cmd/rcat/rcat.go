@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -50,7 +50,7 @@ a lot of data, you're better off caching locally and then
 
 		fdst, dstFileName := cmd.NewFsDstFile(args)
 		cmd.Run(false, false, command, func() error {
-			_, err := fs.Rcat(fdst, dstFileName, os.Stdin, time.Now())
+			_, err := operations.Rcat(fdst, dstFileName, os.Stdin, time.Now())
 			return err
 		})
 	},

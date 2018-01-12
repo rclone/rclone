@@ -28,6 +28,11 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/oauthutil"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
@@ -46,14 +51,14 @@ const (
 )
 
 var (
-	gcsLocation     = fs.StringP("gcs-location", "", "", "Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).")
-	gcsStorageClass = fs.StringP("gcs-storage-class", "", "", "Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).")
+	gcsLocation     = flags.StringP("gcs-location", "", "", "Default location for buckets (us|eu|asia|us-central1|us-east1|us-east4|us-west1|asia-east1|asia-noetheast1|asia-southeast1|australia-southeast1|europe-west1|europe-west2).")
+	gcsStorageClass = flags.StringP("gcs-storage-class", "", "", "Default storage class for buckets (MULTI_REGIONAL|REGIONAL|STANDARD|NEARLINE|COLDLINE|DURABLE_REDUCED_AVAILABILITY).")
 	// Description of how to auth for this app
 	storageConfig = &oauth2.Config{
 		Scopes:       []string{storage.DevstorageFullControlScope},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
 )
@@ -65,7 +70,7 @@ func init() {
 		Description: "Google Cloud Storage (this is not Google Drive)",
 		NewFs:       NewFs,
 		Config: func(name string) {
-			if fs.ConfigFileGet(name, "service_account_file") != "" {
+			if config.FileGet(name, "service_account_file") != "" {
 				return
 			}
 			err := oauthutil.Config("google cloud storage", name, storageConfig)
@@ -74,10 +79,10 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Google Application Client Id - leave blank normally.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Google Application Client Secret - leave blank normally.",
 		}, {
 			Name: "project_number",
@@ -280,7 +285,7 @@ func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
 	}
-	ctxWithSpecialClient := oauthutil.Context(fs.Config.Client())
+	ctxWithSpecialClient := oauthutil.Context(fshttp.NewClient(fs.Config))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
@@ -289,7 +294,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	var oAuthClient *http.Client
 	var err error
 
-	serviceAccountPath := fs.ConfigFileGet(name, "service_account_file")
+	serviceAccountPath := config.FileGet(name, "service_account_file")
 	if serviceAccountPath != "" {
 		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
 		if err != nil {
@@ -311,11 +316,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		name:          name,
 		bucket:        bucket,
 		root:          directory,
-		projectNumber: fs.ConfigFileGet(name, "project_number"),
-		objectACL:     fs.ConfigFileGet(name, "object_acl"),
-		bucketACL:     fs.ConfigFileGet(name, "bucket_acl"),
-		location:      fs.ConfigFileGet(name, "location"),
-		storageClass:  fs.ConfigFileGet(name, "storage_class"),
+		projectNumber: config.FileGet(name, "project_number"),
+		objectACL:     config.FileGet(name, "object_acl"),
+		bucketACL:     config.FileGet(name, "bucket_acl"),
+		location:      config.FileGet(name, "location"),
+		storageClass:  config.FileGet(name, "storage_class"),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
@@ -538,7 +543,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if f.bucket == "" {
 		return fs.ErrorListBucketRequired
 	}
-	list := fs.NewListRHelper(callback)
+	list := walk.NewListRHelper(callback)
 	err = f.list(dir, true, func(remote string, object *storage.Object, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
@@ -669,8 +674,8 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
 }
 
 // ------------------------------------------------------------
@@ -694,9 +699,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	return o.md5sum, nil
 }

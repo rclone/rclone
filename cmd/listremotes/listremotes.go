@@ -6,6 +6,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
 	"github.com/spf13/cobra"
 )
 
@@ -29,7 +30,7 @@ When uses with the -l flag it lists the types too.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
-		remotes := fs.ConfigFileSections()
+		remotes := config.FileSections()
 		sort.Strings(remotes)
 		maxlen := 1
 		for _, remote := range remotes {

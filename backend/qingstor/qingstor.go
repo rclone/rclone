@@ -17,8 +17,12 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
-	"github.com/yunify/qingstor-sdk-go/config"
+	qsConfig "github.com/yunify/qingstor-sdk-go/config"
 	qsErr "github.com/yunify/qingstor-sdk-go/request/errors"
 	qs "github.com/yunify/qingstor-sdk-go/service"
 )
@@ -162,11 +166,11 @@ func qsParseEndpoint(endpoint string) (protocol, host, port string, err error) {
 
 // qsConnection makes a connection to qingstor
 func qsServiceConnection(name string) (*qs.Service, error) {
-	accessKeyID := fs.ConfigFileGet(name, "access_key_id")
-	secretAccessKey := fs.ConfigFileGet(name, "secret_access_key")
+	accessKeyID := config.FileGet(name, "access_key_id")
+	secretAccessKey := config.FileGet(name, "secret_access_key")
 
 	switch {
-	case fs.ConfigFileGetBool(name, "env_auth", false):
+	case config.FileGetBool(name, "env_auth", false):
 		// No need for empty checks if "env_auth" is true
 	case accessKeyID == "" && secretAccessKey == "":
 		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
@@ -180,7 +184,7 @@ func qsServiceConnection(name string) (*qs.Service, error) {
 	host := "qingstor.com"
 	port := 443
 
-	endpoint := fs.ConfigFileGet(name, "endpoint", "")
+	endpoint := config.FileGet(name, "endpoint", "")
 	if endpoint != "" {
 		_protocol, _host, _port, err := qsParseEndpoint(endpoint)
 
@@ -201,19 +205,19 @@ func qsServiceConnection(name string) (*qs.Service, error) {
 	}
 
 	connectionRetries := 3
-	retries := fs.ConfigFileGet(name, "connection_retries", "")
+	retries := config.FileGet(name, "connection_retries", "")
 	if retries != "" {
 		connectionRetries, _ = strconv.Atoi(retries)
 	}
 
-	cf, err := config.NewDefault()
+	cf, err := qsConfig.NewDefault()
 	cf.AccessKeyID = accessKeyID
 	cf.SecretAccessKey = secretAccessKey
 	cf.Protocol = protocol
 	cf.Host = host
 	cf.Port = port
 	cf.ConnectionRetries = connectionRetries
-	cf.Connection = fs.Config.Client()
+	cf.Connection = fshttp.NewClient(fs.Config)
 
 	svc, _ := qs.Init(cf)
 
@@ -231,7 +235,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 
-	zone := fs.ConfigFileGet(name, "zone")
+	zone := config.FileGet(name, "zone")
 	if zone == "" {
 		zone = "pek3a"
 	}
@@ -302,9 +306,9 @@ func (f *Fs) Precision() time.Duration {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
-	//return fs.HashSet(fs.HashNone)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
+	//return hash.HashSet(hash.HashNone)
 }
 
 // Features returns the optional features of this Fs
@@ -591,7 +595,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if f.bucket == "" {
 		return fs.ErrorListBucketRequired
 	}
-	list := fs.NewListRHelper(callback)
+	list := walk.NewListRHelper(callback)
 	err = f.list(dir, true, func(remote string, object *qs.KeyType, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
@@ -925,9 +929,9 @@ var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	etag := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum

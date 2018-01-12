@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/list"
 	"github.com/pkg/errors"
 )
 
@@ -179,7 +180,7 @@ func (d *Dir) _readDir() error {
 		}
 		fs.Debugf(d.path, "Re-reading directory (%v old)", age)
 	}
-	entries, err := fs.ListDirSorted(d.f, false, d.path)
+	entries, err := list.DirSorted(d.f, false, d.path)
 	if err == fs.ErrorDirNotFound {
 		// We treat directory not found as empty because we
 		// create directories on the fly

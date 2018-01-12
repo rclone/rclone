@@ -6,6 +6,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/object"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
@@ -55,7 +56,7 @@ func Touch(fsrc fs.Fs, srcFileName string) error {
 	if err != nil {
 		if !notCreateNewFile {
 			var buffer []byte
-			src := fs.NewStaticObjectInfo(srcFileName, timeAtr, int64(len(buffer)), true, nil, fsrc)
+			src := object.NewStaticObjectInfo(srcFileName, timeAtr, int64(len(buffer)), true, nil, fsrc)
 			_, err = fsrc.Put(bytes.NewBuffer(buffer), src)
 			if err != nil {
 				return err

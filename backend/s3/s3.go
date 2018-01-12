@@ -37,6 +37,11 @@ import (
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/rest"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
@@ -233,8 +238,8 @@ const (
 // Globals
 var (
 	// Flags
-	s3ACL          = fs.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
-	s3StorageClass = fs.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
+	s3ACL          = flags.StringP("s3-acl", "", "", "Canned ACL used when creating buckets and/or storing objects in S3")
+	s3StorageClass = flags.StringP("s3-storage-class", "", "", "Storage class to use when uploading S3 objects (STANDARD|REDUCED_REDUNDANCY|STANDARD_IA)")
 )
 
 // Fs represents a remote s3 server
@@ -316,9 +321,9 @@ func s3ParsePath(path string) (bucket, directory string, err error) {
 func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	// Make the auth
 	v := credentials.Value{
-		AccessKeyID:     fs.ConfigFileGet(name, "access_key_id"),
-		SecretAccessKey: fs.ConfigFileGet(name, "secret_access_key"),
-		SessionToken:    fs.ConfigFileGet(name, "session_token"),
+		AccessKeyID:     config.FileGet(name, "access_key_id"),
+		SecretAccessKey: config.FileGet(name, "secret_access_key"),
+		SessionToken:    config.FileGet(name, "session_token"),
 	}
 
 	lowTimeoutClient := &http.Client{Timeout: 1 * time.Second} // low timeout to ec2 metadata service
@@ -348,7 +353,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 	cred := credentials.NewChainCredentials(providers)
 
 	switch {
-	case fs.ConfigFileGetBool(name, "env_auth", false):
+	case config.FileGetBool(name, "env_auth", false):
 		// No need for empty checks if "env_auth" is true
 	case v.AccessKeyID == "" && v.SecretAccessKey == "":
 		// if no access key/secret and iam is explicitly disabled then fall back to anon interaction
@@ -359,8 +364,8 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		return nil, nil, errors.New("secret_access_key not found")
 	}
 
-	endpoint := fs.ConfigFileGet(name, "endpoint")
-	region := fs.ConfigFileGet(name, "region")
+	endpoint := config.FileGet(name, "endpoint")
+	region := config.FileGet(name, "region")
 	if region == "" && endpoint == "" {
 		endpoint = "https://s3.amazonaws.com/"
 	}
@@ -372,7 +377,7 @@ func s3Connection(name string) (*s3.S3, *session.Session, error) {
 		WithMaxRetries(maxRetries).
 		WithCredentials(cred).
 		WithEndpoint(endpoint).
-		WithHTTPClient(fs.Config.Client()).
+		WithHTTPClient(fshttp.NewClient(fs.Config)).
 		WithS3ForcePathStyle(true)
 	// awsConfig.WithLogLevel(aws.LogDebugWithSigning)
 	ses := session.New()
@@ -408,11 +413,11 @@ func NewFs(name, root string) (fs.Fs, error) {
 		c:                  c,
 		bucket:             bucket,
 		ses:                ses,
-		acl:                fs.ConfigFileGet(name, "acl"),
+		acl:                config.FileGet(name, "acl"),
 		root:               directory,
-		locationConstraint: fs.ConfigFileGet(name, "location_constraint"),
-		sse:                fs.ConfigFileGet(name, "server_side_encryption"),
-		storageClass:       fs.ConfigFileGet(name, "storage_class"),
+		locationConstraint: config.FileGet(name, "location_constraint"),
+		sse:                config.FileGet(name, "server_side_encryption"),
+		storageClass:       config.FileGet(name, "storage_class"),
 	}
 	f.features = (&fs.Features{
 		ReadMimeType:  true,
@@ -657,7 +662,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if f.bucket == "" {
 		return fs.ErrorListBucketRequired
 	}
-	list := fs.NewListRHelper(callback)
+	list := walk.NewListRHelper(callback)
 	err = f.list(dir, true, func(remote string, object *s3.Object, isDirectory bool) error {
 		entry, err := f.itemToDirEntry(remote, object, isDirectory)
 		if err != nil {
@@ -804,8 +809,8 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
 }
 
 // ------------------------------------------------------------
@@ -831,9 +836,9 @@ func (o *Object) Remote() string {
 var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	hash := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
@@ -1027,7 +1032,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	if size > uploader.PartSize {
-		hash, err := src.Hash(fs.HashMD5)
+		hash, err := src.Hash(hash.HashMD5)
 
 		if err == nil && matchMd5.MatchString(hash) {
 			hashBytes, err := hex.DecodeString(hash)

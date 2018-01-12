@@ -16,6 +16,9 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"github.com/xanzy/ssh-agent"
@@ -94,7 +97,7 @@ type Fs struct {
 	port         string
 	url          string
 	mkdirLock    *stringLock
-	cachedHashes *fs.HashSet
+	cachedHashes *hash.Set
 	poolMu       sync.Mutex
 	pool         []*conn
 	connLimit    *rate.Limiter // for limiting number of connections per second
@@ -134,13 +137,13 @@ func readCurrentUser() (userName string) {
 // Dial starts a client connection to the given SSH server. It is a
 // convenience function that connects to the given network address,
 // initiates the SSH handshake, and then sets up a Client.
-func Dial(network, addr string, config *ssh.ClientConfig) (*ssh.Client, error) {
-	dialer := fs.Config.NewDialer()
+func Dial(network, addr string, sshConfig *ssh.ClientConfig) (*ssh.Client, error) {
+	dialer := fshttp.NewDialer(fs.Config)
 	conn, err := dialer.Dial(network, addr)
 	if err != nil {
 		return nil, err
 	}
-	c, chans, reqs, err := ssh.NewClientConn(conn, addr, config)
+	c, chans, reqs, err := ssh.NewClientConn(conn, addr, sshConfig)
 	if err != nil {
 		return nil, err
 	}
@@ -263,19 +266,19 @@ func (f *Fs) putSftpConnection(pc **conn, err error) {
 // NewFs creates a new Fs object from the name and root. It connects to
 // the host specified in the config file.
 func NewFs(name, root string) (fs.Fs, error) {
-	user := fs.ConfigFileGet(name, "user")
-	host := fs.ConfigFileGet(name, "host")
-	port := fs.ConfigFileGet(name, "port")
-	pass := fs.ConfigFileGet(name, "pass")
-	keyFile := fs.ConfigFileGet(name, "key_file")
-	insecureCipher := fs.ConfigFileGetBool(name, "use_insecure_cipher")
+	user := config.FileGet(name, "user")
+	host := config.FileGet(name, "host")
+	port := config.FileGet(name, "port")
+	pass := config.FileGet(name, "pass")
+	keyFile := config.FileGet(name, "key_file")
+	insecureCipher := config.FileGetBool(name, "use_insecure_cipher")
 	if user == "" {
 		user = currentUser
 	}
 	if port == "" {
 		port = "22"
 	}
-	config := &ssh.ClientConfig{
+	sshConfig := &ssh.ClientConfig{
 		User:            user,
 		Auth:            []ssh.AuthMethod{},
 		HostKeyCallback: ssh.InsecureIgnoreHostKey(),
@@ -283,8 +286,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	if insecureCipher {
-		config.Config.SetDefaults()
-		config.Config.Ciphers = append(config.Config.Ciphers, "aes128-cbc")
+		sshConfig.Config.SetDefaults()
+		sshConfig.Config.Ciphers = append(sshConfig.Config.Ciphers, "aes128-cbc")
 	}
 
 	// Add ssh agent-auth if no password or file specified
@@ -297,7 +300,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't read ssh agent signers")
 		}
-		config.Auth = append(config.Auth, ssh.PublicKeys(signers...))
+		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signers...))
 	}
 
 	// Load key file if specified
@@ -310,22 +313,22 @@ func NewFs(name, root string) (fs.Fs, error) {
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to parse private key file")
 		}
-		config.Auth = append(config.Auth, ssh.PublicKeys(signer))
+		sshConfig.Auth = append(sshConfig.Auth, ssh.PublicKeys(signer))
 	}
 
 	// Auth from password if specified
 	if pass != "" {
-		clearpass, err := fs.Reveal(pass)
+		clearpass, err := config.Reveal(pass)
 		if err != nil {
 			return nil, err
 		}
-		config.Auth = append(config.Auth, ssh.Password(clearpass))
+		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
 	}
 
 	f := &Fs{
 		name:      name,
 		root:      root,
-		config:    config,
+		config:    sshConfig,
 		host:      host,
 		port:      port,
 		url:       "sftp://" + user + "@" + host + ":" + port + "/" + root,
@@ -631,25 +634,25 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 }
 
 // Hashes returns the supported hash types of the filesystem
-func (f *Fs) Hashes() fs.HashSet {
+func (f *Fs) Hashes() hash.Set {
 	if f.cachedHashes != nil {
 		return *f.cachedHashes
 	}
 
-	hashcheckDisabled := fs.ConfigFileGetBool(f.name, "disable_hashcheck")
+	hashcheckDisabled := config.FileGetBool(f.name, "disable_hashcheck")
 	if hashcheckDisabled {
-		return fs.HashSet(fs.HashNone)
+		return hash.Set(hash.HashNone)
 	}
 
 	c, err := f.getSftpConnection()
 	if err != nil {
 		fs.Errorf(f, "Couldn't get SSH connection to figure out Hashes: %v", err)
-		return fs.HashSet(fs.HashNone)
+		return hash.Set(hash.HashNone)
 	}
 	defer f.putSftpConnection(&c, err)
 	session, err := c.sshClient.NewSession()
 	if err != nil {
-		return fs.HashSet(fs.HashNone)
+		return hash.Set(hash.HashNone)
 	}
 	sha1Output, _ := session.Output("echo 'abc' | sha1sum")
 	expectedSha1 := "03cfd743661f07975fa2f1220c5194cbaff48451"
@@ -657,7 +660,7 @@ func (f *Fs) Hashes() fs.HashSet {
 
 	session, err = c.sshClient.NewSession()
 	if err != nil {
-		return fs.HashSet(fs.HashNone)
+		return hash.Set(hash.HashNone)
 	}
 	md5Output, _ := session.Output("echo 'abc' | md5sum")
 	expectedMd5 := "0bee89b07a248e27c83fc3d5951213c1"
@@ -666,15 +669,15 @@ func (f *Fs) Hashes() fs.HashSet {
 	sha1Works := parseHash(sha1Output) == expectedSha1
 	md5Works := parseHash(md5Output) == expectedMd5
 
-	set := fs.NewHashSet()
+	set := hash.NewHashSet()
 	if !sha1Works && !md5Works {
-		set.Add(fs.HashNone)
+		set.Add(hash.HashNone)
 	}
 	if sha1Works {
-		set.Add(fs.HashSHA1)
+		set.Add(hash.HashSHA1)
 	}
 	if md5Works {
-		set.Add(fs.HashMD5)
+		set.Add(hash.HashMD5)
 	}
 
 	_ = session.Close()
@@ -702,10 +705,10 @@ func (o *Object) Remote() string {
 
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
-func (o *Object) Hash(r fs.HashType) (string, error) {
-	if r == fs.HashMD5 && o.md5sum != nil {
+func (o *Object) Hash(r hash.Type) (string, error) {
+	if r == hash.HashMD5 && o.md5sum != nil {
 		return *o.md5sum, nil
-	} else if r == fs.HashSHA1 && o.sha1sum != nil {
+	} else if r == hash.HashSHA1 && o.sha1sum != nil {
 		return *o.sha1sum, nil
 	}
 
@@ -717,29 +720,29 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
 		o.fs.cachedHashes = nil // Something has changed on the remote system
-		return "", fs.ErrHashUnsupported
+		return "", hash.ErrHashUnsupported
 	}
 
-	err = fs.ErrHashUnsupported
+	err = hash.ErrHashUnsupported
 	var outputBytes []byte
 	escapedPath := shellEscape(o.path())
-	if r == fs.HashMD5 {
+	if r == hash.HashMD5 {
 		outputBytes, err = session.Output("md5sum " + escapedPath)
-	} else if r == fs.HashSHA1 {
+	} else if r == hash.HashSHA1 {
 		outputBytes, err = session.Output("sha1sum " + escapedPath)
 	}
 
 	if err != nil {
 		o.fs.cachedHashes = nil // Something has changed on the remote system
 		_ = session.Close()
-		return "", fs.ErrHashUnsupported
+		return "", hash.ErrHashUnsupported
 	}
 
 	_ = session.Close()
 	str := parseHash(outputBytes)
-	if r == fs.HashMD5 {
+	if r == hash.HashMD5 {
 		o.md5sum = &str
-	} else if r == fs.HashSHA1 {
+	} else if r == hash.HashSHA1 {
 		o.sha1sum = &str
 	}
 	return str, nil
@@ -812,7 +815,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	if err != nil {
 		return errors.Wrap(err, "SetModTime")
 	}
-	if fs.ConfigFileGetBool(o.fs.name, "set_modtime", true) {
+	if config.FileGetBool(o.fs.name, "set_modtime", true) {
 		err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
 		o.fs.putSftpConnection(&c, err)
 		if err != nil {

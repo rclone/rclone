@@ -19,6 +19,12 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/object"
+	"github.com/ncw/rclone/fs/operations"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/fstest"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
@@ -84,7 +90,7 @@ func TestInit(t *testing.T) {
 
 	// Set extra config if supplied
 	for _, item := range ExtraConfig {
-		fs.ConfigFileSet(item.Name, item.Key, item.Value)
+		config.FileSet(item.Name, item.Key, item.Value)
 	}
 	if *fstest.RemoteName != "" {
 		RemoteName = *fstest.RemoteName
@@ -99,7 +105,10 @@ func TestInit(t *testing.T) {
 	newFs(t)
 
 	skipIfNotOk(t)
-	fstest.TestMkdir(t, remote)
+
+	err = remote.Mkdir("")
+	require.NoError(t, err)
+	fstest.CheckListing(t, remote, []fstest.Item{})
 }
 
 func skipIfNotOk(t *testing.T) {
@@ -156,7 +165,8 @@ func TestFsRoot(t *testing.T) {
 // TestFsRmdirEmpty tests deleting an empty directory
 func TestFsRmdirEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.TestRmdir(t, remote)
+	err := remote.Rmdir("")
+	require.NoError(t, err)
 }
 
 // TestFsRmdirNotFound tests deleting a non existent directory
@@ -175,23 +185,27 @@ func TestFsMkdir(t *testing.T) {
 	// (eg azure blob)
 	newFs(t)
 
-	fstest.TestMkdir(t, remote)
-	fstest.TestMkdir(t, remote)
+	err := remote.Mkdir("")
+	require.NoError(t, err)
+	fstest.CheckListing(t, remote, []fstest.Item{})
+
+	err = remote.Mkdir("")
+	require.NoError(t, err)
 }
 
 // TestFsMkdirRmdirSubdir tests making and removing a sub directory
 func TestFsMkdirRmdirSubdir(t *testing.T) {
 	skipIfNotOk(t)
 	dir := "dir/subdir"
-	err := fs.Mkdir(remote, dir)
+	err := operations.Mkdir(remote, dir)
 	require.NoError(t, err)
 	fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir", "dir/subdir"}, fs.Config.ModifyWindow)
 
-	err = fs.Rmdir(remote, dir)
+	err = operations.Rmdir(remote, dir)
 	require.NoError(t, err)
 	fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{"dir"}, fs.Config.ModifyWindow)
 
-	err = fs.Rmdir(remote, "dir")
+	err = operations.Rmdir(remote, "dir")
 	require.NoError(t, err)
 	fstest.CheckListingWithPrecision(t, remote, []fstest.Item{}, []string{}, fs.Config.ModifyWindow)
 }
@@ -236,7 +250,7 @@ func objsToNames(objs []fs.Object) []string {
 // TestFsListDirEmpty tests listing the directories from an empty directory
 func TestFsListDirEmpty(t *testing.T) {
 	skipIfNotOk(t)
-	objs, dirs, err := fs.WalkGetAll(remote, "", true, 1)
+	objs, dirs, err := walk.GetAll(remote, "", true, 1)
 	require.NoError(t, err)
 	assert.Equal(t, []string{}, objsToNames(objs))
 	assert.Equal(t, []string{}, dirsToNames(dirs))
@@ -282,15 +296,15 @@ func testPut(t *testing.T, file *fstest.Item) string {
 again:
 	contents := fstest.RandomString(100)
 	buf := bytes.NewBufferString(contents)
-	hash := fs.NewMultiHasher()
+	hash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
 	file.Size = int64(buf.Len())
-	obji := fs.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 	obj, err := remote.Put(in, obji)
 	if err != nil {
 		// Retry if err returned a retry error
-		if fs.IsRetryError(err) && tries < maxTries {
+		if fserrors.IsRetryError(err) && tries < maxTries {
 			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
 			time.Sleep(2 * time.Second)
 
@@ -334,7 +348,7 @@ func TestFsPutError(t *testing.T) {
 	er := &errorReader{errors.New("potato")}
 	in := io.MultiReader(buf, er)
 
-	obji := fs.NewStaticObjectInfo(file2.Path, file2.ModTime, 100, true, nil, nil)
+	obji := object.NewStaticObjectInfo(file2.Path, file2.ModTime, 100, true, nil, nil)
 	_, err := remote.Put(in, obji)
 	// assert.Nil(t, obj) - FIXME some remotes return the object even on nil
 	assert.NotNil(t, err)
@@ -364,9 +378,9 @@ func TestFsListDirFile2(t *testing.T) {
 	list := func(dir string, expectedDirNames, expectedObjNames []string) {
 		var objNames, dirNames []string
 		for i := 1; i <= *fstest.ListRetries; i++ {
-			objs, dirs, err := fs.WalkGetAll(remote, dir, true, 1)
+			objs, dirs, err := walk.GetAll(remote, dir, true, 1)
 			if errors.Cause(err) == fs.ErrorDirNotFound {
-				objs, dirs, err = fs.WalkGetAll(remote, winPath(dir), true, 1)
+				objs, dirs, err = walk.GetAll(remote, winPath(dir), true, 1)
 			}
 			require.NoError(t, err)
 			objNames = objsToNames(objs)
@@ -413,7 +427,7 @@ func TestFsListDirRoot(t *testing.T) {
 	skipIfNotOk(t)
 	rootRemote, err := fs.NewFs(RemoteName)
 	require.NoError(t, err)
-	_, dirs, err := fs.WalkGetAll(rootRemote, "", true, 1)
+	_, dirs, err := walk.GetAll(rootRemote, "", true, 1)
 	require.NoError(t, err)
 	assert.Contains(t, dirsToNames(dirs), subRemoteLeaf, "Remote leaf not found")
 }
@@ -434,7 +448,7 @@ func TestFsListSubdir(t *testing.T) {
 	for i := 0; i < 2; i++ {
 		dir, _ := path.Split(fileName)
 		dir = dir[:len(dir)-1]
-		objs, dirs, err = fs.WalkGetAll(remote, dir, true, -1)
+		objs, dirs, err = walk.GetAll(remote, dir, true, -1)
 		if err != fs.ErrorDirNotFound {
 			break
 		}
@@ -455,7 +469,7 @@ func TestFsListRSubdir(t *testing.T) {
 // TestFsListLevel2 tests List works for 2 levels
 func TestFsListLevel2(t *testing.T) {
 	skipIfNotOk(t)
-	objs, dirs, err := fs.WalkGetAll(remote, "", true, 2)
+	objs, dirs, err := walk.GetAll(remote, "", true, 2)
 	if err == fs.ErrorLevelNotSupported {
 		return
 	}
@@ -676,7 +690,7 @@ func TestFsDirChangeNotify(t *testing.T) {
 		t.Skip("FS has no DirChangeNotify interface")
 	}
 
-	err := fs.Mkdir(remote, "dir")
+	err := operations.Mkdir(remote, "dir")
 	require.NoError(t, err)
 
 	changes := []string{}
@@ -685,7 +699,7 @@ func TestFsDirChangeNotify(t *testing.T) {
 	}, time.Second)
 	defer func() { close(quitChannel) }()
 
-	err = fs.Mkdir(remote, "dir/subdir")
+	err = operations.Mkdir(remote, "dir/subdir")
 	require.NoError(t, err)
 
 	time.Sleep(2 * time.Second)
@@ -817,12 +831,12 @@ func TestObjectUpdate(t *testing.T) {
 	skipIfNotOk(t)
 	contents := fstest.RandomString(200)
 	buf := bytes.NewBufferString(contents)
-	hash := fs.NewMultiHasher()
+	hash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
 	file1.Size = int64(buf.Len())
 	obj := findObject(t, file1.Path)
-	obji := fs.NewStaticObjectInfo(file1.Path, file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
+	obji := object.NewStaticObjectInfo(file1.Path, file1.ModTime, int64(len(contents)), true, nil, obj.Fs())
 	err := obj.Update(in, obji)
 	require.NoError(t, err)
 	file1.Hashes = hash.Sums()
@@ -896,15 +910,15 @@ again:
 	contentSize := 100
 	contents := fstest.RandomString(contentSize)
 	buf := bytes.NewBufferString(contents)
-	hash := fs.NewMultiHasher()
+	hash := hash.NewMultiHasher()
 	in := io.TeeReader(buf, hash)
 
 	file.Size = -1
-	obji := fs.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
+	obji := object.NewStaticObjectInfo(file.Path, file.ModTime, file.Size, true, nil, nil)
 	obj, err := remote.Features().PutStream(in, obji)
 	if err != nil {
 		// Retry if err returned a retry error
-		if fs.IsRetryError(err) && tries < maxTries {
+		if fserrors.IsRetryError(err) && tries < maxTries {
 			t.Logf("Put error: %v - low level retry %d/%d", err, tries, maxTries)
 			time.Sleep(2 * time.Second)
 
@@ -924,8 +938,12 @@ again:
 // TestObjectPurge tests Purge
 func TestObjectPurge(t *testing.T) {
 	skipIfNotOk(t)
-	fstest.TestPurge(t, remote)
-	err := fs.Purge(remote)
+
+	err := operations.Purge(remote)
+	require.NoError(t, err)
+	fstest.CheckListing(t, remote, []fstest.Item{})
+
+	err = operations.Purge(remote)
 	assert.Error(t, err, "Expecting error after on second purge")
 }
 

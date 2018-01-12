@@ -14,6 +14,13 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/fserrors"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/operations"
+	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/swift"
 	"github.com/pkg/errors"
 )
@@ -118,7 +125,7 @@ func init() {
 		},
 		},
 	})
-	fs.VarP(&chunkSize, "swift-chunk-size", "", "Above this size files will be chunked into a _segments container.")
+	flags.VarP(&chunkSize, "swift-chunk-size", "", "Above this size files will be chunked into a _segments container.")
 }
 
 // Fs represents a remote swift server
@@ -191,24 +198,24 @@ func parsePath(path string) (container, directory string, err error) {
 func swiftConnection(name string) (*swift.Connection, error) {
 	c := &swift.Connection{
 		// Keep these in the same order as the Config for ease of checking
-		UserName:       fs.ConfigFileGet(name, "user"),
-		ApiKey:         fs.ConfigFileGet(name, "key"),
-		AuthUrl:        fs.ConfigFileGet(name, "auth"),
-		UserId:         fs.ConfigFileGet(name, "user_id"),
-		Domain:         fs.ConfigFileGet(name, "domain"),
-		Tenant:         fs.ConfigFileGet(name, "tenant"),
-		TenantId:       fs.ConfigFileGet(name, "tenant_id"),
-		TenantDomain:   fs.ConfigFileGet(name, "tenant_domain"),
-		Region:         fs.ConfigFileGet(name, "region"),
-		StorageUrl:     fs.ConfigFileGet(name, "storage_url"),
-		AuthToken:      fs.ConfigFileGet(name, "auth_token"),
-		AuthVersion:    fs.ConfigFileGetInt(name, "auth_version", 0),
-		EndpointType:   swift.EndpointType(fs.ConfigFileGet(name, "endpoint_type", "public")),
+		UserName:       config.FileGet(name, "user"),
+		ApiKey:         config.FileGet(name, "key"),
+		AuthUrl:        config.FileGet(name, "auth"),
+		UserId:         config.FileGet(name, "user_id"),
+		Domain:         config.FileGet(name, "domain"),
+		Tenant:         config.FileGet(name, "tenant"),
+		TenantId:       config.FileGet(name, "tenant_id"),
+		TenantDomain:   config.FileGet(name, "tenant_domain"),
+		Region:         config.FileGet(name, "region"),
+		StorageUrl:     config.FileGet(name, "storage_url"),
+		AuthToken:      config.FileGet(name, "auth_token"),
+		AuthVersion:    config.FileGetInt(name, "auth_version", 0),
+		EndpointType:   swift.EndpointType(config.FileGet(name, "endpoint_type", "public")),
 		ConnectTimeout: 10 * fs.Config.ConnectTimeout, // Use the timeouts in the transport
 		Timeout:        10 * fs.Config.Timeout,        // Use the timeouts in the transport
-		Transport:      fs.Config.Transport(),
+		Transport:      fshttp.NewTransport(fs.Config),
 	}
-	if fs.ConfigFileGetBool(name, "env_auth", false) {
+	if config.FileGetBool(name, "env_auth", false) {
 		err := c.ApplyEnvironment()
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to read environment variables")
@@ -466,7 +473,7 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if f.container == "" {
 		return errors.New("container needed for recursive list")
 	}
-	list := fs.NewListRHelper(callback)
+	list := walk.NewListRHelper(callback)
 	err = f.list(dir, true, func(entry fs.DirEntry) error {
 		return list.Add(entry)
 	})
@@ -549,7 +556,7 @@ func (f *Fs) Purge() error {
 	toBeDeleted := make(chan fs.Object, fs.Config.Transfers)
 	delErr := make(chan error, 1)
 	go func() {
-		delErr <- fs.DeleteFiles(toBeDeleted)
+		delErr <- operations.DeleteFiles(toBeDeleted)
 	}()
 	err := f.list("", true, func(entry fs.DirEntry) error {
 		if o, ok := entry.(*Object); ok {
@@ -596,8 +603,8 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
 }
 
 // ------------------------------------------------------------
@@ -621,9 +628,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	isDynamicLargeObject, err := o.isDynamicLargeObject()
 	if err != nil {
@@ -855,7 +862,7 @@ func (o *Object) updateChunks(in0 io.Reader, headers swift.Headers, size int64, 
 // The new object may have been created if an error is returned
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
 	if o.fs.container == "" {
-		return fs.FatalError(errors.New("container name needed in remote"))
+		return fserrors.FatalError(errors.New("container name needed in remote"))
 	}
 	err := o.fs.Mkdir("")
 	if err != nil {

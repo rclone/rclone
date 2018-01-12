@@ -15,9 +15,11 @@ import (
 
 	yandex "github.com/ncw/rclone/backend/yandex/api"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/fshttp"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/oauthutil"
-	"github.com/ncw/rclone/oauthutil"
-	yandex "github.com/ncw/rclone/yandex/api"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2"
 )
@@ -37,7 +39,7 @@ var (
 			TokenURL: "https://oauth.yandex.com/token",     //same as https://oauth.yandex.ru/token
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: fs.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 )
@@ -55,10 +57,10 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: fs.ConfigClientID,
+			Name: config.ConfigClientID,
 			Help: "Yandex Client Id - leave blank normally.",
 		}, {
-			Name: fs.ConfigClientSecret,
+			Name: config.ConfigClientSecret,
 			Help: "Yandex Client Secret - leave blank normally.",
 		}},
 	})
@@ -109,7 +111,7 @@ func (f *Fs) Features() *fs.Features {
 // read access token from ConfigFile string
 func getAccessToken(name string) (*oauth2.Token, error) {
 	// Read the token from the config file
-	tokenConfig := fs.ConfigFileGet(name, "token")
+	tokenConfig := config.FileGet(name, "token")
 	//Get access token from config string
 	decoder := json.NewDecoder(strings.NewReader(tokenConfig))
 	var result *oauth2.Token
@@ -129,7 +131,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	//create new client
-	yandexDisk := yandex.NewClient(token.AccessToken, fs.Config.Client())
+	yandexDisk := yandex.NewClient(token.AccessToken, fshttp.NewClient(fs.Config))
 
 	f := &Fs{
 		name: name,
@@ -487,8 +489,8 @@ func (f *Fs) CleanUp() error {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.HashSet(fs.HashMD5)
+func (f *Fs) Hashes() hash.Set {
+	return hash.Set(hash.HashMD5)
 }
 
 // ------------------------------------------------------------
@@ -512,9 +514,9 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
-func (o *Object) Hash(t fs.HashType) (string, error) {
-	if t != fs.HashMD5 {
-		return "", fs.ErrHashUnsupported
+func (o *Object) Hash(t hash.Type) (string, error) {
+	if t != hash.HashMD5 {
+		return "", hash.ErrHashUnsupported
 	}
 	return o.md5sum, nil
 }
@@ -578,7 +580,7 @@ func (o *Object) remotePath() string {
 //
 // The new object may have been created if an error is returned
 func (o *Object) Update(in0 io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	in := fs.NewCountingReader(in0)
+	in := readers.NewCountingReader(in0)
 	modTime := src.ModTime()
 
 	remote := o.remotePath()

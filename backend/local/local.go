@@ -16,14 +16,17 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 	"google.golang.org/appengine/log"
 )
 
 var (
-	followSymlinks = fs.BoolP("copy-links", "L", false, "Follow symlinks and copy the pointed to item.")
-	skipSymlinks   = fs.BoolP("skip-links", "", false, "Don't warn about skipped symlinks.")
-	noUTFNorm      = fs.BoolP("local-no-unicode-normalization", "", false, "Don't apply unicode normalization to paths and filenames")
+	followSymlinks = flags.BoolP("copy-links", "L", false, "Follow symlinks and copy the pointed to item.")
+	skipSymlinks   = flags.BoolP("skip-links", "", false, "Don't warn about skipped symlinks.")
+	noUTFNorm      = flags.BoolP("local-no-unicode-normalization", "", false, "Don't apply unicode normalization to paths and filenames")
 )
 
 // Constants
@@ -72,7 +75,7 @@ type Object struct {
 	size    int64  // file metadata - always present
 	mode    os.FileMode
 	modTime time.Time
-	hashes  map[fs.HashType]string // Hashes
+	hashes  map[hash.Type]string // Hashes
 }
 
 // ------------------------------------------------------------
@@ -85,7 +88,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 		log.Errorf(nil, "The --local-no-unicode-normalization flag is deprecated and will be removed")
 	}
 
-	nounc := fs.ConfigFileGet(name, "nounc")
+	nounc := config.FileGet(name, "nounc")
 	f := &Fs{
 		name:     name,
 		warned:   make(map[string]struct{}),
@@ -532,8 +535,8 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 }
 
 // Hashes returns the supported hash sets.
-func (f *Fs) Hashes() fs.HashSet {
-	return fs.SupportedHashes
+func (f *Fs) Hashes() hash.Set {
+	return hash.SupportedHashes
 }
 
 // ------------------------------------------------------------
@@ -557,7 +560,7 @@ func (o *Object) Remote() string {
 }
 
 // Hash returns the requested hash of a file as a lowercase hex string
-func (o *Object) Hash(r fs.HashType) (string, error) {
+func (o *Object) Hash(r hash.Type) (string, error) {
 	// Check that the underlying file hasn't changed
 	oldtime := o.modTime
 	oldsize := o.size
@@ -571,12 +574,12 @@ func (o *Object) Hash(r fs.HashType) (string, error) {
 	}
 
 	if o.hashes == nil {
-		o.hashes = make(map[fs.HashType]string)
+		o.hashes = make(map[hash.Type]string)
 		in, err := os.Open(o.path)
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
-		o.hashes, err = fs.HashStream(in)
+		o.hashes, err = hash.Stream(in)
 		closeErr := in.Close()
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to read")
@@ -641,9 +644,9 @@ func (o *Object) Storable() bool {
 // localOpenFile wraps an io.ReadCloser and updates the md5sum of the
 // object that is read
 type localOpenFile struct {
-	o    *Object         // object that is open
-	in   io.ReadCloser   // handle we are wrapping
-	hash *fs.MultiHasher // currently accumulating hashes
+	o    *Object           // object that is open
+	in   io.ReadCloser     // handle we are wrapping
+	hash *hash.MultiHasher // currently accumulating hashes
 }
 
 // Read bytes from the object - see io.Reader
@@ -670,7 +673,7 @@ func (file *localOpenFile) Close() (err error) {
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset int64
-	hashes := fs.SupportedHashes
+	hashes := hash.SupportedHashes
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
@@ -694,7 +697,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		// don't attempt to make checksums
 		return fd, err
 	}
-	hash, err := fs.NewMultiHasherTypes(hashes)
+	hash, err := hash.NewMultiHasherTypes(hashes)
 	if err != nil {
 		return nil, err
 	}
@@ -715,7 +718,7 @@ func (o *Object) mkdirAll() error {
 
 // Update the object from in with modTime and size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	hashes := fs.SupportedHashes
+	hashes := hash.SupportedHashes
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.HashesOption:
@@ -734,7 +737,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	// Calculate the hash of the object we are reading as we go along
-	hash, err := fs.NewMultiHasherTypes(hashes)
+	hash, err := hash.NewMultiHasherTypes(hashes)
 	if err != nil {
 		return err
 	}

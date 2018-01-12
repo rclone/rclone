@@ -2,7 +2,7 @@ package rmdir
 
 import (
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/operations"
 	"github.com/spf13/cobra"
 )
 
@@ -32,7 +32,7 @@ empty directories in.
 		cmd.CheckArgs(1, 1, command, args)
 		fdst := cmd.NewFsDst(args)
 		cmd.Run(true, false, command, func() error {
-			return fs.Rmdirs(fdst, "", leaveRoot)
+			return operations.Rmdirs(fdst, "", leaveRoot)
 		})
 	},
 }

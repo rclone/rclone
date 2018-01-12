@@ -14,6 +14,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ncw/rclone/fs/driveletter"
+	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
 
@@ -29,7 +31,7 @@ const (
 // Globals
 var (
 	// Filesystem registry
-	fsRegistry []*RegInfo
+	Registry []*RegInfo
 	// ErrorNotFoundInConfigFile is returned by NewFs if not found in config file
 	ErrorNotFoundInConfigFile        = errors.New("didn't find section in config file")
 	ErrorCantPurge                   = errors.New("can't purge directory")
@@ -103,7 +105,7 @@ type OptionExample struct {
 //
 // Fs modules  should use this in an init() function
 func Register(info *RegInfo) {
-	fsRegistry = append(fsRegistry, info)
+	Registry = append(Registry, info)
 }
 
 // Fs is the interface a cloud storage system must provide
@@ -158,7 +160,7 @@ type Info interface {
 	Precision() time.Duration
 
 	// Returns the supported hash types of the filesystem
-	Hashes() HashSet
+	Hashes() hash.Set
 
 	// Features returns the optional features of this Fs
 	Features() *Features
@@ -190,7 +192,7 @@ type ObjectInfo interface {
 
 	// Hash returns the selected checksum of the file
 	// If no checksum is available it returns ""
-	Hash(HashType) (string, error)
+	Hash(hash.Type) (string, error)
 
 	// Storable says whether this object can be stored
 	Storable() bool
@@ -671,7 +673,7 @@ type Objects []Object
 // ObjectPair is a pair of Objects used to describe a potential copy
 // operation.
 type ObjectPair struct {
-	src, dst Object
+	Src, Dst Object
 }
 
 // ObjectPairChan is a channel of ObjectPair
@@ -681,7 +683,7 @@ type ObjectPairChan chan ObjectPair
 //
 // Services are looked up in the config file
 func Find(name string) (*RegInfo, error) {
-	for _, item := range fsRegistry {
+	for _, item := range Registry {
 		if item.Name == name {
 			return item, nil
 		}
@@ -702,16 +704,16 @@ func MustFind(name string) *RegInfo {
 	return fs
 }
 
-// Pattern to match an rclone url
-var matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
+// Matcher is a pattern to match an rclone URL
+var Matcher = regexp.MustCompile(`^([\w_ -]+):(.*)$`)
 
 // ParseRemote deconstructs a path into configName, fsPath, looking up
 // the fsName in the config file (returning NotFoundInConfigFile if not found)
 func ParseRemote(path string) (fsInfo *RegInfo, configName, fsPath string, err error) {
-	parts := matcher.FindStringSubmatch(path)
+	parts := Matcher.FindStringSubmatch(path)
 	var fsName string
 	fsName, configName, fsPath = "local", "local", path
-	if parts != nil && !isDriveLetter(parts[1]) {
+	if parts != nil && !driveletter.IsDriveLetter(parts[1]) {
 		configName, fsPath = parts[1], parts[2]
 		fsName = ConfigFileGet(configName, "type")
 		if fsName == "" {
@@ -741,10 +743,10 @@ func NewFs(path string) (Fs, error) {
 	return fsInfo.NewFs(configName, fsPath)
 }
 
-// temporaryLocalFs creates a local FS in the OS's temporary directory.
+// TemporaryLocalFs creates a local FS in the OS's temporary directory.
 //
 // No cleanup is performed, the caller must call Purge on the Fs themselves.
-func temporaryLocalFs() (Fs, error) {
+func TemporaryLocalFs() (Fs, error) {
 	path, err := ioutil.TempDir("", "rclone-spool")
 	if err == nil {
 		err = os.Remove(path)
@@ -776,4 +778,25 @@ func FileExists(fs Fs, remote string) (bool, error) {
 		return false, err
 	}
 	return true, nil
+}
+
+// CalculateModifyWindow works out modify window for Fses passed in -
+// sets Config.ModifyWindow
+//
+// This is the largest modify window of all the fses in use, and the
+// user configured value
+func CalculateModifyWindow(fss ...Fs) {
+	for _, f := range fss {
+		if f != nil {
+			precision := f.Precision()
+			if precision > Config.ModifyWindow {
+				Config.ModifyWindow = precision
+			}
+			if precision == ModTimeNotSupported {
+				Infof(f, "Modify window not supported")
+				return
+			}
+		}
+	}
+	Infof(fss[0], "Modify window is %s", Config.ModifyWindow)
 }
