@@ -32,7 +32,7 @@ version:
 
 # Full suite of integration tests
 test:	rclone
-	go install github.com/ncw/fstest/test_all
+	go install github.com/ncw/rclone/fstest/test_all
 	-go test $(BUILDTAGS) $(GO_FILES) 2>&1 | tee test.log
 	-test_all github.com/ncw/rclone/fs/operations github.com/ncw/rclone/fs/sync 2>&1 | tee fs/test_all.log
 	@echo "Written logs in test.log and fs/test_all.log"
@@ -95,7 +95,7 @@ clean:
 	go clean ./...
 	find . -name \*~ | xargs -r rm -f
 	rm -rf build docs/public
-	rm -f rclone fs/fs.test fs/test_all.log test.log
+	rm -f rclone fs/operations/operations.test fs/sync/sync.test fs/test_all.log test.log
 
 website:
 	cd docs && hugo
