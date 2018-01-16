@@ -178,6 +178,9 @@ func (f *Fs) newObjectWithInfo(remote, dstPath string, info os.FileInfo) (fs.Obj
 			if os.IsNotExist(err) {
 				return nil, fs.ErrorObjectNotFound
 			}
+			if os.IsPermission(err) {
+				return nil, fs.ErrorPermissionDenied
+			}
 			return nil, err
 		}
 	}
