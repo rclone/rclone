@@ -11,8 +11,6 @@ import (
 const (
 	// Wed, 27 Sep 2017 14:28:34 GMT
 	timeFormat = time.RFC1123
-	// Fri, 05 Jan 2018 14:14:38 +0000 (as used by mydrive.ch)
-	timeFormatZ = time.RFC1123Z
 )
 
 // Multistatus contains responses returned from an HTTP 207 return code
@@ -133,6 +131,13 @@ func (t *Time) MarshalXML(e *xml.Encoder, start xml.StartElement) error {
 	return e.EncodeElement(timeString, start)
 }
 
+// Possible time formats to parse the time with
+var timeFormats = []string{
+	timeFormat,    // Wed, 27 Sep 2017 14:28:34 GMT (as per RFC)
+	time.RFC1123Z, // Fri, 05 Jan 2018 14:14:38 +0000 (as used by mydrive.ch)
+	time.UnixDate, // Wed May 17 15:31:58 UTC 2017 (as used in an internal server)
+}
+
 // UnmarshalXML turns XML into a Time
 func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	var v string
@@ -140,13 +145,15 @@ func (t *Time) UnmarshalXML(d *xml.Decoder, start xml.StartElement) error {
 	if err != nil {
 		return err
 	}
-	newT, err := time.Parse(timeFormat, v)
-	if err != nil {
-		newT, err = time.Parse(timeFormatZ, v)
-		if err != nil {
-			return err
+
+	// Parse the time format in multiple possible ways
+	var newT time.Time
+	for _, timeFormat := range timeFormats {
+		newT, err = time.Parse(timeFormat, v)
+		if err == nil {
+			*t = Time(newT)
+			break
 		}
 	}
-	*t = Time(newT)
-	return nil
+	return err
 }
