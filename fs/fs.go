@@ -53,6 +53,7 @@ var (
 	ErrorCantMoveOverlapping         = errors.New("can't move files on overlapping remotes")
 	ErrorDirectoryNotEmpty           = errors.New("directory not empty")
 	ErrorImmutableModified           = errors.New("immutable file modified")
+	ErrorPermissionDenied            = errors.New("permission denied")
 )
 
 // RegInfo provides information about a filesystem
@@ -772,7 +773,7 @@ func CheckClose(c io.Closer, err *error) {
 func FileExists(fs Fs, remote string) (bool, error) {
 	_, err := fs.NewObject(remote)
 	if err != nil {
-		if err == ErrorObjectNotFound || err == ErrorNotAFile {
+		if err == ErrorObjectNotFound || err == ErrorNotAFile || err == ErrorPermissionDenied {
 			return false, nil
 		}
 		return false, err
