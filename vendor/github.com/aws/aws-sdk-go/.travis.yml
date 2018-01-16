@@ -3,11 +3,11 @@ language: go
 sudo: required
 
 go:
-  - 1.5
-  - 1.6
-  - 1.7
-  - 1.8
-  - 1.9
+  - 1.5.x
+  - 1.6.x
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
   - tip
     
 # Use Go 1.5's vendoring experiment for 1.5 tests.
@@ -23,3 +23,7 @@ script:
 matrix:
   allow_failures:
     - go: tip
+
+branches:
+  only:
+    - master

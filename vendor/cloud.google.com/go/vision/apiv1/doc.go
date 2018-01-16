@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,10 +16,12 @@
 
 // Package vision is an auto-generated package for the
 // Google Cloud Vision API.
+
 //
 // Integrates Google Vision features, including image labeling, face, logo,
-// and landmark detection, optical character recognition (OCR), and detection
-// of explicit content, into applications.
+// and
+// landmark detection, optical character recognition (OCR), and detection of
+// explicit content, into applications.
 package vision // import "cloud.google.com/go/vision/apiv1"
 
 import (
@@ -27,16 +29,21 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func insertXGoog(ctx context.Context, val []string) context.Context {
-	md, _ := metadata.FromOutgoingContext(ctx)
-	md = md.Copy()
-	md["x-goog-api-client"] = val
-	return metadata.NewOutgoingContext(ctx, md)
+func insertMetadata(ctx context.Context, mds ...metadata.MD) context.Context {
+	out, _ := metadata.FromOutgoingContext(ctx)
+	out = out.Copy()
+	for _, md := range mds {
+		for k, v := range md {
+			out[k] = append(out[k], v...)
+		}
+	}
+	return metadata.NewOutgoingContext(ctx, out)
 }
 
 // DefaultAuthScopes reports the default set of authentication scopes to use with this package.
 func DefaultAuthScopes() []string {
 	return []string{
 		"https://www.googleapis.com/auth/cloud-platform",
+		"https://www.googleapis.com/auth/cloud-vision",
 	}
 }

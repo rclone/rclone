@@ -1,6 +1,6 @@
 // Package batch implements the Azure ARM Batch service API version 2017-05-01.
 //
-//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/batch/mgmt/2017-05-01/batch
 package batch
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

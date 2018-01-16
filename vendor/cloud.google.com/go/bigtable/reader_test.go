@@ -20,9 +20,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"strings"
 	"testing"
+
+	"cloud.google.com/go/internal/testutil"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/wrappers"
@@ -48,7 +49,7 @@ func TestSingleCell(t *testing.T) {
 		t.Fatalf("Family name length mismatch %d, %d", 1, len(row["fm"]))
 	}
 	want := []ReadItem{ri("rk", "fm", "col", 1, "value")}
-	if !reflect.DeepEqual(row["fm"], want) {
+	if !testutil.Equal(row["fm"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm"], want)
 	}
 	if err := cr.Close(); err != nil {
@@ -76,14 +77,14 @@ func TestMultipleCells(t *testing.T) {
 		ri("rs", "fm1", "col1", 1, "val2"),
 		ri("rs", "fm1", "col2", 0, "val3"),
 	}
-	if !reflect.DeepEqual(row["fm1"], want) {
+	if !testutil.Equal(row["fm1"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm1"], want)
 	}
 	want = []ReadItem{
 		ri("rs", "fm2", "col1", 0, "val4"),
 		ri("rs", "fm2", "col2", 1, "extralongval5"),
 	}
-	if !reflect.DeepEqual(row["fm2"], want) {
+	if !testutil.Equal(row["fm2"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm2"], want)
 	}
 	if err := cr.Close(); err != nil {
@@ -108,7 +109,7 @@ func TestSplitCells(t *testing.T) {
 		ri("rs", "fm1", "col1", 0, "hello world"),
 		ri("rs", "fm1", "col2", 0, "val2"),
 	}
-	if !reflect.DeepEqual(row["fm1"], want) {
+	if !testutil.Equal(row["fm1"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm1"], want)
 	}
 	if err := cr.Close(); err != nil {
@@ -124,7 +125,7 @@ func TestMultipleRows(t *testing.T) {
 		t.Fatalf("Processing chunk: %v", err)
 	}
 	want := []ReadItem{ri("rs1", "fm1", "col1", 1, "val1")}
-	if !reflect.DeepEqual(row["fm1"], want) {
+	if !testutil.Equal(row["fm1"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm1"], want)
 	}
 
@@ -133,7 +134,7 @@ func TestMultipleRows(t *testing.T) {
 		t.Fatalf("Processing chunk: %v", err)
 	}
 	want = []ReadItem{ri("rs2", "fm2", "col2", 2, "val2")}
-	if !reflect.DeepEqual(row["fm2"], want) {
+	if !testutil.Equal(row["fm2"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm2"], want)
 	}
 
@@ -150,7 +151,7 @@ func TestBlankQualifier(t *testing.T) {
 		t.Fatalf("Processing chunk: %v", err)
 	}
 	want := []ReadItem{ri("rs1", "fm1", "", 1, "val1")}
-	if !reflect.DeepEqual(row["fm1"], want) {
+	if !testutil.Equal(row["fm1"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm1"], want)
 	}
 
@@ -159,7 +160,7 @@ func TestBlankQualifier(t *testing.T) {
 		t.Fatalf("Processing chunk: %v", err)
 	}
 	want = []ReadItem{ri("rs2", "fm2", "col2", 2, "val2")}
-	if !reflect.DeepEqual(row["fm2"], want) {
+	if !testutil.Equal(row["fm2"], want) {
 		t.Fatalf("Incorrect ReadItem: got: %v\nwant: %v\n", row["fm2"], want)
 	}
 
@@ -177,7 +178,7 @@ func TestReset(t *testing.T) {
 	cr.Process(ccReset())
 	row, _ := cr.Process(cc("rs1", "fm1", "col1", 1, "val1", 0, true))
 	want := []ReadItem{ri("rs1", "fm1", "col1", 1, "val1")}
-	if !reflect.DeepEqual(row["fm1"], want) {
+	if !testutil.Equal(row["fm1"], want) {
 		t.Fatalf("Reset: got: %v\nwant: %v\n", row["fm1"], want)
 	}
 	if err := cr.Close(); err != nil {
@@ -279,7 +280,7 @@ func runTestCase(t *testing.T, test TestCase) {
 
 	got := toSet(results)
 	want := toSet(test.Results)
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Fatalf("[%s]: got: %v\nwant: %v\n", test.Name, got, want)
 	}
 }

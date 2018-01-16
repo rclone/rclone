@@ -108,7 +108,9 @@ func (client DscNodeConfigurationClient) CreateOrUpdatePreparer(resourceGroupNam
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client DscNodeConfigurationClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -181,7 +183,9 @@ func (client DscNodeConfigurationClient) DeletePreparer(resourceGroupName string
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client DscNodeConfigurationClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -253,7 +257,9 @@ func (client DscNodeConfigurationClient) GetPreparer(resourceGroupName string, a
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DscNodeConfigurationClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -328,7 +334,9 @@ func (client DscNodeConfigurationClient) ListByAutomationAccountPreparer(resourc
 // ListByAutomationAccountSender sends the ListByAutomationAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client DscNodeConfigurationClient) ListByAutomationAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAutomationAccountResponder handles the response to the ListByAutomationAccount request. The method always

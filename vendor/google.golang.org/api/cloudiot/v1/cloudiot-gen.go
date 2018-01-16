@@ -238,8 +238,8 @@ type AuditConfig struct {
 }
 
 func (s *AuditConfig) MarshalJSON() ([]byte, error) {
-	type noMethod AuditConfig
-	raw := noMethod(*s)
+	type NoMethod AuditConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -299,8 +299,8 @@ type AuditLogConfig struct {
 }
 
 func (s *AuditLogConfig) MarshalJSON() ([]byte, error) {
-	type noMethod AuditLogConfig
-	raw := noMethod(*s)
+	type NoMethod AuditLogConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -374,8 +374,8 @@ type Binding struct {
 }
 
 func (s *Binding) MarshalJSON() ([]byte, error) {
-	type noMethod Binding
-	raw := noMethod(*s)
+	type NoMethod Binding
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -531,8 +531,8 @@ type Device struct {
 }
 
 func (s *Device) MarshalJSON() ([]byte, error) {
-	type noMethod Device
-	raw := noMethod(*s)
+	type NoMethod Device
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -598,8 +598,8 @@ type DeviceConfig struct {
 }
 
 func (s *DeviceConfig) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceConfig
-	raw := noMethod(*s)
+	type NoMethod DeviceConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -653,8 +653,8 @@ type DeviceCredential struct {
 }
 
 func (s *DeviceCredential) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceCredential
-	raw := noMethod(*s)
+	type NoMethod DeviceCredential
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -687,7 +687,15 @@ type DeviceRegistry struct {
 	// the
 	// device and acknowledged by Cloud IoT Core are guaranteed to
 	// be
-	// delivered to Cloud Pub/Sub. Only the first configuration is used.
+	// delivered to Cloud Pub/Sub. Only the first configuration is used. If
+	// you
+	// try to publish a device telemetry event using MQTT without specifying
+	// a
+	// Cloud Pub/Sub topic for the device's registry, the connection
+	// closes
+	// automatically. If you try to do so using an HTTP connection, an
+	// error
+	// is returned.
 	EventNotificationConfigs []*EventNotificationConfig `json:"eventNotificationConfigs,omitempty"`
 
 	// HttpConfig: The DeviceService (HTTP) configuration for this device
@@ -742,8 +750,8 @@ type DeviceRegistry struct {
 }
 
 func (s *DeviceRegistry) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceRegistry
-	raw := noMethod(*s)
+	type NoMethod DeviceRegistry
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -775,8 +783,8 @@ type DeviceState struct {
 }
 
 func (s *DeviceState) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceState
-	raw := noMethod(*s)
+	type NoMethod DeviceState
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -825,8 +833,8 @@ type EventNotificationConfig struct {
 }
 
 func (s *EventNotificationConfig) MarshalJSON() ([]byte, error) {
-	type noMethod EventNotificationConfig
-	raw := noMethod(*s)
+	type NoMethod EventNotificationConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -879,8 +887,8 @@ type Expr struct {
 }
 
 func (s *Expr) MarshalJSON() ([]byte, error) {
-	type noMethod Expr
-	raw := noMethod(*s)
+	type NoMethod Expr
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -924,8 +932,8 @@ type HttpConfig struct {
 }
 
 func (s *HttpConfig) MarshalJSON() ([]byte, error) {
-	type noMethod HttpConfig
-	raw := noMethod(*s)
+	type NoMethod HttpConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -959,8 +967,8 @@ type ListDeviceConfigVersionsResponse struct {
 }
 
 func (s *ListDeviceConfigVersionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDeviceConfigVersionsResponse
-	raw := noMethod(*s)
+	type NoMethod ListDeviceConfigVersionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -999,8 +1007,8 @@ type ListDeviceRegistriesResponse struct {
 }
 
 func (s *ListDeviceRegistriesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDeviceRegistriesResponse
-	raw := noMethod(*s)
+	type NoMethod ListDeviceRegistriesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1033,8 +1041,8 @@ type ListDeviceStatesResponse struct {
 }
 
 func (s *ListDeviceStatesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDeviceStatesResponse
-	raw := noMethod(*s)
+	type NoMethod ListDeviceStatesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1070,8 +1078,8 @@ type ListDevicesResponse struct {
 }
 
 func (s *ListDevicesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDevicesResponse
-	raw := noMethod(*s)
+	type NoMethod ListDevicesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1110,8 +1118,8 @@ type ModifyCloudToDeviceConfigRequest struct {
 }
 
 func (s *ModifyCloudToDeviceConfigRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ModifyCloudToDeviceConfigRequest
-	raw := noMethod(*s)
+	type NoMethod ModifyCloudToDeviceConfigRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1147,8 +1155,8 @@ type MqttConfig struct {
 }
 
 func (s *MqttConfig) MarshalJSON() ([]byte, error) {
-	type noMethod MqttConfig
-	raw := noMethod(*s)
+	type NoMethod MqttConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1187,7 +1195,7 @@ func (s *MqttConfig) MarshalJSON() ([]byte, error) {
 //     }
 //
 // For a description of IAM and its features, see the
-// [IAM developer's guide](https://cloud.google.com/iam).
+// [IAM developer's guide](https://cloud.google.com/iam/docs).
 type Policy struct {
 	// AuditConfigs: Specifies cloud audit logging configuration for this
 	// policy.
@@ -1219,7 +1227,7 @@ type Policy struct {
 
 	IamOwned bool `json:"iamOwned,omitempty"`
 
-	// Version: Version of the `Policy`. The default version is 0.
+	// Version: Deprecated.
 	Version int64 `json:"version,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1244,8 +1252,8 @@ type Policy struct {
 }
 
 func (s *Policy) MarshalJSON() ([]byte, error) {
-	type noMethod Policy
-	raw := noMethod(*s)
+	type NoMethod Policy
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1289,8 +1297,8 @@ type PublicKeyCertificate struct {
 }
 
 func (s *PublicKeyCertificate) MarshalJSON() ([]byte, error) {
-	type noMethod PublicKeyCertificate
-	raw := noMethod(*s)
+	type NoMethod PublicKeyCertificate
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1352,8 +1360,8 @@ type PublicKeyCredential struct {
 }
 
 func (s *PublicKeyCredential) MarshalJSON() ([]byte, error) {
-	type noMethod PublicKeyCredential
-	raw := noMethod(*s)
+	type NoMethod PublicKeyCredential
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1384,8 +1392,8 @@ type RegistryCredential struct {
 }
 
 func (s *RegistryCredential) MarshalJSON() ([]byte, error) {
-	type noMethod RegistryCredential
-	raw := noMethod(*s)
+	type NoMethod RegistryCredential
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1426,8 +1434,8 @@ type SetIamPolicyRequest struct {
 }
 
 func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
-	type noMethod SetIamPolicyRequest
-	raw := noMethod(*s)
+	type NoMethod SetIamPolicyRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1458,8 +1466,8 @@ type StateNotificationConfig struct {
 }
 
 func (s *StateNotificationConfig) MarshalJSON() ([]byte, error) {
-	type noMethod StateNotificationConfig
-	raw := noMethod(*s)
+	type NoMethod StateNotificationConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1577,8 +1585,8 @@ type Status struct {
 }
 
 func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1612,8 +1620,8 @@ type TestIamPermissionsRequest struct {
 }
 
 func (s *TestIamPermissionsRequest) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsRequest
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1647,8 +1655,8 @@ type TestIamPermissionsResponse struct {
 }
 
 func (s *TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsResponse
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1691,8 +1699,8 @@ type X509CertificateDetails struct {
 }
 
 func (s *X509CertificateDetails) MarshalJSON() ([]byte, error) {
-	type noMethod X509CertificateDetails
-	raw := noMethod(*s)
+	type NoMethod X509CertificateDetails
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1796,7 +1804,7 @@ func (c *ProjectsLocationsRegistriesCreateCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1925,7 +1933,7 @@ func (c *ProjectsLocationsRegistriesDeleteCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2065,7 +2073,7 @@ func (c *ProjectsLocationsRegistriesGetCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2201,7 +2209,7 @@ func (c *ProjectsLocationsRegistriesGetIamPolicyCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2366,7 +2374,7 @@ func (c *ProjectsLocationsRegistriesListCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2455,9 +2463,9 @@ func (r *ProjectsLocationsRegistriesService) Patch(name string, deviceregistry *
 // The field mask must not be empty, and it must not contain fields
 // that
 // are immutable or only set by the server.
-// Mutable top-level fields: `event_notification_config`, `mqtt_config`,
-// and
-// `state_notification_config`.
+// Mutable top-level fields: `event_notification_config`,
+// `http_config`,
+// `mqtt_config`, and `state_notification_config`.
 func (c *ProjectsLocationsRegistriesPatchCall) UpdateMask(updateMask string) *ProjectsLocationsRegistriesPatchCall {
 	c.urlParams_.Set("updateMask", updateMask)
 	return c
@@ -2544,7 +2552,7 @@ func (c *ProjectsLocationsRegistriesPatchCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2565,7 +2573,7 @@ func (c *ProjectsLocationsRegistriesPatchCall) Do(opts ...googleapi.CallOption) 
 	//       "type": "string"
 	//     },
 	//     "updateMask": {
-	//       "description": "Only updates the `device_registry` fields indicated by this mask.\nThe field mask must not be empty, and it must not contain fields that\nare immutable or only set by the server.\nMutable top-level fields: `event_notification_config`, `mqtt_config`, and\n`state_notification_config`.",
+	//       "description": "Only updates the `device_registry` fields indicated by this mask.\nThe field mask must not be empty, and it must not contain fields that\nare immutable or only set by the server.\nMutable top-level fields: `event_notification_config`, `http_config`,\n`mqtt_config`, and `state_notification_config`.",
 	//       "format": "google-fieldmask",
 	//       "location": "query",
 	//       "type": "string"
@@ -2688,7 +2696,7 @@ func (c *ProjectsLocationsRegistriesSetIamPolicyCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2828,7 +2836,7 @@ func (c *ProjectsLocationsRegistriesTestIamPermissionsCall) Do(opts ...googleapi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2964,7 +2972,7 @@ func (c *ProjectsLocationsRegistriesDevicesCreateCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3093,7 +3101,7 @@ func (c *ProjectsLocationsRegistriesDevicesDeleteCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3141,6 +3149,14 @@ type ProjectsLocationsRegistriesDevicesGetCall struct {
 func (r *ProjectsLocationsRegistriesDevicesService) Get(name string) *ProjectsLocationsRegistriesDevicesGetCall {
 	c := &ProjectsLocationsRegistriesDevicesGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
+	return c
+}
+
+// FieldMask sets the optional parameter "fieldMask": The fields of the
+// `Device` resource to be returned in the response. If the
+// field mask is unset or empty, all fields are returned.
+func (c *ProjectsLocationsRegistriesDevicesGetCall) FieldMask(fieldMask string) *ProjectsLocationsRegistriesDevicesGetCall {
+	c.urlParams_.Set("fieldMask", fieldMask)
 	return c
 }
 
@@ -3233,7 +3249,7 @@ func (c *ProjectsLocationsRegistriesDevicesGetCall) Do(opts ...googleapi.CallOpt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3246,6 +3262,12 @@ func (c *ProjectsLocationsRegistriesDevicesGetCall) Do(opts ...googleapi.CallOpt
 	//     "name"
 	//   ],
 	//   "parameters": {
+	//     "fieldMask": {
+	//       "description": "The fields of the `Device` resource to be returned in the response. If the\nfield mask is unset or empty, all fields are returned.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
 	//     "name": {
 	//       "description": "The name of the device. For example,\n`projects/p0/locations/us-central1/registries/registry0/devices/device0` or\n`projects/p0/locations/us-central1/registries/registry0/devices/{num_id}`.",
 	//       "location": "path",
@@ -3426,7 +3448,7 @@ func (c *ProjectsLocationsRegistriesDevicesListCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3614,7 +3636,7 @@ func (c *ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall) Do(opt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3762,7 +3784,7 @@ func (c *ProjectsLocationsRegistriesDevicesPatchCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3923,7 +3945,7 @@ func (c *ProjectsLocationsRegistriesDevicesConfigVersionsListCall) Do(opts ...go
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4081,7 +4103,7 @@ func (c *ProjectsLocationsRegistriesDevicesStatesListCall) Do(opts ...googleapi.
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

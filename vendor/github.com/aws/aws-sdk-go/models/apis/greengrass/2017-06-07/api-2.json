@@ -254,6 +254,59 @@
         "shape" : "BadRequestException"
       } ]
     },
+    "CreateResourceDefinition" : {
+      "name" : "CreateResourceDefinition",
+      "http" : {
+        "method" : "POST",
+        "requestUri" : "/greengrass/definition/resources",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "CreateResourceDefinitionRequest"
+      },
+      "output" : {
+        "shape" : "CreateResourceDefinitionResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      } ]
+    },
+    "CreateResourceDefinitionVersion" : {
+      "name" : "CreateResourceDefinitionVersion",
+      "http" : {
+        "method" : "POST",
+        "requestUri" : "/greengrass/definition/resources/{ResourceDefinitionId}/versions",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "CreateResourceDefinitionVersionRequest"
+      },
+      "output" : {
+        "shape" : "CreateResourceDefinitionVersionResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      } ]
+    },
+    "CreateSoftwareUpdateJob" : {
+      "name" : "CreateSoftwareUpdateJob",
+      "http" : {
+        "method" : "POST",
+        "requestUri" : "/greengrass/updates",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "CreateSoftwareUpdateJobRequest"
+      },
+      "output" : {
+        "shape" : "CreateSoftwareUpdateJobResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      } ]
+    },
     "CreateSubscriptionDefinition" : {
       "name" : "CreateSubscriptionDefinition",
       "http" : {
@@ -368,6 +421,23 @@
       },
       "output" : {
         "shape" : "DeleteLoggerDefinitionResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      } ]
+    },
+    "DeleteResourceDefinition" : {
+      "name" : "DeleteResourceDefinition",
+      "http" : {
+        "method" : "DELETE",
+        "requestUri" : "/greengrass/definition/resources/{ResourceDefinitionId}",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "DeleteResourceDefinitionRequest"
+      },
+      "output" : {
+        "shape" : "DeleteResourceDefinitionResponse"
       },
       "errors" : [ {
         "shape" : "BadRequestException"
@@ -689,6 +759,40 @@
         "shape" : "BadRequestException"
       } ]
     },
+    "GetResourceDefinition" : {
+      "name" : "GetResourceDefinition",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/greengrass/definition/resources/{ResourceDefinitionId}",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetResourceDefinitionRequest"
+      },
+      "output" : {
+        "shape" : "GetResourceDefinitionResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      } ]
+    },
+    "GetResourceDefinitionVersion" : {
+      "name" : "GetResourceDefinitionVersion",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/greengrass/definition/resources/{ResourceDefinitionId}/versions/{ResourceDefinitionVersionId}",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetResourceDefinitionVersionRequest"
+      },
+      "output" : {
+        "shape" : "GetResourceDefinitionVersionResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      } ]
+    },
     "GetServiceRoleForAccount" : {
       "name" : "GetServiceRoleForAccount",
       "http" : {
@@ -936,6 +1040,38 @@
       },
       "errors" : [ ]
     },
+    "ListResourceDefinitionVersions" : {
+      "name" : "ListResourceDefinitionVersions",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/greengrass/definition/resources/{ResourceDefinitionId}/versions",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "ListResourceDefinitionVersionsRequest"
+      },
+      "output" : {
+        "shape" : "ListResourceDefinitionVersionsResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      } ]
+    },
+    "ListResourceDefinitions" : {
+      "name" : "ListResourceDefinitions",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/greengrass/definition/resources",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "ListResourceDefinitionsRequest"
+      },
+      "output" : {
+        "shape" : "ListResourceDefinitionsResponse"
+      },
+      "errors" : [ ]
+    },
     "ListSubscriptionDefinitionVersions" : {
       "name" : "ListSubscriptionDefinitionVersions",
       "http" : {
@@ -1103,6 +1239,23 @@
       },
       "output" : {
         "shape" : "UpdateLoggerDefinitionResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      } ]
+    },
+    "UpdateResourceDefinition" : {
+      "name" : "UpdateResourceDefinition",
+      "http" : {
+        "method" : "PUT",
+        "requestUri" : "/greengrass/definition/resources/{ResourceDefinitionId}",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "UpdateResourceDefinitionRequest"
+      },
+      "output" : {
+        "shape" : "UpdateResourceDefinitionResponse"
       },
       "errors" : [ {
         "shape" : "BadRequestException"
@@ -1583,6 +1736,9 @@
         "LoggerDefinitionVersionArn" : {
           "shape" : "__string"
         },
+        "ResourceDefinitionVersionArn" : {
+          "shape" : "__string"
+        },
         "SubscriptionDefinitionVersionArn" : {
           "shape" : "__string"
         }
@@ -1680,6 +1836,123 @@
           "shape" : "__string"
         },
         "Version" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "CreateResourceDefinitionRequest" : {
+      "type" : "structure",
+      "members" : {
+        "AmznClientToken" : {
+          "shape" : "__string",
+          "location" : "header",
+          "locationName" : "X-Amzn-Client-Token"
+        },
+        "InitialVersion" : {
+          "shape" : "ResourceDefinitionVersion"
+        },
+        "Name" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "CreateResourceDefinitionResponse" : {
+      "type" : "structure",
+      "members" : {
+        "Arn" : {
+          "shape" : "__string"
+        },
+        "CreationTimestamp" : {
+          "shape" : "__string"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "LastUpdatedTimestamp" : {
+          "shape" : "__string"
+        },
+        "LatestVersion" : {
+          "shape" : "__string"
+        },
+        "LatestVersionArn" : {
+          "shape" : "__string"
+        },
+        "Name" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "CreateResourceDefinitionVersionRequest" : {
+      "type" : "structure",
+      "members" : {
+        "AmznClientToken" : {
+          "shape" : "__string",
+          "location" : "header",
+          "locationName" : "X-Amzn-Client-Token"
+        },
+        "ResourceDefinitionId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "ResourceDefinitionId"
+        },
+        "Resources" : {
+          "shape" : "ListOfResource"
+        }
+      },
+      "required" : [ "ResourceDefinitionId" ]
+    },
+    "CreateResourceDefinitionVersionResponse" : {
+      "type" : "structure",
+      "members" : {
+        "Arn" : {
+          "shape" : "__string"
+        },
+        "CreationTimestamp" : {
+          "shape" : "__string"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "Version" : {
+            "shape" : "__string"
+        }
+      }
+    },
+    "CreateSoftwareUpdateJobRequest" : {
+      "type" : "structure",
+      "members" : {
+        "AmznClientToken" : {
+            "shape" : "__string",
+            "location" : "header",
+            "locationName" : "X-Amzn-Client-Token"
+        },
+        "S3UrlSignerRole" : {
+          "shape" : "S3UrlSignerRole"
+        },
+        "SoftwareToUpdate" : {
+          "shape" : "SoftwareToUpdate"
+        },
+        "UpdateAgentLogLevel" : {
+          "shape" : "UpdateAgentLogLevel"
+        },
+        "UpdateTargets" : {
+          "shape" : "UpdateTargets"
+        },
+        "UpdateTargetsArchitecture" : {
+          "shape" : "UpdateTargetsArchitecture"
+        },
+        "UpdateTargetsOperatingSystem" : {
+          "shape" : "UpdateTargetsOperatingSystem"
+        }
+      }
+    },
+    "CreateSoftwareUpdateJobResponse" : {
+      "type" : "structure",
+      "members" : {
+        "IotJobArn" : {
+          "shape" : "__string"
+        },
+        "IotJobId" : {
           "shape" : "__string"
         }
       }
@@ -1863,6 +2136,21 @@
       "type" : "structure",
       "members" : { }
     },
+    "DeleteResourceDefinitionRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ResourceDefinitionId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "ResourceDefinitionId"
+        }
+      },
+      "required" : [ "ResourceDefinitionId" ]
+    },
+    "DeleteResourceDefinitionResponse" : {
+      "type" : "structure",
+      "members" : { }
+    },
     "DeleteSubscriptionDefinitionRequest" : {
       "type" : "structure",
       "members" : {
@@ -2025,6 +2313,12 @@
     "FunctionConfigurationEnvironment" : {
       "type" : "structure",
       "members" : {
+        "AccessSysfs" : {
+          "shape" : "__boolean"
+        },
+        "ResourceAccessPolicies" : {
+          "shape" : "ListOfResourceAccessPolicy"
+        },
         "Variables" : {
           "shape" : "MapOf__string"
         }
@@ -2550,6 +2844,79 @@
         }
       }
     },
+    "GetResourceDefinitionRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ResourceDefinitionId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "ResourceDefinitionId"
+        }
+      },
+      "required" : [ "ResourceDefinitionId" ]
+    },
+    "GetResourceDefinitionResponse" : {
+      "type" : "structure",
+      "members" : {
+        "Arn" : {
+          "shape" : "__string"
+        },
+        "CreationTimestamp" : {
+          "shape" : "__string"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "LastUpdatedTimestamp" : {
+          "shape" : "__string"
+        },
+        "LatestVersion" : {
+          "shape" : "__string"
+        },
+        "LatestVersionArn" : {
+          "shape" : "__string"
+        },
+        "Name" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "GetResourceDefinitionVersionRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ResourceDefinitionId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "ResourceDefinitionId"
+        },
+        "ResourceDefinitionVersionId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "ResourceDefinitionVersionId"
+        }
+      },
+      "required" : [ "ResourceDefinitionVersionId", "ResourceDefinitionId" ]
+    },
+    "GetResourceDefinitionVersionResponse" : {
+      "type" : "structure",
+      "members" : {
+        "Arn" : {
+          "shape" : "__string"
+        },
+        "CreationTimestamp" : {
+          "shape" : "__string"
+        },
+        "Definition" : {
+          "shape" : "ResourceDefinitionVersion"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "Version" : {
+          "shape" : "__string"
+        }
+      }
+    },
     "GetServiceRoleForAccountRequest" : {
       "type" : "structure",
       "members" : { }
@@ -2689,6 +3056,17 @@
         }
       }
     },
+    "GroupOwnerSetting" : {
+      "type" : "structure",
+      "members" : {
+        "AutoAddGroupOwner" : {
+          "shape" : "__boolean"
+        },
+        "GroupOwner" : {
+          "shape" : "__string"
+        }
+      }
+    },
     "GroupVersion" : {
       "type" : "structure",
       "members" : {
@@ -2702,6 +3080,9 @@
           "shape" : "__string"
         },
         "LoggerDefinitionVersionArn" : {
+          "shape" : "__string"
+        },
+        "ResourceDefinitionVersionArn" : {
           "shape" : "__string"
         },
         "SubscriptionDefinitionVersionArn" : {
@@ -3124,6 +3505,18 @@
         "shape" : "Logger"
       }
     },
+    "ListOfResource" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "Resource"
+      }
+    },
+    "ListOfResourceAccessPolicy" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "ResourceAccessPolicy"
+      }
+    },
     "ListOfSubscription" : {
       "type" : "list",
       "member" : {
@@ -3134,6 +3527,64 @@
       "type" : "list",
       "member" : {
         "shape" : "VersionInformation"
+      }
+    },
+    "ListResourceDefinitionVersionsRequest" : {
+      "type" : "structure",
+      "members" : {
+        "MaxResults" : {
+          "shape" : "__string",
+          "location" : "querystring",
+          "locationName" : "MaxResults"
+        },
+        "NextToken" : {
+          "shape" : "__string",
+          "location" : "querystring",
+          "locationName" : "NextToken"
+        },
+        "ResourceDefinitionId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "ResourceDefinitionId"
+        }
+      },
+      "required" : [ "ResourceDefinitionId" ]
+    },
+    "ListResourceDefinitionVersionsResponse" : {
+      "type" : "structure",
+      "members" : {
+        "NextToken" : {
+          "shape" : "__string"
+        },
+        "Versions" : {
+          "shape" : "ListOfVersionInformation"
+        }
+      }
+    },
+    "ListResourceDefinitionsRequest" : {
+      "type" : "structure",
+      "members" : {
+        "MaxResults" : {
+          "shape" : "__string",
+          "location" : "querystring",
+          "locationName" : "MaxResults"
+        },
+        "NextToken" : {
+          "shape" : "__string",
+          "location" : "querystring",
+          "locationName" : "NextToken"
+        }
+      }
+    },
+    "ListResourceDefinitionsResponse" : {
+      "type" : "structure",
+      "members" : {
+        "Definitions" : {
+          "shape" : "ListOfDefinitionInformation"
+        },
+        "NextToken" : {
+          "shape" : "__string"
+        }
       }
     },
     "ListSubscriptionDefinitionVersionsRequest" : {
@@ -3205,6 +3656,31 @@
         }
       }
     },
+    "LocalDeviceResourceData" : {
+      "type" : "structure",
+      "members" : {
+        "GroupOwnerSetting" : {
+          "shape" : "GroupOwnerSetting"
+        },
+        "SourcePath" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "LocalVolumeResourceData" : {
+      "type" : "structure",
+      "members" : {
+        "DestinationPath" : {
+          "shape" : "__string"
+        },
+        "GroupOwnerSetting" : {
+          "shape" : "GroupOwnerSetting"
+        },
+        "SourcePath" : {
+          "shape" : "__string"
+        }
+      }
+    },
     "Logger" : {
       "type" : "structure",
       "members" : {
@@ -3254,6 +3730,10 @@
         "shape" : "__string"
       }
     },
+    "Permission" : {
+      "type" : "string",
+      "enum" : [ "ro", "rw" ]
+    },
     "ResetDeploymentsRequest" : {
       "type" : "structure",
       "members" : {
@@ -3284,6 +3764,57 @@
         }
       }
     },
+    "Resource" : {
+      "type" : "structure",
+      "members" : {
+        "Id" : {
+          "shape" : "__string"
+        },
+        "Name" : {
+          "shape" : "__string"
+        },
+        "ResourceDataContainer" : {
+          "shape" : "ResourceDataContainer"
+        }
+      }
+    },
+    "ResourceAccessPolicy" : {
+      "type" : "structure",
+      "members" : {
+        "Permission" : {
+          "shape" : "Permission"
+        },
+        "ResourceId" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "ResourceDataContainer" : {
+      "type" : "structure",
+      "members" : {
+        "LocalDeviceResourceData" : {
+          "shape" : "LocalDeviceResourceData"
+        },
+        "LocalVolumeResourceData" : {
+          "shape" : "LocalVolumeResourceData"
+        }
+      }
+    },
+    "ResourceDefinitionVersion" : {
+      "type" : "structure",
+      "members" : {
+        "Resources" : {
+          "shape" : "ListOfResource"
+        }
+      }
+    },
+    "S3UrlSignerRole" : {
+      "type" : "string"
+    },
+    "SoftwareToUpdate" : {
+      "type" : "string",
+      "enum" : [ "core", "ota_agent" ]
+    },
     "Subscription" : {
       "type" : "structure",
       "members" : {
@@ -3308,6 +3839,10 @@
           "shape" : "ListOfSubscription"
         }
       }
+    },
+    "UpdateAgentLogLevel" : {
+      "type" : "string",
+      "enum" : [ "NONE", "TRACE", "DEBUG", "VERBOSE", "INFO", "WARN", "ERROR", "FATAL" ]
     },
     "UpdateConnectivityInfoRequest" : {
       "type" : "structure",
@@ -3453,6 +3988,24 @@
       "type" : "structure",
       "members" : { }
     },
+    "UpdateResourceDefinitionRequest" : {
+      "type" : "structure",
+      "members" : {
+        "Name" : {
+          "shape" : "__string"
+        },
+        "ResourceDefinitionId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "ResourceDefinitionId"
+        }
+      },
+      "required" : [ "ResourceDefinitionId" ]
+    },
+    "UpdateResourceDefinitionResponse" : {
+      "type" : "structure",
+      "members" : { }
+    },
     "UpdateSubscriptionDefinitionRequest" : {
       "type" : "structure",
       "members" : {
@@ -3470,6 +4023,20 @@
     "UpdateSubscriptionDefinitionResponse" : {
       "type" : "structure",
       "members" : { }
+    },
+    "UpdateTargets" : {
+      "type" : "list",
+      "member" : {
+        "shape" : "__string"
+      }
+    },
+    "UpdateTargetsArchitecture" : {
+      "type" : "string",
+      "enum" : [ "armv7l", "x86_64", "aarch64" ]
+    },
+    "UpdateTargetsOperatingSystem" : {
+      "type" : "string",
+      "enum" : [ "ubuntu", "raspbian", "amazon_linux" ]
     },
     "VersionInformation" : {
       "type" : "structure",

@@ -1,7 +1,6 @@
 {
   "version":"2.0",
   "metadata":{
-    "uid":"ecr-2015-09-21",
     "apiVersion":"2015-09-21",
     "endpointPrefix":"ecr",
     "jsonVersion":"1.1",
@@ -9,7 +8,8 @@
     "serviceAbbreviation":"Amazon ECR",
     "serviceFullName":"Amazon EC2 Container Registry",
     "signatureVersion":"v4",
-    "targetPrefix":"AmazonEC2ContainerRegistry_V20150921"
+    "targetPrefix":"AmazonEC2ContainerRegistry_V20150921",
+    "uid":"ecr-2015-09-21"
   },
   "operations":{
     "BatchCheckLayerAvailability":{
@@ -86,6 +86,21 @@
         {"shape":"InvalidParameterException"},
         {"shape":"RepositoryAlreadyExistsException"},
         {"shape":"LimitExceededException"}
+      ]
+    },
+    "DeleteLifecyclePolicy":{
+      "name":"DeleteLifecyclePolicy",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteLifecyclePolicyRequest"},
+      "output":{"shape":"DeleteLifecyclePolicyResponse"},
+      "errors":[
+        {"shape":"ServerException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"RepositoryNotFoundException"},
+        {"shape":"LifecyclePolicyNotFoundException"}
       ]
     },
     "DeleteRepository":{
@@ -176,6 +191,36 @@
         {"shape":"RepositoryNotFoundException"}
       ]
     },
+    "GetLifecyclePolicy":{
+      "name":"GetLifecyclePolicy",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetLifecyclePolicyRequest"},
+      "output":{"shape":"GetLifecyclePolicyResponse"},
+      "errors":[
+        {"shape":"ServerException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"RepositoryNotFoundException"},
+        {"shape":"LifecyclePolicyNotFoundException"}
+      ]
+    },
+    "GetLifecyclePolicyPreview":{
+      "name":"GetLifecyclePolicyPreview",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetLifecyclePolicyPreviewRequest"},
+      "output":{"shape":"GetLifecyclePolicyPreviewResponse"},
+      "errors":[
+        {"shape":"ServerException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"RepositoryNotFoundException"},
+        {"shape":"LifecyclePolicyPreviewNotFoundException"}
+      ]
+    },
     "GetRepositoryPolicy":{
       "name":"GetRepositoryPolicy",
       "http":{
@@ -236,6 +281,20 @@
         {"shape":"LimitExceededException"}
       ]
     },
+    "PutLifecyclePolicy":{
+      "name":"PutLifecyclePolicy",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PutLifecyclePolicyRequest"},
+      "output":{"shape":"PutLifecyclePolicyResponse"},
+      "errors":[
+        {"shape":"ServerException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"RepositoryNotFoundException"}
+      ]
+    },
     "SetRepositoryPolicy":{
       "name":"SetRepositoryPolicy",
       "http":{
@@ -248,6 +307,22 @@
         {"shape":"ServerException"},
         {"shape":"InvalidParameterException"},
         {"shape":"RepositoryNotFoundException"}
+      ]
+    },
+    "StartLifecyclePolicyPreview":{
+      "name":"StartLifecyclePolicyPreview",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"StartLifecyclePolicyPreviewRequest"},
+      "output":{"shape":"StartLifecyclePolicyPreviewResponse"},
+      "errors":[
+        {"shape":"ServerException"},
+        {"shape":"InvalidParameterException"},
+        {"shape":"RepositoryNotFoundException"},
+        {"shape":"LifecyclePolicyNotFoundException"},
+        {"shape":"LifecyclePolicyPreviewInProgressException"}
       ]
     },
     "UploadLayerPart":{
@@ -392,6 +467,23 @@
       }
     },
     "CreationTimestamp":{"type":"timestamp"},
+    "DeleteLifecyclePolicyRequest":{
+      "type":"structure",
+      "required":["repositoryName"],
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"}
+      }
+    },
+    "DeleteLifecyclePolicyResponse":{
+      "type":"structure",
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "lifecyclePolicyText":{"shape":"LifecyclePolicyText"},
+        "lastEvaluatedAt":{"shape":"EvaluationTimestamp"}
+      }
+    },
     "DeleteRepositoryPolicyRequest":{
       "type":"structure",
       "required":["repositoryName"],
@@ -471,6 +563,7 @@
       },
       "exception":true
     },
+    "EvaluationTimestamp":{"type":"timestamp"},
     "ExceptionMessage":{"type":"string"},
     "ExpirationTimestamp":{"type":"timestamp"},
     "ForceFlag":{"type":"boolean"},
@@ -511,6 +604,47 @@
         "layerDigest":{"shape":"LayerDigest"}
       }
     },
+    "GetLifecyclePolicyPreviewRequest":{
+      "type":"structure",
+      "required":["repositoryName"],
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "imageIds":{"shape":"ImageIdentifierList"},
+        "nextToken":{"shape":"NextToken"},
+        "maxResults":{"shape":"MaxResults"},
+        "filter":{"shape":"LifecyclePolicyPreviewFilter"}
+      }
+    },
+    "GetLifecyclePolicyPreviewResponse":{
+      "type":"structure",
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "lifecyclePolicyText":{"shape":"LifecyclePolicyText"},
+        "status":{"shape":"LifecyclePolicyPreviewStatus"},
+        "nextToken":{"shape":"NextToken"},
+        "previewResults":{"shape":"LifecyclePolicyPreviewResultList"},
+        "summary":{"shape":"LifecyclePolicyPreviewSummary"}
+      }
+    },
+    "GetLifecyclePolicyRequest":{
+      "type":"structure",
+      "required":["repositoryName"],
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"}
+      }
+    },
+    "GetLifecyclePolicyResponse":{
+      "type":"structure",
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "lifecyclePolicyText":{"shape":"LifecyclePolicyText"},
+        "lastEvaluatedAt":{"shape":"EvaluationTimestamp"}
+      }
+    },
     "GetRepositoryPolicyRequest":{
       "type":"structure",
       "required":["repositoryName"],
@@ -536,12 +670,20 @@
         "imageManifest":{"shape":"ImageManifest"}
       }
     },
+    "ImageActionType":{
+      "type":"string",
+      "enum":["EXPIRE"]
+    },
     "ImageAlreadyExistsException":{
       "type":"structure",
       "members":{
         "message":{"shape":"ExceptionMessage"}
       },
       "exception":true
+    },
+    "ImageCount":{
+      "type":"integer",
+      "min":0
     },
     "ImageDetail":{
       "type":"structure",
@@ -733,6 +875,77 @@
       },
       "exception":true
     },
+    "LifecyclePolicyNotFoundException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ExceptionMessage"}
+      },
+      "exception":true
+    },
+    "LifecyclePolicyPreviewFilter":{
+      "type":"structure",
+      "members":{
+        "tagStatus":{"shape":"TagStatus"}
+      }
+    },
+    "LifecyclePolicyPreviewInProgressException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ExceptionMessage"}
+      },
+      "exception":true
+    },
+    "LifecyclePolicyPreviewNotFoundException":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ExceptionMessage"}
+      },
+      "exception":true
+    },
+    "LifecyclePolicyPreviewResult":{
+      "type":"structure",
+      "members":{
+        "imageTags":{"shape":"ImageTagList"},
+        "imageDigest":{"shape":"ImageDigest"},
+        "imagePushedAt":{"shape":"PushTimestamp"},
+        "action":{"shape":"LifecyclePolicyRuleAction"},
+        "appliedRulePriority":{"shape":"LifecyclePolicyRulePriority"}
+      }
+    },
+    "LifecyclePolicyPreviewResultList":{
+      "type":"list",
+      "member":{"shape":"LifecyclePolicyPreviewResult"}
+    },
+    "LifecyclePolicyPreviewStatus":{
+      "type":"string",
+      "enum":[
+        "IN_PROGRESS",
+        "COMPLETE",
+        "EXPIRED",
+        "FAILED"
+      ]
+    },
+    "LifecyclePolicyPreviewSummary":{
+      "type":"structure",
+      "members":{
+        "expiringImageTotalCount":{"shape":"ImageCount"}
+      }
+    },
+    "LifecyclePolicyRuleAction":{
+      "type":"structure",
+      "members":{
+        "type":{"shape":"ImageActionType"}
+      }
+    },
+    "LifecyclePolicyRulePriority":{
+      "type":"integer",
+      "min":1
+    },
+    "LifecyclePolicyText":{
+      "type":"string",
+      "max":10240,
+      "min":100
+    },
     "LimitExceededException":{
       "type":"structure",
       "members":{
@@ -769,10 +982,7 @@
       "max":100,
       "min":1
     },
-    "MediaType":{
-      "type":"string",
-      "pattern":"\\w{1,127}\\/[-+.\\w]{1,127}"
-    },
+    "MediaType":{"type":"string"},
     "MediaTypeList":{
       "type":"list",
       "member":{"shape":"MediaType"},
@@ -803,6 +1013,26 @@
       "type":"structure",
       "members":{
         "image":{"shape":"Image"}
+      }
+    },
+    "PutLifecyclePolicyRequest":{
+      "type":"structure",
+      "required":[
+        "repositoryName",
+        "lifecyclePolicyText"
+      ],
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "lifecyclePolicyText":{"shape":"LifecyclePolicyText"}
+      }
+    },
+    "PutLifecyclePolicyResponse":{
+      "type":"structure",
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "lifecyclePolicyText":{"shape":"LifecyclePolicyText"}
       }
     },
     "RegistryId":{
@@ -895,6 +1125,24 @@
         "registryId":{"shape":"RegistryId"},
         "repositoryName":{"shape":"RepositoryName"},
         "policyText":{"shape":"RepositoryPolicyText"}
+      }
+    },
+    "StartLifecyclePolicyPreviewRequest":{
+      "type":"structure",
+      "required":["repositoryName"],
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "lifecyclePolicyText":{"shape":"LifecyclePolicyText"}
+      }
+    },
+    "StartLifecyclePolicyPreviewResponse":{
+      "type":"structure",
+      "members":{
+        "registryId":{"shape":"RegistryId"},
+        "repositoryName":{"shape":"RepositoryName"},
+        "lifecyclePolicyText":{"shape":"LifecyclePolicyText"},
+        "status":{"shape":"LifecyclePolicyPreviewStatus"}
       }
     },
     "TagStatus":{

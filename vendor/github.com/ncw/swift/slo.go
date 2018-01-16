@@ -88,7 +88,10 @@ func (c *Connection) StaticLargeObjectMove(srcContainer string, srcObjectName st
 		return err
 	}
 
-	if err := c.createSLOManifest(dstContainer, dstObjectName, info.ContentType, container, segments); err != nil {
+	//copy only metadata during move (other headers might not be safe for copying)
+	headers = headers.ObjectMetadata().ObjectHeaders()
+
+	if err := c.createSLOManifest(dstContainer, dstObjectName, info.ContentType, container, segments, headers); err != nil {
 		return err
 	}
 
@@ -100,7 +103,7 @@ func (c *Connection) StaticLargeObjectMove(srcContainer string, srcObjectName st
 }
 
 // createSLOManifest creates a static large object manifest
-func (c *Connection) createSLOManifest(container string, path string, contentType string, segmentContainer string, segments []Object) error {
+func (c *Connection) createSLOManifest(container string, path string, contentType string, segmentContainer string, segments []Object, h Headers) error {
 	sloSegments := make([]swiftSegment, len(segments))
 	for i, segment := range segments {
 		sloSegments[i].Path = fmt.Sprintf("%s/%s", segmentContainer, segment.Name)
@@ -115,7 +118,7 @@ func (c *Connection) createSLOManifest(container string, path string, contentTyp
 
 	values := url.Values{}
 	values.Set("multipart-manifest", "put")
-	if _, err := c.objectPut(container, path, bytes.NewBuffer(content), false, "", contentType, nil, values); err != nil {
+	if _, err := c.objectPut(container, path, bytes.NewBuffer(content), false, "", contentType, h, values); err != nil {
 		return err
 	}
 
@@ -127,7 +130,7 @@ func (file *StaticLargeObjectCreateFile) Close() error {
 }
 
 func (file *StaticLargeObjectCreateFile) Flush() error {
-	if err := file.conn.createSLOManifest(file.container, file.objectName, file.contentType, file.segmentContainer, file.segments); err != nil {
+	if err := file.conn.createSLOManifest(file.container, file.objectName, file.contentType, file.segmentContainer, file.segments, file.headers); err != nil {
 		return err
 	}
 	return file.conn.waitForSegmentsToShowUp(file.container, file.objectName, file.Size())

@@ -104,7 +104,9 @@ func (client InputsClient) CreateOrReplacePreparer(input Input, resourceGroupNam
 // CreateOrReplaceSender sends the CreateOrReplace request. The method will close the
 // http.Response Body if it receives an error.
 func (client InputsClient) CreateOrReplaceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrReplaceResponder handles the response to the CreateOrReplace request. The method always
@@ -172,7 +174,9 @@ func (client InputsClient) DeletePreparer(resourceGroupName string, jobName stri
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client InputsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -239,7 +243,9 @@ func (client InputsClient) GetPreparer(resourceGroupName string, jobName string,
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client InputsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -311,7 +317,9 @@ func (client InputsClient) ListByStreamingJobPreparer(resourceGroupName string, 
 // ListByStreamingJobSender sends the ListByStreamingJob request. The method will close the
 // http.Response Body if it receives an error.
 func (client InputsClient) ListByStreamingJobSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByStreamingJobResponder handles the response to the ListByStreamingJob request. The method always
@@ -473,6 +481,7 @@ func (client InputsClient) TestPreparer(resourceGroupName string, jobName string
 func (client InputsClient) TestSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -552,7 +561,9 @@ func (client InputsClient) UpdatePreparer(input Input, resourceGroupName string,
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client InputsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

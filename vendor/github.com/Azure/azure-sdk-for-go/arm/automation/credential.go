@@ -105,7 +105,9 @@ func (client CredentialClient) CreateOrUpdatePreparer(resourceGroupName string, 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client CredentialClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -178,7 +180,9 @@ func (client CredentialClient) DeletePreparer(resourceGroupName string, automati
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client CredentialClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -250,7 +254,9 @@ func (client CredentialClient) GetPreparer(resourceGroupName string, automationA
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client CredentialClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -321,7 +327,9 @@ func (client CredentialClient) ListByAutomationAccountPreparer(resourceGroupName
 // ListByAutomationAccountSender sends the ListByAutomationAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client CredentialClient) ListByAutomationAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAutomationAccountResponder handles the response to the ListByAutomationAccount request. The method always
@@ -466,7 +474,9 @@ func (client CredentialClient) UpdatePreparer(resourceGroupName string, automati
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client CredentialClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

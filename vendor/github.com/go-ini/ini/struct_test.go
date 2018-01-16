@@ -12,7 +12,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package ini
+package ini_test
 
 import (
 	"bytes"
@@ -22,6 +22,7 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/ini.v1"
 )
 
 type testNested struct {
@@ -126,11 +127,11 @@ Born = nil
 Cities = 
 `
 
-func Test_Struct(t *testing.T) {
+func Test_MapToStruct(t *testing.T) {
 	Convey("Map to struct", t, func() {
 		Convey("Map file to struct", func() {
 			ts := new(testStruct)
-			So(MapTo(ts, []byte(_CONF_DATA_STRUCT)), ShouldBeNil)
+			So(ini.MapTo(ts, []byte(_CONF_DATA_STRUCT)), ShouldBeNil)
 
 			So(ts.Name, ShouldEqual, "Unknwon")
 			So(ts.Age, ShouldEqual, 21)
@@ -159,7 +160,7 @@ func Test_Struct(t *testing.T) {
 
 		Convey("Map section to struct", func() {
 			foobar := new(fooBar)
-			f, err := Load([]byte(_CONF_DATA_STRUCT))
+			f, err := ini.Load([]byte(_CONF_DATA_STRUCT))
 			So(err, ShouldBeNil)
 
 			So(f.Section("foo.bar").MapTo(foobar), ShouldBeNil)
@@ -168,58 +169,58 @@ func Test_Struct(t *testing.T) {
 		})
 
 		Convey("Map to non-pointer struct", func() {
-			cfg, err := Load([]byte(_CONF_DATA_STRUCT))
+			f, err := ini.Load([]byte(_CONF_DATA_STRUCT))
 			So(err, ShouldBeNil)
-			So(cfg, ShouldNotBeNil)
+			So(f, ShouldNotBeNil)
 
-			So(cfg.MapTo(testStruct{}), ShouldNotBeNil)
+			So(f.MapTo(testStruct{}), ShouldNotBeNil)
 		})
 
 		Convey("Map to unsupported type", func() {
-			cfg, err := Load([]byte(_CONF_DATA_STRUCT))
+			f, err := ini.Load([]byte(_CONF_DATA_STRUCT))
 			So(err, ShouldBeNil)
-			So(cfg, ShouldNotBeNil)
+			So(f, ShouldNotBeNil)
 
-			cfg.NameMapper = func(raw string) string {
+			f.NameMapper = func(raw string) string {
 				if raw == "Byte" {
 					return "NAME"
 				}
 				return raw
 			}
-			So(cfg.MapTo(&unsupport{}), ShouldNotBeNil)
-			So(cfg.MapTo(&unsupport2{}), ShouldNotBeNil)
-			So(cfg.MapTo(&unsupport4{}), ShouldNotBeNil)
+			So(f.MapTo(&unsupport{}), ShouldNotBeNil)
+			So(f.MapTo(&unsupport2{}), ShouldNotBeNil)
+			So(f.MapTo(&unsupport4{}), ShouldNotBeNil)
 		})
 
 		Convey("Map to omitempty field", func() {
 			ts := new(testStruct)
-			So(MapTo(ts, []byte(_CONF_DATA_STRUCT)), ShouldBeNil)
+			So(ini.MapTo(ts, []byte(_CONF_DATA_STRUCT)), ShouldBeNil)
 
 			So(ts.Omitted, ShouldEqual, true)
 		})
 
 		Convey("Map with shadows", func() {
-			cfg, err := LoadSources(LoadOptions{AllowShadows: true}, []byte(_CONF_DATA_STRUCT))
+			f, err := ini.LoadSources(ini.LoadOptions{AllowShadows: true}, []byte(_CONF_DATA_STRUCT))
 			So(err, ShouldBeNil)
 			ts := new(testStruct)
-			So(cfg.MapTo(ts), ShouldBeNil)
+			So(f.MapTo(ts), ShouldBeNil)
 
 			So(strings.Join(ts.Shadows, " "), ShouldEqual, "1 2 3 4")
 			So(fmt.Sprintf("%v", ts.ShadowInts), ShouldEqual, "[1 2 3 4]")
 		})
 
 		Convey("Map from invalid data source", func() {
-			So(MapTo(&testStruct{}, "hi"), ShouldNotBeNil)
+			So(ini.MapTo(&testStruct{}, "hi"), ShouldNotBeNil)
 		})
 
 		Convey("Map to wrong types and gain default values", func() {
-			cfg, err := Load([]byte(_INVALID_DATA_CONF_STRUCT))
+			f, err := ini.Load([]byte(_INVALID_DATA_CONF_STRUCT))
 			So(err, ShouldBeNil)
 
 			t, err := time.Parse(time.RFC3339, "1993-10-07T20:17:05Z")
 			So(err, ShouldBeNil)
 			dv := &defaultValue{"Joe", 10, true, 1.25, t, []string{"HangZhou", "Boston"}}
-			So(cfg.MapTo(dv), ShouldBeNil)
+			So(f.MapTo(dv), ShouldBeNil)
 			So(dv.Name, ShouldEqual, "Joe")
 			So(dv.Age, ShouldEqual, 10)
 			So(dv.Male, ShouldBeTrue)
@@ -230,7 +231,7 @@ func Test_Struct(t *testing.T) {
 	})
 
 	Convey("Map to struct in strict mode", t, func() {
-		cfg, err := Load([]byte(`
+		f, err := ini.Load([]byte(`
 name=bruce
 age=a30`))
 		So(err, ShouldBeNil)
@@ -241,12 +242,28 @@ age=a30`))
 		}
 		s := new(Strict)
 
-		So(cfg.Section("").StrictMapTo(s), ShouldNotBeNil)
+		So(f.Section("").StrictMapTo(s), ShouldNotBeNil)
 	})
 
+	Convey("Map slice in strict mode", t, func() {
+		f, err := ini.Load([]byte(`
+names=alice, bruce`))
+		So(err, ShouldBeNil)
+
+		type Strict struct {
+			Names []string `ini:"names"`
+		}
+		s := new(Strict)
+
+		So(f.Section("").StrictMapTo(s), ShouldBeNil)
+		So(fmt.Sprint(s.Names), ShouldEqual, "[alice bruce]")
+	})
+}
+
+func Test_ReflectFromStruct(t *testing.T) {
 	Convey("Reflect from struct", t, func() {
 		type Embeded struct {
-			Dates       []time.Time `delim:"|"`
+			Dates       []time.Time `delim:"|" comment:"Time data"`
 			Places      []string
 			Years       []int
 			Numbers     []int64
@@ -258,12 +275,12 @@ age=a30`))
 		type Author struct {
 			Name      string `ini:"NAME"`
 			Male      bool
-			Age       int
+			Age       int `comment:"Author's age"`
 			Height    uint
 			GPA       float64
 			Date      time.Time
 			NeverMind string `ini:"-"`
-			*Embeded  `ini:"infos"`
+			*Embeded  `ini:"infos" comment:"Embeded section"`
 		}
 
 		t, err := time.Parse(time.RFC3339, "1993-10-07T20:17:05Z")
@@ -279,20 +296,23 @@ age=a30`))
 				[]float64{192.168, 10.11},
 				[]int{},
 			}}
-		cfg := Empty()
-		So(ReflectFrom(cfg, a), ShouldBeNil)
+		cfg := ini.Empty()
+		So(ini.ReflectFrom(cfg, a), ShouldBeNil)
 
 		var buf bytes.Buffer
 		_, err = cfg.WriteTo(&buf)
 		So(err, ShouldBeNil)
 		So(buf.String(), ShouldEqual, `NAME   = Unknwon
 Male   = true
+; Author's age
 Age    = 21
 Height = 100
 GPA    = 2.8
 Date   = 1993-10-07T20:17:05Z
 
+; Embeded section
 [infos]
+; Time data
 Dates       = 1993-10-07T20:17:05Z|1993-10-07T20:17:05Z
 Places      = HangZhou,Boston
 Years       = 1993,1994
@@ -305,11 +325,11 @@ None        =
 `)
 
 		Convey("Reflect from non-point struct", func() {
-			So(ReflectFrom(cfg, Author{}), ShouldNotBeNil)
+			So(ini.ReflectFrom(cfg, Author{}), ShouldNotBeNil)
 		})
 
 		Convey("Reflect from struct with omitempty", func() {
-			cfg := Empty()
+			cfg := ini.Empty()
 			type SpecialStruct struct {
 				FirstName  string    `ini:"first_name"`
 				LastName   string    `ini:"last_name"`
@@ -319,7 +339,7 @@ None        =
 				NotEmpty   int       `ini:"omitempty"`
 			}
 
-			So(ReflectFrom(cfg, &SpecialStruct{FirstName: "John", LastName: "Doe", NotEmpty: 9}), ShouldBeNil)
+			So(ini.ReflectFrom(cfg, &SpecialStruct{FirstName: "John", LastName: "Doe", NotEmpty: 9}), ShouldBeNil)
 
 			var buf bytes.Buffer
 			_, err = cfg.WriteTo(&buf)
@@ -338,15 +358,30 @@ type testMapper struct {
 
 func Test_NameGetter(t *testing.T) {
 	Convey("Test name mappers", t, func() {
-		So(MapToWithMapper(&testMapper{}, TitleUnderscore, []byte("packag_name=ini")), ShouldBeNil)
+		So(ini.MapToWithMapper(&testMapper{}, ini.TitleUnderscore, []byte("packag_name=ini")), ShouldBeNil)
 
-		cfg, err := Load([]byte("PACKAGE_NAME=ini"))
+		cfg, err := ini.Load([]byte("PACKAGE_NAME=ini"))
 		So(err, ShouldBeNil)
 		So(cfg, ShouldNotBeNil)
 
-		cfg.NameMapper = AllCapsUnderscore
+		cfg.NameMapper = ini.AllCapsUnderscore
 		tg := new(testMapper)
 		So(cfg.MapTo(tg), ShouldBeNil)
 		So(tg.PackageName, ShouldEqual, "ini")
+	})
+}
+
+type testDurationStruct struct {
+	Duration time.Duration `ini:"Duration"`
+}
+
+func Test_Duration(t *testing.T) {
+	Convey("Duration less than 16m50s", t, func() {
+		ds := new(testDurationStruct)
+		So(ini.MapTo(ds, []byte("Duration=16m49s")), ShouldBeNil)
+
+		dur, err := time.ParseDuration("16m49s")
+		So(err, ShouldBeNil)
+		So(ds.Duration.Seconds(), ShouldEqual, dur.Seconds())
 	})
 }

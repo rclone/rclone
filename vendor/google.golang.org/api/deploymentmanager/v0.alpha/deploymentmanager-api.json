@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/_YIg1ZU-z6xEn8qUWJtIDhiIaWM\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/mU9AB3arZXHonawOKvVGxjy7qkY\"",
  "discoveryVersion": "v1",
  "id": "deploymentmanager:alpha",
  "name": "deploymentmanager",
  "canonicalName": "Deployment Manager Alpha",
  "version": "alpha",
- "revision": "20170925",
+ "revision": "20171214",
  "title": "Google Cloud Deployment Manager Alpha API",
  "description": "The Deployment Manager API allows users to declaratively configure, deploy and run complex solutions on the Google Cloud Platform.",
  "ownerDomain": "google.com",
@@ -86,6 +86,21 @@
   }
  },
  "schemas": {
+  "AsyncOptions": {
+   "id": "AsyncOptions",
+   "type": "object",
+   "description": "Async options that determine when a resource should finish.",
+   "properties": {
+    "methodMatch": {
+     "type": "string",
+     "description": "Method regex where this policy will apply."
+    },
+    "pollingOptions": {
+     "$ref": "PollingOptions",
+     "description": "Deployment manager will poll instances for this API resource setting a RUNNING state, and blocking until polling conditions tell whether the resource is completed or failed."
+    }
+   }
+  },
   "AuditConfig": {
    "id": "AuditConfig",
    "type": "object",
@@ -184,6 +199,10 @@
      "type": "string",
      "description": "The collection that identifies this resource within its service."
     },
+    "methodMap": {
+     "$ref": "MethodMap",
+     "description": "Custom verb method mappings to support unordered list API mappings."
+    },
     "options": {
      "$ref": "Options",
      "description": "The options to apply to this resource-level override"
@@ -217,7 +236,7 @@
     },
     "name": {
      "type": "string",
-     "description": "Name of the composite type."
+     "description": "Name of the composite type, must follow the expression: [a-z]([-a-z0-9_.]{0,61}[a-z0-9])?."
     },
     "operation": {
      "$ref": "Operation",
@@ -527,6 +546,21 @@
     }
    }
   },
+  "Diagnostic": {
+   "id": "Diagnostic",
+   "type": "object",
+   "description": "",
+   "properties": {
+    "field": {
+     "type": "string",
+     "description": "JsonPath expression on the resource that if non empty, indicates that this field needs to be extracted as a diagnostic."
+    },
+    "level": {
+     "type": "string",
+     "description": "Level to record this diagnostic."
+    }
+   }
+  },
   "Expr": {
    "id": "Expr",
    "type": "object",
@@ -709,10 +743,37 @@
     }
    }
   },
+  "MethodMap": {
+   "id": "MethodMap",
+   "type": "object",
+   "description": "Deployment Manager will call these methods during the events of creation/deletion/update/get/setIamPolicy",
+   "properties": {
+    "create": {
+     "type": "string",
+     "description": "The action identifier for the create method to be used for this collection"
+    },
+    "delete": {
+     "type": "string",
+     "description": "The action identifier for the delete method to be used for this collection"
+    },
+    "get": {
+     "type": "string",
+     "description": "The action identifier for the get method to be used for this collection"
+    },
+    "setIamPolicy": {
+     "type": "string",
+     "description": "The action identifier for the setIamPolicy method to be used for this collection"
+    },
+    "update": {
+     "type": "string",
+     "description": "The action identifier for the update method to be used for this collection"
+    }
+   }
+  },
   "Operation": {
    "id": "Operation",
    "type": "object",
-   "description": "An Operation resource, used to manage asynchronous API requests.",
+   "description": "An Operation resource, used to manage asynchronous API requests. (== resource_for v1.globalOperations ==) (== resource_for beta.globalOperations ==) (== resource_for v1.regionOperations ==) (== resource_for beta.regionOperations ==) (== resource_for v1.zoneOperations ==) (== resource_for beta.zoneOperations ==)",
    "properties": {
     "clientOperationId": {
      "type": "string",
@@ -889,6 +950,13 @@
    "type": "object",
    "description": "Options allows customized resource handling by Deployment Manager.",
    "properties": {
+    "asyncOptions": {
+     "type": "array",
+     "description": "Options regarding how to thread async requests.",
+     "items": {
+      "$ref": "AsyncOptions"
+     }
+    },
     "inputMappings": {
      "type": "array",
      "description": "The mappings that apply for requests.",
@@ -948,6 +1016,36 @@
     }
    }
   },
+  "PollingOptions": {
+   "id": "PollingOptions",
+   "type": "object",
+   "description": "",
+   "properties": {
+    "diagnostics": {
+     "type": "array",
+     "description": "An array of diagnostics to be collected by Deployment Manager, these diagnostics will be displayed to the user.",
+     "items": {
+      "$ref": "Diagnostic"
+     }
+    },
+    "failCondition": {
+     "type": "string",
+     "description": "JsonPath expression that determines if the request failed."
+    },
+    "finishCondition": {
+     "type": "string",
+     "description": "JsonPath expression that determines if the request is completed."
+    },
+    "pollingLink": {
+     "type": "string",
+     "description": "JsonPath expression that evaluates to string, it indicates where to poll."
+    },
+    "targetLink": {
+     "type": "string",
+     "description": "JsonPath expression, after polling is completed, indicates where to fetch the resource."
+    }
+   }
+  },
   "Resource": {
    "id": "Resource",
    "type": "object",
@@ -985,6 +1083,13 @@
     "properties": {
      "type": "string",
      "description": "Output only. The current properties of the resource before any references have been filled in. Returned as serialized YAML."
+    },
+    "runtimePolicies": {
+     "type": "array",
+     "description": "Output only. In case this is an action, it will show the runtimePolicies on which this action will run in the deployment",
+     "items": {
+      "type": "string"
+     }
     },
     "type": {
      "type": "string",
@@ -1104,6 +1209,13 @@
     "properties": {
      "type": "string",
      "description": "Output only. The set of updated properties for this resource, before references are expanded. Returned as serialized YAML."
+    },
+    "runtimePolicies": {
+     "type": "array",
+     "description": "Output only. In case this is an action, it will show the runtimePolicies that this action will have after updating the deployment.",
+     "items": {
+      "type": "string"
+     }
     },
     "state": {
      "type": "string",
@@ -1257,6 +1369,10 @@
     "interpreter": {
      "type": "string",
      "description": "Which interpreter (python or jinja) should be used during expansion."
+    },
+    "mainTemplate": {
+     "type": "string",
+     "description": "The filename of the mainTemplate"
     },
     "schema": {
      "type": "string",
@@ -1553,7 +1669,7 @@
        "type": "string",
        "description": "The name of the type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {
@@ -1586,7 +1702,7 @@
        "type": "string",
        "description": "The name of the composite type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {
@@ -1699,7 +1815,7 @@
        "type": "string",
        "description": "The name of the composite type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {
@@ -1735,7 +1851,7 @@
        "type": "string",
        "description": "The name of the composite type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {

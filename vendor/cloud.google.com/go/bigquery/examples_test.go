@@ -86,7 +86,18 @@ func ExampleClient_JobFromID() {
 	if err != nil {
 		// TODO: Handle error.
 	}
-	fmt.Println(job)
+	fmt.Println(job.LastStatus()) // Display the job's status.
+}
+
+func ExampleClient_Jobs() {
+	ctx := context.Background()
+	client, err := bigquery.NewClient(ctx, "project-id")
+	if err != nil {
+		// TODO: Handle error.
+	}
+	it := client.Jobs(ctx)
+	it.State = bigquery.Running // list only running jobs.
+	_ = it                      // TODO: iterate using Next or iterator.Pager.
 }
 
 func ExampleNewGCSReference() {
@@ -228,6 +239,25 @@ func ExampleJob_Wait() {
 	}
 }
 
+func ExampleJob_Config() {
+	ctx := context.Background()
+	client, err := bigquery.NewClient(ctx, "project-id")
+	if err != nil {
+		// TODO: Handle error.
+	}
+	ds := client.Dataset("my_dataset")
+	job, err := ds.Table("t1").CopierFrom(ds.Table("t2")).Run(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	jc, err := job.Config()
+	if err != nil {
+		// TODO: Handle error.
+	}
+	copyConfig := jc.(*bigquery.CopyConfig)
+	fmt.Println(copyConfig.Dst, copyConfig.CreateDisposition)
+}
+
 func ExampleDataset_Create() {
 	ctx := context.Background()
 	client, err := bigquery.NewClient(ctx, "project-id")
@@ -365,10 +395,11 @@ func ExampleInferSchema() {
 
 func ExampleInferSchema_tags() {
 	type Item struct {
-		Name   string
-		Size   float64
-		Count  int    `bigquery:"number"`
-		Secret []byte `bigquery:"-"`
+		Name     string
+		Size     float64
+		Count    int    `bigquery:"number"`
+		Secret   []byte `bigquery:"-"`
+		Optional bool   `bigquery:",nullable"`
 	}
 	schema, err := bigquery.InferSchema(Item{})
 	if err != nil {
@@ -376,12 +407,13 @@ func ExampleInferSchema_tags() {
 		// TODO: Handle error.
 	}
 	for _, fs := range schema {
-		fmt.Println(fs.Name, fs.Type)
+		fmt.Println(fs.Name, fs.Type, fs.Required)
 	}
 	// Output:
-	// Name STRING
-	// Size FLOAT
-	// number INTEGER
+	// Name STRING true
+	// Size FLOAT true
+	// number INTEGER true
+	// Optional BOOLEAN false
 }
 
 func ExampleTable_Create() {

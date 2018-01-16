@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"Kinesis",
     "serviceFullName":"Amazon Kinesis",
+    "serviceId":"Kinesis",
     "signatureVersion":"v4",
     "targetPrefix":"Kinesis_20131202",
     "uid":"kinesis-2013-12-02"
@@ -84,6 +85,19 @@
       },
       "input":{"shape":"DescribeStreamInput"},
       "output":{"shape":"DescribeStreamOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"LimitExceededException"}
+      ]
+    },
+    "DescribeStreamSummary":{
+      "name":"DescribeStreamSummary",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeStreamSummaryInput"},
+      "output":{"shape":"DescribeStreamSummaryOutput"},
       "errors":[
         {"shape":"ResourceNotFoundException"},
         {"shape":"LimitExceededException"}
@@ -407,6 +421,20 @@
       "required":["StreamDescription"],
       "members":{
         "StreamDescription":{"shape":"StreamDescription"}
+      }
+    },
+    "DescribeStreamSummaryInput":{
+      "type":"structure",
+      "required":["StreamName"],
+      "members":{
+        "StreamName":{"shape":"StreamName"}
+      }
+    },
+    "DescribeStreamSummaryOutput":{
+      "type":"structure",
+      "required":["StreamDescriptionSummary"],
+      "members":{
+        "StreamDescriptionSummary":{"shape":"StreamDescriptionSummary"}
       }
     },
     "DisableEnhancedMonitoringInput":{
@@ -944,6 +972,29 @@
         "EnhancedMonitoring":{"shape":"EnhancedMonitoringList"},
         "EncryptionType":{"shape":"EncryptionType"},
         "KeyId":{"shape":"KeyId"}
+      }
+    },
+    "StreamDescriptionSummary":{
+      "type":"structure",
+      "required":[
+        "StreamName",
+        "StreamARN",
+        "StreamStatus",
+        "RetentionPeriodHours",
+        "StreamCreationTimestamp",
+        "EnhancedMonitoring",
+        "OpenShardCount"
+      ],
+      "members":{
+        "StreamName":{"shape":"StreamName"},
+        "StreamARN":{"shape":"StreamARN"},
+        "StreamStatus":{"shape":"StreamStatus"},
+        "RetentionPeriodHours":{"shape":"PositiveIntegerObject"},
+        "StreamCreationTimestamp":{"shape":"Timestamp"},
+        "EnhancedMonitoring":{"shape":"EnhancedMonitoringList"},
+        "EncryptionType":{"shape":"EncryptionType"},
+        "KeyId":{"shape":"KeyId"},
+        "OpenShardCount":{"shape":"ShardCountObject"}
       }
     },
     "StreamName":{

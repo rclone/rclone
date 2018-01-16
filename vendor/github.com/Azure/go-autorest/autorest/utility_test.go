@@ -1,5 +1,19 @@
 package autorest
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"bytes"
 	"encoding/json"
@@ -215,9 +229,49 @@ func ExampleString() {
 
 func TestStringWithValidString(t *testing.T) {
 	i := 123
-	if String(i) != "123" {
-		t.Fatal("autorest: String method failed to convert integer 123 to string")
+	if got, want := String(i), "123"; got != want {
+		t.Logf("got:  %q\nwant: %q", got, want)
+		t.Fail()
 	}
+}
+
+func TestStringWithStringSlice(t *testing.T) {
+	s := []string{"string1", "string2"}
+	if got, want := String(s, ","), "string1,string2"; got != want {
+		t.Logf("got:  %q\nwant: %q", got, want)
+		t.Fail()
+	}
+}
+
+func TestStringWithEnum(t *testing.T) {
+	type TestEnumType string
+	s := TestEnumType("string1")
+	if got, want := String(s), "string1"; got != want {
+		t.Logf("got:  %q\nwant: %q", got, want)
+		t.Fail()
+	}
+}
+
+func TestStringWithEnumSlice(t *testing.T) {
+	type TestEnumType string
+	s := []TestEnumType{"string1", "string2"}
+	if got, want := String(s, ","), "string1,string2"; got != want {
+		t.Logf("got:  %q\nwant: %q", got, want)
+		t.Fail()
+	}
+}
+
+func ExampleAsStringSlice() {
+	type TestEnumType string
+
+	a := []TestEnumType{"value1", "value2"}
+	b, _ := AsStringSlice(a)
+	for _, c := range b {
+		fmt.Println(c)
+	}
+	// Output:
+	// value1
+	// value2
 }
 
 func TestEncodeWithValidPath(t *testing.T) {

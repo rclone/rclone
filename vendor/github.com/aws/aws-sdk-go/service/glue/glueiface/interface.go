@@ -80,6 +80,10 @@ type GlueAPI interface {
 	BatchGetPartitionWithContext(aws.Context, *glue.BatchGetPartitionInput, ...request.Option) (*glue.BatchGetPartitionOutput, error)
 	BatchGetPartitionRequest(*glue.BatchGetPartitionInput) (*request.Request, *glue.BatchGetPartitionOutput)
 
+	BatchStopJobRun(*glue.BatchStopJobRunInput) (*glue.BatchStopJobRunOutput, error)
+	BatchStopJobRunWithContext(aws.Context, *glue.BatchStopJobRunInput, ...request.Option) (*glue.BatchStopJobRunOutput, error)
+	BatchStopJobRunRequest(*glue.BatchStopJobRunInput) (*request.Request, *glue.BatchStopJobRunOutput)
+
 	CreateClassifier(*glue.CreateClassifierInput) (*glue.CreateClassifierOutput, error)
 	CreateClassifierWithContext(aws.Context, *glue.CreateClassifierInput, ...request.Option) (*glue.CreateClassifierOutput, error)
 	CreateClassifierRequest(*glue.CreateClassifierInput) (*request.Request, *glue.CreateClassifierOutput)

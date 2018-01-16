@@ -24,6 +24,7 @@ package unix
 #include <netinet/tcp.h>
 #include <netpacket/packet.h>
 #include <poll.h>
+#include <sched.h>
 #include <signal.h>
 #include <stdio.h>
 #include <sys/epoll.h>
@@ -46,11 +47,12 @@ package unix
 #include <sys/utsname.h>
 #include <sys/wait.h>
 #include <linux/filter.h>
+#include <linux/icmpv6.h>
 #include <linux/keyctl.h>
 #include <linux/netlink.h>
 #include <linux/perf_event.h>
 #include <linux/rtnetlink.h>
-#include <linux/icmpv6.h>
+#include <linux/stat.h>
 #include <asm/termbits.h>
 #include <asm/ptrace.h>
 #include <time.h>
@@ -63,6 +65,7 @@ package unix
 #include <linux/vm_sockets.h>
 #include <linux/random.h>
 #include <linux/taskstats.h>
+#include <linux/cgroupstats.h>
 #include <linux/genetlink.h>
 
 // On mips64, the glibc stat and kernel stat do not agree
@@ -112,6 +115,21 @@ struct stat {
 #include <fcntl.h>
 #include <sys/types.h>
 
+#endif
+
+// These are defined in linux/fcntl.h, but including it globally causes
+// conflicts with fcntl.h
+#ifndef AT_STATX_SYNC_TYPE
+# define AT_STATX_SYNC_TYPE	0x6000	// Type of synchronisation required from statx()
+#endif
+#ifndef AT_STATX_SYNC_AS_STAT
+# define AT_STATX_SYNC_AS_STAT	0x0000	// - Do whatever stat() does
+#endif
+#ifndef AT_STATX_FORCE_SYNC
+# define AT_STATX_FORCE_SYNC	0x2000	// - Force the attributes to be sync'd with the server
+#endif
+#ifndef AT_STATX_DONT_SYNC
+# define AT_STATX_DONT_SYNC	0x4000	// - Don't sync attributes with the server
 #endif
 
 #ifdef TCSETS2
@@ -246,6 +264,10 @@ type _Gid_t C.gid_t
 type Stat_t C.struct_stat
 
 type Statfs_t C.struct_statfs
+
+type StatxTimestamp C.struct_statx_timestamp
+
+type Statx_t C.struct_statx
 
 type Dirent C.struct_dirent
 
@@ -511,8 +533,15 @@ type Ustat_t C.struct_ustat
 type EpollEvent C.struct_my_epoll_event
 
 const (
-	AT_FDCWD            = C.AT_FDCWD
-	AT_REMOVEDIR        = C.AT_REMOVEDIR
+	AT_EMPTY_PATH   = C.AT_EMPTY_PATH
+	AT_FDCWD        = C.AT_FDCWD
+	AT_NO_AUTOMOUNT = C.AT_NO_AUTOMOUNT
+	AT_REMOVEDIR    = C.AT_REMOVEDIR
+
+	AT_STATX_SYNC_AS_STAT = C.AT_STATX_SYNC_AS_STAT
+	AT_STATX_FORCE_SYNC   = C.AT_STATX_FORCE_SYNC
+	AT_STATX_DONT_SYNC    = C.AT_STATX_DONT_SYNC
+
 	AT_SYMLINK_FOLLOW   = C.AT_SYMLINK_FOLLOW
 	AT_SYMLINK_NOFOLLOW = C.AT_SYMLINK_NOFOLLOW
 )
@@ -541,7 +570,7 @@ type Termios C.termios_t
 
 type Winsize C.struct_winsize
 
-// Taskstats
+// Taskstats and cgroup stats.
 
 type Taskstats C.struct_taskstats
 
@@ -561,6 +590,18 @@ const (
 	TASKSTATS_CMD_ATTR_TGID               = C.TASKSTATS_CMD_ATTR_TGID
 	TASKSTATS_CMD_ATTR_REGISTER_CPUMASK   = C.TASKSTATS_CMD_ATTR_REGISTER_CPUMASK
 	TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK = C.TASKSTATS_CMD_ATTR_DEREGISTER_CPUMASK
+)
+
+type CGroupStats C.struct_cgroupstats
+
+const (
+	CGROUPSTATS_CMD_UNSPEC        = C.__TASKSTATS_CMD_MAX
+	CGROUPSTATS_CMD_GET           = C.CGROUPSTATS_CMD_GET
+	CGROUPSTATS_CMD_NEW           = C.CGROUPSTATS_CMD_NEW
+	CGROUPSTATS_TYPE_UNSPEC       = C.CGROUPSTATS_TYPE_UNSPEC
+	CGROUPSTATS_TYPE_CGROUP_STATS = C.CGROUPSTATS_TYPE_CGROUP_STATS
+	CGROUPSTATS_CMD_ATTR_UNSPEC   = C.CGROUPSTATS_CMD_ATTR_UNSPEC
+	CGROUPSTATS_CMD_ATTR_FD       = C.CGROUPSTATS_CMD_ATTR_FD
 )
 
 // Generic netlink
@@ -592,4 +633,13 @@ const (
 	CTRL_ATTR_MCAST_GRP_UNSPEC = C.CTRL_ATTR_MCAST_GRP_UNSPEC
 	CTRL_ATTR_MCAST_GRP_NAME   = C.CTRL_ATTR_MCAST_GRP_NAME
 	CTRL_ATTR_MCAST_GRP_ID     = C.CTRL_ATTR_MCAST_GRP_ID
+)
+
+// CPU affinity
+
+type cpuMask C.__cpu_mask
+
+const (
+	_CPU_SETSIZE = C.__CPU_SETSIZE
+	_NCPUBITS    = C.__NCPUBITS
 )

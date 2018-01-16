@@ -86,8 +86,8 @@ type Analyze struct {
 }
 
 func (s *Analyze) MarshalJSON() ([]byte, error) {
-	type noMethod Analyze
-	raw := noMethod(*s)
+	type NoMethod Analyze
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 

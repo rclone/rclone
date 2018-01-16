@@ -94,7 +94,9 @@ func (client NamespacesClient) CheckNameAvailabilityPreparer(parameters CheckNam
 // CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
@@ -205,6 +207,7 @@ func (client NamespacesClient) CreateOrUpdatePreparer(resourceGroupName string, 
 func (client NamespacesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -286,7 +289,9 @@ func (client NamespacesClient) CreateOrUpdateAuthorizationRulePreparer(resourceG
 // CreateOrUpdateAuthorizationRuleSender sends the CreateOrUpdateAuthorizationRule request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) CreateOrUpdateAuthorizationRuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateAuthorizationRuleResponder handles the response to the CreateOrUpdateAuthorizationRule request. The method always
@@ -381,6 +386,7 @@ func (client NamespacesClient) DeletePreparer(resourceGroupName string, namespac
 func (client NamespacesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -459,7 +465,9 @@ func (client NamespacesClient) DeleteAuthorizationRulePreparer(resourceGroupName
 // DeleteAuthorizationRuleSender sends the DeleteAuthorizationRule request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) DeleteAuthorizationRuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteAuthorizationRuleResponder handles the response to the DeleteAuthorizationRule request. The method always
@@ -533,7 +541,9 @@ func (client NamespacesClient) GetPreparer(resourceGroupName string, namespaceNa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -612,7 +622,9 @@ func (client NamespacesClient) GetAuthorizationRulePreparer(resourceGroupName st
 // GetAuthorizationRuleSender sends the GetAuthorizationRule request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) GetAuthorizationRuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetAuthorizationRuleResponder handles the response to the GetAuthorizationRule request. The method always
@@ -673,7 +685,9 @@ func (client NamespacesClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -817,7 +831,9 @@ func (client NamespacesClient) ListAuthorizationRulesPreparer(resourceGroupName 
 // ListAuthorizationRulesSender sends the ListAuthorizationRules request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) ListAuthorizationRulesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListAuthorizationRulesResponder handles the response to the ListAuthorizationRules request. The method always
@@ -957,7 +973,9 @@ func (client NamespacesClient) ListByResourceGroupPreparer(resourceGroupName str
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -1105,7 +1123,9 @@ func (client NamespacesClient) ListKeysPreparer(resourceGroupName string, namesp
 // ListKeysSender sends the ListKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) ListKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListKeysResponder handles the response to the ListKeys request. The method always
@@ -1187,7 +1207,9 @@ func (client NamespacesClient) RegenerateKeysPreparer(resourceGroupName string, 
 // RegenerateKeysSender sends the RegenerateKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) RegenerateKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateKeysResponder handles the response to the RegenerateKeys request. The method always
@@ -1266,7 +1288,9 @@ func (client NamespacesClient) UpdatePreparer(resourceGroupName string, namespac
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client NamespacesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

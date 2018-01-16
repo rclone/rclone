@@ -135,6 +135,7 @@ func (client AccountClient) CreatePreparer(resourceGroupName string, accountName
 func (client AccountClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -230,6 +231,7 @@ func (client AccountClient) DeletePreparer(resourceGroupName string, accountName
 func (client AccountClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -305,7 +307,9 @@ func (client AccountClient) GetPreparer(resourceGroupName string, accountName st
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -383,7 +387,9 @@ func (client AccountClient) GetKeysPreparer(resourceGroupName string, accountNam
 // GetKeysSender sends the GetKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountClient) GetKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetKeysResponder handles the response to the GetKeys request. The method always
@@ -444,7 +450,9 @@ func (client AccountClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -583,7 +591,9 @@ func (client AccountClient) ListByResourceGroupPreparer(resourceGroupName string
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -730,7 +740,9 @@ func (client AccountClient) RegenerateKeyPreparer(resourceGroupName string, acco
 // RegenerateKeySender sends the RegenerateKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountClient) RegenerateKeySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateKeyResponder handles the response to the RegenerateKey request. The method always
@@ -807,7 +819,9 @@ func (client AccountClient) SynchronizeAutoStorageKeysPreparer(resourceGroupName
 // SynchronizeAutoStorageKeysSender sends the SynchronizeAutoStorageKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountClient) SynchronizeAutoStorageKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // SynchronizeAutoStorageKeysResponder handles the response to the SynchronizeAutoStorageKeys request. The method always
@@ -884,7 +898,9 @@ func (client AccountClient) UpdatePreparer(resourceGroupName string, accountName
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccountClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

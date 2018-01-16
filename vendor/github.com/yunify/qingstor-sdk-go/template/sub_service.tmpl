@@ -20,16 +20,16 @@
 package service
 
 import (
-	"fmt"
-	"io"
-	"net/http"
-	"strings"
-	"time"
+    "fmt"
+    "io"
+    "net/http"
+    "strings"
+    "time"
 
-	"github.com/yunify/qingstor-sdk-go/config"
-	"github.com/yunify/qingstor-sdk-go/request"
-	"github.com/yunify/qingstor-sdk-go/request/data"
-	"github.com/yunify/qingstor-sdk-go/request/errors"
+    "github.com/yunify/qingstor-sdk-go/config"
+    "github.com/yunify/qingstor-sdk-go/request"
+    "github.com/yunify/qingstor-sdk-go/request/data"
+    "github.com/yunify/qingstor-sdk-go/request/errors"
 )
 
 var _ fmt.State
@@ -40,31 +40,31 @@ var _ time.Time
 var _ config.Config
 
 {{if ne $subService.Name "Object"}}
-	// {{$subService.ID | camelCase}} presents {{$subService.ID | snakeCase}}.
-	type {{$subService.ID | camelCase}} struct {
-		Config     *config.Config
-		Properties *Properties
-	}
+    // {{$subService.ID | camelCase}} presents {{$subService.ID | snakeCase}}.
+    type {{$subService.ID | camelCase}} struct {
+        Config     *config.Config
+        Properties *Properties
+    }
 
-	// {{$subService.ID | camelCase}} initializes a new {{$subService.ID | snakeCase}}.
-	func (s *Service) {{$subService.ID | camelCase}}(
-		{{- template "SubServiceInitParams" passThrough $subService.Properties true -}}
-		) (*{{$subService.ID | camelCase}}, error) {
-		{{- range $_, $property := $subService.Properties.Properties -}}
-			{{if eq $property.ID "zone"}}
-				{{$property.ID}} = strings.ToLower({{$property.ID}})
-			{{end}}
-		{{- end -}}
-		properties := &Properties{
-			{{range $_, $property := $subService.Properties.Properties -}}
-				{{$property.ID | upperFirst}}: &{{$property.ID}},
-			{{end -}}
-		}
+    // {{$subService.ID | camelCase}} initializes a new {{$subService.ID | snakeCase}}.
+    func (s *Service) {{$subService.ID | camelCase}}(
+        {{- template "SubServiceInitParams" passThrough $subService.Properties true -}}
+        ) (*{{$subService.ID | camelCase}}, error) {
+        {{- range $_, $property := $subService.Properties.Properties -}}
+            {{if eq $property.ID "zone"}}
+                {{$property.ID}} = strings.ToLower({{$property.ID}})
+            {{end}}
+        {{- end -}}
+        properties := &Properties{
+            {{range $_, $property := $subService.Properties.Properties -}}
+                {{$property.ID | upperFirst}}: &{{$property.ID}},
+            {{end -}}
+        }
 
-		return &{{$subService.ID | camelCase}}{Config: s.Config, Properties: properties}, nil
-	}
+        return &{{$subService.ID | camelCase}}{Config: s.Config, Properties: properties}, nil
+    }
 {{end}}
 
 {{range $_, $operation := $subService.Operations}}
-	{{template "RenderOperation" passThrough $subService $operation}}
+    {{template "RenderOperation" passThrough $subService $operation}}
 {{end}}

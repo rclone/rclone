@@ -46,7 +46,8 @@ func (f Frame) line() int {
 //
 // Format accepts flags that alter the printing of some verbs, as follows:
 //
-//    %+s   path of source file relative to the compile time GOPATH
+//    %+s   function name and path of source file relative to the compile time
+//          GOPATH separated by \n\t (<funcname>\n\t<path>)
 //    %+v   equivalent to %+s:%d
 func (f Frame) Format(s fmt.State, verb rune) {
 	switch verb {

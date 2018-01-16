@@ -8,8 +8,9 @@ import (
 )
 
 type Parser struct {
-	ValidMethods  []string // If populated, only these methods will be considered valid
-	UseJSONNumber bool     // Use JSON Number format in JSON decoder
+	ValidMethods         []string // If populated, only these methods will be considered valid
+	UseJSONNumber        bool     // Use JSON Number format in JSON decoder
+	SkipClaimsValidation bool     // Skip claims validation during token parsing
 }
 
 // Parse, validate, and return a token.
@@ -101,14 +102,16 @@ func (p *Parser) ParseWithClaims(tokenString string, claims Claims, keyFunc Keyf
 	vErr := &ValidationError{}
 
 	// Validate Claims
-	if err := token.Claims.Valid(); err != nil {
+	if !p.SkipClaimsValidation {
+		if err := token.Claims.Valid(); err != nil {
 
-		// If the Claims Valid returned an error, check if it is a validation error,
-		// If it was another error type, create a ValidationError with a generic ClaimsInvalid flag set
-		if e, ok := err.(*ValidationError); !ok {
-			vErr = &ValidationError{Inner: err, Errors: ValidationErrorClaimsInvalid}
-		} else {
-			vErr = e
+			// If the Claims Valid returned an error, check if it is a validation error,
+			// If it was another error type, create a ValidationError with a generic ClaimsInvalid flag set
+			if e, ok := err.(*ValidationError); !ok {
+				vErr = &ValidationError{Inner: err, Errors: ValidationErrorClaimsInvalid}
+			} else {
+				vErr = e
+			}
 		}
 	}
 

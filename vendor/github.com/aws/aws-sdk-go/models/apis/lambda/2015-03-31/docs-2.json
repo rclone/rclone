@@ -9,13 +9,14 @@
     "DeleteAlias": "<p>Deletes the specified Lambda function alias. For more information, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/aliases-intro.html\">Introduction to AWS Lambda Aliases</a>.</p> <p>This requires permission for the lambda:DeleteAlias action.</p>",
     "DeleteEventSourceMapping": "<p>Removes an event source mapping. This means AWS Lambda will no longer invoke the function for events in the associated source.</p> <p>This operation requires permission for the <code>lambda:DeleteEventSourceMapping</code> action.</p>",
     "DeleteFunction": "<p>Deletes the specified Lambda function code and configuration.</p> <p>If you are using the versioning feature and you don't specify a function version in your <code>DeleteFunction</code> request, AWS Lambda will delete the function, including all its versions, and any aliases pointing to the function versions. To delete a specific function version, you must provide the function version via the <code>Qualifier</code> parameter. For information about function versioning, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p> <p>When you delete a function the associated resource policy is also deleted. You will need to delete the event source mappings explicitly.</p> <p>This operation requires permission for the <code>lambda:DeleteFunction</code> action.</p>",
+    "DeleteFunctionConcurrency": "<p>Removes concurrent execution limits from this function. For more information, see <a>concurrent-executions</a>.</p>",
     "GetAccountSettings": "<p>Returns a customer's account settings.</p> <p>You can use this operation to retrieve Lambda limits information, such as code size and concurrency limits. For more information about limits, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/limits.html\">AWS Lambda Limits</a>. You can also retrieve resource usage statistics, such as code storage usage and function count.</p>",
     "GetAlias": "<p>Returns the specified alias information such as the alias ARN, description, and function version it is pointing to. For more information, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/aliases-intro.html\">Introduction to AWS Lambda Aliases</a>.</p> <p>This requires permission for the <code>lambda:GetAlias</code> action.</p>",
     "GetEventSourceMapping": "<p>Returns configuration information for the specified event source mapping (see <a>CreateEventSourceMapping</a>).</p> <p>This operation requires permission for the <code>lambda:GetEventSourceMapping</code> action.</p>",
     "GetFunction": "<p>Returns the configuration information of the Lambda function and a presigned URL link to the .zip file you uploaded with <a>CreateFunction</a> so you can download the .zip file. Note that the URL is valid for up to 10 minutes. The configuration information is the same information you provided as parameters when uploading the function.</p> <p>Using the optional <code>Qualifier</code> parameter, you can specify a specific function version for which you want this information. If you don't specify this parameter, the API uses unqualified function ARN which return information about the <code>$LATEST</code> version of the Lambda function. For more information, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>.</p> <p>This operation requires permission for the <code>lambda:GetFunction</code> action.</p>",
     "GetFunctionConfiguration": "<p>Returns the configuration information of the Lambda function. This the same information you provided as parameters when uploading the function by using <a>CreateFunction</a>.</p> <p>If you are using the versioning feature, you can retrieve this information for a specific function version by using the optional <code>Qualifier</code> parameter and specifying the function version or alias that points to it. If you don't provide it, the API returns information about the $LATEST version of the function. For more information about versioning, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>.</p> <p>This operation requires permission for the <code>lambda:GetFunctionConfiguration</code> operation.</p>",
     "GetPolicy": "<p>Returns the resource policy associated with the specified Lambda function.</p> <p> If you are using the versioning feature, you can get the resource policy associated with the specific Lambda function version or alias by specifying the version or alias name using the <code>Qualifier</code> parameter. For more information about versioning, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p> <p>You need permission for the <code>lambda:GetPolicy action.</code> </p>",
-    "Invoke": "<p>Invokes a specific Lambda function. For an example, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/with-dynamodb-create-function.html#with-dbb-invoke-manually\">Create the Lambda Function and Test It Manually</a>. </p> <p>If you are using the versioning feature, you can invoke the specific function version by providing function version or alias name that is pointing to the function version using the <code>Qualifier</code> parameter in the request. If you don't provide the <code>Qualifier</code> parameter, the <code>$LATEST</code> version of the Lambda function is invoked. Invocations occur at least once in response to an event and functions must be idempotent to handle this. For information about the versioning feature, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p> <p>This operation requires permission for the <code>lambda:InvokeFunction</code> action.</p>",
+    "Invoke": "<p>Invokes a specific Lambda function. For an example, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/with-dynamodb-create-function.html#with-dbb-invoke-manually\">Create the Lambda Function and Test It Manually</a>. </p> <p>If you are using the versioning feature, you can invoke the specific function version by providing function version or alias name that is pointing to the function version using the <code>Qualifier</code> parameter in the request. If you don't provide the <code>Qualifier</code> parameter, the <code>$LATEST</code> version of the Lambda function is invoked. Invocations occur at least once in response to an event and functions must be idempotent to handle this. For information about the versioning feature, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p> <p>This operation requires permission for the <code>lambda:InvokeFunction</code> action.</p> <note> <p>The <code>TooManyRequestsException</code> noted below will return the following: <code>ConcurrentInvocationLimitExceeded</code> will be returned if you have no functions with reserved concurrency and have exceeded your account concurrent limit or if a function without reserved concurrency exceeds the account's unreserved concurrency limit. <code>ReservedFunctionConcurrentInvocationLimitExceeded</code> will be returned when a function with reserved concurrency exceeds its configured concurrency limit. </p> </note>",
     "InvokeAsync": "<important> <p>This API is deprecated. We recommend you use <code>Invoke</code> API (see <a>Invoke</a>).</p> </important> <p>Submits an invocation request to AWS Lambda. Upon receiving the request, Lambda executes the specified function asynchronously. To see the logs generated by the Lambda function execution, see the CloudWatch Logs console.</p> <p>This operation requires permission for the <code>lambda:InvokeFunction</code> action.</p>",
     "ListAliases": "<p>Returns list of aliases created for a Lambda function. For each alias, the response includes information such as the alias ARN, description, alias name, and the function version to which it points. For more information, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/aliases-intro.html\">Introduction to AWS Lambda Aliases</a>.</p> <p>This requires permission for the lambda:ListAliases action.</p>",
     "ListEventSourceMappings": "<p>Returns a list of event source mappings you created using the <code>CreateEventSourceMapping</code> (see <a>CreateEventSourceMapping</a>). </p> <p>For each mapping, the API returns configuration information. You can optionally specify filters to retrieve specific event source mappings.</p> <p>If you are using the versioning feature, you can get list of event source mappings for a specific Lambda function version or an alias as described in the <code>FunctionName</code> parameter. For information about the versioning feature, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p> <p>This operation requires permission for the <code>lambda:ListEventSourceMappings</code> action.</p>",
@@ -23,6 +24,7 @@
     "ListTags": "<p>Returns a list of tags assigned to a function when supplied the function ARN (Amazon Resource Name).</p>",
     "ListVersionsByFunction": "<p>List all versions of a function. For information about the versioning feature, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p>",
     "PublishVersion": "<p>Publishes a version of your function from the current snapshot of $LATEST. That is, AWS Lambda takes a snapshot of the function code and configuration information from $LATEST and publishes a new version. The code and configuration cannot be modified after publication. For information about the versioning feature, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p>",
+    "PutFunctionConcurrency": "<p>Sets a limit on the number of concurrent executions available to this function. It is a subset of your account's total concurrent execution limit per region. Note that Lambda automatically reserves a buffer of 100 concurrent executions for functions without any reserved concurrency limit. This means if your account limit is 1000, you have a total of 900 available to allocate to individual functions. For more information, see <a>concurrent-executions</a>.</p>",
     "RemovePermission": "<p>You can remove individual permissions from an resource policy associated with a Lambda function by providing a statement ID that you provided when you added the permission.</p> <p>If you are using versioning, the permissions you remove are specific to the Lambda function version or alias you specify in the <code>AddPermission</code> request via the <code>Qualifier</code> parameter. For more information about versioning, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a>. </p> <p>Note that removal of a permission will cause an active event source to lose permission to the function.</p> <p>You need permission for the <code>lambda:RemovePermission</code> action.</p>",
     "TagResource": "<p>Creates a list of tags (key-value pairs) on the Lambda function. Requires the Lambda function ARN (Amazon Resource Name). If a key is specified without a value, Lambda creates a tag with the specified key and a value of null. </p>",
     "UntagResource": "<p>Removes tags from a Lambda function. Requires the function ARN (Amazon Resource Name). </p>",
@@ -60,6 +62,18 @@
       "refs": {
       }
     },
+    "AdditionalVersion": {
+      "base": null,
+      "refs": {
+        "AdditionalVersionWeights$key": null
+      }
+    },
+    "AdditionalVersionWeights": {
+      "base": null,
+      "refs": {
+        "AliasRoutingConfiguration$AdditionalVersionWeights": "<p>Set this value to dictate what percentage of traffic will invoke the updated function version. If set to an empty string, 100 percent of traffic will invoke <code>function-version</code>. For more information, see <a>lambda-traffic-shifting-using-aliases</a>.</p>"
+      }
+    },
     "Alias": {
       "base": null,
       "refs": {
@@ -80,6 +94,14 @@
       "base": null,
       "refs": {
         "ListAliasesResponse$Aliases": "<p>A list of aliases.</p>"
+      }
+    },
+    "AliasRoutingConfiguration": {
+      "base": "<p>The parent object that implements what percentage of traffic will invoke each function version. For more information, see <a>lambda-traffic-shifting-using-aliases</a>.</p>",
+      "refs": {
+        "AliasConfiguration$RoutingConfig": "<p>Specifies an additional function versions the alias points to, allowing you to dictate what percentage of traffic will invoke each version. For more information, see <a>lambda-traffic-shifting-using-aliases</a>.</p>",
+        "CreateAliasRequest$RoutingConfig": "<p>Specifies an additional version your alias can point to, allowing you to dictate what percentage of traffic will invoke each version. For more information, see <a>lambda-traffic-shifting-using-aliases</a>.</p>",
+        "UpdateAliasRequest$RoutingConfig": "<p>Specifies an additional version your alias can point to, allowing you to dictate what percentage of traffic will invoke each version. For more information, see <a>lambda-traffic-shifting-using-aliases</a>.</p>"
       }
     },
     "Arn": {
@@ -119,12 +141,18 @@
       "refs": {
         "CreateFunctionRequest$Publish": "<p>This boolean parameter can be used to request AWS Lambda to create the Lambda function and publish a version as an atomic operation.</p>",
         "UpdateFunctionCodeRequest$Publish": "<p>This boolean parameter can be used to request AWS Lambda to update the Lambda function and publish a version as an atomic operation.</p>",
-        "UpdateFunctionCodeRequest$DryRun": "<p>This boolean parameter can be used to test your request to AWS Lambda to update the Lambda function and publish a version as an atomic operation. It will do all necessary computation and validation of your code but will not upload it or a publish a version. Each time this operation is invoked, the <code>CodeSha256</code> hash value the provided code will also be computed and returned in the response.</p>"
+        "UpdateFunctionCodeRequest$DryRun": "<p>This boolean parameter can be used to test your request to AWS Lambda to update the Lambda function and publish a version as an atomic operation. It will do all necessary computation and validation of your code but will not upload it or a publish a version. Each time this operation is invoked, the <code>CodeSha256</code> hash value of the provided code will also be computed and returned in the response.</p>"
       }
     },
     "CodeStorageExceededException": {
       "base": "<p>You have exceeded your maximum total code size per account. <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/limits.html\">Limits</a> </p>",
       "refs": {
+      }
+    },
+    "Concurrency": {
+      "base": null,
+      "refs": {
+        "GetFunctionResponse$Concurrency": "<p>The concurrent execution limit set for this function. For more information, see <a>concurrent-executions</a>.</p>"
       }
     },
     "CreateAliasRequest": {
@@ -164,6 +192,11 @@
     },
     "DeleteEventSourceMappingRequest": {
       "base": "<p/>",
+      "refs": {
+      }
+    },
+    "DeleteFunctionConcurrencyRequest": {
+      "base": null,
       "refs": {
       }
     },
@@ -318,11 +351,13 @@
         "CreateEventSourceMappingRequest$FunctionName": "<p>The Lambda function to invoke when AWS Lambda detects an event on the stream.</p> <p> You can specify the function name (for example, <code>Thumbnail</code>) or you can specify Amazon Resource Name (ARN) of the function (for example, <code>arn:aws:lambda:us-west-2:account-id:function:ThumbNail</code>). </p> <p> If you are using versioning, you can also provide a qualified function ARN (ARN that is qualified with function version or alias name as suffix). For more information about versioning, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a> </p> <p>AWS Lambda also allows you to specify only the function name with the account ID qualifier (for example, <code>account-id:Thumbnail</code>). </p> <p>Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length.</p>",
         "CreateFunctionRequest$FunctionName": "<p>The name you want to assign to the function you are uploading. The function names appear in the console and are returned in the <a>ListFunctions</a> API. Function names are used to specify functions to other AWS Lambda API operations, such as <a>Invoke</a>. Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length. </p>",
         "DeleteAliasRequest$FunctionName": "<p>The Lambda function name for which the alias is created. Deleting an alias does not delete the function version to which it is pointing. Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length.</p>",
+        "DeleteFunctionConcurrencyRequest$FunctionName": "<p>The name of the function you are removing concurrent execution limits from. For more information, see <a>concurrent-executions</a>.</p>",
         "DeleteFunctionRequest$FunctionName": "<p>The Lambda function to delete.</p> <p> You can specify the function name (for example, <code>Thumbnail</code>) or you can specify Amazon Resource Name (ARN) of the function (for example, <code>arn:aws:lambda:us-west-2:account-id:function:ThumbNail</code>). If you are using versioning, you can also provide a qualified function ARN (ARN that is qualified with function version or alias name as suffix). AWS Lambda also allows you to specify only the function name with the account ID qualifier (for example, <code>account-id:Thumbnail</code>). Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length. </p>",
         "GetAliasRequest$FunctionName": "<p>Function name for which the alias is created. An alias is a subresource that exists only in the context of an existing Lambda function so you must specify the function name. Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length.</p>",
         "ListAliasesRequest$FunctionName": "<p>Lambda function name for which the alias is created. Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length.</p>",
         "ListEventSourceMappingsRequest$FunctionName": "<p>The name of the Lambda function.</p> <p> You can specify the function name (for example, <code>Thumbnail</code>) or you can specify Amazon Resource Name (ARN) of the function (for example, <code>arn:aws:lambda:us-west-2:account-id:function:ThumbNail</code>). If you are using versioning, you can also provide a qualified function ARN (ARN that is qualified with function version or alias name as suffix). AWS Lambda also allows you to specify only the function name with the account ID qualifier (for example, <code>account-id:Thumbnail</code>). Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length. </p>",
         "PublishVersionRequest$FunctionName": "<p>The Lambda function name. You can specify a function name (for example, <code>Thumbnail</code>) or you can specify Amazon Resource Name (ARN) of the function (for example, <code>arn:aws:lambda:us-west-2:account-id:function:ThumbNail</code>). AWS Lambda also allows you to specify a partial ARN (for example, <code>account-id:Thumbnail</code>). Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length. </p>",
+        "PutFunctionConcurrencyRequest$FunctionName": "<p>The name of the function you are setting concurrent execution limits on. For more information, see <a>concurrent-executions</a>.</p>",
         "RemovePermissionRequest$FunctionName": "<p>Lambda function whose resource policy you want to remove a permission from.</p> <p> You can specify a function name (for example, <code>Thumbnail</code>) or you can specify Amazon Resource Name (ARN) of the function (for example, <code>arn:aws:lambda:us-west-2:account-id:function:ThumbNail</code>). AWS Lambda also allows you to specify a partial ARN (for example, <code>account-id:Thumbnail</code>). Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length. </p>",
         "UpdateAliasRequest$FunctionName": "<p>The function name for which the alias is created. Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length.</p>",
         "UpdateEventSourceMappingRequest$FunctionName": "<p>The Lambda function to which you want the stream records sent.</p> <p> You can specify a function name (for example, <code>Thumbnail</code>) or you can specify Amazon Resource Name (ARN) of the function (for example, <code>arn:aws:lambda:us-west-2:account-id:function:ThumbNail</code>). AWS Lambda also allows you to specify a partial ARN (for example, <code>account-id:Thumbnail</code>). Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 characters in length. </p> <p>If you are using versioning, you can also provide a qualified function ARN (ARN that is qualified with function version or alias name as suffix). For more information about versioning, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/versioning-aliases.html\">AWS Lambda Function Versioning and Aliases</a> </p> <p>Note that the length constraint applies only to the ARN. If you specify only the function name, it is limited to 64 character in length.</p>",
@@ -333,7 +368,7 @@
     "FunctionVersion": {
       "base": null,
       "refs": {
-        "ListFunctionsRequest$FunctionVersion": "<p>Optional string. If not specified, only the unqualified functions ARNs (Amazon Resource Names) will be returned.</p> <p>Valid value:</p> <p> <code>ALL</code> _ Will return all versions, including <code>$LATEST</code> which will have fully qualified ARNs (Amazon Resource Names).</p>"
+        "ListFunctionsRequest$FunctionVersion": "<p>Optional string. If not specified, only the unqualified functions ARNs (Amazon Resource Names) will be returned.</p> <p>Valid value:</p> <p> <code>ALL</code>: Will return all versions, including <code>$LATEST</code> which will have fully qualified ARNs (Amazon Resource Names).</p>"
       }
     },
     "GetAccountSettingsRequest": {
@@ -398,12 +433,12 @@
     "Integer": {
       "base": null,
       "refs": {
-        "AccountLimit$ConcurrentExecutions": "<p>Number of simultaneous executions of your function per region. For more information or to request a limit increase for concurrent executions, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/concurrent-executions.html\">Lambda Function Concurrent Executions</a>. The default limit is 100.</p>",
+        "AccountLimit$ConcurrentExecutions": "<p>Number of simultaneous executions of your function per region. For more information or to request a limit increase for concurrent executions, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/concurrent-executions.html\">Lambda Function Concurrent Executions</a>. The default limit is 1000.</p>",
         "InvocationResponse$StatusCode": "<p>The HTTP status code will be in the 200 range for successful request. For the <code>RequestResponse</code> invocation type this status code will be 200. For the <code>Event</code> invocation type this status code will be 202. For the <code>DryRun</code> invocation type the status code will be 204. </p>"
       }
     },
     "InvalidParameterValueException": {
-      "base": "<p>One of the parameters in the request is invalid. For example, if you provided an IAM role for AWS Lambda to assume in the <code>CreateFunction</code> or the <code>UpdateFunctionConfiguration</code> API, that AWS Lambda is unable to assume you will get this exception. You will also get this exception if you have selected a deprecated runtime, such as Node v0.10.42. </p>",
+      "base": "<p>One of the parameters in the request is invalid. For example, if you provided an IAM role for AWS Lambda to assume in the <code>CreateFunction</code> or the <code>UpdateFunctionConfiguration</code> API, that AWS Lambda is unable to assume you will get this exception.</p>",
       "refs": {
       }
     },
@@ -556,7 +591,7 @@
     "MasterRegion": {
       "base": null,
       "refs": {
-        "ListFunctionsRequest$MasterRegion": "<p>Optional string. If not specified, will return only regular function versions (i.e., non-replicated versions).</p> <p>Valid values are:</p> <p>The region from which the functions are replicated. For example, if you specify <code>us-east-1</code>, only functions replicated from that region will be returned.</p> <p> <code>ALL</code> _ Will return all functions from any region. If specified, you also must specify a valid FunctionVersion parameter.</p>"
+        "ListFunctionsRequest$MasterRegion": "<p>Optional string. If not specified, will return only regular function versions (i.e., non-replicated versions).</p> <p>Valid values are:</p> <p>The region from which the functions are replicated. For example, if you specify <code>us-east-1</code>, only functions replicated from that region will be returned.</p> <p> <code>ALL</code>: Will return all functions from any region. If specified, you also must specify a valid FunctionVersion parameter.</p>"
       }
     },
     "MaxListItems": {
@@ -616,13 +651,18 @@
       "refs": {
       }
     },
+    "PutFunctionConcurrencyRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
     "Qualifier": {
       "base": null,
       "refs": {
         "AddPermissionRequest$Qualifier": "<p>You can use this optional query parameter to describe a qualified ARN using a function version or an alias name. The permission will then apply to the specific qualified ARN. For example, if you specify function version 2 as the qualifier, then permission applies only when request is made using qualified function ARN:</p> <p> <code>arn:aws:lambda:aws-region:acct-id:function:function-name:2</code> </p> <p>If you specify an alias name, for example <code>PROD</code>, then the permission is valid only for requests made using the alias ARN:</p> <p> <code>arn:aws:lambda:aws-region:acct-id:function:function-name:PROD</code> </p> <p>If the qualifier is not specified, the permission is valid only when requests is made using unqualified function ARN.</p> <p> <code>arn:aws:lambda:aws-region:acct-id:function:function-name</code> </p>",
         "DeleteFunctionRequest$Qualifier": "<p>Using this optional parameter you can specify a function version (but not the <code>$LATEST</code> version) to direct AWS Lambda to delete a specific function version. If the function version has one or more aliases pointing to it, you will get an error because you cannot have aliases pointing to it. You can delete any function version but not the <code>$LATEST</code>, that is, you cannot specify <code>$LATEST</code> as the value of this parameter. The <code>$LATEST</code> version can be deleted only when you want to delete all the function versions and aliases.</p> <p>You can only specify a function version, not an alias name, using this parameter. You cannot delete a function version using its alias.</p> <p>If you don't specify this parameter, AWS Lambda will delete the function, including all of its versions and aliases.</p>",
         "GetFunctionConfigurationRequest$Qualifier": "<p>Using this optional parameter you can specify a function version or an alias name. If you specify function version, the API uses qualified function ARN and returns information about the specific function version. If you specify an alias name, the API uses the alias ARN and returns information about the function version to which the alias points.</p> <p>If you don't specify this parameter, the API uses unqualified function ARN, and returns information about the <code>$LATEST</code> function version.</p>",
-        "GetFunctionRequest$Qualifier": "<p>Using this optional parameter to specify a function version or an alias name. If you specify function version, the API uses qualified function ARN for the request and returns information about the specific Lambda function version. If you specify an alias name, the API uses the alias ARN and returns information about the function version to which the alias points. If you don't provide this parameter, the API uses unqualified function ARN and returns information about the <code>$LATEST</code> version of the Lambda function.</p>",
+        "GetFunctionRequest$Qualifier": "<p>Use this optional parameter to specify a function version or an alias name. If you specify function version, the API uses qualified function ARN for the request and returns information about the specific Lambda function version. If you specify an alias name, the API uses the alias ARN and returns information about the function version to which the alias points. If you don't provide this parameter, the API uses unqualified function ARN and returns information about the <code>$LATEST</code> version of the Lambda function. </p>",
         "GetPolicyRequest$Qualifier": "<p>You can specify this optional query parameter to specify a function version or an alias name in which case this API will return all permissions associated with the specific qualified ARN. If you don't provide this parameter, the API will return permissions that apply to the unqualified function ARN.</p>",
         "InvocationRequest$Qualifier": "<p>You can use this optional parameter to specify a Lambda function version or alias name. If you specify a function version, the API uses the qualified function ARN to invoke a specific Lambda function. If you specify an alias name, the API uses the alias ARN to invoke the Lambda function version to which the alias points.</p> <p>If you don't provide this parameter, then the API uses unqualified function ARN which results in invocation of the <code>$LATEST</code> version.</p>",
         "RemovePermissionRequest$Qualifier": "<p>You can specify this optional parameter to remove permission associated with a specific function version or function alias. If you don't specify this parameter, the API removes permission associated with the unqualified function ARN.</p>"
@@ -636,6 +676,13 @@
     "RequestTooLargeException": {
       "base": "<p>The request payload exceeded the <code>Invoke</code> request body JSON input limit. For more information, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/limits.html\">Limits</a>. </p>",
       "refs": {
+      }
+    },
+    "ReservedConcurrentExecutions": {
+      "base": null,
+      "refs": {
+        "Concurrency$ReservedConcurrentExecutions": "<p>The number of concurrent executions reserved for this function. For more information, see <a>concurrent-executions</a>.</p>",
+        "PutFunctionConcurrencyRequest$ReservedConcurrentExecutions": "<p>The concurrent execution limit reserved for this function. For more information, see <a>concurrent-executions</a>.</p>"
       }
     },
     "ResourceArn": {
@@ -665,9 +712,9 @@
     "Runtime": {
       "base": null,
       "refs": {
-        "CreateFunctionRequest$Runtime": "<p>The runtime environment for the Lambda function you are uploading.</p> <p>To use the Python runtime v3.6, set the value to \"python3.6\". To use the Python runtime v2.7, set the value to \"python2.7\". To use the Node.js runtime v6.10, set the value to \"nodejs6.10\". To use the Node.js runtime v4.3, set the value to \"nodejs4.3\".</p> <note> <p>Node v0.10.42 is currently marked as deprecated. You must migrate existing functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3 or nodejs6.10) as soon as possible. You can request a one-time extension until June 30, 2017 by going to the Lambda console and following the instructions provided. Failure to do so will result in an invalid parmaeter error being returned. Note that you will have to follow this procedure for each region that contains functions written in the Node v0.10.42 runtime.</p> </note>",
+        "CreateFunctionRequest$Runtime": "<p>The runtime environment for the Lambda function you are uploading.</p> <p>To use the Python runtime v3.6, set the value to \"python3.6\". To use the Python runtime v2.7, set the value to \"python2.7\". To use the Node.js runtime v6.10, set the value to \"nodejs6.10\". To use the Node.js runtime v4.3, set the value to \"nodejs4.3\".</p> <note> <p>Node v0.10.42 is currently marked as deprecated. You must migrate existing functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3 or nodejs6.10) as soon as possible. Failure to do so will result in an invalid parmaeter error being returned. Note that you will have to follow this procedure for each region that contains functions written in the Node v0.10.42 runtime.</p> </note>",
         "FunctionConfiguration$Runtime": "<p>The runtime environment for the Lambda function.</p>",
-        "UpdateFunctionConfigurationRequest$Runtime": "<p>The runtime environment for the Lambda function.</p> <p>To use the Python runtime v3.6, set the value to \"python3.6\". To use the Python runtime v2.7, set the value to \"python2.7\". To use the Node.js runtime v6.10, set the value to \"nodejs6.10\". To use the Node.js runtime v4.3, set the value to \"nodejs4.3\". To use the Python runtime v3.6, set the value to \"python3.6\".</p> <note> <p>Node v0.10.42 is currently marked as deprecated. You must migrate existing functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3 or nodejs6.10) as soon as possible. You can request a one-time extension until June 30, 2017 by going to the Lambda console and following the instructions provided. Failure to do so will result in an invalid parameter error being returned. Note that you will have to follow this procedure for each region that contains functions written in the Node v0.10.42 runtime.</p> </note>"
+        "UpdateFunctionConfigurationRequest$Runtime": "<p>The runtime environment for the Lambda function.</p> <p>To use the Python runtime v3.6, set the value to \"python3.6\". To use the Python runtime v2.7, set the value to \"python2.7\". To use the Node.js runtime v6.10, set the value to \"nodejs6.10\". To use the Node.js runtime v4.3, set the value to \"nodejs4.3\". To use the Python runtime v3.6, set the value to \"python3.6\".</p> <note> <p>Node v0.10.42 is currently marked as deprecated. You must migrate existing functions to the newer Node.js runtime versions available on AWS Lambda (nodejs4.3 or nodejs6.10) as soon as possible. Failure to do so will result in an invalid parameter error being returned. Note that you will have to follow this procedure for each region that contains functions written in the Node v0.10.42 runtime.</p> </note>"
       }
     },
     "S3Bucket": {
@@ -765,7 +812,7 @@
         "InvalidSubnetIDException$Message": null,
         "InvalidZipFileException$Type": null,
         "InvalidZipFileException$Message": null,
-        "InvocationRequest$ClientContext": "<p>Using the <code>ClientContext</code> you can pass client-specific information to the Lambda function you are invoking. You can then process the client information in your Lambda function as you choose through the context variable. For an example of a <code>ClientContext</code> JSON, see <a href=\"http://docs.aws.amazon.com/mobileanalytics/latest/ug/PutEvents.html\">PutEvents</a> in the <i>Amazon Mobile Analytics API Reference and User Guide</i>.</p> <p>The ClientContext JSON must be base64-encoded.</p>",
+        "InvocationRequest$ClientContext": "<p>Using the <code>ClientContext</code> you can pass client-specific information to the Lambda function you are invoking. You can then process the client information in your Lambda function as you choose through the context variable. For an example of a <code>ClientContext</code> JSON, see <a href=\"http://docs.aws.amazon.com/mobileanalytics/latest/ug/PutEvents.html\">PutEvents</a> in the <i>Amazon Mobile Analytics API Reference and User Guide</i>.</p> <p>The ClientContext JSON must be base64-encoded and has a maximum size of 3583 bytes.</p>",
         "InvocationResponse$FunctionError": "<p>Indicates whether an error occurred while executing the Lambda function. If an error occurred this field will have one of two values; <code>Handled</code> or <code>Unhandled</code>. <code>Handled</code> errors are errors that are reported by the function while the <code>Unhandled</code> errors are those detected and reported by AWS Lambda. Unhandled errors include out of memory errors and function timeouts. For information about how to report an <code>Handled</code> error, see <a href=\"http://docs.aws.amazon.com/lambda/latest/dg/programming-model.html\">Programming Model</a>. </p>",
         "InvocationResponse$LogResult": "<p> It is the base64-encoded logs for the Lambda function invocation. This is present only if the invocation type is <code>RequestResponse</code> and the logs were requested. </p>",
         "KMSAccessDeniedException$Type": null,
@@ -786,7 +833,7 @@
         "ListVersionsByFunctionResponse$NextMarker": "<p>A string, present if there are more function versions.</p>",
         "PolicyLengthExceededException$Type": null,
         "PolicyLengthExceededException$message": null,
-        "PublishVersionRequest$CodeSha256": "<p>The SHA256 hash of the deployment package you want to publish. This provides validation on the code you are publishing. If you provide this parameter value must match the SHA256 of the $LATEST version for the publication to succeed.</p>",
+        "PublishVersionRequest$CodeSha256": "<p>The SHA256 hash of the deployment package you want to publish. This provides validation on the code you are publishing. If you provide this parameter, the value must match the SHA256 of the $LATEST version for the publication to succeed. You can use the <b>DryRun</b> parameter of <a>UpdateFunctionCode</a> to verify the hash value that will be returned before publishing your new version.</p>",
         "RequestTooLargeException$Type": null,
         "RequestTooLargeException$message": null,
         "ResourceConflictException$Type": "<p/>",
@@ -877,7 +924,7 @@
       }
     },
     "TooManyRequestsException": {
-      "base": "<p/>",
+      "base": "<p> </p>",
       "refs": {
       }
     },
@@ -899,6 +946,12 @@
       "refs": {
         "TracingConfig$Mode": "<p>Can be either PassThrough or Active. If PassThrough, Lambda will only trace the request from an upstream service if it contains a tracing header with \"sampled=1\". If Active, Lambda will respect any tracing header it receives from an upstream service. If no tracing header is received, Lambda will call X-Ray for a tracing decision.</p>",
         "TracingConfigResponse$Mode": "<p>The tracing mode associated with your Lambda function.</p>"
+      }
+    },
+    "UnreservedConcurrentExecutions": {
+      "base": null,
+      "refs": {
+        "AccountLimit$UnreservedConcurrentExecutions": "<p>The number of concurrent executions available to functions that do not have concurrency limits set. For more information, see <a>concurrent-executions</a>.</p>"
       }
     },
     "UnsupportedMediaTypeException": {
@@ -937,6 +990,7 @@
         "AliasConfiguration$FunctionVersion": "<p>Function version to which the alias points.</p>",
         "CreateAliasRequest$FunctionVersion": "<p>Lambda function version for which you are creating the alias.</p>",
         "FunctionConfiguration$Version": "<p>The version of the Lambda function.</p>",
+        "InvocationResponse$ExecutedVersion": "<p>The function version that has been executed. This value is returned only if the invocation type is <code>RequestResponse</code>. For more information, see <a>lambda-traffic-shifting-using-aliases</a>.</p>",
         "ListAliasesRequest$FunctionVersion": "<p>If you specify this optional parameter, the API returns only the aliases that are pointing to the specific Lambda function version, otherwise the API returns all of the aliases created for the Lambda function.</p>",
         "UpdateAliasRequest$FunctionVersion": "<p>Using this parameter you can change the Lambda function version to which the alias points.</p>"
       }
@@ -958,6 +1012,12 @@
       "base": null,
       "refs": {
         "VpcConfigResponse$VpcId": "<p>The VPC ID associated with you Lambda function.</p>"
+      }
+    },
+    "Weight": {
+      "base": null,
+      "refs": {
+        "AdditionalVersionWeights$value": null
       }
     }
   }

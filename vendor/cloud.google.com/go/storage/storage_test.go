@@ -24,10 +24,13 @@ import (
 	"net"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"regexp"
 	"strings"
 	"testing"
 	"time"
 
+	"cloud.google.com/go/iam"
 	"cloud.google.com/go/internal/testutil"
 
 	"golang.org/x/net/context"
@@ -36,6 +39,52 @@ import (
 	"google.golang.org/api/option"
 	raw "google.golang.org/api/storage/v1"
 )
+
+func TestHeaderSanitization(t *testing.T) {
+	t.Parallel()
+	var tests = []struct {
+		desc string
+		in   []string
+		want []string
+	}{
+		{
+			desc: "already sanitized headers should not be modified",
+			in:   []string{"x-goog-header1:true", "x-goog-header2:0"},
+			want: []string{"x-goog-header1:true", "x-goog-header2:0"},
+		},
+		{
+			desc: "sanitized headers should be sorted",
+			in:   []string{"x-goog-header2:0", "x-goog-header1:true"},
+			want: []string{"x-goog-header1:true", "x-goog-header2:0"},
+		},
+		{
+			desc: "non-canonical headers should be removed",
+			in:   []string{"x-goog-header1:true", "x-goog-no-value", "non-canonical-header:not-of-use"},
+			want: []string{"x-goog-header1:true"},
+		},
+		{
+			desc: "excluded canonical headers should be removed",
+			in:   []string{"x-goog-header1:true", "x-goog-encryption-key:my_key", "x-goog-encryption-key-sha256:my_sha256"},
+			want: []string{"x-goog-header1:true"},
+		},
+		{
+			desc: "dirty headers should be formatted correctly",
+			in:   []string{" x-goog-header1 : \textra-spaces ", "X-Goog-Header2:CamelCaseValue"},
+			want: []string{"x-goog-header1:extra-spaces", "x-goog-header2:CamelCaseValue"},
+		},
+		{
+			desc: "duplicate headers should be merged",
+			in:   []string{"x-goog-header1:value1", "X-Goog-Header1:value2"},
+			want: []string{"x-goog-header1:value1,value2"},
+		},
+	}
+	for _, test := range tests {
+		got := sanitizeHeaders(test.in)
+		if !testutil.Equal(got, test.want) {
+			t.Errorf("%s: got %v, want %v", test.desc, got, test.want)
+		}
+	}
+}
 
 func TestSignedURL(t *testing.T) {
 	t.Parallel()
@@ -47,20 +96,20 @@ func TestSignedURL(t *testing.T) {
 		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        expires,
 		ContentType:    "application/json",
-		Headers:        []string{"x-header1", "x-header2"},
+		Headers:        []string{"x-goog-header1:true", "x-goog-header2:false"},
 	})
 	if err != nil {
 		t.Error(err)
 	}
 	want := "https://storage.googleapis.com/bucket-name/object-name?" +
 		"Expires=1033570800&GoogleAccessId=xxx%40clientid&Signature=" +
-		"ZMw18bZVhySNYAMEX87RMyuZCUMtGLVi%2B2zU2ByiQ0Rxgij%2BhFZ5LsT" +
-		"5ZPIH5h3QXB%2BiSb1URJnZo3aF0exVP%2FYR1hpg2e65w9HHt7yYjIqcg" +
-		"%2FfAOIyxriFtgRYk3oAv%2FFLF62fI8iF%2BCp0fWSm%2FHggz22blVnQz" +
-		"EtSP%2BuRhFle4172L%2B710sfMDtyQLKTz6W4TmRjC9ymTi8mVj95dZgyF" +
-		"RXbibTdtw0JzndE0Ig4c6pU4xDPPiyaziUSVDMIpzZDJH1GYOGHxbFasba4" +
-		"1rRoWWkdBnsMtHm2ck%2FsFD2leL6u8q0OpVAc4ZdxseucL4OpCy%2BCLhQ" +
-		"JFQT5bqSljP0g%3D%3D"
+		"RfsHlPtbB2JUYjzCgNr2Mi%2BjggdEuL1V7E6N9o6aaqwVLBDuTv3I0%2B9" +
+		"x94E6rmmr%2FVgnmZigkIUxX%2Blfl7LgKf30uPGLt0mjKGH2p7r9ey1ONJ" +
+		"%2BhVec23FnTRcSgopglvHPuCMWU2oNJE%2F1y8EwWE27baHrG1RhRHbLVF" +
+		"bPpLZ9xTRFK20pluIkfHV00JGljB1imqQHXM%2B2XPWqBngLr%2FwqxLN7i" +
+		"FcUiqR8xQEOHF%2F2e7fbkTHPNq4TazaLZ8X0eZ3eFdJ55A5QmNi8atlN4W" +
+		"5q7Hvs0jcxElG3yqIbx439A995BkspLiAcA%2Fo4%2BxAwEMkGLICdbvakq" +
+		"3eEprNCojw%3D%3D"
 	if url != want {
 		t.Fatalf("Unexpected signed URL; found %v", url)
 	}
@@ -76,16 +125,17 @@ func TestSignedURL_PEMPrivateKey(t *testing.T) {
 		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        expires,
 		ContentType:    "application/json",
-		Headers:        []string{"x-header1", "x-header2"},
+		Headers:        []string{"x-goog-header1:true", "x-goog-header2:false"},
 	})
 	if err != nil {
 		t.Error(err)
 	}
 	want := "https://storage.googleapis.com/bucket-name/object-name?" +
 		"Expires=1033570800&GoogleAccessId=xxx%40clientid&Signature=" +
-		"gHlh63sOxJnNj22X%2B%2F4kwOSNMeqwXWr4udEfrzJPQcq1xzxA8ovMM5SOrOc%" +
-		"2FuE%2Ftc9%2Bq7a42CDBwZff1PsvuJMBDaPbluU257h%2Bvxx8lHMnb%2Bg1wD1" +
-		"99FiCE014MRH9TlIg%2FdXRkErosVWTy4GqAgZemmKHo0HwDGT6IovB9mdg%3D"
+		"TiyKD%2FgGb6Kh0kkb2iF%2FfF%2BnTx7L0J4YiZua8AcTmnidutePEGIU5" +
+		"NULYlrGl6l52gz4zqFb3VFfIRTcPXMdXnnFdMCDhz2QuJBUpsU1Ai9zlyTQ" +
+		"dkb6ShG03xz9%2BEXWAUQO4GBybJw%2FULASuv37xA00SwLdkqj8YdyS5II" +
+		"1lro%3D"
 	if url != want {
 		t.Fatalf("Unexpected signed URL; found %v", url)
 	}
@@ -103,7 +153,7 @@ func TestSignedURL_SignBytes(t *testing.T) {
 		MD5:         "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:     expires,
 		ContentType: "application/json",
-		Headers:     []string{"x-header1", "x-header2"},
+		Headers:     []string{"x-goog-header1:true", "x-goog-header2:false"},
 	})
 	if err != nil {
 		t.Error(err)
@@ -126,16 +176,16 @@ func TestSignedURL_URLUnsafeObjectName(t *testing.T) {
 		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        expires,
 		ContentType:    "application/json",
-		Headers:        []string{"x-header1", "x-header2"},
+		Headers:        []string{"x-goog-header1:true", "x-goog-header2:false"},
 	})
 	if err != nil {
 		t.Error(err)
 	}
 	want := "https://storage.googleapis.com/bucket-name/object%20name%E7%95%8C?" +
-		"Expires=1033570800&GoogleAccessId=xxx%40clientid&Signature=" +
-		"LSxs1YwXNKOa7mQv1ZAI2ao0Fuv6yXLLU7%2BQ97z2B7hYZ57OiFwQ72EdGXSiIM" +
-		"JwLisEKkwoSlYCMm3uuTdgJtXXVi7SYXMfdeKaonyQwMv531KETCBTSewt8CW%2B" +
-		"FaUJ5SEYG44SeJCiqeIr3GF7t90UNWs6TdFXDaKShpQzBGg%3D"
+		"Expires=1033570800&GoogleAccessId=xxx%40clientid&Signature=bxVH1%2Bl%2" +
+		"BSxpnj3XuqKz6mOFk6M94Y%2B4w85J6FCmJan%2FNhGSpndP6fAw1uLHlOn%2F8xUaY%2F" +
+		"SfZ5GzcQ%2BbxOL1WA37yIwZ7xgLYlO%2ByAi3GuqMUmHZiNCai28emODXQ8RtWHvgv6dE" +
+		"SQ%2F0KpDMIWW7rYCaUa63UkUyeSQsKhrVqkIA%3D"
 	if url != want {
 		t.Fatalf("Unexpected signed URL; found %v", url)
 	}
@@ -322,7 +372,7 @@ func TestObjectNames(t *testing.T) {
 		MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
 		Expires:        time.Date(2002, time.October, 2, 10, 0, 0, 0, time.UTC),
 		ContentType:    "application/json",
-		Headers:        []string{"x-header1", "x-header2"},
+		Headers:        []string{"x-goog-header1", "x-goog-header2"},
 	}
 
 	for _, test := range tests {
@@ -767,6 +817,83 @@ func TestBucketAttrs(t *testing.T) {
 			t.Errorf("toRawBucket: got %v, want %v", *got, c.raw)
 		}
 	}
+}
+
+func TestUserProject(t *testing.T) {
+	// Verify that the userProject query param is sent.
+	t.Parallel()
+	ctx := context.Background()
+	gotURL := make(chan *url.URL, 1)
+	hClient, close := newTestServer(func(w http.ResponseWriter, r *http.Request) {
+		io.Copy(ioutil.Discard, r.Body)
+		gotURL <- r.URL
+		if strings.Contains(r.URL.String(), "/rewriteTo/") {
+			res := &raw.RewriteResponse{Done: true}
+			bytes, err := res.MarshalJSON()
+			if err != nil {
+				t.Fatal(err)
+			}
+			w.Write(bytes)
+		} else {
+			fmt.Fprintf(w, "{}")
+		}
+	})
+	defer close()
+	client, err := NewClient(ctx, option.WithHTTPClient(hClient))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	re := regexp.MustCompile(`\buserProject=p\b`)
+	b := client.Bucket("b").UserProject("p")
+	o := b.Object("o")
+
+	check := func(msg string, f func()) {
+		f()
+		select {
+		case u := <-gotURL:
+			if !re.MatchString(u.RawQuery) {
+				t.Errorf("%s: query string %q does not contain userProject", msg, u.RawQuery)
+			}
+		case <-time.After(2 * time.Second):
+			t.Errorf("%s: timed out", msg)
+		}
+	}
+
+	check("buckets.delete", func() { b.Delete(ctx) })
+	check("buckets.get", func() { b.Attrs(ctx) })
+	check("buckets.patch", func() { b.Update(ctx, BucketAttrsToUpdate{}) })
+	check("storage.objects.compose", func() { o.ComposerFrom(b.Object("x")).Run(ctx) })
+	check("storage.objects.delete", func() { o.Delete(ctx) })
+	check("storage.objects.get", func() { o.Attrs(ctx) })
+	check("storage.objects.insert", func() { o.NewWriter(ctx).Close() })
+	check("storage.objects.list", func() { b.Objects(ctx, nil).Next() })
+	check("storage.objects.patch", func() { o.Update(ctx, ObjectAttrsToUpdate{}) })
+	check("storage.objects.rewrite", func() { o.CopierFrom(b.Object("x")).Run(ctx) })
+	check("storage.objectAccessControls.list", func() { o.ACL().List(ctx) })
+	check("storage.objectAccessControls.update", func() { o.ACL().Set(ctx, "", "") })
+	check("storage.objectAccessControls.delete", func() { o.ACL().Delete(ctx, "") })
+	check("storage.bucketAccessControls.list", func() { b.ACL().List(ctx) })
+	check("storage.bucketAccessControls.update", func() { b.ACL().Set(ctx, "", "") })
+	check("storage.bucketAccessControls.delete", func() { b.ACL().Delete(ctx, "") })
+	check("storage.defaultObjectAccessControls.list",
+		func() { b.DefaultObjectACL().List(ctx) })
+	check("storage.defaultObjectAccessControls.update",
+		func() { b.DefaultObjectACL().Set(ctx, "", "") })
+	check("storage.defaultObjectAccessControls.delete",
+		func() { b.DefaultObjectACL().Delete(ctx, "") })
+	check("buckets.getIamPolicy", func() { b.IAM().Policy(ctx) })
+	check("buckets.setIamPolicy", func() {
+		p := &iam.Policy{}
+		p.Add("m", iam.Owner)
+		b.IAM().SetPolicy(ctx, p)
+	})
+	check("buckets.testIamPermissions", func() { b.IAM().TestPermissions(ctx, nil) })
+	check("storage.notifications.insert", func() {
+		b.AddNotification(ctx, &Notification{TopicProjectID: "p", TopicID: "t"})
+	})
+	check("storage.notifications.delete", func() { b.DeleteNotification(ctx, "n") })
+	check("storage.notifications.list", func() { b.Notifications(ctx) })
 }
 
 func newTestServer(handler func(w http.ResponseWriter, r *http.Request)) (*http.Client, func()) {

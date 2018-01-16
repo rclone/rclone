@@ -112,8 +112,8 @@ type GoogleCloudVideointelligenceV1AnnotateVideoProgress struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1AnnotateVideoProgress) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1AnnotateVideoProgress
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1AnnotateVideoProgress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -145,21 +145,25 @@ type GoogleCloudVideointelligenceV1AnnotateVideoResponse struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1AnnotateVideoResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1AnnotateVideoResponse
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1AnnotateVideoResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// GoogleCloudVideointelligenceV1LabelAnnotation: Label annotation.
-type GoogleCloudVideointelligenceV1LabelAnnotation struct {
+// GoogleCloudVideointelligenceV1Entity: Detected entity from video
+// analysis.
+type GoogleCloudVideointelligenceV1Entity struct {
 	// Description: Textual description, e.g. `Fixed-gear bicycle`.
 	Description string `json:"description,omitempty"`
 
+	// EntityId: Opaque entity ID. Some IDs may be available in
+	// [Google Knowledge Graph
+	// Search
+	// API](https://developers.google.com/knowledge-graph/).
+	EntityId string `json:"entityId,omitempty"`
+
 	// LanguageCode: Language code for `description` in BCP-47 format.
 	LanguageCode string `json:"languageCode,omitempty"`
-
-	// Locations: Where the label was detected and with what confidence.
-	Locations []*GoogleCloudVideointelligenceV1LabelLocation `json:"locations,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Description") to
 	// unconditionally include in API requests. By default, fields with
@@ -178,34 +182,186 @@ type GoogleCloudVideointelligenceV1LabelAnnotation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudVideointelligenceV1LabelAnnotation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1LabelAnnotation
-	raw := noMethod(*s)
+func (s *GoogleCloudVideointelligenceV1Entity) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVideointelligenceV1Entity
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// GoogleCloudVideointelligenceV1LabelLocation: Label location.
-type GoogleCloudVideointelligenceV1LabelLocation struct {
+// GoogleCloudVideointelligenceV1ExplicitContentAnnotation: Explicit
+// content annotation (based on per-frame visual signals only).
+// If no explicit content has been detected in a frame, no annotations
+// are
+// present for that frame.
+type GoogleCloudVideointelligenceV1ExplicitContentAnnotation struct {
+	// Frames: All video frames where explicit content was detected.
+	Frames []*GoogleCloudVideointelligenceV1ExplicitContentFrame `json:"frames,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Frames") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Frames") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVideointelligenceV1ExplicitContentAnnotation) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVideointelligenceV1ExplicitContentAnnotation
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVideointelligenceV1ExplicitContentFrame: Video frame level
+// annotation results for explicit content.
+type GoogleCloudVideointelligenceV1ExplicitContentFrame struct {
+	// PornographyLikelihood: Likelihood of the pornography content..
+	//
+	// Possible values:
+	//   "LIKELIHOOD_UNSPECIFIED" - Unspecified likelihood.
+	//   "VERY_UNLIKELY" - Very unlikely.
+	//   "UNLIKELY" - Unlikely.
+	//   "POSSIBLE" - Possible.
+	//   "LIKELY" - Likely.
+	//   "VERY_LIKELY" - Very likely.
+	PornographyLikelihood string `json:"pornographyLikelihood,omitempty"`
+
+	// TimeOffset: Time-offset, relative to the beginning of the video,
+	// corresponding to the
+	// video frame for this location.
+	TimeOffset string `json:"timeOffset,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "PornographyLikelihood") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "PornographyLikelihood") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVideointelligenceV1ExplicitContentFrame) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVideointelligenceV1ExplicitContentFrame
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVideointelligenceV1LabelAnnotation: Label annotation.
+type GoogleCloudVideointelligenceV1LabelAnnotation struct {
+	// CategoryEntities: Common categories for the detected entity.
+	// E.g. when the label is `Terrier` the category is likely `dog`. And in
+	// some
+	// cases there might be more than one categories e.g. `Terrier` could
+	// also be
+	// a `pet`.
+	CategoryEntities []*GoogleCloudVideointelligenceV1Entity `json:"categoryEntities,omitempty"`
+
+	// Entity: Detected entity.
+	Entity *GoogleCloudVideointelligenceV1Entity `json:"entity,omitempty"`
+
+	// Frames: All video frames where a label was detected.
+	Frames []*GoogleCloudVideointelligenceV1LabelFrame `json:"frames,omitempty"`
+
+	// Segments: All video segments where a label was detected.
+	Segments []*GoogleCloudVideointelligenceV1LabelSegment `json:"segments,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "CategoryEntities") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "CategoryEntities") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVideointelligenceV1LabelAnnotation) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVideointelligenceV1LabelAnnotation
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GoogleCloudVideointelligenceV1LabelFrame: Video frame level
+// annotation results for label detection.
+type GoogleCloudVideointelligenceV1LabelFrame struct {
 	// Confidence: Confidence that the label is accurate. Range: [0, 1].
 	Confidence float64 `json:"confidence,omitempty"`
 
-	// Level: Label level.
-	//
-	// Possible values:
-	//   "LABEL_LEVEL_UNSPECIFIED" - Unspecified.
-	//   "VIDEO_LEVEL" - Video-level. Corresponds to the whole video.
-	//   "SEGMENT_LEVEL" - Segment-level. Corresponds to one of
-	// `AnnotateSpec.segments`.
-	//   "SHOT_LEVEL" - Shot-level. Corresponds to a single shot (i.e. a
-	// series of frames
-	// without a major camera position or background change).
-	//   "FRAME_LEVEL" - Frame-level. Corresponds to a single video frame.
-	Level string `json:"level,omitempty"`
+	// TimeOffset: Time-offset, relative to the beginning of the video,
+	// corresponding to the
+	// video frame for this location.
+	TimeOffset string `json:"timeOffset,omitempty"`
 
-	// Segment: Video segment. Unset for video-level labels.
-	// Set to a frame timestamp for frame-level labels.
-	// Otherwise, corresponds to one of `AnnotateSpec.segments`
-	// (if specified) or to shot boundaries (if requested).
+	// ForceSendFields is a list of field names (e.g. "Confidence") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Confidence") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GoogleCloudVideointelligenceV1LabelFrame) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVideointelligenceV1LabelFrame
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+func (s *GoogleCloudVideointelligenceV1LabelFrame) UnmarshalJSON(data []byte) error {
+	type NoMethod GoogleCloudVideointelligenceV1LabelFrame
+	var s1 struct {
+		Confidence gensupport.JSONFloat64 `json:"confidence"`
+		*NoMethod
+	}
+	s1.NoMethod = (*NoMethod)(s)
+	if err := json.Unmarshal(data, &s1); err != nil {
+		return err
+	}
+	s.Confidence = float64(s1.Confidence)
+	return nil
+}
+
+// GoogleCloudVideointelligenceV1LabelSegment: Video segment level
+// annotation results for label detection.
+type GoogleCloudVideointelligenceV1LabelSegment struct {
+	// Confidence: Confidence that the label is accurate. Range: [0, 1].
+	Confidence float64 `json:"confidence,omitempty"`
+
+	// Segment: Video segment where a label was detected.
 	Segment *GoogleCloudVideointelligenceV1VideoSegment `json:"segment,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Confidence") to
@@ -225,68 +381,24 @@ type GoogleCloudVideointelligenceV1LabelLocation struct {
 	NullFields []string `json:"-"`
 }
 
-func (s *GoogleCloudVideointelligenceV1LabelLocation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1LabelLocation
-	raw := noMethod(*s)
+func (s *GoogleCloudVideointelligenceV1LabelSegment) MarshalJSON() ([]byte, error) {
+	type NoMethod GoogleCloudVideointelligenceV1LabelSegment
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-func (s *GoogleCloudVideointelligenceV1LabelLocation) UnmarshalJSON(data []byte) error {
-	type noMethod GoogleCloudVideointelligenceV1LabelLocation
+func (s *GoogleCloudVideointelligenceV1LabelSegment) UnmarshalJSON(data []byte) error {
+	type NoMethod GoogleCloudVideointelligenceV1LabelSegment
 	var s1 struct {
 		Confidence gensupport.JSONFloat64 `json:"confidence"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
 	s.Confidence = float64(s1.Confidence)
 	return nil
-}
-
-// GoogleCloudVideointelligenceV1SafeSearchAnnotation: Safe search
-// annotation (based on per-frame visual signals only).
-// If no unsafe content has been detected in a frame, no annotations
-// are present for that frame.
-type GoogleCloudVideointelligenceV1SafeSearchAnnotation struct {
-	// Adult: Likelihood of adult content.
-	//
-	// Possible values:
-	//   "UNKNOWN" - Unknown likelihood.
-	//   "VERY_UNLIKELY" - Very unlikely.
-	//   "UNLIKELY" - Unlikely.
-	//   "POSSIBLE" - Possible.
-	//   "LIKELY" - Likely.
-	//   "VERY_LIKELY" - Very likely.
-	Adult string `json:"adult,omitempty"`
-
-	// Time: Time-offset, relative to the beginning of the
-	// video,
-	// corresponding to the video frame for this annotation.
-	Time string `json:"time,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "Adult") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "Adult") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *GoogleCloudVideointelligenceV1SafeSearchAnnotation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1SafeSearchAnnotation
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudVideointelligenceV1VideoAnnotationProgress: Annotation
@@ -325,8 +437,8 @@ type GoogleCloudVideointelligenceV1VideoAnnotationProgress struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1VideoAnnotationProgress) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1VideoAnnotationProgress
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1VideoAnnotationProgress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -338,20 +450,29 @@ type GoogleCloudVideointelligenceV1VideoAnnotationResults struct {
 	// some videos may succeed and some may fail.
 	Error *GoogleRpcStatus `json:"error,omitempty"`
 
+	// ExplicitAnnotation: Explicit content annotation.
+	ExplicitAnnotation *GoogleCloudVideointelligenceV1ExplicitContentAnnotation `json:"explicitAnnotation,omitempty"`
+
+	// FrameLabelAnnotations: Label annotations on frame level.
+	// There is exactly one element for each unique label.
+	FrameLabelAnnotations []*GoogleCloudVideointelligenceV1LabelAnnotation `json:"frameLabelAnnotations,omitempty"`
+
 	// InputUri: Video file location in
 	// [Google Cloud Storage](https://cloud.google.com/storage/).
 	InputUri string `json:"inputUri,omitempty"`
 
-	// LabelAnnotations: Label annotations. There is exactly one element for
-	// each unique label.
-	LabelAnnotations []*GoogleCloudVideointelligenceV1LabelAnnotation `json:"labelAnnotations,omitempty"`
-
-	// SafeSearchAnnotations: Safe search annotations.
-	SafeSearchAnnotations []*GoogleCloudVideointelligenceV1SafeSearchAnnotation `json:"safeSearchAnnotations,omitempty"`
+	// SegmentLabelAnnotations: Label annotations on video level or user
+	// specified segment level.
+	// There is exactly one element for each unique label.
+	SegmentLabelAnnotations []*GoogleCloudVideointelligenceV1LabelAnnotation `json:"segmentLabelAnnotations,omitempty"`
 
 	// ShotAnnotations: Shot annotations. Each shot is represented as a
 	// video segment.
 	ShotAnnotations []*GoogleCloudVideointelligenceV1VideoSegment `json:"shotAnnotations,omitempty"`
+
+	// ShotLabelAnnotations: Label annotations on shot level.
+	// There is exactly one element for each unique label.
+	ShotLabelAnnotations []*GoogleCloudVideointelligenceV1LabelAnnotation `json:"shotLabelAnnotations,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "Error") to
 	// unconditionally include in API requests. By default, fields with
@@ -371,24 +492,24 @@ type GoogleCloudVideointelligenceV1VideoAnnotationResults struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1VideoAnnotationResults) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1VideoAnnotationResults
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1VideoAnnotationResults
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // GoogleCloudVideointelligenceV1VideoSegment: Video segment.
 type GoogleCloudVideointelligenceV1VideoSegment struct {
-	// EndTime: Time-offset, relative to the beginning of the
+	// EndTimeOffset: Time-offset, relative to the beginning of the
 	// video,
 	// corresponding to the end of the segment (inclusive).
-	EndTime string `json:"endTime,omitempty"`
+	EndTimeOffset string `json:"endTimeOffset,omitempty"`
 
-	// StartTime: Time-offset, relative to the beginning of the
+	// StartTimeOffset: Time-offset, relative to the beginning of the
 	// video,
 	// corresponding to the start of the segment (inclusive).
-	StartTime string `json:"startTime,omitempty"`
+	StartTimeOffset string `json:"startTimeOffset,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "EndTime") to
+	// ForceSendFields is a list of field names (e.g. "EndTimeOffset") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -396,18 +517,18 @@ type GoogleCloudVideointelligenceV1VideoSegment struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "EndTime") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
+	// NullFields is a list of field names (e.g. "EndTimeOffset") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
 	// null. It is an error if a field in this list has a non-empty value.
 	// This may be used to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
 func (s *GoogleCloudVideointelligenceV1VideoSegment) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1VideoSegment
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1VideoSegment
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -439,8 +560,8 @@ type GoogleCloudVideointelligenceV1beta1AnnotateVideoProgress struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1AnnotateVideoProgress) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1AnnotateVideoProgress
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1AnnotateVideoProgress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -524,8 +645,8 @@ type GoogleCloudVideointelligenceV1beta1AnnotateVideoRequest struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1AnnotateVideoRequest) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1AnnotateVideoRequest
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1AnnotateVideoRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -557,8 +678,8 @@ type GoogleCloudVideointelligenceV1beta1AnnotateVideoResponse struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1AnnotateVideoResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1AnnotateVideoResponse
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1AnnotateVideoResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -591,8 +712,8 @@ type GoogleCloudVideointelligenceV1beta1LabelAnnotation struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1LabelAnnotation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1LabelAnnotation
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1LabelAnnotation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -638,18 +759,18 @@ type GoogleCloudVideointelligenceV1beta1LabelLocation struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1LabelLocation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1LabelLocation
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1LabelLocation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1LabelLocation) UnmarshalJSON(data []byte) error {
-	type noMethod GoogleCloudVideointelligenceV1beta1LabelLocation
+	type NoMethod GoogleCloudVideointelligenceV1beta1LabelLocation
 	var s1 struct {
 		Confidence gensupport.JSONFloat64 `json:"confidence"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -742,8 +863,8 @@ type GoogleCloudVideointelligenceV1beta1SafeSearchAnnotation struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1SafeSearchAnnotation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1SafeSearchAnnotation
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1SafeSearchAnnotation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -783,8 +904,8 @@ type GoogleCloudVideointelligenceV1beta1VideoAnnotationProgress struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1VideoAnnotationProgress) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1VideoAnnotationProgress
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1VideoAnnotationProgress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -829,8 +950,8 @@ type GoogleCloudVideointelligenceV1beta1VideoAnnotationResults struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1VideoAnnotationResults) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1VideoAnnotationResults
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1VideoAnnotationResults
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -897,8 +1018,8 @@ type GoogleCloudVideointelligenceV1beta1VideoContext struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1VideoContext) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1VideoContext
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1VideoContext
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -929,8 +1050,8 @@ type GoogleCloudVideointelligenceV1beta1VideoSegment struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta1VideoSegment) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta1VideoSegment
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta1VideoSegment
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -962,8 +1083,8 @@ type GoogleCloudVideointelligenceV1beta2AnnotateVideoProgress struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2AnnotateVideoProgress) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2AnnotateVideoProgress
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2AnnotateVideoProgress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -995,8 +1116,8 @@ type GoogleCloudVideointelligenceV1beta2AnnotateVideoResponse struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2AnnotateVideoResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2AnnotateVideoResponse
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2AnnotateVideoResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1033,8 +1154,8 @@ type GoogleCloudVideointelligenceV1beta2Entity struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2Entity) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2Entity
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2Entity
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1066,8 +1187,8 @@ type GoogleCloudVideointelligenceV1beta2ExplicitContentAnnotation struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2ExplicitContentAnnotation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2ExplicitContentAnnotation
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2ExplicitContentAnnotation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1110,8 +1231,8 @@ type GoogleCloudVideointelligenceV1beta2ExplicitContentFrame struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2ExplicitContentFrame) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2ExplicitContentFrame
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2ExplicitContentFrame
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1153,8 +1274,8 @@ type GoogleCloudVideointelligenceV1beta2LabelAnnotation struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2LabelAnnotation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2LabelAnnotation
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2LabelAnnotation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1187,18 +1308,18 @@ type GoogleCloudVideointelligenceV1beta2LabelFrame struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2LabelFrame) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2LabelFrame
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2LabelFrame
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2LabelFrame) UnmarshalJSON(data []byte) error {
-	type noMethod GoogleCloudVideointelligenceV1beta2LabelFrame
+	type NoMethod GoogleCloudVideointelligenceV1beta2LabelFrame
 	var s1 struct {
 		Confidence gensupport.JSONFloat64 `json:"confidence"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1233,18 +1354,18 @@ type GoogleCloudVideointelligenceV1beta2LabelSegment struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2LabelSegment) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2LabelSegment
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2LabelSegment
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2LabelSegment) UnmarshalJSON(data []byte) error {
-	type noMethod GoogleCloudVideointelligenceV1beta2LabelSegment
+	type NoMethod GoogleCloudVideointelligenceV1beta2LabelSegment
 	var s1 struct {
 		Confidence gensupport.JSONFloat64 `json:"confidence"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1288,8 +1409,8 @@ type GoogleCloudVideointelligenceV1beta2VideoAnnotationProgress struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2VideoAnnotationProgress) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2VideoAnnotationProgress
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2VideoAnnotationProgress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1343,8 +1464,8 @@ type GoogleCloudVideointelligenceV1beta2VideoAnnotationResults struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2VideoAnnotationResults) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2VideoAnnotationResults
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2VideoAnnotationResults
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1378,8 +1499,8 @@ type GoogleCloudVideointelligenceV1beta2VideoSegment struct {
 }
 
 func (s *GoogleCloudVideointelligenceV1beta2VideoSegment) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudVideointelligenceV1beta2VideoSegment
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudVideointelligenceV1beta2VideoSegment
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1453,8 +1574,8 @@ type GoogleLongrunningOperation struct {
 }
 
 func (s *GoogleLongrunningOperation) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleLongrunningOperation
-	raw := noMethod(*s)
+	type NoMethod GoogleLongrunningOperation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1572,8 +1693,8 @@ type GoogleRpcStatus struct {
 }
 
 func (s *GoogleRpcStatus) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleRpcStatus
-	raw := noMethod(*s)
+	type NoMethod GoogleRpcStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1678,7 +1799,7 @@ func (c *VideosAnnotateCall) Do(opts ...googleapi.CallOption) (*GoogleLongrunnin
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

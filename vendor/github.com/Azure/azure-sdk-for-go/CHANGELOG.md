@@ -1,5 +1,122 @@
 # CHANGELOG
 
+## `v12.2.0-beta`
+
+### Changes
+
+#### Storage
+
+- Add support for creating a SAS client from an endpoint and SAS token.
+- Fixed bug that wasn't appending SAS token to URI query parameters in all cases.
+
+## `v12.1.1-beta`
+
+### Changes
+
+- Removing (at least temporarily) calls to `uuid.NewV1()` due to breaking changes (see https://github.com/Azure/azure-sdk-for-go/issues/947 for more info).
+- Deleted glide files as we are now using dep.
+
+## `v12.1.0-beta`
+
+### New Services
+
+#### Data plane
+- Cognitive Services Computer Vision
+- Cognitive Services Content Moderator
+- Cognitive Services LUIS
+
+## `v12.0.0-beta`
+
+### Changes
+- Long Running Operations now return a `Future` type. Go routines and return via channel features have been removed.
+- Added support for services that make use of polymorphic types.
+- Operations now make use of the [Context Pattern](https://blog.golang.org/context).
+- Container Services has been moved out of Compute folder in its own folder.
+- Azure Go SDK is now using [dep](https://github.com/golang/dep) for vendoring.
+- The *arm* and *dataplane* folders have been deprecated. Use the *profiles* and the *services* folders instead.
+- Group clients have been renamed to a a service specific name.
+
+### New Services
+
+#### Management Plane
+- Azure Container Service for Kubernetes (AKS)
+- Azure MSI Service
+
+#### Data plane
+-	Cognitive Services Custom Search
+-	Cognitive Services Entity Search
+-	Cognitive Services Image Search
+-	Cognitive Services News Search
+-	Cognitive Services Video Search
+-	Cognitive Services Web Search
+-	Cognitive Services Spell Check
+-	MongoDb for CosmosDb
+
+
+### Generated code notes
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: 515f358fe1e521441aec5d63d62b5f0affcc8ea9
+- [AutoRest Go Generator](https://github.com/Azure/autorest.go) commit: c759908a0d8726eb755afd93353c58e072c345af
+
+## `v11.3.0-beta`
+
+### ARM
+
+- Added storage API version 2017-10-01.
+
+## `v11.2.2-beta`
+
+### Bug Fixes
+ - Regenerating `latest` and `preview` profiles after deleting falsely included apimanagement.
+
+## `v11.2.1-beta`
+
+### Bug Fixes
+ - Commenting out ignore rule that false-positived on the graphrbac package.
+
+## `v11.2.0-beta`
+
+### Repository Structure
+ - Adding support for Multi-API Version paradigm in `services` directory.
+ - Adding support for Azure Profile in `profiles` directory.
+
+### Storage
+ - Added operations for getting and setting container metadata.
+ - Fixed unmarshaling bug on list containers operation.'
+
+### Generated code notes
+
+- Services directory generated from [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: 274c99f7bd93d8b98048e31b74a34333cecded74
+- [AutoRest Go Generator](https://github.com/Azure/autorest.go) version: 2.0.41
+
+## `v11.1.1-beta`
+
+### ARM
+
+- Registers resource providers if necessary.
+- Requires go-autorest v9.1.0
+
+### Generated code notes
+
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commits:
+  - All services except trafficmanager and containerregistry: 0c2a12b50d8598f68d6715b507f7dd53e163407e
+  - trafficmanager and containerregistry: c97a18ed775029207715b09c80761334724740b9
+- [AutoRest Go Generator](https://github.com/Azure/autorest.go) version: 2.0.36
+
+### Storage
+
+- Fixed bug in which blob types were unmarshaed incorrectly.
+
+## `v11.1.0-beta`
+
+### ARM
+
+- trafficmanager and containerregistry SDKs now reflect the services faithfully
+- trafficmanager also has a new operation group: user metrics.
+
+### Generated code notes
+- [Azure REST API specs](https://github.com/Azure/azure-rest-api-specs) commit: c97a18ed775029207715b09c80761334724740b9
+- [AutoRest Go Generator](https://github.com/Azure/autorest.go) commit: 5d984152f2e9cff6878ea5060bed7e8d8a2ae1cc
+
 ## `v11.0.0-beta`
 
 ### ARM
@@ -35,6 +152,8 @@
 
 ### Data plane
 
+| api                                 | version            | note                                |
+|:------------------------------------|:-------------------|:------------------------------------|
 | dataplane/cognitiveservices/face          | 1.0          | new                                 |
 | dataplane/cognitiveservices/textanalytics | v2.0         | new                                 |
 
@@ -232,7 +351,7 @@ Storage has been moved to its own repository which can be found here:
 https://github.com/Azure/azure-storage-go
 
 For backwards compatibility, a submodule has been added to this repo. However, consuming storage
-via this repository is deprecated and may be deleted in future versions. 
+via this repository is deprecated and may be deleted in future versions.
 
 ## `v8.1.0-beta`
 ### ARM
@@ -471,7 +590,7 @@ Below are some design changes.
 
 - Uses go-autorest v6.0.0 (Polling and Asynchronous requests related changes).
 
- 
+
 ## `v0.5.0-beta`
 
 Updated following packages to new API versions:
@@ -480,7 +599,7 @@ Updated following packages to new API versions:
 - arm/resources/subscriptions 2015-11-01
 
 
-### Changes 
+### Changes
 
  - SDK now uses go-autorest v3.0.0.
 

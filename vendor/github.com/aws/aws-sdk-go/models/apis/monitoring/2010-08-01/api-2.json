@@ -366,6 +366,10 @@
       "type":"list",
       "member":{"shape":"Datapoint"}
     },
+    "DatapointsToAlarm":{
+      "type":"integer",
+      "min":1
+    },
     "DeleteAlarmsInput":{
       "type":"structure",
       "required":["AlarmNames"],
@@ -375,6 +379,7 @@
     },
     "DeleteDashboardsInput":{
       "type":"structure",
+      "required":["DashboardNames"],
       "members":{
         "DashboardNames":{"shape":"DashboardNames"}
       }
@@ -526,6 +531,7 @@
     "FaultDescription":{"type":"string"},
     "GetDashboardInput":{
       "type":"structure",
+      "required":["DashboardName"],
       "members":{
         "DashboardName":{"shape":"DashboardName"}
       }
@@ -733,6 +739,7 @@
         "Period":{"shape":"Period"},
         "Unit":{"shape":"StandardUnit"},
         "EvaluationPeriods":{"shape":"EvaluationPeriods"},
+        "DatapointsToAlarm":{"shape":"DatapointsToAlarm"},
         "Threshold":{"shape":"Threshold"},
         "ComparisonOperator":{"shape":"ComparisonOperator"},
         "TreatMissingData":{"shape":"TreatMissingData"},
@@ -762,7 +769,8 @@
         "ComparisonOperator",
         "ExtendedStatistic",
         "TreatMissingData",
-        "EvaluateLowSampleCountPercentile"
+        "EvaluateLowSampleCountPercentile",
+        "DatapointsToAlarm"
       ]
     },
     "MetricAlarms":{
@@ -825,6 +833,10 @@
     },
     "PutDashboardInput":{
       "type":"structure",
+      "required":[
+        "DashboardName",
+        "DashboardBody"
+      ],
       "members":{
         "DashboardName":{"shape":"DashboardName"},
         "DashboardBody":{"shape":"DashboardBody"}
@@ -862,6 +874,7 @@
         "Period":{"shape":"Period"},
         "Unit":{"shape":"StandardUnit"},
         "EvaluationPeriods":{"shape":"EvaluationPeriods"},
+        "DatapointsToAlarm":{"shape":"DatapointsToAlarm"},
         "Threshold":{"shape":"Threshold"},
         "ComparisonOperator":{"shape":"ComparisonOperator"},
         "TreatMissingData":{"shape":"TreatMissingData"},

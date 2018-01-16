@@ -1,6 +1,8 @@
 // Package mobileengagement implements the Azure ARM Mobileengagement service API version 2014-12-01.
 //
 // Microsoft Azure Mobile Engagement REST APIs.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/mobileengagement/mgmt/2014-12-01/mobileengagement
 package mobileengagement
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

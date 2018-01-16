@@ -77,10 +77,11 @@ func TestZshCompletion(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			buf := new(bytes.Buffer)
 			tc.root.GenZshCompletion(buf)
-			completion := buf.String()
+			output := buf.String()
+
 			for _, expectedExpression := range tc.expectedExpressions {
-				if !strings.Contains(completion, expectedExpression) {
-					t.Errorf("expected completion to contain '%v' somewhere; got '%v'", expectedExpression, completion)
+				if !strings.Contains(output, expectedExpression) {
+					t.Errorf("Expected completion to contain %q somewhere; got %q", expectedExpression, output)
 				}
 			}
 		})

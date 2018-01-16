@@ -107,7 +107,9 @@ func (client ComputePoliciesClient) CreateOrUpdatePreparer(resourceGroupName str
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ComputePoliciesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -175,7 +177,9 @@ func (client ComputePoliciesClient) DeletePreparer(resourceGroupName string, acc
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ComputePoliciesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -242,7 +246,9 @@ func (client ComputePoliciesClient) GetPreparer(resourceGroupName string, accoun
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ComputePoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -309,7 +315,9 @@ func (client ComputePoliciesClient) ListByAccountPreparer(resourceGroupName stri
 // ListByAccountSender sends the ListByAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client ComputePoliciesClient) ListByAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAccountResponder handles the response to the ListByAccount request. The method always
@@ -451,7 +459,9 @@ func (client ComputePoliciesClient) UpdatePreparer(resourceGroupName string, acc
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ComputePoliciesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

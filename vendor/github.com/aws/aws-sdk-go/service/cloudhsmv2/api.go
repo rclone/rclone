@@ -36,7 +36,7 @@ const opCreateCluster = "CreateCluster"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateCluster
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateCluster
 func (c *CloudHSMV2) CreateClusterRequest(input *CreateClusterInput) (req *request.Request, output *CreateClusterOutput) {
 	op := &request.Operation{
 		Name:       opCreateCluster,
@@ -82,7 +82,7 @@ func (c *CloudHSMV2) CreateClusterRequest(input *CreateClusterInput) (req *reque
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateCluster
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateCluster
 func (c *CloudHSMV2) CreateCluster(input *CreateClusterInput) (*CreateClusterOutput, error) {
 	req, out := c.CreateClusterRequest(input)
 	return out, req.Send()
@@ -129,7 +129,7 @@ const opCreateHsm = "CreateHsm"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsm
 func (c *CloudHSMV2) CreateHsmRequest(input *CreateHsmInput) (req *request.Request, output *CreateHsmOutput) {
 	op := &request.Operation{
 		Name:       opCreateHsm,
@@ -176,7 +176,7 @@ func (c *CloudHSMV2) CreateHsmRequest(input *CreateHsmInput) (req *request.Reque
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsm
 func (c *CloudHSMV2) CreateHsm(input *CreateHsmInput) (*CreateHsmOutput, error) {
 	req, out := c.CreateHsmRequest(input)
 	return out, req.Send()
@@ -223,7 +223,7 @@ const opDeleteCluster = "DeleteCluster"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteCluster
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteCluster
 func (c *CloudHSMV2) DeleteClusterRequest(input *DeleteClusterInput) (req *request.Request, output *DeleteClusterOutput) {
 	op := &request.Operation{
 		Name:       opDeleteCluster,
@@ -271,7 +271,7 @@ func (c *CloudHSMV2) DeleteClusterRequest(input *DeleteClusterInput) (req *reque
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteCluster
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteCluster
 func (c *CloudHSMV2) DeleteCluster(input *DeleteClusterInput) (*DeleteClusterOutput, error) {
 	req, out := c.DeleteClusterRequest(input)
 	return out, req.Send()
@@ -318,7 +318,7 @@ const opDeleteHsm = "DeleteHsm"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsm
 func (c *CloudHSMV2) DeleteHsmRequest(input *DeleteHsmInput) (req *request.Request, output *DeleteHsmOutput) {
 	op := &request.Operation{
 		Name:       opDeleteHsm,
@@ -367,7 +367,7 @@ func (c *CloudHSMV2) DeleteHsmRequest(input *DeleteHsmInput) (req *request.Reque
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsm
 func (c *CloudHSMV2) DeleteHsm(input *DeleteHsmInput) (*DeleteHsmOutput, error) {
 	req, out := c.DeleteHsmRequest(input)
 	return out, req.Send()
@@ -414,7 +414,7 @@ const opDescribeBackups = "DescribeBackups"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackups
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackups
 func (c *CloudHSMV2) DescribeBackupsRequest(input *DescribeBackupsInput) (req *request.Request, output *DescribeBackupsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeBackups,
@@ -473,7 +473,7 @@ func (c *CloudHSMV2) DescribeBackupsRequest(input *DescribeBackupsInput) (req *r
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackups
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackups
 func (c *CloudHSMV2) DescribeBackups(input *DescribeBackupsInput) (*DescribeBackupsOutput, error) {
 	req, out := c.DescribeBackupsRequest(input)
 	return out, req.Send()
@@ -570,7 +570,7 @@ const opDescribeClusters = "DescribeClusters"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClusters
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClusters
 func (c *CloudHSMV2) DescribeClustersRequest(input *DescribeClustersInput) (req *request.Request, output *DescribeClustersOutput) {
 	op := &request.Operation{
 		Name:       opDescribeClusters,
@@ -626,7 +626,7 @@ func (c *CloudHSMV2) DescribeClustersRequest(input *DescribeClustersInput) (req 
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClusters
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClusters
 func (c *CloudHSMV2) DescribeClusters(input *DescribeClustersInput) (*DescribeClustersOutput, error) {
 	req, out := c.DescribeClustersRequest(input)
 	return out, req.Send()
@@ -723,7 +723,7 @@ const opInitializeCluster = "InitializeCluster"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeCluster
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeCluster
 func (c *CloudHSMV2) InitializeClusterRequest(input *InitializeClusterInput) (req *request.Request, output *InitializeClusterOutput) {
 	op := &request.Operation{
 		Name:       opInitializeCluster,
@@ -772,7 +772,7 @@ func (c *CloudHSMV2) InitializeClusterRequest(input *InitializeClusterInput) (re
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeCluster
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeCluster
 func (c *CloudHSMV2) InitializeCluster(input *InitializeClusterInput) (*InitializeClusterOutput, error) {
 	req, out := c.InitializeClusterRequest(input)
 	return out, req.Send()
@@ -819,7 +819,7 @@ const opListTags = "ListTags"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTags
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTags
 func (c *CloudHSMV2) ListTagsRequest(input *ListTagsInput) (req *request.Request, output *ListTagsOutput) {
 	op := &request.Operation{
 		Name:       opListTags,
@@ -877,7 +877,7 @@ func (c *CloudHSMV2) ListTagsRequest(input *ListTagsInput) (req *request.Request
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTags
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTags
 func (c *CloudHSMV2) ListTags(input *ListTagsInput) (*ListTagsOutput, error) {
 	req, out := c.ListTagsRequest(input)
 	return out, req.Send()
@@ -974,7 +974,7 @@ const opTagResource = "TagResource"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResource
 func (c *CloudHSMV2) TagResourceRequest(input *TagResourceInput) (req *request.Request, output *TagResourceOutput) {
 	op := &request.Operation{
 		Name:       opTagResource,
@@ -1020,7 +1020,7 @@ func (c *CloudHSMV2) TagResourceRequest(input *TagResourceInput) (req *request.R
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResource
 func (c *CloudHSMV2) TagResource(input *TagResourceInput) (*TagResourceOutput, error) {
 	req, out := c.TagResourceRequest(input)
 	return out, req.Send()
@@ -1067,7 +1067,7 @@ const opUntagResource = "UntagResource"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResource
 func (c *CloudHSMV2) UntagResourceRequest(input *UntagResourceInput) (req *request.Request, output *UntagResourceOutput) {
 	op := &request.Operation{
 		Name:       opUntagResource,
@@ -1113,7 +1113,7 @@ func (c *CloudHSMV2) UntagResourceRequest(input *UntagResourceInput) (req *reque
 //   The request was rejected because the requester does not have permission to
 //   perform the requested operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResource
 func (c *CloudHSMV2) UntagResource(input *UntagResourceInput) (*UntagResourceOutput, error) {
 	req, out := c.UntagResourceRequest(input)
 	return out, req.Send()
@@ -1136,7 +1136,7 @@ func (c *CloudHSMV2) UntagResourceWithContext(ctx aws.Context, input *UntagResou
 }
 
 // Contains information about a backup of an AWS CloudHSM cluster.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Backup
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Backup
 type Backup struct {
 	_ struct{} `type:"structure"`
 
@@ -1190,7 +1190,7 @@ func (s *Backup) SetCreateTimestamp(v time.Time) *Backup {
 }
 
 // Contains one or more certificates or a certificate signing request (CSR).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Certificates
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Certificates
 type Certificates struct {
 	_ struct{} `type:"structure"`
 
@@ -1253,7 +1253,7 @@ func (s *Certificates) SetManufacturerHardwareCertificate(v string) *Certificate
 }
 
 // Contains information about an AWS CloudHSM cluster.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Cluster
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Cluster
 type Cluster struct {
 	_ struct{} `type:"structure"`
 
@@ -1387,7 +1387,7 @@ func (s *Cluster) SetVpcId(v string) *Cluster {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateClusterRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateClusterRequest
 type CreateClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1461,7 +1461,7 @@ func (s *CreateClusterInput) SetSubnetIds(v []*string) *CreateClusterInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateClusterResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateClusterResponse
 type CreateClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1485,7 +1485,7 @@ func (s *CreateClusterOutput) SetCluster(v *Cluster) *CreateClusterOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsmRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsmRequest
 type CreateHsmInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1551,7 +1551,7 @@ func (s *CreateHsmInput) SetIpAddress(v string) *CreateHsmInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsmResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/CreateHsmResponse
 type CreateHsmOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1575,7 +1575,7 @@ func (s *CreateHsmOutput) SetHsm(v *Hsm) *CreateHsmOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteClusterRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteClusterRequest
 type DeleteClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1615,7 +1615,7 @@ func (s *DeleteClusterInput) SetClusterId(v string) *DeleteClusterInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteClusterResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteClusterResponse
 type DeleteClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1639,7 +1639,7 @@ func (s *DeleteClusterOutput) SetCluster(v *Cluster) *DeleteClusterOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsmRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsmRequest
 type DeleteHsmInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1707,7 +1707,7 @@ func (s *DeleteHsmInput) SetHsmId(v string) *DeleteHsmInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsmResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DeleteHsmResponse
 type DeleteHsmOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1731,7 +1731,7 @@ func (s *DeleteHsmOutput) SetHsmId(v string) *DeleteHsmOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackupsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackupsRequest
 type DescribeBackupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1796,7 +1796,7 @@ func (s *DescribeBackupsInput) SetNextToken(v string) *DescribeBackupsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackupsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeBackupsResponse
 type DescribeBackupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1831,7 +1831,7 @@ func (s *DescribeBackupsOutput) SetNextToken(v string) *DescribeBackupsOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClustersRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClustersRequest
 type DescribeClustersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1897,7 +1897,7 @@ func (s *DescribeClustersInput) SetNextToken(v string) *DescribeClustersInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClustersResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/DescribeClustersResponse
 type DescribeClustersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1934,7 +1934,7 @@ func (s *DescribeClustersOutput) SetNextToken(v string) *DescribeClustersOutput 
 
 // Contains information about a hardware security module (HSM) in an AWS CloudHSM
 // cluster.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Hsm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Hsm
 type Hsm struct {
 	_ struct{} `type:"structure"`
 
@@ -2023,7 +2023,7 @@ func (s *Hsm) SetSubnetId(v string) *Hsm {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeClusterRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeClusterRequest
 type InitializeClusterInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2034,7 +2034,8 @@ type InitializeClusterInput struct {
 	ClusterId *string `type:"string" required:"true"`
 
 	// The cluster certificate issued (signed) by your issuing certificate authority
-	// (CA). The certificate must be in PEM format.
+	// (CA). The certificate must be in PEM format and can contain a maximum of
+	// 5000 characters.
 	//
 	// SignedCert is a required field
 	SignedCert *string `type:"string" required:"true"`
@@ -2043,7 +2044,7 @@ type InitializeClusterInput struct {
 	// (signed) the cluster certificate. This can be a root (self-signed) certificate
 	// or a certificate chain that begins with the certificate that issued the cluster
 	// certificate and ends with a root certificate. The certificate or certificate
-	// chain must be in PEM format.
+	// chain must be in PEM format and can contain a maximum of 5000 characters.
 	//
 	// TrustAnchor is a required field
 	TrustAnchor *string `type:"string" required:"true"`
@@ -2096,7 +2097,7 @@ func (s *InitializeClusterInput) SetTrustAnchor(v string) *InitializeClusterInpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeClusterResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/InitializeClusterResponse
 type InitializeClusterOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2129,7 +2130,7 @@ func (s *InitializeClusterOutput) SetStateMessage(v string) *InitializeClusterOu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTagsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTagsRequest
 type ListTagsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2192,7 +2193,7 @@ func (s *ListTagsInput) SetResourceId(v string) *ListTagsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTagsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/ListTagsResponse
 type ListTagsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2229,7 +2230,7 @@ func (s *ListTagsOutput) SetTagList(v []*Tag) *ListTagsOutput {
 }
 
 // Contains a tag. A tag is a key-value pair.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Tag
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -2285,7 +2286,7 @@ func (s *Tag) SetValue(v string) *Tag {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResourceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResourceRequest
 type TagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2352,7 +2353,7 @@ func (s *TagResourceInput) SetTagList(v []*Tag) *TagResourceInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResourceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/TagResourceResponse
 type TagResourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2367,7 +2368,7 @@ func (s TagResourceOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResourceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResourceRequest
 type UntagResourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2425,7 +2426,7 @@ func (s *UntagResourceInput) SetTagKeyList(v []*string) *UntagResourceInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResourceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cloudhsmv2-2017-04-28/UntagResourceResponse
 type UntagResourceOutput struct {
 	_ struct{} `type:"structure"`
 }

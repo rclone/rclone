@@ -125,6 +125,7 @@ func (client RoleAssignmentsClient) CreateOrUpdatePreparer(resourceGroupName str
 func (client RoleAssignmentsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -192,7 +193,9 @@ func (client RoleAssignmentsClient) DeletePreparer(resourceGroupName string, hub
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -258,7 +261,9 @@ func (client RoleAssignmentsClient) GetPreparer(resourceGroupName string, hubNam
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -323,7 +328,9 @@ func (client RoleAssignmentsClient) ListByHubPreparer(resourceGroupName string, 
 // ListByHubSender sends the ListByHub request. The method will close the
 // http.Response Body if it receives an error.
 func (client RoleAssignmentsClient) ListByHubSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByHubResponder handles the response to the ListByHub request. The method always

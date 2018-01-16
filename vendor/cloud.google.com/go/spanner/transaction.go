@@ -742,7 +742,7 @@ func (t *ReadWriteTransaction) runInTransaction(ctx context.Context, f func(cont
 		return ts, err
 	}
 	// err == nil, return commit timestamp.
-	return ts, err
+	return ts, nil
 }
 
 // writeOnlyTransaction provides the most efficient way of doing write-only transactions. It essentially does blind writes to Cloud Spanner.

@@ -121,6 +121,7 @@ func (client DeviceSettingsClient) CreateOrUpdateAlertSettingsPreparer(deviceNam
 func (client DeviceSettingsClient) CreateOrUpdateAlertSettingsSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -220,6 +221,7 @@ func (client DeviceSettingsClient) CreateOrUpdateTimeSettingsPreparer(deviceName
 func (client DeviceSettingsClient) CreateOrUpdateTimeSettingsSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -293,7 +295,9 @@ func (client DeviceSettingsClient) GetAlertSettingsPreparer(deviceName string, r
 // GetAlertSettingsSender sends the GetAlertSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) GetAlertSettingsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetAlertSettingsResponder handles the response to the GetAlertSettings request. The method always
@@ -366,7 +370,9 @@ func (client DeviceSettingsClient) GetNetworkSettingsPreparer(deviceName string,
 // GetNetworkSettingsSender sends the GetNetworkSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) GetNetworkSettingsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetNetworkSettingsResponder handles the response to the GetNetworkSettings request. The method always
@@ -439,7 +445,9 @@ func (client DeviceSettingsClient) GetSecuritySettingsPreparer(deviceName string
 // GetSecuritySettingsSender sends the GetSecuritySettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) GetSecuritySettingsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetSecuritySettingsResponder handles the response to the GetSecuritySettings request. The method always
@@ -512,7 +520,9 @@ func (client DeviceSettingsClient) GetTimeSettingsPreparer(deviceName string, re
 // GetTimeSettingsSender sends the GetTimeSettings request. The method will close the
 // http.Response Body if it receives an error.
 func (client DeviceSettingsClient) GetTimeSettingsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetTimeSettingsResponder handles the response to the GetTimeSettings request. The method always
@@ -605,6 +615,7 @@ func (client DeviceSettingsClient) SyncRemotemanagementCertificatePreparer(devic
 func (client DeviceSettingsClient) SyncRemotemanagementCertificateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -700,6 +711,7 @@ func (client DeviceSettingsClient) UpdateNetworkSettingsPreparer(deviceName stri
 func (client DeviceSettingsClient) UpdateNetworkSettingsSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -796,6 +808,7 @@ func (client DeviceSettingsClient) UpdateSecuritySettingsPreparer(deviceName str
 func (client DeviceSettingsClient) UpdateSecuritySettingsSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

@@ -3,7 +3,8 @@
   "service": "<p>Amazon Route 53 API actions let you register domain names and perform related operations.</p>",
   "operations": {
     "CheckDomainAvailability": "<p>This operation checks the availability of one domain name. Note that if the availability status of a domain is pending, you must submit another request to determine the availability of the domain name.</p>",
-    "DeleteTagsForDomain": "<p>This operation deletes the specified tags for a domain.</p> <p>All tag operations are eventually consistent; subsequent operations may not immediately represent all issued operations.</p>",
+    "CheckDomainTransferability": "<p>Checks whether a domain name can be transferred to Amazon Route 53. </p>",
+    "DeleteTagsForDomain": "<p>This operation deletes the specified tags for a domain.</p> <p>All tag operations are eventually consistent; subsequent operations might not immediately represent all issued operations.</p>",
     "DisableDomainAutoRenew": "<p>This operation disables automatic renewal of domain registration for the specified domain.</p>",
     "DisableDomainTransferLock": "<p>This operation removes the transfer lock on the domain (specifically the <code>clientTransferProhibited</code> status) to allow domain transfers. We recommend you refrain from performing this action unless you intend to transfer the domain to a different registrar. Successful submission returns an operation ID that you can use to track the progress and completion of the action. If the request is not completed successfully, the domain registrant will be notified by email.</p>",
     "EnableDomainAutoRenew": "<p>This operation configures Amazon Route 53 to automatically renew the specified domain before the domain registration expires. The cost of renewing your domain registration is billed to your AWS account.</p> <p>The period during which you can renew a domain name varies by TLD. For a list of TLDs and their renewal policies, see <a href=\"http://wiki.gandi.net/en/domains/renew#renewal_restoration_and_deletion_times\">\"Renewal, restoration, and deletion times\"</a> on the website for our registrar partner, Gandi. Route 53 requires that you renew before the end of the renewal period that is listed on the Gandi website so we can complete processing before the deadline.</p>",
@@ -14,7 +15,7 @@
     "GetOperationDetail": "<p>This operation returns the current status of an operation that is not completed.</p>",
     "ListDomains": "<p>This operation returns all the domain names registered with Amazon Route 53 for the current AWS account.</p>",
     "ListOperations": "<p>This operation returns the operation IDs of operations that are not yet complete.</p>",
-    "ListTagsForDomain": "<p>This operation returns all of the tags that are associated with the specified domain.</p> <p>All tag operations are eventually consistent; subsequent operations may not immediately represent all issued operations.</p>",
+    "ListTagsForDomain": "<p>This operation returns all of the tags that are associated with the specified domain.</p> <p>All tag operations are eventually consistent; subsequent operations might not immediately represent all issued operations.</p>",
     "RegisterDomain": "<p>This operation registers a domain. Domains are registered by the AWS registrar partner, Gandi. For some top-level domains (TLDs), this operation requires extra parameters.</p> <p>When you register a domain, Amazon Route 53 does the following:</p> <ul> <li> <p>Creates a Amazon Route 53 hosted zone that has the same name as the domain. Amazon Route 53 assigns four name servers to your hosted zone and automatically updates your domain registration with the names of these name servers.</p> </li> <li> <p>Enables autorenew, so your domain registration will renew automatically each year. We'll notify you in advance of the renewal date so you can choose whether to renew the registration.</p> </li> <li> <p>Optionally enables privacy protection, so WHOIS queries return contact information for our registrar partner, Gandi, instead of the information you entered for registrant, admin, and tech contacts.</p> </li> <li> <p>If registration is successful, returns an operation ID that you can use to track the progress and completion of the action. If the request is not completed successfully, the domain registrant is notified by email.</p> </li> <li> <p>Charges your AWS account an amount based on the top-level domain. For more information, see <a href=\"http://aws.amazon.com/route53/pricing/\">Amazon Route 53 Pricing</a>.</p> </li> </ul>",
     "RenewDomain": "<p>This operation renews a domain for the specified number of years. The cost of renewing your domain is billed to your AWS account.</p> <p>We recommend that you renew your domain several weeks before the expiration date. Some TLD registries delete domains before the expiration date if you haven't renewed far enough in advance. For more information about renewing domain registration, see <a href=\"http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/domain-renew.html\">Renewing Registration for a Domain</a> in the Amazon Route 53 Developer Guide.</p>",
     "ResendContactReachabilityEmail": "<p>For operations that require confirmation that the email address for the registrant contact is valid, such as registering a new domain, this operation resends the confirmation email to the current email address for the registrant contact.</p>",
@@ -23,7 +24,7 @@
     "UpdateDomainContact": "<p>This operation updates the contact information for a particular domain. Information for at least one contact (registrant, administrator, or technical) must be supplied for update.</p> <p>If the update is successful, this method returns an operation ID that you can use to track the progress and completion of the action. If the request is not completed successfully, the domain registrant will be notified by email.</p>",
     "UpdateDomainContactPrivacy": "<p>This operation updates the specified domain contact's privacy setting. When the privacy option is enabled, personal information such as postal or email address is hidden from the results of a public WHOIS query. The privacy services are provided by the AWS registrar, Gandi. For more information, see the <a href=\"http://www.gandi.net/domain/whois/?currency=USD&amp;amp;lang=en\">Gandi privacy features</a>.</p> <p>This operation only affects the privacy of the specified contact type (registrant, administrator, or tech). Successful acceptance returns an operation ID that you can use with <a>GetOperationDetail</a> to track the progress and completion of the action. If the request is not completed successfully, the domain registrant will be notified by email.</p>",
     "UpdateDomainNameservers": "<p>This operation replaces the current set of name servers for the domain with the specified set of name servers. If you use Amazon Route 53 as your DNS service, specify the four name servers in the delegation set for the hosted zone for the domain.</p> <p>If successful, this operation returns an operation ID that you can use to track the progress and completion of the action. If the request is not completed successfully, the domain registrant will be notified by email.</p>",
-    "UpdateTagsForDomain": "<p>This operation adds or updates tags for a specified domain.</p> <p>All tag operations are eventually consistent; subsequent operations may not immediately represent all issued operations.</p>",
+    "UpdateTagsForDomain": "<p>This operation adds or updates tags for a specified domain.</p> <p>All tag operations are eventually consistent; subsequent operations might not immediately represent all issued operations.</p>",
     "ViewBilling": "<p>Returns all the domain-related billing records for the current AWS account for a specified period</p>"
   },
   "shapes": {
@@ -77,6 +78,16 @@
     },
     "CheckDomainAvailabilityResponse": {
       "base": "<p>The CheckDomainAvailability response includes the following elements.</p>",
+      "refs": {
+      }
+    },
+    "CheckDomainTransferabilityRequest": {
+      "base": "<p>The CheckDomainTransferability request contains the following elements.</p>",
+      "refs": {
+      }
+    },
+    "CheckDomainTransferabilityResponse": {
+      "base": "<p>The CheckDomainTransferability response includes the following elements.</p>",
       "refs": {
       }
     },
@@ -176,6 +187,7 @@
     "DomainAuthCode": {
       "base": null,
       "refs": {
+        "CheckDomainTransferabilityRequest$AuthCode": "<p>If the registrar for the top-level domain (TLD) requires an authorization code to transfer the domain, the code that you got from the current registrar for the domain.</p>",
         "RetrieveDomainAuthCodeResponse$AuthCode": "<p>The authorization code for the domain.</p>",
         "TransferDomainRequest$AuthCode": "<p>The authorization code for the domain. You get this value from the current registrar.</p>"
       }
@@ -183,7 +195,7 @@
     "DomainAvailability": {
       "base": null,
       "refs": {
-        "CheckDomainAvailabilityResponse$Availability": "<p>Whether the domain name is available for registering.</p> <note> <p>You can only register domains designated as <code>AVAILABLE</code>.</p> </note> <p>Valid values:</p> <dl> <dt>AVAILABLE</dt> <dd> <p>The domain name is available.</p> </dd> <dt>AVAILABLE_RESERVED</dt> <dd> <p>The domain name is reserved under specific conditions.</p> </dd> <dt>AVAILABLE_PREORDER</dt> <dd> <p>The domain name is available and can be preordered.</p> </dd> <dt>DONT_KNOW</dt> <dd> <p>The TLD registry didn't reply with a definitive answer about whether the domain name is available. Amazon Route 53 can return this response for a variety of reasons, for example, the registry is performing maintenance. Try again later.</p> </dd> <dt>PENDING</dt> <dd> <p>The TLD registry didn't return a response in the expected amount of time. When the response is delayed, it usually takes just a few extra seconds. You can resubmit the request immediately.</p> </dd> <dt>RESERVED</dt> <dd> <p>The domain name has been reserved for another person or organization.</p> </dd> <dt>UNAVAILABLE</dt> <dd> <p>The domain name is not available.</p> </dd> <dt>UNAVAILABLE_PREMIUM</dt> <dd> <p>The domain name is not available.</p> </dd> <dt>UNAVAILABLE_RESTRICTED</dt> <dd> <p>The domain name is forbidden.</p> </dd> </dl>"
+        "CheckDomainAvailabilityResponse$Availability": "<p>Whether the domain name is available for registering.</p> <note> <p>You can register only domains designated as <code>AVAILABLE</code>.</p> </note> <p>Valid values:</p> <dl> <dt>AVAILABLE</dt> <dd> <p>The domain name is available.</p> </dd> <dt>AVAILABLE_RESERVED</dt> <dd> <p>The domain name is reserved under specific conditions.</p> </dd> <dt>AVAILABLE_PREORDER</dt> <dd> <p>The domain name is available and can be preordered.</p> </dd> <dt>DONT_KNOW</dt> <dd> <p>The TLD registry didn't reply with a definitive answer about whether the domain name is available. Amazon Route 53 can return this response for a variety of reasons, for example, the registry is performing maintenance. Try again later.</p> </dd> <dt>PENDING</dt> <dd> <p>The TLD registry didn't return a response in the expected amount of time. When the response is delayed, it usually takes just a few extra seconds. You can resubmit the request immediately.</p> </dd> <dt>RESERVED</dt> <dd> <p>The domain name has been reserved for another person or organization.</p> </dd> <dt>UNAVAILABLE</dt> <dd> <p>The domain name is not available.</p> </dd> <dt>UNAVAILABLE_PREMIUM</dt> <dd> <p>The domain name is not available.</p> </dd> <dt>UNAVAILABLE_RESTRICTED</dt> <dd> <p>The domain name is forbidden.</p> </dd> </dl>"
       }
     },
     "DomainLimitExceeded": {
@@ -196,6 +208,7 @@
       "refs": {
         "BillingRecord$DomainName": "<p>The name of the domain that the billing record applies to. If the domain name contains characters other than a-z, 0-9, and - (hyphen), such as an internationalized domain name, then this value is in Punycode. For more information, see <a href=\"http://docs.aws.amazon.com/Route53/latest/DeveloperGuide/DomainNameFormat.html\">DNS Domain Name Format</a> in the <i>Amazon Route 53 Developer Guidezzz</i>.</p>",
         "CheckDomainAvailabilityRequest$DomainName": "<p>The name of the domain that you want to get availability for.</p> <p>Constraints: The domain name can contain only the letters a through z, the numbers 0 through 9, and hyphen (-). Internationalized Domain Names are not supported.</p>",
+        "CheckDomainTransferabilityRequest$DomainName": "<p>The name of the domain that you want to transfer to Amazon Route 53.</p> <p>Constraints: The domain name can contain only the letters a through z, the numbers 0 through 9, and hyphen (-). Internationalized Domain Names are not supported.</p>",
         "DeleteTagsForDomainRequest$DomainName": "<p>The domain for which you want to delete one or more tags.</p>",
         "DisableDomainAutoRenewRequest$DomainName": "<p>The name of the domain that you want to disable automatic renewal for.</p>",
         "DisableDomainTransferLockRequest$DomainName": "<p>The name of the domain that you want to remove the transfer lock for.</p>",
@@ -258,6 +271,12 @@
         "ListDomainsResponse$Domains": "<p>A summary of domains.</p>"
       }
     },
+    "DomainTransferability": {
+      "base": null,
+      "refs": {
+        "CheckDomainTransferabilityResponse$Transferability": "<p>A complex type that contains information about whether the specified domain can be transferred to Amazon Route 53.</p>"
+      }
+    },
     "DuplicateRequest": {
       "base": "<p>The request is already in progress for the domain.</p>",
       "refs": {
@@ -305,10 +324,10 @@
         "DomainLimitExceeded$message": "<p>The number of domains has exceeded the allowed threshold for the account.</p>",
         "DuplicateRequest$message": "<p>The request is already in progress for the domain.</p>",
         "GetOperationDetailResponse$Message": "<p>Detailed information on the status including possible errors.</p>",
-        "InvalidInput$message": "<p>The requested item is not acceptable. For example, for an OperationId it may refer to the ID of an operation that is already completed. For a domain name, it may not be a valid domain name or belong to the requester account.</p>",
+        "InvalidInput$message": "<p>The requested item is not acceptable. For example, for an OperationId it might refer to the ID of an operation that is already completed. For a domain name, it might not be a valid domain name or belong to the requester account.</p>",
         "OperationLimitExceeded$message": "<p>The number of operations or jobs running exceeded the allowed threshold for the account.</p>",
         "TLDRulesViolation$message": "<p>The top-level domain does not support this operation.</p>",
-        "UnsupportedTLD$message": "<p>Amazon Route 53 does not support this top-level domain.</p>"
+        "UnsupportedTLD$message": "<p>Amazon Route 53 does not support this top-level domain (TLD).</p>"
       }
     },
     "ExtraParam": {
@@ -406,7 +425,7 @@
       }
     },
     "InvalidInput": {
-      "base": "<p>The requested item is not acceptable. For example, for an OperationId it may refer to the ID of an operation that is already completed. For a domain name, it may not be a valid domain name or belong to the requester account.</p>",
+      "base": "<p>The requested item is not acceptable. For example, for an OperationId it might refer to the ID of an operation that is already completed. For a domain name, it might not be a valid domain name or belong to the requester account.</p>",
       "refs": {
       }
     },
@@ -690,8 +709,14 @@
       "refs": {
       }
     },
+    "Transferable": {
+      "base": "<p>Whether the domain name can be transferred to Amazon Route 53.</p> <note> <p>You can transfer only domains that have a value of <code>TRANSFERABLE</code> for <code>Transferable</code>.</p> </note> <p>Valid values:</p> <dl> <dt>TRANSFERABLE</dt> <dd> <p>The domain name can be transferred to Amazon Route 53.</p> </dd> <dt>UNTRANSFERRABLE</dt> <dd> <p>The domain name can't be transferred to Amazon Route 53.</p> </dd> <dt>DONT_KNOW</dt> <dd> <p>Reserved for future use.</p> </dd> </dl>",
+      "refs": {
+        "DomainTransferability$Transferable": null
+      }
+    },
     "UnsupportedTLD": {
-      "base": "<p>Amazon Route 53 does not support this top-level domain.</p>",
+      "base": "<p>Amazon Route 53 does not support this top-level domain (TLD).</p>",
       "refs": {
       }
     },

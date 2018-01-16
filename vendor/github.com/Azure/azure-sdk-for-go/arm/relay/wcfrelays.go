@@ -111,7 +111,9 @@ func (client WCFRelaysClient) CreateOrUpdatePreparer(resourceGroupName string, n
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -201,7 +203,9 @@ func (client WCFRelaysClient) CreateOrUpdateAuthorizationRulePreparer(resourceGr
 // CreateOrUpdateAuthorizationRuleSender sends the CreateOrUpdateAuthorizationRule request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) CreateOrUpdateAuthorizationRuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateAuthorizationRuleResponder handles the response to the CreateOrUpdateAuthorizationRule request. The method always
@@ -280,7 +284,9 @@ func (client WCFRelaysClient) DeletePreparer(resourceGroupName string, namespace
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -361,7 +367,9 @@ func (client WCFRelaysClient) DeleteAuthorizationRulePreparer(resourceGroupName 
 // DeleteAuthorizationRuleSender sends the DeleteAuthorizationRule request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) DeleteAuthorizationRuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteAuthorizationRuleResponder handles the response to the DeleteAuthorizationRule request. The method always
@@ -439,7 +447,9 @@ func (client WCFRelaysClient) GetPreparer(resourceGroupName string, namespaceNam
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -521,7 +531,9 @@ func (client WCFRelaysClient) GetAuthorizationRulePreparer(resourceGroupName str
 // GetAuthorizationRuleSender sends the GetAuthorizationRule request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) GetAuthorizationRuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetAuthorizationRuleResponder handles the response to the GetAuthorizationRule request. The method always
@@ -600,7 +612,9 @@ func (client WCFRelaysClient) ListAuthorizationRulesPreparer(resourceGroupName s
 // ListAuthorizationRulesSender sends the ListAuthorizationRules request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) ListAuthorizationRulesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListAuthorizationRulesResponder handles the response to the ListAuthorizationRules request. The method always
@@ -744,7 +758,9 @@ func (client WCFRelaysClient) ListByNamespacePreparer(resourceGroupName string, 
 // ListByNamespaceSender sends the ListByNamespace request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) ListByNamespaceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByNamespaceResponder handles the response to the ListByNamespace request. The method always
@@ -895,7 +911,9 @@ func (client WCFRelaysClient) ListKeysPreparer(resourceGroupName string, namespa
 // ListKeysSender sends the ListKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) ListKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListKeysResponder handles the response to the ListKeys request. The method always
@@ -980,7 +998,9 @@ func (client WCFRelaysClient) RegenerateKeysPreparer(resourceGroupName string, n
 // RegenerateKeysSender sends the RegenerateKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client WCFRelaysClient) RegenerateKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateKeysResponder handles the response to the RegenerateKeys request. The method always

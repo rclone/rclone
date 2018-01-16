@@ -3,9 +3,10 @@ sudo: false
 language: go
 
 go:
-  - 1.6
-  - 1.7
-  - 1.8
+  - 1.6.x
+  - 1.7.x
+  - 1.8.x
+  - 1.9.x
   
 before_install:
   - openssl aes-256-cbc -K $encrypted_6c6ebd86ce52_key -iv $encrypted_6c6ebd86ce52_iv -in key.json.enc -out key.json -d

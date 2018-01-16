@@ -101,7 +101,9 @@ func (client WebhookClient) CreateOrUpdatePreparer(resourceGroupName string, aut
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhookClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -174,7 +176,9 @@ func (client WebhookClient) DeletePreparer(resourceGroupName string, automationA
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhookClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -244,7 +248,9 @@ func (client WebhookClient) GenerateURIPreparer(resourceGroupName string, automa
 // GenerateURISender sends the GenerateURI request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhookClient) GenerateURISender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GenerateURIResponder handles the response to the GenerateURI request. The method always
@@ -317,7 +323,9 @@ func (client WebhookClient) GetPreparer(resourceGroupName string, automationAcco
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhookClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -392,7 +400,9 @@ func (client WebhookClient) ListByAutomationAccountPreparer(resourceGroupName st
 // ListByAutomationAccountSender sends the ListByAutomationAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhookClient) ListByAutomationAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAutomationAccountResponder handles the response to the ListByAutomationAccount request. The method always
@@ -536,7 +546,9 @@ func (client WebhookClient) UpdatePreparer(resourceGroupName string, automationA
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client WebhookClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

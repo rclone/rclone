@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/fjbnlFC4GTEIX5zCJ4_9R1qQWCw\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/Os0QttejTkDUy1hcIScN6tyVIbQ\"",
  "discoveryVersion": "v1",
  "id": "deploymentmanager:v2beta",
  "name": "deploymentmanager",
  "canonicalName": "Deployment Manager V2Beta",
  "version": "v2beta",
- "revision": "20170925",
+ "revision": "20171201",
  "title": "Google Cloud Deployment Manager API V2Beta Methods",
  "description": "The Deployment Manager API allows users to declaratively configure, deploy and run complex solutions on the Google Cloud Platform.",
  "ownerDomain": "google.com",
@@ -243,7 +243,7 @@
     },
     "name": {
      "type": "string",
-     "description": "Name of the composite type."
+     "description": "Name of the composite type, must follow the expression: [a-z]([-a-z0-9_.]{0,61}[a-z0-9])?."
     },
     "operation": {
      "$ref": "Operation",
@@ -685,7 +685,7 @@
   "Operation": {
    "id": "Operation",
    "type": "object",
-   "description": "An Operation resource, used to manage asynchronous API requests.",
+   "description": "An Operation resource, used to manage asynchronous API requests. (== resource_for v1.globalOperations ==) (== resource_for beta.globalOperations ==) (== resource_for v1.regionOperations ==) (== resource_for beta.regionOperations ==) (== resource_for v1.zoneOperations ==) (== resource_for beta.zoneOperations ==)",
    "properties": {
     "clientOperationId": {
      "type": "string",
@@ -1223,6 +1223,10 @@
      "type": "string",
      "description": "Which interpreter (python or jinja) should be used during expansion."
     },
+    "mainTemplate": {
+     "type": "string",
+     "description": "The filename of the mainTemplate"
+    },
     "schema": {
      "type": "string",
      "description": "The contents of the template schema."
@@ -1518,7 +1522,7 @@
        "type": "string",
        "description": "The name of the type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {
@@ -1551,7 +1555,7 @@
        "type": "string",
        "description": "The name of the composite type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {
@@ -1664,7 +1668,7 @@
        "type": "string",
        "description": "The name of the composite type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {
@@ -1700,7 +1704,7 @@
        "type": "string",
        "description": "The name of the composite type for this request.",
        "required": true,
-       "pattern": "[a-z](?:[-a-z0-9]{0,61}[a-z0-9])?",
+       "pattern": "[a-z](?:[-a-z0-9_.]{0,61}[a-z0-9])?",
        "location": "path"
       },
       "project": {

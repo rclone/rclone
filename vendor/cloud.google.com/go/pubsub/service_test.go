@@ -15,8 +15,9 @@
 package pubsub
 
 import (
-	"reflect"
 	"testing"
+
+	"cloud.google.com/go/internal/testutil"
 
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
 )
@@ -58,10 +59,10 @@ func TestSplitRequest(t *testing.T) {
 			ModifyDeadlineSeconds: modDeadlines[len(m1) : len(m1)+len(m2)],
 		}
 		got1, got2 := splitRequest(req, reqFixedOverhead+40)
-		if !reflect.DeepEqual(got1, want1) {
+		if !testutil.Equal(got1, want1) {
 			t.Errorf("#%d: first:\ngot  %+v\nwant %+v", i, got1, want1)
 		}
-		if !reflect.DeepEqual(got2, want2) {
+		if !testutil.Equal(got2, want2) {
 			t.Errorf("#%d: second:\ngot  %+v\nwant %+v", i, got2, want2)
 		}
 	}

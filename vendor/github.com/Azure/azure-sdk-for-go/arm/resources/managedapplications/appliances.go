@@ -132,6 +132,7 @@ func (client AppliancesClient) CreateOrUpdatePreparer(resourceGroupName string, 
 func (client AppliancesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -234,6 +235,7 @@ func (client AppliancesClient) CreateOrUpdateByIDPreparer(applianceID string, pa
 func (client AppliancesClient) CreateOrUpdateByIDSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -330,6 +332,7 @@ func (client AppliancesClient) DeletePreparer(resourceGroupName string, applianc
 func (client AppliancesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -410,6 +413,7 @@ func (client AppliancesClient) DeleteByIDPreparer(applianceID string, cancel <-c
 func (client AppliancesClient) DeleteByIDSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -486,7 +490,9 @@ func (client AppliancesClient) GetPreparer(resourceGroupName string, applianceNa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AppliancesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -551,7 +557,9 @@ func (client AppliancesClient) GetByIDPreparer(applianceID string) (*http.Reques
 // GetByIDSender sends the GetByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client AppliancesClient) GetByIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetByIDResponder handles the response to the GetByID request. The method always
@@ -623,7 +631,9 @@ func (client AppliancesClient) ListByResourceGroupPreparer(resourceGroupName str
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client AppliancesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -753,7 +763,9 @@ func (client AppliancesClient) ListBySubscriptionPreparer() (*http.Request, erro
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client AppliancesClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
@@ -904,7 +916,9 @@ func (client AppliancesClient) UpdatePreparer(resourceGroupName string, applianc
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client AppliancesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always
@@ -975,7 +989,9 @@ func (client AppliancesClient) UpdateByIDPreparer(applianceID string, parameters
 // UpdateByIDSender sends the UpdateByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client AppliancesClient) UpdateByIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // UpdateByIDResponder handles the response to the UpdateByID request. The method always

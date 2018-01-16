@@ -15,228 +15,138 @@
 package bigquery
 
 import (
+	"errors"
+	"strconv"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
 
 	"cloud.google.com/go/internal/pretty"
 	"cloud.google.com/go/internal/testutil"
-
-	"golang.org/x/net/context"
+	bq "google.golang.org/api/bigquery/v2"
 )
 
 type testSaver struct {
-	ir  *insertionRow
-	err error
+	row      map[string]Value
+	insertID string
+	err      error
 }
 
 func (ts testSaver) Save() (map[string]Value, string, error) {
-	return ts.ir.Row, ts.ir.InsertID, ts.err
+	return ts.row, ts.insertID, ts.err
 }
 
-func TestRejectsNonValueSavers(t *testing.T) {
-	client := &Client{projectID: "project-id"}
-	u := Uploader{t: client.Dataset("dataset-id").Table("table-id")}
-	inputs := []interface{}{
-		1,
-		[]int{1, 2},
-		[]interface{}{
-			testSaver{ir: &insertionRow{"a", map[string]Value{"one": 1}}},
-			1,
-		},
-		StructSaver{},
-	}
-	for _, in := range inputs {
-		if err := u.Put(context.Background(), in); err == nil {
-			t.Errorf("put value: %v; got nil, want error", in)
-		}
-	}
-}
+func TestNewInsertRequest(t *testing.T) {
+	prev := randomIDFn
+	n := 0
+	randomIDFn = func() string { n++; return strconv.Itoa(n) }
+	defer func() { randomIDFn = prev }()
 
-type insertRowsRecorder struct {
-	rowBatches [][]*insertionRow
-	service
-}
-
-func (irr *insertRowsRecorder) insertRows(ctx context.Context, projectID, datasetID, tableID string, rows []*insertionRow, conf *insertRowsConf) error {
-	irr.rowBatches = append(irr.rowBatches, rows)
-	return nil
-}
-
-func TestInsertsData(t *testing.T) {
-	testCases := []struct {
-		data [][]*insertionRow
+	tests := []struct {
+		ul     *Uploader
+		savers []ValueSaver
+		req    *bq.TableDataInsertAllRequest
 	}{
 		{
-			data: [][]*insertionRow{
-				{
-					&insertionRow{"a", map[string]Value{"one": 1}},
+			ul:     &Uploader{},
+			savers: nil,
+			req:    nil,
+		},
+		{
+			ul: &Uploader{},
+			savers: []ValueSaver{
+				testSaver{row: map[string]Value{"one": 1}},
+				testSaver{row: map[string]Value{"two": 2}},
+			},
+			req: &bq.TableDataInsertAllRequest{
+				Rows: []*bq.TableDataInsertAllRequestRows{
+					{InsertId: "1", Json: map[string]bq.JsonValue{"one": 1}},
+					{InsertId: "2", Json: map[string]bq.JsonValue{"two": 2}},
 				},
 			},
 		},
 		{
-
-			data: [][]*insertionRow{
-				{
-					&insertionRow{"a", map[string]Value{"one": 1}},
-					&insertionRow{"b", map[string]Value{"two": 2}},
-				},
+			ul: &Uploader{
+				TableTemplateSuffix: "suffix",
+				IgnoreUnknownValues: true,
+				SkipInvalidRows:     true,
 			},
-		},
-		{
-
-			data: [][]*insertionRow{
-				{
-					&insertionRow{"a", map[string]Value{"one": 1}},
-				},
-				{
-					&insertionRow{"b", map[string]Value{"two": 2}},
-				},
+			savers: []ValueSaver{
+				testSaver{insertID: "a", row: map[string]Value{"one": 1}},
+				testSaver{insertID: "", row: map[string]Value{"two": 2}},
 			},
-		},
-		{
-
-			data: [][]*insertionRow{
-				{
-					&insertionRow{"a", map[string]Value{"one": 1}},
-					&insertionRow{"b", map[string]Value{"two": 2}},
+			req: &bq.TableDataInsertAllRequest{
+				Rows: []*bq.TableDataInsertAllRequestRows{
+					{InsertId: "a", Json: map[string]bq.JsonValue{"one": 1}},
+					{InsertId: "3", Json: map[string]bq.JsonValue{"two": 2}},
 				},
-				{
-					&insertionRow{"c", map[string]Value{"three": 3}},
-					&insertionRow{"d", map[string]Value{"four": 4}},
-				},
+				TemplateSuffix:      "suffix",
+				SkipInvalidRows:     true,
+				IgnoreUnknownValues: true,
 			},
 		},
 	}
-	for _, tc := range testCases {
-		irr := &insertRowsRecorder{}
-		client := &Client{
-			projectID: "project-id",
-			service:   irr,
-		}
-		u := client.Dataset("dataset-id").Table("table-id").Uploader()
-		for _, batch := range tc.data {
-			if len(batch) == 0 {
-				continue
-			}
-			var toUpload interface{}
-			if len(batch) == 1 {
-				toUpload = testSaver{ir: batch[0]}
-			} else {
-				savers := []testSaver{}
-				for _, row := range batch {
-					savers = append(savers, testSaver{ir: row})
-				}
-				toUpload = savers
-			}
-
-			err := u.Put(context.Background(), toUpload)
-			if err != nil {
-				t.Errorf("expected successful Put of ValueSaver; got: %v", err)
-			}
-		}
-		if got, want := irr.rowBatches, tc.data; !testutil.Equal(got, want) {
-			t.Errorf("got: %v, want: %v", got, want)
-		}
-	}
-}
-
-type uploadOptionRecorder struct {
-	received *insertRowsConf
-	service
-}
-
-func (u *uploadOptionRecorder) insertRows(ctx context.Context, projectID, datasetID, tableID string, rows []*insertionRow, conf *insertRowsConf) error {
-	u.received = conf
-	return nil
-}
-
-func TestUploadOptionsPropagate(t *testing.T) {
-	// we don't care for the data in this testcase.
-	dummyData := testSaver{ir: &insertionRow{}}
-	recorder := new(uploadOptionRecorder)
-	c := &Client{service: recorder}
-	table := &Table{
-		ProjectID: "project-id",
-		DatasetID: "dataset-id",
-		TableID:   "table-id",
-		c:         c,
-	}
-
-	tests := [...]struct {
-		ul   *Uploader
-		conf insertRowsConf
-	}{
-		{
-			// test zero options lead to zero value for insertRowsConf
-			ul: table.Uploader(),
-		},
-		{
-			ul: func() *Uploader {
-				u := table.Uploader()
-				u.TableTemplateSuffix = "suffix"
-				return u
-			}(),
-			conf: insertRowsConf{
-				templateSuffix: "suffix",
-			},
-		},
-		{
-			ul: func() *Uploader {
-				u := table.Uploader()
-				u.IgnoreUnknownValues = true
-				return u
-			}(),
-			conf: insertRowsConf{
-				ignoreUnknownValues: true,
-			},
-		},
-		{
-			ul: func() *Uploader {
-				u := table.Uploader()
-				u.SkipInvalidRows = true
-				return u
-			}(),
-			conf: insertRowsConf{
-				skipInvalidRows: true,
-			},
-		},
-		{ // multiple upload options combine
-			ul: func() *Uploader {
-				u := table.Uploader()
-				u.TableTemplateSuffix = "suffix"
-				u.IgnoreUnknownValues = true
-				u.SkipInvalidRows = true
-				return u
-			}(),
-			conf: insertRowsConf{
-				templateSuffix:      "suffix",
-				skipInvalidRows:     true,
-				ignoreUnknownValues: true,
-			},
-		},
-	}
-
 	for i, tc := range tests {
-		err := tc.ul.Put(context.Background(), dummyData)
+		got, err := tc.ul.newInsertRequest(tc.savers)
 		if err != nil {
-			t.Fatalf("%d: expected successful Put of ValueSaver; got: %v", i, err)
+			t.Fatal(err)
 		}
-
-		if recorder.received == nil {
-			t.Fatalf("%d: received no options at all!", i)
+		want := tc.req
+		if !testutil.Equal(got, want) {
+			t.Errorf("%d: %#v: got %#v, want %#v", i, tc.ul, got, want)
 		}
+	}
+}
 
-		want := tc.conf
-		got := *recorder.received
-		if got != want {
-			t.Errorf("%d: got %#v, want %#v, ul=%#v", i, got, want, tc.ul)
+func TestNewInsertRequestErrors(t *testing.T) {
+	var u Uploader
+	_, err := u.newInsertRequest([]ValueSaver{testSaver{err: errors.New("!")}})
+	if err == nil {
+		t.Error("got nil, want error")
+	}
+}
+
+func TestHandleInsertErrors(t *testing.T) {
+	rows := []*bq.TableDataInsertAllRequestRows{
+		{InsertId: "a"},
+		{InsertId: "b"},
+	}
+	for _, test := range []struct {
+		in   []*bq.TableDataInsertAllResponseInsertErrors
+		want error
+	}{
+		{
+			in:   nil,
+			want: nil,
+		},
+		{
+			in:   []*bq.TableDataInsertAllResponseInsertErrors{{Index: 1}},
+			want: PutMultiError{RowInsertionError{InsertID: "b", RowIndex: 1}},
+		},
+		{
+			in:   []*bq.TableDataInsertAllResponseInsertErrors{{Index: 1}},
+			want: PutMultiError{RowInsertionError{InsertID: "b", RowIndex: 1}},
+		},
+		{
+			in: []*bq.TableDataInsertAllResponseInsertErrors{
+				{Errors: []*bq.ErrorProto{{Message: "m0"}}, Index: 0},
+				{Errors: []*bq.ErrorProto{{Message: "m1"}}, Index: 1},
+			},
+			want: PutMultiError{
+				RowInsertionError{InsertID: "a", RowIndex: 0, Errors: []error{&Error{Message: "m0"}}},
+				RowInsertionError{InsertID: "b", RowIndex: 1, Errors: []error{&Error{Message: "m1"}}},
+			},
+		},
+	} {
+		got := handleInsertErrors(test.in, rows)
+		if !testutil.Equal(got, test.want) {
+			t.Errorf("%#v:\ngot\n%#v\nwant\n%#v", test.in, got, test.want)
 		}
 	}
 }
 
 func TestValueSavers(t *testing.T) {
-	ts := &testSaver{ir: &insertionRow{}}
+	ts := &testSaver{}
 	type T struct{ I int }
 	schema, err := InferSchema(T{})
 	if err != nil {
@@ -246,6 +156,8 @@ func TestValueSavers(t *testing.T) {
 		in   interface{}
 		want []ValueSaver
 	}{
+		{[]interface{}(nil), nil},
+		{[]interface{}{}, nil},
 		{ts, []ValueSaver{ts}},
 		{T{I: 1}, []ValueSaver{&StructSaver{Schema: schema, Struct: T{I: 1}}}},
 		{[]ValueSaver{ts, ts}, []ValueSaver{ts, ts}},
@@ -276,6 +188,24 @@ func TestValueSavers(t *testing.T) {
 			if err != nil {
 				t.Fatalf("%+v, #%d: got error %v, want nil", test.in, i, err)
 			}
+		}
+	}
+}
+
+func TestValueSaversErrors(t *testing.T) {
+	inputs := []interface{}{
+		nil,
+		1,
+		[]int{1, 2},
+		[]interface{}{
+			testSaver{row: map[string]Value{"one": 1}, insertID: "a"},
+			1,
+		},
+		StructSaver{},
+	}
+	for _, in := range inputs {
+		if _, err := valueSavers(in); err == nil {
+			t.Errorf("%#v: got nil, want error", in)
 		}
 	}
 }

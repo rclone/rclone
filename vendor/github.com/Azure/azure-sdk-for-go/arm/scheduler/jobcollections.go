@@ -90,7 +90,9 @@ func (client JobCollectionsClient) CreateOrUpdatePreparer(resourceGroupName stri
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -171,6 +173,7 @@ func (client JobCollectionsClient) DeletePreparer(resourceGroupName string, jobC
 func (client JobCollectionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -252,6 +255,7 @@ func (client JobCollectionsClient) DisablePreparer(resourceGroupName string, job
 func (client JobCollectionsClient) DisableSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -333,6 +337,7 @@ func (client JobCollectionsClient) EnablePreparer(resourceGroupName string, jobC
 func (client JobCollectionsClient) EnableSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -397,7 +402,9 @@ func (client JobCollectionsClient) GetPreparer(resourceGroupName string, jobColl
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -461,7 +468,9 @@ func (client JobCollectionsClient) ListByResourceGroupPreparer(resourceGroupName
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -591,7 +600,9 @@ func (client JobCollectionsClient) ListBySubscriptionPreparer() (*http.Request, 
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
@@ -728,7 +739,9 @@ func (client JobCollectionsClient) PatchPreparer(resourceGroupName string, jobCo
 // PatchSender sends the Patch request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobCollectionsClient) PatchSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // PatchResponder handles the response to the Patch request. The method always

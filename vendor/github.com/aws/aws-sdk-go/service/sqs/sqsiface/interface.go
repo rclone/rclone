@@ -100,6 +100,10 @@ type SQSAPI interface {
 	ListDeadLetterSourceQueuesWithContext(aws.Context, *sqs.ListDeadLetterSourceQueuesInput, ...request.Option) (*sqs.ListDeadLetterSourceQueuesOutput, error)
 	ListDeadLetterSourceQueuesRequest(*sqs.ListDeadLetterSourceQueuesInput) (*request.Request, *sqs.ListDeadLetterSourceQueuesOutput)
 
+	ListQueueTags(*sqs.ListQueueTagsInput) (*sqs.ListQueueTagsOutput, error)
+	ListQueueTagsWithContext(aws.Context, *sqs.ListQueueTagsInput, ...request.Option) (*sqs.ListQueueTagsOutput, error)
+	ListQueueTagsRequest(*sqs.ListQueueTagsInput) (*request.Request, *sqs.ListQueueTagsOutput)
+
 	ListQueues(*sqs.ListQueuesInput) (*sqs.ListQueuesOutput, error)
 	ListQueuesWithContext(aws.Context, *sqs.ListQueuesInput, ...request.Option) (*sqs.ListQueuesOutput, error)
 	ListQueuesRequest(*sqs.ListQueuesInput) (*request.Request, *sqs.ListQueuesOutput)
@@ -127,6 +131,14 @@ type SQSAPI interface {
 	SetQueueAttributes(*sqs.SetQueueAttributesInput) (*sqs.SetQueueAttributesOutput, error)
 	SetQueueAttributesWithContext(aws.Context, *sqs.SetQueueAttributesInput, ...request.Option) (*sqs.SetQueueAttributesOutput, error)
 	SetQueueAttributesRequest(*sqs.SetQueueAttributesInput) (*request.Request, *sqs.SetQueueAttributesOutput)
+
+	TagQueue(*sqs.TagQueueInput) (*sqs.TagQueueOutput, error)
+	TagQueueWithContext(aws.Context, *sqs.TagQueueInput, ...request.Option) (*sqs.TagQueueOutput, error)
+	TagQueueRequest(*sqs.TagQueueInput) (*request.Request, *sqs.TagQueueOutput)
+
+	UntagQueue(*sqs.UntagQueueInput) (*sqs.UntagQueueOutput, error)
+	UntagQueueWithContext(aws.Context, *sqs.UntagQueueInput, ...request.Option) (*sqs.UntagQueueOutput, error)
+	UntagQueueRequest(*sqs.UntagQueueInput) (*request.Request, *sqs.UntagQueueOutput)
 }
 
 var _ SQSAPI = (*sqs.SQS)(nil)

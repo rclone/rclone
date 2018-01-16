@@ -123,8 +123,8 @@ type AnalyticsInfo struct {
 }
 
 func (s *AnalyticsInfo) MarshalJSON() ([]byte, error) {
-	type noMethod AnalyticsInfo
-	raw := noMethod(*s)
+	type NoMethod AnalyticsInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -165,8 +165,8 @@ type AndroidInfo struct {
 }
 
 func (s *AndroidInfo) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidInfo
-	raw := noMethod(*s)
+	type NoMethod AndroidInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -213,8 +213,8 @@ type CreateShortDynamicLinkRequest struct {
 }
 
 func (s *CreateShortDynamicLinkRequest) MarshalJSON() ([]byte, error) {
-	type noMethod CreateShortDynamicLinkRequest
-	raw := noMethod(*s)
+	type NoMethod CreateShortDynamicLinkRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -253,8 +253,37 @@ type CreateShortDynamicLinkResponse struct {
 }
 
 func (s *CreateShortDynamicLinkResponse) MarshalJSON() ([]byte, error) {
-	type noMethod CreateShortDynamicLinkResponse
-	raw := noMethod(*s)
+	type NoMethod CreateShortDynamicLinkResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// DesktopInfo: Desktop related attributes to the Dynamic Link.
+type DesktopInfo struct {
+	// DesktopFallbackLink: Link to open on desktop.
+	DesktopFallbackLink string `json:"desktopFallbackLink,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DesktopFallbackLink")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DesktopFallbackLink") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *DesktopInfo) MarshalJSON() ([]byte, error) {
+	type NoMethod DesktopInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -265,6 +294,18 @@ type DeviceInfo struct {
 
 	// LanguageCode: Device language code setting.
 	LanguageCode string `json:"languageCode,omitempty"`
+
+	// LanguageCodeFromWebview: Device language code setting obtained by
+	// executing JavaScript code in
+	// WebView.
+	LanguageCodeFromWebview string `json:"languageCodeFromWebview,omitempty"`
+
+	// LanguageCodeRaw: Device language code raw setting.
+	// iOS does returns language code in different format than iOS
+	// WebView.
+	// For example WebView returns en_US, but iOS returns en-US.
+	// Field below will return raw value returned by iOS.
+	LanguageCodeRaw string `json:"languageCodeRaw,omitempty"`
 
 	// ScreenResolutionHeight: Device display resolution height.
 	ScreenResolutionHeight int64 `json:"screenResolutionHeight,omitempty,string"`
@@ -294,8 +335,8 @@ type DeviceInfo struct {
 }
 
 func (s *DeviceInfo) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceInfo
-	raw := noMethod(*s)
+	type NoMethod DeviceInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -353,8 +394,8 @@ type DynamicLinkEventStat struct {
 }
 
 func (s *DynamicLinkEventStat) MarshalJSON() ([]byte, error) {
-	type noMethod DynamicLinkEventStat
-	raw := noMethod(*s)
+	type NoMethod DynamicLinkEventStat
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -373,6 +414,13 @@ type DynamicLinkInfo struct {
 	// [documentation](https://firebase.google.com/docs/dynamic-links/cre
 	// ate-manually).
 	AndroidInfo *AndroidInfo `json:"androidInfo,omitempty"`
+
+	// DesktopInfo: Desktop related information. See desktop related
+	// parameters in
+	// the
+	// [documentation](https://firebase.google.com/docs/dynamic-links/cre
+	// ate-manually).
+	DesktopInfo *DesktopInfo `json:"desktopInfo,omitempty"`
 
 	// DynamicLinkDomain: Dynamic Links domain that the project owns, e.g.
 	// abcd.app.goo.gl
@@ -429,8 +477,8 @@ type DynamicLinkInfo struct {
 }
 
 func (s *DynamicLinkInfo) MarshalJSON() ([]byte, error) {
-	type noMethod DynamicLinkInfo
-	raw := noMethod(*s)
+	type NoMethod DynamicLinkInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -463,8 +511,8 @@ type DynamicLinkStats struct {
 }
 
 func (s *DynamicLinkStats) MarshalJSON() ([]byte, error) {
-	type noMethod DynamicLinkStats
-	raw := noMethod(*s)
+	type NoMethod DynamicLinkStats
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -549,8 +597,8 @@ type DynamicLinkWarning struct {
 }
 
 func (s *DynamicLinkWarning) MarshalJSON() ([]byte, error) {
-	type noMethod DynamicLinkWarning
-	raw := noMethod(*s)
+	type NoMethod DynamicLinkWarning
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -633,8 +681,8 @@ type GetIosPostInstallAttributionRequest struct {
 }
 
 func (s *GetIosPostInstallAttributionRequest) MarshalJSON() ([]byte, error) {
-	type noMethod GetIosPostInstallAttributionRequest
-	raw := noMethod(*s)
+	type NoMethod GetIosPostInstallAttributionRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -751,8 +799,8 @@ type GetIosPostInstallAttributionResponse struct {
 }
 
 func (s *GetIosPostInstallAttributionResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GetIosPostInstallAttributionResponse
-	raw := noMethod(*s)
+	type NoMethod GetIosPostInstallAttributionResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -811,8 +859,8 @@ type GooglePlayAnalytics struct {
 }
 
 func (s *GooglePlayAnalytics) MarshalJSON() ([]byte, error) {
-	type noMethod GooglePlayAnalytics
-	raw := noMethod(*s)
+	type NoMethod GooglePlayAnalytics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -853,8 +901,8 @@ type ITunesConnectAnalytics struct {
 }
 
 func (s *ITunesConnectAnalytics) MarshalJSON() ([]byte, error) {
-	type noMethod ITunesConnectAnalytics
-	raw := noMethod(*s)
+	type NoMethod ITunesConnectAnalytics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -901,8 +949,8 @@ type IosInfo struct {
 }
 
 func (s *IosInfo) MarshalJSON() ([]byte, error) {
-	type noMethod IosInfo
-	raw := noMethod(*s)
+	type NoMethod IosInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -933,8 +981,8 @@ type NavigationInfo struct {
 }
 
 func (s *NavigationInfo) MarshalJSON() ([]byte, error) {
-	type noMethod NavigationInfo
-	raw := noMethod(*s)
+	type NoMethod NavigationInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -969,8 +1017,8 @@ type SocialMetaTagInfo struct {
 }
 
 func (s *SocialMetaTagInfo) MarshalJSON() ([]byte, error) {
-	type noMethod SocialMetaTagInfo
-	raw := noMethod(*s)
+	type NoMethod SocialMetaTagInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1014,8 +1062,8 @@ type Suffix struct {
 }
 
 func (s *Suffix) MarshalJSON() ([]byte, error) {
-	type noMethod Suffix
-	raw := noMethod(*s)
+	type NoMethod Suffix
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1126,7 +1174,7 @@ func (c *ShortLinksCreateCall) Do(opts ...googleapi.CallOption) (*CreateShortDyn
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1268,7 +1316,7 @@ func (c *V1GetLinkStatsCall) Do(opts ...googleapi.CallOption) (*DynamicLinkStats
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1402,7 +1450,7 @@ func (c *V1InstallAttributionCall) Do(opts ...googleapi.CallOption) (*GetIosPost
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

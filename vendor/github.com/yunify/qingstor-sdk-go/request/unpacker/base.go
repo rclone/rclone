@@ -18,6 +18,7 @@ package unpacker
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"net/http"
 	"reflect"
@@ -25,7 +26,6 @@ import (
 	"time"
 
 	"github.com/pengsrc/go-shared/convert"
-	"github.com/pengsrc/go-shared/json"
 
 	"github.com/yunify/qingstor-sdk-go/logger"
 	"github.com/yunify/qingstor-sdk-go/request/data"
@@ -69,7 +69,7 @@ func (b *BaseUnpacker) exposeStatusCode() error {
 	if value.IsValid() {
 		switch value.Interface().(type) {
 		case *int:
-			logger.Infof(fmt.Sprintf(
+			logger.Infof(nil, fmt.Sprintf(
 				"QingStor response status code: [%d] %d",
 				convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
 				b.httpResponse.StatusCode,
@@ -82,7 +82,7 @@ func (b *BaseUnpacker) exposeStatusCode() error {
 }
 
 func (b *BaseUnpacker) parseResponseHeaders() error {
-	logger.Infof(fmt.Sprintf(
+	logger.Infof(nil, fmt.Sprintf(
 		"QingStor response headers: [%d] %s",
 		convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
 		fmt.Sprint(b.httpResponse.Header),
@@ -145,7 +145,7 @@ func (b *BaseUnpacker) parseResponseBody() error {
 				buffer.ReadFrom(b.httpResponse.Body)
 				b.httpResponse.Body.Close()
 
-				logger.Infof(fmt.Sprintf(
+				logger.Infof(nil, fmt.Sprintf(
 					"QingStor response body string: [%d] %s",
 					convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
 					string(buffer.Bytes()),
@@ -168,13 +168,13 @@ func (b *BaseUnpacker) parseResponseElements() error {
 			buffer.ReadFrom(b.httpResponse.Body)
 			b.httpResponse.Body.Close()
 
-			logger.Infof(fmt.Sprintf(
+			logger.Infof(nil, fmt.Sprintf(
 				"QingStor response body string: [%d] %s",
 				convert.StringToUnixTimestamp(b.httpResponse.Header.Get("Date"), convert.RFC822),
 				string(buffer.Bytes()),
 			))
 
-			_, err := json.Decode(buffer.Bytes(), b.output.Interface())
+			err := json.Unmarshal(buffer.Bytes(), b.output.Interface())
 			if err != nil {
 				return err
 			}

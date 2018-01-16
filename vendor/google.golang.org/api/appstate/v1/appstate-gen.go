@@ -122,8 +122,8 @@ type GetResponse struct {
 }
 
 func (s *GetResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GetResponse
-	raw := noMethod(*s)
+	type NoMethod GetResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -162,8 +162,8 @@ type ListResponse struct {
 }
 
 func (s *ListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListResponse
-	raw := noMethod(*s)
+	type NoMethod ListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -196,8 +196,8 @@ type UpdateRequest struct {
 }
 
 func (s *UpdateRequest) MarshalJSON() ([]byte, error) {
-	type noMethod UpdateRequest
-	raw := noMethod(*s)
+	type NoMethod UpdateRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -237,8 +237,8 @@ type WriteResult struct {
 }
 
 func (s *WriteResult) MarshalJSON() ([]byte, error) {
-	type noMethod WriteResult
-	raw := noMethod(*s)
+	type NoMethod WriteResult
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -345,7 +345,7 @@ func (c *StatesClearCall) Do(opts ...googleapi.CallOption) (*WriteResult, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -594,7 +594,7 @@ func (c *StatesGetCall) Do(opts ...googleapi.CallOption) (*GetResponse, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -736,7 +736,7 @@ func (c *StatesListCall) Do(opts ...googleapi.CallOption) (*ListResponse, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -877,7 +877,7 @@ func (c *StatesUpdateCall) Do(opts ...googleapi.CallOption) (*WriteResult, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

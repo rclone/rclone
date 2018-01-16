@@ -123,8 +123,8 @@ type Webfont struct {
 }
 
 func (s *Webfont) MarshalJSON() ([]byte, error) {
-	type noMethod Webfont
-	raw := noMethod(*s)
+	type NoMethod Webfont
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -158,8 +158,8 @@ type WebfontList struct {
 }
 
 func (s *WebfontList) MarshalJSON() ([]byte, error) {
-	type noMethod WebfontList
-	raw := noMethod(*s)
+	type NoMethod WebfontList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -279,7 +279,7 @@ func (c *WebfontsListCall) Do(opts ...googleapi.CallOption) (*WebfontList, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

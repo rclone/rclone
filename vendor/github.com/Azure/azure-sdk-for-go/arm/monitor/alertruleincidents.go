@@ -89,7 +89,9 @@ func (client AlertRuleIncidentsClient) GetPreparer(resourceGroupName string, rul
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertRuleIncidentsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -154,7 +156,9 @@ func (client AlertRuleIncidentsClient) ListByAlertRulePreparer(resourceGroupName
 // ListByAlertRuleSender sends the ListByAlertRule request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertRuleIncidentsClient) ListByAlertRuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAlertRuleResponder handles the response to the ListByAlertRule request. The method always

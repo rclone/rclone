@@ -1,6 +1,8 @@
 // Package streamanalytics implements the Azure ARM Streamanalytics service API version 2016-03-01.
 //
 // Stream Analytics Client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/streamanalytics/mgmt/2016-03-01/streamanalytics
 package streamanalytics
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

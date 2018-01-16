@@ -16,7 +16,6 @@ package pubsub
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
 	"time"
 
@@ -149,7 +148,7 @@ func TestAll(t *testing.T) {
 		md := extractMessageData(m)
 		got[md.ID] = md
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("messages: got: %v ; want: %v", got, want)
 	}
 
@@ -247,7 +246,7 @@ func testIAM(ctx context.Context, h *iam.Handle, permission string) (msg string,
 	if policy, err = h.Policy(ctx); err != nil {
 		return fmt.Sprintf("Policy: %v", err), false
 	}
-	if got, want := policy.Members(iam.Viewer), []string{member}; !reflect.DeepEqual(got, want) {
+	if got, want := policy.Members(iam.Viewer), []string{member}; !testutil.Equal(got, want) {
 		return fmt.Sprintf("after Add: got %v, want %v", got, want), false
 	}
 	// Now remove that member, set the policy, and check that it's empty again.
@@ -271,7 +270,7 @@ func testIAM(ctx context.Context, h *iam.Handle, permission string) (msg string,
 	if err != nil {
 		return fmt.Sprintf("TestPermissions: %v", err), false
 	}
-	if !reflect.DeepEqual(gotPerms, wantPerms) {
+	if !testutil.Equal(gotPerms, wantPerms) {
 		return fmt.Sprintf("TestPermissions: got %v, want %v", gotPerms, wantPerms), false
 	}
 	return "", true
@@ -300,8 +299,8 @@ func TestSubscriptionUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(sc.PushConfig, PushConfig{}) {
-		t.Fatalf("got %+v, want empty PushConfig")
+	if !testutil.Equal(sc.PushConfig, PushConfig{}) {
+		t.Fatalf("got %+v, want empty PushConfig", sc.PushConfig)
 	}
 	// Add a PushConfig.
 	projID := testutil.ProjID()
@@ -317,7 +316,7 @@ func TestSubscriptionUpdate(t *testing.T) {
 	// attribute, none is returned. See
 	// https://cloud.google.com/pubsub/docs/reference/rpc/google.pubsub.v1#google.pubsub.v1.PushConfig
 	pc.Attributes = nil
-	if got, want := sc.PushConfig, pc; !reflect.DeepEqual(got, want) {
+	if got, want := sc.PushConfig, pc; !testutil.Equal(got, want) {
 		t.Fatalf("setting push config: got\n%+v\nwant\n%+v", got, want)
 	}
 	// Remove the PushConfig, turning the subscription back into pull mode.
@@ -326,7 +325,7 @@ func TestSubscriptionUpdate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := sc.PushConfig, pc; !reflect.DeepEqual(got, want) {
+	if got, want := sc.PushConfig, pc; !testutil.Equal(got, want) {
 		t.Fatalf("removing push config: got\n%+v\nwant %+v", got, want)
 	}
 

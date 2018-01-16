@@ -124,6 +124,7 @@ func (client DatabasesClient) CreateImportOperationPreparer(resourceGroupName st
 func (client DatabasesClient) CreateImportOperationSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -212,6 +213,7 @@ func (client DatabasesClient) CreateOrUpdatePreparer(resourceGroupName string, s
 func (client DatabasesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -280,7 +282,9 @@ func (client DatabasesClient) DeletePreparer(resourceGroupName string, serverNam
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -377,6 +381,7 @@ func (client DatabasesClient) ExportPreparer(resourceGroupName string, serverNam
 func (client DatabasesClient) ExportSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -449,7 +454,9 @@ func (client DatabasesClient) GetPreparer(resourceGroupName string, serverName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -518,7 +525,9 @@ func (client DatabasesClient) GetByElasticPoolPreparer(resourceGroupName string,
 // GetByElasticPoolSender sends the GetByElasticPool request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) GetByElasticPoolSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetByElasticPoolResponder handles the response to the GetByElasticPool request. The method always
@@ -587,7 +596,9 @@ func (client DatabasesClient) GetByRecommendedElasticPoolPreparer(resourceGroupN
 // GetByRecommendedElasticPoolSender sends the GetByRecommendedElasticPool request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) GetByRecommendedElasticPoolSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetByRecommendedElasticPoolResponder handles the response to the GetByRecommendedElasticPool request. The method always
@@ -682,6 +693,7 @@ func (client DatabasesClient) ImportPreparer(resourceGroupName string, serverNam
 func (client DatabasesClient) ImportSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -750,7 +762,9 @@ func (client DatabasesClient) ListByElasticPoolPreparer(resourceGroupName string
 // ListByElasticPoolSender sends the ListByElasticPool request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) ListByElasticPoolSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByElasticPoolResponder handles the response to the ListByElasticPool request. The method always
@@ -818,7 +832,9 @@ func (client DatabasesClient) ListByRecommendedElasticPoolPreparer(resourceGroup
 // ListByRecommendedElasticPoolSender sends the ListByRecommendedElasticPool request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) ListByRecommendedElasticPoolSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByRecommendedElasticPoolResponder handles the response to the ListByRecommendedElasticPool request. The method always
@@ -892,7 +908,9 @@ func (client DatabasesClient) ListByServerPreparer(resourceGroupName string, ser
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) ListByServerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByServerResponder handles the response to the ListByServer request. The method always
@@ -960,7 +978,9 @@ func (client DatabasesClient) ListMetricDefinitionsPreparer(resourceGroupName st
 // ListMetricDefinitionsSender sends the ListMetricDefinitions request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) ListMetricDefinitionsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListMetricDefinitionsResponder handles the response to the ListMetricDefinitions request. The method always
@@ -1029,7 +1049,9 @@ func (client DatabasesClient) ListMetricsPreparer(resourceGroupName string, serv
 // ListMetricsSender sends the ListMetrics request. The method will close the
 // http.Response Body if it receives an error.
 func (client DatabasesClient) ListMetricsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListMetricsResponder handles the response to the ListMetrics request. The method always
@@ -1113,6 +1135,7 @@ func (client DatabasesClient) PausePreparer(resourceGroupName string, serverName
 func (client DatabasesClient) PauseSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1196,6 +1219,7 @@ func (client DatabasesClient) ResumePreparer(resourceGroupName string, serverNam
 func (client DatabasesClient) ResumeSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1281,6 +1305,7 @@ func (client DatabasesClient) UpdatePreparer(resourceGroupName string, serverNam
 func (client DatabasesClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

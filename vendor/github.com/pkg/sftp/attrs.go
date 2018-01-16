@@ -94,6 +94,10 @@ func fileStatFromInfo(fi os.FileInfo) (uint32, FileStat) {
 
 func unmarshalAttrs(b []byte) (*FileStat, []byte) {
 	flags, b := unmarshalUint32(b)
+	return getFileStat(flags, b)
+}
+
+func getFileStat(flags uint32, b []byte) (*FileStat, []byte) {
 	var fs FileStat
 	if flags&ssh_FILEXFER_ATTR_SIZE == ssh_FILEXFER_ATTR_SIZE {
 		fs.Size, b = unmarshalUint64(b)

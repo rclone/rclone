@@ -91,7 +91,9 @@ func (client ApplicationsClient) CreatePreparer(resourceGroupName string, cluste
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplicationsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -175,6 +177,7 @@ func (client ApplicationsClient) DeletePreparer(resourceGroupName string, cluste
 func (client ApplicationsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -241,7 +244,9 @@ func (client ApplicationsClient) GetPreparer(resourceGroupName string, clusterNa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplicationsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -306,7 +311,9 @@ func (client ApplicationsClient) ListPreparer(resourceGroupName string, clusterN
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplicationsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

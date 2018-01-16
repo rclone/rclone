@@ -1,5 +1,19 @@
 package cli
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"encoding/json"
 	"fmt"
@@ -48,8 +62,19 @@ func (t Token) ToADALToken() (converted adal.Token, err error) {
 }
 
 // AccessTokensPath returns the path where access tokens are stored from the Azure CLI
+// TODO(#199): add unit test.
 func AccessTokensPath() (string, error) {
-	return homedir.Expand("~/.azure/accessTokens.json")
+	// Azure-CLI allows user to customize the path of access tokens thorugh environment variable.
+	var accessTokenPath = os.Getenv("AZURE_ACCESS_TOKEN_FILE")
+	var err error
+
+	// Fallback logic to default path on non-cloud-shell environment.
+	// TODO(#200): remove the dependency on hard-coding path.
+	if accessTokenPath == "" {
+		accessTokenPath, err = homedir.Expand("~/.azure/accessTokens.json")
+	}
+
+	return accessTokenPath, err
 }
 
 // ParseExpirationDate parses either a Azure CLI or CloudShell date into a time object

@@ -80,6 +80,10 @@ type ECRAPI interface {
 	CreateRepositoryWithContext(aws.Context, *ecr.CreateRepositoryInput, ...request.Option) (*ecr.CreateRepositoryOutput, error)
 	CreateRepositoryRequest(*ecr.CreateRepositoryInput) (*request.Request, *ecr.CreateRepositoryOutput)
 
+	DeleteLifecyclePolicy(*ecr.DeleteLifecyclePolicyInput) (*ecr.DeleteLifecyclePolicyOutput, error)
+	DeleteLifecyclePolicyWithContext(aws.Context, *ecr.DeleteLifecyclePolicyInput, ...request.Option) (*ecr.DeleteLifecyclePolicyOutput, error)
+	DeleteLifecyclePolicyRequest(*ecr.DeleteLifecyclePolicyInput) (*request.Request, *ecr.DeleteLifecyclePolicyOutput)
+
 	DeleteRepository(*ecr.DeleteRepositoryInput) (*ecr.DeleteRepositoryOutput, error)
 	DeleteRepositoryWithContext(aws.Context, *ecr.DeleteRepositoryInput, ...request.Option) (*ecr.DeleteRepositoryOutput, error)
 	DeleteRepositoryRequest(*ecr.DeleteRepositoryInput) (*request.Request, *ecr.DeleteRepositoryOutput)
@@ -110,6 +114,14 @@ type ECRAPI interface {
 	GetDownloadUrlForLayerWithContext(aws.Context, *ecr.GetDownloadUrlForLayerInput, ...request.Option) (*ecr.GetDownloadUrlForLayerOutput, error)
 	GetDownloadUrlForLayerRequest(*ecr.GetDownloadUrlForLayerInput) (*request.Request, *ecr.GetDownloadUrlForLayerOutput)
 
+	GetLifecyclePolicy(*ecr.GetLifecyclePolicyInput) (*ecr.GetLifecyclePolicyOutput, error)
+	GetLifecyclePolicyWithContext(aws.Context, *ecr.GetLifecyclePolicyInput, ...request.Option) (*ecr.GetLifecyclePolicyOutput, error)
+	GetLifecyclePolicyRequest(*ecr.GetLifecyclePolicyInput) (*request.Request, *ecr.GetLifecyclePolicyOutput)
+
+	GetLifecyclePolicyPreview(*ecr.GetLifecyclePolicyPreviewInput) (*ecr.GetLifecyclePolicyPreviewOutput, error)
+	GetLifecyclePolicyPreviewWithContext(aws.Context, *ecr.GetLifecyclePolicyPreviewInput, ...request.Option) (*ecr.GetLifecyclePolicyPreviewOutput, error)
+	GetLifecyclePolicyPreviewRequest(*ecr.GetLifecyclePolicyPreviewInput) (*request.Request, *ecr.GetLifecyclePolicyPreviewOutput)
+
 	GetRepositoryPolicy(*ecr.GetRepositoryPolicyInput) (*ecr.GetRepositoryPolicyOutput, error)
 	GetRepositoryPolicyWithContext(aws.Context, *ecr.GetRepositoryPolicyInput, ...request.Option) (*ecr.GetRepositoryPolicyOutput, error)
 	GetRepositoryPolicyRequest(*ecr.GetRepositoryPolicyInput) (*request.Request, *ecr.GetRepositoryPolicyOutput)
@@ -129,9 +141,17 @@ type ECRAPI interface {
 	PutImageWithContext(aws.Context, *ecr.PutImageInput, ...request.Option) (*ecr.PutImageOutput, error)
 	PutImageRequest(*ecr.PutImageInput) (*request.Request, *ecr.PutImageOutput)
 
+	PutLifecyclePolicy(*ecr.PutLifecyclePolicyInput) (*ecr.PutLifecyclePolicyOutput, error)
+	PutLifecyclePolicyWithContext(aws.Context, *ecr.PutLifecyclePolicyInput, ...request.Option) (*ecr.PutLifecyclePolicyOutput, error)
+	PutLifecyclePolicyRequest(*ecr.PutLifecyclePolicyInput) (*request.Request, *ecr.PutLifecyclePolicyOutput)
+
 	SetRepositoryPolicy(*ecr.SetRepositoryPolicyInput) (*ecr.SetRepositoryPolicyOutput, error)
 	SetRepositoryPolicyWithContext(aws.Context, *ecr.SetRepositoryPolicyInput, ...request.Option) (*ecr.SetRepositoryPolicyOutput, error)
 	SetRepositoryPolicyRequest(*ecr.SetRepositoryPolicyInput) (*request.Request, *ecr.SetRepositoryPolicyOutput)
+
+	StartLifecyclePolicyPreview(*ecr.StartLifecyclePolicyPreviewInput) (*ecr.StartLifecyclePolicyPreviewOutput, error)
+	StartLifecyclePolicyPreviewWithContext(aws.Context, *ecr.StartLifecyclePolicyPreviewInput, ...request.Option) (*ecr.StartLifecyclePolicyPreviewOutput, error)
+	StartLifecyclePolicyPreviewRequest(*ecr.StartLifecyclePolicyPreviewInput) (*request.Request, *ecr.StartLifecyclePolicyPreviewOutput)
 
 	UploadLayerPart(*ecr.UploadLayerPartInput) (*ecr.UploadLayerPartOutput, error)
 	UploadLayerPartWithContext(aws.Context, *ecr.UploadLayerPartInput, ...request.Option) (*ecr.UploadLayerPartOutput, error)

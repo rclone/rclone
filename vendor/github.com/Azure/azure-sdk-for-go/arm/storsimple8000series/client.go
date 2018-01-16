@@ -1,6 +1,6 @@
 // Package storsimple8000series implements the Azure ARM Storsimple8000series service API version 2017-06-01.
 //
-//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/storsimple8000series/mgmt/2017-06-01/storsimple
 package storsimple8000series
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

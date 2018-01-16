@@ -37,7 +37,7 @@ const opAddPermission = "AddPermission"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermission
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermission
 func (c *SNS) AddPermissionRequest(input *AddPermissionInput) (req *request.Request, output *AddPermissionOutput) {
 	op := &request.Operation{
 		Name:       opAddPermission,
@@ -81,7 +81,7 @@ func (c *SNS) AddPermissionRequest(input *AddPermissionInput) (req *request.Requ
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermission
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermission
 func (c *SNS) AddPermission(input *AddPermissionInput) (*AddPermissionOutput, error) {
 	req, out := c.AddPermissionRequest(input)
 	return out, req.Send()
@@ -128,7 +128,7 @@ const opCheckIfPhoneNumberIsOptedOut = "CheckIfPhoneNumberIsOptedOut"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOut
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOut
 func (c *SNS) CheckIfPhoneNumberIsOptedOutRequest(input *CheckIfPhoneNumberIsOptedOutInput) (req *request.Request, output *CheckIfPhoneNumberIsOptedOutOutput) {
 	op := &request.Operation{
 		Name:       opCheckIfPhoneNumberIsOptedOut,
@@ -175,7 +175,7 @@ func (c *SNS) CheckIfPhoneNumberIsOptedOutRequest(input *CheckIfPhoneNumberIsOpt
 //   * ErrCodeInvalidParameterException "InvalidParameter"
 //   Indicates that a request parameter does not comply with the associated constraints.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOut
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOut
 func (c *SNS) CheckIfPhoneNumberIsOptedOut(input *CheckIfPhoneNumberIsOptedOutInput) (*CheckIfPhoneNumberIsOptedOutOutput, error) {
 	req, out := c.CheckIfPhoneNumberIsOptedOutRequest(input)
 	return out, req.Send()
@@ -222,7 +222,7 @@ const opConfirmSubscription = "ConfirmSubscription"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscription
 func (c *SNS) ConfirmSubscriptionRequest(input *ConfirmSubscriptionInput) (req *request.Request, output *ConfirmSubscriptionOutput) {
 	op := &request.Operation{
 		Name:       opConfirmSubscription,
@@ -270,7 +270,7 @@ func (c *SNS) ConfirmSubscriptionRequest(input *ConfirmSubscriptionInput) (req *
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscription
 func (c *SNS) ConfirmSubscription(input *ConfirmSubscriptionInput) (*ConfirmSubscriptionOutput, error) {
 	req, out := c.ConfirmSubscriptionRequest(input)
 	return out, req.Send()
@@ -317,7 +317,7 @@ const opCreatePlatformApplication = "CreatePlatformApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplication
 func (c *SNS) CreatePlatformApplicationRequest(input *CreatePlatformApplicationInput) (req *request.Request, output *CreatePlatformApplicationOutput) {
 	op := &request.Operation{
 		Name:       opCreatePlatformApplication,
@@ -380,7 +380,7 @@ func (c *SNS) CreatePlatformApplicationRequest(input *CreatePlatformApplicationI
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplication
 func (c *SNS) CreatePlatformApplication(input *CreatePlatformApplicationInput) (*CreatePlatformApplicationOutput, error) {
 	req, out := c.CreatePlatformApplicationRequest(input)
 	return out, req.Send()
@@ -427,7 +427,7 @@ const opCreatePlatformEndpoint = "CreatePlatformEndpoint"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformEndpoint
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformEndpoint
 func (c *SNS) CreatePlatformEndpointRequest(input *CreatePlatformEndpointInput) (req *request.Request, output *CreatePlatformEndpointOutput) {
 	op := &request.Operation{
 		Name:       opCreatePlatformEndpoint,
@@ -481,7 +481,7 @@ func (c *SNS) CreatePlatformEndpointRequest(input *CreatePlatformEndpointInput) 
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformEndpoint
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformEndpoint
 func (c *SNS) CreatePlatformEndpoint(input *CreatePlatformEndpointInput) (*CreatePlatformEndpointOutput, error) {
 	req, out := c.CreatePlatformEndpointRequest(input)
 	return out, req.Send()
@@ -528,7 +528,7 @@ const opCreateTopic = "CreateTopic"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopic
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopic
 func (c *SNS) CreateTopicRequest(input *CreateTopicInput) (req *request.Request, output *CreateTopicOutput) {
 	op := &request.Operation{
 		Name:       opCreateTopic,
@@ -573,7 +573,7 @@ func (c *SNS) CreateTopicRequest(input *CreateTopicInput) (req *request.Request,
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopic
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopic
 func (c *SNS) CreateTopic(input *CreateTopicInput) (*CreateTopicOutput, error) {
 	req, out := c.CreateTopicRequest(input)
 	return out, req.Send()
@@ -620,7 +620,7 @@ const opDeleteEndpoint = "DeleteEndpoint"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpoint
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpoint
 func (c *SNS) DeleteEndpointRequest(input *DeleteEndpointInput) (req *request.Request, output *DeleteEndpointOutput) {
 	op := &request.Operation{
 		Name:       opDeleteEndpoint,
@@ -665,7 +665,7 @@ func (c *SNS) DeleteEndpointRequest(input *DeleteEndpointInput) (req *request.Re
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpoint
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpoint
 func (c *SNS) DeleteEndpoint(input *DeleteEndpointInput) (*DeleteEndpointOutput, error) {
 	req, out := c.DeleteEndpointRequest(input)
 	return out, req.Send()
@@ -712,7 +712,7 @@ const opDeletePlatformApplication = "DeletePlatformApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplication
 func (c *SNS) DeletePlatformApplicationRequest(input *DeletePlatformApplicationInput) (req *request.Request, output *DeletePlatformApplicationOutput) {
 	op := &request.Operation{
 		Name:       opDeletePlatformApplication,
@@ -754,7 +754,7 @@ func (c *SNS) DeletePlatformApplicationRequest(input *DeletePlatformApplicationI
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplication
 func (c *SNS) DeletePlatformApplication(input *DeletePlatformApplicationInput) (*DeletePlatformApplicationOutput, error) {
 	req, out := c.DeletePlatformApplicationRequest(input)
 	return out, req.Send()
@@ -801,7 +801,7 @@ const opDeleteTopic = "DeleteTopic"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopic
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopic
 func (c *SNS) DeleteTopicRequest(input *DeleteTopicInput) (req *request.Request, output *DeleteTopicOutput) {
 	op := &request.Operation{
 		Name:       opDeleteTopic,
@@ -847,7 +847,7 @@ func (c *SNS) DeleteTopicRequest(input *DeleteTopicInput) (req *request.Request,
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopic
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopic
 func (c *SNS) DeleteTopic(input *DeleteTopicInput) (*DeleteTopicOutput, error) {
 	req, out := c.DeleteTopicRequest(input)
 	return out, req.Send()
@@ -894,7 +894,7 @@ const opGetEndpointAttributes = "GetEndpointAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributes
 func (c *SNS) GetEndpointAttributesRequest(input *GetEndpointAttributesInput) (req *request.Request, output *GetEndpointAttributesOutput) {
 	op := &request.Operation{
 		Name:       opGetEndpointAttributes,
@@ -937,7 +937,7 @@ func (c *SNS) GetEndpointAttributesRequest(input *GetEndpointAttributesInput) (r
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributes
 func (c *SNS) GetEndpointAttributes(input *GetEndpointAttributesInput) (*GetEndpointAttributesOutput, error) {
 	req, out := c.GetEndpointAttributesRequest(input)
 	return out, req.Send()
@@ -984,7 +984,7 @@ const opGetPlatformApplicationAttributes = "GetPlatformApplicationAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributes
 func (c *SNS) GetPlatformApplicationAttributesRequest(input *GetPlatformApplicationAttributesInput) (req *request.Request, output *GetPlatformApplicationAttributesOutput) {
 	op := &request.Operation{
 		Name:       opGetPlatformApplicationAttributes,
@@ -1027,7 +1027,7 @@ func (c *SNS) GetPlatformApplicationAttributesRequest(input *GetPlatformApplicat
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributes
 func (c *SNS) GetPlatformApplicationAttributes(input *GetPlatformApplicationAttributesInput) (*GetPlatformApplicationAttributesOutput, error) {
 	req, out := c.GetPlatformApplicationAttributesRequest(input)
 	return out, req.Send()
@@ -1074,7 +1074,7 @@ const opGetSMSAttributes = "GetSMSAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributes
 func (c *SNS) GetSMSAttributesRequest(input *GetSMSAttributesInput) (req *request.Request, output *GetSMSAttributesOutput) {
 	op := &request.Operation{
 		Name:       opGetSMSAttributes,
@@ -1118,7 +1118,7 @@ func (c *SNS) GetSMSAttributesRequest(input *GetSMSAttributesInput) (req *reques
 //   * ErrCodeInvalidParameterException "InvalidParameter"
 //   Indicates that a request parameter does not comply with the associated constraints.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributes
 func (c *SNS) GetSMSAttributes(input *GetSMSAttributesInput) (*GetSMSAttributesOutput, error) {
 	req, out := c.GetSMSAttributesRequest(input)
 	return out, req.Send()
@@ -1165,7 +1165,7 @@ const opGetSubscriptionAttributes = "GetSubscriptionAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributes
 func (c *SNS) GetSubscriptionAttributesRequest(input *GetSubscriptionAttributesInput) (req *request.Request, output *GetSubscriptionAttributesOutput) {
 	op := &request.Operation{
 		Name:       opGetSubscriptionAttributes,
@@ -1206,7 +1206,7 @@ func (c *SNS) GetSubscriptionAttributesRequest(input *GetSubscriptionAttributesI
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributes
 func (c *SNS) GetSubscriptionAttributes(input *GetSubscriptionAttributesInput) (*GetSubscriptionAttributesOutput, error) {
 	req, out := c.GetSubscriptionAttributesRequest(input)
 	return out, req.Send()
@@ -1253,7 +1253,7 @@ const opGetTopicAttributes = "GetTopicAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributes
 func (c *SNS) GetTopicAttributesRequest(input *GetTopicAttributesInput) (req *request.Request, output *GetTopicAttributesOutput) {
 	op := &request.Operation{
 		Name:       opGetTopicAttributes,
@@ -1295,7 +1295,7 @@ func (c *SNS) GetTopicAttributesRequest(input *GetTopicAttributesInput) (req *re
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributes
 func (c *SNS) GetTopicAttributes(input *GetTopicAttributesInput) (*GetTopicAttributesOutput, error) {
 	req, out := c.GetTopicAttributesRequest(input)
 	return out, req.Send()
@@ -1342,7 +1342,7 @@ const opListEndpointsByPlatformApplication = "ListEndpointsByPlatformApplication
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplication
 func (c *SNS) ListEndpointsByPlatformApplicationRequest(input *ListEndpointsByPlatformApplicationInput) (req *request.Request, output *ListEndpointsByPlatformApplicationOutput) {
 	op := &request.Operation{
 		Name:       opListEndpointsByPlatformApplication,
@@ -1396,7 +1396,7 @@ func (c *SNS) ListEndpointsByPlatformApplicationRequest(input *ListEndpointsByPl
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplication
 func (c *SNS) ListEndpointsByPlatformApplication(input *ListEndpointsByPlatformApplicationInput) (*ListEndpointsByPlatformApplicationOutput, error) {
 	req, out := c.ListEndpointsByPlatformApplicationRequest(input)
 	return out, req.Send()
@@ -1493,7 +1493,7 @@ const opListPhoneNumbersOptedOut = "ListPhoneNumbersOptedOut"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOut
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOut
 func (c *SNS) ListPhoneNumbersOptedOutRequest(input *ListPhoneNumbersOptedOutInput) (req *request.Request, output *ListPhoneNumbersOptedOutOutput) {
 	op := &request.Operation{
 		Name:       opListPhoneNumbersOptedOut,
@@ -1543,7 +1543,7 @@ func (c *SNS) ListPhoneNumbersOptedOutRequest(input *ListPhoneNumbersOptedOutInp
 //   * ErrCodeInvalidParameterException "InvalidParameter"
 //   Indicates that a request parameter does not comply with the associated constraints.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOut
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOut
 func (c *SNS) ListPhoneNumbersOptedOut(input *ListPhoneNumbersOptedOutInput) (*ListPhoneNumbersOptedOutOutput, error) {
 	req, out := c.ListPhoneNumbersOptedOutRequest(input)
 	return out, req.Send()
@@ -1590,7 +1590,7 @@ const opListPlatformApplications = "ListPlatformApplications"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplications
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplications
 func (c *SNS) ListPlatformApplicationsRequest(input *ListPlatformApplicationsInput) (req *request.Request, output *ListPlatformApplicationsOutput) {
 	op := &request.Operation{
 		Name:       opListPlatformApplications,
@@ -1641,7 +1641,7 @@ func (c *SNS) ListPlatformApplicationsRequest(input *ListPlatformApplicationsInp
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplications
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplications
 func (c *SNS) ListPlatformApplications(input *ListPlatformApplicationsInput) (*ListPlatformApplicationsOutput, error) {
 	req, out := c.ListPlatformApplicationsRequest(input)
 	return out, req.Send()
@@ -1738,7 +1738,7 @@ const opListSubscriptions = "ListSubscriptions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptions
 func (c *SNS) ListSubscriptionsRequest(input *ListSubscriptionsInput) (req *request.Request, output *ListSubscriptionsOutput) {
 	op := &request.Operation{
 		Name:       opListSubscriptions,
@@ -1785,7 +1785,7 @@ func (c *SNS) ListSubscriptionsRequest(input *ListSubscriptionsInput) (req *requ
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptions
 func (c *SNS) ListSubscriptions(input *ListSubscriptionsInput) (*ListSubscriptionsOutput, error) {
 	req, out := c.ListSubscriptionsRequest(input)
 	return out, req.Send()
@@ -1882,7 +1882,7 @@ const opListSubscriptionsByTopic = "ListSubscriptionsByTopic"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopic
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopic
 func (c *SNS) ListSubscriptionsByTopicRequest(input *ListSubscriptionsByTopicInput) (req *request.Request, output *ListSubscriptionsByTopicOutput) {
 	op := &request.Operation{
 		Name:       opListSubscriptionsByTopic,
@@ -1932,7 +1932,7 @@ func (c *SNS) ListSubscriptionsByTopicRequest(input *ListSubscriptionsByTopicInp
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopic
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopic
 func (c *SNS) ListSubscriptionsByTopic(input *ListSubscriptionsByTopicInput) (*ListSubscriptionsByTopicOutput, error) {
 	req, out := c.ListSubscriptionsByTopicRequest(input)
 	return out, req.Send()
@@ -2029,7 +2029,7 @@ const opListTopics = "ListTopics"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopics
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopics
 func (c *SNS) ListTopicsRequest(input *ListTopicsInput) (req *request.Request, output *ListTopicsOutput) {
 	op := &request.Operation{
 		Name:       opListTopics,
@@ -2075,7 +2075,7 @@ func (c *SNS) ListTopicsRequest(input *ListTopicsInput) (req *request.Request, o
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopics
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopics
 func (c *SNS) ListTopics(input *ListTopicsInput) (*ListTopicsOutput, error) {
 	req, out := c.ListTopicsRequest(input)
 	return out, req.Send()
@@ -2172,7 +2172,7 @@ const opOptInPhoneNumber = "OptInPhoneNumber"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumber
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumber
 func (c *SNS) OptInPhoneNumberRequest(input *OptInPhoneNumberInput) (req *request.Request, output *OptInPhoneNumberOutput) {
 	op := &request.Operation{
 		Name:       opOptInPhoneNumber,
@@ -2217,7 +2217,7 @@ func (c *SNS) OptInPhoneNumberRequest(input *OptInPhoneNumberInput) (req *reques
 //   * ErrCodeInvalidParameterException "InvalidParameter"
 //   Indicates that a request parameter does not comply with the associated constraints.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumber
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumber
 func (c *SNS) OptInPhoneNumber(input *OptInPhoneNumberInput) (*OptInPhoneNumberOutput, error) {
 	req, out := c.OptInPhoneNumberRequest(input)
 	return out, req.Send()
@@ -2264,7 +2264,7 @@ const opPublish = "Publish"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Publish
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Publish
 func (c *SNS) PublishRequest(input *PublishInput) (req *request.Request, output *PublishOutput) {
 	op := &request.Operation{
 		Name:       opPublish,
@@ -2325,7 +2325,7 @@ func (c *SNS) PublishRequest(input *PublishInput) (req *request.Request, output 
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Publish
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Publish
 func (c *SNS) Publish(input *PublishInput) (*PublishOutput, error) {
 	req, out := c.PublishRequest(input)
 	return out, req.Send()
@@ -2372,7 +2372,7 @@ const opRemovePermission = "RemovePermission"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermission
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermission
 func (c *SNS) RemovePermissionRequest(input *RemovePermissionInput) (req *request.Request, output *RemovePermissionOutput) {
 	op := &request.Operation{
 		Name:       opRemovePermission,
@@ -2415,7 +2415,7 @@ func (c *SNS) RemovePermissionRequest(input *RemovePermissionInput) (req *reques
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermission
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermission
 func (c *SNS) RemovePermission(input *RemovePermissionInput) (*RemovePermissionOutput, error) {
 	req, out := c.RemovePermissionRequest(input)
 	return out, req.Send()
@@ -2462,7 +2462,7 @@ const opSetEndpointAttributes = "SetEndpointAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributes
 func (c *SNS) SetEndpointAttributesRequest(input *SetEndpointAttributesInput) (req *request.Request, output *SetEndpointAttributesOutput) {
 	op := &request.Operation{
 		Name:       opSetEndpointAttributes,
@@ -2507,7 +2507,7 @@ func (c *SNS) SetEndpointAttributesRequest(input *SetEndpointAttributesInput) (r
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributes
 func (c *SNS) SetEndpointAttributes(input *SetEndpointAttributesInput) (*SetEndpointAttributesOutput, error) {
 	req, out := c.SetEndpointAttributesRequest(input)
 	return out, req.Send()
@@ -2554,7 +2554,7 @@ const opSetPlatformApplicationAttributes = "SetPlatformApplicationAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributes
 func (c *SNS) SetPlatformApplicationAttributesRequest(input *SetPlatformApplicationAttributesInput) (req *request.Request, output *SetPlatformApplicationAttributesOutput) {
 	op := &request.Operation{
 		Name:       opSetPlatformApplicationAttributes,
@@ -2601,7 +2601,7 @@ func (c *SNS) SetPlatformApplicationAttributesRequest(input *SetPlatformApplicat
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributes
 func (c *SNS) SetPlatformApplicationAttributes(input *SetPlatformApplicationAttributesInput) (*SetPlatformApplicationAttributesOutput, error) {
 	req, out := c.SetPlatformApplicationAttributesRequest(input)
 	return out, req.Send()
@@ -2648,7 +2648,7 @@ const opSetSMSAttributes = "SetSMSAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributes
 func (c *SNS) SetSMSAttributesRequest(input *SetSMSAttributesInput) (req *request.Request, output *SetSMSAttributesOutput) {
 	op := &request.Operation{
 		Name:       opSetSMSAttributes,
@@ -2696,7 +2696,7 @@ func (c *SNS) SetSMSAttributesRequest(input *SetSMSAttributesInput) (req *reques
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributes
 func (c *SNS) SetSMSAttributes(input *SetSMSAttributesInput) (*SetSMSAttributesOutput, error) {
 	req, out := c.SetSMSAttributesRequest(input)
 	return out, req.Send()
@@ -2743,7 +2743,7 @@ const opSetSubscriptionAttributes = "SetSubscriptionAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributes
 func (c *SNS) SetSubscriptionAttributesRequest(input *SetSubscriptionAttributesInput) (req *request.Request, output *SetSubscriptionAttributesOutput) {
 	op := &request.Operation{
 		Name:       opSetSubscriptionAttributes,
@@ -2786,7 +2786,7 @@ func (c *SNS) SetSubscriptionAttributesRequest(input *SetSubscriptionAttributesI
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributes
 func (c *SNS) SetSubscriptionAttributes(input *SetSubscriptionAttributesInput) (*SetSubscriptionAttributesOutput, error) {
 	req, out := c.SetSubscriptionAttributesRequest(input)
 	return out, req.Send()
@@ -2833,7 +2833,7 @@ const opSetTopicAttributes = "SetTopicAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributes
 func (c *SNS) SetTopicAttributesRequest(input *SetTopicAttributesInput) (req *request.Request, output *SetTopicAttributesOutput) {
 	op := &request.Operation{
 		Name:       opSetTopicAttributes,
@@ -2876,7 +2876,7 @@ func (c *SNS) SetTopicAttributesRequest(input *SetTopicAttributesInput) (req *re
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributes
 func (c *SNS) SetTopicAttributes(input *SetTopicAttributesInput) (*SetTopicAttributesOutput, error) {
 	req, out := c.SetTopicAttributesRequest(input)
 	return out, req.Send()
@@ -2923,7 +2923,7 @@ const opSubscribe = "Subscribe"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Subscribe
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Subscribe
 func (c *SNS) SubscribeRequest(input *SubscribeInput) (req *request.Request, output *SubscribeOutput) {
 	op := &request.Operation{
 		Name:       opSubscribe,
@@ -2970,7 +2970,7 @@ func (c *SNS) SubscribeRequest(input *SubscribeInput) (req *request.Request, out
 //   * ErrCodeAuthorizationErrorException "AuthorizationError"
 //   Indicates that the user has been denied access to the requested resource.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Subscribe
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Subscribe
 func (c *SNS) Subscribe(input *SubscribeInput) (*SubscribeOutput, error) {
 	req, out := c.SubscribeRequest(input)
 	return out, req.Send()
@@ -3017,7 +3017,7 @@ const opUnsubscribe = "Unsubscribe"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Unsubscribe
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Unsubscribe
 func (c *SNS) UnsubscribeRequest(input *UnsubscribeInput) (req *request.Request, output *UnsubscribeOutput) {
 	op := &request.Operation{
 		Name:       opUnsubscribe,
@@ -3065,7 +3065,7 @@ func (c *SNS) UnsubscribeRequest(input *UnsubscribeInput) (req *request.Request,
 //   * ErrCodeNotFoundException "NotFound"
 //   Indicates that the requested resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Unsubscribe
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Unsubscribe
 func (c *SNS) Unsubscribe(input *UnsubscribeInput) (*UnsubscribeOutput, error) {
 	req, out := c.UnsubscribeRequest(input)
 	return out, req.Send()
@@ -3087,7 +3087,7 @@ func (c *SNS) UnsubscribeWithContext(ctx aws.Context, input *UnsubscribeInput, o
 	return out, req.Send()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermissionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermissionInput
 type AddPermissionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3172,7 +3172,7 @@ func (s *AddPermissionInput) SetTopicArn(v string) *AddPermissionInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermissionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/AddPermissionOutput
 type AddPermissionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3188,7 +3188,7 @@ func (s AddPermissionOutput) GoString() string {
 }
 
 // The input for the CheckIfPhoneNumberIsOptedOut action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOutInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOutInput
 type CheckIfPhoneNumberIsOptedOutInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3228,7 +3228,7 @@ func (s *CheckIfPhoneNumberIsOptedOutInput) SetPhoneNumber(v string) *CheckIfPho
 }
 
 // The response from the CheckIfPhoneNumberIsOptedOut action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOutResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CheckIfPhoneNumberIsOptedOutResponse
 type CheckIfPhoneNumberIsOptedOutOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3259,7 +3259,7 @@ func (s *CheckIfPhoneNumberIsOptedOutOutput) SetIsOptedOut(v bool) *CheckIfPhone
 }
 
 // Input for ConfirmSubscription action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscriptionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscriptionInput
 type ConfirmSubscriptionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3325,7 +3325,7 @@ func (s *ConfirmSubscriptionInput) SetTopicArn(v string) *ConfirmSubscriptionInp
 }
 
 // Response for ConfirmSubscriptions action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscriptionResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ConfirmSubscriptionResponse
 type ConfirmSubscriptionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3350,7 +3350,7 @@ func (s *ConfirmSubscriptionOutput) SetSubscriptionArn(v string) *ConfirmSubscri
 }
 
 // Input for CreatePlatformApplication action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplicationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplicationInput
 type CreatePlatformApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3421,7 +3421,7 @@ func (s *CreatePlatformApplicationInput) SetPlatform(v string) *CreatePlatformAp
 }
 
 // Response from CreatePlatformApplication action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformApplicationResponse
 type CreatePlatformApplicationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3446,7 +3446,7 @@ func (s *CreatePlatformApplicationOutput) SetPlatformApplicationArn(v string) *C
 }
 
 // Input for CreatePlatformEndpoint action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformEndpointInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreatePlatformEndpointInput
 type CreatePlatformEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3524,7 +3524,7 @@ func (s *CreatePlatformEndpointInput) SetToken(v string) *CreatePlatformEndpoint
 }
 
 // Response from CreateEndpoint action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateEndpointResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateEndpointResponse
 type CreatePlatformEndpointOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3549,7 +3549,7 @@ func (s *CreatePlatformEndpointOutput) SetEndpointArn(v string) *CreatePlatformE
 }
 
 // Input for CreateTopic action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopicInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopicInput
 type CreateTopicInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3593,7 +3593,7 @@ func (s *CreateTopicInput) SetName(v string) *CreateTopicInput {
 }
 
 // Response from CreateTopic action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopicResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/CreateTopicResponse
 type CreateTopicOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3618,7 +3618,7 @@ func (s *CreateTopicOutput) SetTopicArn(v string) *CreateTopicOutput {
 }
 
 // Input for DeleteEndpoint action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpointInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpointInput
 type DeleteEndpointInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3657,7 +3657,7 @@ func (s *DeleteEndpointInput) SetEndpointArn(v string) *DeleteEndpointInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpointOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteEndpointOutput
 type DeleteEndpointOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3673,7 +3673,7 @@ func (s DeleteEndpointOutput) GoString() string {
 }
 
 // Input for DeletePlatformApplication action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplicationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplicationInput
 type DeletePlatformApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3712,7 +3712,7 @@ func (s *DeletePlatformApplicationInput) SetPlatformApplicationArn(v string) *De
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplicationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeletePlatformApplicationOutput
 type DeletePlatformApplicationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3727,7 +3727,7 @@ func (s DeletePlatformApplicationOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopicInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopicInput
 type DeleteTopicInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3766,7 +3766,7 @@ func (s *DeleteTopicInput) SetTopicArn(v string) *DeleteTopicInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopicOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/DeleteTopicOutput
 type DeleteTopicOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3782,7 +3782,7 @@ func (s DeleteTopicOutput) GoString() string {
 }
 
 // Endpoint for mobile app and device.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Endpoint
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Endpoint
 type Endpoint struct {
 	_ struct{} `type:"structure"`
 
@@ -3816,7 +3816,7 @@ func (s *Endpoint) SetEndpointArn(v string) *Endpoint {
 }
 
 // Input for GetEndpointAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributesInput
 type GetEndpointAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3856,7 +3856,7 @@ func (s *GetEndpointAttributesInput) SetEndpointArn(v string) *GetEndpointAttrib
 }
 
 // Response from GetEndpointAttributes of the EndpointArn.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetEndpointAttributesResponse
 type GetEndpointAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3894,7 +3894,7 @@ func (s *GetEndpointAttributesOutput) SetAttributes(v map[string]*string) *GetEn
 }
 
 // Input for GetPlatformApplicationAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributesInput
 type GetPlatformApplicationAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3934,7 +3934,7 @@ func (s *GetPlatformApplicationAttributesInput) SetPlatformApplicationArn(v stri
 }
 
 // Response for GetPlatformApplicationAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetPlatformApplicationAttributesResponse
 type GetPlatformApplicationAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3972,7 +3972,7 @@ func (s *GetPlatformApplicationAttributesOutput) SetAttributes(v map[string]*str
 }
 
 // The input for the GetSMSAttributes request.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributesInput
 type GetSMSAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4002,7 +4002,7 @@ func (s *GetSMSAttributesInput) SetAttributes(v []*string) *GetSMSAttributesInpu
 }
 
 // The response from the GetSMSAttributes request.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSMSAttributesResponse
 type GetSMSAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4027,7 +4027,7 @@ func (s *GetSMSAttributesOutput) SetAttributes(v map[string]*string) *GetSMSAttr
 }
 
 // Input for GetSubscriptionAttributes.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributesInput
 type GetSubscriptionAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4067,7 +4067,7 @@ func (s *GetSubscriptionAttributesInput) SetSubscriptionArn(v string) *GetSubscr
 }
 
 // Response for GetSubscriptionAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetSubscriptionAttributesResponse
 type GetSubscriptionAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4109,7 +4109,7 @@ func (s *GetSubscriptionAttributesOutput) SetAttributes(v map[string]*string) *G
 }
 
 // Input for GetTopicAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributesInput
 type GetTopicAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4149,7 +4149,7 @@ func (s *GetTopicAttributesInput) SetTopicArn(v string) *GetTopicAttributesInput
 }
 
 // Response for GetTopicAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/GetTopicAttributesResponse
 type GetTopicAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4197,7 +4197,7 @@ func (s *GetTopicAttributesOutput) SetAttributes(v map[string]*string) *GetTopic
 }
 
 // Input for ListEndpointsByPlatformApplication action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplicationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplicationInput
 type ListEndpointsByPlatformApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4248,7 +4248,7 @@ func (s *ListEndpointsByPlatformApplicationInput) SetPlatformApplicationArn(v st
 }
 
 // Response for ListEndpointsByPlatformApplication action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListEndpointsByPlatformApplicationResponse
 type ListEndpointsByPlatformApplicationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4283,7 +4283,7 @@ func (s *ListEndpointsByPlatformApplicationOutput) SetNextToken(v string) *ListE
 }
 
 // The input for the ListPhoneNumbersOptedOut action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOutInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOutInput
 type ListPhoneNumbersOptedOutInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4310,7 +4310,7 @@ func (s *ListPhoneNumbersOptedOutInput) SetNextToken(v string) *ListPhoneNumbers
 }
 
 // The response from the ListPhoneNumbersOptedOut action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOutResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPhoneNumbersOptedOutResponse
 type ListPhoneNumbersOptedOutOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4346,7 +4346,7 @@ func (s *ListPhoneNumbersOptedOutOutput) SetPhoneNumbers(v []*string) *ListPhone
 }
 
 // Input for ListPlatformApplications action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplicationsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplicationsInput
 type ListPlatformApplicationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4372,7 +4372,7 @@ func (s *ListPlatformApplicationsInput) SetNextToken(v string) *ListPlatformAppl
 }
 
 // Response for ListPlatformApplications action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplicationsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListPlatformApplicationsResponse
 type ListPlatformApplicationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4407,7 +4407,7 @@ func (s *ListPlatformApplicationsOutput) SetPlatformApplications(v []*PlatformAp
 }
 
 // Input for ListSubscriptionsByTopic action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopicInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopicInput
 type ListSubscriptionsByTopicInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4456,7 +4456,7 @@ func (s *ListSubscriptionsByTopicInput) SetTopicArn(v string) *ListSubscriptions
 }
 
 // Response for ListSubscriptionsByTopic action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopicResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsByTopicResponse
 type ListSubscriptionsByTopicOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4491,7 +4491,7 @@ func (s *ListSubscriptionsByTopicOutput) SetSubscriptions(v []*Subscription) *Li
 }
 
 // Input for ListSubscriptions action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsInput
 type ListSubscriptionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4516,7 +4516,7 @@ func (s *ListSubscriptionsInput) SetNextToken(v string) *ListSubscriptionsInput 
 }
 
 // Response for ListSubscriptions action
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListSubscriptionsResponse
 type ListSubscriptionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4550,7 +4550,7 @@ func (s *ListSubscriptionsOutput) SetSubscriptions(v []*Subscription) *ListSubsc
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopicsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopicsInput
 type ListTopicsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4575,7 +4575,7 @@ func (s *ListTopicsInput) SetNextToken(v string) *ListTopicsInput {
 }
 
 // Response for ListTopics action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopicsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/ListTopicsResponse
 type ListTopicsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4618,7 +4618,7 @@ func (s *ListTopicsOutput) SetTopics(v []*Topic) *ListTopicsOutput {
 // name, type, and value, are included in the message size restriction, which
 // is currently 256 KB (262,144 bytes). For more information, see Using Amazon
 // SNS Message Attributes (http://docs.aws.amazon.com/sns/latest/dg/SNSMessageAttributes.html).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/MessageAttributeValue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/MessageAttributeValue
 type MessageAttributeValue struct {
 	_ struct{} `type:"structure"`
 
@@ -4681,7 +4681,7 @@ func (s *MessageAttributeValue) SetStringValue(v string) *MessageAttributeValue 
 }
 
 // Input for the OptInPhoneNumber action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumberInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumberInput
 type OptInPhoneNumberInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4721,7 +4721,7 @@ func (s *OptInPhoneNumberInput) SetPhoneNumber(v string) *OptInPhoneNumberInput 
 }
 
 // The response for the OptInPhoneNumber action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumberResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/OptInPhoneNumberResponse
 type OptInPhoneNumberOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4737,7 +4737,7 @@ func (s OptInPhoneNumberOutput) GoString() string {
 }
 
 // Platform application object.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/PlatformApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/PlatformApplication
 type PlatformApplication struct {
 	_ struct{} `type:"structure"`
 
@@ -4771,7 +4771,7 @@ func (s *PlatformApplication) SetPlatformApplicationArn(v string) *PlatformAppli
 }
 
 // Input for Publish action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/PublishInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/PublishInput
 type PublishInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4943,7 +4943,7 @@ func (s *PublishInput) SetTopicArn(v string) *PublishInput {
 }
 
 // Response for Publish action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/PublishResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/PublishResponse
 type PublishOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4970,7 +4970,7 @@ func (s *PublishOutput) SetMessageId(v string) *PublishOutput {
 }
 
 // Input for RemovePermission action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermissionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermissionInput
 type RemovePermissionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5023,7 +5023,7 @@ func (s *RemovePermissionInput) SetTopicArn(v string) *RemovePermissionInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermissionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/RemovePermissionOutput
 type RemovePermissionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5039,7 +5039,7 @@ func (s RemovePermissionOutput) GoString() string {
 }
 
 // Input for SetEndpointAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributesInput
 type SetEndpointAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5105,7 +5105,7 @@ func (s *SetEndpointAttributesInput) SetEndpointArn(v string) *SetEndpointAttrib
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetEndpointAttributesOutput
 type SetEndpointAttributesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5121,7 +5121,7 @@ func (s SetEndpointAttributesOutput) GoString() string {
 }
 
 // Input for SetPlatformApplicationAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributesInput
 type SetPlatformApplicationAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5207,7 +5207,7 @@ func (s *SetPlatformApplicationAttributesInput) SetPlatformApplicationArn(v stri
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetPlatformApplicationAttributesOutput
 type SetPlatformApplicationAttributesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5223,7 +5223,7 @@ func (s SetPlatformApplicationAttributesOutput) GoString() string {
 }
 
 // The input for the SetSMSAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributesInput
 type SetSMSAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5334,7 +5334,7 @@ func (s *SetSMSAttributesInput) SetAttributes(v map[string]*string) *SetSMSAttri
 }
 
 // The response for the SetSMSAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributesResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSMSAttributesResponse
 type SetSMSAttributesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5350,7 +5350,7 @@ func (s SetSMSAttributesOutput) GoString() string {
 }
 
 // Input for SetSubscriptionAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributesInput
 type SetSubscriptionAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5415,7 +5415,7 @@ func (s *SetSubscriptionAttributesInput) SetSubscriptionArn(v string) *SetSubscr
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetSubscriptionAttributesOutput
 type SetSubscriptionAttributesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5431,7 +5431,7 @@ func (s SetSubscriptionAttributesOutput) GoString() string {
 }
 
 // Input for SetTopicAttributes action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributesInput
 type SetTopicAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5496,7 +5496,7 @@ func (s *SetTopicAttributesInput) SetTopicArn(v string) *SetTopicAttributesInput
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SetTopicAttributesOutput
 type SetTopicAttributesOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5512,7 +5512,7 @@ func (s SetTopicAttributesOutput) GoString() string {
 }
 
 // Input for Subscribe action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SubscribeInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SubscribeInput
 type SubscribeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5610,7 +5610,7 @@ func (s *SubscribeInput) SetTopicArn(v string) *SubscribeInput {
 }
 
 // Response for Subscribe action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SubscribeResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/SubscribeResponse
 type SubscribeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5636,7 +5636,7 @@ func (s *SubscribeOutput) SetSubscriptionArn(v string) *SubscribeOutput {
 }
 
 // A wrapper type for the attributes of an Amazon SNS subscription.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Subscription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Subscription
 type Subscription struct {
 	_ struct{} `type:"structure"`
 
@@ -5698,7 +5698,7 @@ func (s *Subscription) SetTopicArn(v string) *Subscription {
 
 // A wrapper type for the topic's Amazon Resource Name (ARN). To retrieve a
 // topic's attributes, use GetTopicAttributes.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Topic
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/Topic
 type Topic struct {
 	_ struct{} `type:"structure"`
 
@@ -5723,7 +5723,7 @@ func (s *Topic) SetTopicArn(v string) *Topic {
 }
 
 // Input for Unsubscribe action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/UnsubscribeInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/UnsubscribeInput
 type UnsubscribeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5762,7 +5762,7 @@ func (s *UnsubscribeInput) SetSubscriptionArn(v string) *UnsubscribeInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/UnsubscribeOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/sns-2010-03-31/UnsubscribeOutput
 type UnsubscribeOutput struct {
 	_ struct{} `type:"structure"`
 }

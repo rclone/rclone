@@ -26,7 +26,7 @@ import (
 //    // myFunc uses an SDK service client to make a request to
 //    // Elastic Load Balancing.
 //    func myFunc(svc elbv2iface.ELBV2API) bool {
-//        // Make svc.AddTags request
+//        // Make svc.AddListenerCertificates request
 //    }
 //
 //    func main() {
@@ -42,7 +42,7 @@ import (
 //    type mockELBV2Client struct {
 //        elbv2iface.ELBV2API
 //    }
-//    func (m *mockELBV2Client) AddTags(input *elbv2.AddTagsInput) (*elbv2.AddTagsOutput, error) {
+//    func (m *mockELBV2Client) AddListenerCertificates(input *elbv2.AddListenerCertificatesInput) (*elbv2.AddListenerCertificatesOutput, error) {
 //        // mock response/functionality
 //    }
 //
@@ -60,6 +60,10 @@ import (
 // and waiters. Its suggested to use the pattern above for testing, or using
 // tooling to generate mocks to satisfy the interfaces.
 type ELBV2API interface {
+	AddListenerCertificates(*elbv2.AddListenerCertificatesInput) (*elbv2.AddListenerCertificatesOutput, error)
+	AddListenerCertificatesWithContext(aws.Context, *elbv2.AddListenerCertificatesInput, ...request.Option) (*elbv2.AddListenerCertificatesOutput, error)
+	AddListenerCertificatesRequest(*elbv2.AddListenerCertificatesInput) (*request.Request, *elbv2.AddListenerCertificatesOutput)
+
 	AddTags(*elbv2.AddTagsInput) (*elbv2.AddTagsOutput, error)
 	AddTagsWithContext(aws.Context, *elbv2.AddTagsInput, ...request.Option) (*elbv2.AddTagsOutput, error)
 	AddTagsRequest(*elbv2.AddTagsInput) (*request.Request, *elbv2.AddTagsOutput)
@@ -103,6 +107,10 @@ type ELBV2API interface {
 	DescribeAccountLimits(*elbv2.DescribeAccountLimitsInput) (*elbv2.DescribeAccountLimitsOutput, error)
 	DescribeAccountLimitsWithContext(aws.Context, *elbv2.DescribeAccountLimitsInput, ...request.Option) (*elbv2.DescribeAccountLimitsOutput, error)
 	DescribeAccountLimitsRequest(*elbv2.DescribeAccountLimitsInput) (*request.Request, *elbv2.DescribeAccountLimitsOutput)
+
+	DescribeListenerCertificates(*elbv2.DescribeListenerCertificatesInput) (*elbv2.DescribeListenerCertificatesOutput, error)
+	DescribeListenerCertificatesWithContext(aws.Context, *elbv2.DescribeListenerCertificatesInput, ...request.Option) (*elbv2.DescribeListenerCertificatesOutput, error)
+	DescribeListenerCertificatesRequest(*elbv2.DescribeListenerCertificatesInput) (*request.Request, *elbv2.DescribeListenerCertificatesOutput)
 
 	DescribeListeners(*elbv2.DescribeListenersInput) (*elbv2.DescribeListenersOutput, error)
 	DescribeListenersWithContext(aws.Context, *elbv2.DescribeListenersInput, ...request.Option) (*elbv2.DescribeListenersOutput, error)
@@ -172,6 +180,10 @@ type ELBV2API interface {
 	RegisterTargets(*elbv2.RegisterTargetsInput) (*elbv2.RegisterTargetsOutput, error)
 	RegisterTargetsWithContext(aws.Context, *elbv2.RegisterTargetsInput, ...request.Option) (*elbv2.RegisterTargetsOutput, error)
 	RegisterTargetsRequest(*elbv2.RegisterTargetsInput) (*request.Request, *elbv2.RegisterTargetsOutput)
+
+	RemoveListenerCertificates(*elbv2.RemoveListenerCertificatesInput) (*elbv2.RemoveListenerCertificatesOutput, error)
+	RemoveListenerCertificatesWithContext(aws.Context, *elbv2.RemoveListenerCertificatesInput, ...request.Option) (*elbv2.RemoveListenerCertificatesOutput, error)
+	RemoveListenerCertificatesRequest(*elbv2.RemoveListenerCertificatesInput) (*request.Request, *elbv2.RemoveListenerCertificatesOutput)
 
 	RemoveTags(*elbv2.RemoveTagsInput) (*elbv2.RemoveTagsOutput, error)
 	RemoveTagsWithContext(aws.Context, *elbv2.RemoveTagsInput, ...request.Option) (*elbv2.RemoveTagsOutput, error)

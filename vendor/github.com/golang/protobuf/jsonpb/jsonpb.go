@@ -193,8 +193,7 @@ func (m *Marshaler) marshalObject(out *errWriter, v proto.Message, indent, typeU
 			// "Generated output always contains 3, 6, or 9 fractional digits,
 			//  depending on required precision."
 			s, ns := s.Field(0).Int(), s.Field(1).Int()
-			d := time.Duration(s)*time.Second + time.Duration(ns)*time.Nanosecond
-			x := fmt.Sprintf("%.9f", d.Seconds())
+			x := fmt.Sprintf("%d.%09d", s, ns)
 			x = strings.TrimSuffix(x, "000")
 			x = strings.TrimSuffix(x, "000")
 			out.write(`"`)

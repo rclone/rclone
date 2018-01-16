@@ -103,7 +103,9 @@ func (client LogProfilesClient) CreateOrUpdatePreparer(logProfileName string, pa
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client LogProfilesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -167,7 +169,9 @@ func (client LogProfilesClient) DeletePreparer(logProfileName string) (*http.Req
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client LogProfilesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -230,7 +234,9 @@ func (client LogProfilesClient) GetPreparer(logProfileName string) (*http.Reques
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client LogProfilesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -291,7 +297,9 @@ func (client LogProfilesClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client LogProfilesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -357,7 +365,9 @@ func (client LogProfilesClient) UpdatePreparer(logProfileName string, logProfile
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client LogProfilesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

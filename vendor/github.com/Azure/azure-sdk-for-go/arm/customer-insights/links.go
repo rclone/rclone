@@ -128,6 +128,7 @@ func (client LinksClient) CreateOrUpdatePreparer(resourceGroupName string, hubNa
 func (client LinksClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -195,7 +196,9 @@ func (client LinksClient) DeletePreparer(resourceGroupName string, hubName strin
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client LinksClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -261,7 +264,9 @@ func (client LinksClient) GetPreparer(resourceGroupName string, hubName string, 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client LinksClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -326,7 +331,9 @@ func (client LinksClient) ListByHubPreparer(resourceGroupName string, hubName st
 // ListByHubSender sends the ListByHub request. The method will close the
 // http.Response Body if it receives an error.
 func (client LinksClient) ListByHubSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByHubResponder handles the response to the ListByHub request. The method always

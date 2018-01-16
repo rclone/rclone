@@ -35,7 +35,7 @@ const opAssociateTeamMember = "AssociateTeamMember"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMember
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMember
 func (c *CodeStar) AssociateTeamMemberRequest(input *AssociateTeamMemberInput) (req *request.Request, output *AssociateTeamMemberOutput) {
 	op := &request.Operation{
 		Name:       opAssociateTeamMember,
@@ -86,7 +86,7 @@ func (c *CodeStar) AssociateTeamMemberRequest(input *AssociateTeamMemberInput) (
 //   Another modification is being made. That modification must complete before
 //   you can make your change.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMember
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMember
 func (c *CodeStar) AssociateTeamMember(input *AssociateTeamMemberInput) (*AssociateTeamMemberOutput, error) {
 	req, out := c.AssociateTeamMemberRequest(input)
 	return out, req.Send()
@@ -133,7 +133,7 @@ const opCreateProject = "CreateProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProject
 func (c *CodeStar) CreateProjectRequest(input *CreateProjectInput) (req *request.Request, output *CreateProjectOutput) {
 	op := &request.Operation{
 		Name:       opCreateProject,
@@ -188,7 +188,7 @@ func (c *CodeStar) CreateProjectRequest(input *CreateProjectInput) (req *request
 //   Another modification is being made. That modification must complete before
 //   you can make your change.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProject
 func (c *CodeStar) CreateProject(input *CreateProjectInput) (*CreateProjectOutput, error) {
 	req, out := c.CreateProjectRequest(input)
 	return out, req.Send()
@@ -235,7 +235,7 @@ const opCreateUserProfile = "CreateUserProfile"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfile
 func (c *CodeStar) CreateUserProfileRequest(input *CreateUserProfileInput) (req *request.Request, output *CreateUserProfileOutput) {
 	op := &request.Operation{
 		Name:       opCreateUserProfile,
@@ -276,7 +276,7 @@ func (c *CodeStar) CreateUserProfileRequest(input *CreateUserProfileInput) (req 
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfile
 func (c *CodeStar) CreateUserProfile(input *CreateUserProfileInput) (*CreateUserProfileOutput, error) {
 	req, out := c.CreateUserProfileRequest(input)
 	return out, req.Send()
@@ -323,7 +323,7 @@ const opDeleteProject = "DeleteProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProject
 func (c *CodeStar) DeleteProjectRequest(input *DeleteProjectInput) (req *request.Request, output *DeleteProjectOutput) {
 	op := &request.Operation{
 		Name:       opDeleteProject,
@@ -364,7 +364,7 @@ func (c *CodeStar) DeleteProjectRequest(input *DeleteProjectInput) (req *request
 //   * ErrCodeInvalidServiceRoleException "InvalidServiceRoleException"
 //   The service role is not valid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProject
 func (c *CodeStar) DeleteProject(input *DeleteProjectInput) (*DeleteProjectOutput, error) {
 	req, out := c.DeleteProjectRequest(input)
 	return out, req.Send()
@@ -411,7 +411,7 @@ const opDeleteUserProfile = "DeleteUserProfile"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfile
 func (c *CodeStar) DeleteUserProfileRequest(input *DeleteUserProfileInput) (req *request.Request, output *DeleteUserProfileOutput) {
 	op := &request.Operation{
 		Name:       opDeleteUserProfile,
@@ -446,7 +446,7 @@ func (c *CodeStar) DeleteUserProfileRequest(input *DeleteUserProfileInput) (req 
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfile
 func (c *CodeStar) DeleteUserProfile(input *DeleteUserProfileInput) (*DeleteUserProfileOutput, error) {
 	req, out := c.DeleteUserProfileRequest(input)
 	return out, req.Send()
@@ -493,7 +493,7 @@ const opDescribeProject = "DescribeProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProject
 func (c *CodeStar) DescribeProjectRequest(input *DescribeProjectInput) (req *request.Request, output *DescribeProjectOutput) {
 	op := &request.Operation{
 		Name:       opDescribeProject,
@@ -538,7 +538,7 @@ func (c *CodeStar) DescribeProjectRequest(input *DescribeProjectInput) (req *req
 //   Another modification is being made. That modification must complete before
 //   you can make your change.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProject
 func (c *CodeStar) DescribeProject(input *DescribeProjectInput) (*DescribeProjectOutput, error) {
 	req, out := c.DescribeProjectRequest(input)
 	return out, req.Send()
@@ -585,7 +585,7 @@ const opDescribeUserProfile = "DescribeUserProfile"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfile
 func (c *CodeStar) DescribeUserProfileRequest(input *DescribeUserProfileInput) (req *request.Request, output *DescribeUserProfileOutput) {
 	op := &request.Operation{
 		Name:       opDescribeUserProfile,
@@ -620,7 +620,7 @@ func (c *CodeStar) DescribeUserProfileRequest(input *DescribeUserProfileInput) (
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfile
 func (c *CodeStar) DescribeUserProfile(input *DescribeUserProfileInput) (*DescribeUserProfileOutput, error) {
 	req, out := c.DescribeUserProfileRequest(input)
 	return out, req.Send()
@@ -667,7 +667,7 @@ const opDisassociateTeamMember = "DisassociateTeamMember"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMember
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMember
 func (c *CodeStar) DisassociateTeamMemberRequest(input *DisassociateTeamMemberInput) (req *request.Request, output *DisassociateTeamMemberOutput) {
 	op := &request.Operation{
 		Name:       opDisassociateTeamMember,
@@ -712,7 +712,7 @@ func (c *CodeStar) DisassociateTeamMemberRequest(input *DisassociateTeamMemberIn
 //   Another modification is being made. That modification must complete before
 //   you can make your change.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMember
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMember
 func (c *CodeStar) DisassociateTeamMember(input *DisassociateTeamMemberInput) (*DisassociateTeamMemberOutput, error) {
 	req, out := c.DisassociateTeamMemberRequest(input)
 	return out, req.Send()
@@ -759,7 +759,7 @@ const opListProjects = "ListProjects"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjects
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjects
 func (c *CodeStar) ListProjectsRequest(input *ListProjectsInput) (req *request.Request, output *ListProjectsOutput) {
 	op := &request.Operation{
 		Name:       opListProjects,
@@ -794,7 +794,7 @@ func (c *CodeStar) ListProjectsRequest(input *ListProjectsInput) (req *request.R
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjects
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjects
 func (c *CodeStar) ListProjects(input *ListProjectsInput) (*ListProjectsOutput, error) {
 	req, out := c.ListProjectsRequest(input)
 	return out, req.Send()
@@ -841,7 +841,7 @@ const opListResources = "ListResources"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResources
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResources
 func (c *CodeStar) ListResourcesRequest(input *ListResourcesInput) (req *request.Request, output *ListResourcesOutput) {
 	op := &request.Operation{
 		Name:       opListResources,
@@ -879,7 +879,7 @@ func (c *CodeStar) ListResourcesRequest(input *ListResourcesInput) (req *request
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResources
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResources
 func (c *CodeStar) ListResources(input *ListResourcesInput) (*ListResourcesOutput, error) {
 	req, out := c.ListResourcesRequest(input)
 	return out, req.Send()
@@ -926,7 +926,7 @@ const opListTagsForProject = "ListTagsForProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProject
 func (c *CodeStar) ListTagsForProjectRequest(input *ListTagsForProjectInput) (req *request.Request, output *ListTagsForProjectOutput) {
 	op := &request.Operation{
 		Name:       opListTagsForProject,
@@ -964,7 +964,7 @@ func (c *CodeStar) ListTagsForProjectRequest(input *ListTagsForProjectInput) (re
 //   * ErrCodeInvalidNextTokenException "InvalidNextTokenException"
 //   The next token is not valid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProject
 func (c *CodeStar) ListTagsForProject(input *ListTagsForProjectInput) (*ListTagsForProjectOutput, error) {
 	req, out := c.ListTagsForProjectRequest(input)
 	return out, req.Send()
@@ -1011,7 +1011,7 @@ const opListTeamMembers = "ListTeamMembers"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembers
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembers
 func (c *CodeStar) ListTeamMembersRequest(input *ListTeamMembersInput) (req *request.Request, output *ListTeamMembersOutput) {
 	op := &request.Operation{
 		Name:       opListTeamMembers,
@@ -1049,7 +1049,7 @@ func (c *CodeStar) ListTeamMembersRequest(input *ListTeamMembersInput) (req *req
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembers
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembers
 func (c *CodeStar) ListTeamMembers(input *ListTeamMembersInput) (*ListTeamMembersOutput, error) {
 	req, out := c.ListTeamMembersRequest(input)
 	return out, req.Send()
@@ -1096,7 +1096,7 @@ const opListUserProfiles = "ListUserProfiles"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfiles
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfiles
 func (c *CodeStar) ListUserProfilesRequest(input *ListUserProfilesInput) (req *request.Request, output *ListUserProfilesOutput) {
 	op := &request.Operation{
 		Name:       opListUserProfiles,
@@ -1131,7 +1131,7 @@ func (c *CodeStar) ListUserProfilesRequest(input *ListUserProfilesInput) (req *r
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfiles
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfiles
 func (c *CodeStar) ListUserProfiles(input *ListUserProfilesInput) (*ListUserProfilesOutput, error) {
 	req, out := c.ListUserProfilesRequest(input)
 	return out, req.Send()
@@ -1178,7 +1178,7 @@ const opTagProject = "TagProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProject
 func (c *CodeStar) TagProjectRequest(input *TagProjectInput) (req *request.Request, output *TagProjectOutput) {
 	op := &request.Operation{
 		Name:       opTagProject,
@@ -1220,7 +1220,7 @@ func (c *CodeStar) TagProjectRequest(input *TagProjectInput) (req *request.Reque
 //   Another modification is being made. That modification must complete before
 //   you can make your change.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProject
 func (c *CodeStar) TagProject(input *TagProjectInput) (*TagProjectOutput, error) {
 	req, out := c.TagProjectRequest(input)
 	return out, req.Send()
@@ -1267,7 +1267,7 @@ const opUntagProject = "UntagProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProject
 func (c *CodeStar) UntagProjectRequest(input *UntagProjectInput) (req *request.Request, output *UntagProjectOutput) {
 	op := &request.Operation{
 		Name:       opUntagProject,
@@ -1309,7 +1309,7 @@ func (c *CodeStar) UntagProjectRequest(input *UntagProjectInput) (req *request.R
 //   Another modification is being made. That modification must complete before
 //   you can make your change.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProject
 func (c *CodeStar) UntagProject(input *UntagProjectInput) (*UntagProjectOutput, error) {
 	req, out := c.UntagProjectRequest(input)
 	return out, req.Send()
@@ -1356,7 +1356,7 @@ const opUpdateProject = "UpdateProject"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProject
 func (c *CodeStar) UpdateProjectRequest(input *UpdateProjectInput) (req *request.Request, output *UpdateProjectOutput) {
 	op := &request.Operation{
 		Name:       opUpdateProject,
@@ -1391,7 +1391,7 @@ func (c *CodeStar) UpdateProjectRequest(input *UpdateProjectInput) (req *request
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProject
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProject
 func (c *CodeStar) UpdateProject(input *UpdateProjectInput) (*UpdateProjectOutput, error) {
 	req, out := c.UpdateProjectRequest(input)
 	return out, req.Send()
@@ -1438,7 +1438,7 @@ const opUpdateTeamMember = "UpdateTeamMember"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMember
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMember
 func (c *CodeStar) UpdateTeamMemberRequest(input *UpdateTeamMemberInput) (req *request.Request, output *UpdateTeamMemberOutput) {
 	op := &request.Operation{
 		Name:       opUpdateTeamMember,
@@ -1491,7 +1491,7 @@ func (c *CodeStar) UpdateTeamMemberRequest(input *UpdateTeamMemberInput) (req *r
 //   * ErrCodeTeamMemberNotFoundException "TeamMemberNotFoundException"
 //   The specified team member was not found.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMember
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMember
 func (c *CodeStar) UpdateTeamMember(input *UpdateTeamMemberInput) (*UpdateTeamMemberOutput, error) {
 	req, out := c.UpdateTeamMemberRequest(input)
 	return out, req.Send()
@@ -1538,7 +1538,7 @@ const opUpdateUserProfile = "UpdateUserProfile"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfile
 func (c *CodeStar) UpdateUserProfileRequest(input *UpdateUserProfileInput) (req *request.Request, output *UpdateUserProfileOutput) {
 	op := &request.Operation{
 		Name:       opUpdateUserProfile,
@@ -1575,7 +1575,7 @@ func (c *CodeStar) UpdateUserProfileRequest(input *UpdateUserProfileInput) (req 
 //   * ErrCodeValidationException "ValidationException"
 //   The specified input is either not valid, or it could not be validated.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfile
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfile
 func (c *CodeStar) UpdateUserProfile(input *UpdateUserProfileInput) (*UpdateUserProfileOutput, error) {
 	req, out := c.UpdateUserProfileRequest(input)
 	return out, req.Send()
@@ -1597,7 +1597,7 @@ func (c *CodeStar) UpdateUserProfileWithContext(ctx aws.Context, input *UpdateUs
 	return out, req.Send()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMemberRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMemberRequest
 type AssociateTeamMemberInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1696,7 +1696,7 @@ func (s *AssociateTeamMemberInput) SetUserArn(v string) *AssociateTeamMemberInpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMemberResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMemberResult
 type AssociateTeamMemberOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1721,7 +1721,7 @@ func (s *AssociateTeamMemberOutput) SetClientRequestToken(v string) *AssociateTe
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProjectRequest
 type CreateProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1801,7 +1801,7 @@ func (s *CreateProjectInput) SetName(v string) *CreateProjectInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProjectResult
 type CreateProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1856,7 +1856,7 @@ func (s *CreateProjectOutput) SetProjectTemplateId(v string) *CreateProjectOutpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfileRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfileRequest
 type CreateUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1945,7 +1945,7 @@ func (s *CreateUserProfileInput) SetUserArn(v string) *CreateUserProfileInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfileResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfileResult
 type CreateUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2019,7 +2019,7 @@ func (s *CreateUserProfileOutput) SetUserArn(v string) *CreateUserProfileOutput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProjectRequest
 type DeleteProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2086,7 +2086,7 @@ func (s *DeleteProjectInput) SetId(v string) *DeleteProjectInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProjectResult
 type DeleteProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2120,7 +2120,7 @@ func (s *DeleteProjectOutput) SetStackId(v string) *DeleteProjectOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfileRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfileRequest
 type DeleteUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2162,7 +2162,7 @@ func (s *DeleteUserProfileInput) SetUserArn(v string) *DeleteUserProfileInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfileResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfileResult
 type DeleteUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2188,7 +2188,7 @@ func (s *DeleteUserProfileOutput) SetUserArn(v string) *DeleteUserProfileOutput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProjectRequest
 type DescribeProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2230,7 +2230,7 @@ func (s *DescribeProjectInput) SetId(v string) *DescribeProjectInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProjectResult
 type DescribeProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2319,7 +2319,7 @@ func (s *DescribeProjectOutput) SetStackId(v string) *DescribeProjectOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfileRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfileRequest
 type DescribeUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2361,7 +2361,7 @@ func (s *DescribeUserProfileInput) SetUserArn(v string) *DescribeUserProfileInpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfileResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfileResult
 type DescribeUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2448,7 +2448,7 @@ func (s *DescribeUserProfileOutput) SetUserArn(v string) *DescribeUserProfileOut
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMemberRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMemberRequest
 type DisassociateTeamMemberInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2508,7 +2508,7 @@ func (s *DisassociateTeamMemberInput) SetUserArn(v string) *DisassociateTeamMemb
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMemberResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMemberResult
 type DisassociateTeamMemberOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2523,7 +2523,7 @@ func (s DisassociateTeamMemberOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjectsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjectsRequest
 type ListProjectsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2573,7 +2573,7 @@ func (s *ListProjectsInput) SetNextToken(v string) *ListProjectsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjectsResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjectsResult
 type ListProjectsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2609,7 +2609,7 @@ func (s *ListProjectsOutput) SetProjects(v []*ProjectSummary) *ListProjectsOutpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResourcesRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResourcesRequest
 type ListResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2676,7 +2676,7 @@ func (s *ListResourcesInput) SetProjectId(v string) *ListResourcesInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResourcesResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResourcesResult
 type ListResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2710,7 +2710,7 @@ func (s *ListResourcesOutput) SetResources(v []*Resource) *ListResourcesOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectRequest
 type ListTagsForProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2776,7 +2776,7 @@ func (s *ListTagsForProjectInput) SetNextToken(v string) *ListTagsForProjectInpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectResult
 type ListTagsForProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2809,7 +2809,7 @@ func (s *ListTagsForProjectOutput) SetTags(v map[string]*string) *ListTagsForPro
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembersRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembersRequest
 type ListTeamMembersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2876,7 +2876,7 @@ func (s *ListTeamMembersInput) SetProjectId(v string) *ListTeamMembersInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembersResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembersResult
 type ListTeamMembersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2912,7 +2912,7 @@ func (s *ListTeamMembersOutput) SetTeamMembers(v []*TeamMember) *ListTeamMembers
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfilesRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfilesRequest
 type ListUserProfilesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2962,7 +2962,7 @@ func (s *ListUserProfilesInput) SetNextToken(v string) *ListUserProfilesInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfilesResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfilesResult
 type ListUserProfilesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2999,7 +2999,7 @@ func (s *ListUserProfilesOutput) SetUserProfiles(v []*UserProfileSummary) *ListU
 }
 
 // Information about the metadata for a project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ProjectSummary
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ProjectSummary
 type ProjectSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -3033,7 +3033,7 @@ func (s *ProjectSummary) SetProjectId(v string) *ProjectSummary {
 }
 
 // Information about a resource for a project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/Resource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/Resource
 type Resource struct {
 	_ struct{} `type:"structure"`
 
@@ -3059,7 +3059,7 @@ func (s *Resource) SetId(v string) *Resource {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectRequest
 type TagProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3115,7 +3115,7 @@ func (s *TagProjectInput) SetTags(v map[string]*string) *TagProjectInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectResult
 type TagProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3140,7 +3140,7 @@ func (s *TagProjectOutput) SetTags(v map[string]*string) *TagProjectOutput {
 }
 
 // Information about a team member in a project.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TeamMember
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TeamMember
 type TeamMember struct {
 	_ struct{} `type:"structure"`
 
@@ -3189,7 +3189,7 @@ func (s *TeamMember) SetUserArn(v string) *TeamMember {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectRequest
 type UntagProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3245,7 +3245,7 @@ func (s *UntagProjectInput) SetTags(v []*string) *UntagProjectInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectResult
 type UntagProjectOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3260,7 +3260,7 @@ func (s UntagProjectOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProjectRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProjectRequest
 type UpdateProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3323,7 +3323,7 @@ func (s *UpdateProjectInput) SetName(v string) *UpdateProjectInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProjectResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProjectResult
 type UpdateProjectOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3338,7 +3338,7 @@ func (s UpdateProjectOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMemberRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMemberRequest
 type UpdateTeamMemberInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3421,7 +3421,7 @@ func (s *UpdateTeamMemberInput) SetUserArn(v string) *UpdateTeamMemberInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMemberResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMemberResult
 type UpdateTeamMemberOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3465,7 +3465,7 @@ func (s *UpdateTeamMemberOutput) SetUserArn(v string) *UpdateTeamMemberOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfileRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfileRequest
 type UpdateUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3544,7 +3544,7 @@ func (s *UpdateUserProfileInput) SetUserArn(v string) *UpdateUserProfileInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfileResult
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfileResult
 type UpdateUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3619,7 +3619,7 @@ func (s *UpdateUserProfileOutput) SetUserArn(v string) *UpdateUserProfileOutput 
 }
 
 // Information about a user's profile in AWS CodeStar.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UserProfileSummary
+// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UserProfileSummary
 type UserProfileSummary struct {
 	_ struct{} `type:"structure"`
 

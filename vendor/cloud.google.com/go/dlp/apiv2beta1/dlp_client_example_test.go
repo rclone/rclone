@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -61,6 +61,47 @@ func ExampleClient_RedactContent() {
 	// TODO: Fill request struct fields.
 	}
 	resp, err := c.RedactContent(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleClient_DeidentifyContent() {
+	ctx := context.Background()
+	c, err := dlp.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &dlppb.DeidentifyContentRequest{
+	// TODO: Fill request struct fields.
+	}
+	resp, err := c.DeidentifyContent(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleClient_AnalyzeDataSourceRisk() {
+	ctx := context.Background()
+	c, err := dlp.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &dlppb.AnalyzeDataSourceRiskRequest{
+	// TODO: Fill request struct fields.
+	}
+	op, err := c.AnalyzeDataSourceRisk(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	resp, err := op.Wait(ctx)
 	if err != nil {
 		// TODO: Handle error.
 	}

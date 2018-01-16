@@ -105,6 +105,7 @@ func (client LabsClient) ClaimAnyVMPreparer(resourceGroupName string, name strin
 func (client LabsClient) ClaimAnyVMSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -207,6 +208,7 @@ func (client LabsClient) CreateEnvironmentPreparer(resourceGroupName string, nam
 func (client LabsClient) CreateEnvironmentSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -290,6 +292,7 @@ func (client LabsClient) CreateOrUpdatePreparer(resourceGroupName string, name s
 func (client LabsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -372,6 +375,7 @@ func (client LabsClient) DeletePreparer(resourceGroupName string, name string, c
 func (client LabsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -456,6 +460,7 @@ func (client LabsClient) ExportResourceUsagePreparer(resourceGroupName string, n
 func (client LabsClient) ExportResourceUsageSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -523,7 +528,9 @@ func (client LabsClient) GenerateUploadURIPreparer(resourceGroupName string, nam
 // GenerateUploadURISender sends the GenerateUploadURI request. The method will close the
 // http.Response Body if it receives an error.
 func (client LabsClient) GenerateUploadURISender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GenerateUploadURIResponder handles the response to the GenerateUploadURI request. The method always
@@ -592,7 +599,9 @@ func (client LabsClient) GetPreparer(resourceGroupName string, name string, expa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client LabsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -671,7 +680,9 @@ func (client LabsClient) ListByResourceGroupPreparer(resourceGroupName string, e
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client LabsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -817,7 +828,9 @@ func (client LabsClient) ListBySubscriptionPreparer(expand string, filter string
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client LabsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
@@ -951,7 +964,9 @@ func (client LabsClient) ListVhdsPreparer(resourceGroupName string, name string)
 // ListVhdsSender sends the ListVhds request. The method will close the
 // http.Response Body if it receives an error.
 func (client LabsClient) ListVhdsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListVhdsResponder handles the response to the ListVhds request. The method always
@@ -1087,7 +1102,9 @@ func (client LabsClient) UpdatePreparer(resourceGroupName string, name string, l
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client LabsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

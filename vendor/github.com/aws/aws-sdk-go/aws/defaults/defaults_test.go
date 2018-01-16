@@ -13,12 +13,40 @@ import (
 )
 
 func TestHTTPCredProvider(t *testing.T) {
+	origFn := lookupHostFn
+	defer func() { lookupHostFn = origFn }()
+
+	lookupHostFn = func(host string) ([]string, error) {
+		m := map[string]struct {
+			Addrs []string
+			Err   error
+		}{
+			"localhost":       {Addrs: []string{"::1", "127.0.0.1"}},
+			"actuallylocal":   {Addrs: []string{"127.0.0.2"}},
+			"notlocal":        {Addrs: []string{"::1", "127.0.0.1", "192.168.1.10"}},
+			"www.example.com": {Addrs: []string{"10.10.10.10"}},
+		}
+
+		h, ok := m[host]
+		if !ok {
+			t.Fatalf("unknown host in test, %v", host)
+			return nil, fmt.Errorf("unknown host")
+		}
+
+		return h.Addrs, h.Err
+	}
+
 	cases := []struct {
 		Host string
 		Fail bool
 	}{
-		{"localhost", false}, {"127.0.0.1", false},
-		{"www.example.com", true}, {"169.254.170.2", true},
+		{"localhost", false},
+		{"actuallylocal", false},
+		{"127.0.0.1", false},
+		{"127.1.1.1", false},
+		{"[::1]", false},
+		{"www.example.com", true},
+		{"169.254.170.2", true},
 	}
 
 	defer os.Clearenv()

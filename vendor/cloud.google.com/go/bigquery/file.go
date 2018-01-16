@@ -22,6 +22,10 @@ import (
 
 // A ReaderSource is a source for a load operation that gets
 // data from an io.Reader.
+//
+// When a ReaderSource is part of a LoadConfig obtained via Job.Config,
+// its internal io.Reader will be nil, so it cannot be used for a
+// subsequent load operation.
 type ReaderSource struct {
 	r io.Reader
 	FileConfig
@@ -34,9 +38,9 @@ func NewReaderSource(r io.Reader) *ReaderSource {
 	return &ReaderSource{r: r}
 }
 
-func (r *ReaderSource) populateInsertJobConfForLoad(conf *insertJobConf) {
-	conf.media = r.r
-	r.FileConfig.populateLoadConfig(conf.job.Configuration.Load)
+func (r *ReaderSource) populateLoadConfig(lc *bq.JobConfigurationLoad) io.Reader {
+	r.FileConfig.populateLoadConfig(lc)
+	return r.r
 }
 
 // FileConfig contains configuration options that pertain to files, typically
@@ -48,28 +52,9 @@ type FileConfig struct {
 	// Allowed values are: CSV, Avro, JSON, DatastoreBackup.  The default is CSV.
 	SourceFormat DataFormat
 
-	// FieldDelimiter is the separator for fields in a CSV file, used when
-	// reading or exporting data. The default is ",".
-	FieldDelimiter string
-
-	// The number of rows at the top of a CSV file that BigQuery will skip when
-	// reading data.
-	SkipLeadingRows int64
-
-	// AllowJaggedRows causes missing trailing optional columns to be tolerated
-	// when reading CSV data. Missing values are treated as nulls.
-	AllowJaggedRows bool
-
-	// AllowQuotedNewlines sets whether quoted data sections containing
-	// newlines are allowed when reading CSV data.
-	AllowQuotedNewlines bool
-
 	// Indicates if we should automatically infer the options and
 	// schema for CSV and JSON sources.
 	AutoDetect bool
-
-	// Encoding is the character encoding of data to be read.
-	Encoding Encoding
 
 	// MaxBadRecords is the maximum number of bad records that will be ignored
 	// when reading data.
@@ -87,26 +72,8 @@ type FileConfig struct {
 	// unless the data is being loaded into a table that already exists.
 	Schema Schema
 
-	// Quote is the value used to quote data sections in a CSV file. The
-	// default quotation character is the double quote ("), which is used if
-	// both Quote and ForceZeroQuote are unset.
-	// To specify that no character should be interpreted as a quotation
-	// character, set ForceZeroQuote to true.
-	// Only used when reading data.
-	Quote          string
-	ForceZeroQuote bool
-}
-
-// quote returns the CSV quote character, or nil if unset.
-func (fc *FileConfig) quote() *string {
-	if fc.ForceZeroQuote {
-		quote := ""
-		return &quote
-	}
-	if fc.Quote == "" {
-		return nil
-	}
-	return &fc.Quote
+	// Additional options for CSV files.
+	CSVOptions
 }
 
 func (fc *FileConfig) populateLoadConfig(conf *bq.JobConfigurationLoad) {
@@ -120,9 +87,23 @@ func (fc *FileConfig) populateLoadConfig(conf *bq.JobConfigurationLoad) {
 	conf.IgnoreUnknownValues = fc.IgnoreUnknownValues
 	conf.MaxBadRecords = fc.MaxBadRecords
 	if fc.Schema != nil {
-		conf.Schema = fc.Schema.asTableSchema()
+		conf.Schema = fc.Schema.toBQ()
 	}
 	conf.Quote = fc.quote()
+}
+
+func bqPopulateFileConfig(conf *bq.JobConfigurationLoad, fc *FileConfig) {
+	fc.SourceFormat = DataFormat(conf.SourceFormat)
+	fc.AutoDetect = conf.Autodetect
+	fc.MaxBadRecords = conf.MaxBadRecords
+	fc.IgnoreUnknownValues = conf.IgnoreUnknownValues
+	fc.Schema = bqToSchema(conf.Schema)
+	fc.SkipLeadingRows = conf.SkipLeadingRows
+	fc.AllowJaggedRows = conf.AllowJaggedRows
+	fc.AllowQuotedNewlines = conf.AllowQuotedNewlines
+	fc.Encoding = Encoding(conf.Encoding)
+	fc.FieldDelimiter = conf.FieldDelimiter
+	fc.CSVOptions.setQuote(conf.Quote)
 }
 
 func (fc *FileConfig) populateExternalDataConfig(conf *bq.ExternalDataConfiguration) {
@@ -131,35 +112,17 @@ func (fc *FileConfig) populateExternalDataConfig(conf *bq.ExternalDataConfigurat
 		// Format must be explicitly set for external data sources.
 		format = CSV
 	}
-	// TODO(jba): support AutoDetect.
+	conf.Autodetect = fc.AutoDetect
 	conf.IgnoreUnknownValues = fc.IgnoreUnknownValues
 	conf.MaxBadRecords = fc.MaxBadRecords
 	conf.SourceFormat = string(format)
 	if fc.Schema != nil {
-		conf.Schema = fc.Schema.asTableSchema()
+		conf.Schema = fc.Schema.toBQ()
 	}
 	if format == CSV {
-		conf.CsvOptions = &bq.CsvOptions{
-			AllowJaggedRows:     fc.AllowJaggedRows,
-			AllowQuotedNewlines: fc.AllowQuotedNewlines,
-			Encoding:            string(fc.Encoding),
-			FieldDelimiter:      fc.FieldDelimiter,
-			SkipLeadingRows:     fc.SkipLeadingRows,
-			Quote:               fc.quote(),
-		}
+		fc.CSVOptions.populateExternalDataConfig(conf)
 	}
 }
-
-// DataFormat describes the format of BigQuery table data.
-type DataFormat string
-
-// Constants describing the format of BigQuery table data.
-const (
-	CSV             DataFormat = "CSV"
-	Avro            DataFormat = "AVRO"
-	JSON            DataFormat = "NEWLINE_DELIMITED_JSON"
-	DatastoreBackup DataFormat = "DATASTORE_BACKUP"
-)
 
 // Encoding specifies the character encoding of data to be loaded into BigQuery.
 // See https://cloud.google.com/bigquery/docs/reference/v2/jobs#configuration.load.encoding

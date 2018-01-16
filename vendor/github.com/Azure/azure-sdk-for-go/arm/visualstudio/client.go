@@ -4,6 +4,8 @@
 // operations conform to the HTTP/1.1 protocol specification and each operation returns an x-ms-request-id header that
 // can be used to obtain information about the request. You must make sure that requests made to these resources are
 // secure. For more information, see https://docs.microsoft.com/en-us/rest/api/index.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/visualstudio/mgmt/2014-04-01-preview/visualstudio
 package visualstudio
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

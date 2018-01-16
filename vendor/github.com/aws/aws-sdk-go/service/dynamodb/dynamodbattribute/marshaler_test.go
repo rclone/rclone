@@ -493,6 +493,53 @@ func Test_New_UnmarshalListError(t *testing.T) {
 	}
 }
 
+// see github issue #1594
+func TestDecodeArrayType(t *testing.T) {
+	cases := []struct {
+		to, from interface{}
+	}{
+		{
+			&[2]int{1, 2},
+			&[2]int{},
+		},
+		{
+			&[2]int64{1, 2},
+			&[2]int64{},
+		},
+		{
+			&[2]byte{1, 2},
+			&[2]byte{},
+		},
+		{
+			&[2]bool{true, false},
+			&[2]bool{},
+		},
+		{
+			&[2]string{"1", "2"},
+			&[2]string{},
+		},
+		{
+			&[2][]string{{"1", "2"}},
+			&[2][]string{},
+		},
+	}
+
+	for _, c := range cases {
+		marshaled, err := Marshal(c.to)
+		if err != nil {
+			t.Errorf("expected no error, but received %v", err)
+		}
+
+		if err = Unmarshal(marshaled, c.from); err != nil {
+			t.Errorf("expected no error, but received %v", err)
+		}
+
+		if !reflect.DeepEqual(c.to, c.from) {
+			t.Errorf("expected %v, but received %v", c.to, c.from)
+		}
+	}
+}
+
 func compareObjects(t *testing.T, expected interface{}, actual interface{}) {
 	if !reflect.DeepEqual(expected, actual) {
 		ev := reflect.ValueOf(expected)

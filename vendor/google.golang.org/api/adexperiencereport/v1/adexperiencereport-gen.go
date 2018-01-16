@@ -158,8 +158,8 @@ type PlatformSummary struct {
 }
 
 func (s *PlatformSummary) MarshalJSON() ([]byte, error) {
-	type noMethod PlatformSummary
-	raw := noMethod(*s)
+	type NoMethod PlatformSummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -197,8 +197,8 @@ type SiteSummaryResponse struct {
 }
 
 func (s *SiteSummaryResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SiteSummaryResponse
-	raw := noMethod(*s)
+	type NoMethod SiteSummaryResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -230,8 +230,8 @@ type ViolatingSitesResponse struct {
 }
 
 func (s *ViolatingSitesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ViolatingSitesResponse
-	raw := noMethod(*s)
+	type NoMethod ViolatingSitesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -342,7 +342,7 @@ func (c *SitesGetCall) Do(opts ...googleapi.CallOption) (*SiteSummaryResponse, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -477,7 +477,7 @@ func (c *ViolatingSitesListCall) Do(opts ...googleapi.CallOption) (*ViolatingSit
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

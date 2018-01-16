@@ -97,7 +97,9 @@ func (client HubsClient) CheckAvailabilityPreparer(resourceGroupName string, nam
 // CheckAvailabilitySender sends the CheckAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client HubsClient) CheckAvailabilitySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CheckAvailabilityResponder handles the response to the CheckAvailability request. The method always

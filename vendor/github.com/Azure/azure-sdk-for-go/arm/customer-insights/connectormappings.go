@@ -117,7 +117,9 @@ func (client ConnectorMappingsClient) CreateOrUpdatePreparer(resourceGroupName s
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ConnectorMappingsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -185,7 +187,9 @@ func (client ConnectorMappingsClient) DeletePreparer(resourceGroupName string, h
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ConnectorMappingsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -252,7 +256,9 @@ func (client ConnectorMappingsClient) GetPreparer(resourceGroupName string, hubN
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ConnectorMappingsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -319,7 +325,9 @@ func (client ConnectorMappingsClient) ListByConnectorPreparer(resourceGroupName 
 // ListByConnectorSender sends the ListByConnector request. The method will close the
 // http.Response Body if it receives an error.
 func (client ConnectorMappingsClient) ListByConnectorSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByConnectorResponder handles the response to the ListByConnector request. The method always

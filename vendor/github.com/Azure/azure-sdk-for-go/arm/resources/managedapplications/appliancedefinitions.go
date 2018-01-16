@@ -126,6 +126,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdatePreparer(resourceGroupNam
 func (client ApplianceDefinitionsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -223,6 +224,7 @@ func (client ApplianceDefinitionsClient) CreateOrUpdateByIDPreparer(applianceDef
 func (client ApplianceDefinitionsClient) CreateOrUpdateByIDSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -319,6 +321,7 @@ func (client ApplianceDefinitionsClient) DeletePreparer(resourceGroupName string
 func (client ApplianceDefinitionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -399,6 +402,7 @@ func (client ApplianceDefinitionsClient) DeleteByIDPreparer(applianceDefinitionI
 func (client ApplianceDefinitionsClient) DeleteByIDSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -475,7 +479,9 @@ func (client ApplianceDefinitionsClient) GetPreparer(resourceGroupName string, a
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -540,7 +546,9 @@ func (client ApplianceDefinitionsClient) GetByIDPreparer(applianceDefinitionID s
 // GetByIDSender sends the GetByID request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) GetByIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetByIDResponder handles the response to the GetByID request. The method always
@@ -612,7 +620,9 @@ func (client ApplianceDefinitionsClient) ListByResourceGroupPreparer(resourceGro
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplianceDefinitionsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always

@@ -1348,7 +1348,16 @@
         "AWS::AutoScaling::AutoScalingGroup",
         "AWS::AutoScaling::LaunchConfiguration",
         "AWS::AutoScaling::ScalingPolicy",
-        "AWS::AutoScaling::ScheduledAction"
+        "AWS::AutoScaling::ScheduledAction",
+        "AWS::CodeBuild::Project",
+        "AWS::WAF::RateBasedRule",
+        "AWS::WAF::Rule",
+        "AWS::WAF::WebACL",
+        "AWS::WAFRegional::RateBasedRule",
+        "AWS::WAFRegional::Rule",
+        "AWS::WAFRegional::WebACL",
+        "AWS::CloudFront::Distribution",
+        "AWS::CloudFront::StreamingDistribution"
       ]
     },
     "ResourceTypeList":{

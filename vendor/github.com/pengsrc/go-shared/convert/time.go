@@ -37,6 +37,10 @@ func StringToTime(timeString string, format string) (time.Time, error) {
 
 // TimeToTimestamp transforms given time to unix time int.
 func TimeToTimestamp(t time.Time) int64 {
+	zero := time.Time{}
+	if t == zero {
+		t = time.Unix(0, 0).UTC()
+	}
 	return t.Unix()
 }
 

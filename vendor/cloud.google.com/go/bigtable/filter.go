@@ -181,7 +181,7 @@ type timestampRangeFilter struct {
 }
 
 func (trf timestampRangeFilter) String() string {
-	return fmt.Sprintf("timestamp_range(%s,%s)", trf.startTime, trf.endTime)
+	return fmt.Sprintf("timestamp_range(%v,%v)", trf.startTime, trf.endTime)
 }
 
 func (trf timestampRangeFilter) proto() *btpb.RowFilter {

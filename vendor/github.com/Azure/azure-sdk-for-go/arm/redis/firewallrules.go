@@ -87,7 +87,9 @@ func (client FirewallRulesClient) ListPreparer(resourceGroupName string, cacheNa
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client FirewallRulesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

@@ -183,6 +183,13 @@ type DatabaseMigrationServiceAPI interface {
 	DescribeReplicationSubnetGroupsPages(*databasemigrationservice.DescribeReplicationSubnetGroupsInput, func(*databasemigrationservice.DescribeReplicationSubnetGroupsOutput, bool) bool) error
 	DescribeReplicationSubnetGroupsPagesWithContext(aws.Context, *databasemigrationservice.DescribeReplicationSubnetGroupsInput, func(*databasemigrationservice.DescribeReplicationSubnetGroupsOutput, bool) bool, ...request.Option) error
 
+	DescribeReplicationTaskAssessmentResults(*databasemigrationservice.DescribeReplicationTaskAssessmentResultsInput) (*databasemigrationservice.DescribeReplicationTaskAssessmentResultsOutput, error)
+	DescribeReplicationTaskAssessmentResultsWithContext(aws.Context, *databasemigrationservice.DescribeReplicationTaskAssessmentResultsInput, ...request.Option) (*databasemigrationservice.DescribeReplicationTaskAssessmentResultsOutput, error)
+	DescribeReplicationTaskAssessmentResultsRequest(*databasemigrationservice.DescribeReplicationTaskAssessmentResultsInput) (*request.Request, *databasemigrationservice.DescribeReplicationTaskAssessmentResultsOutput)
+
+	DescribeReplicationTaskAssessmentResultsPages(*databasemigrationservice.DescribeReplicationTaskAssessmentResultsInput, func(*databasemigrationservice.DescribeReplicationTaskAssessmentResultsOutput, bool) bool) error
+	DescribeReplicationTaskAssessmentResultsPagesWithContext(aws.Context, *databasemigrationservice.DescribeReplicationTaskAssessmentResultsInput, func(*databasemigrationservice.DescribeReplicationTaskAssessmentResultsOutput, bool) bool, ...request.Option) error
+
 	DescribeReplicationTasks(*databasemigrationservice.DescribeReplicationTasksInput) (*databasemigrationservice.DescribeReplicationTasksOutput, error)
 	DescribeReplicationTasksWithContext(aws.Context, *databasemigrationservice.DescribeReplicationTasksInput, ...request.Option) (*databasemigrationservice.DescribeReplicationTasksOutput, error)
 	DescribeReplicationTasksRequest(*databasemigrationservice.DescribeReplicationTasksInput) (*request.Request, *databasemigrationservice.DescribeReplicationTasksOutput)
@@ -247,6 +254,10 @@ type DatabaseMigrationServiceAPI interface {
 	StartReplicationTask(*databasemigrationservice.StartReplicationTaskInput) (*databasemigrationservice.StartReplicationTaskOutput, error)
 	StartReplicationTaskWithContext(aws.Context, *databasemigrationservice.StartReplicationTaskInput, ...request.Option) (*databasemigrationservice.StartReplicationTaskOutput, error)
 	StartReplicationTaskRequest(*databasemigrationservice.StartReplicationTaskInput) (*request.Request, *databasemigrationservice.StartReplicationTaskOutput)
+
+	StartReplicationTaskAssessment(*databasemigrationservice.StartReplicationTaskAssessmentInput) (*databasemigrationservice.StartReplicationTaskAssessmentOutput, error)
+	StartReplicationTaskAssessmentWithContext(aws.Context, *databasemigrationservice.StartReplicationTaskAssessmentInput, ...request.Option) (*databasemigrationservice.StartReplicationTaskAssessmentOutput, error)
+	StartReplicationTaskAssessmentRequest(*databasemigrationservice.StartReplicationTaskAssessmentInput) (*request.Request, *databasemigrationservice.StartReplicationTaskAssessmentOutput)
 
 	StopReplicationTask(*databasemigrationservice.StopReplicationTaskInput) (*databasemigrationservice.StopReplicationTaskOutput, error)
 	StopReplicationTaskWithContext(aws.Context, *databasemigrationservice.StopReplicationTaskInput, ...request.Option) (*databasemigrationservice.StopReplicationTaskOutput, error)

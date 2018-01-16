@@ -17,10 +17,14 @@ func TestCount(t *testing.T) {
 		success  bool
 		expected int
 	}{
+		{[]string{}, true, 0},
+		{[]string{"-v"}, true, 1},
 		{[]string{"-vvv"}, true, 3},
 		{[]string{"-v", "-v", "-v"}, true, 3},
 		{[]string{"-v", "--verbose", "-v"}, true, 3},
 		{[]string{"-v=3", "-v"}, true, 4},
+		{[]string{"--verbose=0"}, true, 0},
+		{[]string{"-v=0"}, true, 0},
 		{[]string{"-v=a"}, false, 0},
 	}
 
@@ -45,7 +49,7 @@ func TestCount(t *testing.T) {
 				t.Errorf("Got error trying to fetch the counter flag")
 			}
 			if c != tc.expected {
-				t.Errorf("expected %q, got %q", tc.expected, c)
+				t.Errorf("expected %d, got %d", tc.expected, c)
 			}
 		}
 	}

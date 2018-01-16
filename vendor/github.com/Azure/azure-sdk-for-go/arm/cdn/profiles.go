@@ -122,6 +122,7 @@ func (client ProfilesClient) CreatePreparer(resourceGroupName string, profileNam
 func (client ProfilesClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -217,6 +218,7 @@ func (client ProfilesClient) DeletePreparer(resourceGroupName string, profileNam
 func (client ProfilesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -293,7 +295,9 @@ func (client ProfilesClient) GenerateSsoURIPreparer(resourceGroupName string, pr
 // GenerateSsoURISender sends the GenerateSsoURI request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) GenerateSsoURISender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GenerateSsoURIResponder handles the response to the GenerateSsoURI request. The method always
@@ -367,7 +371,9 @@ func (client ProfilesClient) GetPreparer(resourceGroupName string, profileName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -428,7 +434,9 @@ func (client ProfilesClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -569,7 +577,9 @@ func (client ProfilesClient) ListByResourceGroupPreparer(resourceGroupName strin
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -712,7 +722,9 @@ func (client ProfilesClient) ListResourceUsagePreparer(resourceGroupName string,
 // ListResourceUsageSender sends the ListResourceUsage request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListResourceUsageSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResourceUsageResponder handles the response to the ListResourceUsage request. The method always
@@ -856,7 +868,9 @@ func (client ProfilesClient) ListSupportedOptimizationTypesPreparer(resourceGrou
 // ListSupportedOptimizationTypesSender sends the ListSupportedOptimizationTypes request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListSupportedOptimizationTypesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSupportedOptimizationTypesResponder handles the response to the ListSupportedOptimizationTypes request. The method always
@@ -953,6 +967,7 @@ func (client ProfilesClient) UpdatePreparer(resourceGroupName string, profileNam
 func (client ProfilesClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

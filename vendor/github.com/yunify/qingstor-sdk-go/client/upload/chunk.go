@@ -2,8 +2,8 @@ package upload
 
 import (
 	"bytes"
-	"io"
 	"errors"
+	"io"
 )
 
 const (

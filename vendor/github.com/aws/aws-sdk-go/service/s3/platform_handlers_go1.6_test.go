@@ -9,7 +9,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/stretchr/testify/assert"
 )
 
 func TestAdd100Continue_Added(t *testing.T) {
@@ -22,8 +21,12 @@ func TestAdd100Continue_Added(t *testing.T) {
 
 	err := r.Sign()
 
-	assert.NoError(t, err)
-	assert.Equal(t, "100-Continue", r.HTTPRequest.Header.Get("Expect"))
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if e, a := "100-Continue", r.HTTPRequest.Header.Get("Expect"); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
 }
 
 func TestAdd100Continue_SkipDisabled(t *testing.T) {
@@ -36,8 +39,12 @@ func TestAdd100Continue_SkipDisabled(t *testing.T) {
 
 	err := r.Sign()
 
-	assert.NoError(t, err)
-	assert.Empty(t, r.HTTPRequest.Header.Get("Expect"))
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if r.HTTPRequest.Header.Get("Expect") != "" {
+		t.Errorf("expected empty value, but received %s", r.HTTPRequest.Header.Get("Expect"))
+	}
 }
 
 func TestAdd100Continue_SkipNonPUT(t *testing.T) {
@@ -49,8 +56,12 @@ func TestAdd100Continue_SkipNonPUT(t *testing.T) {
 
 	err := r.Sign()
 
-	assert.NoError(t, err)
-	assert.Empty(t, r.HTTPRequest.Header.Get("Expect"))
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if r.HTTPRequest.Header.Get("Expect") != "" {
+		t.Errorf("expected empty value, but received %s", r.HTTPRequest.Header.Get("Expect"))
+	}
 }
 
 func TestAdd100Continue_SkipTooSmall(t *testing.T) {
@@ -63,6 +74,10 @@ func TestAdd100Continue_SkipTooSmall(t *testing.T) {
 
 	err := r.Sign()
 
-	assert.NoError(t, err)
-	assert.Empty(t, r.HTTPRequest.Header.Get("Expect"))
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if r.HTTPRequest.Header.Get("Expect") != "" {
+		t.Errorf("expected empty value, but received %s", r.HTTPRequest.Header.Get("Expect"))
+	}
 }

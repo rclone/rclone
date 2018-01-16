@@ -74,13 +74,6 @@ import (
 // A Handle refers to a registered message type.
 type Handle int
 
-// First is used as a Handle to EncodeMessageType, followed by a series of calls
-// to EncodeMessage, to implement selecting the first matching Message.
-//
-// TODO: this can be removed once we either can use type aliases or if the
-// internals of this package are merged with the catalog package.
-var First Handle = msgFirst
-
 // A Handler decodes and evaluates data compiled by a Message and sends the
 // result to the Decoder. The output may depend on the value of the substitution
 // arguments, accessible by the Decoder's Arg method. The Handler returns false
@@ -111,20 +104,24 @@ const (
 	msgFirst
 	msgRaw
 	msgString
-	numFixed
+	msgAffix
+	// Leave some arbitrary room for future expansion: 20 should suffice.
+	numInternal = 20
 )
 
 const prefix = "golang.org/x/text/internal/catmsg."
 
 var (
+	// TODO: find a more stable way to link handles to message types.
 	mutex sync.Mutex
 	names = map[string]Handle{
 		prefix + "Vars":   msgVars,
 		prefix + "First":  msgFirst,
 		prefix + "Raw":    msgRaw,
 		prefix + "String": msgString,
+		prefix + "Affix":  msgAffix,
 	}
-	handlers = make([]Handler, numFixed)
+	handlers = make([]Handler, numInternal)
 )
 
 func init() {
@@ -167,6 +164,20 @@ func init() {
 			d.ExecuteSubstitution()
 		}
 		return true
+	}
+
+	handlers[msgAffix] = func(d *Decoder) bool {
+		// TODO: use an alternative method for common cases.
+		prefix := d.DecodeString()
+		suffix := d.DecodeString()
+		if prefix != "" {
+			d.Render(prefix)
+		}
+		ret := d.ExecuteMessage()
+		if suffix != "" {
+			d.Render(suffix)
+		}
+		return ret
 	}
 }
 
@@ -234,6 +245,23 @@ func Compile(tag language.Tag, macros Dictionary, m Message) (data string, err e
 		err = v.err
 	}
 	return string(buf), err
+}
+
+// FirstOf is a message type that prints the first message in the sequence that
+// resolves to a match for the given substitution arguments.
+type FirstOf []Message
+
+// Compile implements Message.
+func (s FirstOf) Compile(e *Encoder) error {
+	e.EncodeMessageType(msgFirst)
+	err := ErrIncomplete
+	for i, m := range s {
+		if err == nil {
+			return fmt.Errorf("catalog: message argument %d is complete and blocks subsequent messages", i-1)
+		}
+		err = e.EncodeMessage(m)
+	}
+	return err
 }
 
 // Var defines a message that can be substituted for a placeholder of the same
@@ -363,4 +391,25 @@ func (s String) Compile(e *Encoder) (err error) {
 		e.EncodeString(string(b))
 	}
 	return err
+}
+
+// Affix is a message that adds a prefix and suffix to another message.
+// This is mostly used add back whitespace to a translation that was stripped
+// before sending it out.
+type Affix struct {
+	Message Message
+	Prefix  string
+	Suffix  string
+}
+
+// Compile implements Message.
+func (a Affix) Compile(e *Encoder) (err error) {
+	// TODO: consider adding a special message type that just adds a single
+	// return. This is probably common enough to handle the majority of cases.
+	// Get some stats first, though.
+	e.EncodeMessageType(msgAffix)
+	e.EncodeString(a.Prefix)
+	e.EncodeString(a.Suffix)
+	e.EncodeMessage(a.Message)
+	return nil
 }

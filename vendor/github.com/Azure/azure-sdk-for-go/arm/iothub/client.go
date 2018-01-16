@@ -1,6 +1,8 @@
 // Package iothub implements the Azure ARM Iothub service API version 2017-07-01.
 //
 // Use this API to manage the IoT hubs in your Azure subscription.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/iothub/mgmt/2017-07-01/devices
 package iothub
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

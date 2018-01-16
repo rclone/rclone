@@ -36,7 +36,7 @@ const opPostContent = "PostContent"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContent
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContent
 func (c *LexRuntimeService) PostContentRequest(input *PostContentInput) (req *request.Request, output *PostContentOutput) {
 	op := &request.Operation{
 		Name:       opPostContent,
@@ -167,7 +167,7 @@ func (c *LexRuntimeService) PostContentRequest(input *PostContentInput) (req *re
 //   * ErrCodeLoopDetectedException "LoopDetectedException"
 //   This exception is not used.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContent
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContent
 func (c *LexRuntimeService) PostContent(input *PostContentInput) (*PostContentOutput, error) {
 	req, out := c.PostContentRequest(input)
 	return out, req.Send()
@@ -214,7 +214,7 @@ const opPostText = "PostText"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostText
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostText
 func (c *LexRuntimeService) PostTextRequest(input *PostTextInput) (req *request.Request, output *PostTextOutput) {
 	op := &request.Operation{
 		Name:       opPostText,
@@ -327,7 +327,7 @@ func (c *LexRuntimeService) PostTextRequest(input *PostTextInput) (req *request.
 //   * ErrCodeLoopDetectedException "LoopDetectedException"
 //   This exception is not used.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostText
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostText
 func (c *LexRuntimeService) PostText(input *PostTextInput) (*PostTextOutput, error) {
 	req, out := c.PostTextRequest(input)
 	return out, req.Send()
@@ -351,7 +351,7 @@ func (c *LexRuntimeService) PostTextWithContext(ctx aws.Context, input *PostText
 
 // Represents an option to be shown on the client platform (Facebook, Slack,
 // etc.)
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/Button
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/Button
 type Button struct {
 	_ struct{} `type:"structure"`
 
@@ -392,7 +392,7 @@ func (s *Button) SetValue(v string) *Button {
 
 // Represents an option rendered to the user when a prompt is shown. It could
 // be an image, a button, a link, or text.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/GenericAttachment
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/GenericAttachment
 type GenericAttachment struct {
 	_ struct{} `type:"structure"`
 
@@ -452,7 +452,7 @@ func (s *GenericAttachment) SetTitle(v string) *GenericAttachment {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContentRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContentRequest
 type PostContentInput struct {
 	_ struct{} `type:"structure" payload:"InputStream"`
 
@@ -664,7 +664,7 @@ func (s *PostContentInput) SetUserId(v string) *PostContentInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContentResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostContentResponse
 type PostContentOutput struct {
 	_ struct{} `type:"structure" payload:"AudioStream"`
 
@@ -833,7 +833,7 @@ func (s *PostContentOutput) SetSlots(v aws.JSONValue) *PostContentOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostTextRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostTextRequest
 type PostTextInput struct {
 	_ struct{} `type:"structure"`
 
@@ -967,7 +967,7 @@ func (s *PostTextInput) SetUserId(v string) *PostTextInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostTextResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/PostTextResponse
 type PostTextOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1113,7 +1113,7 @@ func (s *PostTextOutput) SetSlots(v map[string]*string) *PostTextOutput {
 // the session attributes and slot values that are available, and then returns
 // it. The response card can also come from a Lambda function ( dialogCodeHook
 // and fulfillmentActivity on an intent).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/ResponseCard
+// See also, https://docs.aws.amazon.com/goto/WebAPI/runtime.lex-2016-11-28/ResponseCard
 type ResponseCard struct {
 	_ struct{} `type:"structure"`
 

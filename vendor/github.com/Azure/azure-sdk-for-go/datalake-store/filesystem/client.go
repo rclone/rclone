@@ -1,6 +1,8 @@
 // Package filesystem implements the Azure ARM Filesystem service API version 2016-11-01.
 //
 // Creates an Azure Data Lake Store filesystem client.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/datalake/store/2016-11-01/filesystem
 package filesystem
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -185,8 +185,8 @@ type BeginTransactionRequest struct {
 }
 
 func (s *BeginTransactionRequest) MarshalJSON() ([]byte, error) {
-	type noMethod BeginTransactionRequest
-	raw := noMethod(*s)
+	type NoMethod BeginTransactionRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -251,8 +251,8 @@ type Binding struct {
 }
 
 func (s *Binding) MarshalJSON() ([]byte, error) {
-	type noMethod Binding
-	raw := noMethod(*s)
+	type NoMethod Binding
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -305,8 +305,8 @@ type ChildLink struct {
 }
 
 func (s *ChildLink) MarshalJSON() ([]byte, error) {
-	type noMethod ChildLink
-	raw := noMethod(*s)
+	type NoMethod ChildLink
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -353,8 +353,8 @@ type CommitRequest struct {
 }
 
 func (s *CommitRequest) MarshalJSON() ([]byte, error) {
-	type noMethod CommitRequest
-	raw := noMethod(*s)
+	type NoMethod CommitRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -387,8 +387,8 @@ type CommitResponse struct {
 }
 
 func (s *CommitResponse) MarshalJSON() ([]byte, error) {
-	type noMethod CommitResponse
-	raw := noMethod(*s)
+	type NoMethod CommitResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -417,8 +417,8 @@ type CreateDatabaseMetadata struct {
 }
 
 func (s *CreateDatabaseMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod CreateDatabaseMetadata
-	raw := noMethod(*s)
+	type NoMethod CreateDatabaseMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -461,8 +461,8 @@ type CreateDatabaseRequest struct {
 }
 
 func (s *CreateDatabaseRequest) MarshalJSON() ([]byte, error) {
-	type noMethod CreateDatabaseRequest
-	raw := noMethod(*s)
+	type NoMethod CreateDatabaseRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -507,8 +507,8 @@ type CreateInstanceMetadata struct {
 }
 
 func (s *CreateInstanceMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod CreateInstanceMetadata
-	raw := noMethod(*s)
+	type NoMethod CreateInstanceMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -544,8 +544,8 @@ type CreateInstanceRequest struct {
 }
 
 func (s *CreateInstanceRequest) MarshalJSON() ([]byte, error) {
-	type noMethod CreateInstanceRequest
-	raw := noMethod(*s)
+	type NoMethod CreateInstanceRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -572,8 +572,8 @@ type CreateSessionRequest struct {
 }
 
 func (s *CreateSessionRequest) MarshalJSON() ([]byte, error) {
-	type noMethod CreateSessionRequest
-	raw := noMethod(*s)
+	type NoMethod CreateSessionRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -620,8 +620,8 @@ type Database struct {
 }
 
 func (s *Database) MarshalJSON() ([]byte, error) {
-	type noMethod Database
-	raw := noMethod(*s)
+	type NoMethod Database
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -652,8 +652,8 @@ type Delete struct {
 }
 
 func (s *Delete) MarshalJSON() ([]byte, error) {
-	type noMethod Delete
-	raw := noMethod(*s)
+	type NoMethod Delete
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -765,8 +765,8 @@ type ExecuteSqlRequest struct {
 }
 
 func (s *ExecuteSqlRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ExecuteSqlRequest
-	raw := noMethod(*s)
+	type NoMethod ExecuteSqlRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -804,8 +804,8 @@ type Field struct {
 }
 
 func (s *Field) MarshalJSON() ([]byte, error) {
-	type noMethod Field
-	raw := noMethod(*s)
+	type NoMethod Field
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -838,8 +838,8 @@ type GetDatabaseDdlResponse struct {
 }
 
 func (s *GetDatabaseDdlResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GetDatabaseDdlResponse
-	raw := noMethod(*s)
+	type NoMethod GetDatabaseDdlResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -912,26 +912,10 @@ type Instance struct {
 	// in API responses for instances that are not yet in state
 	// `READY`.
 	//
-	// Each Spanner node can provide up to 10,000 QPS of reads or 2000 QPS
-	// of
-	// writes (writing single rows at 1KB data per row), and 2 TiB
-	// storage.
-	//
-	// For optimal performance, we recommend provisioning enough nodes to
-	// keep
-	// overall CPU utilization under 75%.
-	//
-	// A minimum of 3 nodes is recommended for production environments.
-	// This
-	// minimum is required for SLAs to apply to your instance.
-	//
-	// Note that Cloud Spanner performance is highly dependent on workload,
-	// schema
-	// design, and dataset characteristics. The performance numbers above
-	// are
-	// estimates, and assume [best
-	// practices](https://cloud.google.com/spanner/docs/bulk-loading)
-	// are followed.
+	// See [the
+	// documentation](https://cloud.google.com/spanner/docs/instances#node_co
+	// unt)
+	// for more information about nodes.
 	NodeCount int64 `json:"nodeCount,omitempty"`
 
 	// State: Output only. The current instance state. For
@@ -973,8 +957,8 @@ type Instance struct {
 }
 
 func (s *Instance) MarshalJSON() ([]byte, error) {
-	type noMethod Instance
-	raw := noMethod(*s)
+	type NoMethod Instance
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1013,8 +997,8 @@ type InstanceConfig struct {
 }
 
 func (s *InstanceConfig) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceConfig
-	raw := noMethod(*s)
+	type NoMethod InstanceConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1157,8 +1141,8 @@ type KeyRange struct {
 }
 
 func (s *KeyRange) MarshalJSON() ([]byte, error) {
-	type noMethod KeyRange
-	raw := noMethod(*s)
+	type NoMethod KeyRange
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1211,8 +1195,8 @@ type KeySet struct {
 }
 
 func (s *KeySet) MarshalJSON() ([]byte, error) {
-	type noMethod KeySet
-	raw := noMethod(*s)
+	type NoMethod KeySet
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1249,8 +1233,8 @@ type ListDatabasesResponse struct {
 }
 
 func (s *ListDatabasesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDatabasesResponse
-	raw := noMethod(*s)
+	type NoMethod ListDatabasesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1288,8 +1272,8 @@ type ListInstanceConfigsResponse struct {
 }
 
 func (s *ListInstanceConfigsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListInstanceConfigsResponse
-	raw := noMethod(*s)
+	type NoMethod ListInstanceConfigsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1326,8 +1310,8 @@ type ListInstancesResponse struct {
 }
 
 func (s *ListInstancesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListInstancesResponse
-	raw := noMethod(*s)
+	type NoMethod ListInstancesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1363,8 +1347,8 @@ type ListOperationsResponse struct {
 }
 
 func (s *ListOperationsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListOperationsResponse
-	raw := noMethod(*s)
+	type NoMethod ListOperationsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1401,8 +1385,8 @@ type ListSessionsResponse struct {
 }
 
 func (s *ListSessionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListSessionsResponse
-	raw := noMethod(*s)
+	type NoMethod ListSessionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1458,8 +1442,8 @@ type Mutation struct {
 }
 
 func (s *Mutation) MarshalJSON() ([]byte, error) {
-	type noMethod Mutation
-	raw := noMethod(*s)
+	type NoMethod Mutation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1533,8 +1517,8 @@ type Operation struct {
 }
 
 func (s *Operation) MarshalJSON() ([]byte, error) {
-	type noMethod Operation
-	raw := noMethod(*s)
+	type NoMethod Operation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1680,8 +1664,8 @@ type PartialResultSet struct {
 }
 
 func (s *PartialResultSet) MarshalJSON() ([]byte, error) {
-	type noMethod PartialResultSet
-	raw := noMethod(*s)
+	type NoMethod PartialResultSet
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1765,8 +1749,8 @@ type PlanNode struct {
 }
 
 func (s *PlanNode) MarshalJSON() ([]byte, error) {
-	type noMethod PlanNode
-	raw := noMethod(*s)
+	type NoMethod PlanNode
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1856,8 +1840,8 @@ type Policy struct {
 }
 
 func (s *Policy) MarshalJSON() ([]byte, error) {
-	type noMethod Policy
-	raw := noMethod(*s)
+	type NoMethod Policy
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1889,8 +1873,8 @@ type QueryPlan struct {
 }
 
 func (s *QueryPlan) MarshalJSON() ([]byte, error) {
-	type noMethod QueryPlan
-	raw := noMethod(*s)
+	type NoMethod QueryPlan
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1943,6 +1927,10 @@ type ReadOnly struct {
 	// previously committed transaction whose timestamp is known.
 	//
 	// Note that this option can only be used in single-use transactions.
+	//
+	// A timestamp in RFC3339 UTC \"Zulu\" format, accurate to
+	// nanoseconds.
+	// Example: "2014-10-02T15:01:23.045123456Z".
 	MinReadTimestamp string `json:"minReadTimestamp,omitempty"`
 
 	// ReadTimestamp: Executes all reads at the given timestamp. Unlike
@@ -1956,6 +1944,10 @@ type ReadOnly struct {
 	// for coordinating many reads against a consistent snapshot of
 	// the
 	// data.
+	//
+	// A timestamp in RFC3339 UTC \"Zulu\" format, accurate to
+	// nanoseconds.
+	// Example: "2014-10-02T15:01:23.045123456Z".
 	ReadTimestamp string `json:"readTimestamp,omitempty"`
 
 	// ReturnReadTimestamp: If true, the Cloud Spanner-selected read
@@ -1987,8 +1979,8 @@ type ReadOnly struct {
 }
 
 func (s *ReadOnly) MarshalJSON() ([]byte, error) {
-	type noMethod ReadOnly
-	raw := noMethod(*s)
+	type NoMethod ReadOnly
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2022,7 +2014,6 @@ type ReadRequest struct {
 	// Limit: If greater than zero, only the first `limit` rows are yielded.
 	// If `limit`
 	// is zero, the default is no limit.
-	// A limit cannot be specified if partition_token is set.
 	Limit int64 `json:"limit,omitempty,string"`
 
 	// ResumeToken: If this request is resuming a previously interrupted
@@ -2060,8 +2051,8 @@ type ReadRequest struct {
 }
 
 func (s *ReadRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ReadRequest
-	raw := noMethod(*s)
+	type NoMethod ReadRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2116,8 +2107,8 @@ type ResultSet struct {
 }
 
 func (s *ResultSet) MarshalJSON() ([]byte, error) {
-	type noMethod ResultSet
-	raw := noMethod(*s)
+	type NoMethod ResultSet
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2158,8 +2149,8 @@ type ResultSetMetadata struct {
 }
 
 func (s *ResultSetMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod ResultSetMetadata
-	raw := noMethod(*s)
+	type NoMethod ResultSetMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2200,8 +2191,8 @@ type ResultSetStats struct {
 }
 
 func (s *ResultSetStats) MarshalJSON() ([]byte, error) {
-	type noMethod ResultSetStats
-	raw := noMethod(*s)
+	type NoMethod ResultSetStats
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2228,8 +2219,8 @@ type RollbackRequest struct {
 }
 
 func (s *RollbackRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RollbackRequest
-	raw := noMethod(*s)
+	type NoMethod RollbackRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2251,10 +2242,16 @@ type Session struct {
 	//  * Label values must be between 0 and 63 characters long and must
 	// conform
 	//    to the regular expression `([a-z]([-a-z0-9]*[a-z0-9])?)?`.
-	//  * No more than 20 labels can be associated with a given session.
+	//  * No more than 64 labels can be associated with a given
+	// session.
+	//
+	// See https://goo.gl/xmQnxf for more information on and examples of
+	// labels.
 	Labels map[string]string `json:"labels,omitempty"`
 
-	// Name: The name of the session.
+	// Name: The name of the session. This is always system-assigned; values
+	// provided
+	// when creating a session are ignored.
 	Name string `json:"name,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2281,8 +2278,8 @@ type Session struct {
 }
 
 func (s *Session) MarshalJSON() ([]byte, error) {
-	type noMethod Session
-	raw := noMethod(*s)
+	type NoMethod Session
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2314,8 +2311,8 @@ type SetIamPolicyRequest struct {
 }
 
 func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
-	type noMethod SetIamPolicyRequest
-	raw := noMethod(*s)
+	type NoMethod SetIamPolicyRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2356,8 +2353,8 @@ type ShortRepresentation struct {
 }
 
 func (s *ShortRepresentation) MarshalJSON() ([]byte, error) {
-	type noMethod ShortRepresentation
-	raw := noMethod(*s)
+	type NoMethod ShortRepresentation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2475,8 +2472,8 @@ type Status struct {
 }
 
 func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2511,8 +2508,8 @@ type StructType struct {
 }
 
 func (s *StructType) MarshalJSON() ([]byte, error) {
-	type noMethod StructType
-	raw := noMethod(*s)
+	type NoMethod StructType
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2543,8 +2540,8 @@ type TestIamPermissionsRequest struct {
 }
 
 func (s *TestIamPermissionsRequest) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsRequest
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2578,8 +2575,8 @@ type TestIamPermissionsResponse struct {
 }
 
 func (s *TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsResponse
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2601,6 +2598,10 @@ type Transaction struct {
 	// for the transaction. Not returned by default:
 	// see
 	// TransactionOptions.ReadOnly.return_read_timestamp.
+	//
+	// A timestamp in RFC3339 UTC \"Zulu\" format, accurate to
+	// nanoseconds.
+	// Example: "2014-10-02T15:01:23.045123456Z".
 	ReadTimestamp string `json:"readTimestamp,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -2625,8 +2626,8 @@ type Transaction struct {
 }
 
 func (s *Transaction) MarshalJSON() ([]byte, error) {
-	type noMethod Transaction
-	raw := noMethod(*s)
+	type NoMethod Transaction
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2957,8 +2958,8 @@ type TransactionOptions struct {
 }
 
 func (s *TransactionOptions) MarshalJSON() ([]byte, error) {
-	type noMethod TransactionOptions
-	raw := noMethod(*s)
+	type NoMethod TransactionOptions
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3004,8 +3005,8 @@ type TransactionSelector struct {
 }
 
 func (s *TransactionSelector) MarshalJSON() ([]byte, error) {
-	type noMethod TransactionSelector
-	raw := noMethod(*s)
+	type NoMethod TransactionSelector
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3065,8 +3066,8 @@ type Type struct {
 }
 
 func (s *Type) MarshalJSON() ([]byte, error) {
-	type noMethod Type
-	raw := noMethod(*s)
+	type NoMethod Type
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3108,8 +3109,8 @@ type UpdateDatabaseDdlMetadata struct {
 }
 
 func (s *UpdateDatabaseDdlMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod UpdateDatabaseDdlMetadata
-	raw := noMethod(*s)
+	type NoMethod UpdateDatabaseDdlMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3184,8 +3185,8 @@ type UpdateDatabaseDdlRequest struct {
 }
 
 func (s *UpdateDatabaseDdlRequest) MarshalJSON() ([]byte, error) {
-	type noMethod UpdateDatabaseDdlRequest
-	raw := noMethod(*s)
+	type NoMethod UpdateDatabaseDdlRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3229,8 +3230,8 @@ type UpdateInstanceMetadata struct {
 }
 
 func (s *UpdateInstanceMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod UpdateInstanceMetadata
-	raw := noMethod(*s)
+	type NoMethod UpdateInstanceMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3271,8 +3272,8 @@ type UpdateInstanceRequest struct {
 }
 
 func (s *UpdateInstanceRequest) MarshalJSON() ([]byte, error) {
-	type noMethod UpdateInstanceRequest
-	raw := noMethod(*s)
+	type NoMethod UpdateInstanceRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3320,8 +3321,8 @@ type Write struct {
 }
 
 func (s *Write) MarshalJSON() ([]byte, error) {
-	type noMethod Write
-	raw := noMethod(*s)
+	type NoMethod Write
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3432,7 +3433,7 @@ func (c *ProjectsInstanceConfigsGetCall) Do(opts ...googleapi.CallOption) (*Inst
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3590,7 +3591,7 @@ func (c *ProjectsInstanceConfigsListCall) Do(opts ...googleapi.CallOption) (*Lis
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3795,7 +3796,7 @@ func (c *ProjectsInstancesCreateCall) Do(opts ...googleapi.CallOption) (*Operati
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3935,7 +3936,7 @@ func (c *ProjectsInstancesDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4075,7 +4076,7 @@ func (c *ProjectsInstancesGetCall) Do(opts ...googleapi.CallOption) (*Instance, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4214,7 +4215,7 @@ func (c *ProjectsInstancesGetIamPolicyCall) Do(opts ...googleapi.CallOption) (*P
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4272,22 +4273,22 @@ func (r *ProjectsInstancesService) List(parent string) *ProjectsInstancesListCal
 // filtering the results of the request. Filter rules are
 // case insensitive. The fields eligible for filtering are:
 //
-//   * name
-//   * display_name
-//   * labels.key where key is the name of a label
+//   * `name`
+//   * `display_name`
+//   * `labels.key` where key is the name of a label
 //
 // Some examples of using filters are:
 //
-//   * name:* --> The instance has a name.
-//   * name:Howl --> The instance's name contains the string "howl".
-//   * name:HOWL --> Equivalent to above.
-//   * NAME:howl --> Equivalent to above.
-//   * labels.env:* --> The instance has the label "env".
-//   * labels.env:dev --> The instance has the label "env" and the value
-// of
+//   * `name:*` --> The instance has a name.
+//   * `name:Howl` --> The instance's name contains the string "howl".
+//   * `name:HOWL` --> Equivalent to above.
+//   * `NAME:howl` --> Equivalent to above.
+//   * `labels.env:*` --> The instance has the label "env".
+//   * `labels.env:dev` --> The instance has the label "env" and the
+// value of
 //                        the label contains the string "dev".
-//   * name:howl labels.env:dev --> The instance's name contains "howl"
-// and
+//   * `name:howl labels.env:dev` --> The instance's name contains
+// "howl" and
 //                                  it has the label "env" with its
 // value
 //                                  containing "dev".
@@ -4402,7 +4403,7 @@ func (c *ProjectsInstancesListCall) Do(opts ...googleapi.CallOption) (*ListInsta
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4416,7 +4417,7 @@ func (c *ProjectsInstancesListCall) Do(opts ...googleapi.CallOption) (*ListInsta
 	//   ],
 	//   "parameters": {
 	//     "filter": {
-	//       "description": "An expression for filtering the results of the request. Filter rules are\ncase insensitive. The fields eligible for filtering are:\n\n  * name\n  * display_name\n  * labels.key where key is the name of a label\n\nSome examples of using filters are:\n\n  * name:* --\u003e The instance has a name.\n  * name:Howl --\u003e The instance's name contains the string \"howl\".\n  * name:HOWL --\u003e Equivalent to above.\n  * NAME:howl --\u003e Equivalent to above.\n  * labels.env:* --\u003e The instance has the label \"env\".\n  * labels.env:dev --\u003e The instance has the label \"env\" and the value of\n                       the label contains the string \"dev\".\n  * name:howl labels.env:dev --\u003e The instance's name contains \"howl\" and\n                                 it has the label \"env\" with its value\n                                 containing \"dev\".",
+	//       "description": "An expression for filtering the results of the request. Filter rules are\ncase insensitive. The fields eligible for filtering are:\n\n  * `name`\n  * `display_name`\n  * `labels.key` where key is the name of a label\n\nSome examples of using filters are:\n\n  * `name:*` --\u003e The instance has a name.\n  * `name:Howl` --\u003e The instance's name contains the string \"howl\".\n  * `name:HOWL` --\u003e Equivalent to above.\n  * `NAME:howl` --\u003e Equivalent to above.\n  * `labels.env:*` --\u003e The instance has the label \"env\".\n  * `labels.env:dev` --\u003e The instance has the label \"env\" and the value of\n                       the label contains the string \"dev\".\n  * `name:howl labels.env:dev` --\u003e The instance's name contains \"howl\" and\n                                 it has the label \"env\" with its value\n                                 containing \"dev\".",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -4620,7 +4621,7 @@ func (c *ProjectsInstancesPatchCall) Do(opts ...googleapi.CallOption) (*Operatio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4761,7 +4762,7 @@ func (c *ProjectsInstancesSetIamPolicyCall) Do(opts ...googleapi.CallOption) (*P
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4906,7 +4907,7 @@ func (c *ProjectsInstancesTestIamPermissionsCall) Do(opts ...googleapi.CallOptio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5051,7 +5052,7 @@ func (c *ProjectsInstancesDatabasesCreateCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5180,7 +5181,7 @@ func (c *ProjectsInstancesDatabasesDropDatabaseCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5320,7 +5321,7 @@ func (c *ProjectsInstancesDatabasesGetCall) Do(opts ...googleapi.CallOption) (*D
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5464,7 +5465,7 @@ func (c *ProjectsInstancesDatabasesGetDdlCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5604,7 +5605,7 @@ func (c *ProjectsInstancesDatabasesGetIamPolicyCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5764,7 +5765,7 @@ func (c *ProjectsInstancesDatabasesListCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5935,7 +5936,7 @@ func (c *ProjectsInstancesDatabasesSetIamPolicyCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6080,7 +6081,7 @@ func (c *ProjectsInstancesDatabasesTestIamPermissionsCall) Do(opts ...googleapi.
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6225,7 +6226,7 @@ func (c *ProjectsInstancesDatabasesUpdateDdlCall) Do(opts ...googleapi.CallOptio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6371,7 +6372,7 @@ func (c *ProjectsInstancesDatabasesOperationsCancelCall) Do(opts ...googleapi.Ca
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6503,7 +6504,7 @@ func (c *ProjectsInstancesDatabasesOperationsDeleteCall) Do(opts ...googleapi.Ca
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6647,7 +6648,7 @@ func (c *ProjectsInstancesDatabasesOperationsGetCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6824,7 +6825,7 @@ func (c *ProjectsInstancesDatabasesOperationsListCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6998,7 +6999,7 @@ func (c *ProjectsInstancesDatabasesSessionsBeginTransactionCall) Do(opts ...goog
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7145,7 +7146,7 @@ func (c *ProjectsInstancesDatabasesSessionsCommitCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7311,7 +7312,7 @@ func (c *ProjectsInstancesDatabasesSessionsCreateCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7441,7 +7442,7 @@ func (c *ProjectsInstancesDatabasesSessionsDeleteCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7587,7 +7588,7 @@ func (c *ProjectsInstancesDatabasesSessionsExecuteSqlCall) Do(opts ...googleapi.
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7728,7 +7729,7 @@ func (c *ProjectsInstancesDatabasesSessionsExecuteStreamingSqlCall) Do(opts ...g
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7875,7 +7876,7 @@ func (c *ProjectsInstancesDatabasesSessionsGetCall) Do(opts ...googleapi.CallOpt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7930,13 +7931,13 @@ func (r *ProjectsInstancesDatabasesSessionsService) List(database string) *Proje
 // filtering the results of the request. Filter rules are
 // case insensitive. The fields eligible for filtering are:
 //
-//   * labels.key where key is the name of a label
+//   * `labels.key` where key is the name of a label
 //
 // Some examples of using filters are:
 //
-//   * labels.env:* --> The session has the label "env".
-//   * labels.env:dev --> The session has the label "env" and the value
-// of
+//   * `labels.env:*` --> The session has the label "env".
+//   * `labels.env:dev` --> The session has the label "env" and the
+// value of
 //                        the label contains the string "dev".
 func (c *ProjectsInstancesDatabasesSessionsListCall) Filter(filter string) *ProjectsInstancesDatabasesSessionsListCall {
 	c.urlParams_.Set("filter", filter)
@@ -8049,7 +8050,7 @@ func (c *ProjectsInstancesDatabasesSessionsListCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8070,7 +8071,7 @@ func (c *ProjectsInstancesDatabasesSessionsListCall) Do(opts ...googleapi.CallOp
 	//       "type": "string"
 	//     },
 	//     "filter": {
-	//       "description": "An expression for filtering the results of the request. Filter rules are\ncase insensitive. The fields eligible for filtering are:\n\n  * labels.key where key is the name of a label\n\nSome examples of using filters are:\n\n  * labels.env:* --\u003e The session has the label \"env\".\n  * labels.env:dev --\u003e The session has the label \"env\" and the value of\n                       the label contains the string \"dev\".",
+	//       "description": "An expression for filtering the results of the request. Filter rules are\ncase insensitive. The fields eligible for filtering are:\n\n  * `labels.key` where key is the name of a label\n\nSome examples of using filters are:\n\n  * `labels.env:*` --\u003e The session has the label \"env\".\n  * `labels.env:dev` --\u003e The session has the label \"env\" and the value of\n                       the label contains the string \"dev\".",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -8234,7 +8235,7 @@ func (c *ProjectsInstancesDatabasesSessionsReadCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8379,7 +8380,7 @@ func (c *ProjectsInstancesDatabasesSessionsRollbackCall) Do(opts ...googleapi.Ca
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8519,7 +8520,7 @@ func (c *ProjectsInstancesDatabasesSessionsStreamingReadCall) Do(opts ...googlea
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8665,7 +8666,7 @@ func (c *ProjectsInstancesOperationsCancelCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8797,7 +8798,7 @@ func (c *ProjectsInstancesOperationsDeleteCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8941,7 +8942,7 @@ func (c *ProjectsInstancesOperationsGetCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9118,7 +9119,7 @@ func (c *ProjectsInstancesOperationsListCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

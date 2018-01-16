@@ -146,8 +146,8 @@ type AdministrationRegion struct {
 }
 
 func (s *AdministrationRegion) MarshalJSON() ([]byte, error) {
-	type noMethod AdministrationRegion
-	raw := noMethod(*s)
+	type NoMethod AdministrationRegion
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -227,8 +227,8 @@ type AdministrativeBody struct {
 }
 
 func (s *AdministrativeBody) MarshalJSON() ([]byte, error) {
-	type noMethod AdministrativeBody
-	raw := noMethod(*s)
+	type NoMethod AdministrativeBody
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -280,8 +280,8 @@ type Candidate struct {
 }
 
 func (s *Candidate) MarshalJSON() ([]byte, error) {
-	type noMethod Candidate
-	raw := noMethod(*s)
+	type NoMethod Candidate
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -313,8 +313,8 @@ type Channel struct {
 }
 
 func (s *Channel) MarshalJSON() ([]byte, error) {
-	type noMethod Channel
-	raw := noMethod(*s)
+	type NoMethod Channel
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -447,8 +447,8 @@ type Contest struct {
 }
 
 func (s *Contest) MarshalJSON() ([]byte, error) {
-	type noMethod Contest
-	raw := noMethod(*s)
+	type NoMethod Contest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -473,8 +473,8 @@ type ContextParams struct {
 }
 
 func (s *ContextParams) MarshalJSON() ([]byte, error) {
-	type noMethod ContextParams
-	raw := noMethod(*s)
+	type NoMethod ContextParams
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -501,8 +501,8 @@ type DivisionRepresentativeInfoRequest struct {
 }
 
 func (s *DivisionRepresentativeInfoRequest) MarshalJSON() ([]byte, error) {
-	type noMethod DivisionRepresentativeInfoRequest
-	raw := noMethod(*s)
+	type NoMethod DivisionRepresentativeInfoRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -528,8 +528,8 @@ type DivisionSearchRequest struct {
 }
 
 func (s *DivisionSearchRequest) MarshalJSON() ([]byte, error) {
-	type noMethod DivisionSearchRequest
-	raw := noMethod(*s)
+	type NoMethod DivisionSearchRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -563,8 +563,8 @@ type DivisionSearchResponse struct {
 }
 
 func (s *DivisionSearchResponse) MarshalJSON() ([]byte, error) {
-	type noMethod DivisionSearchResponse
-	raw := noMethod(*s)
+	type NoMethod DivisionSearchResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -603,8 +603,8 @@ type DivisionSearchResult struct {
 }
 
 func (s *DivisionSearchResult) MarshalJSON() ([]byte, error) {
-	type noMethod DivisionSearchResult
-	raw := noMethod(*s)
+	type NoMethod DivisionSearchResult
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -644,8 +644,8 @@ type Election struct {
 }
 
 func (s *Election) MarshalJSON() ([]byte, error) {
-	type noMethod Election
-	raw := noMethod(*s)
+	type NoMethod Election
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -684,8 +684,8 @@ type ElectionOfficial struct {
 }
 
 func (s *ElectionOfficial) MarshalJSON() ([]byte, error) {
-	type noMethod ElectionOfficial
-	raw := noMethod(*s)
+	type NoMethod ElectionOfficial
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -710,8 +710,8 @@ type ElectionsQueryRequest struct {
 }
 
 func (s *ElectionsQueryRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ElectionsQueryRequest
-	raw := noMethod(*s)
+	type NoMethod ElectionsQueryRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -747,8 +747,8 @@ type ElectionsQueryResponse struct {
 }
 
 func (s *ElectionsQueryResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ElectionsQueryResponse
-	raw := noMethod(*s)
+	type NoMethod ElectionsQueryResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -789,8 +789,8 @@ type ElectoralDistrict struct {
 }
 
 func (s *ElectoralDistrict) MarshalJSON() ([]byte, error) {
-	type noMethod ElectoralDistrict
-	raw := noMethod(*s)
+	type NoMethod ElectoralDistrict
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -837,8 +837,8 @@ type GeographicDivision struct {
 }
 
 func (s *GeographicDivision) MarshalJSON() ([]byte, error) {
-	type noMethod GeographicDivision
-	raw := noMethod(*s)
+	type NoMethod GeographicDivision
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -891,8 +891,8 @@ type Office struct {
 }
 
 func (s *Office) MarshalJSON() ([]byte, error) {
-	type noMethod Office
-	raw := noMethod(*s)
+	type NoMethod Office
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -940,8 +940,8 @@ type Official struct {
 }
 
 func (s *Official) MarshalJSON() ([]byte, error) {
-	type noMethod Official
-	raw := noMethod(*s)
+	type NoMethod Official
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1003,8 +1003,8 @@ type PollingLocation struct {
 }
 
 func (s *PollingLocation) MarshalJSON() ([]byte, error) {
-	type noMethod PollingLocation
-	raw := noMethod(*s)
+	type NoMethod PollingLocation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1089,8 +1089,8 @@ type PostalAddress struct {
 }
 
 func (s *PostalAddress) MarshalJSON() ([]byte, error) {
-	type noMethod PostalAddress
-	raw := noMethod(*s)
+	type NoMethod PostalAddress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1129,8 +1129,8 @@ type RepresentativeInfoData struct {
 }
 
 func (s *RepresentativeInfoData) MarshalJSON() ([]byte, error) {
-	type noMethod RepresentativeInfoData
-	raw := noMethod(*s)
+	type NoMethod RepresentativeInfoData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1157,8 +1157,8 @@ type RepresentativeInfoRequest struct {
 }
 
 func (s *RepresentativeInfoRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RepresentativeInfoRequest
-	raw := noMethod(*s)
+	type NoMethod RepresentativeInfoRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1206,8 +1206,8 @@ type RepresentativeInfoResponse struct {
 }
 
 func (s *RepresentativeInfoResponse) MarshalJSON() ([]byte, error) {
-	type noMethod RepresentativeInfoResponse
-	raw := noMethod(*s)
+	type NoMethod RepresentativeInfoResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1252,8 +1252,8 @@ type SimpleAddressType struct {
 }
 
 func (s *SimpleAddressType) MarshalJSON() ([]byte, error) {
-	type noMethod SimpleAddressType
-	raw := noMethod(*s)
+	type NoMethod SimpleAddressType
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1284,8 +1284,8 @@ type Source struct {
 }
 
 func (s *Source) MarshalJSON() ([]byte, error) {
-	type noMethod Source
-	raw := noMethod(*s)
+	type NoMethod Source
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1313,8 +1313,8 @@ type VoterInfoRequest struct {
 }
 
 func (s *VoterInfoRequest) MarshalJSON() ([]byte, error) {
-	type noMethod VoterInfoRequest
-	raw := noMethod(*s)
+	type NoMethod VoterInfoRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1386,8 +1386,8 @@ type VoterInfoResponse struct {
 }
 
 func (s *VoterInfoResponse) MarshalJSON() ([]byte, error) {
-	type noMethod VoterInfoResponse
-	raw := noMethod(*s)
+	type NoMethod VoterInfoResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1419,8 +1419,8 @@ type VoterInfoSegmentResult struct {
 }
 
 func (s *VoterInfoSegmentResult) MarshalJSON() ([]byte, error) {
-	type noMethod VoterInfoSegmentResult
-	raw := noMethod(*s)
+	type NoMethod VoterInfoSegmentResult
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1540,7 +1540,7 @@ func (c *DivisionsSearchCall) Do(opts ...googleapi.CallOption) (*DivisionSearchR
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1670,7 +1670,7 @@ func (c *ElectionsElectionQueryCall) Do(opts ...googleapi.CallOption) (*Election
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1820,7 +1820,7 @@ func (c *ElectionsVoterInfoQueryCall) Do(opts ...googleapi.CallOption) (*VoterIn
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2031,7 +2031,7 @@ func (c *RepresentativesRepresentativeInfoByAddressCall) Do(opts ...googleapi.Ca
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2285,7 +2285,7 @@ func (c *RepresentativesRepresentativeInfoByDivisionCall) Do(opts ...googleapi.C
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

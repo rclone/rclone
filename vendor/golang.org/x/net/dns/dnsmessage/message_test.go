@@ -852,6 +852,31 @@ func smallTestMsg() Message {
 	}
 }
 
+func BenchmarkPack(b *testing.B) {
+	msg := largeTestMsg()
+
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if _, err := msg.Pack(); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
+func BenchmarkAppendPack(b *testing.B) {
+	msg := largeTestMsg()
+	buf := make([]byte, 0, packStartingCap)
+
+	b.ReportAllocs()
+
+	for i := 0; i < b.N; i++ {
+		if _, err := msg.AppendPack(buf[:0]); err != nil {
+			b.Fatal(err)
+		}
+	}
+}
+
 func largeTestMsg() Message {
 	name := mustNewName("foo.bar.example.com.")
 	return Message{

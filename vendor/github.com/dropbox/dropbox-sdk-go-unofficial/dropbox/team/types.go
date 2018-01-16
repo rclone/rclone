@@ -2191,7 +2191,7 @@ func (u *MembersAddJobStatus) UnmarshalJSON(body []byte) error {
 		// Complete : The asynchronous job has finished. For each member that
 		// was specified in the parameter `MembersAddArg` that was provided to
 		// `membersAdd`, a corresponding item is returned in this list.
-		Complete json.RawMessage `json:"complete,omitempty"`
+		Complete []json.RawMessage `json:"complete,omitempty"`
 	}
 	var w wrap
 	var err error
@@ -2238,7 +2238,7 @@ func (u *MembersAddLaunch) UnmarshalJSON(body []byte) error {
 	type wrap struct {
 		dropbox.Tagged
 		// Complete : has no documentation (yet)
-		Complete json.RawMessage `json:"complete,omitempty"`
+		Complete []json.RawMessage `json:"complete,omitempty"`
 	}
 	var w wrap
 	var err error

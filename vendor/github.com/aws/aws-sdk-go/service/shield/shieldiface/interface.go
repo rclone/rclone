@@ -88,6 +88,10 @@ type ShieldAPI interface {
 	DescribeSubscriptionWithContext(aws.Context, *shield.DescribeSubscriptionInput, ...request.Option) (*shield.DescribeSubscriptionOutput, error)
 	DescribeSubscriptionRequest(*shield.DescribeSubscriptionInput) (*request.Request, *shield.DescribeSubscriptionOutput)
 
+	GetSubscriptionState(*shield.GetSubscriptionStateInput) (*shield.GetSubscriptionStateOutput, error)
+	GetSubscriptionStateWithContext(aws.Context, *shield.GetSubscriptionStateInput, ...request.Option) (*shield.GetSubscriptionStateOutput, error)
+	GetSubscriptionStateRequest(*shield.GetSubscriptionStateInput) (*request.Request, *shield.GetSubscriptionStateOutput)
+
 	ListAttacks(*shield.ListAttacksInput) (*shield.ListAttacksOutput, error)
 	ListAttacksWithContext(aws.Context, *shield.ListAttacksInput, ...request.Option) (*shield.ListAttacksOutput, error)
 	ListAttacksRequest(*shield.ListAttacksInput) (*request.Request, *shield.ListAttacksOutput)

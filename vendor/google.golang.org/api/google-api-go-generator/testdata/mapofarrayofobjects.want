@@ -112,8 +112,8 @@ type TimeseriesDescriptor struct {
 }
 
 func (s *TimeseriesDescriptor) MarshalJSON() ([]byte, error) {
-	type noMethod TimeseriesDescriptor
-	raw := noMethod(*s)
+	type NoMethod TimeseriesDescriptor
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -199,7 +199,7 @@ func (c *AtlasGetMapCall) Do(opts ...googleapi.CallOption) (map[string]string, e
 	}
 	var ret map[string]string
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

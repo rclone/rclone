@@ -65,7 +65,7 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailability(para
 
 // CheckTrafficManagerRelativeDNSNameAvailabilityPreparer prepares the CheckTrafficManagerRelativeDNSNameAvailability request.
 func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityPreparer(parameters CheckTrafficManagerRelativeDNSNameAvailabilityParameters) (*http.Request, error) {
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -83,7 +83,9 @@ func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilityPrepa
 // CheckTrafficManagerRelativeDNSNameAvailabilitySender sends the CheckTrafficManagerRelativeDNSNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) CheckTrafficManagerRelativeDNSNameAvailabilitySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CheckTrafficManagerRelativeDNSNameAvailabilityResponder handles the response to the CheckTrafficManagerRelativeDNSNameAvailability request. The method always
@@ -134,7 +136,7 @@ func (client ProfilesClient) CreateOrUpdatePreparer(resourceGroupName string, pr
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -152,7 +154,9 @@ func (client ProfilesClient) CreateOrUpdatePreparer(resourceGroupName string, pr
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -202,7 +206,7 @@ func (client ProfilesClient) DeletePreparer(resourceGroupName string, profileNam
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -218,7 +222,9 @@ func (client ProfilesClient) DeletePreparer(resourceGroupName string, profileNam
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -268,7 +274,7 @@ func (client ProfilesClient) GetPreparer(resourceGroupName string, profileName s
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -284,7 +290,9 @@ func (client ProfilesClient) GetPreparer(resourceGroupName string, profileName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -332,7 +340,7 @@ func (client ProfilesClient) ListByResourceGroupPreparer(resourceGroupName strin
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -348,7 +356,9 @@ func (client ProfilesClient) ListByResourceGroupPreparer(resourceGroupName strin
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -393,7 +403,7 @@ func (client ProfilesClient) ListBySubscriptionPreparer() (*http.Request, error)
 		"subscriptionId": autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -409,7 +419,9 @@ func (client ProfilesClient) ListBySubscriptionPreparer() (*http.Request, error)
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
@@ -460,7 +472,7 @@ func (client ProfilesClient) UpdatePreparer(resourceGroupName string, profileNam
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),
 	}
 
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -478,7 +490,9 @@ func (client ProfilesClient) UpdatePreparer(resourceGroupName string, profileNam
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ProfilesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

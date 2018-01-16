@@ -120,11 +120,6 @@ type AuthorizationRule struct {
 	*AuthorizationRuleProperties `json:"properties,omitempty"`
 }
 
-// AuthorizationRuleProperties is authorization rule properties.
-type AuthorizationRuleProperties struct {
-	Rights *[]AccessRights `json:"rights,omitempty"`
-}
-
 // AuthorizationRuleListResult is the response from the list namespace operation.
 type AuthorizationRuleListResult struct {
 	autorest.Response `json:"-"`
@@ -142,6 +137,11 @@ func (client AuthorizationRuleListResult) AuthorizationRuleListResultPreparer() 
 		autorest.AsJSON(),
 		autorest.AsGet(),
 		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// AuthorizationRuleProperties is authorization rule properties.
+type AuthorizationRuleProperties struct {
+	Rights *[]AccessRights `json:"rights,omitempty"`
 }
 
 // CheckNameAvailability is description of the check name availability request properties.
@@ -173,15 +173,6 @@ type HybridConnection struct {
 	*HybridConnectionProperties `json:"properties,omitempty"`
 }
 
-// HybridConnectionProperties is properties of the HybridConnection.
-type HybridConnectionProperties struct {
-	CreatedAt                   *date.Time `json:"createdAt,omitempty"`
-	UpdatedAt                   *date.Time `json:"updatedAt,omitempty"`
-	ListenerCount               *int32     `json:"listenerCount,omitempty"`
-	RequiresClientAuthorization *bool      `json:"requiresClientAuthorization,omitempty"`
-	UserMetadata                *string    `json:"userMetadata,omitempty"`
-}
-
 // HybridConnectionListResult is the response of the list hybrid connection operation.
 type HybridConnectionListResult struct {
 	autorest.Response `json:"-"`
@@ -199,6 +190,15 @@ func (client HybridConnectionListResult) HybridConnectionListResultPreparer() (*
 		autorest.AsJSON(),
 		autorest.AsGet(),
 		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// HybridConnectionProperties is properties of the HybridConnection.
+type HybridConnectionProperties struct {
+	CreatedAt                   *date.Time `json:"createdAt,omitempty"`
+	UpdatedAt                   *date.Time `json:"updatedAt,omitempty"`
+	ListenerCount               *int32     `json:"listenerCount,omitempty"`
+	RequiresClientAuthorization *bool      `json:"requiresClientAuthorization,omitempty"`
+	UserMetadata                *string    `json:"userMetadata,omitempty"`
 }
 
 // Namespace is description of a namespace resource.

@@ -98,7 +98,9 @@ func (client StatisticsClient) ListByAutomationAccountPreparer(resourceGroupName
 // ListByAutomationAccountSender sends the ListByAutomationAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client StatisticsClient) ListByAutomationAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAutomationAccountResponder handles the response to the ListByAutomationAccount request. The method always

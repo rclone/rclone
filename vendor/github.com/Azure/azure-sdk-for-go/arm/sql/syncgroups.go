@@ -93,7 +93,9 @@ func (client SyncGroupsClient) CancelSyncPreparer(resourceGroupName string, serv
 // CancelSyncSender sends the CancelSync request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncGroupsClient) CancelSyncSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CancelSyncResponder handles the response to the CancelSync request. The method always
@@ -180,6 +182,7 @@ func (client SyncGroupsClient) CreateOrUpdatePreparer(resourceGroupName string, 
 func (client SyncGroupsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -265,6 +268,7 @@ func (client SyncGroupsClient) DeletePreparer(resourceGroupName string, serverNa
 func (client SyncGroupsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -333,7 +337,9 @@ func (client SyncGroupsClient) GetPreparer(resourceGroupName string, serverName 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncGroupsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -401,7 +407,9 @@ func (client SyncGroupsClient) ListByDatabasePreparer(resourceGroupName string, 
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncGroupsClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always
@@ -539,7 +547,9 @@ func (client SyncGroupsClient) ListHubSchemasPreparer(resourceGroupName string, 
 // ListHubSchemasSender sends the ListHubSchemas request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncGroupsClient) ListHubSchemasSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListHubSchemasResponder handles the response to the ListHubSchemas request. The method always
@@ -685,7 +695,9 @@ func (client SyncGroupsClient) ListLogsPreparer(resourceGroupName string, server
 // ListLogsSender sends the ListLogs request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncGroupsClient) ListLogsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListLogsResponder handles the response to the ListLogs request. The method always
@@ -818,7 +830,9 @@ func (client SyncGroupsClient) ListSyncDatabaseIdsPreparer(locationName string) 
 // ListSyncDatabaseIdsSender sends the ListSyncDatabaseIds request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncGroupsClient) ListSyncDatabaseIdsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSyncDatabaseIdsResponder handles the response to the ListSyncDatabaseIds request. The method always
@@ -972,6 +986,7 @@ func (client SyncGroupsClient) RefreshHubSchemaPreparer(resourceGroupName string
 func (client SyncGroupsClient) RefreshHubSchemaSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1040,7 +1055,9 @@ func (client SyncGroupsClient) TriggerSyncPreparer(resourceGroupName string, ser
 // TriggerSyncSender sends the TriggerSync request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncGroupsClient) TriggerSyncSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // TriggerSyncResponder handles the response to the TriggerSync request. The method always
@@ -1127,6 +1144,7 @@ func (client SyncGroupsClient) UpdatePreparer(resourceGroupName string, serverNa
 func (client SyncGroupsClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

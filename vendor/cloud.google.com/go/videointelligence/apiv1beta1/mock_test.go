@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -118,8 +118,9 @@ func TestVideoIntelligenceServiceAnnotateVideo(t *testing.T) {
 		Result: &longrunningpb.Operation_Response{Response: any},
 	})
 
-	var inputUri string = "inputUri1707300727"
-	var features []videointelligencepb.Feature = nil
+	var inputUri string = "gs://demomaker/cat.mp4"
+	var featuresElement videointelligencepb.Feature = videointelligencepb.Feature_LABEL_DETECTION
+	var features = []videointelligencepb.Feature{featuresElement}
 	var request = &videointelligencepb.AnnotateVideoRequest{
 		InputUri: inputUri,
 		Features: features,
@@ -163,8 +164,9 @@ func TestVideoIntelligenceServiceAnnotateVideoError(t *testing.T) {
 		},
 	})
 
-	var inputUri string = "inputUri1707300727"
-	var features []videointelligencepb.Feature = nil
+	var inputUri string = "gs://demomaker/cat.mp4"
+	var featuresElement videointelligencepb.Feature = videointelligencepb.Feature_LABEL_DETECTION
+	var features = []videointelligencepb.Feature{featuresElement}
 	var request = &videointelligencepb.AnnotateVideoRequest{
 		InputUri: inputUri,
 		Features: features,

@@ -1497,8 +1497,14 @@ func (b *builder) writeMatchData() {
 			if desired == supported && desired == "*_*_*" {
 				continue
 			}
-			if desired != supported { // (Weird but correct.)
-				log.Fatalf("not supported: desired=%q; supported=%q", desired, supported)
+			if desired != supported {
+				// This is now supported by CLDR, but only one case, which
+				// should already be covered by paradigm locales. For instance,
+				// test case "und, en, en-GU, en-IN, en-GB ; en-ZA ; en-GB" in
+				// testdata/CLDRLocaleMatcherTest.txt tests this.
+				if supported != "en_*_GB" {
+					log.Fatalf("not supported: desired=%q; supported=%q", desired, supported)
+				}
 				continue
 			}
 			ri := regionIntelligibility{

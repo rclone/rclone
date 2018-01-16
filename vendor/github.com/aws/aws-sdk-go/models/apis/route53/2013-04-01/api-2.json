@@ -7,6 +7,7 @@
     "protocol":"rest-xml",
     "serviceAbbreviation":"Route 53",
     "serviceFullName":"Amazon Route 53",
+    "serviceId":"Route 53",
     "signatureVersion":"v4",
     "uid":"route53-2013-04-01"
   },
@@ -219,6 +220,7 @@
       "errors":[
         {"shape":"NoSuchTrafficPolicy"},
         {"shape":"InvalidInput"},
+        {"shape":"TooManyTrafficPolicyVersionsForCurrentPolicy"},
         {"shape":"ConcurrentModification"},
         {"shape":"InvalidTrafficPolicyDocument"}
       ]
@@ -371,6 +373,18 @@
         {"shape":"InvalidInput"}
       ]
     },
+    "GetAccountLimit":{
+      "name":"GetAccountLimit",
+      "http":{
+        "method":"GET",
+        "requestUri":"/2013-04-01/accountlimit/{Type}"
+      },
+      "input":{"shape":"GetAccountLimitRequest"},
+      "output":{"shape":"GetAccountLimitResponse"},
+      "errors":[
+        {"shape":"InvalidInput"}
+      ]
+    },
     "GetChange":{
       "name":"GetChange",
       "http":{
@@ -480,6 +494,20 @@
         {"shape":"InvalidInput"}
       ]
     },
+    "GetHostedZoneLimit":{
+      "name":"GetHostedZoneLimit",
+      "http":{
+        "method":"GET",
+        "requestUri":"/2013-04-01/hostedzonelimit/{Id}/{Type}"
+      },
+      "input":{"shape":"GetHostedZoneLimitRequest"},
+      "output":{"shape":"GetHostedZoneLimitResponse"},
+      "errors":[
+        {"shape":"NoSuchHostedZone"},
+        {"shape":"InvalidInput"},
+        {"shape":"HostedZoneNotPrivate"}
+      ]
+    },
     "GetQueryLoggingConfig":{
       "name":"GetQueryLoggingConfig",
       "http":{
@@ -505,6 +533,19 @@
         {"shape":"NoSuchDelegationSet"},
         {"shape":"DelegationSetNotReusable"},
         {"shape":"InvalidInput"}
+      ]
+    },
+    "GetReusableDelegationSetLimit":{
+      "name":"GetReusableDelegationSetLimit",
+      "http":{
+        "method":"GET",
+        "requestUri":"/2013-04-01/reusabledelegationsetlimit/{Id}/{Type}"
+      },
+      "input":{"shape":"GetReusableDelegationSetLimitRequest"},
+      "output":{"shape":"GetReusableDelegationSetLimitResponse"},
+      "errors":[
+        {"shape":"InvalidInput"},
+        {"shape":"NoSuchDelegationSet"}
       ]
     },
     "GetTrafficPolicy":{
@@ -837,6 +878,27 @@
     }
   },
   "shapes":{
+    "AccountLimit":{
+      "type":"structure",
+      "required":[
+        "Type",
+        "Value"
+      ],
+      "members":{
+        "Type":{"shape":"AccountLimitType"},
+        "Value":{"shape":"LimitValue"}
+      }
+    },
+    "AccountLimitType":{
+      "type":"string",
+      "enum":[
+        "MAX_HEALTH_CHECKS_BY_OWNER",
+        "MAX_HOSTED_ZONES_BY_OWNER",
+        "MAX_TRAFFIC_POLICY_INSTANCES_BY_OWNER",
+        "MAX_REUSABLE_DELEGATION_SETS_BY_OWNER",
+        "MAX_TRAFFIC_POLICIES_BY_OWNER"
+      ]
+    },
     "AlarmIdentifier":{
       "type":"structure",
       "required":[
@@ -1041,6 +1103,7 @@
         "eu-central-1",
         "eu-west-1",
         "eu-west-2",
+        "eu-west-3",
         "ap-south-1",
         "ap-southeast-1",
         "ap-southeast-2",
@@ -1624,6 +1687,28 @@
       "max":64,
       "min":1
     },
+    "GetAccountLimitRequest":{
+      "type":"structure",
+      "required":["Type"],
+      "members":{
+        "Type":{
+          "shape":"AccountLimitType",
+          "location":"uri",
+          "locationName":"Type"
+        }
+      }
+    },
+    "GetAccountLimitResponse":{
+      "type":"structure",
+      "required":[
+        "Limit",
+        "Count"
+      ],
+      "members":{
+        "Limit":{"shape":"AccountLimit"},
+        "Count":{"shape":"UsageCount"}
+      }
+    },
     "GetChangeRequest":{
       "type":"structure",
       "required":["Id"],
@@ -1759,6 +1844,36 @@
         "HostedZoneCount":{"shape":"HostedZoneCount"}
       }
     },
+    "GetHostedZoneLimitRequest":{
+      "type":"structure",
+      "required":[
+        "Type",
+        "HostedZoneId"
+      ],
+      "members":{
+        "Type":{
+          "shape":"HostedZoneLimitType",
+          "location":"uri",
+          "locationName":"Type"
+        },
+        "HostedZoneId":{
+          "shape":"ResourceId",
+          "location":"uri",
+          "locationName":"Id"
+        }
+      }
+    },
+    "GetHostedZoneLimitResponse":{
+      "type":"structure",
+      "required":[
+        "Limit",
+        "Count"
+      ],
+      "members":{
+        "Limit":{"shape":"HostedZoneLimit"},
+        "Count":{"shape":"UsageCount"}
+      }
+    },
     "GetHostedZoneRequest":{
       "type":"structure",
       "required":["Id"],
@@ -1795,6 +1910,36 @@
       "required":["QueryLoggingConfig"],
       "members":{
         "QueryLoggingConfig":{"shape":"QueryLoggingConfig"}
+      }
+    },
+    "GetReusableDelegationSetLimitRequest":{
+      "type":"structure",
+      "required":[
+        "Type",
+        "DelegationSetId"
+      ],
+      "members":{
+        "Type":{
+          "shape":"ReusableDelegationSetLimitType",
+          "location":"uri",
+          "locationName":"Type"
+        },
+        "DelegationSetId":{
+          "shape":"ResourceId",
+          "location":"uri",
+          "locationName":"Id"
+        }
+      }
+    },
+    "GetReusableDelegationSetLimitResponse":{
+      "type":"structure",
+      "required":[
+        "Limit",
+        "Count"
+      ],
+      "members":{
+        "Limit":{"shape":"ReusableDelegationSetLimit"},
+        "Count":{"shape":"UsageCount"}
       }
     },
     "GetReusableDelegationSetRequest":{
@@ -1882,6 +2027,7 @@
       "members":{
         "Id":{"shape":"HealthCheckId"},
         "CallerReference":{"shape":"HealthCheckNonce"},
+        "LinkedService":{"shape":"LinkedService"},
         "HealthCheckConfig":{"shape":"HealthCheckConfig"},
         "HealthCheckVersion":{"shape":"HealthCheckVersion"},
         "CloudWatchAlarmConfiguration":{"shape":"CloudWatchAlarmConfiguration"}
@@ -2023,7 +2169,8 @@
         "Name":{"shape":"DNSName"},
         "CallerReference":{"shape":"Nonce"},
         "Config":{"shape":"HostedZoneConfig"},
-        "ResourceRecordSetCount":{"shape":"HostedZoneRRSetCount"}
+        "ResourceRecordSetCount":{"shape":"HostedZoneRRSetCount"},
+        "LinkedService":{"shape":"LinkedService"}
       }
     },
     "HostedZoneAlreadyExists":{
@@ -2042,6 +2189,24 @@
       }
     },
     "HostedZoneCount":{"type":"long"},
+    "HostedZoneLimit":{
+      "type":"structure",
+      "required":[
+        "Type",
+        "Value"
+      ],
+      "members":{
+        "Type":{"shape":"HostedZoneLimitType"},
+        "Value":{"shape":"LimitValue"}
+      }
+    },
+    "HostedZoneLimitType":{
+      "type":"string",
+      "enum":[
+        "MAX_RRSETS_BY_ZONE",
+        "MAX_VPCS_ASSOCIATED_BY_ZONE"
+      ]
+    },
     "HostedZoneNotEmpty":{
       "type":"structure",
       "members":{
@@ -2051,6 +2216,13 @@
       "exception":true
     },
     "HostedZoneNotFound":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "HostedZoneNotPrivate":{
       "type":"structure",
       "members":{
         "message":{"shape":"ErrorMessage"}
@@ -2160,12 +2332,23 @@
       "error":{"httpStatusCode":400},
       "exception":true
     },
+    "LimitValue":{
+      "type":"long",
+      "min":1
+    },
     "LimitsExceeded":{
       "type":"structure",
       "members":{
         "message":{"shape":"ErrorMessage"}
       },
       "exception":true
+    },
+    "LinkedService":{
+      "type":"structure",
+      "members":{
+        "ServicePrincipal":{"shape":"ServicePrincipal"},
+        "Description":{"shape":"ResourceDescription"}
+      }
     },
     "ListGeoLocationsRequest":{
       "type":"structure",
@@ -2996,6 +3179,7 @@
         "ca-central-1",
         "eu-west-1",
         "eu-west-2",
+        "eu-west-3",
         "eu-central-1",
         "ap-southeast-1",
         "ap-southeast-2",
@@ -3003,6 +3187,7 @@
         "ap-northeast-2",
         "sa-east-1",
         "cn-north-1",
+        "cn-northwest-1",
         "ap-south-1"
       ],
       "max":64,
@@ -3047,9 +3232,28 @@
       "type":"string",
       "max":1024
     },
+    "ReusableDelegationSetLimit":{
+      "type":"structure",
+      "required":[
+        "Type",
+        "Value"
+      ],
+      "members":{
+        "Type":{"shape":"ReusableDelegationSetLimitType"},
+        "Value":{"shape":"LimitValue"}
+      }
+    },
+    "ReusableDelegationSetLimitType":{
+      "type":"string",
+      "enum":["MAX_ZONES_BY_REUSABLE_DELEGATION_SET"]
+    },
     "SearchString":{
       "type":"string",
       "max":255
+    },
+    "ServicePrincipal":{
+      "type":"string",
+      "max":128
     },
     "Statistic":{
       "type":"string",
@@ -3225,6 +3429,14 @@
       "exception":true
     },
     "TooManyTrafficPolicyInstances":{
+      "type":"structure",
+      "members":{
+        "message":{"shape":"ErrorMessage"}
+      },
+      "error":{"httpStatusCode":400},
+      "exception":true
+    },
+    "TooManyTrafficPolicyVersionsForCurrentPolicy":{
       "type":"structure",
       "members":{
         "message":{"shape":"ErrorMessage"}
@@ -3485,6 +3697,10 @@
         "TrafficPolicyInstance":{"shape":"TrafficPolicyInstance"}
       }
     },
+    "UsageCount":{
+      "type":"long",
+      "min":0
+    },
     "VPC":{
       "type":"structure",
       "members":{
@@ -3521,6 +3737,7 @@
         "us-west-2",
         "eu-west-1",
         "eu-west-2",
+        "eu-west-3",
         "eu-central-1",
         "ap-southeast-1",
         "ap-southeast-2",

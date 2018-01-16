@@ -122,6 +122,7 @@ func (client AccessControlRecordsClient) CreateOrUpdatePreparer(accessControlRec
 func (client AccessControlRecordsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -215,6 +216,7 @@ func (client AccessControlRecordsClient) DeletePreparer(accessControlRecordName 
 func (client AccessControlRecordsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -288,7 +290,9 @@ func (client AccessControlRecordsClient) GetPreparer(accessControlRecordName str
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccessControlRecordsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -360,7 +364,9 @@ func (client AccessControlRecordsClient) ListByManagerPreparer(resourceGroupName
 // ListByManagerSender sends the ListByManager request. The method will close the
 // http.Response Body if it receives an error.
 func (client AccessControlRecordsClient) ListByManagerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByManagerResponder handles the response to the ListByManager request. The method always

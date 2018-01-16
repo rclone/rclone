@@ -192,12 +192,12 @@ func TestSchemaConversion(t *testing.T) {
 	}
 
 	for _, tc := range testCases {
-		bqSchema := tc.schema.asTableSchema()
+		bqSchema := tc.schema.toBQ()
 		if !testutil.Equal(bqSchema, tc.bqSchema) {
 			t.Errorf("converting to TableSchema: got:\n%v\nwant:\n%v",
 				pretty.Value(bqSchema), pretty.Value(tc.bqSchema))
 		}
-		schema := convertTableSchema(tc.bqSchema)
+		schema := bqToSchema(tc.bqSchema)
 		if !testutil.Equal(schema, tc.schema) {
 			t.Errorf("converting to Schema: got:\n%v\nwant:\n%v", schema, tc.schema)
 		}
@@ -536,6 +536,7 @@ type withTags struct {
 	SimpleTag     int `bigquery:"simple_tag"`
 	UnderscoreTag int `bigquery:"_id"`
 	MixedCase     int `bigquery:"MIXEDcase"`
+	Nullable      int `bigquery:",nullable"`
 }
 
 type withTagsNested struct {
@@ -563,6 +564,7 @@ var withTagsSchema = Schema{
 	reqField("simple_tag", "INTEGER"),
 	reqField("_id", "INTEGER"),
 	reqField("MIXEDcase", "INTEGER"),
+	{Name: "Nullable", Type: FieldType("INTEGER"), Required: false},
 }
 
 func TestTagInference(t *testing.T) {
@@ -666,12 +668,6 @@ func TestTagInferenceErrors(t *testing.T) {
 			}{},
 			err: errInvalidFieldName,
 		},
-		{
-			in: struct {
-				OmitEmpty int `bigquery:"abc,omitempty"`
-			}{},
-			err: errInvalidFieldName,
-		},
 	}
 	for i, tc := range testCases {
 		want := tc.err
@@ -679,6 +675,13 @@ func TestTagInferenceErrors(t *testing.T) {
 		if got != want {
 			t.Errorf("%d: inferring TableSchema: got:\n%#v\nwant:\n%#v", i, got, want)
 		}
+	}
+
+	_, err := InferSchema(struct {
+		X int `bigquery:",optional"`
+	}{})
+	if err == nil {
+		t.Error("got nil, want error")
 	}
 }
 

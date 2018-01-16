@@ -1,6 +1,8 @@
 // Package monitor implements the Azure ARM Monitor service API version .
 //
 // Monitor Management Client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/monitor/mgmt/2017-05-01-preview/insights
 package monitor
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -217,14 +217,6 @@
       "refs": {
       }
     },
-    "GenericBoolean": {
-      "base": "A generic boolean value.",
-      "refs": {
-        "CostTypes$IncludeTax": null,
-        "CostTypes$IncludeSubscription": null,
-        "CostTypes$UseBlended": null
-      }
-    },
     "GenericString": {
       "base": "A generic String.",
       "refs": {
@@ -235,8 +227,7 @@
         "DescribeNotificationsForBudgetResponse$NextToken": null,
         "DescribeSubscribersForNotificationRequest$NextToken": null,
         "DescribeSubscribersForNotificationResponse$NextToken": null,
-        "DimensionValues$member": null,
-        "Subscriber$Address": null
+        "DimensionValues$member": null
       }
     },
     "GenericTimestamp": {
@@ -319,6 +310,20 @@
         "DescribeNotificationsForBudgetResponse$Notifications": null
       }
     },
+    "NullableBoolean": {
+      "base": null,
+      "refs": {
+        "CostTypes$IncludeTax": "A boolean value whether to include tax in the cost budget.",
+        "CostTypes$IncludeSubscription": "A boolean value whether to include subscriptions in the cost budget.",
+        "CostTypes$UseBlended": "A boolean value whether to use blended costs in the cost budget.",
+        "CostTypes$IncludeRefund": "A boolean value whether to include refunds in the cost budget.",
+        "CostTypes$IncludeCredit": "A boolean value whether to include credits in the cost budget.",
+        "CostTypes$IncludeUpfront": "A boolean value whether to include upfront costs in the cost budget.",
+        "CostTypes$IncludeRecurring": "A boolean value whether to include recurring costs in the cost budget.",
+        "CostTypes$IncludeOtherSubscription": "A boolean value whether to include other subscription costs in the cost budget.",
+        "CostTypes$IncludeSupport": "A boolean value whether to include support costs in the cost budget."
+      }
+    },
     "NumericValue": {
       "base": "A string to represent NumericValue.",
       "refs": {
@@ -341,6 +346,12 @@
         "Subscribers$member": null,
         "UpdateSubscriberRequest$OldSubscriber": null,
         "UpdateSubscriberRequest$NewSubscriber": null
+      }
+    },
+    "SubscriberAddress": {
+      "base": "String containing email or sns topic for the subscriber address.",
+      "refs": {
+        "Subscriber$Address": null
       }
     },
     "Subscribers": {

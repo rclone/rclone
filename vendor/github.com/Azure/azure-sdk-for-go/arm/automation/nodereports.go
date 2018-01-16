@@ -97,7 +97,9 @@ func (client NodeReportsClient) GetPreparer(resourceGroupName string, automation
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeReportsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -171,7 +173,9 @@ func (client NodeReportsClient) GetContentPreparer(resourceGroupName string, aut
 // GetContentSender sends the GetContent request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeReportsClient) GetContentSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetContentResponder handles the response to the GetContent request. The method always
@@ -246,7 +250,9 @@ func (client NodeReportsClient) ListByNodePreparer(resourceGroupName string, aut
 // ListByNodeSender sends the ListByNode request. The method will close the
 // http.Response Body if it receives an error.
 func (client NodeReportsClient) ListByNodeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByNodeResponder handles the response to the ListByNode request. The method always

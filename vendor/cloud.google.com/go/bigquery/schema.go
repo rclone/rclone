@@ -49,7 +49,7 @@ type FieldSchema struct {
 	Schema Schema
 }
 
-func (fs *FieldSchema) asTableFieldSchema() *bq.TableFieldSchema {
+func (fs *FieldSchema) toBQ() *bq.TableFieldSchema {
 	tfs := &bq.TableFieldSchema{
 		Description: fs.Description,
 		Name:        fs.Name,
@@ -63,21 +63,21 @@ func (fs *FieldSchema) asTableFieldSchema() *bq.TableFieldSchema {
 	} // else leave as default, which is interpreted as NULLABLE.
 
 	for _, f := range fs.Schema {
-		tfs.Fields = append(tfs.Fields, f.asTableFieldSchema())
+		tfs.Fields = append(tfs.Fields, f.toBQ())
 	}
 
 	return tfs
 }
 
-func (s Schema) asTableSchema() *bq.TableSchema {
+func (s Schema) toBQ() *bq.TableSchema {
 	var fields []*bq.TableFieldSchema
 	for _, f := range s {
-		fields = append(fields, f.asTableFieldSchema())
+		fields = append(fields, f.toBQ())
 	}
 	return &bq.TableSchema{Fields: fields}
 }
 
-func convertTableFieldSchema(tfs *bq.TableFieldSchema) *FieldSchema {
+func bqToFieldSchema(tfs *bq.TableFieldSchema) *FieldSchema {
 	fs := &FieldSchema{
 		Description: tfs.Description,
 		Name:        tfs.Name,
@@ -87,18 +87,18 @@ func convertTableFieldSchema(tfs *bq.TableFieldSchema) *FieldSchema {
 	}
 
 	for _, f := range tfs.Fields {
-		fs.Schema = append(fs.Schema, convertTableFieldSchema(f))
+		fs.Schema = append(fs.Schema, bqToFieldSchema(f))
 	}
 	return fs
 }
 
-func convertTableSchema(ts *bq.TableSchema) Schema {
+func bqToSchema(ts *bq.TableSchema) Schema {
 	if ts == nil {
 		return nil
 	}
 	var s Schema
 	for _, f := range ts.Fields {
-		s = append(s, convertTableFieldSchema(f))
+		s = append(s, bqToFieldSchema(f))
 	}
 	return s
 }
@@ -141,6 +141,7 @@ func InferSchema(st interface{}) (Schema, error) {
 	return inferSchemaReflectCached(reflect.TypeOf(st))
 }
 
+// TODO(jba): replace with sync.Map for Go 1.9.
 var schemaCache atomiccache.Cache
 
 type cacheVal struct {
@@ -184,21 +185,21 @@ func inferStruct(t reflect.Type) (Schema, error) {
 }
 
 // inferFieldSchema infers the FieldSchema for a Go type
-func inferFieldSchema(rt reflect.Type) (*FieldSchema, error) {
+func inferFieldSchema(rt reflect.Type, nullable bool) (*FieldSchema, error) {
 	switch rt {
 	case typeOfByteSlice:
-		return &FieldSchema{Required: true, Type: BytesFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: BytesFieldType}, nil
 	case typeOfGoTime:
-		return &FieldSchema{Required: true, Type: TimestampFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: TimestampFieldType}, nil
 	case typeOfDate:
-		return &FieldSchema{Required: true, Type: DateFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: DateFieldType}, nil
 	case typeOfTime:
-		return &FieldSchema{Required: true, Type: TimeFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: TimeFieldType}, nil
 	case typeOfDateTime:
-		return &FieldSchema{Required: true, Type: DateTimeFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: DateTimeFieldType}, nil
 	}
 	if isSupportedIntType(rt) {
-		return &FieldSchema{Required: true, Type: IntegerFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: IntegerFieldType}, nil
 	}
 	switch rt.Kind() {
 	case reflect.Slice, reflect.Array:
@@ -208,7 +209,7 @@ func inferFieldSchema(rt reflect.Type) (*FieldSchema, error) {
 			return nil, errUnsupportedFieldType
 		}
 
-		f, err := inferFieldSchema(et)
+		f, err := inferFieldSchema(et, false)
 		if err != nil {
 			return nil, err
 		}
@@ -220,13 +221,13 @@ func inferFieldSchema(rt reflect.Type) (*FieldSchema, error) {
 		if err != nil {
 			return nil, err
 		}
-		return &FieldSchema{Required: true, Type: RecordFieldType, Schema: nested}, nil
+		return &FieldSchema{Required: !nullable, Type: RecordFieldType, Schema: nested}, nil
 	case reflect.String:
-		return &FieldSchema{Required: true, Type: StringFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: StringFieldType}, nil
 	case reflect.Bool:
-		return &FieldSchema{Required: true, Type: BooleanFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: BooleanFieldType}, nil
 	case reflect.Float32, reflect.Float64:
-		return &FieldSchema{Required: true, Type: FloatFieldType}, nil
+		return &FieldSchema{Required: !nullable, Type: FloatFieldType}, nil
 	default:
 		return nil, errUnsupportedFieldType
 	}
@@ -240,7 +241,14 @@ func inferFields(rt reflect.Type) (Schema, error) {
 		return nil, err
 	}
 	for _, field := range fields {
-		f, err := inferFieldSchema(field.Type)
+		var nullable bool
+		for _, opt := range field.ParsedTag.([]string) {
+			if opt == nullableTagOption {
+				nullable = true
+				break
+			}
+		}
+		f, err := inferFieldSchema(field.Type, nullable)
 		if err != nil {
 			return nil, err
 		}

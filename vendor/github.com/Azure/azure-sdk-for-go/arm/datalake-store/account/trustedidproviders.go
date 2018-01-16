@@ -102,7 +102,9 @@ func (client TrustedIDProvidersClient) CreateOrUpdatePreparer(resourceGroupName 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client TrustedIDProvidersClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -170,7 +172,9 @@ func (client TrustedIDProvidersClient) DeletePreparer(resourceGroupName string, 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client TrustedIDProvidersClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -237,7 +241,9 @@ func (client TrustedIDProvidersClient) GetPreparer(resourceGroupName string, acc
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client TrustedIDProvidersClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -303,7 +309,9 @@ func (client TrustedIDProvidersClient) ListByAccountPreparer(resourceGroupName s
 // ListByAccountSender sends the ListByAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client TrustedIDProvidersClient) ListByAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAccountResponder handles the response to the ListByAccount request. The method always
@@ -446,7 +454,9 @@ func (client TrustedIDProvidersClient) UpdatePreparer(resourceGroupName string, 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client TrustedIDProvidersClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

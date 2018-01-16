@@ -216,7 +216,7 @@ func (r *Request) send() error {
 	retries := r.Operation.Config.ConnectionRetries + 1
 	for {
 		if retries > 0 {
-			logger.Infof(fmt.Sprintf(
+			logger.Infof(nil, fmt.Sprintf(
 				"Sending request: [%d] %s %s",
 				convert.StringToUnixTimestamp(r.HTTPRequest.Header.Get("Date"), convert.RFC822),
 				r.Operation.RequestMethod,

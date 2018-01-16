@@ -15,7 +15,7 @@ stone -v -a :all go_types.stoneg.py "$gen_dir" "$spec_dir"/*.stone
 stone -v -a :all go_client.stoneg.py "$gen_dir" "$spec_dir"/*.stone
 
 # Update SDK and API spec versions
-sdk_version=${1:-"4.0.0"}
+sdk_version=${1:-"4.2.0"}
 pushd ${spec_dir}
 spec_version=$(git rev-parse --short HEAD)
 popd

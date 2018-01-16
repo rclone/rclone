@@ -44,6 +44,134 @@ func TestFreelist_release(t *testing.T) {
 	}
 }
 
+// Ensure that releaseRange handles boundary conditions correctly
+func TestFreelist_releaseRange(t *testing.T) {
+	type testRange struct {
+		begin, end txid
+	}
+
+	type testPage struct {
+		id       pgid
+		n        int
+		allocTxn txid
+		freeTxn  txid
+	}
+
+	var releaseRangeTests = []struct {
+		title         string
+		pagesIn       []testPage
+		releaseRanges []testRange
+		wantFree      []pgid
+	}{
+		{
+			title:         "Single pending in range",
+			pagesIn:       []testPage{{id: 3, n: 1, allocTxn: 100, freeTxn: 200}},
+			releaseRanges: []testRange{{1, 300}},
+			wantFree:      []pgid{3},
+		},
+		{
+			title:         "Single pending with minimum end range",
+			pagesIn:       []testPage{{id: 3, n: 1, allocTxn: 100, freeTxn: 200}},
+			releaseRanges: []testRange{{1, 200}},
+			wantFree:      []pgid{3},
+		},
+		{
+			title:         "Single pending outsize minimum end range",
+			pagesIn:       []testPage{{id: 3, n: 1, allocTxn: 100, freeTxn: 200}},
+			releaseRanges: []testRange{{1, 199}},
+			wantFree:      nil,
+		},
+		{
+			title:         "Single pending with minimum begin range",
+			pagesIn:       []testPage{{id: 3, n: 1, allocTxn: 100, freeTxn: 200}},
+			releaseRanges: []testRange{{100, 300}},
+			wantFree:      []pgid{3},
+		},
+		{
+			title:         "Single pending outside minimum begin range",
+			pagesIn:       []testPage{{id: 3, n: 1, allocTxn: 100, freeTxn: 200}},
+			releaseRanges: []testRange{{101, 300}},
+			wantFree:      nil,
+		},
+		{
+			title:         "Single pending in minimum range",
+			pagesIn:       []testPage{{id: 3, n: 1, allocTxn: 199, freeTxn: 200}},
+			releaseRanges: []testRange{{199, 200}},
+			wantFree:      []pgid{3},
+		},
+		{
+			title:         "Single pending and read transaction at 199",
+			pagesIn:       []testPage{{id: 3, n: 1, allocTxn: 199, freeTxn: 200}},
+			releaseRanges: []testRange{{100, 198}, {200, 300}},
+			wantFree:      nil,
+		},
+		{
+			title: "Adjacent pending and read transactions at 199, 200",
+			pagesIn: []testPage{
+				{id: 3, n: 1, allocTxn: 199, freeTxn: 200},
+				{id: 4, n: 1, allocTxn: 200, freeTxn: 201},
+			},
+			releaseRanges: []testRange{
+				{100, 198},
+				{200, 199}, // Simulate the ranges db.freePages might produce.
+				{201, 300},
+			},
+			wantFree: nil,
+		},
+		{
+			title: "Out of order ranges",
+			pagesIn: []testPage{
+				{id: 3, n: 1, allocTxn: 199, freeTxn: 200},
+				{id: 4, n: 1, allocTxn: 200, freeTxn: 201},
+			},
+			releaseRanges: []testRange{
+				{201, 199},
+				{201, 200},
+				{200, 200},
+			},
+			wantFree: nil,
+		},
+		{
+			title: "Multiple pending, read transaction at 150",
+			pagesIn: []testPage{
+				{id: 3, n: 1, allocTxn: 100, freeTxn: 200},
+				{id: 4, n: 1, allocTxn: 100, freeTxn: 125},
+				{id: 5, n: 1, allocTxn: 125, freeTxn: 150},
+				{id: 6, n: 1, allocTxn: 125, freeTxn: 175},
+				{id: 7, n: 2, allocTxn: 150, freeTxn: 175},
+				{id: 9, n: 2, allocTxn: 175, freeTxn: 200},
+			},
+			releaseRanges: []testRange{{50, 149}, {151, 300}},
+			wantFree:      []pgid{4, 9},
+		},
+	}
+
+	for _, c := range releaseRangeTests {
+		f := newFreelist()
+
+		for _, p := range c.pagesIn {
+			for i := uint64(0); i < uint64(p.n); i++ {
+				f.ids = append(f.ids, pgid(uint64(p.id)+i))
+			}
+		}
+		for _, p := range c.pagesIn {
+			f.allocate(p.allocTxn, p.n)
+		}
+
+		for _, p := range c.pagesIn {
+			f.free(p.freeTxn, &page{id: p.id})
+		}
+
+		for _, r := range c.releaseRanges {
+			f.releaseRange(r.begin, r.end)
+		}
+
+		if exp := c.wantFree; !reflect.DeepEqual(exp, f.ids) {
+			t.Errorf("exp=%v; got=%v for %s", exp, f.ids, c.title)
+		}
+	}
+}
+
 // Ensure that a freelist can find contiguous blocks of pages.
 func TestFreelist_allocate(t *testing.T) {
 	f := newFreelist()

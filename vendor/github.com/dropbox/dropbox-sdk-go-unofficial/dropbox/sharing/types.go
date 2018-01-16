@@ -1431,6 +1431,27 @@ func NewGetSharedLinksResult(Links []IsLinkMetadata) *GetSharedLinksResult {
 	return s
 }
 
+// UnmarshalJSON deserializes into a GetSharedLinksResult instance
+func (u *GetSharedLinksResult) UnmarshalJSON(b []byte) error {
+	type wrap struct {
+		// Links : Shared links applicable to the path argument.
+		Links []json.RawMessage `json:"links"`
+	}
+	var w wrap
+	if err := json.Unmarshal(b, &w); err != nil {
+		return err
+	}
+	u.Links = make([]IsLinkMetadata, len(w.Links))
+	for i, e := range w.Links {
+		v, err := IsLinkMetadataFromJSON(e)
+		if err != nil {
+			return err
+		}
+		u.Links[i] = v
+	}
+	return nil
+}
+
 // GroupInfo : The information about a group. Groups is a way to manage a list
 // of users  who need same access permission to the shared folder.
 type GroupInfo struct {
@@ -2396,6 +2417,36 @@ func NewListSharedLinksResult(Links []IsSharedLinkMetadata, HasMore bool) *ListS
 	s.Links = Links
 	s.HasMore = HasMore
 	return s
+}
+
+// UnmarshalJSON deserializes into a ListSharedLinksResult instance
+func (u *ListSharedLinksResult) UnmarshalJSON(b []byte) error {
+	type wrap struct {
+		// Links : Shared links applicable to the path argument.
+		Links []json.RawMessage `json:"links"`
+		// HasMore : Is true if there are additional shared links that have not
+		// been returned yet. Pass the cursor into `listSharedLinks` to retrieve
+		// them.
+		HasMore bool `json:"has_more"`
+		// Cursor : Pass the cursor into `listSharedLinks` to obtain the
+		// additional links. Cursor is returned only if no path is given.
+		Cursor string `json:"cursor,omitempty"`
+	}
+	var w wrap
+	if err := json.Unmarshal(b, &w); err != nil {
+		return err
+	}
+	u.Links = make([]IsSharedLinkMetadata, len(w.Links))
+	for i, e := range w.Links {
+		v, err := IsSharedLinkMetadataFromJSON(e)
+		if err != nil {
+			return err
+		}
+		u.Links[i] = v
+	}
+	u.HasMore = w.HasMore
+	u.Cursor = w.Cursor
+	return nil
 }
 
 // MemberAccessLevelResult : Contains information about a member's access level

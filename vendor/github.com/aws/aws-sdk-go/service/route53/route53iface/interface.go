@@ -136,6 +136,10 @@ type Route53API interface {
 	DisassociateVPCFromHostedZoneWithContext(aws.Context, *route53.DisassociateVPCFromHostedZoneInput, ...request.Option) (*route53.DisassociateVPCFromHostedZoneOutput, error)
 	DisassociateVPCFromHostedZoneRequest(*route53.DisassociateVPCFromHostedZoneInput) (*request.Request, *route53.DisassociateVPCFromHostedZoneOutput)
 
+	GetAccountLimit(*route53.GetAccountLimitInput) (*route53.GetAccountLimitOutput, error)
+	GetAccountLimitWithContext(aws.Context, *route53.GetAccountLimitInput, ...request.Option) (*route53.GetAccountLimitOutput, error)
+	GetAccountLimitRequest(*route53.GetAccountLimitInput) (*request.Request, *route53.GetAccountLimitOutput)
+
 	GetChange(*route53.GetChangeInput) (*route53.GetChangeOutput, error)
 	GetChangeWithContext(aws.Context, *route53.GetChangeInput, ...request.Option) (*route53.GetChangeOutput, error)
 	GetChangeRequest(*route53.GetChangeInput) (*request.Request, *route53.GetChangeOutput)
@@ -172,6 +176,10 @@ type Route53API interface {
 	GetHostedZoneCountWithContext(aws.Context, *route53.GetHostedZoneCountInput, ...request.Option) (*route53.GetHostedZoneCountOutput, error)
 	GetHostedZoneCountRequest(*route53.GetHostedZoneCountInput) (*request.Request, *route53.GetHostedZoneCountOutput)
 
+	GetHostedZoneLimit(*route53.GetHostedZoneLimitInput) (*route53.GetHostedZoneLimitOutput, error)
+	GetHostedZoneLimitWithContext(aws.Context, *route53.GetHostedZoneLimitInput, ...request.Option) (*route53.GetHostedZoneLimitOutput, error)
+	GetHostedZoneLimitRequest(*route53.GetHostedZoneLimitInput) (*request.Request, *route53.GetHostedZoneLimitOutput)
+
 	GetQueryLoggingConfig(*route53.GetQueryLoggingConfigInput) (*route53.GetQueryLoggingConfigOutput, error)
 	GetQueryLoggingConfigWithContext(aws.Context, *route53.GetQueryLoggingConfigInput, ...request.Option) (*route53.GetQueryLoggingConfigOutput, error)
 	GetQueryLoggingConfigRequest(*route53.GetQueryLoggingConfigInput) (*request.Request, *route53.GetQueryLoggingConfigOutput)
@@ -179,6 +187,10 @@ type Route53API interface {
 	GetReusableDelegationSet(*route53.GetReusableDelegationSetInput) (*route53.GetReusableDelegationSetOutput, error)
 	GetReusableDelegationSetWithContext(aws.Context, *route53.GetReusableDelegationSetInput, ...request.Option) (*route53.GetReusableDelegationSetOutput, error)
 	GetReusableDelegationSetRequest(*route53.GetReusableDelegationSetInput) (*request.Request, *route53.GetReusableDelegationSetOutput)
+
+	GetReusableDelegationSetLimit(*route53.GetReusableDelegationSetLimitInput) (*route53.GetReusableDelegationSetLimitOutput, error)
+	GetReusableDelegationSetLimitWithContext(aws.Context, *route53.GetReusableDelegationSetLimitInput, ...request.Option) (*route53.GetReusableDelegationSetLimitOutput, error)
+	GetReusableDelegationSetLimitRequest(*route53.GetReusableDelegationSetLimitInput) (*request.Request, *route53.GetReusableDelegationSetLimitOutput)
 
 	GetTrafficPolicy(*route53.GetTrafficPolicyInput) (*route53.GetTrafficPolicyOutput, error)
 	GetTrafficPolicyWithContext(aws.Context, *route53.GetTrafficPolicyInput, ...request.Option) (*route53.GetTrafficPolicyOutput, error)

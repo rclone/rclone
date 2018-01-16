@@ -90,7 +90,9 @@ func (client InvoicesClient) GetPreparer(invoiceName string) (*http.Request, err
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client InvoicesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -152,7 +154,9 @@ func (client InvoicesClient) GetLatestPreparer() (*http.Request, error) {
 // GetLatestSender sends the GetLatest request. The method will close the
 // http.Response Body if it receives an error.
 func (client InvoicesClient) GetLatestSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetLatestResponder handles the response to the GetLatest request. The method always
@@ -244,7 +248,9 @@ func (client InvoicesClient) ListPreparer(expand string, filter string, skiptoke
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client InvoicesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

@@ -119,6 +119,9 @@ type OpsWorksCMAPI interface {
 	UpdateServerEngineAttributes(*opsworkscm.UpdateServerEngineAttributesInput) (*opsworkscm.UpdateServerEngineAttributesOutput, error)
 	UpdateServerEngineAttributesWithContext(aws.Context, *opsworkscm.UpdateServerEngineAttributesInput, ...request.Option) (*opsworkscm.UpdateServerEngineAttributesOutput, error)
 	UpdateServerEngineAttributesRequest(*opsworkscm.UpdateServerEngineAttributesInput) (*request.Request, *opsworkscm.UpdateServerEngineAttributesOutput)
+
+	WaitUntilNodeAssociated(*opsworkscm.DescribeNodeAssociationStatusInput) error
+	WaitUntilNodeAssociatedWithContext(aws.Context, *opsworkscm.DescribeNodeAssociationStatusInput, ...request.WaiterOption) error
 }
 
 var _ OpsWorksCMAPI = (*opsworkscm.OpsWorksCM)(nil)

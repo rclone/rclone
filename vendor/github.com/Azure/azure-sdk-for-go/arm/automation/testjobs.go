@@ -101,7 +101,9 @@ func (client TestJobsClient) CreatePreparer(resourceGroupName string, automation
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client TestJobsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -174,7 +176,9 @@ func (client TestJobsClient) GetPreparer(resourceGroupName string, automationAcc
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client TestJobsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -247,7 +251,9 @@ func (client TestJobsClient) ResumePreparer(resourceGroupName string, automation
 // ResumeSender sends the Resume request. The method will close the
 // http.Response Body if it receives an error.
 func (client TestJobsClient) ResumeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ResumeResponder handles the response to the Resume request. The method always
@@ -319,7 +325,9 @@ func (client TestJobsClient) StopPreparer(resourceGroupName string, automationAc
 // StopSender sends the Stop request. The method will close the
 // http.Response Body if it receives an error.
 func (client TestJobsClient) StopSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // StopResponder handles the response to the Stop request. The method always
@@ -391,7 +399,9 @@ func (client TestJobsClient) SuspendPreparer(resourceGroupName string, automatio
 // SuspendSender sends the Suspend request. The method will close the
 // http.Response Body if it receives an error.
 func (client TestJobsClient) SuspendSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // SuspendResponder handles the response to the Suspend request. The method always

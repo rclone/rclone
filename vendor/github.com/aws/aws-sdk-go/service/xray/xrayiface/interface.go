@@ -64,17 +64,29 @@ type XRayAPI interface {
 	BatchGetTracesWithContext(aws.Context, *xray.BatchGetTracesInput, ...request.Option) (*xray.BatchGetTracesOutput, error)
 	BatchGetTracesRequest(*xray.BatchGetTracesInput) (*request.Request, *xray.BatchGetTracesOutput)
 
+	BatchGetTracesPages(*xray.BatchGetTracesInput, func(*xray.BatchGetTracesOutput, bool) bool) error
+	BatchGetTracesPagesWithContext(aws.Context, *xray.BatchGetTracesInput, func(*xray.BatchGetTracesOutput, bool) bool, ...request.Option) error
+
 	GetServiceGraph(*xray.GetServiceGraphInput) (*xray.GetServiceGraphOutput, error)
 	GetServiceGraphWithContext(aws.Context, *xray.GetServiceGraphInput, ...request.Option) (*xray.GetServiceGraphOutput, error)
 	GetServiceGraphRequest(*xray.GetServiceGraphInput) (*request.Request, *xray.GetServiceGraphOutput)
+
+	GetServiceGraphPages(*xray.GetServiceGraphInput, func(*xray.GetServiceGraphOutput, bool) bool) error
+	GetServiceGraphPagesWithContext(aws.Context, *xray.GetServiceGraphInput, func(*xray.GetServiceGraphOutput, bool) bool, ...request.Option) error
 
 	GetTraceGraph(*xray.GetTraceGraphInput) (*xray.GetTraceGraphOutput, error)
 	GetTraceGraphWithContext(aws.Context, *xray.GetTraceGraphInput, ...request.Option) (*xray.GetTraceGraphOutput, error)
 	GetTraceGraphRequest(*xray.GetTraceGraphInput) (*request.Request, *xray.GetTraceGraphOutput)
 
+	GetTraceGraphPages(*xray.GetTraceGraphInput, func(*xray.GetTraceGraphOutput, bool) bool) error
+	GetTraceGraphPagesWithContext(aws.Context, *xray.GetTraceGraphInput, func(*xray.GetTraceGraphOutput, bool) bool, ...request.Option) error
+
 	GetTraceSummaries(*xray.GetTraceSummariesInput) (*xray.GetTraceSummariesOutput, error)
 	GetTraceSummariesWithContext(aws.Context, *xray.GetTraceSummariesInput, ...request.Option) (*xray.GetTraceSummariesOutput, error)
 	GetTraceSummariesRequest(*xray.GetTraceSummariesInput) (*request.Request, *xray.GetTraceSummariesOutput)
+
+	GetTraceSummariesPages(*xray.GetTraceSummariesInput, func(*xray.GetTraceSummariesOutput, bool) bool) error
+	GetTraceSummariesPagesWithContext(aws.Context, *xray.GetTraceSummariesInput, func(*xray.GetTraceSummariesOutput, bool) bool, ...request.Option) error
 
 	PutTelemetryRecords(*xray.PutTelemetryRecordsInput) (*xray.PutTelemetryRecordsOutput, error)
 	PutTelemetryRecordsWithContext(aws.Context, *xray.PutTelemetryRecordsInput, ...request.Option) (*xray.PutTelemetryRecordsOutput, error)

@@ -1,6 +1,3 @@
-#!/bin/bash
+#!/bin/bash -eu
 
-set -eu
-
-go build
 go test -bench=.

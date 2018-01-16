@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/e5EzALeRN0V4G9pDZ9NMnYZoVEo\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/_-wHHBOc4xeuo22Q1pblI2Gv-vs\"",
  "discoveryVersion": "v1",
  "id": "plus:v1",
  "name": "plus",
  "version": "v1",
- "revision": "20170828",
+ "revision": "20171030",
  "title": "Google+ API",
  "description": "Builds on top of the Google+ platform.",
  "ownerDomain": "google.com",
@@ -20,7 +20,7 @@
  "basePath": "/plus/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "plus/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/plus/v1",
  "parameters": {
   "alt": {
    "type": "string",

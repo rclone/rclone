@@ -10,10 +10,10 @@ import (
 	"io/ioutil"
 	"path"
 	"path/filepath"
-	"regexp"
 	"sort"
 	"strings"
 	"text/template"
+	"unicode"
 )
 
 // An API defines a service API's definition. and logic to serialize the definition.
@@ -94,23 +94,53 @@ func (a *API) InterfacePackageName() string {
 	return a.PackageName() + "iface"
 }
 
-var nameRegex = regexp.MustCompile(`^Amazon|AWS\s*|\(.*|\s+|\W+`)
+var stripServiceNamePrefixes = []string{
+	"Amazon",
+	"AWS",
+}
 
 // StructName returns the struct name for a given API.
 func (a *API) StructName() string {
-	if a.name == "" {
-		name := a.Metadata.ServiceAbbreviation
-		if name == "" {
-			name = a.Metadata.ServiceFullName
-		}
+	if len(a.name) != 0 {
+		return a.name
+	}
 
-		name = nameRegex.ReplaceAllString(name, "")
+	name := a.Metadata.ServiceAbbreviation
+	if len(name) == 0 {
+		name = a.Metadata.ServiceFullName
+	}
 
-		a.name = name
-		if name, ok := serviceAliases[strings.ToLower(name)]; ok {
-			a.name = name
+	name = strings.TrimSpace(name)
+
+	// Strip out prefix names not reflected in service client symbol names.
+	for _, prefix := range stripServiceNamePrefixes {
+		if strings.HasPrefix(name, prefix) {
+			name = name[len(prefix):]
+			break
 		}
 	}
+
+	// Replace all Non-letter/number values with space
+	runes := []rune(name)
+	for i := 0; i < len(runes); i++ {
+		if r := runes[i]; !(unicode.IsNumber(r) || unicode.IsLetter(r)) {
+			runes[i] = ' '
+		}
+	}
+	name = string(runes)
+
+	// Title case name so its readable as a symbol.
+	name = strings.Title(name)
+
+	// Strip out spaces.
+	name = strings.Replace(name, " ", "", -1)
+
+	// Swap out for alias name if one is defined.
+	if alias, ok := serviceAliases[strings.ToLower(name)]; ok {
+		name = alias
+	}
+
+	a.name = name
 	return a.name
 }
 
@@ -307,6 +337,12 @@ var noCrossLinkServices = map[string]struct{}{
 	"swf":               {},
 }
 
+// HasCrosslinks will return whether or not a service has crosslinking .
+func HasCrosslinks(service string) bool {
+	_, ok := noCrossLinkServices[service]
+	return !ok
+}
+
 // GetCrosslinkURL returns the crosslinking URL for the shape based on the name and
 // uid provided. Empty string is returned if no crosslink link could be determined.
 func GetCrosslinkURL(baseURL, uid string, params ...string) string {
@@ -314,14 +350,16 @@ func GetCrosslinkURL(baseURL, uid string, params ...string) string {
 		return ""
 	}
 
-	if _, ok := noCrossLinkServices[strings.ToLower(serviceIDFromUID(uid))]; ok {
+	if !HasCrosslinks(strings.ToLower(ServiceIDFromUID(uid))) {
 		return ""
 	}
 
 	return strings.Join(append([]string{baseURL, "goto", "WebAPI", uid}, params...), "/")
 }
 
-func serviceIDFromUID(uid string) string {
+// ServiceIDFromUID will parse the service id from the uid and return
+// the service id that was found.
+func ServiceIDFromUID(uid string) string {
 	found := 0
 	i := len(uid) - 1
 	for ; i >= 0; i-- {
@@ -363,7 +401,7 @@ var tplServiceDoc = template.Must(template.New("service docs").Funcs(template.Fu
 //
 // Using the Client
 //
-// To {{ .Metadata.ServiceFullName }} with the SDK use the New function to create
+// To contact {{ .Metadata.ServiceFullName }} with the SDK use the New function to create
 // a new service client. With that client you can make API requests to the service.
 // These clients are safe to use concurrently.
 //

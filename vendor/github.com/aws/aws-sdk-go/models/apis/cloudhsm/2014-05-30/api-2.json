@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"CloudHSM",
     "serviceFullName":"Amazon CloudHSM",
+    "serviceId":"CloudHSM",
     "signatureVersion":"v4",
     "targetPrefix":"CloudHsmFrontendService",
     "uid":"cloudhsm-2014-05-30"

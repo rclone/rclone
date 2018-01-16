@@ -716,5 +716,166 @@
         }
       }
     ]
+  },
+  {
+    "description": "Enum",
+    "metadata": {
+      "protocol": "rest-xml"
+    },
+    "shapes": {
+      "OutputShape": {
+        "type": "structure",
+        "members": {
+          "HeaderEnum": {
+            "shape": "RESTJSONEnumType",
+            "location": "header",
+            "locationName": "x-amz-enum"
+          },
+          "FooEnum": {
+            "shape": "RESTJSONEnumType"
+          },
+          "ListEnums": {
+            "shape": "EnumList"
+          }
+        }
+      },
+      "RESTJSONEnumType":{
+        "type":"string",
+        "enum":[
+          "foo",
+          "bar",
+          "0",
+          "1"
+        ]
+      },
+      "EnumList":{
+        "type":"list",
+        "member": {"shape": "RESTJSONEnumType"}
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "output": {
+            "shape": "OutputShape"
+          },
+          "http": {
+            "method": "POST",
+            "requestUri": "/path"
+          },
+          "name": "OperationName"
+        },
+        "result": {
+          "HeaderEnum": "baz",
+          "FooEnum": "foo",
+          "ListEnums": ["0", "1"]
+        },
+        "response": {
+          "status_code": 200,
+          "headers": {"x-amz-enum": "baz"},
+          "body": "<OperationNameResponse><FooEnum>foo</FooEnum><ListEnums><member>0</member><member>1</member></ListEnums></OperationNameResponse>"
+        }
+      },
+      {
+        "given": {
+          "input": {
+            "shape": "OutputShape"
+          },
+          "http": {
+            "method": "POST",
+            "requestUri": "/path"
+          },
+          "name": "OperationName"
+        },
+        "result": {
+        },
+        "response": {
+          "status_code": 200,
+          "headers": {}
+        }
+      }
+    ]
+  },
+  {
+    "description": "XML Attributes",
+    "metadata": {
+      "protocol": "rest-xml"
+    },
+    "shapes": {
+      "OutputShape":{
+        "type":"structure",
+        "members":{
+          "ListItems":{
+            "shape":"ListItemsShape",
+            "locationName":"ItemsList"
+          }
+        }
+      },
+      "ListItemsShape":{
+        "type":"list",
+        "member":{
+          "shape":"ItemShape",
+          "locationName":"Item"
+        }
+      },
+      "ItemShape":{
+        "type":"structure",
+        "members":{
+          "ItemDetail":{"shape":"ItemDetailShape"}
+        }
+      },
+      "ItemDetailShape":{
+        "type":"structure",
+        "required":["Type"],
+        "members":{
+          "ID":{"shape":"StringShape"},
+          "Type":{
+            "shape":"ItemType",
+            "locationName":"xsi:type",
+            "xmlAttribute":true
+          }
+        },
+        "xmlNamespace":{
+          "prefix":"xsi",
+          "uri":"http://www.w3.org/2001/XMLSchema-instance"
+        }
+      },
+      "StringShape":{
+        "type":"string"
+      },
+      "ItemType":{
+        "type":"string",
+        "enum":[
+          "Type1",
+          "Type2",
+          "Type3"
+        ]
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "output": {
+            "shape": "OutputShape"
+          },
+          "http": {
+            "method": "GET",
+            "requestUri": "/path"
+          },
+          "name": "OperationName"
+        },
+        "result": {
+          "ListItems": [
+              {"ItemDetail": {"ID": "id1", "Type": "Type1"}},
+              {"ItemDetail": {"ID": "id2", "Type": "Type2"}},
+              {"ItemDetail": {"ID": "id3", "Type": "Type3"}}
+          ]
+        },
+        "response": {
+          "status_code": 200,
+          "body": "<SomeOutputDoc xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><ItemsList><Item><ItemDetail xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"Type1\"><ID>id1</ID></ItemDetail></Item><Item><ItemDetail xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"Type2\"><ID>id2</ID></ItemDetail></Item><Item><ItemDetail xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:type=\"Type3\"><ID>id3</ID></ItemDetail></Item></ItemsList></SomeOutputDoc>"
+        }
+      }
+    ]
   }
 ]

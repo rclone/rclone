@@ -83,6 +83,14 @@ func ExampleECS_CreateService_shared00() {
 				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
 			case ecs.ErrCodeClusterNotFoundException:
 				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeUnsupportedFeatureException:
+				fmt.Println(ecs.ErrCodeUnsupportedFeatureException, aerr.Error())
+			case ecs.ErrCodePlatformUnknownException:
+				fmt.Println(ecs.ErrCodePlatformUnknownException, aerr.Error())
+			case ecs.ErrCodePlatformTaskDefinitionIncompatibilityException:
+				fmt.Println(ecs.ErrCodePlatformTaskDefinitionIncompatibilityException, aerr.Error())
+			case ecs.ErrCodeAccessDeniedException:
+				fmt.Println(ecs.ErrCodeAccessDeniedException, aerr.Error())
 			default:
 				fmt.Println(aerr.Error())
 			}
@@ -130,6 +138,14 @@ func ExampleECS_CreateService_shared01() {
 				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
 			case ecs.ErrCodeClusterNotFoundException:
 				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeUnsupportedFeatureException:
+				fmt.Println(ecs.ErrCodeUnsupportedFeatureException, aerr.Error())
+			case ecs.ErrCodePlatformUnknownException:
+				fmt.Println(ecs.ErrCodePlatformUnknownException, aerr.Error())
+			case ecs.ErrCodePlatformTaskDefinitionIncompatibilityException:
+				fmt.Println(ecs.ErrCodePlatformTaskDefinitionIncompatibilityException, aerr.Error())
+			case ecs.ErrCodeAccessDeniedException:
+				fmt.Println(ecs.ErrCodeAccessDeniedException, aerr.Error())
 			default:
 				fmt.Println(aerr.Error())
 			}
@@ -169,6 +185,8 @@ func ExampleECS_DeleteCluster_shared00() {
 				fmt.Println(ecs.ErrCodeClusterContainsContainerInstancesException, aerr.Error())
 			case ecs.ErrCodeClusterContainsServicesException:
 				fmt.Println(ecs.ErrCodeClusterContainsServicesException, aerr.Error())
+			case ecs.ErrCodeClusterContainsTasksException:
+				fmt.Println(ecs.ErrCodeClusterContainsTasksException, aerr.Error())
 			default:
 				fmt.Println(aerr.Error())
 			}
@@ -815,6 +833,16 @@ func ExampleECS_RunTask_shared00() {
 				fmt.Println(ecs.ErrCodeInvalidParameterException, aerr.Error())
 			case ecs.ErrCodeClusterNotFoundException:
 				fmt.Println(ecs.ErrCodeClusterNotFoundException, aerr.Error())
+			case ecs.ErrCodeUnsupportedFeatureException:
+				fmt.Println(ecs.ErrCodeUnsupportedFeatureException, aerr.Error())
+			case ecs.ErrCodePlatformUnknownException:
+				fmt.Println(ecs.ErrCodePlatformUnknownException, aerr.Error())
+			case ecs.ErrCodePlatformTaskDefinitionIncompatibilityException:
+				fmt.Println(ecs.ErrCodePlatformTaskDefinitionIncompatibilityException, aerr.Error())
+			case ecs.ErrCodeAccessDeniedException:
+				fmt.Println(ecs.ErrCodeAccessDeniedException, aerr.Error())
+			case ecs.ErrCodeBlockedException:
+				fmt.Println(ecs.ErrCodeBlockedException, aerr.Error())
 			default:
 				fmt.Println(aerr.Error())
 			}
@@ -856,6 +884,12 @@ func ExampleECS_UpdateService_shared00() {
 				fmt.Println(ecs.ErrCodeServiceNotFoundException, aerr.Error())
 			case ecs.ErrCodeServiceNotActiveException:
 				fmt.Println(ecs.ErrCodeServiceNotActiveException, aerr.Error())
+			case ecs.ErrCodePlatformUnknownException:
+				fmt.Println(ecs.ErrCodePlatformUnknownException, aerr.Error())
+			case ecs.ErrCodePlatformTaskDefinitionIncompatibilityException:
+				fmt.Println(ecs.ErrCodePlatformTaskDefinitionIncompatibilityException, aerr.Error())
+			case ecs.ErrCodeAccessDeniedException:
+				fmt.Println(ecs.ErrCodeAccessDeniedException, aerr.Error())
 			default:
 				fmt.Println(aerr.Error())
 			}
@@ -896,6 +930,12 @@ func ExampleECS_UpdateService_shared01() {
 				fmt.Println(ecs.ErrCodeServiceNotFoundException, aerr.Error())
 			case ecs.ErrCodeServiceNotActiveException:
 				fmt.Println(ecs.ErrCodeServiceNotActiveException, aerr.Error())
+			case ecs.ErrCodePlatformUnknownException:
+				fmt.Println(ecs.ErrCodePlatformUnknownException, aerr.Error())
+			case ecs.ErrCodePlatformTaskDefinitionIncompatibilityException:
+				fmt.Println(ecs.ErrCodePlatformTaskDefinitionIncompatibilityException, aerr.Error())
+			case ecs.ErrCodeAccessDeniedException:
+				fmt.Println(ecs.ErrCodeAccessDeniedException, aerr.Error())
 			default:
 				fmt.Println(aerr.Error())
 			}

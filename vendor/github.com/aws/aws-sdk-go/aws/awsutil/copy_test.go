@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
+	"reflect"
 	"testing"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws/awsutil"
-	"github.com/stretchr/testify/assert"
 )
 
 func ExampleCopy() {
@@ -81,12 +81,24 @@ func TestCopy1(t *testing.T) {
 	awsutil.Copy(&f2, f1)
 
 	// Values are equal
-	assert.Equal(t, f2.A, f1.A)
-	assert.Equal(t, f2.B, f1.B)
-	assert.Equal(t, f2.C, f1.C)
-	assert.Equal(t, f2.D, f1.D)
-	assert.Equal(t, f2.E.B, f1.E.B)
-	assert.Equal(t, f2.E.D, f1.E.D)
+	if v1, v2 := f2.A, f1.A; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.B, f1.B; !reflect.DeepEqual(v1, v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.C, f1.C; !reflect.DeepEqual(v1, v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.D, f1.D; !v1.Equal(*v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.E.B, f1.E.B; !reflect.DeepEqual(v1, v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.E.D, f1.E.D; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
 
 	// But pointers are not!
 	str3 := "nothello"
@@ -99,14 +111,30 @@ func TestCopy1(t *testing.T) {
 	*f2.E.B = int3
 	f2.E.c = 5
 	f2.E.D = 5
-	assert.NotEqual(t, f2.A, f1.A)
-	assert.NotEqual(t, f2.B, f1.B)
-	assert.NotEqual(t, f2.C, f1.C)
-	assert.NotEqual(t, f2.D, f1.D)
-	assert.NotEqual(t, f2.E.a, f1.E.a)
-	assert.NotEqual(t, f2.E.B, f1.E.B)
-	assert.NotEqual(t, f2.E.c, f1.E.c)
-	assert.NotEqual(t, f2.E.D, f1.E.D)
+	if v1, v2 := f2.A, f1.A; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.B, f1.B; reflect.DeepEqual(v1, v2) {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.C, f1.C; reflect.DeepEqual(v1, v2) {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.D, f1.D; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.E.a, f1.E.a; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.E.B, f1.E.B; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.E.c, f1.E.c; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.E.D, f1.E.D; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
 }
 
 func TestCopyNestedWithUnexported(t *testing.T) {
@@ -125,10 +153,18 @@ func TestCopyNestedWithUnexported(t *testing.T) {
 	awsutil.Copy(&f2, f1)
 
 	// Values match
-	assert.Equal(t, f2.A, f1.A)
-	assert.NotEqual(t, f2.B, f1.B)
-	assert.NotEqual(t, f2.B.a, f1.B.a)
-	assert.Equal(t, f2.B.B, f2.B.B)
+	if v1, v2 := f2.A, f1.A; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.B, f1.B; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.B.a, f1.B.a; v1 == v2 {
+		t.Errorf("expected values to be not equivalent, but received %v", v1)
+	}
+	if v1, v2 := f2.B.B, f2.B.B; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
 }
 
 func TestCopyIgnoreNilMembers(t *testing.T) {
@@ -139,34 +175,56 @@ func TestCopyIgnoreNilMembers(t *testing.T) {
 	}
 
 	f := &Foo{}
-	assert.Nil(t, f.A)
-	assert.Nil(t, f.B)
-	assert.Nil(t, f.C)
+	if v1 := f.A; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
+	if v1 := f.B; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
+	if v1 := f.C; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
 
 	var f2 Foo
 	awsutil.Copy(&f2, f)
-	assert.Nil(t, f2.A)
-	assert.Nil(t, f2.B)
-	assert.Nil(t, f2.C)
+	if v1 := f2.A; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
+	if v1 := f2.B; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
+	if v1 := f2.C; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
 
 	fcopy := awsutil.CopyOf(f)
 	f3 := fcopy.(*Foo)
-	assert.Nil(t, f3.A)
-	assert.Nil(t, f3.B)
-	assert.Nil(t, f3.C)
+	if v1 := f3.A; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
+	if v1 := f3.B; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
+	if v1 := f3.C; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
 }
 
 func TestCopyPrimitive(t *testing.T) {
 	str := "hello"
 	var s string
 	awsutil.Copy(&s, &str)
-	assert.Equal(t, "hello", s)
+	if v1, v2 := "hello", s; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
 }
 
 func TestCopyNil(t *testing.T) {
 	var s string
 	awsutil.Copy(&s, nil)
-	assert.Equal(t, "", s)
+	if v1, v2 := "", s; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
 }
 
 func TestCopyReader(t *testing.T) {
@@ -174,13 +232,21 @@ func TestCopyReader(t *testing.T) {
 	var r io.Reader
 	awsutil.Copy(&r, buf)
 	b, err := ioutil.ReadAll(r)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte("hello world"), b)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if v1, v2 := []byte("hello world"), b; !bytes.Equal(v1, v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
 
 	// empty bytes because this is not a deep copy
 	b, err = ioutil.ReadAll(buf)
-	assert.NoError(t, err)
-	assert.Equal(t, []byte(""), b)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if v1, v2 := []byte(""), b; !bytes.Equal(v1, v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
 }
 
 func TestCopyDifferentStructs(t *testing.T) {
@@ -226,17 +292,39 @@ func TestCopyDifferentStructs(t *testing.T) {
 	awsutil.Copy(&f2, f1)
 
 	// Values are equal
-	assert.Equal(t, f2.A, f1.A)
-	assert.Equal(t, f2.B, f1.B)
-	assert.Equal(t, f2.C, f1.C)
-	assert.Equal(t, "unique", f1.SrcUnique)
-	assert.Equal(t, 1, f1.SameNameDiffType)
-	assert.Equal(t, 0, f2.DstUnique)
-	assert.Equal(t, "", f2.SameNameDiffType)
-	assert.Equal(t, int1, *f1.unexportedPtr)
-	assert.Nil(t, f2.unexportedPtr)
-	assert.Equal(t, int2, *f1.ExportedPtr)
-	assert.Equal(t, int2, *f2.ExportedPtr)
+	if v1, v2 := f2.A, f1.A; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.B, f1.B; !reflect.DeepEqual(v1, v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := f2.C, f1.C; !reflect.DeepEqual(v1, v2) {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := "unique", f1.SrcUnique; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := 1, f1.SameNameDiffType; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := 0, f2.DstUnique; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := "", f2.SameNameDiffType; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := int1, *f1.unexportedPtr; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1 := f2.unexportedPtr; v1 != nil {
+		t.Errorf("expected nil, but received %v", v1)
+	}
+	if v1, v2 := int2, *f1.ExportedPtr; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
+	if v1, v2 := int2, *f2.ExportedPtr; v1 != v2 {
+		t.Errorf("expected values to be equivalent but received %v and %v", v1, v2)
+	}
 }
 
 func ExampleCopyOf() {

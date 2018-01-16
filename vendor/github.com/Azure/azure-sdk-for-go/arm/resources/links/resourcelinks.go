@@ -102,7 +102,9 @@ func (client ResourceLinksClient) CreateOrUpdatePreparer(linkID string, paramete
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ResourceLinksClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -168,7 +170,9 @@ func (client ResourceLinksClient) DeletePreparer(linkID string) (*http.Request, 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ResourceLinksClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -231,7 +235,9 @@ func (client ResourceLinksClient) GetPreparer(linkID string) (*http.Request, err
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ResourceLinksClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -300,7 +306,9 @@ func (client ResourceLinksClient) ListAtSourceScopePreparer(scope string, filter
 // ListAtSourceScopeSender sends the ListAtSourceScope request. The method will close the
 // http.Response Body if it receives an error.
 func (client ResourceLinksClient) ListAtSourceScopeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ListAtSourceScopeResponder handles the response to the ListAtSourceScope request. The method always
@@ -436,7 +444,9 @@ func (client ResourceLinksClient) ListAtSubscriptionPreparer(filter string) (*ht
 // ListAtSubscriptionSender sends the ListAtSubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client ResourceLinksClient) ListAtSubscriptionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListAtSubscriptionResponder handles the response to the ListAtSubscription request. The method always

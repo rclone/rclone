@@ -108,8 +108,8 @@ func wildcardMatch(pat []byte, str []byte) bool {
 	}
 }
 
-func (l *hostPattern) match(a addr) bool {
-	return wildcardMatch([]byte(l.addr.host), []byte(a.host)) && l.addr.port == a.port
+func (p *hostPattern) match(a addr) bool {
+	return wildcardMatch([]byte(p.addr.host), []byte(a.host)) && p.addr.port == a.port
 }
 
 type keyDBLine struct {

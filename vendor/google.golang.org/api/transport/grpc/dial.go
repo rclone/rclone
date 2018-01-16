@@ -34,42 +34,23 @@ var appengineDialerHook func(context.Context) grpc.DialOption
 // Dial returns a GRPC connection for use communicating with a Google cloud
 // service, configured with the given ClientOptions.
 func Dial(ctx context.Context, opts ...option.ClientOption) (*grpc.ClientConn, error) {
-	var o internal.DialSettings
-	for _, opt := range opts {
-		opt.Apply(&o)
-	}
-	if o.HTTPClient != nil {
-		return nil, errors.New("unsupported HTTP client specified")
-	}
-	if o.GRPCConn != nil {
-		return o.GRPCConn, nil
-	}
-	creds, err := internal.Creds(ctx, &o)
-	if err != nil {
-		return nil, err
-	}
-	grpcOpts := []grpc.DialOption{
-		grpc.WithPerRPCCredentials(oauth.TokenSource{creds.TokenSource}),
-		grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")),
-	}
-	if appengineDialerHook != nil {
-		// Use the Socket API on App Engine.
-		grpcOpts = append(grpcOpts, appengineDialerHook(ctx))
-	}
-	grpcOpts = append(grpcOpts, o.GRPCDialOpts...)
-	if o.UserAgent != "" {
-		grpcOpts = append(grpcOpts, grpc.WithUserAgent(o.UserAgent))
-	}
-	return grpc.DialContext(ctx, o.Endpoint, grpcOpts...)
+	return dial(ctx, false, opts)
 }
 
 // DialInsecure returns an insecure GRPC connection for use communicating
 // with fake or mock Google cloud service implementations, such as emulators.
 // The connection is configured with the given ClientOptions.
 func DialInsecure(ctx context.Context, opts ...option.ClientOption) (*grpc.ClientConn, error) {
+	return dial(ctx, true, opts)
+}
+
+func dial(ctx context.Context, insecure bool, opts []option.ClientOption) (*grpc.ClientConn, error) {
 	var o internal.DialSettings
 	for _, opt := range opts {
 		opt.Apply(&o)
+	}
+	if err := o.Validate(); err != nil {
+		return nil, err
 	}
 	if o.HTTPClient != nil {
 		return nil, errors.New("unsupported HTTP client specified")
@@ -77,7 +58,23 @@ func DialInsecure(ctx context.Context, opts ...option.ClientOption) (*grpc.Clien
 	if o.GRPCConn != nil {
 		return o.GRPCConn, nil
 	}
-	grpcOpts := []grpc.DialOption{grpc.WithInsecure()}
+	var grpcOpts []grpc.DialOption
+	if insecure {
+		grpcOpts = []grpc.DialOption{grpc.WithInsecure()}
+	} else if !o.NoAuth {
+		creds, err := internal.Creds(ctx, &o)
+		if err != nil {
+			return nil, err
+		}
+		grpcOpts = []grpc.DialOption{
+			grpc.WithPerRPCCredentials(oauth.TokenSource{creds.TokenSource}),
+			grpc.WithTransportCredentials(credentials.NewClientTLSFromCert(nil, "")),
+		}
+	}
+	if appengineDialerHook != nil {
+		// Use the Socket API on App Engine.
+		grpcOpts = append(grpcOpts, appengineDialerHook(ctx))
+	}
 	grpcOpts = append(grpcOpts, o.GRPCDialOpts...)
 	if o.UserAgent != "" {
 		grpcOpts = append(grpcOpts, grpc.WithUserAgent(o.UserAgent))

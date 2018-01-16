@@ -97,7 +97,9 @@ func (client QueryKeysClient) CreatePreparer(resourceGroupName string, searchSer
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client QueryKeysClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -172,7 +174,9 @@ func (client QueryKeysClient) DeletePreparer(resourceGroupName string, searchSer
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client QueryKeysClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -243,7 +247,9 @@ func (client QueryKeysClient) ListBySearchServicePreparer(resourceGroupName stri
 // ListBySearchServiceSender sends the ListBySearchService request. The method will close the
 // http.Response Body if it receives an error.
 func (client QueryKeysClient) ListBySearchServiceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySearchServiceResponder handles the response to the ListBySearchService request. The method always

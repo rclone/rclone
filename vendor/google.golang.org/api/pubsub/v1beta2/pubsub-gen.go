@@ -148,8 +148,8 @@ type AcknowledgeRequest struct {
 }
 
 func (s *AcknowledgeRequest) MarshalJSON() ([]byte, error) {
-	type noMethod AcknowledgeRequest
-	raw := noMethod(*s)
+	type NoMethod AcknowledgeRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -214,8 +214,8 @@ type Binding struct {
 }
 
 func (s *Binding) MarshalJSON() ([]byte, error) {
-	type noMethod Binding
-	raw := noMethod(*s)
+	type NoMethod Binding
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -272,8 +272,8 @@ type ListSubscriptionsResponse struct {
 }
 
 func (s *ListSubscriptionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListSubscriptionsResponse
-	raw := noMethod(*s)
+	type NoMethod ListSubscriptionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -312,8 +312,8 @@ type ListTopicSubscriptionsResponse struct {
 }
 
 func (s *ListTopicSubscriptionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTopicSubscriptionsResponse
-	raw := noMethod(*s)
+	type NoMethod ListTopicSubscriptionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -349,8 +349,8 @@ type ListTopicsResponse struct {
 }
 
 func (s *ListTopicsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListTopicsResponse
-	raw := noMethod(*s)
+	type NoMethod ListTopicsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -394,8 +394,8 @@ type ModifyAckDeadlineRequest struct {
 }
 
 func (s *ModifyAckDeadlineRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ModifyAckDeadlineRequest
-	raw := noMethod(*s)
+	type NoMethod ModifyAckDeadlineRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -427,8 +427,8 @@ type ModifyPushConfigRequest struct {
 }
 
 func (s *ModifyPushConfigRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ModifyPushConfigRequest
-	raw := noMethod(*s)
+	type NoMethod ModifyPushConfigRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -467,7 +467,7 @@ func (s *ModifyPushConfigRequest) MarshalJSON() ([]byte, error) {
 //     }
 //
 // For a description of IAM and its features, see the
-// [IAM developer's guide](https://cloud.google.com/iam).
+// [IAM developer's guide](https://cloud.google.com/iam/docs).
 type Policy struct {
 	// Bindings: Associates a list of `members` to a `role`.
 	// `bindings` with no members will result in an error.
@@ -493,7 +493,7 @@ type Policy struct {
 	// policy is overwritten blindly.
 	Etag string `json:"etag,omitempty"`
 
-	// Version: Version of the `Policy`. The default version is 0.
+	// Version: Deprecated.
 	Version int64 `json:"version,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -518,8 +518,8 @@ type Policy struct {
 }
 
 func (s *Policy) MarshalJSON() ([]byte, error) {
-	type noMethod Policy
-	raw := noMethod(*s)
+	type NoMethod Policy
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -546,8 +546,8 @@ type PublishRequest struct {
 }
 
 func (s *PublishRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PublishRequest
-	raw := noMethod(*s)
+	type NoMethod PublishRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -582,8 +582,8 @@ type PublishResponse struct {
 }
 
 func (s *PublishResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PublishResponse
-	raw := noMethod(*s)
+	type NoMethod PublishResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -635,8 +635,8 @@ type PubsubMessage struct {
 }
 
 func (s *PubsubMessage) MarshalJSON() ([]byte, error) {
-	type noMethod PubsubMessage
-	raw := noMethod(*s)
+	type NoMethod PubsubMessage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -676,8 +676,8 @@ type PullRequest struct {
 }
 
 func (s *PullRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PullRequest
-	raw := noMethod(*s)
+	type NoMethod PullRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -715,8 +715,8 @@ type PullResponse struct {
 }
 
 func (s *PullResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PullResponse
-	raw := noMethod(*s)
+	type NoMethod PullResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -780,8 +780,8 @@ type PushConfig struct {
 }
 
 func (s *PushConfig) MarshalJSON() ([]byte, error) {
-	type noMethod PushConfig
-	raw := noMethod(*s)
+	type NoMethod PushConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -811,8 +811,8 @@ type ReceivedMessage struct {
 }
 
 func (s *ReceivedMessage) MarshalJSON() ([]byte, error) {
-	type noMethod ReceivedMessage
-	raw := noMethod(*s)
+	type NoMethod ReceivedMessage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -844,8 +844,8 @@ type SetIamPolicyRequest struct {
 }
 
 func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
-	type noMethod SetIamPolicyRequest
-	raw := noMethod(*s)
+	type NoMethod SetIamPolicyRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -930,8 +930,8 @@ type Subscription struct {
 }
 
 func (s *Subscription) MarshalJSON() ([]byte, error) {
-	type noMethod Subscription
-	raw := noMethod(*s)
+	type NoMethod Subscription
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -965,8 +965,8 @@ type TestIamPermissionsRequest struct {
 }
 
 func (s *TestIamPermissionsRequest) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsRequest
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1000,8 +1000,8 @@ type TestIamPermissionsResponse struct {
 }
 
 func (s *TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsResponse
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1042,8 +1042,8 @@ type Topic struct {
 }
 
 func (s *Topic) MarshalJSON() ([]byte, error) {
-	type noMethod Topic
-	raw := noMethod(*s)
+	type NoMethod Topic
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1157,7 +1157,7 @@ func (c *ProjectsSubscriptionsAcknowledgeCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1301,7 +1301,7 @@ func (c *ProjectsSubscriptionsCreateCall) Do(opts ...googleapi.CallOption) (*Sub
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1438,7 +1438,7 @@ func (c *ProjectsSubscriptionsDeleteCall) Do(opts ...googleapi.CallOption) (*Emp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1578,7 +1578,7 @@ func (c *ProjectsSubscriptionsGetCall) Do(opts ...googleapi.CallOption) (*Subscr
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1721,7 +1721,7 @@ func (c *ProjectsSubscriptionsGetIamPolicyCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1878,7 +1878,7 @@ func (c *ProjectsSubscriptionsListCall) Do(opts ...googleapi.CallOption) (*ListS
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2051,7 +2051,7 @@ func (c *ProjectsSubscriptionsModifyAckDeadlineCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2197,7 +2197,7 @@ func (c *ProjectsSubscriptionsModifyPushConfigCall) Do(opts ...googleapi.CallOpt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2339,7 +2339,7 @@ func (c *ProjectsSubscriptionsPullCall) Do(opts ...googleapi.CallOption) (*PullR
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2477,7 +2477,7 @@ func (c *ProjectsSubscriptionsSetIamPolicyCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2623,7 +2623,7 @@ func (c *ProjectsSubscriptionsTestIamPermissionsCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2759,7 +2759,7 @@ func (c *ProjectsTopicsCreateCall) Do(opts ...googleapi.CallOption) (*Topic, err
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2896,7 +2896,7 @@ func (c *ProjectsTopicsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, err
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3036,7 +3036,7 @@ func (c *ProjectsTopicsGetCall) Do(opts ...googleapi.CallOption) (*Topic, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3179,7 +3179,7 @@ func (c *ProjectsTopicsGetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Poli
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3336,7 +3336,7 @@ func (c *ProjectsTopicsListCall) Do(opts ...googleapi.CallOption) (*ListTopicsRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3505,7 +3505,7 @@ func (c *ProjectsTopicsPublishCall) Do(opts ...googleapi.CallOption) (*PublishRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3643,7 +3643,7 @@ func (c *ProjectsTopicsSetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Poli
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3789,7 +3789,7 @@ func (c *ProjectsTopicsTestIamPermissionsCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3949,7 +3949,7 @@ func (c *ProjectsTopicsSubscriptionsListCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

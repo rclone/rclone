@@ -16,12 +16,14 @@ package internal
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 	"time"
 
-	"golang.org/x/net/context"
-
 	gax "github.com/googleapis/gax-go"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 func TestRetry(t *testing.T) {
@@ -60,5 +62,28 @@ func TestRetry(t *testing.T) {
 		})
 	if err == nil {
 		t.Error("got nil, want error")
+	}
+}
+
+func TestRetryPreserveError(t *testing.T) {
+	// Retry tries to preserve the type and other information from
+	// the last error returned by the function.
+	err := retry(context.Background(), gax.Backoff{},
+		func() (bool, error) {
+			return false, status.Error(codes.NotFound, "not found")
+		},
+		func(context.Context, time.Duration) error {
+			return context.DeadlineExceeded
+		})
+	got, ok := status.FromError(err)
+	if !ok {
+		t.Fatalf("got %T, wanted a status", got)
+	}
+	if g, w := got.Code(), codes.NotFound; g != w {
+		t.Errorf("got code %v, want %v", g, w)
+	}
+	wantMessage := fmt.Sprintf("retry failed with %v; last error: not found", context.DeadlineExceeded)
+	if g, w := got.Message(), wantMessage; g != w {
+		t.Errorf("got message %q, want %q", g, w)
 	}
 }

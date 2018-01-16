@@ -62,6 +62,19 @@ func (d *Document) init() error {
 // NewDocument unmarshals the bytes into a Document.
 // It also validates the document to make sure it is error-free.
 func NewDocument(bytes []byte) (*Document, error) {
+	// The discovery service returns JSON with this format if there's an error, e.g.
+	// the document isn't found.
+	var errDoc struct {
+		Error struct {
+			Code    int
+			Message string
+			Status  string
+		}
+	}
+	if err := json.Unmarshal(bytes, &errDoc); err == nil && errDoc.Error.Code != 0 {
+		return nil, fmt.Errorf("bad discovery doc: %+v", errDoc.Error)
+	}
+
 	var doc Document
 	if err := json.Unmarshal(bytes, &doc); err != nil {
 		return nil, err

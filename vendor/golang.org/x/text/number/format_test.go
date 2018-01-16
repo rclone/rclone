@@ -98,9 +98,14 @@ func TestPluralIntegration(t *testing.T) {
 
 			p := message.NewPrinter(language.English)
 
-			got := p.Sprintf("num %f", tc.f)
+			// Indirect the call to p.Sprintf through the variable f
+			// to avoid Go tip failing a vet check.
+			// TODO: remove once vet check has been fixed. See Issue #22936.
+			f := p.Sprintf
+			got := f("num %f", tc.f)
+
 			if got != tc.want {
-				t.Errorf("got %v; want %v", got, tc.want)
+				t.Errorf("got %q; want %q", got, tc.want)
 			}
 		})
 	}

@@ -129,9 +129,16 @@ func (c *Config) AuthCodeURL(state string, opts ...AuthCodeOption) string {
 	v := url.Values{
 		"response_type": {"code"},
 		"client_id":     {c.ClientID},
-		"redirect_uri":  internal.CondVal(c.RedirectURL),
-		"scope":         internal.CondVal(strings.Join(c.Scopes, " ")),
-		"state":         internal.CondVal(state),
+	}
+	if c.RedirectURL != "" {
+		v.Set("redirect_uri", c.RedirectURL)
+	}
+	if len(c.Scopes) > 0 {
+		v.Set("scope", strings.Join(c.Scopes, " "))
+	}
+	if state != "" {
+		// TODO(light): Docs say never to omit state; don't allow empty.
+		v.Set("state", state)
 	}
 	for _, opt := range opts {
 		opt.setValue(v)
@@ -157,12 +164,15 @@ func (c *Config) AuthCodeURL(state string, opts ...AuthCodeOption) string {
 // The HTTP client to use is derived from the context.
 // If nil, http.DefaultClient is used.
 func (c *Config) PasswordCredentialsToken(ctx context.Context, username, password string) (*Token, error) {
-	return retrieveToken(ctx, c, url.Values{
+	v := url.Values{
 		"grant_type": {"password"},
 		"username":   {username},
 		"password":   {password},
-		"scope":      internal.CondVal(strings.Join(c.Scopes, " ")),
-	})
+	}
+	if len(c.Scopes) > 0 {
+		v.Set("scope", strings.Join(c.Scopes, " "))
+	}
+	return retrieveToken(ctx, c, v)
 }
 
 // Exchange converts an authorization code into a token.
@@ -176,11 +186,14 @@ func (c *Config) PasswordCredentialsToken(ctx context.Context, username, passwor
 // The code will be in the *http.Request.FormValue("code"). Before
 // calling Exchange, be sure to validate FormValue("state").
 func (c *Config) Exchange(ctx context.Context, code string) (*Token, error) {
-	return retrieveToken(ctx, c, url.Values{
-		"grant_type":   {"authorization_code"},
-		"code":         {code},
-		"redirect_uri": internal.CondVal(c.RedirectURL),
-	})
+	v := url.Values{
+		"grant_type": {"authorization_code"},
+		"code":       {code},
+	}
+	if c.RedirectURL != "" {
+		v.Set("redirect_uri", c.RedirectURL)
+	}
+	return retrieveToken(ctx, c, v)
 }
 
 // Client returns an HTTP client using the provided token.
@@ -300,15 +313,11 @@ var HTTPClient internal.ContextKey
 // packages.
 func NewClient(ctx context.Context, src TokenSource) *http.Client {
 	if src == nil {
-		c, err := internal.ContextClient(ctx)
-		if err != nil {
-			return &http.Client{Transport: internal.ErrorTransport{Err: err}}
-		}
-		return c
+		return internal.ContextClient(ctx)
 	}
 	return &http.Client{
 		Transport: &Transport{
-			Base:   internal.ContextTransport(ctx),
+			Base:   internal.ContextClient(ctx).Transport,
 			Source: ReuseTokenSource(nil, src),
 		},
 	}

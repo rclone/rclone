@@ -64,6 +64,10 @@ type Route53DomainsAPI interface {
 	CheckDomainAvailabilityWithContext(aws.Context, *route53domains.CheckDomainAvailabilityInput, ...request.Option) (*route53domains.CheckDomainAvailabilityOutput, error)
 	CheckDomainAvailabilityRequest(*route53domains.CheckDomainAvailabilityInput) (*request.Request, *route53domains.CheckDomainAvailabilityOutput)
 
+	CheckDomainTransferability(*route53domains.CheckDomainTransferabilityInput) (*route53domains.CheckDomainTransferabilityOutput, error)
+	CheckDomainTransferabilityWithContext(aws.Context, *route53domains.CheckDomainTransferabilityInput, ...request.Option) (*route53domains.CheckDomainTransferabilityOutput, error)
+	CheckDomainTransferabilityRequest(*route53domains.CheckDomainTransferabilityInput) (*request.Request, *route53domains.CheckDomainTransferabilityOutput)
+
 	DeleteTagsForDomain(*route53domains.DeleteTagsForDomainInput) (*route53domains.DeleteTagsForDomainOutput, error)
 	DeleteTagsForDomainWithContext(aws.Context, *route53domains.DeleteTagsForDomainInput, ...request.Option) (*route53domains.DeleteTagsForDomainOutput, error)
 	DeleteTagsForDomainRequest(*route53domains.DeleteTagsForDomainInput) (*request.Request, *route53domains.DeleteTagsForDomainOutput)

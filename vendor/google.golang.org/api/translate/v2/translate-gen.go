@@ -136,8 +136,8 @@ type DetectLanguageRequest struct {
 }
 
 func (s *DetectLanguageRequest) MarshalJSON() ([]byte, error) {
-	type noMethod DetectLanguageRequest
-	raw := noMethod(*s)
+	type NoMethod DetectLanguageRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -167,8 +167,8 @@ type DetectionsListResponse struct {
 }
 
 func (s *DetectionsListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod DetectionsListResponse
-	raw := noMethod(*s)
+	type NoMethod DetectionsListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -201,18 +201,18 @@ type DetectionsResourceItem struct {
 }
 
 func (s *DetectionsResourceItem) MarshalJSON() ([]byte, error) {
-	type noMethod DetectionsResourceItem
-	raw := noMethod(*s)
+	type NoMethod DetectionsResourceItem
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *DetectionsResourceItem) UnmarshalJSON(data []byte) error {
-	type noMethod DetectionsResourceItem
+	type NoMethod DetectionsResourceItem
 	var s1 struct {
 		Confidence gensupport.JSONFloat64 `json:"confidence"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -246,8 +246,8 @@ type GetSupportedLanguagesRequest struct {
 }
 
 func (s *GetSupportedLanguagesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod GetSupportedLanguagesRequest
-	raw := noMethod(*s)
+	type NoMethod GetSupportedLanguagesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -281,8 +281,8 @@ type LanguagesListResponse struct {
 }
 
 func (s *LanguagesListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod LanguagesListResponse
-	raw := noMethod(*s)
+	type NoMethod LanguagesListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -316,8 +316,8 @@ type LanguagesResource struct {
 }
 
 func (s *LanguagesResource) MarshalJSON() ([]byte, error) {
-	type noMethod LanguagesResource
-	raw := noMethod(*s)
+	type NoMethod LanguagesResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -372,8 +372,8 @@ type TranslateTextRequest struct {
 }
 
 func (s *TranslateTextRequest) MarshalJSON() ([]byte, error) {
-	type noMethod TranslateTextRequest
-	raw := noMethod(*s)
+	type NoMethod TranslateTextRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -406,8 +406,8 @@ type TranslationsListResponse struct {
 }
 
 func (s *TranslationsListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod TranslationsListResponse
-	raw := noMethod(*s)
+	type NoMethod TranslationsListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -451,8 +451,8 @@ type TranslationsResource struct {
 }
 
 func (s *TranslationsResource) MarshalJSON() ([]byte, error) {
-	type noMethod TranslationsResource
-	raw := noMethod(*s)
+	type NoMethod TranslationsResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -553,7 +553,7 @@ func (c *DetectionsDetectCall) Do(opts ...googleapi.CallOption) (*DetectionsList
 	target := &struct {
 		Data *DetectionsListResponse `json:"data"`
 	}{ret}
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -683,7 +683,7 @@ func (c *DetectionsListCall) Do(opts ...googleapi.CallOption) (*DetectionsListRe
 	target := &struct {
 		Data *DetectionsListResponse `json:"data"`
 	}{ret}
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -834,7 +834,7 @@ func (c *LanguagesListCall) Do(opts ...googleapi.CallOption) (*LanguagesListResp
 	target := &struct {
 		Data *LanguagesListResponse `json:"data"`
 	}{ret}
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1012,7 +1012,7 @@ func (c *TranslationsListCall) Do(opts ...googleapi.CallOption) (*TranslationsLi
 	target := &struct {
 		Data *TranslationsListResponse `json:"data"`
 	}{ret}
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1177,7 +1177,7 @@ func (c *TranslationsTranslateCall) Do(opts ...googleapi.CallOption) (*Translati
 	target := &struct {
 		Data *TranslationsListResponse `json:"data"`
 	}{ret}
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

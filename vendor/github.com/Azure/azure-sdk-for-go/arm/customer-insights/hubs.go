@@ -114,7 +114,9 @@ func (client HubsClient) CreateOrUpdatePreparer(resourceGroupName string, hubNam
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client HubsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -195,6 +197,7 @@ func (client HubsClient) DeletePreparer(resourceGroupName string, hubName string
 func (client HubsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -259,7 +262,9 @@ func (client HubsClient) GetPreparer(resourceGroupName string, hubName string) (
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client HubsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -320,7 +325,9 @@ func (client HubsClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client HubsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -453,7 +460,9 @@ func (client HubsClient) ListByResourceGroupPreparer(resourceGroupName string) (
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client HubsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -590,7 +599,9 @@ func (client HubsClient) UpdatePreparer(resourceGroupName string, hubName string
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client HubsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

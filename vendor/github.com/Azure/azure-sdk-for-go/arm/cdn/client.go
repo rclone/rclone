@@ -2,6 +2,8 @@
 //
 // Use these APIs to manage Azure CDN resources through the Azure Resource Manager. You must make sure that requests
 // made to these resources are secure.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/cdn/mgmt/2017-04-02/cdn
 package cdn
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
@@ -107,7 +109,9 @@ func (client ManagementClient) CheckNameAvailabilityPreparer(checkNameAvailabili
 // CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
@@ -180,7 +184,9 @@ func (client ManagementClient) ValidateProbePreparer(validateProbeInput Validate
 // ValidateProbeSender sends the ValidateProbe request. The method will close the
 // http.Response Body if it receives an error.
 func (client ManagementClient) ValidateProbeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ValidateProbeResponder handles the response to the ValidateProbe request. The method always

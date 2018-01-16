@@ -56,7 +56,7 @@ func TestLoadDefaultConfig(t *testing.T) {
 	assert.Equal(t, "https", config.Protocol)
 	assert.Equal(t, "qingstor.com", config.Host)
 	assert.Equal(t, "", config.AdditionalUserAgent)
-	assert.Equal(t, "warning", logger.GetLevel())
+	assert.Equal(t, "WARN", logger.GetLevel())
 }
 
 func TestLoadUserConfig(t *testing.T) {
@@ -83,7 +83,7 @@ log_level: 'debug'
 	assert.Equal(t, "secret_access_key", config.SecretAccessKey)
 	assert.Equal(t, "https", config.Protocol)
 	assert.Equal(t, "qingstor.com", config.Host)
-	assert.Equal(t, "debug", logger.GetLevel())
+	assert.Equal(t, "DEBUG", logger.GetLevel())
 }
 
 func TestNewDefault(t *testing.T) {

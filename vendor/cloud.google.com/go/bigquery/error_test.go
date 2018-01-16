@@ -95,7 +95,7 @@ func TestErrorFromErrorProto(t *testing.T) {
 			want: &Error{Location: "L", Message: "M", Reason: "R"},
 		},
 	} {
-		if got := errorFromErrorProto(test.in); !testutil.Equal(got, test.want) {
+		if got := bqToError(test.in); !testutil.Equal(got, test.want) {
 			t.Errorf("%v: got %v, want %v", test.in, got, test.want)
 		}
 	}

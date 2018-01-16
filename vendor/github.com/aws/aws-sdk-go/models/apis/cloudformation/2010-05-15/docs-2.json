@@ -39,6 +39,7 @@
     "SignalResource": "<p>Sends a signal to the specified resource with a success or failure status. You can use the SignalResource API in conjunction with a creation policy or update policy. AWS CloudFormation doesn't proceed with a stack creation or update until resources receive the required number of signals or the timeout period is exceeded. The SignalResource API is useful in cases where you want to send signals from anywhere other than an Amazon EC2 instance.</p>",
     "StopStackSetOperation": "<p>Stops an in-progress operation on a stack set and its associated stack instances. </p>",
     "UpdateStack": "<p>Updates a stack as specified in the template. After the call completes successfully, the stack update starts. You can check the status of the stack via the <a>DescribeStacks</a> action.</p> <p>To get a copy of the template for an existing stack, you can use the <a>GetTemplate</a> action.</p> <p>For more information about creating an update template, updating a stack, and monitoring the progress of the update, see <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-updating-stacks.html\">Updating a Stack</a>.</p>",
+    "UpdateStackInstances": "<p>Updates the parameter values for stack instances for the specified accounts, within the specified regions. A stack instance refers to a stack in a specific account and region. </p> <p>You can only update stack instances in regions and accounts where they already exist; to create additional stack instances, use <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_CreateStackInstances.html\">CreateStackInstances</a>. </p> <p>During stack set updates, any parameters overridden for a stack instance are not updated, but retain their overridden value.</p> <p>You can only update the parameter <i>values</i> that are specified in the stack set; to add or delete a parameter itself, use <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_UpdateStackSet.html\">UpdateStackSet</a> to update the stack set template. If you add a parameter to a template, before you can override the parameter value specified in the stack set you must first use <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_UpdateStackSet.html\">UpdateStackSet</a> to update all stack instances with the updated template and parameter value specified in the stack set. Once a stack instance has been updated with the new parameter, you can then override the parameter value using <code>UpdateStackInstances</code>.</p>",
     "UpdateStackSet": "<p>Updates the stack set and <i>all</i> associated stack instances.</p> <p>Even if the stack set operation created by updating the stack set fails (completely or partially, below or above a specified failure tolerance), the stack set is updated with your changes. Subsequent <a>CreateStackInstances</a> calls on the specified stack set use the updated stack set.</p>",
     "UpdateTerminationProtection": "<p>Updates termination protection for the specified stack. If a user attempts to delete a stack with termination protection enabled, the operation fails and the stack remains unchanged. For more information, see <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-protect-stacks.html\">Protecting a Stack From Being Deleted</a> in the <i>AWS CloudFormation User Guide</i>.</p> <p> For <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/using-cfn-nested-stacks.html\">nested stacks</a>, termination protection is set on the root stack and cannot be changed directly on the nested stack.</p>",
     "ValidateTemplate": "<p>Validates a specified template. AWS CloudFormation first checks if the template is valid JSON. If it isn't, AWS CloudFormation checks if the template is valid YAML. If both these checks fail, AWS CloudFormation returns a template validation error.</p>"
@@ -89,7 +90,8 @@
       "base": null,
       "refs": {
         "CreateStackInstancesInput$Accounts": "<p>The names of one or more AWS accounts that you want to create stack instances in the specified region(s) for.</p>",
-        "DeleteStackInstancesInput$Accounts": "<p>The names of the AWS accounts that you want to delete stack instances for.</p>"
+        "DeleteStackInstancesInput$Accounts": "<p>The names of the AWS accounts that you want to delete stack instances for.</p>",
+        "UpdateStackInstancesInput$Accounts": "<p>The names of one or more AWS accounts for which you want to update parameter values for stack instances. The overridden parameter values will be applied to all stack instances in the specified accounts and regions.</p>"
       }
     },
     "AllowedValue": {
@@ -267,6 +269,8 @@
         "StackSetOperationSummary$OperationId": "<p>The unique ID of the stack set operation.</p>",
         "StopStackSetOperationInput$OperationId": "<p>The ID of the stack operation. </p>",
         "UpdateStackInput$ClientRequestToken": "<p>A unique identifier for this <code>UpdateStack</code> request. Specify this token if you plan to retry requests so that AWS CloudFormation knows that you're not attempting to update a stack with the same name. You might retry <code>UpdateStack</code> requests to ensure that AWS CloudFormation successfully received them.</p> <p>All events triggered by a given stack operation are assigned the same client request token, which you can use to track operations. For example, if you execute a <code>CreateStack</code> operation with the token <code>token1</code>, then all the <code>StackEvents</code> generated by that operation will have <code>ClientRequestToken</code> set as <code>token1</code>.</p> <p>In the console, stack operations display the client request token on the Events tab. Stack operations that are initiated from the console use the token format <i>Console-StackOperation-ID</i>, which helps you easily identify the stack operation . For example, if you create a stack using the console, each stack event would be assigned the same token in the following format: <code>Console-CreateStack-7f59c3cf-00d2-40c7-b2ff-e75db0987002</code>. </p>",
+        "UpdateStackInstancesInput$OperationId": "<p>The unique identifier for this stack set operation. </p> <p>The operation ID also functions as an idempotency token, to ensure that AWS CloudFormation performs the stack set operation only once, even if you retry the request multiple times. You might retry stack set operation requests to ensure that AWS CloudFormation successfully received them.</p> <p>If you don't specify an operation ID, the SDK generates one automatically. </p>",
+        "UpdateStackInstancesOutput$OperationId": "<p>The unique identifier for this stack set operation. </p>",
         "UpdateStackSetInput$OperationId": "<p>The unique ID for this stack set operation. </p> <p>The operation ID also functions as an idempotency token, to ensure that AWS CloudFormation performs the stack set operation only once, even if you retry the request multiple times. You might retry stack set operation requests to ensure that AWS CloudFormation successfully received them.</p> <p>If you don't specify an operation ID, AWS CloudFormation generates one automatically.</p> <p>Repeating this stack set operation with a new operation ID retries all stack instances whose status is <code>OUTDATED</code>. </p>",
         "UpdateStackSetOutput$OperationId": "<p>The unique ID for this stack set operation.</p>"
       }
@@ -943,7 +947,8 @@
     "ParameterValue": {
       "base": null,
       "refs": {
-        "Parameter$ParameterValue": "<p>The value associated with the parameter.</p>",
+        "Parameter$ParameterValue": "<p>The input value associated with the parameter.</p>",
+        "Parameter$ResolvedValue": "<p>Read-only. The value that corresponds to a Systems Manager parameter key. This field is returned only for <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html#aws-ssm-parameter-types\"> <code>SSM</code> parameter types</a> in the template.</p>",
         "ParameterDeclaration$DefaultValue": "<p>The default value of the parameter.</p>",
         "TemplateParameter$DefaultValue": "<p>The default value associated with the parameter.</p>"
       }
@@ -953,12 +958,15 @@
       "refs": {
         "CreateChangeSetInput$Parameters": "<p>A list of <code>Parameter</code> structures that specify input parameters for the change set. For more information, see the <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html\">Parameter</a> data type.</p>",
         "CreateStackInput$Parameters": "<p>A list of <code>Parameter</code> structures that specify input parameters for the stack. For more information, see the <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html\">Parameter</a> data type.</p>",
+        "CreateStackInstancesInput$ParameterOverrides": "<p>A list of stack set parameters whose values you want to override in the selected stack instances.</p> <p>Any overridden parameter values will be applied to all stack instances in the specified accounts and regions. When specifying parameters and their values, be aware of how AWS CloudFormation sets parameter values during stack instance operations:</p> <ul> <li> <p>To override the current value for a parameter, include the parameter and specify its value.</p> </li> <li> <p>To leave a parameter set to its present value, you can do one of the following:</p> <ul> <li> <p>Do not include the parameter in the list.</p> </li> <li> <p>Include the parameter and specify <code>UsePreviousValue</code> as <code>true</code>. (You cannot specify both a value and set <code>UsePreviousValue</code> to <code>true</code>.)</p> </li> </ul> </li> <li> <p>To set all overridden parameter back to the values specified in the stack set, specify a parameter list but do not include any parameters.</p> </li> <li> <p>To leave all parameters set to their present values, do not specify this property at all.</p> </li> </ul> <p>During stack set updates, any parameter values overridden for a stack instance are not updated, but retain their overridden value.</p> <p>You can only override the parameter <i>values</i> that are specified in the stack set; to add or delete a parameter itself, use <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_UpdateStackSet.html\">UpdateStackSet</a> to update the stack set template.</p>",
         "CreateStackSetInput$Parameters": "<p>The input parameters for the stack set template. </p>",
         "DescribeChangeSetOutput$Parameters": "<p>A list of <code>Parameter</code> structures that describes the input parameters and their values used to create the change set. For more information, see the <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html\">Parameter</a> data type.</p>",
         "EstimateTemplateCostInput$Parameters": "<p>A list of <code>Parameter</code> structures that specify input parameters.</p>",
         "Stack$Parameters": "<p>A list of <code>Parameter</code> structures.</p>",
+        "StackInstance$ParameterOverrides": "<p>A list of parameters from the stack set template whose values have been overridden in this stack instance.</p>",
         "StackSet$Parameters": "<p>A list of input parameters for a stack set.</p>",
         "UpdateStackInput$Parameters": "<p>A list of <code>Parameter</code> structures that specify input parameters for the stack. For more information, see the <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_Parameter.html\">Parameter</a> data type.</p>",
+        "UpdateStackInstancesInput$ParameterOverrides": "<p> A list of input parameters whose values you want to update for the specified stack instances. </p> <p>Any overridden parameter values will be applied to all stack instances in the specified accounts and regions. When specifying parameters and their values, be aware of how AWS CloudFormation sets parameter values during stack instance update operations:</p> <ul> <li> <p>To override the current value for a parameter, include the parameter and specify its value.</p> </li> <li> <p>To leave a parameter set to its present value, you can do one of the following:</p> <ul> <li> <p>Do not include the parameter in the list.</p> </li> <li> <p>Include the parameter and specify <code>UsePreviousValue</code> as <code>true</code>. (You cannot specify both a value and set <code>UsePreviousValue</code> to <code>true</code>.)</p> </li> </ul> </li> <li> <p>To set all overridden parameter back to the values specified in the stack set, specify a parameter list but do not include any parameters.</p> </li> <li> <p>To leave all parameters set to their present values, do not specify this property at all.</p> </li> </ul> <p>During stack set updates, any parameter values overridden for a stack instance are not updated, but retain their overridden value.</p> <p>You can only override the parameter <i>values</i> that are specified in the stack set; to add or delete a parameter itself, use <code>UpdateStackSet</code> to update the stack set template. If you add a parameter to a template, before you can override the parameter value specified in the stack set you must first use <a href=\"http://docs.aws.amazon.com/AWSCloudFormation/latest/APIReference/API_UpdateStackSet.html\">UpdateStackSet</a> to update all stack instances with the updated template and parameter value specified in the stack set. Once a stack instance has been updated with the new parameter, you can then override the parameter value using <code>UpdateStackInstances</code>.</p>",
         "UpdateStackSetInput$Parameters": "<p>A list of input parameters for the stack set template. </p>"
       }
     },
@@ -1003,7 +1011,8 @@
       "refs": {
         "CreateStackInstancesInput$Regions": "<p>The names of one or more regions where you want to create stack instances using the specified AWS account(s). </p>",
         "DeleteStackInstancesInput$Regions": "<p>The regions where you want to delete stack set instances. </p>",
-        "StackSetOperationPreferences$RegionOrder": "<p>The order of the regions in where you want to perform the stack operation.</p>"
+        "StackSetOperationPreferences$RegionOrder": "<p>The order of the regions in where you want to perform the stack operation.</p>",
+        "UpdateStackInstancesInput$Regions": "<p>The names of one or more regions in which you want to update parameter values for stack instances. The overridden parameter values will be applied to all stack instances in the specified accounts and regions.</p>"
       }
     },
     "Replacement": {
@@ -1386,6 +1395,7 @@
         "StackSet$StackSetName": "<p>The name that's associated with the stack set.</p>",
         "StackSetSummary$StackSetName": "<p>The name of the stack set.</p>",
         "StopStackSetOperationInput$StackSetName": "<p>The name or unique ID of the stack set that you want to stop the operation for.</p>",
+        "UpdateStackInstancesInput$StackSetName": "<p>The name or unique ID of the stack set associated with the stack instances.</p>",
         "UpdateStackSetInput$StackSetName": "<p>The name or unique ID of the stack set that you want to update.</p>"
       }
     },
@@ -1424,6 +1434,7 @@
         "CreateStackInstancesInput$OperationPreferences": "<p>Preferences for how AWS CloudFormation performs this stack set operation.</p>",
         "DeleteStackInstancesInput$OperationPreferences": "<p>Preferences for how AWS CloudFormation performs this stack set operation.</p>",
         "StackSetOperation$OperationPreferences": "<p>The preferences for how AWS CloudFormation performs this stack set operation.</p>",
+        "UpdateStackInstancesInput$OperationPreferences": "<p>Preferences for how AWS CloudFormation performs this stack set operation.</p>",
         "UpdateStackSetInput$OperationPreferences": "<p>Preferences for how AWS CloudFormation performs this stack set operation.</p>"
       }
     },
@@ -1674,6 +1685,16 @@
     },
     "UpdateStackInput": {
       "base": "<p>The input for an <a>UpdateStack</a> action.</p>",
+      "refs": {
+      }
+    },
+    "UpdateStackInstancesInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateStackInstancesOutput": {
+      "base": null,
       "refs": {
       }
     },

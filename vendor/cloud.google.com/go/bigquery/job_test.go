@@ -18,12 +18,11 @@ import (
 	"testing"
 
 	"cloud.google.com/go/internal/testutil"
-	"golang.org/x/net/context"
 	bq "google.golang.org/api/bigquery/v2"
 )
 
 func TestCreateJobRef(t *testing.T) {
-	defer fixRandomJobID("RANDOM")()
+	defer fixRandomID("RANDOM")()
 	for _, test := range []struct {
 		jobID          string
 		addJobIDSuffix bool
@@ -50,7 +49,8 @@ func TestCreateJobRef(t *testing.T) {
 			want:           "foo-RANDOM",
 		},
 	} {
-		jr := createJobRef(test.jobID, test.addJobIDSuffix, "projectID")
+		jc := JobIDConfig{JobID: test.jobID, AddJobIDSuffix: test.addJobIDSuffix}
+		jr := jc.createJobRef("projectID")
 		got := jr.JobId
 		if got != test.want {
 			t.Errorf("%q, %t: got %q, want %q", test.jobID, test.addJobIDSuffix, got, test.want)
@@ -58,10 +58,10 @@ func TestCreateJobRef(t *testing.T) {
 	}
 }
 
-func fixRandomJobID(s string) func() {
-	prev := randomJobIDFn
-	randomJobIDFn = func() string { return s }
-	return func() { randomJobIDFn = prev }
+func fixRandomID(s string) func() {
+	prev := randomIDFn
+	randomIDFn = func() string { return s }
+	return func() { randomIDFn = prev }
 }
 
 func checkJob(t *testing.T, i int, got, want *bq.Job) {
@@ -77,19 +77,4 @@ func checkJob(t *testing.T, i int, got, want *bq.Job) {
 	if d != "" {
 		t.Errorf("#%d: (got=-, want=+) %s", i, d)
 	}
-}
-
-type testService struct {
-	*bq.Job
-
-	service
-}
-
-func (s *testService) insertJob(ctx context.Context, projectID string, conf *insertJobConf) (*Job, error) {
-	s.Job = conf.job
-	return &Job{}, nil
-}
-
-func (s *testService) jobStatus(ctx context.Context, projectID, jobID string) (*JobStatus, error) {
-	return &JobStatus{State: Done}, nil
 }

@@ -1,5 +1,19 @@
 package autorest
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"bytes"
 	"fmt"
@@ -7,6 +21,7 @@ import (
 	"log"
 	"math/rand"
 	"net/http"
+	"net/http/httptest"
 	"reflect"
 	"testing"
 	"time"
@@ -328,6 +343,51 @@ func TestClientByInspectingSetsDefault(t *testing.T) {
 
 	if !reflect.DeepEqual(r, &http.Response{}) {
 		t.Fatal("autorest: Client#ByInspecting failed to provide a default ResponseInspector")
+	}
+}
+
+func TestCookies(t *testing.T) {
+	second := "second"
+	expected := http.Cookie{
+		Name:  "tastes",
+		Value: "delicious",
+	}
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.SetCookie(w, &expected)
+		b, err := ioutil.ReadAll(r.Body)
+		if err != nil {
+			t.Fatalf("autorest: ioutil.ReadAll failed reading request body: %s", err)
+		}
+		if string(b) == second {
+			cookie, err := r.Cookie(expected.Name)
+			if err != nil {
+				t.Fatalf("autorest: r.Cookie could not get request cookie: %s", err)
+			}
+			if cookie == nil {
+				t.Fatalf("autorest: got nil cookie, expecting %v", expected)
+			}
+			if cookie.Value != expected.Value {
+				t.Fatalf("autorest: got cookie value '%s', expecting '%s'", cookie.Value, expected.Name)
+			}
+		}
+	}))
+	defer server.Close()
+
+	client := NewClientWithUserAgent("")
+	_, err := SendWithSender(client, mocks.NewRequestForURL(server.URL))
+	if err != nil {
+		t.Fatalf("autorest: first request failed: %s", err)
+	}
+
+	r2, err := http.NewRequest(http.MethodGet, server.URL, mocks.NewBody(second))
+	if err != nil {
+		t.Fatalf("autorest: failed creating second request: %s", err)
+	}
+
+	_, err = SendWithSender(client, r2)
+	if err != nil {
+		t.Fatalf("autorest: second request failed: %s", err)
 	}
 }
 

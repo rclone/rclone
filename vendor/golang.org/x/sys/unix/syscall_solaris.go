@@ -34,15 +34,6 @@ type SockaddrDatalink struct {
 	raw    RawSockaddrDatalink
 }
 
-func clen(n []byte) int {
-	for i := 0; i < len(n); i++ {
-		if n[i] == 0 {
-			return i
-		}
-	}
-	return len(n)
-}
-
 func direntIno(buf []byte) (uint64, bool) {
 	return readInt(buf, unsafe.Offsetof(Dirent{}.Ino), unsafe.Sizeof(Dirent{}.Ino))
 }
@@ -139,6 +130,18 @@ func Getsockname(fd int) (sa Sockaddr, err error) {
 	return anyToSockaddr(&rsa)
 }
 
+// GetsockoptString returns the string value of the socket option opt for the
+// socket associated with fd at the given socket level.
+func GetsockoptString(fd, level, opt int) (string, error) {
+	buf := make([]byte, 256)
+	vallen := _Socklen(len(buf))
+	err := getsockopt(fd, level, opt, unsafe.Pointer(&buf[0]), &vallen)
+	if err != nil {
+		return "", err
+	}
+	return string(buf[:vallen-1]), nil
+}
+
 const ImplementsGetwd = true
 
 //sys	Getcwd(buf []byte) (n int, err error)
@@ -166,7 +169,7 @@ func Getwd() (wd string, err error) {
 
 func Getgroups() (gids []int, err error) {
 	n, err := getgroups(0, nil)
-	// Check for error and sanity check group count.  Newer versions of
+	// Check for error and sanity check group count. Newer versions of
 	// Solaris allow up to 1024 (NGROUPS_MAX).
 	if n < 0 || n > 1024 {
 		if err != nil {
@@ -350,7 +353,7 @@ func Futimesat(dirfd int, path string, tv []Timeval) error {
 }
 
 // Solaris doesn't have an futimes function because it allows NULL to be
-// specified as the path for futimesat.  However, Go doesn't like
+// specified as the path for futimesat. However, Go doesn't like
 // NULL-style string interfaces, so this simple wrapper is provided.
 func Futimes(fd int, tv []Timeval) error {
 	if tv == nil {
@@ -578,6 +581,15 @@ func IoctlGetTermio(fd int, req uint) (*Termio, error) {
 	return &value, err
 }
 
+//sys   poll(fds *PollFd, nfds int, timeout int) (n int, err error)
+
+func Poll(fds []PollFd, timeout int) (n int, err error) {
+	if len(fds) == 0 {
+		return poll(nil, 0, timeout)
+	}
+	return poll(&fds[0], len(fds), timeout)
+}
+
 /*
  * Exposed directly
  */
@@ -646,6 +658,7 @@ func IoctlGetTermio(fd int, req uint) (*Termio, error) {
 //sys	Renameat(olddirfd int, oldpath string, newdirfd int, newpath string) (err error)
 //sys	Rmdir(path string) (err error)
 //sys	Seek(fd int, offset int64, whence int) (newoffset int64, err error) = lseek
+//sys	Select(n int, r *FdSet, w *FdSet, e *FdSet, timeout *Timeval) (err error)
 //sysnb	Setegid(egid int) (err error)
 //sysnb	Seteuid(euid int) (err error)
 //sysnb	Setgid(gid int) (err error)

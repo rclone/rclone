@@ -1,6 +1,8 @@
 // Package recoveryservicesbackup implements the Azure ARM Recoveryservicesbackup service API version .
 //
 // Open API 2.0 Specs for Azure RecoveryServices Backup service
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package recoveryservicesbackup
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

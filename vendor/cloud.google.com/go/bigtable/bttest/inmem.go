@@ -421,12 +421,14 @@ func filterRow(f *btpb.RowFilter, r *row) bool {
 				}
 			}
 		}
+		var count int
 		for _, fam := range r.families {
 			for _, cs := range fam.cells {
 				sort.Sort(byDescTS(cs))
+				count += len(cs)
 			}
 		}
-		return true
+		return count > 0
 	case *btpb.RowFilter_CellsPerColumnLimitFilter:
 		lim := int(f.CellsPerColumnLimitFilter)
 		for _, fam := range r.families {
@@ -690,10 +692,8 @@ func (s *server) CheckAndMutateRow(ctx context.Context, req *btpb.CheckAndMutate
 		nr := r.copy()
 		filterRow(req.PredicateFilter, nr)
 		whichMut = !nr.isEmpty()
-		// TODO(dsymonds): Figure out if this is supposed to be set
-		// even when there's no predicate filter.
-		res.PredicateMatched = whichMut
 	}
+	res.PredicateMatched = whichMut
 	muts := req.FalseMutations
 	if whichMut {
 		muts = req.TrueMutations
@@ -907,7 +907,8 @@ func (s *server) ReadModifyWriteRow(ctx context.Context, req *btpb.ReadModifyWri
 		f.Columns = append(f.Columns, &btpb.Column{
 			Qualifier: []byte(qual),
 			Cells: []*btpb.Cell{{
-				Value: cell.value,
+				TimestampMicros: cell.ts,
+				Value:           cell.value,
 			}},
 		})
 	}

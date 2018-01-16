@@ -21,68 +21,7 @@ func TestChopStack(t *testing.T) {
 		name     string
 		in       []byte
 		expected string
-		isPanic  bool
 	}{
-		{
-			name: "Catch",
-			in: []byte(`goroutine 20 [running]:
-runtime/debug.Stack()
-	/gopath/src/runtime/debug/stack.go:24 +0x79
-cloud.google.com/go/errorreporting.(*Client).logInternal()
-	/gopath/src/cloud.google.com/go/errorreporting/errors.go:259 +0x18b
-cloud.google.com/go/errorreporting.(*Client).Catch()
-	/gopath/src/cloud.google.com/go/errorreporting/errors.go:219 +0x6ed
-panic()
-	/gopath/src/runtime/panic.go:458 +0x243
-cloud.google.com/go/errorreporting.TestCatchPanic()
-	/gopath/src/cloud.google.com/go/errorreporting/errors_test.go:93 +0x171
-testing.tRunner()
-	/gopath/src/testing/testing.go:610 +0x81
-created by testing.(*T).Run
-	/gopath/src/testing/testing.go:646 +0x2ec
-`),
-			expected: `goroutine 20 [running]:
-cloud.google.com/go/errorreporting.TestCatchPanic()
-	/gopath/src/cloud.google.com/go/errorreporting/errors_test.go:93 +0x171
-testing.tRunner()
-	/gopath/src/testing/testing.go:610 +0x81
-created by testing.(*T).Run
-	/gopath/src/testing/testing.go:646 +0x2ec
-`,
-			isPanic: true,
-		},
-		{
-			name: "function not found",
-			in: []byte(`goroutine 20 [running]:
-runtime/debug.Stack()
-	/gopath/src/runtime/debug/stack.go:24 +0x79
-cloud.google.com/go/errorreporting.(*Client).logInternal()
-	/gopath/src/cloud.google.com/go/errorreporting/errors.go:259 +0x18b
-cloud.google.com/go/errorreporting.(*Client).Catch()
-	/gopath/src/cloud.google.com/go/errorreporting/errors.go:219 +0x6ed
-cloud.google.com/go/errorreporting.TestCatchPanic()
-	/gopath/src/cloud.google.com/go/errorreporting/errors_test.go:93 +0x171
-testing.tRunner()
-	/gopath/src/testing/testing.go:610 +0x81
-created by testing.(*T).Run
-	/gopath/src/testing/testing.go:646 +0x2ec
-`),
-			expected: `goroutine 20 [running]:
-runtime/debug.Stack()
-	/gopath/src/runtime/debug/stack.go:24 +0x79
-cloud.google.com/go/errorreporting.(*Client).logInternal()
-	/gopath/src/cloud.google.com/go/errorreporting/errors.go:259 +0x18b
-cloud.google.com/go/errorreporting.(*Client).Catch()
-	/gopath/src/cloud.google.com/go/errorreporting/errors.go:219 +0x6ed
-cloud.google.com/go/errorreporting.TestCatchPanic()
-	/gopath/src/cloud.google.com/go/errorreporting/errors_test.go:93 +0x171
-testing.tRunner()
-	/gopath/src/testing/testing.go:610 +0x81
-created by testing.(*T).Run
-	/gopath/src/testing/testing.go:646 +0x2ec
-`,
-			isPanic: true,
-		},
 		{
 			name: "Report",
 			in: []byte(` goroutine 39 [running]:
@@ -107,12 +46,11 @@ testing.tRunner()
 created by testing.(*T).Run
 	/gopath/testing/testing.go:646 +0x2ec
 `,
-			isPanic: false,
 		},
 	} {
-		out := chopStack(test.in, test.isPanic)
+		out := chopStack(test.in)
 		if out != test.expected {
-			t.Errorf("case %q: chopStack(%q, %t): got %q want %q", test.name, test.in, test.isPanic, out, test.expected)
+			t.Errorf("case %q: chopStack(%q): got %q want %q", test.name, test.in, out, test.expected)
 		}
 	}
 }

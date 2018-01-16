@@ -115,19 +115,19 @@ type AntennaCharacteristics struct {
 }
 
 func (s *AntennaCharacteristics) MarshalJSON() ([]byte, error) {
-	type noMethod AntennaCharacteristics
-	raw := noMethod(*s)
+	type NoMethod AntennaCharacteristics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *AntennaCharacteristics) UnmarshalJSON(data []byte) error {
-	type noMethod AntennaCharacteristics
+	type NoMethod AntennaCharacteristics
 	var s1 struct {
 		Height            gensupport.JSONFloat64 `json:"height"`
 		HeightUncertainty gensupport.JSONFloat64 `json:"heightUncertainty"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -162,8 +162,8 @@ type DatabaseSpec struct {
 }
 
 func (s *DatabaseSpec) MarshalJSON() ([]byte, error) {
-	type noMethod DatabaseSpec
-	raw := noMethod(*s)
+	type NoMethod DatabaseSpec
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -193,8 +193,8 @@ type DbUpdateSpec struct {
 }
 
 func (s *DbUpdateSpec) MarshalJSON() ([]byte, error) {
-	type noMethod DbUpdateSpec
-	raw := noMethod(*s)
+	type NoMethod DbUpdateSpec
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -230,8 +230,8 @@ type DeviceCapabilities struct {
 }
 
 func (s *DeviceCapabilities) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceCapabilities
-	raw := noMethod(*s)
+	type NoMethod DeviceCapabilities
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -321,8 +321,8 @@ type DeviceDescriptor struct {
 }
 
 func (s *DeviceDescriptor) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceDescriptor
-	raw := noMethod(*s)
+	type NoMethod DeviceDescriptor
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -368,8 +368,8 @@ type DeviceOwner struct {
 }
 
 func (s *DeviceOwner) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceOwner
-	raw := noMethod(*s)
+	type NoMethod DeviceOwner
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -407,8 +407,8 @@ type DeviceValidity struct {
 }
 
 func (s *DeviceValidity) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceValidity
-	raw := noMethod(*s)
+	type NoMethod DeviceValidity
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -442,8 +442,8 @@ type EventTime struct {
 }
 
 func (s *EventTime) MarshalJSON() ([]byte, error) {
-	type noMethod EventTime
-	raw := noMethod(*s)
+	type NoMethod EventTime
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -491,20 +491,20 @@ type FrequencyRange struct {
 }
 
 func (s *FrequencyRange) MarshalJSON() ([]byte, error) {
-	type noMethod FrequencyRange
-	raw := noMethod(*s)
+	type NoMethod FrequencyRange
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *FrequencyRange) UnmarshalJSON(data []byte) error {
-	type noMethod FrequencyRange
+	type NoMethod FrequencyRange
 	var s1 struct {
 		MaxPowerDBm gensupport.JSONFloat64 `json:"maxPowerDBm"`
 		StartHz     gensupport.JSONFloat64 `json:"startHz"`
 		StopHz      gensupport.JSONFloat64 `json:"stopHz"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -554,8 +554,8 @@ type GeoLocation struct {
 }
 
 func (s *GeoLocation) MarshalJSON() ([]byte, error) {
-	type noMethod GeoLocation
-	raw := noMethod(*s)
+	type NoMethod GeoLocation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -605,20 +605,20 @@ type GeoLocationEllipse struct {
 }
 
 func (s *GeoLocationEllipse) MarshalJSON() ([]byte, error) {
-	type noMethod GeoLocationEllipse
-	raw := noMethod(*s)
+	type NoMethod GeoLocationEllipse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GeoLocationEllipse) UnmarshalJSON(data []byte) error {
-	type noMethod GeoLocationEllipse
+	type NoMethod GeoLocationEllipse
 	var s1 struct {
 		Orientation   gensupport.JSONFloat64 `json:"orientation"`
 		SemiMajorAxis gensupport.JSONFloat64 `json:"semiMajorAxis"`
 		SemiMinorAxis gensupport.JSONFloat64 `json:"semiMinorAxis"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -660,19 +660,19 @@ type GeoLocationPoint struct {
 }
 
 func (s *GeoLocationPoint) MarshalJSON() ([]byte, error) {
-	type noMethod GeoLocationPoint
-	raw := noMethod(*s)
+	type NoMethod GeoLocationPoint
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *GeoLocationPoint) UnmarshalJSON(data []byte) error {
-	type noMethod GeoLocationPoint
+	type NoMethod GeoLocationPoint
 	var s1 struct {
 		Latitude  gensupport.JSONFloat64 `json:"latitude"`
 		Longitude gensupport.JSONFloat64 `json:"longitude"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -719,8 +719,8 @@ type GeoLocationPolygon struct {
 }
 
 func (s *GeoLocationPolygon) MarshalJSON() ([]byte, error) {
-	type noMethod GeoLocationPolygon
-	raw := noMethod(*s)
+	type NoMethod GeoLocationPolygon
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -756,8 +756,8 @@ type GeoSpectrumSchedule struct {
 }
 
 func (s *GeoSpectrumSchedule) MarshalJSON() ([]byte, error) {
-	type noMethod GeoSpectrumSchedule
-	raw := noMethod(*s)
+	type NoMethod GeoSpectrumSchedule
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -854,8 +854,8 @@ type PawsGetSpectrumBatchRequest struct {
 }
 
 func (s *PawsGetSpectrumBatchRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PawsGetSpectrumBatchRequest
-	raw := noMethod(*s)
+	type NoMethod PawsGetSpectrumBatchRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -969,19 +969,19 @@ type PawsGetSpectrumBatchResponse struct {
 }
 
 func (s *PawsGetSpectrumBatchResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PawsGetSpectrumBatchResponse
-	raw := noMethod(*s)
+	type NoMethod PawsGetSpectrumBatchResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *PawsGetSpectrumBatchResponse) UnmarshalJSON(data []byte) error {
-	type noMethod PawsGetSpectrumBatchResponse
+	type NoMethod PawsGetSpectrumBatchResponse
 	var s1 struct {
 		MaxContiguousBwHz gensupport.JSONFloat64 `json:"maxContiguousBwHz"`
 		MaxTotalBwHz      gensupport.JSONFloat64 `json:"maxTotalBwHz"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1077,8 +1077,8 @@ type PawsGetSpectrumRequest struct {
 }
 
 func (s *PawsGetSpectrumRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PawsGetSpectrumRequest
-	raw := noMethod(*s)
+	type NoMethod PawsGetSpectrumRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1187,19 +1187,19 @@ type PawsGetSpectrumResponse struct {
 }
 
 func (s *PawsGetSpectrumResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PawsGetSpectrumResponse
-	raw := noMethod(*s)
+	type NoMethod PawsGetSpectrumResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *PawsGetSpectrumResponse) UnmarshalJSON(data []byte) error {
-	type noMethod PawsGetSpectrumResponse
+	type NoMethod PawsGetSpectrumResponse
 	var s1 struct {
 		MaxContiguousBwHz gensupport.JSONFloat64 `json:"maxContiguousBwHz"`
 		MaxTotalBwHz      gensupport.JSONFloat64 `json:"maxTotalBwHz"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1249,8 +1249,8 @@ type PawsInitRequest struct {
 }
 
 func (s *PawsInitRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PawsInitRequest
-	raw := noMethod(*s)
+	type NoMethod PawsInitRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1310,8 +1310,8 @@ type PawsInitResponse struct {
 }
 
 func (s *PawsInitResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PawsInitResponse
-	raw := noMethod(*s)
+	type NoMethod PawsInitResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1374,8 +1374,8 @@ type PawsNotifySpectrumUseRequest struct {
 }
 
 func (s *PawsNotifySpectrumUseRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PawsNotifySpectrumUseRequest
-	raw := noMethod(*s)
+	type NoMethod PawsNotifySpectrumUseRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1418,8 +1418,8 @@ type PawsNotifySpectrumUseResponse struct {
 }
 
 func (s *PawsNotifySpectrumUseResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PawsNotifySpectrumUseResponse
-	raw := noMethod(*s)
+	type NoMethod PawsNotifySpectrumUseResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1468,8 +1468,8 @@ type PawsRegisterRequest struct {
 }
 
 func (s *PawsRegisterRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PawsRegisterRequest
-	raw := noMethod(*s)
+	type NoMethod PawsRegisterRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1522,8 +1522,8 @@ type PawsRegisterResponse struct {
 }
 
 func (s *PawsRegisterResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PawsRegisterResponse
-	raw := noMethod(*s)
+	type NoMethod PawsRegisterResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1562,8 +1562,8 @@ type PawsVerifyDeviceRequest struct {
 }
 
 func (s *PawsVerifyDeviceRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PawsVerifyDeviceRequest
-	raw := noMethod(*s)
+	type NoMethod PawsVerifyDeviceRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1622,8 +1622,8 @@ type PawsVerifyDeviceResponse struct {
 }
 
 func (s *PawsVerifyDeviceResponse) MarshalJSON() ([]byte, error) {
-	type noMethod PawsVerifyDeviceResponse
-	raw := noMethod(*s)
+	type NoMethod PawsVerifyDeviceResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1690,18 +1690,18 @@ type RulesetInfo struct {
 }
 
 func (s *RulesetInfo) MarshalJSON() ([]byte, error) {
-	type noMethod RulesetInfo
-	raw := noMethod(*s)
+	type NoMethod RulesetInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *RulesetInfo) UnmarshalJSON(data []byte) error {
-	type noMethod RulesetInfo
+	type NoMethod RulesetInfo
 	var s1 struct {
 		MaxLocationChange gensupport.JSONFloat64 `json:"maxLocationChange"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1744,18 +1744,18 @@ type SpectrumMessage struct {
 }
 
 func (s *SpectrumMessage) MarshalJSON() ([]byte, error) {
-	type noMethod SpectrumMessage
-	raw := noMethod(*s)
+	type NoMethod SpectrumMessage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *SpectrumMessage) UnmarshalJSON(data []byte) error {
-	type noMethod SpectrumMessage
+	type NoMethod SpectrumMessage
 	var s1 struct {
 		Bandwidth gensupport.JSONFloat64 `json:"bandwidth"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1794,8 +1794,8 @@ type SpectrumSchedule struct {
 }
 
 func (s *SpectrumSchedule) MarshalJSON() ([]byte, error) {
-	type noMethod SpectrumSchedule
-	raw := noMethod(*s)
+	type NoMethod SpectrumSchedule
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1840,8 +1840,8 @@ type Vcard struct {
 }
 
 func (s *Vcard) MarshalJSON() ([]byte, error) {
-	type noMethod Vcard
-	raw := noMethod(*s)
+	type NoMethod Vcard
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1886,8 +1886,8 @@ type VcardAddress struct {
 }
 
 func (s *VcardAddress) MarshalJSON() ([]byte, error) {
-	type noMethod VcardAddress
-	raw := noMethod(*s)
+	type NoMethod VcardAddress
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1914,8 +1914,8 @@ type VcardTelephone struct {
 }
 
 func (s *VcardTelephone) MarshalJSON() ([]byte, error) {
-	type noMethod VcardTelephone
-	raw := noMethod(*s)
+	type NoMethod VcardTelephone
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1944,8 +1944,8 @@ type VcardTypedText struct {
 }
 
 func (s *VcardTypedText) MarshalJSON() ([]byte, error) {
-	type noMethod VcardTypedText
-	raw := noMethod(*s)
+	type NoMethod VcardTypedText
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2046,7 +2046,7 @@ func (c *PawsGetSpectrumCall) Do(opts ...googleapi.CallOption) (*PawsGetSpectrum
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2161,7 +2161,7 @@ func (c *PawsGetSpectrumBatchCall) Do(opts ...googleapi.CallOption) (*PawsGetSpe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2276,7 +2276,7 @@ func (c *PawsInitCall) Do(opts ...googleapi.CallOption) (*PawsInitResponse, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2394,7 +2394,7 @@ func (c *PawsNotifySpectrumUseCall) Do(opts ...googleapi.CallOption) (*PawsNotif
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2510,7 +2510,7 @@ func (c *PawsRegisterCall) Do(opts ...googleapi.CallOption) (*PawsRegisterRespon
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2627,7 +2627,7 @@ func (c *PawsVerifyDeviceCall) Do(opts ...googleapi.CallOption) (*PawsVerifyDevi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

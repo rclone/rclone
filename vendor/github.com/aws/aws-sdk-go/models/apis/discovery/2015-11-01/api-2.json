@@ -429,10 +429,7 @@
     },
     "ConfigurationTagSet":{
       "type":"list",
-      "member":{
-        "shape":"ConfigurationTag",
-        "locationName":"item"
-      }
+      "member":{"shape":"ConfigurationTag"}
     },
     "Configurations":{
       "type":"list",
@@ -725,10 +722,7 @@
     "FilterValue":{"type":"string"},
     "FilterValues":{
       "type":"list",
-      "member":{
-        "shape":"FilterValue",
-        "locationName":"item"
-      }
+      "member":{"shape":"FilterValue"}
     },
     "Filters":{
       "type":"list",
@@ -930,10 +924,7 @@
     "TagKey":{"type":"string"},
     "TagSet":{
       "type":"list",
-      "member":{
-        "shape":"Tag",
-        "locationName":"item"
-      }
+      "member":{"shape":"Tag"}
     },
     "TagValue":{"type":"string"},
     "TimeStamp":{"type":"timestamp"},

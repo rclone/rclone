@@ -97,7 +97,9 @@ func (client ObjectDataTypesClient) ListFieldsByModuleAndTypePreparer(resourceGr
 // ListFieldsByModuleAndTypeSender sends the ListFieldsByModuleAndType request. The method will close the
 // http.Response Body if it receives an error.
 func (client ObjectDataTypesClient) ListFieldsByModuleAndTypeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListFieldsByModuleAndTypeResponder handles the response to the ListFieldsByModuleAndType request. The method always
@@ -170,7 +172,9 @@ func (client ObjectDataTypesClient) ListFieldsByTypePreparer(resourceGroupName s
 // ListFieldsByTypeSender sends the ListFieldsByType request. The method will close the
 // http.Response Body if it receives an error.
 func (client ObjectDataTypesClient) ListFieldsByTypeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListFieldsByTypeResponder handles the response to the ListFieldsByType request. The method always

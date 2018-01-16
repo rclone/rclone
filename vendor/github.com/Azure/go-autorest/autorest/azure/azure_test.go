@@ -1,5 +1,19 @@
 package azure
 
+// Copyright 2017 Microsoft Corporation
+//
+//  Licensed under the Apache License, Version 2.0 (the "License");
+//  you may not use this file except in compliance with the License.
+//  You may obtain a copy of the License at
+//
+//      http://www.apache.org/licenses/LICENSE-2.0
+//
+//  Unless required by applicable law or agreed to in writing, software
+//  distributed under the License is distributed on an "AS IS" BASIS,
+//  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+//  See the License for the specific language governing permissions and
+//  limitations under the License.
+
 import (
 	"encoding/json"
 	"fmt"
@@ -326,6 +340,74 @@ func TestWithErrorUnlessStatusCode_NoAzureError(t *testing.T) {
 	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		t.Fatal(err)
+	}
+	if string(b) != j {
+		t.Fatalf("response body is wrong. got=%q expected=%q", string(b), j)
+	}
+
+}
+
+func TestWithErrorUnlessStatusCode_UnwrappedError(t *testing.T) {
+	j := `{
+		"target": null,
+		"code": "InternalError",
+		"message": "Azure is having trouble right now.",
+		"details": [{"code": "conflict1", "message":"error message1"},
+					{"code": "conflict2", "message":"error message2"}],
+		"innererror": []
+}`
+	uuid := "71FDB9F4-5E49-4C12-B266-DE7B4FD999A6"
+	r := mocks.NewResponseWithContent(j)
+	mocks.SetResponseHeader(r, HeaderRequestID, uuid)
+	r.Request = mocks.NewRequest()
+	r.StatusCode = http.StatusInternalServerError
+	r.Status = http.StatusText(r.StatusCode)
+
+	err := autorest.Respond(r,
+		WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByClosing())
+
+	if err == nil {
+		t.Fatal("azure: returned nil error for proper error response")
+	}
+
+	azErr, ok := err.(*RequestError)
+	if !ok {
+		t.Fatalf("returned error is not azure.RequestError: %T", err)
+	}
+
+	if expected := http.StatusInternalServerError; azErr.StatusCode != expected {
+		t.Logf("Incorrect StatusCode got: %v want: %d", azErr.StatusCode, expected)
+		t.Fail()
+	}
+
+	if expected := "Azure is having trouble right now."; azErr.ServiceError.Message != expected {
+		t.Logf("Incorrect Message\n\tgot:  %q\n\twant: %q", azErr.Message, expected)
+		t.Fail()
+	}
+
+	if expected := uuid; azErr.RequestID != expected {
+		t.Logf("Incorrect request ID\n\tgot:  %q\n\twant: %q", azErr.RequestID, expected)
+		t.Fail()
+	}
+
+	expectedServiceErrorDetails := `[{"code":"conflict1","message":"error message1"},{"code":"conflict2","message":"error message2"}]`
+	if azErr.ServiceError == nil {
+		t.Logf("`ServiceError` was nil when it shouldn't have been.")
+		t.Fail()
+	} else if azErr.ServiceError.Details == nil {
+		t.Logf("`ServiceError.Details` was nil when it should have been %q", expectedServiceErrorDetails)
+		t.Fail()
+	} else if details, _ := json.Marshal(*azErr.ServiceError.Details); expectedServiceErrorDetails != string(details) {
+		t.Logf("Error detaisl was not unmarshaled properly.\n\tgot:  %q\n\twant: %q", string(details), expectedServiceErrorDetails)
+		t.Fail()
+	}
+
+	// the error body should still be there
+	defer r.Body.Close()
+	b, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		t.Error(err)
 	}
 	if string(b) != j {
 		t.Fatalf("response body is wrong. got=%q expected=%q", string(b), j)

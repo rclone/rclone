@@ -82,7 +82,7 @@
               "parameterOrder": [
                 "name"
               ],
-              "description": "Lists the projects associated with a billing account. The current\nauthenticated user must be an [owner of the billing\naccount](https://support.google.com/cloud/answer/4430947).",
+              "description": "Lists the projects associated with a billing account. The current\nauthenticated user must have the \"billing.resourceAssociations.list\" IAM\npermission, which is often given to billing account\n[viewers](https://support.google.com/cloud/answer/4430947).",
               "flatPath": "v1/billingAccounts/{billingAccountsId}/projects",
               "httpMethod": "GET",
               "parameters": {
@@ -197,7 +197,7 @@
                   "type": "string"
                 },
                 "endTime": {
-                  "description": "Optional exclusive end time of the time range for which the pricing\nversions will be returned. Timestamps in the future are not allowed.\nMaximum allowable time range is 1 month (31 days). Time range as a whole\nis optional. If not specified, the latest pricing will be returned (up to\n12 hours old at most).",
+                  "description": "Optional exclusive end time of the time range for which the pricing\nversions will be returned. Timestamps in the future are not allowed.\nThe time range has to be within a single calendar month in\nAmerica/Los_Angeles timezone. Time range as a whole is optional. If not\nspecified, the latest pricing will be returned (up to 12 hours old at\nmost).",
                   "location": "query",
                   "type": "string",
                   "format": "google-datetime"
@@ -209,7 +209,7 @@
                   "format": "int32"
                 },
                 "startTime": {
-                  "description": "Optional inclusive start time of the time range for which the pricing\nversions will be returned. Timestamps in the future are not allowed.\nMaximum allowable time range is 1 month (31 days). Time range as a whole\nis optional. If not specified, the latest pricing will be returned (up to\n12 hours old at most).",
+                  "description": "Optional inclusive start time of the time range for which the pricing\nversions will be returned. Timestamps in the future are not allowed.\nThe time range has to be within a single calendar month in\nAmerica/Los_Angeles timezone. Time range as a whole is optional. If not\nspecified, the latest pricing will be returned (up to 12 hours old at\nmost).",
                   "location": "query",
                   "type": "string",
                   "format": "google-datetime"
@@ -596,7 +596,7 @@
       "id": "Category"
     }
   },
-  "revision": "20170813",
+  "revision": "20180108",
   "basePath": "",
   "icons": {
     "x32": "http://www.google.com/images/icons/product/search-32.gif",

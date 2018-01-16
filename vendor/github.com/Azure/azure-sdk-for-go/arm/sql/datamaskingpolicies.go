@@ -96,7 +96,9 @@ func (client DataMaskingPoliciesClient) CreateOrUpdatePreparer(resourceGroupName
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client DataMaskingPoliciesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -165,7 +167,9 @@ func (client DataMaskingPoliciesClient) GetPreparer(resourceGroupName string, se
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DataMaskingPoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always

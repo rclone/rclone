@@ -1179,9 +1179,7 @@ type Budget struct {
 	CostFilters map[string][]*string `type:"map"`
 
 	// This includes the options for getting the cost of a budget.
-	//
-	// CostTypes is a required field
-	CostTypes *CostTypes `type:"structure" required:"true"`
+	CostTypes *CostTypes `type:"structure"`
 
 	// A time period indicating the start date and end date of a budget.
 	//
@@ -1216,9 +1214,6 @@ func (s *Budget) Validate() error {
 	if s.BudgetType == nil {
 		invalidParams.Add(request.NewErrParamRequired("BudgetType"))
 	}
-	if s.CostTypes == nil {
-		invalidParams.Add(request.NewErrParamRequired("CostTypes"))
-	}
 	if s.TimePeriod == nil {
 		invalidParams.Add(request.NewErrParamRequired("TimePeriod"))
 	}
@@ -1233,11 +1228,6 @@ func (s *Budget) Validate() error {
 	if s.CalculatedSpend != nil {
 		if err := s.CalculatedSpend.Validate(); err != nil {
 			invalidParams.AddNested("CalculatedSpend", err.(request.ErrInvalidParams))
-		}
-	}
-	if s.CostTypes != nil {
-		if err := s.CostTypes.Validate(); err != nil {
-			invalidParams.AddNested("CostTypes", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.TimePeriod != nil {
@@ -1364,20 +1354,32 @@ func (s *CalculatedSpend) SetForecastedSpend(v *Spend) *CalculatedSpend {
 type CostTypes struct {
 	_ struct{} `type:"structure"`
 
-	// A generic boolean value.
-	//
-	// IncludeSubscription is a required field
-	IncludeSubscription *bool `type:"boolean" required:"true"`
+	// A boolean value whether to include credits in the cost budget.
+	IncludeCredit *bool `type:"boolean"`
 
-	// A generic boolean value.
-	//
-	// IncludeTax is a required field
-	IncludeTax *bool `type:"boolean" required:"true"`
+	// A boolean value whether to include other subscription costs in the cost budget.
+	IncludeOtherSubscription *bool `type:"boolean"`
 
-	// A generic boolean value.
-	//
-	// UseBlended is a required field
-	UseBlended *bool `type:"boolean" required:"true"`
+	// A boolean value whether to include recurring costs in the cost budget.
+	IncludeRecurring *bool `type:"boolean"`
+
+	// A boolean value whether to include refunds in the cost budget.
+	IncludeRefund *bool `type:"boolean"`
+
+	// A boolean value whether to include subscriptions in the cost budget.
+	IncludeSubscription *bool `type:"boolean"`
+
+	// A boolean value whether to include support costs in the cost budget.
+	IncludeSupport *bool `type:"boolean"`
+
+	// A boolean value whether to include tax in the cost budget.
+	IncludeTax *bool `type:"boolean"`
+
+	// A boolean value whether to include upfront costs in the cost budget.
+	IncludeUpfront *bool `type:"boolean"`
+
+	// A boolean value whether to use blended costs in the cost budget.
+	UseBlended *bool `type:"boolean"`
 }
 
 // String returns the string representation
@@ -1390,23 +1392,28 @@ func (s CostTypes) GoString() string {
 	return s.String()
 }
 
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *CostTypes) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "CostTypes"}
-	if s.IncludeSubscription == nil {
-		invalidParams.Add(request.NewErrParamRequired("IncludeSubscription"))
-	}
-	if s.IncludeTax == nil {
-		invalidParams.Add(request.NewErrParamRequired("IncludeTax"))
-	}
-	if s.UseBlended == nil {
-		invalidParams.Add(request.NewErrParamRequired("UseBlended"))
-	}
+// SetIncludeCredit sets the IncludeCredit field's value.
+func (s *CostTypes) SetIncludeCredit(v bool) *CostTypes {
+	s.IncludeCredit = &v
+	return s
+}
 
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
+// SetIncludeOtherSubscription sets the IncludeOtherSubscription field's value.
+func (s *CostTypes) SetIncludeOtherSubscription(v bool) *CostTypes {
+	s.IncludeOtherSubscription = &v
+	return s
+}
+
+// SetIncludeRecurring sets the IncludeRecurring field's value.
+func (s *CostTypes) SetIncludeRecurring(v bool) *CostTypes {
+	s.IncludeRecurring = &v
+	return s
+}
+
+// SetIncludeRefund sets the IncludeRefund field's value.
+func (s *CostTypes) SetIncludeRefund(v bool) *CostTypes {
+	s.IncludeRefund = &v
+	return s
 }
 
 // SetIncludeSubscription sets the IncludeSubscription field's value.
@@ -1415,9 +1422,21 @@ func (s *CostTypes) SetIncludeSubscription(v bool) *CostTypes {
 	return s
 }
 
+// SetIncludeSupport sets the IncludeSupport field's value.
+func (s *CostTypes) SetIncludeSupport(v bool) *CostTypes {
+	s.IncludeSupport = &v
+	return s
+}
+
 // SetIncludeTax sets the IncludeTax field's value.
 func (s *CostTypes) SetIncludeTax(v bool) *CostTypes {
 	s.IncludeTax = &v
+	return s
+}
+
+// SetIncludeUpfront sets the IncludeUpfront field's value.
+func (s *CostTypes) SetIncludeUpfront(v bool) *CostTypes {
+	s.IncludeUpfront = &v
 	return s
 }
 
@@ -2659,10 +2678,10 @@ func (s *Spend) SetUnit(v string) *Spend {
 type Subscriber struct {
 	_ struct{} `type:"structure"`
 
-	// A generic String.
+	// String containing email or sns topic for the subscriber address.
 	//
 	// Address is a required field
-	Address *string `type:"string" required:"true"`
+	Address *string `min:"1" type:"string" required:"true"`
 
 	// The subscription type of the subscriber. It can be SMS or EMAIL.
 	//
@@ -2685,6 +2704,9 @@ func (s *Subscriber) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "Subscriber"}
 	if s.Address == nil {
 		invalidParams.Add(request.NewErrParamRequired("Address"))
+	}
+	if s.Address != nil && len(*s.Address) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Address", 1))
 	}
 	if s.SubscriptionType == nil {
 		invalidParams.Add(request.NewErrParamRequired("SubscriptionType"))

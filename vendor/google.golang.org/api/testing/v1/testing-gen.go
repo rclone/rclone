@@ -134,8 +134,8 @@ type Account struct {
 }
 
 func (s *Account) MarshalJSON() ([]byte, error) {
-	type noMethod Account
-	raw := noMethod(*s)
+	type NoMethod Account
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -184,8 +184,8 @@ type AndroidDevice struct {
 }
 
 func (s *AndroidDevice) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidDevice
-	raw := noMethod(*s)
+	type NoMethod AndroidDevice
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -222,8 +222,8 @@ type AndroidDeviceCatalog struct {
 }
 
 func (s *AndroidDeviceCatalog) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidDeviceCatalog
-	raw := noMethod(*s)
+	type NoMethod AndroidDeviceCatalog
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -253,8 +253,8 @@ type AndroidDeviceList struct {
 }
 
 func (s *AndroidDeviceList) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidDeviceList
-	raw := noMethod(*s)
+	type NoMethod AndroidDeviceList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -361,8 +361,8 @@ type AndroidInstrumentationTest struct {
 }
 
 func (s *AndroidInstrumentationTest) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidInstrumentationTest
-	raw := noMethod(*s)
+	type NoMethod AndroidInstrumentationTest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -421,8 +421,8 @@ type AndroidMatrix struct {
 }
 
 func (s *AndroidMatrix) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidMatrix
-	raw := noMethod(*s)
+	type NoMethod AndroidMatrix
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -518,8 +518,8 @@ type AndroidModel struct {
 }
 
 func (s *AndroidModel) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidModel
-	raw := noMethod(*s)
+	type NoMethod AndroidModel
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -562,6 +562,13 @@ type AndroidRoboTest struct {
 	// Optional
 	RoboDirectives []*RoboDirective `json:"roboDirectives,omitempty"`
 
+	// StartingIntents: The intents used to launch the app for the crawl.
+	// If none are provided, then the main launcher activity is launched.
+	// If some are provided, then only those provided are launched (the
+	// main
+	// launcher activity must be provided explicitly).
+	StartingIntents []*RoboStartingIntent `json:"startingIntents,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "AppApk") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -580,8 +587,8 @@ type AndroidRoboTest struct {
 }
 
 func (s *AndroidRoboTest) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidRoboTest
-	raw := noMethod(*s)
+	type NoMethod AndroidRoboTest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -614,8 +621,8 @@ type AndroidRuntimeConfiguration struct {
 }
 
 func (s *AndroidRuntimeConfiguration) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidRuntimeConfiguration
-	raw := noMethod(*s)
+	type NoMethod AndroidRuntimeConfiguration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -674,8 +681,8 @@ type AndroidTestLoop struct {
 }
 
 func (s *AndroidTestLoop) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidTestLoop
-	raw := noMethod(*s)
+	type NoMethod AndroidTestLoop
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -733,8 +740,8 @@ type AndroidVersion struct {
 }
 
 func (s *AndroidVersion) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidVersion
-	raw := noMethod(*s)
+	type NoMethod AndroidVersion
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -818,8 +825,8 @@ type CancelTestMatrixResponse struct {
 }
 
 func (s *CancelTestMatrixResponse) MarshalJSON() ([]byte, error) {
-	type noMethod CancelTestMatrixResponse
-	raw := noMethod(*s)
+	type NoMethod CancelTestMatrixResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -851,8 +858,8 @@ type ClientInfo struct {
 }
 
 func (s *ClientInfo) MarshalJSON() ([]byte, error) {
-	type noMethod ClientInfo
-	raw := noMethod(*s)
+	type NoMethod ClientInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -886,8 +893,8 @@ type ClientInfoDetail struct {
 }
 
 func (s *ClientInfoDetail) MarshalJSON() ([]byte, error) {
-	type noMethod ClientInfoDetail
-	raw := noMethod(*s)
+	type NoMethod ClientInfoDetail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -936,8 +943,8 @@ type Date struct {
 }
 
 func (s *Date) MarshalJSON() ([]byte, error) {
-	type noMethod Date
-	raw := noMethod(*s)
+	type NoMethod Date
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -964,8 +971,8 @@ type DeviceFile struct {
 }
 
 func (s *DeviceFile) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceFile
-	raw := noMethod(*s)
+	type NoMethod DeviceFile
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1000,18 +1007,18 @@ type Distribution struct {
 }
 
 func (s *Distribution) MarshalJSON() ([]byte, error) {
-	type noMethod Distribution
-	raw := noMethod(*s)
+	type NoMethod Distribution
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *Distribution) UnmarshalJSON(data []byte) error {
-	type noMethod Distribution
+	type NoMethod Distribution
 	var s1 struct {
 		MarketShare gensupport.JSONFloat64 `json:"marketShare"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1043,8 +1050,8 @@ type Environment struct {
 }
 
 func (s *Environment) MarshalJSON() ([]byte, error) {
-	type noMethod Environment
-	raw := noMethod(*s)
+	type NoMethod Environment
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1078,8 +1085,8 @@ type EnvironmentMatrix struct {
 }
 
 func (s *EnvironmentMatrix) MarshalJSON() ([]byte, error) {
-	type noMethod EnvironmentMatrix
-	raw := noMethod(*s)
+	type NoMethod EnvironmentMatrix
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1110,8 +1117,8 @@ type EnvironmentVariable struct {
 }
 
 func (s *EnvironmentVariable) MarshalJSON() ([]byte, error) {
-	type noMethod EnvironmentVariable
-	raw := noMethod(*s)
+	type NoMethod EnvironmentVariable
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1139,8 +1146,8 @@ type FileReference struct {
 }
 
 func (s *FileReference) MarshalJSON() ([]byte, error) {
-	type noMethod FileReference
-	raw := noMethod(*s)
+	type NoMethod FileReference
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1187,9 +1194,14 @@ type GoogleCloudStorage struct {
 }
 
 func (s *GoogleCloudStorage) MarshalJSON() ([]byte, error) {
-	type noMethod GoogleCloudStorage
-	raw := noMethod(*s)
+	type NoMethod GoogleCloudStorage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// LauncherActivityIntent: Specifies an intent that starts the main
+// launcher activity.
+type LauncherActivityIntent struct {
 }
 
 // Locale: A location/region designation for language.
@@ -1204,7 +1216,7 @@ type Locale struct {
 	// @OutputOnly
 	Name string `json:"name,omitempty"`
 
-	// Region: A human-friendy string representing the region for this
+	// Region: A human-friendly string representing the region for this
 	// locale.
 	// Example: "United States"
 	// Not present for every locale.
@@ -1233,8 +1245,8 @@ type Locale struct {
 }
 
 func (s *Locale) MarshalJSON() ([]byte, error) {
-	type noMethod Locale
-	raw := noMethod(*s)
+	type NoMethod Locale
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1268,8 +1280,8 @@ type NetworkConfiguration struct {
 }
 
 func (s *NetworkConfiguration) MarshalJSON() ([]byte, error) {
-	type noMethod NetworkConfiguration
-	raw := noMethod(*s)
+	type NoMethod NetworkConfiguration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1295,8 +1307,8 @@ type NetworkConfigurationCatalog struct {
 }
 
 func (s *NetworkConfigurationCatalog) MarshalJSON() ([]byte, error) {
-	type noMethod NetworkConfigurationCatalog
-	raw := noMethod(*s)
+	type NoMethod NetworkConfigurationCatalog
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1336,8 +1348,8 @@ type ObbFile struct {
 }
 
 func (s *ObbFile) MarshalJSON() ([]byte, error) {
-	type noMethod ObbFile
-	raw := noMethod(*s)
+	type NoMethod ObbFile
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1375,8 +1387,8 @@ type Orientation struct {
 }
 
 func (s *Orientation) MarshalJSON() ([]byte, error) {
-	type noMethod Orientation
-	raw := noMethod(*s)
+	type NoMethod Orientation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1418,8 +1430,8 @@ type ResultStorage struct {
 }
 
 func (s *ResultStorage) MarshalJSON() ([]byte, error) {
-	type noMethod ResultStorage
-	raw := noMethod(*s)
+	type NoMethod ResultStorage
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1479,8 +1491,77 @@ type RoboDirective struct {
 }
 
 func (s *RoboDirective) MarshalJSON() ([]byte, error) {
-	type noMethod RoboDirective
-	raw := noMethod(*s)
+	type NoMethod RoboDirective
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// RoboStartingIntent: Message for specifying the start activities to
+// crawl
+type RoboStartingIntent struct {
+	LauncherActivity *LauncherActivityIntent `json:"launcherActivity,omitempty"`
+
+	StartActivity *StartActivityIntent `json:"startActivity,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "LauncherActivity") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "LauncherActivity") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *RoboStartingIntent) MarshalJSON() ([]byte, error) {
+	type NoMethod RoboStartingIntent
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// StartActivityIntent: A starting intent specified by an action, uri,
+// and categories.
+type StartActivityIntent struct {
+	// Action: Action name.
+	// Required for START_ACTIVITY.
+	Action string `json:"action,omitempty"`
+
+	// Categories: Intent categories to set on the intent.
+	// Optional.
+	Categories []string `json:"categories,omitempty"`
+
+	// Uri: URI for the action.
+	// Optional.
+	Uri string `json:"uri,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Action") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Action") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *StartActivityIntent) MarshalJSON() ([]byte, error) {
+	type NoMethod StartActivityIntent
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1520,8 +1601,8 @@ type TestDetails struct {
 }
 
 func (s *TestDetails) MarshalJSON() ([]byte, error) {
-	type noMethod TestDetails
-	raw := noMethod(*s)
+	type NoMethod TestDetails
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1558,8 +1639,8 @@ type TestEnvironmentCatalog struct {
 }
 
 func (s *TestEnvironmentCatalog) MarshalJSON() ([]byte, error) {
-	type noMethod TestEnvironmentCatalog
-	raw := noMethod(*s)
+	type NoMethod TestEnvironmentCatalog
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1673,8 +1754,8 @@ type TestExecution struct {
 }
 
 func (s *TestExecution) MarshalJSON() ([]byte, error) {
-	type noMethod TestExecution
-	raw := noMethod(*s)
+	type NoMethod TestExecution
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1747,6 +1828,7 @@ type TestMatrix struct {
 	//   "DEVICE_ADMIN_RECEIVER" - Device administrator applications are not
 	// allowed.
 	//   "TEST_ONLY_APK" - The APK is marked as "testOnly".
+	//   "MALFORMED_IPA" - The input IPA could not be parsed.
 	InvalidMatrixDetails string `json:"invalidMatrixDetails,omitempty"`
 
 	// ProjectId: The cloud project that owns the test matrix.
@@ -1851,8 +1933,8 @@ type TestMatrix struct {
 }
 
 func (s *TestMatrix) MarshalJSON() ([]byte, error) {
-	type noMethod TestMatrix
-	raw := noMethod(*s)
+	type NoMethod TestMatrix
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1864,10 +1946,20 @@ type TestSetup struct {
 	// Optional
 	Account *Account `json:"account,omitempty"`
 
-	// DirectoriesToPull: The directories on the device to upload to GCS at
-	// the end of the test;
-	// they must be absolute, whitelisted paths.
-	// Refer to RegularFile for whitelisted paths.
+	// DirectoriesToPull: List of directories on the device to upload to GCS
+	// at the end of the test;
+	// they must be absolute paths under /sdcard or /data/local/tmp.
+	// Path names are restricted to characters a-z A-Z 0-9 _ - . + and
+	// /
+	//
+	// Note: The paths /sdcard and /data will be made available and treated
+	// as
+	// implicit path substitutions. E.g. if /sdcard on a particular device
+	// does
+	// not map to external storage, the system will replace it with the
+	// external
+	// storage path prefix for that device.
+	//
 	// Optional
 	DirectoriesToPull []string `json:"directoriesToPull,omitempty"`
 
@@ -1876,7 +1968,10 @@ type TestSetup struct {
 	// instrumentation tests).
 	EnvironmentVariables []*EnvironmentVariable `json:"environmentVariables,omitempty"`
 
-	// FilesToPush: Optional
+	// FilesToPush: List of files to push to the device before starting the
+	// test.
+	//
+	// Optional
 	FilesToPush []*DeviceFile `json:"filesToPush,omitempty"`
 
 	// NetworkProfile: The network traffic profile used for running the
@@ -1902,8 +1997,8 @@ type TestSetup struct {
 }
 
 func (s *TestSetup) MarshalJSON() ([]byte, error) {
-	type noMethod TestSetup
-	raw := noMethod(*s)
+	type NoMethod TestSetup
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1972,8 +2067,8 @@ type TestSpecification struct {
 }
 
 func (s *TestSpecification) MarshalJSON() ([]byte, error) {
-	type noMethod TestSpecification
-	raw := noMethod(*s)
+	type NoMethod TestSpecification
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2013,8 +2108,8 @@ type ToolResultsExecution struct {
 }
 
 func (s *ToolResultsExecution) MarshalJSON() ([]byte, error) {
-	type noMethod ToolResultsExecution
-	raw := noMethod(*s)
+	type NoMethod ToolResultsExecution
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2047,8 +2142,8 @@ type ToolResultsHistory struct {
 }
 
 func (s *ToolResultsHistory) MarshalJSON() ([]byte, error) {
-	type noMethod ToolResultsHistory
-	raw := noMethod(*s)
+	type NoMethod ToolResultsHistory
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2091,8 +2186,8 @@ type ToolResultsStep struct {
 }
 
 func (s *ToolResultsStep) MarshalJSON() ([]byte, error) {
-	type noMethod ToolResultsStep
-	raw := noMethod(*s)
+	type NoMethod ToolResultsStep
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2131,21 +2226,21 @@ type TrafficRule struct {
 }
 
 func (s *TrafficRule) MarshalJSON() ([]byte, error) {
-	type noMethod TrafficRule
-	raw := noMethod(*s)
+	type NoMethod TrafficRule
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *TrafficRule) UnmarshalJSON(data []byte) error {
-	type noMethod TrafficRule
+	type NoMethod TrafficRule
 	var s1 struct {
 		Bandwidth              gensupport.JSONFloat64 `json:"bandwidth"`
 		Burst                  gensupport.JSONFloat64 `json:"burst"`
 		PacketDuplicationRatio gensupport.JSONFloat64 `json:"packetDuplicationRatio"`
 		PacketLossRatio        gensupport.JSONFloat64 `json:"packetLossRatio"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -2262,7 +2357,7 @@ func (c *ProjectsTestMatricesCancelCall) Do(opts ...googleapi.CallOption) (*Canc
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2424,7 +2519,7 @@ func (c *ProjectsTestMatricesCreateCall) Do(opts ...googleapi.CallOption) (*Test
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2579,7 +2674,7 @@ func (c *ProjectsTestMatricesGetCall) Do(opts ...googleapi.CallOption) (*TestMat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2739,7 +2834,7 @@ func (c *TestEnvironmentCatalogGetCall) Do(opts ...googleapi.CallOption) (*TestE
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

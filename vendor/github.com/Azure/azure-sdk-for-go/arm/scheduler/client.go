@@ -1,6 +1,6 @@
 // Package scheduler implements the Azure ARM Scheduler service API version 2016-03-01.
 //
-//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/scheduler/2016-03-01/scheduler
 package scheduler
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

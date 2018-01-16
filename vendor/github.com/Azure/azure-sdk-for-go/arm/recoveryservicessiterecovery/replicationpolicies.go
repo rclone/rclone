@@ -107,6 +107,7 @@ func (client ReplicationPoliciesClient) CreatePreparer(policyName string, input 
 func (client ReplicationPoliciesClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -189,6 +190,7 @@ func (client ReplicationPoliciesClient) DeletePreparer(policyName string, cancel
 func (client ReplicationPoliciesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -254,7 +256,9 @@ func (client ReplicationPoliciesClient) GetPreparer(policyName string) (*http.Re
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationPoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -317,7 +321,9 @@ func (client ReplicationPoliciesClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationPoliciesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -470,6 +476,7 @@ func (client ReplicationPoliciesClient) UpdatePreparer(policyName string, input 
 func (client ReplicationPoliciesClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

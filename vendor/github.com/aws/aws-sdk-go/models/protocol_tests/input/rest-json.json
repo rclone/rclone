@@ -1310,17 +1310,46 @@
     "shapes": {
       "InputShape": {
         "type": "structure",
+        "payload": "Body",
         "members": {
-          "Attr": {
+          "HeaderField": {
             "shape": "StringType",
-              "jsonvalue": true,
-              "location": "header",
-              "locationName": "X-Amz-Foo"
+            "jsonvalue": true,
+            "location": "header",
+            "locationName": "X-Amz-Foo"
+          },
+          "QueryField": {
+            "shape": "StringType",
+            "jsonvalue": true,
+            "location": "querystring",
+            "locationName": "Bar"
+          },
+          "Body": {
+            "shape": "BodyStructure"
           }
         }
       },
       "StringType": {
         "type": "string"
+      },
+      "ListType": {
+        "type": "list",
+        "member": {
+          "shape": "StringType",
+          "jsonvalue": true
+        }
+      },
+      "BodyStructure": {
+        "type": "structure",
+        "members": {
+          "BodyField": {
+            "shape": "StringType",
+            "jsonvalue": true
+          },
+          "BodyListField": {
+            "shape": "ListType"
+          }
+        }
       }
     },
     "cases": [
@@ -1335,15 +1364,40 @@
           "name": "OperationName"
         },
         "params": {
-          "Attr": {"Foo":"Bar"}
+          "HeaderField": {"Foo":"Bar"},
+          "QueryField": {"Foo":"Bar"},
+          "Body": {
+            "BodyField": {"Foo":"Bar"}
+          }
         },
         "serialized": {
-          "uri": "/",
+          "uri": "/?Bar=%7B%22Foo%22%3A%22Bar%22%7D",
           "headers": {"X-Amz-Foo": "eyJGb28iOiJCYXIifQ=="},
-          "body": ""
+          "body": "{\"BodyField\":\"{\\\"Foo\\\":\\\"Bar\\\"}\"}"
         }
       },
       {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "http": {
+            "method": "POST"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+          "Body": {
+            "BodyListField": [{"Foo":"Bar"}]
+          }
+        },
+        "serialized": {
+          "uri": "/",
+          "headers": {},
+          "body": "{\"BodyListField\":[\"{\\\"Foo\\\":\\\"Bar\\\"}\"]}"
+        }
+      },
+	  {
         "given": {
           "input": {
             "shape": "InputShape"
@@ -1359,6 +1413,98 @@
           "uri": "/",
           "headers": {},
           "body": ""
+        }
+      }
+    ]
+  },
+  {
+    "description": "Enum",
+    "metadata": {
+      "protocol": "rest-json",
+      "apiVersion": "2014-01-01"
+    },
+    "shapes": {
+      "InputShape": {
+        "type": "structure",
+        "members": {
+          "HeaderEnum": {
+            "shape": "EnumType",
+            "location": "header",
+            "locationName": "x-amz-enum"
+          },
+          "FooEnum": {
+            "shape": "EnumType"
+          },
+          "QueryFooEnum": {
+            "shape": "EnumType",
+            "location": "querystring",
+            "locationName": "Enum"
+          },
+          "ListEnums": {
+            "shape": "EnumList"
+          },
+          "QueryListEnums": {
+            "shape": "EnumList",
+            "location": "querystring",
+            "locationName": "List"
+          }
+        }
+      },
+      "EnumType":{
+        "type":"string",
+        "enum":[
+          "foo",
+          "bar",
+          "0",
+          "1"
+        ]
+      },
+      "EnumList":{
+        "type":"list",
+        "member": {"shape": "EnumType"}
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "http": {
+            "method": "POST",
+            "requestUri": "/path"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+          "HeaderEnum": "baz",
+          "FooEnum": "foo",
+          "QueryFooEnum": "bar",
+          "ListEnums": ["foo", "", "bar"],
+          "QueryListEnums": ["0", "", "1"]
+        },
+        "serialized": {
+          "uri": "/path?Enum=bar&List=0&List=1&List=",
+          "headers": {"x-amz-enum": "baz"},
+          "body": "{\"FooEnum\": \"foo\", \"ListEnums\": [\"foo\", \"\", \"bar\"]}"
+        }
+      },
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "http": {
+            "method": "POST",
+            "requestUri": "/path"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+        },
+        "serialized": {
+          "uri": "/path",
+          "headers": {}
         }
       }
     ]

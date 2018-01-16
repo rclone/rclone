@@ -92,7 +92,7 @@ type Thing struct {
 }
 
 func (s *Thing) MarshalJSON() ([]byte, error) {
-	type noMethod Thing
-	raw := noMethod(*s)
+	type NoMethod Thing
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

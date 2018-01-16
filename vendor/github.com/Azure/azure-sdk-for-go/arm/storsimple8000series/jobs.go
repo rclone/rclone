@@ -117,6 +117,7 @@ func (client JobsClient) CancelPreparer(deviceName string, jobName string, resou
 func (client JobsClient) CancelSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -191,7 +192,9 @@ func (client JobsClient) GetPreparer(deviceName string, jobName string, resource
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -269,7 +272,9 @@ func (client JobsClient) ListByDevicePreparer(deviceName string, resourceGroupNa
 // ListByDeviceSender sends the ListByDevice request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) ListByDeviceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDeviceResponder handles the response to the ListByDevice request. The method always
@@ -414,7 +419,9 @@ func (client JobsClient) ListByManagerPreparer(resourceGroupName string, manager
 // ListByManagerSender sends the ListByManager request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) ListByManagerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByManagerResponder handles the response to the ListByManager request. The method always

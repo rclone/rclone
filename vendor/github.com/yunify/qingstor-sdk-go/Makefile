@@ -32,22 +32,22 @@ check: vet lint
 
 .PHONY: vet
 vet:
-	@echo "go tool vet, skipping vendor packages"
+	@echo "Go tool vet, skipping vendor packages"
 	@go tool vet -all ${DIRS_TO_CHECK}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: lint
 lint:
-	@echo "golint, skipping vendor packages"
+	@echo "Golint, skipping vendor packages"
 	@lint=$$(for pkg in ${PKGS_TO_CHECK}; do golint $${pkg}; done); \
 	 lint=$$(echo "$${lint}"); \
 	 if [[ -n $${lint} ]]; then echo "$${lint}"; exit 1; fi
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: update
 update:
 	git submodule update --remote
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: generate
 generate:
@@ -56,23 +56,23 @@ generate:
 	fi
 	snips -f="./specs/qingstor/2016-01-06/swagger/api_v2.0.json" -t="./template" -o="./service"
 	gofmt -w .
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: build
 build:
-	@echo "build the SDK"
+	@echo "Build the SDK"
 	go build ${PKGS_TO_RELEASE}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: test
 test:
-	@echo "run test"
+	@echo "Run test"
 	go test -v ${PKGS_TO_RELEASE}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: test-coverage
 test-coverage:
-	@echo "run test with coverage"
+	@echo "Run test with coverage"
 	for pkg in ${PKGS_TO_RELEASE}; do \
 		output="coverage$${pkg#github.com/yunify/qingstor-sdk-go}"; \
 		mkdir -p $${output}; \
@@ -81,38 +81,38 @@ test-coverage:
 			go tool cover -html="$${output}/profile.out" -o "$${output}/profile.html"; \
 		fi; \
 	done
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: test-race
 test-race:
-	@echo "run test with race"
+	@echo "Run test with race"
 	go test -v -race -cpu=1,2,4 ${PKGS_TO_RELEASE}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: integration-test
 integration-test:
-	@echo "run integration test"
+	@echo "Run integration test"
 	pushd "./test"; go run *.go; popd
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: release
 release: release-source release-source-with-vendor
 
 .PHONY: release-source
 release-source:
-	@echo "pack the source code"
+	@echo "Pack the source code"
 	mkdir -p "release"
 	zip -FS "release/${PREFIX}-source-v${VERSION}.zip" ${FILES_TO_RELEASE}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: release-source-with-vendor
 release-source-with-vendor:
-	@echo "pack the source code"
+	@echo "Pack the source code with vendor"
 	mkdir -p "release"
 	zip -FS "release/${PREFIX}-source-with-vendor-v${VERSION}.zip" ${FILES_TO_RELEASE_WITH_VENDOR}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: clean
 clean:
 	rm -rf $${PWD}/coverage
-	@echo "ok"
+	@echo "Done"

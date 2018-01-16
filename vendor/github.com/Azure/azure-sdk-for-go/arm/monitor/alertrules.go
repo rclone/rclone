@@ -101,7 +101,9 @@ func (client AlertRulesClient) CreateOrUpdatePreparer(resourceGroupName string, 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertRulesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -166,7 +168,9 @@ func (client AlertRulesClient) DeletePreparer(resourceGroupName string, ruleName
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertRulesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -230,7 +234,9 @@ func (client AlertRulesClient) GetPreparer(resourceGroupName string, ruleName st
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertRulesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -294,7 +300,9 @@ func (client AlertRulesClient) ListByResourceGroupPreparer(resourceGroupName str
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertRulesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -362,7 +370,9 @@ func (client AlertRulesClient) UpdatePreparer(resourceGroupName string, ruleName
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client AlertRulesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

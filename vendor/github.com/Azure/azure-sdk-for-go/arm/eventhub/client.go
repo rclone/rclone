@@ -1,6 +1,8 @@
 // Package eventhub implements the Azure ARM Eventhub service API version 2017-04-01.
 //
 // Azure Event Hubs client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/eventhub/mgmt/2017-04-01/event
 package eventhub
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

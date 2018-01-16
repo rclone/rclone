@@ -12,7 +12,6 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/awstesting"
-	"github.com/stretchr/testify/assert"
 )
 
 type signerBuilder struct {
@@ -56,8 +55,6 @@ func (sb signerBuilder) BuildSigner() signer {
 }
 
 func TestSignRequestWithAndWithoutSession(t *testing.T) {
-	assert := assert.New(t)
-
 	// have to create more than once, so use a function
 	newQuery := func() url.Values {
 		query := make(url.Values)
@@ -82,21 +79,45 @@ func TestSignRequestWithAndWithoutSession(t *testing.T) {
 	signer := builder.BuildSigner()
 
 	err := signer.Sign()
-	assert.NoError(err)
-	assert.Equal("tm4dX8Ks7pzFSVHz7qHdoJVXKRLuC4gWz9eti60d8ks=", signer.signature)
-	assert.Equal(8, len(signer.Query))
-	assert.Equal("AKID", signer.Query.Get("AWSAccessKeyId"))
-	assert.Equal("2015-07-16T07:56:16Z", signer.Query.Get("Timestamp"))
-	assert.Equal("HmacSHA256", signer.Query.Get("SignatureMethod"))
-	assert.Equal("2", signer.Query.Get("SignatureVersion"))
-	assert.Equal("tm4dX8Ks7pzFSVHz7qHdoJVXKRLuC4gWz9eti60d8ks=", signer.Query.Get("Signature"))
-	assert.Equal("CreateDomain", signer.Query.Get("Action"))
-	assert.Equal("TestDomain-1437033376", signer.Query.Get("DomainName"))
-	assert.Equal("2009-04-15", signer.Query.Get("Version"))
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := "tm4dX8Ks7pzFSVHz7qHdoJVXKRLuC4gWz9eti60d8ks=", signer.signature; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := 8, len(signer.Query); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "AKID", signer.Query.Get("AWSAccessKeyId"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "2015-07-16T07:56:16Z", signer.Query.Get("Timestamp"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "HmacSHA256", signer.Query.Get("SignatureMethod"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "2", signer.Query.Get("SignatureVersion"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "tm4dX8Ks7pzFSVHz7qHdoJVXKRLuC4gWz9eti60d8ks=", signer.Query.Get("Signature"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "CreateDomain", signer.Query.Get("Action"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "TestDomain-1437033376", signer.Query.Get("DomainName"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "2009-04-15", signer.Query.Get("Version"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	// should not have a SecurityToken parameter
 	_, ok := signer.Query["SecurityToken"]
-	assert.False(ok)
+	if ok {
+		t.Errorf("expect SecurityToken found, was not")
+	}
 
 	// now sign again, this time with a security token (session)
 
@@ -105,15 +126,24 @@ func TestSignRequestWithAndWithoutSession(t *testing.T) {
 	signer = builder.BuildSigner()
 
 	err = signer.Sign()
-	assert.NoError(err)
-	assert.Equal("Ch6qv3rzXB1SLqY2vFhsgA1WQ9rnQIE2WJCigOvAJwI=", signer.signature)
-	assert.Equal(9, len(signer.Query)) // expect one more parameter
-	assert.Equal("Ch6qv3rzXB1SLqY2vFhsgA1WQ9rnQIE2WJCigOvAJwI=", signer.Query.Get("Signature"))
-	assert.Equal("SESSION", signer.Query.Get("SecurityToken"))
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := "Ch6qv3rzXB1SLqY2vFhsgA1WQ9rnQIE2WJCigOvAJwI=", signer.signature; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := 9, len(signer.Query); e != a { // expect one more parameter
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "Ch6qv3rzXB1SLqY2vFhsgA1WQ9rnQIE2WJCigOvAJwI=", signer.Query.Get("Signature"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "SESSION", signer.Query.Get("SecurityToken"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestMoreComplexSignRequest(t *testing.T) {
-	assert := assert.New(t)
 	query := make(url.Values)
 	query.Add("Action", "PutAttributes")
 	query.Add("DomainName", "TestDomain-1437041569")
@@ -139,12 +169,15 @@ func TestMoreComplexSignRequest(t *testing.T) {
 	signer := builder.BuildSigner()
 
 	err := signer.Sign()
-	assert.NoError(err)
-	assert.Equal("WNdE62UJKLKoA6XncVY/9RDbrKmcVMdQPQOTAs8SgwQ=", signer.signature)
+	if err != nil {
+		t.Fatalf("expect no error, got %v", err)
+	}
+	if e, a := "WNdE62UJKLKoA6XncVY/9RDbrKmcVMdQPQOTAs8SgwQ=", signer.signature; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 }
 
 func TestGet(t *testing.T) {
-	assert := assert.New(t)
 	svc := awstesting.NewClient(&aws.Config{
 		Credentials: credentials.NewStaticCredentials("AKID", "SECRET", "SESSION"),
 		Region:      aws.String("ap-southeast-2"),
@@ -160,17 +193,24 @@ func TestGet(t *testing.T) {
 	)
 
 	r.Build()
-	assert.Equal("GET", r.HTTPRequest.Method)
-	assert.Equal("", r.HTTPRequest.URL.Query().Get("Signature"))
+	if e, a := "GET", r.HTTPRequest.Method; e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
+	if e, a := "", r.HTTPRequest.URL.Query().Get("Signature"); e != a {
+		t.Errorf("expect %v, got %v", e, a)
+	}
 
 	SignSDKRequest(r)
-	assert.NoError(r.Error)
+	if r.Error != nil {
+		t.Fatalf("expect no error, got %v", r.Error)
+	}
 	t.Logf("Signature: %s", r.HTTPRequest.URL.Query().Get("Signature"))
-	assert.NotEqual("", r.HTTPRequest.URL.Query().Get("Signature"))
+	if len(r.HTTPRequest.URL.Query().Get("Signature")) == 0 {
+		t.Errorf("expect signature to be set, was not")
+	}
 }
 
 func TestAnonymousCredentials(t *testing.T) {
-	assert := assert.New(t)
 	svc := awstesting.NewClient(&aws.Config{
 		Credentials: credentials.AnonymousCredentials,
 		Region:      aws.String("ap-southeast-2"),
@@ -191,5 +231,7 @@ func TestAnonymousCredentials(t *testing.T) {
 	req := r.HTTPRequest
 	req.ParseForm()
 
-	assert.Empty(req.PostForm.Get("Signature"))
+	if a := req.PostForm.Get("Signature"); len(a) != 0 {
+		t.Errorf("expect no signature, got %v", a)
+	}
 }

@@ -90,7 +90,9 @@ func (client ServerUsagesClient) ListByServerPreparer(resourceGroupName string, 
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerUsagesClient) ListByServerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByServerResponder handles the response to the ListByServer request. The method always

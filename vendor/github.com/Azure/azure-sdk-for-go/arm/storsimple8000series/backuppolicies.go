@@ -118,6 +118,7 @@ func (client BackupPoliciesClient) BackupNowPreparer(deviceName string, backupPo
 func (client BackupPoliciesClient) BackupNowSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -216,6 +217,7 @@ func (client BackupPoliciesClient) CreateOrUpdatePreparer(deviceName string, bac
 func (client BackupPoliciesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -310,6 +312,7 @@ func (client BackupPoliciesClient) DeletePreparer(deviceName string, backupPolic
 func (client BackupPoliciesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -384,7 +387,9 @@ func (client BackupPoliciesClient) GetPreparer(deviceName string, backupPolicyNa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupPoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -457,7 +462,9 @@ func (client BackupPoliciesClient) ListByDevicePreparer(deviceName string, resou
 // ListByDeviceSender sends the ListByDevice request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupPoliciesClient) ListByDeviceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDeviceResponder handles the response to the ListByDevice request. The method always

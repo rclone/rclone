@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/UYGCzApTAApQ5LVMe3mi28BTsws\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/Yf3Z0mLn7GU4E3aNY8w0QjeYwBA\"",
  "discoveryVersion": "v1",
  "id": "toolresults:v1beta3",
  "name": "toolresults",
  "canonicalName": "Tool Results",
  "version": "v1beta3",
- "revision": "20170925",
+ "revision": "20171211",
  "title": "Cloud Tool Results API",
  "description": "Reads and publishes results from Firebase Test Lab.",
  "ownerDomain": "google.com",
@@ -122,7 +122,7 @@
     },
     "useOrchestrator": {
      "type": "boolean",
-     "description": "The flag indicates whether Android Test Orchestrator will be used to run test or not. Test orchestrator is used if either: - orchestrator_option field is USE_ORCHESTRATOR, and test runner is compatible with orchestrator. Or - orchestrator_option field is unspecified or ORCHESTRATOR_OPTION_UNSPECIFIED, and test runner is compatible with orchestrator."
+     "description": "The flag indicates whether Android Test Orchestrator will be used to run test or not."
     }
    }
   },
@@ -185,7 +185,7 @@
    "properties": {
     "typeUrl": {
      "type": "string",
-     "description": "A URL/resource name whose content describes the type of the serialized protocol buffer message.\n\nFor URLs which use the scheme `http`, `https`, or no scheme, the following restrictions and interpretations apply:\n\n* If no scheme is provided, `https` is assumed. * The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted). * An HTTP GET on the URL must yield a [google.protobuf.Type][] value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the URL, or have them precompiled into a binary to avoid any lookup. Therefore, binary compatibility needs to be preserved on changes to types. (Use versioned type names to manage breaking changes.)\n\nSchemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
+     "description": "A URL/resource name that uniquely identifies the type of the serialized protocol buffer message. The last segment of the URL's path must represent the fully qualified name of the type (as in `path/google.protobuf.Duration`). The name should be in a canonical form (e.g., leading \".\" is not accepted).\n\nIn practice, teams usually precompile into the binary all types that they expect it to use in the context of Any. However, for URLs which use the scheme `http`, `https`, or no scheme, one can optionally set up a type server that maps type URLs to message definitions as follows:\n\n* If no scheme is provided, `https` is assumed. * An HTTP GET on the URL must yield a [google.protobuf.Type][] value in binary format, or produce an error. * Applications are allowed to cache lookup results based on the URL, or have them precompiled into a binary to avoid any lookup. Therefore, binary compatibility needs to be preserved on changes to types. (Use versioned type names to manage breaking changes.)\n\nNote: this functionality is not currently available in the official protobuf release, and it is not used for type URLs beginning with type.googleapis.com.\n\nSchemes other than `http`, `https` (or the empty scheme) might be used with implementation specific semantics."
     },
     "value": {
      "type": "string",
@@ -428,6 +428,91 @@
     "fileUri": {
      "type": "string",
      "description": "The URI of a file stored in Google Cloud Storage.\n\nFor example: http://storage.googleapis.com/mybucket/path/to/test.xml or in gsutil format: gs://mybucket/path/to/test.xml with version-specific info, gs://mybucket/path/to/test.xml#1360383693690000\n\nAn INVALID_ARGUMENT error will be returned if the URI format is not supported.\n\n- In response: always set - In create/update request: always set"
+    }
+   }
+  },
+  "GraphicsStats": {
+   "id": "GraphicsStats",
+   "type": "object",
+   "description": "Graphics statistics for the App. The information is collected from 'adb shell dumpsys graphicsstats'. For more info see: https://developer.android.com/training/testing/performance.html Statistics will only be present for API 23+.",
+   "properties": {
+    "buckets": {
+     "type": "array",
+     "description": "Histogram of frame render times. There should be 154 buckets ranging from [5ms, 6ms) to [4950ms, infinity)",
+     "items": {
+      "$ref": "GraphicsStatsBucket"
+     }
+    },
+    "highInputLatencyCount": {
+     "type": "string",
+     "description": "Total \"high input latency\" events.",
+     "format": "int64"
+    },
+    "jankyFrames": {
+     "type": "string",
+     "description": "Total frames with slow render time. Should be \u003c= total_frames.",
+     "format": "int64"
+    },
+    "missedVsyncCount": {
+     "type": "string",
+     "description": "Total \"missed vsync\" events.",
+     "format": "int64"
+    },
+    "p50Millis": {
+     "type": "string",
+     "description": "50th percentile frame render time in milliseconds.",
+     "format": "int64"
+    },
+    "p90Millis": {
+     "type": "string",
+     "description": "90th percentile frame render time in milliseconds.",
+     "format": "int64"
+    },
+    "p95Millis": {
+     "type": "string",
+     "description": "95th percentile frame render time in milliseconds.",
+     "format": "int64"
+    },
+    "p99Millis": {
+     "type": "string",
+     "description": "99th percentile frame render time in milliseconds.",
+     "format": "int64"
+    },
+    "slowBitmapUploadCount": {
+     "type": "string",
+     "description": "Total \"slow bitmap upload\" events.",
+     "format": "int64"
+    },
+    "slowDrawCount": {
+     "type": "string",
+     "description": "Total \"slow draw\" events.",
+     "format": "int64"
+    },
+    "slowUiThreadCount": {
+     "type": "string",
+     "description": "Total \"slow UI thread\" events.",
+     "format": "int64"
+    },
+    "totalFrames": {
+     "type": "string",
+     "description": "Total frames rendered by package.",
+     "format": "int64"
+    }
+   }
+  },
+  "GraphicsStatsBucket": {
+   "id": "GraphicsStatsBucket",
+   "type": "object",
+   "properties": {
+    "frameCount": {
+     "type": "string",
+     "description": "Number of frames in the bucket.",
+     "format": "int64"
+    },
+    "renderMillis": {
+     "type": "string",
+     "description": "Lower bound of render time in milliseconds.",
+     "format": "int64"
     }
    }
   },
@@ -683,6 +768,10 @@
     "executionId": {
      "type": "string",
      "description": "A tool results execution ID."
+    },
+    "graphicsStats": {
+     "$ref": "GraphicsStats",
+     "description": "Graphics statistics for the entire run. Statistics are reset at the beginning of the run and collected at the end of the run."
     },
     "historyId": {
      "type": "string",
@@ -1114,11 +1203,19 @@
      "description": "Type of issue. Required.",
      "enum": [
       "anr",
+      "compatibleWithOrchestrator",
       "fatalException",
+      "launcherActivityNotFound",
       "nativeCrash",
-      "unspecifiedType"
+      "startActivityNotFound",
+      "unspecifiedType",
+      "unusedRoboDirective"
      ],
      "enumDescriptions": [
+      "",
+      "",
+      "",
+      "",
       "",
       "",
       "",
@@ -1127,7 +1224,7 @@
     },
     "warning": {
      "$ref": "Any",
-     "description": "Warning message with additional details of the issue. Should always be a message from com.google.devtools.toolresults.v1.warnings Required."
+     "description": "Warning message with additional details of the issue. Should always be a message from com.google.devtools.toolresults.v1.warnings"
     }
    }
   },
@@ -1206,7 +1303,7 @@
   "Timestamp": {
    "id": "Timestamp",
    "type": "object",
-   "description": "A Timestamp represents a point in time independent of any time zone or calendar, represented as seconds and fractions of seconds at nanosecond resolution in UTC Epoch time. It is encoded using the Proleptic Gregorian Calendar which extends the Gregorian calendar backwards to year one. It is encoded assuming all minutes are 60 seconds long, i.e. leap seconds are \"smeared\" so that no leap second table is needed for interpretation. Range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By restricting to that range, we ensure that we can convert to and from RFC 3339 date strings. See [https://www.ietf.org/rfc/rfc3339.txt](https://www.ietf.org/rfc/rfc3339.txt).\n\n# Examples\n\nExample 1: Compute Timestamp from POSIX `time()`.\n\nTimestamp timestamp; timestamp.set_seconds(time(NULL)); timestamp.set_nanos(0);\n\nExample 2: Compute Timestamp from POSIX `gettimeofday()`.\n\nstruct timeval tv; gettimeofday(&tv, NULL);\n\nTimestamp timestamp; timestamp.set_seconds(tv.tv_sec); timestamp.set_nanos(tv.tv_usec * 1000);\n\nExample 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.\n\nFILETIME ft; GetSystemTimeAsFileTime(&ft); UINT64 ticks = (((UINT64)ft.dwHighDateTime) \u003c\u003c 32) | ft.dwLowDateTime;\n\n// A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z. Timestamp timestamp; timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL)); timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));\n\nExample 4: Compute Timestamp from Java `System.currentTimeMillis()`.\n\nlong millis = System.currentTimeMillis();\n\nTimestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000) .setNanos((int) ((millis % 1000) * 1000000)).build();\n\n\n\nExample 5: Compute Timestamp from current time in Python.\n\ntimestamp = Timestamp() timestamp.GetCurrentTime()\n\n# JSON Mapping\n\nIn JSON format, the Timestamp type is encoded as a string in the [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the format is \"{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z\" where {year} is always expressed using four digits while {month}, {day}, {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution), are optional. The \"Z\" suffix indicates the timezone (\"UTC\"); the timezone is required, though only UTC (as indicated by \"Z\") is presently supported.\n\nFor example, \"2017-01-15T01:30:15.01Z\" encodes 15.01 seconds past 01:30 UTC on January 15, 2017.\n\nIn JavaScript, one can convert a Date object to this format using the standard [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString] method. In Python, a standard `datetime.datetime` object can be converted to this format using [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use the Joda Time's [`ISODateTimeFormat.dateTime()`]( http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()) to obtain a formatter capable of generating timestamps in this format.",
+   "description": "A Timestamp represents a point in time independent of any time zone or calendar, represented as seconds and fractions of seconds at nanosecond resolution in UTC Epoch time. It is encoded using the Proleptic Gregorian Calendar which extends the Gregorian calendar backwards to year one. It is encoded assuming all minutes are 60 seconds long, i.e. leap seconds are \"smeared\" so that no leap second table is needed for interpretation. Range is from 0001-01-01T00:00:00Z to 9999-12-31T23:59:59.999999999Z. By restricting to that range, we ensure that we can convert to and from RFC 3339 date strings. See [https://www.ietf.org/rfc/rfc3339.txt](https://www.ietf.org/rfc/rfc3339.txt).\n\n# Examples\n\nExample 1: Compute Timestamp from POSIX `time()`.\n\nTimestamp timestamp; timestamp.set_seconds(time(NULL)); timestamp.set_nanos(0);\n\nExample 2: Compute Timestamp from POSIX `gettimeofday()`.\n\nstruct timeval tv; gettimeofday(&tv, NULL);\n\nTimestamp timestamp; timestamp.set_seconds(tv.tv_sec); timestamp.set_nanos(tv.tv_usec * 1000);\n\nExample 3: Compute Timestamp from Win32 `GetSystemTimeAsFileTime()`.\n\nFILETIME ft; GetSystemTimeAsFileTime(&ft); UINT64 ticks = (((UINT64)ft.dwHighDateTime) \u003c\u003c 32) | ft.dwLowDateTime;\n\n// A Windows tick is 100 nanoseconds. Windows epoch 1601-01-01T00:00:00Z // is 11644473600 seconds before Unix epoch 1970-01-01T00:00:00Z. Timestamp timestamp; timestamp.set_seconds((INT64) ((ticks / 10000000) - 11644473600LL)); timestamp.set_nanos((INT32) ((ticks % 10000000) * 100));\n\nExample 4: Compute Timestamp from Java `System.currentTimeMillis()`.\n\nlong millis = System.currentTimeMillis();\n\nTimestamp timestamp = Timestamp.newBuilder().setSeconds(millis / 1000) .setNanos((int) ((millis % 1000) * 1000000)).build();\n\n\n\nExample 5: Compute Timestamp from current time in Python.\n\ntimestamp = Timestamp() timestamp.GetCurrentTime()\n\n# JSON Mapping\n\nIn JSON format, the Timestamp type is encoded as a string in the [RFC 3339](https://www.ietf.org/rfc/rfc3339.txt) format. That is, the format is \"{year}-{month}-{day}T{hour}:{min}:{sec}[.{frac_sec}]Z\" where {year} is always expressed using four digits while {month}, {day}, {hour}, {min}, and {sec} are zero-padded to two digits each. The fractional seconds, which can go up to 9 digits (i.e. up to 1 nanosecond resolution), are optional. The \"Z\" suffix indicates the timezone (\"UTC\"); the timezone is required, though only UTC (as indicated by \"Z\") is currently supported.\n\nFor example, \"2017-01-15T01:30:15.01Z\" encodes 15.01 seconds past 01:30 UTC on January 15, 2017.\n\nIn JavaScript, one can convert a Date object to this format using the standard [toISOString()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/toISOString] method. In Python, a standard `datetime.datetime` object can be converted to this format using [`strftime`](https://docs.python.org/2/library/time.html#time.strftime) with the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in Java, one can use the Joda Time's [`ISODateTimeFormat.dateTime()`]( http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime-- ) to obtain a formatter capable of generating timestamps in this format.",
    "properties": {
     "nanos": {
      "type": "integer",

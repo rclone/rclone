@@ -185,7 +185,7 @@ func testHashes2X(t *testing.T) {
 	if n, err := h.Read(result[:]); err != nil {
 		t.Fatalf("#unknown length: error from Read: %v", err)
 	} else if n != len(result) {
-		t.Fatalf("#unknown length: Read returned %d bytes, want %d: %v", n, len(result))
+		t.Fatalf("#unknown length: Read returned %d bytes, want %d", n, len(result))
 	}
 
 	const expected = "2a9a6977d915a2c4dd07dbcafe1918bf1682e56d9c8e567ecd19bfd7cd93528833c764d12b34a5e2a219c9fd463dab45e972c5574d73f45de5b2e23af72530d8"

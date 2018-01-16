@@ -16,6 +16,9 @@
     "CreateGroupVersion" : "Creates a version of a group which has already been defined.",
     "CreateLoggerDefinition" : "Creates a logger definition. You may optionally provide the initial version of the logger definition or use ``CreateLoggerDefinitionVersion`` at a later time.",
     "CreateLoggerDefinitionVersion" : "Creates a version of a logger definition that has already been defined.",
+    "CreateResourceDefinition" : "Creates a resource definition which contains a list of resources to be used in a group. You can create an initial version of the definition by providing a list of resources now, or use ``CreateResourceDefinitionVersion`` later.",
+    "CreateResourceDefinitionVersion" : "Create a version of a resource definition that has already been defined.",
+    "CreateSoftwareUpdateJob" : "Creates an Iot Job that will trigger your Greengrass Cores to update the software they are running.",
     "CreateSubscriptionDefinition" : "Creates a subscription definition. You may optionally provide the initial version of the subscription definition or use ``CreateSubscriptionDefinitionVersion`` at a later time.",
     "CreateSubscriptionDefinitionVersion" : "Creates a version of a subscription definition which has already been defined.",
     "DeleteCoreDefinition" : "Deletes a core definition. The core definition must not have been used in a deployment.",
@@ -23,6 +26,7 @@
     "DeleteFunctionDefinition" : "Deletes a Lambda function definition. The Lambda function definition must not have been used in a deployment.",
     "DeleteGroup" : "Deletes a group. The group must not have been used in deployment.",
     "DeleteLoggerDefinition" : "Deletes a logger definition. The logger definition must not have been used in a deployment.",
+    "DeleteResourceDefinition" : "Deletes a resource definition.",
     "DeleteSubscriptionDefinition" : "Deletes a subscription definition. The subscription definition must not have been used in a deployment.",
     "DisassociateRoleFromGroup" : "Disassociates the role from a group.",
     "DisassociateServiceRoleFromAccount" : "Disassociates the service role from the account. Without a service role, deployments will not work.",
@@ -41,6 +45,8 @@
     "GetGroupVersion" : "Retrieves information about a group version.",
     "GetLoggerDefinition" : "Retrieves information about a logger definition.",
     "GetLoggerDefinitionVersion" : "Retrieves information about a logger definition version.",
+    "GetResourceDefinition" : "Retrieves information about a resource definition, such as its creation time and latest version.",
+    "GetResourceDefinitionVersion" : "Retrieves information about a resource definition version, such as which resources are included in the version.",
     "GetServiceRoleForAccount" : "Retrieves the service role that is attached to the account.",
     "GetSubscriptionDefinition" : "Retrieves information about a subscription definition.",
     "GetSubscriptionDefinitionVersion" : "Retrieves information about a subscription definition version.",
@@ -56,6 +62,8 @@
     "ListGroups" : "Retrieves a list of groups.",
     "ListLoggerDefinitionVersions" : "Lists the versions of a logger definition.",
     "ListLoggerDefinitions" : "Retrieves a list of logger definitions.",
+    "ListResourceDefinitionVersions" : "Lists the versions of a resource definition.",
+    "ListResourceDefinitions" : "Retrieves a list of resource definitions.",
     "ListSubscriptionDefinitionVersions" : "Lists the versions of a subscription definition.",
     "ListSubscriptionDefinitions" : "Retrieves a list of subscription definitions.",
     "ResetDeployments" : "Resets a group's deployments.",
@@ -66,6 +74,7 @@
     "UpdateGroup" : "Updates a group.",
     "UpdateGroupCertificateConfiguration" : "Updates the Cert expiry time for a group.",
     "UpdateLoggerDefinition" : "Updates a logger definition.",
+    "UpdateResourceDefinition" : "Updates a resource definition.",
     "UpdateSubscriptionDefinition" : "Updates a subscription definition."
   },
   "shapes" : {
@@ -117,6 +126,14 @@
       "refs" : { }
     },
     "CreateGroupCertificateAuthorityResponse" : {
+      "base" : null,
+      "refs" : { }
+    },
+    "CreateSoftwareUpdateJobRequest" : {
+      "base" : "Request for the CreateSoftwareUpdateJob API",
+      "refs" : { }
+    },
+    "CreateSoftwareUpdateJobResponse" : {
       "base" : null,
       "refs" : { }
     },
@@ -204,7 +221,7 @@
     "FunctionDefinitionVersion" : {
       "base" : "Information on the function definition version",
       "refs" : {
-        "GetFunctionDefinitionVersionResponse$Definition" : "Information on the definition"
+        "GetFunctionDefinitionVersionResponse$Definition" : "Information on the definition."
       }
     },
     "GeneralError" : {
@@ -247,6 +264,10 @@
       "base" : "Information on logger definition version response",
       "refs" : { }
     },
+    "GetResourceDefinitionVersionResponse" : {
+      "base" : "Information on resource definition version response",
+      "refs" : { }
+    },
     "GetServiceRoleForAccountResponse" : {
       "base" : null,
       "refs" : { }
@@ -271,6 +292,13 @@
         "ListGroupsResponse$Groups" : "Groups"
       }
     },
+    "GroupOwnerSetting" : {
+      "base" : "Group owner related settings for local resources.",
+      "refs" : {
+        "LocalDeviceResourceData$GroupOwnerSetting" : "Group owner related settings for local resources.",
+        "LocalVolumeResourceData$GroupOwnerSetting" : "Group owner related settings for local resources."
+      }
+    },
     "GroupVersion" : {
       "base" : "Information on group version",
       "refs" : {
@@ -278,7 +306,7 @@
       }
     },
     "InternalServerErrorException" : {
-      "base" : "Server Error",
+      "base" : "The server encountered an unexpected error.",
       "refs" : { }
     },
     "ListDefinitionsResponse" : {
@@ -329,6 +357,14 @@
       "base" : null,
       "refs" : { }
     },
+    "ListOfResource" : {
+      "base" : null,
+      "refs" : { }
+    },
+    "ListOfResourceAccessPolicy" : {
+      "base" : null,
+      "refs" : { }
+    },
     "ListOfSubscription" : {
       "base" : null,
       "refs" : { }
@@ -340,6 +376,18 @@
     "ListVersionsResponse" : {
       "base" : "List of versions response",
       "refs" : { }
+    },
+    "LocalDeviceResourceData" : {
+      "base" : "Attributes that define the Local Device Resource.",
+      "refs" : {
+        "ResourceDataContainer$LocalDeviceResourceData" : "Attributes that define the Local Device Resource."
+      }
+    },
+    "LocalVolumeResourceData" : {
+      "base" : "Attributes that define the Local Volume Resource.",
+      "refs" : {
+        "ResourceDataContainer$LocalVolumeResourceData" : "Attributes that define the Local Volume Resource."
+      }
     },
     "Logger" : {
       "base" : "Information on the Logger",
@@ -375,6 +423,12 @@
       "base" : null,
       "refs" : { }
     },
+    "Permission" : {
+      "base" : "Type of permissions a function could have to access a resource.",
+      "refs" : {
+        "ResourceAccessPolicy$Permission" : "The function's access permission to the resource."
+      }
+    },
     "ResetDeploymentsRequest" : {
       "base" : "Information needed to perform a reset of a group's deployments.",
       "refs" : { }
@@ -382,6 +436,42 @@
     "ResetDeploymentsResponse" : {
       "base" : null,
       "refs" : { }
+    },
+    "Resource" : {
+      "base" : "Information on the resource.",
+      "refs" : {
+        "ResourceDefinitionVersion$Resources" : "List of resources."
+      }
+    },
+    "ResourceAccessPolicy" : {
+      "base" : "Policy for the function to access a resource.",
+      "refs" : {
+        "FunctionConfigurationEnvironment$ResourceAccessPolicies" : "Policies for the function to access resources."
+      }
+    },
+    "ResourceDataContainer" : {
+      "base" : "A container of data for all resource types.",
+      "refs" : {
+        "Resource$ResourceDataContainer" : "A container of data for all resource types."
+      }
+    },
+    "ResourceDefinitionVersion" : {
+      "base" : "Information on resource definition version",
+      "refs" : {
+        "GetResourceDefinitionVersionResponse$Definition" : "Information on definition."
+      }
+    },
+    "S3UrlSignerRole" : {
+      "base" : "The IAM Role that Greengrass will use to create pre-signed URLs pointing towards the update artifact.",
+      "refs" : {
+        "CreateSoftwareUpdateJobRequest$S3UrlSignerRole" : null
+      }
+    },
+    "SoftwareToUpdate" : {
+      "base" : "The piece of software on the Greengrass Core that will be updated.",
+      "refs" : {
+        "CreateSoftwareUpdateJobRequest$SoftwareToUpdate" : null
+      }
     },
     "Subscription" : {
       "base" : "Information on subscription",
@@ -393,6 +483,12 @@
       "base" : "Information on subscription definition version",
       "refs" : {
         "GetSubscriptionDefinitionVersionResponse$Definition" : "Information on the definition"
+      }
+    },
+    "UpdateAgentLogLevel" : {
+      "base" : "The minimum level of log statements that should be logged by the OTA Agent during an update.",
+      "refs" : {
+        "CreateSoftwareUpdateJobRequest$UpdateAgentLogLevel" : null
       }
     },
     "UpdateConnectivityInfoRequest" : {
@@ -407,6 +503,24 @@
       "base" : null,
       "refs" : { }
     },
+    "UpdateTargets" : {
+      "base" : "The target arns that this update will be applied to.",
+      "refs" : {
+        "CreateSoftwareUpdateJobRequest$UpdateTargets" : null
+      }
+    },
+    "UpdateTargetsArchitecture" : {
+      "base" : "The architecture of the Cores in the targets of an update",
+      "refs" : {
+        "CreateSoftwareUpdateJobRequest$UpdateTargetsArchitecture" : null
+      }
+    },
+    "UpdateTargetsOperatingSystem" : {
+      "base" : "The operating system of the Cores in the targets of an update",
+      "refs" : {
+        "CreateSoftwareUpdateJobRequest$UpdateTargetsOperatingSystem" : null
+      }
+    },
     "VersionInformation" : {
       "base" : "Information on the version",
       "refs" : {
@@ -419,6 +533,8 @@
         "Core$SyncShadow" : "If true, the local shadow value automatically syncs with the cloud's shadow state.",
         "Device$SyncShadow" : "If true, the local shadow value automatically syncs with the cloud's shadow state.",
         "FunctionConfiguration$Pinned" : "Whether the function is pinned or not. Pinned means the function is long-lived and starts when the core starts.",
+        "FunctionConfigurationEnvironment$AccessSysfs" : "Flag to allow lambda access sys filesystem.",
+        "GroupOwnerSetting$AutoAddGroupOwner" : "Eanble the auto added group owner.",
         "ResetDeploymentsRequest$Force" : "When set to true, perform a best-effort only core reset."
       }
     },
@@ -449,6 +565,8 @@
         "CreateDeploymentResponse$DeploymentArn" : "The arn of the deployment.",
         "CreateDeploymentResponse$DeploymentId" : "The id of the deployment.",
         "CreateGroupCertificateAuthorityResponse$GroupCertificateAuthorityArn" : "Arn of the group certificate authority.",
+        "CreateSoftwareUpdateJobResponse$IotJobArn" : "The Iot Job Arn corresponding to this update.",
+        "CreateSoftwareUpdateJobResponse$IotJobId" : "The Iot Job Id corresponding to this update.",
         "DefinitionInformation$Arn" : "Arn of the definition.",
         "DefinitionInformation$CreationTimestamp" : "Timestamp of when the definition was created.",
         "DefinitionInformation$Id" : "Id of the definition.",
@@ -474,7 +592,7 @@
         "GeneralError$Message" : "Message containing information about the error",
         "GetAssociatedRoleResponse$AssociatedAt" : "Time when the role was associated for the group.",
         "GetAssociatedRoleResponse$RoleArn" : "Arn of the role that is associated with the group.",
-        "GetConnectivityInfoResponse$message" : "Response Text",
+        "GetConnectivityInfoResponse$Message" : "Response Text",
         "GetCoreDefinitionVersionResponse$Arn" : "Arn of the core definition version.",
         "GetCoreDefinitionVersionResponse$CreationTimestamp" : "Timestamp of when the core definition version was created.",
         "GetCoreDefinitionVersionResponse$Id" : "Id of the core definition the version belongs to.",
@@ -501,6 +619,10 @@
         "GetLoggerDefinitionVersionResponse$CreationTimestamp" : "Timestamp of when the logger definition version was created.",
         "GetLoggerDefinitionVersionResponse$Id" : "Id of the logger definition the version belongs to.",
         "GetLoggerDefinitionVersionResponse$Version" : "Version of the logger definition version.",
+        "GetResourceDefinitionVersionResponse$Arn" : "Arn of the resource definition version.",
+        "GetResourceDefinitionVersionResponse$CreationTimestamp" : "Timestamp of when the resource definition version was created.",
+        "GetResourceDefinitionVersionResponse$Id" : "Id of the resource definition the version belongs to.",
+        "GetResourceDefinitionVersionResponse$Version" : "Version of the resource definition version.",
         "GetServiceRoleForAccountResponse$AssociatedAt" : "Time when the service role was associated to the account.",
         "GetServiceRoleForAccountResponse$RoleArn" : "Role arn which is associated to the account.",
         "GetSubscriptionDefinitionVersionResponse$Arn" : "Arn of the subscription definition version.",
@@ -519,24 +641,32 @@
         "GroupInformation$LatestVersion" : "Last version of the group.",
         "GroupInformation$LatestVersionArn" : "Latest version arn of the group.",
         "GroupInformation$Name" : "Name of a group.",
+        "GroupOwnerSetting$GroupOwner" : "Name of the group owner.",
         "GroupVersion$CoreDefinitionVersionArn" : "Core definition version arn for this group.",
         "GroupVersion$DeviceDefinitionVersionArn" : "Device definition version arn for this group.",
         "GroupVersion$FunctionDefinitionVersionArn" : "Function definition version arn for this group.",
-        "GroupVersion$LoggerDefinitionVersionArn" : "Logger definitionv ersion arn for this group.",
+        "GroupVersion$LoggerDefinitionVersionArn" : "Logger definition version arn for this group.",
+        "GroupVersion$ResourceDefinitionVersionArn" : "Resource definition version arn for this group.",
         "GroupVersion$SubscriptionDefinitionVersionArn" : "Subscription definition version arn for this group.",
         "ListDefinitionsResponse$NextToken" : "The token for the next set of results, or ''null'' if there are no additional results.",
         "ListDeploymentsResponse$NextToken" : "The token for the next set of results, or ''null'' if there are no additional results.",
         "ListGroupsResponse$NextToken" : "The token for the next set of results, or ''null'' if there are no additional results.",
         "ListVersionsResponse$NextToken" : "The token for the next set of results, or ''null'' if there are no additional results.",
+        "LocalDeviceResourceData$SourcePath" : "Local source path of the resource.",
+        "LocalVolumeResourceData$DestinationPath" : "Local destination path of the resource.",
+        "LocalVolumeResourceData$SourcePath" : "Local source path of the resource.",
         "Logger$Id" : "Element Id for this entry in the list.",
         "ResetDeploymentsResponse$DeploymentArn" : "The arn of the reset deployment.",
         "ResetDeploymentsResponse$DeploymentId" : "The id of the reset deployment.",
+        "Resource$Id" : "Resource Id.",
+        "Resource$Name" : "A descriptive resource name.",
+        "ResourceAccessPolicy$ResourceId" : "Id of the resource. A reference to the resource definiton.",
         "Subscription$Id" : "Element Id for this entry in the list.",
         "Subscription$Source" : "Source of the subscription. Can be a thing arn, lambda arn or word 'cloud'",
         "Subscription$Subject" : "Subject of the message.",
         "Subscription$Target" : "Where the message is sent to. Can be a thing arn, lambda arn or word 'cloud'.",
+        "UpdateConnectivityInfoResponse$Message" : "Response Text",
         "UpdateConnectivityInfoResponse$Version" : "New Version",
-        "UpdateConnectivityInfoResponse$message" : "Response Text",
         "UpdateGroupCertificateConfigurationRequest$CertificateExpiryInMilliseconds" : "Amount of time when the certificate expires in milliseconds.",
         "VersionInformation$Arn" : "Arn of the version.",
         "VersionInformation$CreationTimestamp" : "Timestamp of when the version was created.",

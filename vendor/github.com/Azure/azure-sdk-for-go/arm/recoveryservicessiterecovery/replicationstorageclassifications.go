@@ -92,7 +92,9 @@ func (client ReplicationStorageClassificationsClient) GetPreparer(fabricName str
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationStorageClassificationsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -155,7 +157,9 @@ func (client ReplicationStorageClassificationsClient) ListPreparer() (*http.Requ
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationStorageClassificationsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -290,7 +294,9 @@ func (client ReplicationStorageClassificationsClient) ListByReplicationFabricsPr
 // ListByReplicationFabricsSender sends the ListByReplicationFabrics request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationStorageClassificationsClient) ListByReplicationFabricsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByReplicationFabricsResponder handles the response to the ListByReplicationFabrics request. The method always

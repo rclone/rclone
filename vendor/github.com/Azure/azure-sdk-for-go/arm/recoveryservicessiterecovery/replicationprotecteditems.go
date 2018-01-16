@@ -113,6 +113,7 @@ func (client ReplicationProtectedItemsClient) ApplyRecoveryPointPreparer(fabricN
 func (client ReplicationProtectedItemsClient) ApplyRecoveryPointSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -201,6 +202,7 @@ func (client ReplicationProtectedItemsClient) CreatePreparer(fabricName string, 
 func (client ReplicationProtectedItemsClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -289,6 +291,7 @@ func (client ReplicationProtectedItemsClient) DeletePreparer(fabricName string, 
 func (client ReplicationProtectedItemsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -374,6 +377,7 @@ func (client ReplicationProtectedItemsClient) FailoverCommitPreparer(fabricName 
 func (client ReplicationProtectedItemsClient) FailoverCommitSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -443,7 +447,9 @@ func (client ReplicationProtectedItemsClient) GetPreparer(fabricName string, pro
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationProtectedItemsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -515,7 +521,9 @@ func (client ReplicationProtectedItemsClient) ListPreparer(skipToken string, fil
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationProtectedItemsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -651,7 +659,9 @@ func (client ReplicationProtectedItemsClient) ListByReplicationProtectionContain
 // ListByReplicationProtectionContainersSender sends the ListByReplicationProtectionContainers request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationProtectedItemsClient) ListByReplicationProtectionContainersSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByReplicationProtectionContainersResponder handles the response to the ListByReplicationProtectionContainers request. The method always
@@ -808,6 +818,7 @@ func (client ReplicationProtectedItemsClient) PlannedFailoverPreparer(fabricName
 func (client ReplicationProtectedItemsClient) PlannedFailoverSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -895,6 +906,7 @@ func (client ReplicationProtectedItemsClient) PurgePreparer(fabricName string, p
 func (client ReplicationProtectedItemsClient) PurgeSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -980,6 +992,7 @@ func (client ReplicationProtectedItemsClient) RepairReplicationPreparer(fabricNa
 func (client ReplicationProtectedItemsClient) RepairReplicationSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1068,6 +1081,7 @@ func (client ReplicationProtectedItemsClient) ReprotectPreparer(fabricName strin
 func (client ReplicationProtectedItemsClient) ReprotectSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1156,6 +1170,7 @@ func (client ReplicationProtectedItemsClient) TestFailoverPreparer(fabricName st
 func (client ReplicationProtectedItemsClient) TestFailoverSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1253,6 +1268,7 @@ func (client ReplicationProtectedItemsClient) TestFailoverCleanupPreparer(fabric
 func (client ReplicationProtectedItemsClient) TestFailoverCleanupSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1341,6 +1357,7 @@ func (client ReplicationProtectedItemsClient) UnplannedFailoverPreparer(fabricNa
 func (client ReplicationProtectedItemsClient) UnplannedFailoverSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1429,6 +1446,7 @@ func (client ReplicationProtectedItemsClient) UpdatePreparer(fabricName string, 
 func (client ReplicationProtectedItemsClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1519,6 +1537,7 @@ func (client ReplicationProtectedItemsClient) UpdateMobilityServicePreparer(fabr
 func (client ReplicationProtectedItemsClient) UpdateMobilityServiceSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

@@ -31,6 +31,7 @@ import (
 	"net/url"
 	"regexp"
 	"runtime"
+	"strconv"
 	"strings"
 	"time"
 
@@ -69,6 +70,17 @@ const (
 	userAgentHeader = "User-Agent"
 
 	userDefinedMetadataHeaderPrefix = "x-ms-meta-"
+
+	connectionStringAccountName      = "accountname"
+	connectionStringAccountKey       = "accountkey"
+	connectionStringEndpointSuffix   = "endpointsuffix"
+	connectionStringEndpointProtocol = "defaultendpointsprotocol"
+
+	connectionStringBlobEndpoint  = "blobendpoint"
+	connectionStringFileEndpoint  = "fileendpoint"
+	connectionStringQueueEndpoint = "queueendpoint"
+	connectionStringTableEndpoint = "tableendpoint"
+	connectionStringSAS           = "sharedaccesssignature"
 )
 
 var (
@@ -204,6 +216,55 @@ func (e UnexpectedStatusCodeError) Got() int {
 	return e.got
 }
 
+// NewClientFromConnectionString creates a Client from the connection string.
+func NewClientFromConnectionString(input string) (Client, error) {
+	// build a map of connection string key/value pairs
+	parts := map[string]string{}
+	for _, pair := range strings.Split(input, ";") {
+		if pair == "" {
+			continue
+		}
+
+		equalDex := strings.IndexByte(pair, '=')
+		if equalDex <= 0 {
+			return Client{}, fmt.Errorf("Invalid connection segment %q", pair)
+		}
+
+		value := strings.TrimSpace(pair[equalDex+1:])
+		key := strings.TrimSpace(strings.ToLower(pair[:equalDex]))
+		parts[key] = value
+	}
+
+	// TODO: validate parameter sets?
+
+	if parts[connectionStringAccountName] == StorageEmulatorAccountName {
+		return NewEmulatorClient()
+	}
+
+	if parts[connectionStringSAS] != "" {
+		endpoint := ""
+		if parts[connectionStringBlobEndpoint] != "" {
+			endpoint = parts[connectionStringBlobEndpoint]
+		} else if parts[connectionStringFileEndpoint] != "" {
+			endpoint = parts[connectionStringFileEndpoint]
+		} else if parts[connectionStringQueueEndpoint] != "" {
+			endpoint = parts[connectionStringQueueEndpoint]
+		} else {
+			endpoint = parts[connectionStringTableEndpoint]
+		}
+
+		return NewAccountSASClientFromEndpointToken(endpoint, parts[connectionStringSAS])
+	}
+
+	useHTTPS := defaultUseHTTPS
+	if parts[connectionStringEndpointProtocol] != "" {
+		useHTTPS = parts[connectionStringEndpointProtocol] == "https"
+	}
+
+	return NewClient(parts[connectionStringAccountName], parts[connectionStringAccountKey],
+		parts[connectionStringEndpointSuffix], DefaultAPIVersion, useHTTPS)
+}
+
 // NewBasicClient constructs a Client with given storage service name and
 // key.
 func NewBasicClient(accountName, accountKey string) (Client, error) {
@@ -283,6 +344,47 @@ func NewAccountSASClient(account string, token url.Values, env azure.Environment
 	c.apiVersion = token.Get("sv")
 	c.useHTTPS = token.Get("spr") == "https"
 	return c
+}
+
+// NewAccountSASClientFromEndpointToken constructs a client that uses accountSAS authorization
+// for its operations using the specified endpoint and SAS token.
+func NewAccountSASClientFromEndpointToken(endpoint string, sasToken string) (Client, error) {
+	u, err := url.Parse(endpoint)
+	if err != nil {
+		return Client{}, err
+	}
+
+	token, err := url.ParseQuery(sasToken)
+	if err != nil {
+		return Client{}, err
+	}
+
+	// the host name will look something like this
+	// - foo.blob.core.windows.net
+	// "foo" is the account name
+	// "core.windows.net" is the baseURL
+
+	// find the first dot to get account name
+	i1 := strings.IndexByte(u.Host, '.')
+	if i1 < 0 {
+		return Client{}, fmt.Errorf("failed to find '.' in %s", u.Host)
+	}
+
+	// now find the second dot to get the base URL
+	i2 := strings.IndexByte(u.Host[i1+1:], '.')
+	if i2 < 0 {
+		return Client{}, fmt.Errorf("failed to find '.' in %s", u.Host[i1+1:])
+	}
+
+	c := newSASClient()
+	c.accountSASToken = token
+	c.accountName = u.Host[:i1]
+	c.baseURL = u.Host[i1+i2+2:]
+
+	// Get API version and protocol from token
+	c.apiVersion = token.Get("sv")
+	c.useHTTPS = token.Get("spr") == "https"
+	return c, nil
 }
 
 func newSASClient() Client {
@@ -613,17 +715,25 @@ func (c Client) exec(verb, url string, headers map[string]string, body io.Reader
 		return nil, errors.New("azure/storage: error creating request: " + err.Error())
 	}
 
-	// if a body was provided ensure that the content length was set.
-	// http.NewRequest() will automatically do this for a handful of types
-	// and for those that it doesn't we will handle here.
-	if body != nil && req.ContentLength < 1 {
-		if lr, ok := body.(*io.LimitedReader); ok {
-			setContentLengthFromLimitedReader(req, lr)
+	// http.NewRequest() will automatically set req.ContentLength for a handful of types
+	// otherwise we will handle here.
+	if req.ContentLength < 1 {
+		if clstr, ok := headers["Content-Length"]; ok {
+			if cl, err := strconv.ParseInt(clstr, 10, 64); err == nil {
+				req.ContentLength = cl
+			}
 		}
 	}
 
 	for k, v := range headers {
 		req.Header[k] = append(req.Header[k], v) // Must bypass case munging present in `Add` by using map functions directly. See https://github.com/Azure/azure-sdk-for-go/issues/645
+	}
+
+	if c.isAccountSASClient() {
+		// append the SAS token to the query params
+		v := req.URL.Query()
+		v = mergeParams(v, c.accountSASToken)
+		req.URL.RawQuery = v.Encode()
 	}
 
 	resp, err := c.Sender.Send(&c, req)

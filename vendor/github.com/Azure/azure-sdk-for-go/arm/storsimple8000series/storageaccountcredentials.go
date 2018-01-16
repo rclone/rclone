@@ -126,6 +126,7 @@ func (client StorageAccountCredentialsClient) CreateOrUpdatePreparer(storageAcco
 func (client StorageAccountCredentialsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -219,6 +220,7 @@ func (client StorageAccountCredentialsClient) DeletePreparer(storageAccountCrede
 func (client StorageAccountCredentialsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -292,7 +294,9 @@ func (client StorageAccountCredentialsClient) GetPreparer(storageAccountCredenti
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountCredentialsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -364,7 +368,9 @@ func (client StorageAccountCredentialsClient) ListByManagerPreparer(resourceGrou
 // ListByManagerSender sends the ListByManager request. The method will close the
 // http.Response Body if it receives an error.
 func (client StorageAccountCredentialsClient) ListByManagerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByManagerResponder handles the response to the ListByManager request. The method always

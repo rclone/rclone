@@ -20,25 +20,25 @@
 package service
 
 import (
-	"net/http"
+    "net/http"
 
-	"github.com/yunify/qingstor-sdk-go/config"
-	"github.com/yunify/qingstor-sdk-go/request"
-	"github.com/yunify/qingstor-sdk-go/request/data"
+    "github.com/yunify/qingstor-sdk-go/config"
+    "github.com/yunify/qingstor-sdk-go/request"
+    "github.com/yunify/qingstor-sdk-go/request/data"
 )
 
 var _ http.Header
 
 {{if $service.Description}}// Service {{$service.Description}}{{end}}
 type Service struct {
-	Config *config.Config
+    Config *config.Config
 }
 
 // Init initializes a new service.
 func Init(c *config.Config) (*Service, error) {
-	return &Service{Config: c}, nil
+    return &Service{Config: c}, nil
 }
 
 {{range $_, $operation := $service.Operations}}
-	{{template "RenderOperation" passThrough $service $operation}}
+    {{template "RenderOperation" passThrough $service $operation}}
 {{end}}

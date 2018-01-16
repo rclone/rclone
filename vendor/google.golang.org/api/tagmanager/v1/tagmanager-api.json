@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/rRpL0Yww6KCNEEWca1YtyKw9Y48\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/V5whA3DADpXWbKdtajaJL7JmgE0\"",
  "discoveryVersion": "v1",
  "id": "tagmanager:v1",
  "name": "tagmanager",
  "canonicalName": "Tag Manager",
  "version": "v1",
- "revision": "20160310",
+ "revision": "20171108",
  "title": "Tag Manager API",
  "description": "Accesses Tag Manager accounts and containers.",
  "ownerDomain": "google.com",
@@ -131,11 +131,13 @@
       "enum": [
        "delete",
        "edit",
+       "editWorkspace",
        "manage",
        "publish",
        "read"
       ],
       "enumDescriptions": [
+       "",
        "",
        "",
        "",
@@ -235,6 +237,26 @@
       "enum": [
        "advertiserId",
        "advertisingTrackingEnabled",
+       "ampBrowserLanguage",
+       "ampCanonicalHost",
+       "ampCanonicalPath",
+       "ampCanonicalUrl",
+       "ampClientId",
+       "ampClientMaxScrollX",
+       "ampClientMaxScrollY",
+       "ampClientScreenHeight",
+       "ampClientScreenWidth",
+       "ampClientScrollX",
+       "ampClientScrollY",
+       "ampClientTimestamp",
+       "ampClientTimezone",
+       "ampGtmEvent",
+       "ampPageDownloadTime",
+       "ampPageLoadTime",
+       "ampPageViewId",
+       "ampReferrer",
+       "ampTitle",
+       "ampTotalEngagedTime",
        "appId",
        "appName",
        "appVersionCode",
@@ -249,11 +271,39 @@
        "containerVersion",
        "debugMode",
        "deviceName",
+       "elementVisibilityFirstTime",
+       "elementVisibilityRatio",
+       "elementVisibilityRecentTime",
+       "elementVisibilityTime",
        "environmentName",
        "errorLine",
        "errorMessage",
        "errorUrl",
        "event",
+       "eventName",
+       "firebaseEventParameterCampaign",
+       "firebaseEventParameterCampaignAclid",
+       "firebaseEventParameterCampaignAnid",
+       "firebaseEventParameterCampaignClickTimestamp",
+       "firebaseEventParameterCampaignContent",
+       "firebaseEventParameterCampaignCp1",
+       "firebaseEventParameterCampaignGclid",
+       "firebaseEventParameterCampaignSource",
+       "firebaseEventParameterCampaignTerm",
+       "firebaseEventParameterCurrency",
+       "firebaseEventParameterDynamicLinkAcceptTime",
+       "firebaseEventParameterDynamicLinkLinkid",
+       "firebaseEventParameterNotificationMessageDeviceTime",
+       "firebaseEventParameterNotificationMessageId",
+       "firebaseEventParameterNotificationMessageName",
+       "firebaseEventParameterNotificationMessageTime",
+       "firebaseEventParameterNotificationTopic",
+       "firebaseEventParameterPreviousAppVersion",
+       "firebaseEventParameterPreviousOsVersion",
+       "firebaseEventParameterPrice",
+       "firebaseEventParameterProductId",
+       "firebaseEventParameterQuantity",
+       "firebaseEventParameterValue",
        "formClasses",
        "formElement",
        "formId",
@@ -275,9 +325,79 @@
        "randomNumber",
        "referrer",
        "resolution",
-       "sdkVersion"
+       "scrollDepthDirection",
+       "scrollDepthThreshold",
+       "scrollDepthUnits",
+       "sdkVersion",
+       "videoCurrentTime",
+       "videoDuration",
+       "videoPercent",
+       "videoProvider",
+       "videoStatus",
+       "videoTitle",
+       "videoUrl",
+       "videoVisible"
       ],
       "enumDescriptions": [
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
+       "",
        "",
        "",
        "",
@@ -369,6 +489,7 @@
      "items": {
       "type": "string",
       "enum": [
+       "amp",
        "android",
        "androidSdk5",
        "ios",
@@ -376,6 +497,7 @@
        "web"
       ],
       "enumDescriptions": [
+       "",
        "",
        "",
        "",
@@ -408,11 +530,13 @@
       "enum": [
        "delete",
        "edit",
+       "editWorkspace",
        "manage",
        "publish",
        "read"
       ],
       "enumDescriptions": [
+       "",
        "",
        "",
        "",
@@ -632,7 +756,8 @@
      "description": "The environment display name. Can be set or changed only on USER type environments.",
      "annotations": {
       "required": [
-       "tagmanager.accounts.containers.environments.create"
+       "tagmanager.accounts.containers.environments.create",
+       "tagmanager.accounts.containers.environments.update"
       ]
      }
     },
@@ -684,7 +809,8 @@
      "description": "Folder display name.",
      "annotations": {
       "required": [
-       "tagmanager.accounts.containers.folders.create"
+       "tagmanager.accounts.containers.folders.create",
+       "tagmanager.accounts.containers.folders.update"
       ]
      }
     }
@@ -1099,7 +1225,8 @@
      "description": "Tag display name.",
      "annotations": {
       "required": [
-       "tagmanager.accounts.containers.tags.create"
+       "tagmanager.accounts.containers.tags.create",
+       "tagmanager.accounts.containers.tags.update"
       ]
      }
     },
@@ -1117,6 +1244,10 @@
     "parentFolderId": {
      "type": "string",
      "description": "Parent folder id."
+    },
+    "paused": {
+     "type": "boolean",
+     "description": "True if the tag is paused."
     },
     "priority": {
      "$ref": "Parameter",
@@ -1213,16 +1344,16 @@
      "type": "string",
      "description": "GTM Container ID."
     },
+    "continuousTimeMinMilliseconds": {
+     "$ref": "Parameter",
+     "description": "A visibility trigger minimum continuous visible time (in milliseconds). Only valid for AMP Visibility trigger."
+    },
     "customEventFilter": {
      "type": "array",
      "description": "Used in the case of custom event, which is fired iff all Conditions are true.",
      "items": {
       "$ref": "Condition"
      }
-    },
-    "enableAllVideos": {
-     "$ref": "Parameter",
-     "description": "Reloads the videos in the page that don't already have the YT API enabled. If false, only capture events from videos that already have the API enabled. Only valid for YouTube triggers."
     },
     "eventName": {
      "$ref": "Parameter",
@@ -1239,26 +1370,54 @@
      "type": "string",
      "description": "The fingerprint of the GTM Trigger as computed at storage time. This value is recomputed whenever the trigger is modified."
     },
+    "horizontalScrollPercentageList": {
+     "$ref": "Parameter",
+     "description": "List of integer percentage values for scroll triggers. The trigger will fire when each percentage is reached when the view is scrolled horizontally. Only valid for AMP scroll triggers."
+    },
     "interval": {
      "$ref": "Parameter",
      "description": "Time between triggering recurring Timer Events (in milliseconds). Only valid for Timer triggers."
     },
+    "intervalSeconds": {
+     "$ref": "Parameter",
+     "description": "Time between Timer Events to fire (in seconds). Only valid for AMP Timer trigger."
+    },
     "limit": {
      "$ref": "Parameter",
      "description": "Limit of the number of GTM events this Timer Trigger will fire. If no limit is set, we will continue to fire GTM events until the user leaves the page. Only valid for Timer triggers."
+    },
+    "maxTimerLengthSeconds": {
+     "$ref": "Parameter",
+     "description": "Max time to fire Timer Events (in seconds). Only valid for AMP Timer trigger."
     },
     "name": {
      "type": "string",
      "description": "Trigger display name.",
      "annotations": {
       "required": [
-       "tagmanager.accounts.containers.triggers.create"
+       "tagmanager.accounts.containers.triggers.create",
+       "tagmanager.accounts.containers.triggers.update"
       ]
+     }
+    },
+    "parameter": {
+     "type": "array",
+     "description": "Additional parameters.",
+     "items": {
+      "$ref": "Parameter"
      }
     },
     "parentFolderId": {
      "type": "string",
      "description": "Parent folder id."
+    },
+    "selector": {
+     "$ref": "Parameter",
+     "description": "A click trigger CSS selector (i.e. \"a\", \"button\" etc.). Only valid for AMP Click trigger."
+    },
+    "totalTimeMinMilliseconds": {
+     "$ref": "Parameter",
+     "description": "A visibility trigger minimum total visible time (in milliseconds). Only valid for AMP Visibility trigger."
     },
     "triggerId": {
      "type": "string",
@@ -1268,21 +1427,31 @@
      "type": "string",
      "description": "Defines the data layer event that causes this trigger.",
      "enum": [
-      "ajaxSubmission",
       "always",
+      "ampClick",
+      "ampScroll",
+      "ampTimer",
+      "ampVisibility",
       "click",
       "customEvent",
       "domReady",
+      "elementVisibility",
       "formSubmission",
       "historyChange",
       "jsError",
       "linkClick",
       "pageview",
+      "scrollDepth",
       "timer",
       "windowLoaded",
-      "youTube"
+      "youTubeVideo"
      ],
      "enumDescriptions": [
+      "",
+      "",
+      "",
+      "",
+      "",
       "",
       "",
       "",
@@ -1307,9 +1476,21 @@
      "$ref": "Parameter",
      "description": "Globally unique id of the trigger that auto-generates this (a Form Submit, Link Click or Timer listener) if any. Used to make incompatible auto-events work together with trigger filtering based on trigger ids. This value is populated during output generation since the tags implied by triggers don't exist until then. Only valid for Form Submit, Link Click and Timer triggers."
     },
-    "videoPercentageList": {
+    "verticalScrollPercentageList": {
      "$ref": "Parameter",
-     "description": "List of integer percentage values. The trigger will fire as each percentage is reached in any instrumented videos. Only valid for YouTube triggers."
+     "description": "List of integer percentage values for scroll triggers. The trigger will fire when each percentage is reached when the view is scrolled vertically. Only valid for AMP scroll triggers."
+    },
+    "visibilitySelector": {
+     "$ref": "Parameter",
+     "description": "A visibility trigger CSS selector (i.e. \"#id\"). Only valid for AMP Visibility trigger."
+    },
+    "visiblePercentageMax": {
+     "$ref": "Parameter",
+     "description": "A visibility trigger maximum percent visibility. Only valid for AMP Visibility trigger."
+    },
+    "visiblePercentageMin": {
+     "$ref": "Parameter",
+     "description": "A visibility trigger minimum percent visibility. Only valid for AMP Visibility trigger."
     },
     "waitForTags": {
      "$ref": "Parameter",
@@ -1397,7 +1578,8 @@
      "description": "Variable display name.",
      "annotations": {
       "required": [
-       "tagmanager.accounts.containers.variables.create"
+       "tagmanager.accounts.containers.variables.create",
+       "tagmanager.accounts.containers.variables.update"
       ]
      }
     },

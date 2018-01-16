@@ -238,8 +238,8 @@ type AdWordsManagerAccountInfo struct {
 }
 
 func (s *AdWordsManagerAccountInfo) MarshalJSON() ([]byte, error) {
-	type noMethod AdWordsManagerAccountInfo
-	raw := noMethod(*s)
+	type NoMethod AdWordsManagerAccountInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -279,8 +279,8 @@ type Analytics struct {
 }
 
 func (s *Analytics) MarshalJSON() ([]byte, error) {
-	type noMethod Analytics
-	raw := noMethod(*s)
+	type NoMethod Analytics
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -312,8 +312,8 @@ type AnalyticsDataPoint struct {
 }
 
 func (s *AnalyticsDataPoint) MarshalJSON() ([]byte, error) {
-	type noMethod AnalyticsDataPoint
-	raw := noMethod(*s)
+	type NoMethod AnalyticsDataPoint
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -352,8 +352,8 @@ type AnalyticsSummary struct {
 }
 
 func (s *AnalyticsSummary) MarshalJSON() ([]byte, error) {
-	type noMethod AnalyticsSummary
-	raw := noMethod(*s)
+	type NoMethod AnalyticsSummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -438,8 +438,8 @@ type AvailableOffer struct {
 }
 
 func (s *AvailableOffer) MarshalJSON() ([]byte, error) {
-	type noMethod AvailableOffer
-	raw := noMethod(*s)
+	type NoMethod AvailableOffer
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -492,8 +492,8 @@ type Certification struct {
 }
 
 func (s *Certification) MarshalJSON() ([]byte, error) {
-	type noMethod Certification
-	raw := noMethod(*s)
+	type NoMethod Certification
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -539,8 +539,8 @@ type CertificationExamStatus struct {
 }
 
 func (s *CertificationExamStatus) MarshalJSON() ([]byte, error) {
-	type noMethod CertificationExamStatus
-	raw := noMethod(*s)
+	type NoMethod CertificationExamStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -590,8 +590,8 @@ type CertificationStatus struct {
 }
 
 func (s *CertificationStatus) MarshalJSON() ([]byte, error) {
-	type noMethod CertificationStatus
-	raw := noMethod(*s)
+	type NoMethod CertificationStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -766,8 +766,8 @@ type Company struct {
 }
 
 func (s *Company) MarshalJSON() ([]byte, error) {
-	type noMethod Company
-	raw := noMethod(*s)
+	type NoMethod Company
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -889,8 +889,8 @@ type CompanyRelation struct {
 }
 
 func (s *CompanyRelation) MarshalJSON() ([]byte, error) {
-	type noMethod CompanyRelation
-	raw := noMethod(*s)
+	type NoMethod CompanyRelation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -933,8 +933,8 @@ type CountryOfferInfo struct {
 }
 
 func (s *CountryOfferInfo) MarshalJSON() ([]byte, error) {
-	type noMethod CountryOfferInfo
-	raw := noMethod(*s)
+	type NoMethod CountryOfferInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -971,8 +971,8 @@ type CreateLeadRequest struct {
 }
 
 func (s *CreateLeadRequest) MarshalJSON() ([]byte, error) {
-	type noMethod CreateLeadRequest
-	raw := noMethod(*s)
+	type NoMethod CreateLeadRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1018,8 +1018,8 @@ type CreateLeadResponse struct {
 }
 
 func (s *CreateLeadResponse) MarshalJSON() ([]byte, error) {
-	type noMethod CreateLeadResponse
-	raw := noMethod(*s)
+	type NoMethod CreateLeadResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1068,8 +1068,8 @@ type Date struct {
 }
 
 func (s *Date) MarshalJSON() ([]byte, error) {
-	type noMethod Date
-	raw := noMethod(*s)
+	type NoMethod Date
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1102,8 +1102,8 @@ type DebugInfo struct {
 }
 
 func (s *DebugInfo) MarshalJSON() ([]byte, error) {
-	type noMethod DebugInfo
-	raw := noMethod(*s)
+	type NoMethod DebugInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1191,8 +1191,8 @@ type EventData struct {
 }
 
 func (s *EventData) MarshalJSON() ([]byte, error) {
-	type noMethod EventData
-	raw := noMethod(*s)
+	type NoMethod EventData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1247,8 +1247,8 @@ type ExamStatus struct {
 }
 
 func (s *ExamStatus) MarshalJSON() ([]byte, error) {
-	type noMethod ExamStatus
-	raw := noMethod(*s)
+	type NoMethod ExamStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1298,8 +1298,8 @@ type ExamToken struct {
 }
 
 func (s *ExamToken) MarshalJSON() ([]byte, error) {
-	type noMethod ExamToken
-	raw := noMethod(*s)
+	type NoMethod ExamToken
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1333,8 +1333,8 @@ type GetCompanyResponse struct {
 }
 
 func (s *GetCompanyResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GetCompanyResponse
-	raw := noMethod(*s)
+	type NoMethod GetCompanyResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1367,8 +1367,8 @@ type GetPartnersStatusResponse struct {
 }
 
 func (s *GetPartnersStatusResponse) MarshalJSON() ([]byte, error) {
-	type noMethod GetPartnersStatusResponse
-	raw := noMethod(*s)
+	type NoMethod GetPartnersStatusResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1443,8 +1443,8 @@ type HistoricalOffer struct {
 }
 
 func (s *HistoricalOffer) MarshalJSON() ([]byte, error) {
-	type noMethod HistoricalOffer
-	raw := noMethod(*s)
+	type NoMethod HistoricalOffer
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1457,40 +1457,6 @@ func (s *HistoricalOffer) MarshalJSON() ([]byte, error) {
 // href="http://www.unoosa.org/pdf/icg/2012/template/WGS_84.pdf">WGS84
 // st
 // andard</a>. Values must be within normalized ranges.
-//
-// Example of normalization code in Python:
-//
-//     def NormalizeLongitude(longitude):
-//       """Wraps decimal degrees longitude to [-180.0, 180.0]."""
-//       q, r = divmod(longitude, 360.0)
-//       if r > 180.0 or (r == 180.0 and q <= -1.0):
-//         return r - 360.0
-//       return r
-//
-//     def NormalizeLatLng(latitude, longitude):
-//       """Wraps decimal degrees latitude and longitude to
-//       [-90.0, 90.0] and [-180.0, 180.0], respectively."""
-//       r = latitude % 360.0
-//       if r <= 90.0:
-//         return r, NormalizeLongitude(longitude)
-//       elif r >= 270.0:
-//         return r - 360, NormalizeLongitude(longitude)
-//       else:
-//         return 180 - r, NormalizeLongitude(longitude + 180.0)
-//
-//     assert 180.0 == NormalizeLongitude(180.0)
-//     assert -180.0 == NormalizeLongitude(-180.0)
-//     assert -179.0 == NormalizeLongitude(181.0)
-//     assert (0.0, 0.0) == NormalizeLatLng(360.0, 0.0)
-//     assert (0.0, 0.0) == NormalizeLatLng(-360.0, 0.0)
-//     assert (85.0, 180.0) == NormalizeLatLng(95.0, 0.0)
-//     assert (-85.0, -170.0) == NormalizeLatLng(-95.0, 10.0)
-//     assert (90.0, 10.0) == NormalizeLatLng(90.0, 10.0)
-//     assert (-90.0, -10.0) == NormalizeLatLng(-90.0, -10.0)
-//     assert (0.0, -170.0) == NormalizeLatLng(-180.0, 10.0)
-//     assert (0.0, -170.0) == NormalizeLatLng(180.0, 10.0)
-//     assert (-90.0, 10.0) == NormalizeLatLng(270.0, 10.0)
-//     assert (90.0, 10.0) == NormalizeLatLng(-270.0, 10.0)
 type LatLng struct {
 	// Latitude: The latitude in degrees. It must be in the range [-90.0,
 	// +90.0].
@@ -1518,19 +1484,19 @@ type LatLng struct {
 }
 
 func (s *LatLng) MarshalJSON() ([]byte, error) {
-	type noMethod LatLng
-	raw := noMethod(*s)
+	type NoMethod LatLng
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *LatLng) UnmarshalJSON(data []byte) error {
-	type noMethod LatLng
+	type NoMethod LatLng
 	var s1 struct {
 		Latitude  gensupport.JSONFloat64 `json:"latitude"`
 		Longitude gensupport.JSONFloat64 `json:"longitude"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1637,8 +1603,8 @@ type Lead struct {
 }
 
 func (s *Lead) MarshalJSON() ([]byte, error) {
-	type noMethod Lead
-	raw := noMethod(*s)
+	type NoMethod Lead
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1688,8 +1654,8 @@ type ListAnalyticsResponse struct {
 }
 
 func (s *ListAnalyticsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListAnalyticsResponse
-	raw := noMethod(*s)
+	type NoMethod ListAnalyticsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1732,8 +1698,8 @@ type ListCompaniesResponse struct {
 }
 
 func (s *ListCompaniesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListCompaniesResponse
-	raw := noMethod(*s)
+	type NoMethod ListCompaniesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1778,8 +1744,8 @@ type ListLeadsResponse struct {
 }
 
 func (s *ListLeadsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListLeadsResponse
-	raw := noMethod(*s)
+	type NoMethod ListLeadsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1830,8 +1796,8 @@ type ListOffersHistoryResponse struct {
 }
 
 func (s *ListOffersHistoryResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListOffersHistoryResponse
-	raw := noMethod(*s)
+	type NoMethod ListOffersHistoryResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1875,8 +1841,8 @@ type ListOffersResponse struct {
 }
 
 func (s *ListOffersResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListOffersResponse
-	raw := noMethod(*s)
+	type NoMethod ListOffersResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1918,8 +1884,8 @@ type ListUserStatesResponse struct {
 }
 
 func (s *ListUserStatesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListUserStatesResponse
-	raw := noMethod(*s)
+	type NoMethod ListUserStatesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1959,8 +1925,8 @@ type LocalizedCompanyInfo struct {
 }
 
 func (s *LocalizedCompanyInfo) MarshalJSON() ([]byte, error) {
-	type noMethod LocalizedCompanyInfo
-	raw := noMethod(*s)
+	type NoMethod LocalizedCompanyInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2024,8 +1990,8 @@ type Location struct {
 }
 
 func (s *Location) MarshalJSON() ([]byte, error) {
-	type noMethod Location
-	raw := noMethod(*s)
+	type NoMethod Location
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2070,8 +2036,8 @@ type LogMessageRequest struct {
 }
 
 func (s *LogMessageRequest) MarshalJSON() ([]byte, error) {
-	type noMethod LogMessageRequest
-	raw := noMethod(*s)
+	type NoMethod LogMessageRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2104,8 +2070,8 @@ type LogMessageResponse struct {
 }
 
 func (s *LogMessageResponse) MarshalJSON() ([]byte, error) {
-	type noMethod LogMessageResponse
-	raw := noMethod(*s)
+	type NoMethod LogMessageResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2419,6 +2385,10 @@ type LogUserEventRequest struct {
 	// Terms Of Service` button.
 	//   "SMB_ENTERED_WEBSITE_IN_CONTACT_PARTNER_FORM" - Advertiser entered
 	// website in contact form.
+	//   "AGENCY_SELECTED_OPT_IN_AFA_MIGRATION" - Agency opted in for
+	// migrating their exams to Academy for Ads.
+	//   "AGENCY_SELECTED_OPT_OUT_AFA_MIGRATION" - Agency opted out for
+	// migrating their exams to Academy for Ads.
 	EventAction string `json:"eventAction,omitempty"`
 
 	// EventCategory: The category the action belongs to.
@@ -2490,8 +2460,8 @@ type LogUserEventRequest struct {
 }
 
 func (s *LogUserEventRequest) MarshalJSON() ([]byte, error) {
-	type noMethod LogUserEventRequest
-	raw := noMethod(*s)
+	type NoMethod LogUserEventRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2524,8 +2494,8 @@ type LogUserEventResponse struct {
 }
 
 func (s *LogUserEventResponse) MarshalJSON() ([]byte, error) {
-	type noMethod LogUserEventResponse
-	raw := noMethod(*s)
+	type NoMethod LogUserEventResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2566,8 +2536,8 @@ type Money struct {
 }
 
 func (s *Money) MarshalJSON() ([]byte, error) {
-	type noMethod Money
-	raw := noMethod(*s)
+	type NoMethod Money
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2624,8 +2594,8 @@ type OfferCustomer struct {
 }
 
 func (s *OfferCustomer) MarshalJSON() ([]byte, error) {
-	type noMethod OfferCustomer
-	raw := noMethod(*s)
+	type NoMethod OfferCustomer
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2672,8 +2642,8 @@ type OptIns struct {
 }
 
 func (s *OptIns) MarshalJSON() ([]byte, error) {
-	type noMethod OptIns
-	raw := noMethod(*s)
+	type NoMethod OptIns
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2716,8 +2686,8 @@ type PublicProfile struct {
 }
 
 func (s *PublicProfile) MarshalJSON() ([]byte, error) {
-	type noMethod PublicProfile
-	raw := noMethod(*s)
+	type NoMethod PublicProfile
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2751,18 +2721,18 @@ type Rank struct {
 }
 
 func (s *Rank) MarshalJSON() ([]byte, error) {
-	type noMethod Rank
-	raw := noMethod(*s)
+	type NoMethod Rank
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *Rank) UnmarshalJSON(data []byte) error {
-	type noMethod Rank
+	type NoMethod Rank
 	var s1 struct {
 		Value gensupport.JSONFloat64 `json:"value"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -2798,8 +2768,8 @@ type RecaptchaChallenge struct {
 }
 
 func (s *RecaptchaChallenge) MarshalJSON() ([]byte, error) {
-	type noMethod RecaptchaChallenge
-	raw := noMethod(*s)
+	type NoMethod RecaptchaChallenge
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2840,8 +2810,8 @@ type RequestMetadata struct {
 }
 
 func (s *RequestMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod RequestMetadata
-	raw := noMethod(*s)
+	type NoMethod RequestMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2868,8 +2838,8 @@ type ResponseMetadata struct {
 }
 
 func (s *ResponseMetadata) MarshalJSON() ([]byte, error) {
-	type noMethod ResponseMetadata
-	raw := noMethod(*s)
+	type NoMethod ResponseMetadata
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2918,8 +2888,8 @@ type SpecializationStatus struct {
 }
 
 func (s *SpecializationStatus) MarshalJSON() ([]byte, error) {
-	type noMethod SpecializationStatus
-	raw := noMethod(*s)
+	type NoMethod SpecializationStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2958,8 +2928,8 @@ type TrafficSource struct {
 }
 
 func (s *TrafficSource) MarshalJSON() ([]byte, error) {
-	type noMethod TrafficSource
-	raw := noMethod(*s)
+	type NoMethod TrafficSource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3045,8 +3015,8 @@ type User struct {
 }
 
 func (s *User) MarshalJSON() ([]byte, error) {
-	type noMethod User
-	raw := noMethod(*s)
+	type NoMethod User
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3079,8 +3049,8 @@ type UserOverrides struct {
 }
 
 func (s *UserOverrides) MarshalJSON() ([]byte, error) {
-	type noMethod UserOverrides
-	raw := noMethod(*s)
+	type NoMethod UserOverrides
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3129,6 +3099,10 @@ type UserProfile struct {
 	// interested in.
 	Markets []string `json:"markets,omitempty"`
 
+	// MigrateToAfa: Whether or not to migrate the user's exam data to
+	// Academy for Ads.
+	MigrateToAfa bool `json:"migrateToAfa,omitempty"`
+
 	// PhoneNumber: The user's phone number.
 	PhoneNumber string `json:"phoneNumber,omitempty"`
 
@@ -3162,8 +3136,8 @@ type UserProfile struct {
 }
 
 func (s *UserProfile) MarshalJSON() ([]byte, error) {
-	type noMethod UserProfile
-	raw := noMethod(*s)
+	type NoMethod UserProfile
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3361,7 +3335,7 @@ func (c *AnalyticsListCall) Do(opts ...googleapi.CallOption) (*ListAnalyticsResp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3546,7 +3520,7 @@ func (c *ClientMessagesLogCall) Do(opts ...googleapi.CallOption) (*LogMessageRes
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3777,7 +3751,7 @@ func (c *CompaniesGetCall) Do(opts ...googleapi.CallOption) (*GetCompanyResponse
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4237,7 +4211,7 @@ func (c *CompaniesListCall) Do(opts ...googleapi.CallOption) (*ListCompaniesResp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4554,7 +4528,7 @@ func (c *CompaniesLeadsCreateCall) Do(opts ...googleapi.CallOption) (*CreateLead
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4753,7 +4727,7 @@ func (c *ExamsGetTokenCall) Do(opts ...googleapi.CallOption) (*ExamToken, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5021,7 +4995,7 @@ func (c *LeadsListCall) Do(opts ...googleapi.CallOption) (*ListLeadsResponse, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5276,7 +5250,7 @@ func (c *OffersListCall) Do(opts ...googleapi.CallOption) (*ListOffersResponse, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5528,7 +5502,7 @@ func (c *OffersHistoryListCall) Do(opts ...googleapi.CallOption) (*ListOffersHis
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5721,7 +5695,7 @@ func (c *UserEventsLogCall) Do(opts ...googleapi.CallOption) (*LogUserEventRespo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5905,7 +5879,7 @@ func (c *UserStatesListCall) Do(opts ...googleapi.CallOption) (*ListUserStatesRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6122,7 +6096,7 @@ func (c *UsersCreateCompanyRelationCall) Do(opts ...googleapi.CallOption) (*Comp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6343,7 +6317,7 @@ func (c *UsersDeleteCompanyRelationCall) Do(opts ...googleapi.CallOption) (*Empt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6586,7 +6560,7 @@ func (c *UsersGetCall) Do(opts ...googleapi.CallOption) (*User, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6817,7 +6791,7 @@ func (c *UsersUpdateProfileCall) Do(opts ...googleapi.CallOption) (*UserProfile,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7041,7 +7015,7 @@ func (c *V2GetPartnersstatusCall) Do(opts ...googleapi.CallOption) (*GetPartners
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7262,7 +7236,7 @@ func (c *V2UpdateCompaniesCall) Do(opts ...googleapi.CallOption) (*Company, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7491,7 +7465,7 @@ func (c *V2UpdateLeadsCall) Do(opts ...googleapi.CallOption) (*Lead, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

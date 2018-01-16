@@ -98,7 +98,9 @@ func (client SchedulesClient) CreateOrUpdatePreparer(resourceGroupName string, l
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client SchedulesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -165,7 +167,9 @@ func (client SchedulesClient) DeletePreparer(resourceGroupName string, labName s
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SchedulesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -248,6 +252,7 @@ func (client SchedulesClient) ExecutePreparer(resourceGroupName string, labName 
 func (client SchedulesClient) ExecuteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -317,7 +322,9 @@ func (client SchedulesClient) GetPreparer(resourceGroupName string, labName stri
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SchedulesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -397,7 +404,9 @@ func (client SchedulesClient) ListPreparer(resourceGroupName string, labName str
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client SchedulesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -533,7 +542,9 @@ func (client SchedulesClient) ListApplicablePreparer(resourceGroupName string, l
 // ListApplicableSender sends the ListApplicable request. The method will close the
 // http.Response Body if it receives an error.
 func (client SchedulesClient) ListApplicableSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListApplicableResponder handles the response to the ListApplicable request. The method always
@@ -671,7 +682,9 @@ func (client SchedulesClient) UpdatePreparer(resourceGroupName string, labName s
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client SchedulesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

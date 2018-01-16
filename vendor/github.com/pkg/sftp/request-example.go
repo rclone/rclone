@@ -24,8 +24,19 @@ func InMemHandler() Handlers {
 	return Handlers{root, root, root, root}
 }
 
+// So I can test Handlers returning errors
+var (
+	readErr  error = nil
+	writeErr error = nil
+	cmdErr   error = nil
+	listErr  error = nil
+)
+
 // Handlers
 func (fs *root) Fileread(r *Request) (io.ReaderAt, error) {
+	if readErr != nil {
+		return nil, readErr
+	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 	file, err := fs.fetch(r.Filepath)
@@ -42,6 +53,9 @@ func (fs *root) Fileread(r *Request) (io.ReaderAt, error) {
 }
 
 func (fs *root) Filewrite(r *Request) (io.WriterAt, error) {
+	if writeErr != nil {
+		return nil, writeErr
+	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 	file, err := fs.fetch(r.Filepath)
@@ -60,6 +74,9 @@ func (fs *root) Filewrite(r *Request) (io.WriterAt, error) {
 }
 
 func (fs *root) Filecmd(r *Request) error {
+	if cmdErr != nil {
+		return cmdErr
+	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 	switch r.Method {
@@ -116,6 +133,9 @@ func (f listerat) ListAt(ls []os.FileInfo, offset int64) (int, error) {
 }
 
 func (fs *root) Filelist(r *Request) (ListerAt, error) {
+	if listErr != nil {
+		return nil, listErr
+	}
 	fs.filesLock.Lock()
 	defer fs.filesLock.Unlock()
 

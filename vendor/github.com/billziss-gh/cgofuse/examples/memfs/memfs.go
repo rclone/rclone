@@ -78,6 +78,7 @@ func newNode(dev uint64, ino uint64, mode uint32, uid uint32, gid uint32) *node_
 			Mtim:     tmsp,
 			Ctim:     tmsp,
 			Birthtim: tmsp,
+			Flags:    0,
 		},
 		nil,
 		nil,
@@ -228,8 +229,9 @@ func (self *Memfs) Utimens(path string, tmsp []fuse.Timespec) (errc int) {
 	if nil == node {
 		return -fuse.ENOENT
 	}
+	node.stat.Ctim = fuse.Now()
 	if nil == tmsp {
-		tmsp0 := fuse.Now()
+		tmsp0 := node.stat.Ctim
 		tmsa := [2]fuse.Timespec{tmsp0, tmsp0}
 		tmsp = tmsa[:]
 	}
@@ -420,6 +422,41 @@ func (self *Memfs) Listxattr(path string, fill func(name string) bool) (errc int
 	return 0
 }
 
+func (self *Memfs) Chflags(path string, flags uint32) (errc int) {
+	defer trace(path, flags)(&errc)
+	defer self.synchronize()()
+	_, _, node := self.lookupNode(path, nil)
+	if nil == node {
+		return -fuse.ENOENT
+	}
+	node.stat.Flags = flags
+	node.stat.Ctim = fuse.Now()
+	return 0
+}
+
+func (self *Memfs) Setcrtime(path string, tmsp fuse.Timespec) (errc int) {
+	defer trace(path, tmsp)(&errc)
+	defer self.synchronize()()
+	_, _, node := self.lookupNode(path, nil)
+	if nil == node {
+		return -fuse.ENOENT
+	}
+	node.stat.Birthtim = tmsp
+	node.stat.Ctim = fuse.Now()
+	return 0
+}
+
+func (self *Memfs) Setchgtime(path string, tmsp fuse.Timespec) (errc int) {
+	defer trace(path, tmsp)(&errc)
+	defer self.synchronize()()
+	_, _, node := self.lookupNode(path, nil)
+	if nil == node {
+		return -fuse.ENOENT
+	}
+	node.stat.Ctim = tmsp
+	return 0
+}
+
 func (self *Memfs) lookupNode(path string, ancestor *node_t) (prnt *node_t, name string, node *node_t) {
 	prnt = self.root
 	name = ""
@@ -536,6 +573,10 @@ func NewMemfs() *Memfs {
 	self.openmap = map[uint64]*node_t{}
 	return &self
 }
+
+var _ fuse.FileSystemChflags = (*Memfs)(nil)
+var _ fuse.FileSystemSetcrtime = (*Memfs)(nil)
+var _ fuse.FileSystemSetchgtime = (*Memfs)(nil)
 
 func main() {
 	memfs := NewMemfs()

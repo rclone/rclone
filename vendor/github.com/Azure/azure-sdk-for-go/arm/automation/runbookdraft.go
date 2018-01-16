@@ -119,6 +119,7 @@ func (client RunbookDraftClient) CreateOrUpdatePreparer(resourceGroupName string
 func (client RunbookDraftClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -191,7 +192,9 @@ func (client RunbookDraftClient) GetPreparer(resourceGroupName string, automatio
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RunbookDraftClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -264,7 +267,9 @@ func (client RunbookDraftClient) GetContentPreparer(resourceGroupName string, au
 // GetContentSender sends the GetContent request. The method will close the
 // http.Response Body if it receives an error.
 func (client RunbookDraftClient) GetContentSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetContentResponder handles the response to the GetContent request. The method always
@@ -355,6 +360,7 @@ func (client RunbookDraftClient) PublishPreparer(resourceGroupName string, autom
 func (client RunbookDraftClient) PublishSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -428,7 +434,9 @@ func (client RunbookDraftClient) UndoEditPreparer(resourceGroupName string, auto
 // UndoEditSender sends the UndoEdit request. The method will close the
 // http.Response Body if it receives an error.
 func (client RunbookDraftClient) UndoEditSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UndoEditResponder handles the response to the UndoEdit request. The method always

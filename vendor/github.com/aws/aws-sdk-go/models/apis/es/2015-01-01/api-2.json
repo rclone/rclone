@@ -56,6 +56,18 @@
         {"shape":"ValidationException"}
       ]
     },
+    "DeleteElasticsearchServiceRole":{
+      "name":"DeleteElasticsearchServiceRole",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/2015-01-01/es/role"
+      },
+      "errors":[
+        {"shape":"BaseException"},
+        {"shape":"InternalException"},
+        {"shape":"ValidationException"}
+      ]
+    },
     "DescribeElasticsearchDomain":{
       "name":"DescribeElasticsearchDomain",
       "http":{
@@ -264,6 +276,7 @@
       "exception":true
     },
     "Boolean":{"type":"boolean"},
+    "CloudWatchLogsLogGroupArn":{"type":"string"},
     "CreateElasticsearchDomainRequest":{
       "type":"structure",
       "required":["DomainName"],
@@ -274,7 +287,10 @@
         "EBSOptions":{"shape":"EBSOptions"},
         "AccessPolicies":{"shape":"PolicyDocument"},
         "SnapshotOptions":{"shape":"SnapshotOptions"},
-        "AdvancedOptions":{"shape":"AdvancedOptions"}
+        "VPCOptions":{"shape":"VPCOptions"},
+        "EncryptionAtRestOptions":{"shape":"EncryptionAtRestOptions"},
+        "AdvancedOptions":{"shape":"AdvancedOptions"},
+        "LogPublishingOptions":{"shape":"LogPublishingOptions"}
       }
     },
     "CreateElasticsearchDomainResponse":{
@@ -468,7 +484,13 @@
         "r4.2xlarge.elasticsearch",
         "r4.4xlarge.elasticsearch",
         "r4.8xlarge.elasticsearch",
-        "r4.16xlarge.elasticsearch"
+        "r4.16xlarge.elasticsearch",
+        "i3.large.elasticsearch",
+        "i3.xlarge.elasticsearch",
+        "i3.2xlarge.elasticsearch",
+        "i3.4xlarge.elasticsearch",
+        "i3.8xlarge.elasticsearch",
+        "i3.16xlarge.elasticsearch"
       ]
     },
     "ElasticsearchClusterConfig":{
@@ -501,7 +523,10 @@
         "EBSOptions":{"shape":"EBSOptionsStatus"},
         "AccessPolicies":{"shape":"AccessPoliciesStatus"},
         "SnapshotOptions":{"shape":"SnapshotOptionsStatus"},
-        "AdvancedOptions":{"shape":"AdvancedOptionsStatus"}
+        "VPCOptions":{"shape":"VPCDerivedInfoStatus"},
+        "EncryptionAtRestOptions":{"shape":"EncryptionAtRestOptionsStatus"},
+        "AdvancedOptions":{"shape":"AdvancedOptionsStatus"},
+        "LogPublishingOptions":{"shape":"LogPublishingOptionsStatus"}
       }
     },
     "ElasticsearchDomainStatus":{
@@ -519,13 +544,17 @@
         "Created":{"shape":"Boolean"},
         "Deleted":{"shape":"Boolean"},
         "Endpoint":{"shape":"ServiceUrl"},
+        "Endpoints":{"shape":"EndpointsMap"},
         "Processing":{"shape":"Boolean"},
         "ElasticsearchVersion":{"shape":"ElasticsearchVersionString"},
         "ElasticsearchClusterConfig":{"shape":"ElasticsearchClusterConfig"},
         "EBSOptions":{"shape":"EBSOptions"},
         "AccessPolicies":{"shape":"PolicyDocument"},
         "SnapshotOptions":{"shape":"SnapshotOptions"},
-        "AdvancedOptions":{"shape":"AdvancedOptions"}
+        "VPCOptions":{"shape":"VPCDerivedInfo"},
+        "EncryptionAtRestOptions":{"shape":"EncryptionAtRestOptions"},
+        "AdvancedOptions":{"shape":"AdvancedOptions"},
+        "LogPublishingOptions":{"shape":"LogPublishingOptions"}
       }
     },
     "ElasticsearchDomainStatusList":{
@@ -552,6 +581,29 @@
       }
     },
     "ElasticsearchVersionString":{"type":"string"},
+    "EncryptionAtRestOptions":{
+      "type":"structure",
+      "members":{
+        "Enabled":{"shape":"Boolean"},
+        "KmsKeyId":{"shape":"KmsKeyId"}
+      }
+    },
+    "EncryptionAtRestOptionsStatus":{
+      "type":"structure",
+      "required":[
+        "Options",
+        "Status"
+      ],
+      "members":{
+        "Options":{"shape":"EncryptionAtRestOptions"},
+        "Status":{"shape":"OptionStatus"}
+      }
+    },
+    "EndpointsMap":{
+      "type":"map",
+      "key":{"shape":"String"},
+      "value":{"shape":"ServiceUrl"}
+    },
     "ErrorMessage":{"type":"string"},
     "InstanceCountLimits":{
       "type":"structure",
@@ -581,6 +633,11 @@
       },
       "error":{"httpStatusCode":409},
       "exception":true
+    },
+    "KmsKeyId":{
+      "type":"string",
+      "max":500,
+      "min":1
     },
     "LimitExceededException":{
       "type":"structure",
@@ -685,6 +742,32 @@
       "members":{
         "TagList":{"shape":"TagList"}
       }
+    },
+    "LogPublishingOption":{
+      "type":"structure",
+      "members":{
+        "CloudWatchLogsLogGroupArn":{"shape":"CloudWatchLogsLogGroupArn"},
+        "Enabled":{"shape":"Boolean"}
+      }
+    },
+    "LogPublishingOptions":{
+      "type":"map",
+      "key":{"shape":"LogType"},
+      "value":{"shape":"LogPublishingOption"}
+    },
+    "LogPublishingOptionsStatus":{
+      "type":"structure",
+      "members":{
+        "Options":{"shape":"LogPublishingOptions"},
+        "Status":{"shape":"OptionStatus"}
+      }
+    },
+    "LogType":{
+      "type":"string",
+      "enum":[
+        "INDEX_SLOW_LOGS",
+        "SEARCH_SLOW_LOGS"
+      ]
     },
     "MaxResults":{
       "type":"integer",
@@ -831,8 +914,10 @@
         "ElasticsearchClusterConfig":{"shape":"ElasticsearchClusterConfig"},
         "EBSOptions":{"shape":"EBSOptions"},
         "SnapshotOptions":{"shape":"SnapshotOptions"},
+        "VPCOptions":{"shape":"VPCOptions"},
         "AdvancedOptions":{"shape":"AdvancedOptions"},
-        "AccessPolicies":{"shape":"PolicyDocument"}
+        "AccessPolicies":{"shape":"PolicyDocument"},
+        "LogPublishingOptions":{"shape":"LogPublishingOptions"}
       }
     },
     "UpdateElasticsearchDomainConfigResponse":{
@@ -843,6 +928,33 @@
       }
     },
     "UpdateTimestamp":{"type":"timestamp"},
+    "VPCDerivedInfo":{
+      "type":"structure",
+      "members":{
+        "VPCId":{"shape":"String"},
+        "SubnetIds":{"shape":"StringList"},
+        "AvailabilityZones":{"shape":"StringList"},
+        "SecurityGroupIds":{"shape":"StringList"}
+      }
+    },
+    "VPCDerivedInfoStatus":{
+      "type":"structure",
+      "required":[
+        "Options",
+        "Status"
+      ],
+      "members":{
+        "Options":{"shape":"VPCDerivedInfo"},
+        "Status":{"shape":"OptionStatus"}
+      }
+    },
+    "VPCOptions":{
+      "type":"structure",
+      "members":{
+        "SubnetIds":{"shape":"StringList"},
+        "SecurityGroupIds":{"shape":"StringList"}
+      }
+    },
     "ValidationException":{
       "type":"structure",
       "members":{

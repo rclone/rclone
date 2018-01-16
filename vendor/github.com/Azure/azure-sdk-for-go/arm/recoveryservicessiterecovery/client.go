@@ -1,7 +1,7 @@
 // Package recoveryservicessiterecovery implements the Azure ARM Recoveryservicessiterecovery service API version
 // 2016-08-10.
 //
-//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package recoveryservicessiterecovery
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

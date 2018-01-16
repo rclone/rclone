@@ -365,5 +365,54 @@
         }
       }
     ]
+  },
+  {
+    "description": "Enum output",
+    "metadata": {
+      "protocol": "json"
+    },
+    "shapes": {
+      "OutputShape": {
+        "type": "structure",
+        "members": {
+          "FooEnum": {
+            "shape": "JSONEnumType"
+          },
+          "ListEnums": {
+            "shape": "JSONEnumList"
+          }
+        }
+      },
+      "JSONEnumType":{
+        "type":"string",
+        "enum":[
+          "foo",
+          "bar"
+        ]
+      },
+      "JSONEnumList":{
+        "type":"list",
+        "member": {"shape": "JSONEnumType"}
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "output": {
+            "shape": "OutputShape"
+          },
+          "name": "OperationName"
+        },
+        "result": {
+          "FooEnum": "foo",
+          "ListEnums": ["foo", "bar"]
+        },
+        "response": {
+          "status_code": 200,
+          "headers": {},
+          "body": "{\"FooEnum\": \"foo\", \"ListEnums\": [\"foo\", \"bar\"]}"
+        }
+      }
+    ]
   }
 ]

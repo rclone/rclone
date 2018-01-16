@@ -114,8 +114,8 @@ type Groups struct {
 }
 
 func (s *Groups) MarshalJSON() ([]byte, error) {
-	type noMethod Groups
-	raw := noMethod(*s)
+	type NoMethod Groups
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -279,7 +279,7 @@ func (c *ArchiveInsertCall) Do(opts ...googleapi.CallOption) (*Groups, error) {
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

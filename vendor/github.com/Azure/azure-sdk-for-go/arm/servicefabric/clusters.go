@@ -162,6 +162,7 @@ func (client ClustersClient) CreatePreparer(resourceGroupName string, clusterNam
 func (client ClustersClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -228,7 +229,9 @@ func (client ClustersClient) DeletePreparer(resourceGroupName string, clusterNam
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -293,7 +296,9 @@ func (client ClustersClient) GetPreparer(resourceGroupName string, clusterName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -354,7 +359,9 @@ func (client ClustersClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -487,7 +494,9 @@ func (client ClustersClient) ListByResourceGroupPreparer(resourceGroupName strin
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClustersClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -641,6 +650,7 @@ func (client ClustersClient) UpdatePreparer(resourceGroupName string, clusterNam
 func (client ClustersClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

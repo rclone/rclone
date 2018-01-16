@@ -68,6 +68,12 @@
         "HistogramEntry$Value": "<p>The value of the entry.</p>"
       }
     },
+    "EC2InstanceId": {
+      "base": null,
+      "refs": {
+        "PutTelemetryRecordsRequest$EC2InstanceId": "<p/>"
+      }
+    },
     "Edge": {
       "base": "<p>Information about a connection between two services.</p>",
       "refs": {
@@ -84,6 +90,13 @@
       "base": "<p>Response statistics for an edge.</p>",
       "refs": {
         "Edge$SummaryStatistics": "<p>Response statistics for segments on the edge.</p>"
+      }
+    },
+    "ErrorMessage": {
+      "base": null,
+      "refs": {
+        "InvalidRequestException$Message": null,
+        "ThrottledException$Message": null
       }
     },
     "ErrorStatistics": {
@@ -148,6 +161,12 @@
       "base": "<p>An entry in a histogram for a statistic. A histogram maps the range of observed values on the X axis, and the prevalence of each value on the Y axis.</p>",
       "refs": {
         "Histogram$member": null
+      }
+    },
+    "Hostname": {
+      "base": null,
+      "refs": {
+        "PutTelemetryRecordsRequest$Hostname": "<p/>"
       }
     },
     "Http": {
@@ -243,6 +262,12 @@
       "refs": {
       }
     },
+    "ResourceARN": {
+      "base": null,
+      "refs": {
+        "PutTelemetryRecordsRequest$ResourceARN": "<p/>"
+      }
+    },
     "Segment": {
       "base": "<p>A segment from a trace that has been ingested by the X-Ray service. The segment can be compiled from documents uploaded with <a>PutTraceSegments</a>, or an <code>inferred</code> segment for a downstream service, generated from a subsegment sent by the service that called it.</p>",
       "refs": {
@@ -326,9 +351,6 @@
         "Http$HttpMethod": "<p>The request method.</p>",
         "Http$UserAgent": "<p>The request's user agent string.</p>",
         "Http$ClientIp": "<p>The IP address of the requestor.</p>",
-        "PutTelemetryRecordsRequest$EC2InstanceId": "<p/>",
-        "PutTelemetryRecordsRequest$Hostname": "<p/>",
-        "PutTelemetryRecordsRequest$ResourceARN": "<p/>",
         "Service$Name": "<p>The canonical name of the service.</p>",
         "Service$AccountId": "<p>Identifier of the AWS account in which the service runs.</p>",
         "Service$Type": "<p>The type of service.</p> <ul> <li> <p>AWS Resource - The type of an AWS resource. For example, <code>AWS::EC2::Instance</code> for a application running on Amazon EC2 or <code>AWS::DynamoDB::Table</code> for an Amazon DynamoDB table that the application used.</p> </li> <li> <p>AWS Service - The type of an AWS service. For example, <code>AWS::DynamoDB</code> for downstream calls to Amazon DynamoDB that didn't target a specific table.</p> </li> <li> <p> <code>client</code> - Represents the clients that sent requests to a root service.</p> </li> <li> <p> <code>remote</code> - A downstream service of indeterminate type.</p> </li> </ul>",

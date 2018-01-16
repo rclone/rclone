@@ -65,8 +65,10 @@ package fields
 
 import (
 	"bytes"
+	"errors"
 	"reflect"
 	"sort"
+	"strings"
 
 	"cloud.google.com/go/internal/atomiccache"
 )
@@ -441,4 +443,26 @@ func dominantField(fs []Field) (Field, bool) {
 		return Field{}, false
 	}
 	return fs[0], true
+}
+
+// ParseStandardTag extracts the sub-tag named by key, then parses it using the
+// de facto standard format introduced in encoding/json:
+//   "-" means "ignore this tag". It must occur by itself. (parseStandardTag returns an error
+//       in this case, whereas encoding/json accepts the "-" even if it is not alone.)
+//   "<name>" provides an alternative name for the field
+//   "<name>,opt1,opt2,..." specifies options after the name.
+// The options are returned as a []string.
+func ParseStandardTag(key string, t reflect.StructTag) (name string, keep bool, options []string, err error) {
+	s := t.Get(key)
+	parts := strings.Split(s, ",")
+	if parts[0] == "-" {
+		if len(parts) > 1 {
+			return "", false, nil, errors.New(`"-" field tag with options`)
+		}
+		return "", false, nil, nil
+	}
+	if len(parts) > 1 {
+		options = parts[1:]
+	}
+	return parts[0], true, options, nil
 }

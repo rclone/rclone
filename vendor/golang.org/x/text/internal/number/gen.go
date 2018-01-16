@@ -255,10 +255,10 @@ func genSymbols(w *gen.CodeWriter, data *cldr.CLDR) {
 
 	// resolveSymbolIndex gets the index from the closest matching locale,
 	// including the locale itself.
-	resolveSymbolIndex := func(langIndex int, ns system) byte {
+	resolveSymbolIndex := func(langIndex int, ns system) symOffset {
 		for {
 			if sym := symbolMap[key{langIndex, ns}]; sym != nil {
-				return byte(m[*sym])
+				return symOffset(m[*sym])
 			}
 			if langIndex == 0 {
 				return 0 // und, latn
@@ -270,7 +270,7 @@ func genSymbols(w *gen.CodeWriter, data *cldr.CLDR) {
 	// Create an index with the symbols for each locale for the latn numbering
 	// system. If this is not the default, or the only one, for a locale, we
 	// will overwrite the value later.
-	var langToDefaults [language.NumCompactTags]byte
+	var langToDefaults [language.NumCompactTags]symOffset
 	for _, l := range data.Locales() {
 		langIndex, _ := language.CompactIndex(language.MustParse(l))
 		langToDefaults[langIndex] = resolveSymbolIndex(langIndex, 0)
@@ -300,8 +300,8 @@ func genSymbols(w *gen.CodeWriter, data *cldr.CLDR) {
 	for _, l := range data.Locales() {
 		langIndex, _ := language.CompactIndex(language.MustParse(l))
 		start := len(langToAlt)
-		if start > 0x7F {
-			log.Fatal("Number of alternative assignments > 0x7F")
+		if start >= hasNonLatnMask {
+			log.Fatalf("Number of alternative assignments >= %x", hasNonLatnMask)
 		}
 		// Create the entry for the default value.
 		def := defaults[langIndex]
@@ -328,7 +328,7 @@ func genSymbols(w *gen.CodeWriter, data *cldr.CLDR) {
 			langToAlt = langToAlt[:start]
 		} else {
 			// Overwrite the entry in langToDefaults.
-			langToDefaults[langIndex] = 0x80 | byte(start)
+			langToDefaults[langIndex] = hasNonLatnMask | symOffset(start)
 		}
 	}
 	w.WriteComment(`

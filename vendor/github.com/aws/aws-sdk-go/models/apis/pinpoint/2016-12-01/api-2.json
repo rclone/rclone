@@ -4,10 +4,10 @@
     "endpointPrefix" : "pinpoint",
     "signingName" : "mobiletargeting",
     "serviceFullName" : "Amazon Pinpoint",
-    "signatureVersion":"v4",
     "protocol" : "rest-json",
     "jsonVersion" : "1.1",
-    "uid":"pinpoint-2016-12-01"
+    "uid" : "pinpoint-2016-12-01",
+    "signatureVersion" : "v4"
   },
   "operations" : {
     "CreateApp" : {
@@ -184,6 +184,60 @@
       },
       "output" : {
         "shape" : "DeleteApnsSandboxChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "DeleteApnsVoipChannel" : {
+      "name" : "DeleteApnsVoipChannel",
+      "http" : {
+        "method" : "DELETE",
+        "requestUri" : "/v1/apps/{application-id}/channels/apns_voip",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "DeleteApnsVoipChannelRequest"
+      },
+      "output" : {
+        "shape" : "DeleteApnsVoipChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "DeleteApnsVoipSandboxChannel" : {
+      "name" : "DeleteApnsVoipSandboxChannel",
+      "http" : {
+        "method" : "DELETE",
+        "requestUri" : "/v1/apps/{application-id}/channels/apns_voip_sandbox",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "DeleteApnsVoipSandboxChannelRequest"
+      },
+      "output" : {
+        "shape" : "DeleteApnsVoipSandboxChannelResponse"
       },
       "errors" : [ {
         "shape" : "BadRequestException"
@@ -481,6 +535,60 @@
       },
       "output" : {
         "shape" : "GetApnsSandboxChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "GetApnsVoipChannel" : {
+      "name" : "GetApnsVoipChannel",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/v1/apps/{application-id}/channels/apns_voip",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetApnsVoipChannelRequest"
+      },
+      "output" : {
+        "shape" : "GetApnsVoipChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "GetApnsVoipSandboxChannel" : {
+      "name" : "GetApnsVoipSandboxChannel",
+      "http" : {
+        "method" : "GET",
+        "requestUri" : "/v1/apps/{application-id}/channels/apns_voip_sandbox",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "GetApnsVoipSandboxChannelRequest"
+      },
+      "output" : {
+        "shape" : "GetApnsVoipSandboxChannelResponse"
       },
       "errors" : [ {
         "shape" : "BadRequestException"
@@ -1225,6 +1333,60 @@
         "shape" : "TooManyRequestsException"
       } ]
     },
+    "UpdateApnsVoipChannel" : {
+      "name" : "UpdateApnsVoipChannel",
+      "http" : {
+        "method" : "PUT",
+        "requestUri" : "/v1/apps/{application-id}/channels/apns_voip",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "UpdateApnsVoipChannelRequest"
+      },
+      "output" : {
+        "shape" : "UpdateApnsVoipChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
+    "UpdateApnsVoipSandboxChannel" : {
+      "name" : "UpdateApnsVoipSandboxChannel",
+      "http" : {
+        "method" : "PUT",
+        "requestUri" : "/v1/apps/{application-id}/channels/apns_voip_sandbox",
+        "responseCode" : 200
+      },
+      "input" : {
+        "shape" : "UpdateApnsVoipSandboxChannelRequest"
+      },
+      "output" : {
+        "shape" : "UpdateApnsVoipSandboxChannelResponse"
+      },
+      "errors" : [ {
+        "shape" : "BadRequestException"
+      }, {
+        "shape" : "InternalServerErrorException"
+      }, {
+        "shape" : "ForbiddenException"
+      }, {
+        "shape" : "NotFoundException"
+      }, {
+        "shape" : "MethodNotAllowedException"
+      }, {
+        "shape" : "TooManyRequestsException"
+      } ]
+    },
     "UpdateApplicationSettings" : {
       "name" : "UpdateApplicationSettings",
       "http" : {
@@ -1496,6 +1658,9 @@
         "Enabled" : {
           "shape" : "__boolean"
         },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
         "Id" : {
           "shape" : "__string"
         },
@@ -1541,9 +1706,6 @@
           "shape" : "__string"
         },
         "ImageUrl" : {
-          "shape" : "__string"
-        },
-        "JsonData" : {
           "shape" : "__string"
         },
         "MD5" : {
@@ -1610,7 +1772,16 @@
         "CreationDate" : {
           "shape" : "__string"
         },
+        "DefaultAuthenticationMethod" : {
+          "shape" : "__string"
+        },
         "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
+        "HasTokenKey" : {
           "shape" : "__boolean"
         },
         "Id" : {
@@ -1648,16 +1819,19 @@
         "Category" : {
           "shape" : "__string"
         },
+        "CollapseId" : {
+          "shape" : "__string"
+        },
         "Data" : {
           "shape" : "MapOf__string"
-        },
-        "JsonData" : {
-          "shape" : "__string"
         },
         "MediaUrl" : {
           "shape" : "__string"
         },
         "PreferredAuthenticationMethod" : {
+          "shape" : "__string"
+        },
+        "Priority" : {
           "shape" : "__string"
         },
         "RawContent" : {
@@ -1674,6 +1848,9 @@
         },
         "ThreadId" : {
           "shape" : "__string"
+        },
+        "TimeToLive" : {
+          "shape" : "__integer"
         },
         "Title" : {
           "shape" : "__string"
@@ -1721,7 +1898,156 @@
         "CreationDate" : {
           "shape" : "__string"
         },
+        "DefaultAuthenticationMethod" : {
+          "shape" : "__string"
+        },
         "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
+        "HasTokenKey" : {
+          "shape" : "__boolean"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "IsArchived" : {
+          "shape" : "__boolean"
+        },
+        "LastModifiedBy" : {
+          "shape" : "__string"
+        },
+        "LastModifiedDate" : {
+          "shape" : "__string"
+        },
+        "Platform" : {
+          "shape" : "__string"
+        },
+        "Version" : {
+          "shape" : "__integer"
+        }
+      }
+    },
+    "APNSVoipChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "BundleId" : {
+          "shape" : "__string"
+        },
+        "Certificate" : {
+          "shape" : "__string"
+        },
+        "DefaultAuthenticationMethod" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "PrivateKey" : {
+          "shape" : "__string"
+        },
+        "TeamId" : {
+          "shape" : "__string"
+        },
+        "TokenKey" : {
+          "shape" : "__string"
+        },
+        "TokenKeyId" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "APNSVoipChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string"
+        },
+        "CreationDate" : {
+          "shape" : "__string"
+        },
+        "DefaultAuthenticationMethod" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
+        "HasTokenKey" : {
+          "shape" : "__boolean"
+        },
+        "Id" : {
+          "shape" : "__string"
+        },
+        "IsArchived" : {
+          "shape" : "__boolean"
+        },
+        "LastModifiedBy" : {
+          "shape" : "__string"
+        },
+        "LastModifiedDate" : {
+          "shape" : "__string"
+        },
+        "Platform" : {
+          "shape" : "__string"
+        },
+        "Version" : {
+          "shape" : "__integer"
+        }
+      }
+    },
+    "APNSVoipSandboxChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "BundleId" : {
+          "shape" : "__string"
+        },
+        "Certificate" : {
+          "shape" : "__string"
+        },
+        "DefaultAuthenticationMethod" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "PrivateKey" : {
+          "shape" : "__string"
+        },
+        "TeamId" : {
+          "shape" : "__string"
+        },
+        "TokenKey" : {
+          "shape" : "__string"
+        },
+        "TokenKeyId" : {
+          "shape" : "__string"
+        }
+      }
+    },
+    "APNSVoipSandboxChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string"
+        },
+        "CreationDate" : {
+          "shape" : "__string"
+        },
+        "DefaultAuthenticationMethod" : {
+          "shape" : "__string"
+        },
+        "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
+        "HasTokenKey" : {
           "shape" : "__boolean"
         },
         "Id" : {
@@ -1921,6 +2247,9 @@
         "Enabled" : {
           "shape" : "__boolean"
         },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
         "Id" : {
           "shape" : "__string"
         },
@@ -1960,9 +2289,6 @@
           "shape" : "__string"
         },
         "ImageUrl" : {
-          "shape" : "__string"
-        },
-        "JsonData" : {
           "shape" : "__string"
         },
         "RawContent" : {
@@ -2123,7 +2449,7 @@
     },
     "ChannelType" : {
       "type" : "string",
-      "enum" : [ "GCM", "APNS", "APNS_SANDBOX", "ADM", "SMS", "EMAIL", "BAIDU" ]
+      "enum" : [ "GCM", "APNS", "APNS_SANDBOX", "APNS_VOIP", "APNS_VOIP_SANDBOX", "ADM", "SMS", "EMAIL", "BAIDU"]
     },
     "CreateAppRequest" : {
       "type" : "structure",
@@ -2251,9 +2577,6 @@
         "Data" : {
           "shape" : "MapOf__string"
         },
-        "JsonData" : {
-          "shape" : "__string"
-        },
         "SilentPush" : {
           "shape" : "__boolean"
         },
@@ -2330,6 +2653,48 @@
       },
       "required" : [ "APNSSandboxChannelResponse" ],
       "payload" : "APNSSandboxChannelResponse"
+    },
+    "DeleteApnsVoipChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "DeleteApnsVoipChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipChannelResponse" : {
+          "shape" : "APNSVoipChannelResponse"
+        }
+      },
+      "required" : [ "APNSVoipChannelResponse" ],
+      "payload" : "APNSVoipChannelResponse"
+    },
+    "DeleteApnsVoipSandboxChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "DeleteApnsVoipSandboxChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipSandboxChannelResponse" : {
+          "shape" : "APNSVoipSandboxChannelResponse"
+        }
+      },
+      "required" : [ "APNSVoipSandboxChannelResponse" ],
+      "payload" : "APNSVoipSandboxChannelResponse"
     },
     "DeleteAppRequest" : {
       "type" : "structure",
@@ -2535,9 +2900,6 @@
         "DefaultPushNotificationMessage" : {
           "shape" : "DefaultPushNotificationMessage"
         },
-        "EmailMessage" : {
-          "shape" : "EmailMessage"
-        },
         "GCMMessage" : {
           "shape" : "GCMMessage"
         },
@@ -2582,6 +2944,9 @@
         "FromAddress" : {
           "shape" : "__string"
         },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
         "Id" : {
           "shape" : "__string"
         },
@@ -2605,29 +2970,6 @@
         },
         "Version" : {
           "shape" : "__integer"
-        }
-      }
-    },
-    "EmailMessage" : {
-      "type" : "structure",
-      "members" : {
-        "Body" : {
-          "shape" : "__string"
-        },
-        "FromAddress" : {
-          "shape" : "__string"
-        },
-        "HtmlBody" : {
-          "shape" : "__string"
-        },
-        "Substitutions" : {
-          "shape" : "MapOfListOf__string"
-        },
-        "TemplateArn" : {
-          "shape" : "__string"
-        },
-        "Title" : {
-          "shape" : "__string"
         }
       }
     },
@@ -2835,9 +3177,6 @@
         "RequestId" : {
           "shape" : "__string"
         },
-        "ShardId" : {
-          "shape" : "__string"
-        },
         "User" : {
           "shape" : "EndpointUser"
         }
@@ -2946,6 +3285,9 @@
         "Enabled" : {
           "shape" : "__boolean"
         },
+        "HasCredential" : {
+          "shape" : "__boolean"
+        },
         "Id" : {
           "shape" : "__string"
         },
@@ -2990,7 +3332,7 @@
         "ImageUrl" : {
           "shape" : "__string"
         },
-        "JsonData" : {
+        "Priority" : {
           "shape" : "__string"
         },
         "RawContent" : {
@@ -3010,6 +3352,9 @@
         },
         "Substitutions" : {
           "shape" : "MapOfListOf__string"
+        },
+        "TimeToLive" : {
+          "shape" : "__integer"
         },
         "Title" : {
           "shape" : "__string"
@@ -3081,6 +3426,48 @@
       },
       "required" : [ "APNSSandboxChannelResponse" ],
       "payload" : "APNSSandboxChannelResponse"
+    },
+    "GetApnsVoipChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "GetApnsVoipChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipChannelResponse" : {
+          "shape" : "APNSVoipChannelResponse"
+        }
+      },
+      "required" : [ "APNSVoipChannelResponse" ],
+      "payload" : "APNSVoipChannelResponse"
+    },
+    "GetApnsVoipSandboxChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId" ]
+    },
+    "GetApnsVoipSandboxChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipSandboxChannelResponse" : {
+          "shape" : "APNSVoipSandboxChannelResponse"
+        }
+      },
+      "required" : [ "APNSVoipSandboxChannelResponse" ],
+      "payload" : "APNSVoipSandboxChannelResponse"
     },
     "GetAppRequest" : {
       "type" : "structure",
@@ -3985,7 +4372,13 @@
     "MessageConfiguration" : {
       "type" : "structure",
       "members" : {
+        "ADMMessage" : {
+          "shape" : "Message"
+        },
         "APNSMessage" : {
+          "shape" : "Message"
+        },
+        "BaiduMessage" : {
           "shape" : "Message"
         },
         "DefaultMessage" : {
@@ -4008,9 +4401,6 @@
         "Addresses" : {
           "shape" : "MapOfAddressConfiguration"
         },
-        "Campaign" : {
-          "shape" : "MapOf__string"
-        },
         "Context" : {
           "shape" : "MapOf__string"
         },
@@ -4019,9 +4409,6 @@
         },
         "MessageConfiguration" : {
           "shape" : "DirectMessageConfiguration"
-        },
-        "RequestId" : {
-          "shape" : "__string"
         }
       }
     },
@@ -4168,6 +4555,9 @@
           "shape" : "__string"
         },
         "Enabled" : {
+          "shape" : "__boolean"
+        },
+        "HasCredential" : {
           "shape" : "__boolean"
         },
         "Id" : {
@@ -4399,9 +4789,6 @@
         "MessageConfiguration" : {
           "shape" : "DirectMessageConfiguration"
         },
-        "RequestId" : {
-          "shape" : "__string"
-        },
         "Users" : {
           "shape" : "MapOfEndpointSendConfiguration"
         }
@@ -4572,6 +4959,56 @@
       },
       "required" : [ "APNSSandboxChannelResponse" ],
       "payload" : "APNSSandboxChannelResponse"
+    },
+    "UpdateApnsVoipChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipChannelRequest" : {
+          "shape" : "APNSVoipChannelRequest"
+        },
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId", "APNSVoipChannelRequest" ],
+      "payload" : "APNSVoipChannelRequest"
+    },
+    "UpdateApnsVoipChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipChannelResponse" : {
+          "shape" : "APNSVoipChannelResponse"
+        }
+      },
+      "required" : [ "APNSVoipChannelResponse" ],
+      "payload" : "APNSVoipChannelResponse"
+    },
+    "UpdateApnsVoipSandboxChannelRequest" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipSandboxChannelRequest" : {
+          "shape" : "APNSVoipSandboxChannelRequest"
+        },
+        "ApplicationId" : {
+          "shape" : "__string",
+          "location" : "uri",
+          "locationName" : "application-id"
+        }
+      },
+      "required" : [ "ApplicationId", "APNSVoipSandboxChannelRequest" ],
+      "payload" : "APNSVoipSandboxChannelRequest"
+    },
+    "UpdateApnsVoipSandboxChannelResponse" : {
+      "type" : "structure",
+      "members" : {
+        "APNSVoipSandboxChannelResponse" : {
+          "shape" : "APNSVoipSandboxChannelResponse"
+        }
+      },
+      "required" : [ "APNSVoipSandboxChannelResponse" ],
+      "payload" : "APNSVoipSandboxChannelResponse"
     },
     "UpdateApplicationSettingsRequest" : {
       "type" : "structure",
@@ -4857,9 +5294,6 @@
         "SegmentVersion" : {
           "shape" : "__integer"
         },
-        "Trace" : {
-          "shape" : "__boolean"
-        },
         "TreatmentDescription" : {
           "shape" : "__string"
         },
@@ -4872,9 +5306,6 @@
       "type" : "structure",
       "members" : {
         "DestinationStreamArn" : {
-          "shape" : "__string"
-        },
-        "ExternalId" : {
           "shape" : "__string"
         },
         "RoleArn" : {

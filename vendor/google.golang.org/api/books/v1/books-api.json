@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/q1aPzEOdugLS9_Y8FK61EmJhEHg\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/grKqkiLaDaBaqW7ezJtDaKmrU78\"",
  "discoveryVersion": "v1",
  "id": "books:v1",
  "name": "books",
  "version": "v1",
- "revision": "20170313",
+ "revision": "20171127",
  "title": "Books API",
  "description": "Searches for books and manages your Google Books library.",
  "ownerDomain": "google.com",
@@ -890,6 +890,42 @@
     }
    }
   },
+  "FamilyInfo": {
+   "id": "FamilyInfo",
+   "type": "object",
+   "properties": {
+    "kind": {
+     "type": "string",
+     "description": "Resource type.",
+     "default": "books#familyInfo"
+    },
+    "membership": {
+     "type": "object",
+     "description": "Family membership info of the user that made the request.",
+     "properties": {
+      "acquirePermission": {
+       "type": "string",
+       "description": "Restrictions on user buying and acquiring content."
+      },
+      "ageGroup": {
+       "type": "string",
+       "description": "The age group of the user."
+      },
+      "allowedMaturityRating": {
+       "type": "string",
+       "description": "The maximum allowed maturity rating for the user."
+      },
+      "isInFamily": {
+       "type": "boolean"
+      },
+      "role": {
+       "type": "string",
+       "description": "The role of the user in the family."
+      }
+     }
+    }
+   }
+  },
   "Geolayerdata": {
    "id": "Geolayerdata",
    "type": "object",
@@ -1444,6 +1480,14 @@
     "notification": {
      "type": "object",
      "properties": {
+      "matchMyInterests": {
+       "type": "object",
+       "properties": {
+        "opted_state": {
+         "type": "string"
+        }
+       }
+      },
       "moreFromAuthors": {
        "type": "object",
        "properties": {
@@ -1453,6 +1497,14 @@
        }
       },
       "moreFromSeries": {
+       "type": "object",
+       "properties": {
+        "opted_state": {
+         "type": "string"
+        }
+       }
+      },
+      "priceDrop": {
        "type": "object",
        "properties": {
         "opted_state": {
@@ -2500,6 +2552,81 @@
      ],
      "response": {
       "$ref": "Metadata"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/books"
+     ]
+    }
+   }
+  },
+  "familysharing": {
+   "methods": {
+    "getFamilyInfo": {
+     "id": "books.familysharing.getFamilyInfo",
+     "path": "familysharing/getFamilyInfo",
+     "httpMethod": "GET",
+     "description": "Gets information regarding the family that the user is part of.",
+     "parameters": {
+      "source": {
+       "type": "string",
+       "description": "String to identify the originator of this request.",
+       "location": "query"
+      }
+     },
+     "response": {
+      "$ref": "FamilyInfo"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/books"
+     ]
+    },
+    "share": {
+     "id": "books.familysharing.share",
+     "path": "familysharing/share",
+     "httpMethod": "POST",
+     "description": "Initiates sharing of the content with the user's family. Empty response indicates success.",
+     "parameters": {
+      "docId": {
+       "type": "string",
+       "description": "The docid to share.",
+       "location": "query"
+      },
+      "source": {
+       "type": "string",
+       "description": "String to identify the originator of this request.",
+       "location": "query"
+      },
+      "volumeId": {
+       "type": "string",
+       "description": "The volume to share.",
+       "location": "query"
+      }
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/books"
+     ]
+    },
+    "unshare": {
+     "id": "books.familysharing.unshare",
+     "path": "familysharing/unshare",
+     "httpMethod": "POST",
+     "description": "Initiates revoking content that has already been shared with the user's family. Empty response indicates success.",
+     "parameters": {
+      "docId": {
+       "type": "string",
+       "description": "The docid to unshare.",
+       "location": "query"
+      },
+      "source": {
+       "type": "string",
+       "description": "String to identify the originator of this request.",
+       "location": "query"
+      },
+      "volumeId": {
+       "type": "string",
+       "description": "The volume to unshare.",
+       "location": "query"
+      }
      },
      "scopes": [
       "https://www.googleapis.com/auth/books"

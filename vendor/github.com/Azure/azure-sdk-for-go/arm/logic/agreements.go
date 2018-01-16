@@ -527,7 +527,9 @@ func (client AgreementsClient) CreateOrUpdatePreparer(resourceGroupName string, 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client AgreementsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -594,7 +596,9 @@ func (client AgreementsClient) DeletePreparer(resourceGroupName string, integrat
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client AgreementsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -660,7 +664,9 @@ func (client AgreementsClient) GetPreparer(resourceGroupName string, integration
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AgreementsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -732,7 +738,9 @@ func (client AgreementsClient) ListByIntegrationAccountsPreparer(resourceGroupNa
 // ListByIntegrationAccountsSender sends the ListByIntegrationAccounts request. The method will close the
 // http.Response Body if it receives an error.
 func (client AgreementsClient) ListByIntegrationAccountsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByIntegrationAccountsResponder handles the response to the ListByIntegrationAccounts request. The method always

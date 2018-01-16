@@ -126,8 +126,8 @@ type CustomApp struct {
 }
 
 func (s *CustomApp) MarshalJSON() ([]byte, error) {
-	type noMethod CustomApp
-	raw := noMethod(*s)
+	type NoMethod CustomApp
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -298,7 +298,7 @@ func (c *AccountsCustomAppsCreateCall) Do(opts ...googleapi.CallOption) (*Custom
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

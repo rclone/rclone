@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,7 +85,31 @@ func (s *mockDlpServer) RedactContent(ctx context.Context, req *dlppb.RedactCont
 	return s.resps[0].(*dlppb.RedactContentResponse), nil
 }
 
+func (s *mockDlpServer) DeidentifyContent(ctx context.Context, req *dlppb.DeidentifyContentRequest) (*dlppb.DeidentifyContentResponse, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*dlppb.DeidentifyContentResponse), nil
+}
+
 func (s *mockDlpServer) CreateInspectOperation(ctx context.Context, req *dlppb.CreateInspectOperationRequest) (*longrunningpb.Operation, error) {
+	md, _ := metadata.FromIncomingContext(ctx)
+	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
+		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
+	}
+	s.reqs = append(s.reqs, req)
+	if s.err != nil {
+		return nil, s.err
+	}
+	return s.resps[0].(*longrunningpb.Operation), nil
+}
+
+func (s *mockDlpServer) AnalyzeDataSourceRisk(ctx context.Context, req *dlppb.AnalyzeDataSourceRiskRequest) (*longrunningpb.Operation, error) {
 	md, _ := metadata.FromIncomingContext(ctx)
 	if xg := md["x-goog-api-client"]; len(xg) == 0 || !strings.Contains(xg[0], "gl-go/") {
 		return nil, fmt.Errorf("x-goog-api-client = %v, expected gl-go key", xg)
@@ -170,8 +194,23 @@ func TestDlpServiceInspectContent(t *testing.T) {
 
 	mockDlp.resps = append(mockDlp.resps[:0], expectedResponse)
 
-	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
-	var items []*dlppb.ContentItem = nil
+	var name string = "EMAIL_ADDRESS"
+	var infoTypesElement = &dlppb.InfoType{
+		Name: name,
+	}
+	var infoTypes = []*dlppb.InfoType{infoTypesElement}
+	var inspectConfig = &dlppb.InspectConfig{
+		InfoTypes: infoTypes,
+	}
+	var type_ string = "text/plain"
+	var value string = "My email is example@example.com."
+	var itemsElement = &dlppb.ContentItem{
+		Type: type_,
+		DataItem: &dlppb.ContentItem_Value{
+			Value: value,
+		},
+	}
+	var items = []*dlppb.ContentItem{itemsElement}
 	var request = &dlppb.InspectContentRequest{
 		InspectConfig: inspectConfig,
 		Items:         items,
@@ -201,8 +240,23 @@ func TestDlpServiceInspectContentError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDlp.err = gstatus.Error(errCode, "test error")
 
-	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
-	var items []*dlppb.ContentItem = nil
+	var name string = "EMAIL_ADDRESS"
+	var infoTypesElement = &dlppb.InfoType{
+		Name: name,
+	}
+	var infoTypes = []*dlppb.InfoType{infoTypesElement}
+	var inspectConfig = &dlppb.InspectConfig{
+		InfoTypes: infoTypes,
+	}
+	var type_ string = "text/plain"
+	var value string = "My email is example@example.com."
+	var itemsElement = &dlppb.ContentItem{
+		Type: type_,
+		DataItem: &dlppb.ContentItem_Value{
+			Value: value,
+		},
+	}
+	var items = []*dlppb.ContentItem{itemsElement}
 	var request = &dlppb.InspectContentRequest{
 		InspectConfig: inspectConfig,
 		Items:         items,
@@ -230,13 +284,26 @@ func TestDlpServiceRedactContent(t *testing.T) {
 
 	mockDlp.resps = append(mockDlp.resps[:0], expectedResponse)
 
-	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
-	var items []*dlppb.ContentItem = nil
-	var replaceConfigs []*dlppb.RedactContentRequest_ReplaceConfig = nil
+	var name string = "EMAIL_ADDRESS"
+	var infoTypesElement = &dlppb.InfoType{
+		Name: name,
+	}
+	var infoTypes = []*dlppb.InfoType{infoTypesElement}
+	var inspectConfig = &dlppb.InspectConfig{
+		InfoTypes: infoTypes,
+	}
+	var type_ string = "text/plain"
+	var value string = "My email is example@example.com."
+	var itemsElement = &dlppb.ContentItem{
+		Type: type_,
+		DataItem: &dlppb.ContentItem_Value{
+			Value: value,
+		},
+	}
+	var items = []*dlppb.ContentItem{itemsElement}
 	var request = &dlppb.RedactContentRequest{
-		InspectConfig:  inspectConfig,
-		Items:          items,
-		ReplaceConfigs: replaceConfigs,
+		InspectConfig: inspectConfig,
+		Items:         items,
 	}
 
 	c, err := NewClient(context.Background(), clientOpt)
@@ -263,13 +330,26 @@ func TestDlpServiceRedactContentError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDlp.err = gstatus.Error(errCode, "test error")
 
-	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
-	var items []*dlppb.ContentItem = nil
-	var replaceConfigs []*dlppb.RedactContentRequest_ReplaceConfig = nil
+	var name string = "EMAIL_ADDRESS"
+	var infoTypesElement = &dlppb.InfoType{
+		Name: name,
+	}
+	var infoTypes = []*dlppb.InfoType{infoTypesElement}
+	var inspectConfig = &dlppb.InspectConfig{
+		InfoTypes: infoTypes,
+	}
+	var type_ string = "text/plain"
+	var value string = "My email is example@example.com."
+	var itemsElement = &dlppb.ContentItem{
+		Type: type_,
+		DataItem: &dlppb.ContentItem_Value{
+			Value: value,
+		},
+	}
+	var items = []*dlppb.ContentItem{itemsElement}
 	var request = &dlppb.RedactContentRequest{
-		InspectConfig:  inspectConfig,
-		Items:          items,
-		ReplaceConfigs: replaceConfigs,
+		InspectConfig: inspectConfig,
+		Items:         items,
 	}
 
 	c, err := NewClient(context.Background(), clientOpt)
@@ -286,10 +366,160 @@ func TestDlpServiceRedactContentError(t *testing.T) {
 	}
 	_ = resp
 }
+func TestDlpServiceDeidentifyContent(t *testing.T) {
+	var expectedResponse *dlppb.DeidentifyContentResponse = &dlppb.DeidentifyContentResponse{}
+
+	mockDlp.err = nil
+	mockDlp.reqs = nil
+
+	mockDlp.resps = append(mockDlp.resps[:0], expectedResponse)
+
+	var deidentifyConfig *dlppb.DeidentifyConfig = &dlppb.DeidentifyConfig{}
+	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
+	var items []*dlppb.ContentItem = nil
+	var request = &dlppb.DeidentifyContentRequest{
+		DeidentifyConfig: deidentifyConfig,
+		InspectConfig:    inspectConfig,
+		Items:            items,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.DeidentifyContent(context.Background(), request)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockDlp.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	if want, got := expectedResponse, resp; !proto.Equal(want, got) {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestDlpServiceDeidentifyContentError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockDlp.err = gstatus.Error(errCode, "test error")
+
+	var deidentifyConfig *dlppb.DeidentifyConfig = &dlppb.DeidentifyConfig{}
+	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
+	var items []*dlppb.ContentItem = nil
+	var request = &dlppb.DeidentifyContentRequest{
+		DeidentifyConfig: deidentifyConfig,
+		InspectConfig:    inspectConfig,
+		Items:            items,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	resp, err := c.DeidentifyContent(context.Background(), request)
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
+func TestDlpServiceAnalyzeDataSourceRisk(t *testing.T) {
+	var expectedResponse *dlppb.RiskAnalysisOperationResult = &dlppb.RiskAnalysisOperationResult{}
+
+	mockDlp.err = nil
+	mockDlp.reqs = nil
+
+	any, err := ptypes.MarshalAny(expectedResponse)
+	if err != nil {
+		t.Fatal(err)
+	}
+	mockDlp.resps = append(mockDlp.resps[:0], &longrunningpb.Operation{
+		Name:   "longrunning-test",
+		Done:   true,
+		Result: &longrunningpb.Operation_Response{Response: any},
+	})
+
+	var privacyMetric *dlppb.PrivacyMetric = &dlppb.PrivacyMetric{}
+	var sourceTable *dlppb.BigQueryTable = &dlppb.BigQueryTable{}
+	var request = &dlppb.AnalyzeDataSourceRiskRequest{
+		PrivacyMetric: privacyMetric,
+		SourceTable:   sourceTable,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	respLRO, err := c.AnalyzeDataSourceRisk(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := respLRO.Wait(context.Background())
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if want, got := request, mockDlp.reqs[0]; !proto.Equal(want, got) {
+		t.Errorf("wrong request %q, want %q", got, want)
+	}
+
+	if want, got := expectedResponse, resp; !proto.Equal(want, got) {
+		t.Errorf("wrong response %q, want %q)", got, want)
+	}
+}
+
+func TestDlpServiceAnalyzeDataSourceRiskError(t *testing.T) {
+	errCode := codes.PermissionDenied
+	mockDlp.err = nil
+	mockDlp.resps = append(mockDlp.resps[:0], &longrunningpb.Operation{
+		Name: "longrunning-test",
+		Done: true,
+		Result: &longrunningpb.Operation_Error{
+			Error: &status.Status{
+				Code:    int32(errCode),
+				Message: "test error",
+			},
+		},
+	})
+
+	var privacyMetric *dlppb.PrivacyMetric = &dlppb.PrivacyMetric{}
+	var sourceTable *dlppb.BigQueryTable = &dlppb.BigQueryTable{}
+	var request = &dlppb.AnalyzeDataSourceRiskRequest{
+		PrivacyMetric: privacyMetric,
+		SourceTable:   sourceTable,
+	}
+
+	c, err := NewClient(context.Background(), clientOpt)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	respLRO, err := c.AnalyzeDataSourceRisk(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	resp, err := respLRO.Wait(context.Background())
+
+	if st, ok := gstatus.FromError(err); !ok {
+		t.Errorf("got error %v, expected grpc error", err)
+	} else if c := st.Code(); c != errCode {
+		t.Errorf("got error code %q, want %q", c, errCode)
+	}
+	_ = resp
+}
 func TestDlpServiceCreateInspectOperation(t *testing.T) {
-	var name string = "name3373707"
+	var name2 string = "name2-1052831874"
 	var expectedResponse = &dlppb.InspectOperationResult{
-		Name: name,
+		Name: name2,
 	}
 
 	mockDlp.err = nil
@@ -305,8 +535,26 @@ func TestDlpServiceCreateInspectOperation(t *testing.T) {
 		Result: &longrunningpb.Operation_Response{Response: any},
 	})
 
-	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
-	var storageConfig *dlppb.StorageConfig = &dlppb.StorageConfig{}
+	var name string = "EMAIL_ADDRESS"
+	var infoTypesElement = &dlppb.InfoType{
+		Name: name,
+	}
+	var infoTypes = []*dlppb.InfoType{infoTypesElement}
+	var inspectConfig = &dlppb.InspectConfig{
+		InfoTypes: infoTypes,
+	}
+	var url string = "gs://example_bucket/example_file.png"
+	var fileSet = &dlppb.CloudStorageOptions_FileSet{
+		Url: url,
+	}
+	var cloudStorageOptions = &dlppb.CloudStorageOptions{
+		FileSet: fileSet,
+	}
+	var storageConfig = &dlppb.StorageConfig{
+		Type: &dlppb.StorageConfig_CloudStorageOptions{
+			CloudStorageOptions: cloudStorageOptions,
+		},
+	}
 	var outputConfig *dlppb.OutputStorageConfig = &dlppb.OutputStorageConfig{}
 	var request = &dlppb.CreateInspectOperationRequest{
 		InspectConfig: inspectConfig,
@@ -352,8 +600,26 @@ func TestDlpServiceCreateInspectOperationError(t *testing.T) {
 		},
 	})
 
-	var inspectConfig *dlppb.InspectConfig = &dlppb.InspectConfig{}
-	var storageConfig *dlppb.StorageConfig = &dlppb.StorageConfig{}
+	var name string = "EMAIL_ADDRESS"
+	var infoTypesElement = &dlppb.InfoType{
+		Name: name,
+	}
+	var infoTypes = []*dlppb.InfoType{infoTypesElement}
+	var inspectConfig = &dlppb.InspectConfig{
+		InfoTypes: infoTypes,
+	}
+	var url string = "gs://example_bucket/example_file.png"
+	var fileSet = &dlppb.CloudStorageOptions_FileSet{
+		Url: url,
+	}
+	var cloudStorageOptions = &dlppb.CloudStorageOptions{
+		FileSet: fileSet,
+	}
+	var storageConfig = &dlppb.StorageConfig{
+		Type: &dlppb.StorageConfig_CloudStorageOptions{
+			CloudStorageOptions: cloudStorageOptions,
+		},
+	}
 	var outputConfig *dlppb.OutputStorageConfig = &dlppb.OutputStorageConfig{}
 	var request = &dlppb.CreateInspectOperationRequest{
 		InspectConfig: inspectConfig,
@@ -446,8 +712,8 @@ func TestDlpServiceListInfoTypes(t *testing.T) {
 
 	mockDlp.resps = append(mockDlp.resps[:0], expectedResponse)
 
-	var category string = "category50511102"
-	var languageCode string = "languageCode-412800396"
+	var category string = "PII"
+	var languageCode string = "en"
 	var request = &dlppb.ListInfoTypesRequest{
 		Category:     category,
 		LanguageCode: languageCode,
@@ -477,8 +743,8 @@ func TestDlpServiceListInfoTypesError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDlp.err = gstatus.Error(errCode, "test error")
 
-	var category string = "category50511102"
-	var languageCode string = "languageCode-412800396"
+	var category string = "PII"
+	var languageCode string = "en"
 	var request = &dlppb.ListInfoTypesRequest{
 		Category:     category,
 		LanguageCode: languageCode,
@@ -506,7 +772,7 @@ func TestDlpServiceListRootCategories(t *testing.T) {
 
 	mockDlp.resps = append(mockDlp.resps[:0], expectedResponse)
 
-	var languageCode string = "languageCode-412800396"
+	var languageCode string = "en"
 	var request = &dlppb.ListRootCategoriesRequest{
 		LanguageCode: languageCode,
 	}
@@ -535,7 +801,7 @@ func TestDlpServiceListRootCategoriesError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockDlp.err = gstatus.Error(errCode, "test error")
 
-	var languageCode string = "languageCode-412800396"
+	var languageCode string = "en"
 	var request = &dlppb.ListRootCategoriesRequest{
 		LanguageCode: languageCode,
 	}

@@ -56,6 +56,25 @@ type AvailabilityStatus struct {
 	Properties        *AvailabilityStatusProperties `json:"properties,omitempty"`
 }
 
+// AvailabilityStatusListResult is the List availabilityStatus operation response.
+type AvailabilityStatusListResult struct {
+	autorest.Response `json:"-"`
+	Value             *[]AvailabilityStatus `json:"value,omitempty"`
+	NextLink          *string               `json:"nextLink,omitempty"`
+}
+
+// AvailabilityStatusListResultPreparer prepares a request to retrieve the next set of results. It returns
+// nil if no more results exist.
+func (client AvailabilityStatusListResult) AvailabilityStatusListResultPreparer() (*http.Request, error) {
+	if client.NextLink == nil || len(to.String(client.NextLink)) <= 0 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
 // AvailabilityStatusProperties is properties of availability state.
 type AvailabilityStatusProperties struct {
 	AvailabilityState        AvailabilityStateValues                            `json:"availabilityState,omitempty"`
@@ -82,25 +101,6 @@ type AvailabilityStatusPropertiesRecentlyResolvedState struct {
 	UnavailableOccurredTime *date.Time `json:"unavailableOccurredTime,omitempty"`
 	ResolvedTime            *date.Time `json:"resolvedTime,omitempty"`
 	UnavailabilitySummary   *string    `json:"unavailabilitySummary,omitempty"`
-}
-
-// AvailabilityStatusListResult is the List availabilityStatus operation response.
-type AvailabilityStatusListResult struct {
-	autorest.Response `json:"-"`
-	Value             *[]AvailabilityStatus `json:"value,omitempty"`
-	NextLink          *string               `json:"nextLink,omitempty"`
-}
-
-// AvailabilityStatusListResultPreparer prepares a request to retrieve the next set of results. It returns
-// nil if no more results exist.
-func (client AvailabilityStatusListResult) AvailabilityStatusListResultPreparer() (*http.Request, error) {
-	if client.NextLink == nil || len(to.String(client.NextLink)) <= 0 {
-		return nil, nil
-	}
-	return autorest.Prepare(&http.Request{},
-		autorest.AsJSON(),
-		autorest.AsGet(),
-		autorest.WithBaseURL(to.String(client.NextLink)))
 }
 
 // ErrorResponse is error details.

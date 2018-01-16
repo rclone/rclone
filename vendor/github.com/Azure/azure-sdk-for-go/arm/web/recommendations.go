@@ -96,7 +96,9 @@ func (client RecommendationsClient) DisableAllForWebAppPreparer(resourceGroupNam
 // DisableAllForWebAppSender sends the DisableAllForWebApp request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) DisableAllForWebAppSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DisableAllForWebAppResponder handles the response to the DisableAllForWebApp request. The method always
@@ -174,7 +176,9 @@ func (client RecommendationsClient) GetRuleDetailsByWebAppPreparer(resourceGroup
 // GetRuleDetailsByWebAppSender sends the GetRuleDetailsByWebApp request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) GetRuleDetailsByWebAppSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetRuleDetailsByWebAppResponder handles the response to the GetRuleDetailsByWebApp request. The method always
@@ -246,7 +250,9 @@ func (client RecommendationsClient) ListPreparer(featured *bool, filter string) 
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -324,7 +330,9 @@ func (client RecommendationsClient) ListHistoryForWebAppPreparer(resourceGroupNa
 // ListHistoryForWebAppSender sends the ListHistoryForWebApp request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) ListHistoryForWebAppSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListHistoryForWebAppResponder handles the response to the ListHistoryForWebApp request. The method always
@@ -406,7 +414,9 @@ func (client RecommendationsClient) ListRecommendedRulesForWebAppPreparer(resour
 // ListRecommendedRulesForWebAppSender sends the ListRecommendedRulesForWebApp request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) ListRecommendedRulesForWebAppSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListRecommendedRulesForWebAppResponder handles the response to the ListRecommendedRulesForWebApp request. The method always
@@ -467,7 +477,9 @@ func (client RecommendationsClient) ResetAllFiltersPreparer() (*http.Request, er
 // ResetAllFiltersSender sends the ResetAllFilters request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) ResetAllFiltersSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ResetAllFiltersResponder handles the response to the ResetAllFilters request. The method always
@@ -539,7 +551,9 @@ func (client RecommendationsClient) ResetAllFiltersForWebAppPreparer(resourceGro
 // ResetAllFiltersForWebAppSender sends the ResetAllFiltersForWebApp request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendationsClient) ResetAllFiltersForWebAppSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ResetAllFiltersForWebAppResponder handles the response to the ResetAllFiltersForWebApp request. The method always

@@ -37,8 +37,19 @@ const (
 	NumSymbolTypes
 )
 
+const hasNonLatnMask = 0x8000
+
+// symOffset is an offset into altSymData if the bit indicated by hasNonLatnMask
+// is not 0 (with this bit masked out), and an offset into symIndex otherwise.
+//
+// TODO: this type can be a byte again if we use an indirection into altsymData
+// and introduce an alt -> offset slice (the length of this will be number of
+// alternatives plus 1). This also allows getting rid of the compactTag field
+// in altSymData. In total this will save about 1K.
+type symOffset uint16
+
 type altSymData struct {
 	compactTag uint16
+	symIndex   symOffset
 	system     system
-	symIndex   byte
 }

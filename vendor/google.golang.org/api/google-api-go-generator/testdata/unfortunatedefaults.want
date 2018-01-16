@@ -220,20 +220,20 @@ type Thing struct {
 }
 
 func (s *Thing) MarshalJSON() ([]byte, error) {
-	type noMethod Thing
-	raw := noMethod(*s)
+	type NoMethod Thing
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *Thing) UnmarshalJSON(data []byte) error {
-	type noMethod Thing
+	type NoMethod Thing
 	var s1 struct {
 		NumericEmptyDefaultD    gensupport.JSONFloat64  `json:"numeric_empty_default_d"`
 		NumericEmptyDefaultE    gensupport.JSONFloat64  `json:"numeric_empty_default_e"`
 		NumericNonemptyDefaultB *gensupport.JSONFloat64 `json:"numeric_nonempty_default_b"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}

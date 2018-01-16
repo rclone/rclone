@@ -1,6 +1,8 @@
 // Package servicemap implements the Azure ARM Servicemap service API version 2015-11-01-preview.
 //
 // Service Map API Reference
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/operationalinsights/mgmt/2015-11-01-preview/servicemap
 package servicemap
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

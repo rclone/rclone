@@ -124,7 +124,7 @@ These methods create references to datasets, not the datasets themselves. You ca
 a dataset reference even if the dataset doesn't exist yet. Use Dataset.Create to
 create a dataset from a reference:
 
-    if err := myDataset.Create(ctx); err != nil {
+    if err := myDataset.Create(ctx, nil); err != nil {
         // TODO: Handle error.
     }
 
@@ -134,9 +134,10 @@ to an object in BigQuery that may or may not exist.
     table := myDataset.Table("my_table")
 
 You can create, delete and update the metadata of tables with methods on Table.
-Table.Create supports a few options. For instance, you could create a temporary table with:
+For instance, you could create a temporary table with:
 
-    err = myDataset.Table("temp").Create(ctx, bigquery.TableExpiration(time.Now().Add(1*time.Hour)))
+    err = myDataset.Table("temp").Create(ctx, &bigquery.TableMetadata{
+        ExpirationTime: time.Now().Add(1*time.Hour)})
     if err != nil {
         // TODO: Handle error.
     }
@@ -166,22 +167,23 @@ Or you can infer the schema from a struct:
     // schema1 and schema2 are identical.
 
 Struct inference supports tags like those of the encoding/json package,
-so you can change names or ignore fields:
+so you can change names, ignore fields, or mark a field as nullable (non-required):
 
     type student2 struct {
-        Name   string `bigquery:"full_name"`
-        Grades []int
-        Secret string `bigquery:"-"`
+        Name     string `bigquery:"full_name"`
+        Grades   []int
+        Secret   string `bigquery:"-"`
+        Optional int    `bigquery:",nullable"
     }
     schema3, err := bigquery.InferSchema(student2{})
     if err != nil {
         // TODO: Handle error.
     }
-    // schema3 has fields "full_name" and "Grade".
+    // schema3 has required fields "full_name", "Grade" and nullable field "Optional".
 
-Having constructed a schema, you can pass it to Table.Create as an option:
+Having constructed a schema, you can create a table with it like so:
 
-    if err := table.Create(ctx, schema1); err != nil {
+    if err := table.Create(ctx, &bigquery.TableMetadata{Schema: schema1}); err != nil {
         // TODO: Handle error.
     }
 

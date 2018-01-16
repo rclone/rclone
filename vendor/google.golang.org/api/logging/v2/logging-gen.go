@@ -70,10 +70,13 @@ func New(client *http.Client) (*Service, error) {
 	s := &Service{client: client, BasePath: basePath}
 	s.BillingAccounts = NewBillingAccountsService(s)
 	s.Entries = NewEntriesService(s)
+	s.Exclusions = NewExclusionsService(s)
 	s.Folders = NewFoldersService(s)
+	s.Logs = NewLogsService(s)
 	s.MonitoredResourceDescriptors = NewMonitoredResourceDescriptorsService(s)
 	s.Organizations = NewOrganizationsService(s)
 	s.Projects = NewProjectsService(s)
+	s.Sinks = NewSinksService(s)
 	return s, nil
 }
 
@@ -86,13 +89,19 @@ type Service struct {
 
 	Entries *EntriesService
 
+	Exclusions *ExclusionsService
+
 	Folders *FoldersService
+
+	Logs *LogsService
 
 	MonitoredResourceDescriptors *MonitoredResourceDescriptorsService
 
 	Organizations *OrganizationsService
 
 	Projects *ProjectsService
+
+	Sinks *SinksService
 }
 
 func (s *Service) userAgent() string {
@@ -156,6 +165,15 @@ type EntriesService struct {
 	s *Service
 }
 
+func NewExclusionsService(s *Service) *ExclusionsService {
+	rs := &ExclusionsService{s: s}
+	return rs
+}
+
+type ExclusionsService struct {
+	s *Service
+}
+
 func NewFoldersService(s *Service) *FoldersService {
 	rs := &FoldersService{s: s}
 	rs.Exclusions = NewFoldersExclusionsService(s)
@@ -198,6 +216,15 @@ func NewFoldersSinksService(s *Service) *FoldersSinksService {
 }
 
 type FoldersSinksService struct {
+	s *Service
+}
+
+func NewLogsService(s *Service) *LogsService {
+	rs := &LogsService{s: s}
+	return rs
+}
+
+type LogsService struct {
 	s *Service
 }
 
@@ -312,6 +339,15 @@ type ProjectsSinksService struct {
 	s *Service
 }
 
+func NewSinksService(s *Service) *SinksService {
+	rs := &SinksService{s: s}
+	return rs
+}
+
+type SinksService struct {
+	s *Service
+}
+
 // BucketOptions: BucketOptions describes the bucket boundaries used to
 // create a histogram for the distribution. The buckets can be in a
 // linear sequence, an exponential sequence, or each bucket can be
@@ -356,8 +392,8 @@ type BucketOptions struct {
 }
 
 func (s *BucketOptions) MarshalJSON() ([]byte, error) {
-	type noMethod BucketOptions
-	raw := noMethod(*s)
+	type NoMethod BucketOptions
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -405,8 +441,8 @@ type Explicit struct {
 }
 
 func (s *Explicit) MarshalJSON() ([]byte, error) {
-	type noMethod Explicit
-	raw := noMethod(*s)
+	type NoMethod Explicit
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -445,19 +481,19 @@ type Exponential struct {
 }
 
 func (s *Exponential) MarshalJSON() ([]byte, error) {
-	type noMethod Exponential
-	raw := noMethod(*s)
+	type NoMethod Exponential
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *Exponential) UnmarshalJSON(data []byte) error {
-	type noMethod Exponential
+	type NoMethod Exponential
 	var s1 struct {
 		GrowthFactor gensupport.JSONFloat64 `json:"growthFactor"`
 		Scale        gensupport.JSONFloat64 `json:"scale"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -552,8 +588,8 @@ type HttpRequest struct {
 }
 
 func (s *HttpRequest) MarshalJSON() ([]byte, error) {
-	type noMethod HttpRequest
-	raw := noMethod(*s)
+	type NoMethod HttpRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -591,8 +627,8 @@ type LabelDescriptor struct {
 }
 
 func (s *LabelDescriptor) MarshalJSON() ([]byte, error) {
-	type noMethod LabelDescriptor
-	raw := noMethod(*s)
+	type NoMethod LabelDescriptor
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -631,19 +667,19 @@ type Linear struct {
 }
 
 func (s *Linear) MarshalJSON() ([]byte, error) {
-	type noMethod Linear
-	raw := noMethod(*s)
+	type NoMethod Linear
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *Linear) UnmarshalJSON(data []byte) error {
-	type noMethod Linear
+	type NoMethod Linear
 	var s1 struct {
 		Offset gensupport.JSONFloat64 `json:"offset"`
 		Width  gensupport.JSONFloat64 `json:"width"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -685,8 +721,8 @@ type ListExclusionsResponse struct {
 }
 
 func (s *ListExclusionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListExclusionsResponse
-	raw := noMethod(*s)
+	type NoMethod ListExclusionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -758,8 +794,8 @@ type ListLogEntriesRequest struct {
 }
 
 func (s *ListLogEntriesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ListLogEntriesRequest
-	raw := noMethod(*s)
+	type NoMethod ListLogEntriesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -804,8 +840,8 @@ type ListLogEntriesResponse struct {
 }
 
 func (s *ListLogEntriesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListLogEntriesResponse
-	raw := noMethod(*s)
+	type NoMethod ListLogEntriesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -842,8 +878,8 @@ type ListLogMetricsResponse struct {
 }
 
 func (s *ListLogMetricsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListLogMetricsResponse
-	raw := noMethod(*s)
+	type NoMethod ListLogMetricsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -882,8 +918,8 @@ type ListLogsResponse struct {
 }
 
 func (s *ListLogsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListLogsResponse
-	raw := noMethod(*s)
+	type NoMethod ListLogsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -921,8 +957,8 @@ type ListMonitoredResourceDescriptorsResponse struct {
 }
 
 func (s *ListMonitoredResourceDescriptorsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListMonitoredResourceDescriptorsResponse
-	raw := noMethod(*s)
+	type NoMethod ListMonitoredResourceDescriptorsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -959,8 +995,8 @@ type ListSinksResponse struct {
 }
 
 func (s *ListSinksResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListSinksResponse
-	raw := noMethod(*s)
+	type NoMethod ListSinksResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1052,6 +1088,12 @@ type LogEntry struct {
 	// with the log entry, if any.
 	SourceLocation *LogEntrySourceLocation `json:"sourceLocation,omitempty"`
 
+	// SpanId: Optional. The span ID within the trace associated with the
+	// log entry. For Stackdriver Trace spans, this is the same format that
+	// the Stackdriver Trace API v2 uses: a 16-character hexadecimal
+	// encoding of an 8-byte array, such as <code>"000000000000004a"</code>.
+	SpanId string `json:"spanId,omitempty"`
+
 	// TextPayload: The log entry payload, represented as a Unicode string
 	// (UTF-8).
 	TextPayload string `json:"textPayload,omitempty"`
@@ -1062,7 +1104,9 @@ type LogEntry struct {
 	// log entry, then Stackdriver Logging assigns it the current
 	// time.Incoming log entries should have timestamps that are no more
 	// than the logs retention period in the past, and no more than 24 hours
-	// in the future. See the entries.write API method for more information.
+	// in the future. Log entries outside those time boundaries will not be
+	// available when calling entries.list, but those log entries can still
+	// be exported with LogSinks.
 	Timestamp string `json:"timestamp,omitempty"`
 
 	// Trace: Optional. Resource name of the trace associated with the log
@@ -1089,8 +1133,8 @@ type LogEntry struct {
 }
 
 func (s *LogEntry) MarshalJSON() ([]byte, error) {
-	type noMethod LogEntry
-	raw := noMethod(*s)
+	type NoMethod LogEntry
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1132,8 +1176,8 @@ type LogEntryOperation struct {
 }
 
 func (s *LogEntryOperation) MarshalJSON() ([]byte, error) {
-	type noMethod LogEntryOperation
-	raw := noMethod(*s)
+	type NoMethod LogEntryOperation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1174,8 +1218,8 @@ type LogEntrySourceLocation struct {
 }
 
 func (s *LogEntrySourceLocation) MarshalJSON() ([]byte, error) {
-	type noMethod LogEntrySourceLocation
-	raw := noMethod(*s)
+	type NoMethod LogEntrySourceLocation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1232,8 +1276,8 @@ type LogExclusion struct {
 }
 
 func (s *LogExclusion) MarshalJSON() ([]byte, error) {
-	type noMethod LogExclusion
-	raw := noMethod(*s)
+	type NoMethod LogExclusion
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1284,8 +1328,8 @@ type LogLine struct {
 }
 
 func (s *LogLine) MarshalJSON() ([]byte, error) {
-	type noMethod LogLine
-	raw := noMethod(*s)
+	type NoMethod LogLine
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1405,8 +1449,8 @@ type LogMetric struct {
 }
 
 func (s *LogMetric) MarshalJSON() ([]byte, error) {
-	type noMethod LogMetric
-	raw := noMethod(*s)
+	type NoMethod LogMetric
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1513,8 +1557,8 @@ type LogSink struct {
 }
 
 func (s *LogSink) MarshalJSON() ([]byte, error) {
-	type noMethod LogSink
-	raw := noMethod(*s)
+	type NoMethod LogSink
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1528,7 +1572,9 @@ type MetricDescriptor struct {
 
 	// DisplayName: A concise name for the metric, which can be displayed in
 	// user interfaces. Use sentence case without an ending period, for
-	// example "Request count".
+	// example "Request count". This field is optional but it is recommended
+	// to be set for any metrics associated with user-visible concepts, such
+	// as Quota.
 	DisplayName string `json:"displayName,omitempty"`
 
 	// Labels: The set of labels that can be used to describe a specific
@@ -1553,16 +1599,7 @@ type MetricDescriptor struct {
 	// zero and sets a new start time for the following points.
 	MetricKind string `json:"metricKind,omitempty"`
 
-	// Name: The resource name of the metric descriptor. Depending on the
-	// implementation, the name typically includes: (1) the parent resource
-	// name that defines the scope of the metric type or of its data; and
-	// (2) the metric's URL-encoded type, which also appears in the type
-	// field of this descriptor. For example, following is the resource name
-	// of a custom metric within the GCP project
-	// my-project-id:
-	// "projects/my-project-id/metricDescriptors/custom.google
-	// apis.com%2Finvoice%2Fpaid%2Famount"
-	//
+	// Name: The resource name of the metric descriptor.
 	Name string `json:"name,omitempty"`
 
 	// Type: The metric type, including its DNS name prefix. The type is not
@@ -1661,8 +1698,8 @@ type MetricDescriptor struct {
 }
 
 func (s *MetricDescriptor) MarshalJSON() ([]byte, error) {
-	type noMethod MetricDescriptor
-	raw := noMethod(*s)
+	type NoMethod MetricDescriptor
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1709,8 +1746,8 @@ type MonitoredResource struct {
 }
 
 func (s *MonitoredResource) MarshalJSON() ([]byte, error) {
-	type noMethod MonitoredResource
-	raw := noMethod(*s)
+	type NoMethod MonitoredResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1771,8 +1808,8 @@ type MonitoredResourceDescriptor struct {
 }
 
 func (s *MonitoredResourceDescriptor) MarshalJSON() ([]byte, error) {
-	type noMethod MonitoredResourceDescriptor
-	raw := noMethod(*s)
+	type NoMethod MonitoredResourceDescriptor
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1918,18 +1955,18 @@ type RequestLog struct {
 }
 
 func (s *RequestLog) MarshalJSON() ([]byte, error) {
-	type noMethod RequestLog
-	raw := noMethod(*s)
+	type NoMethod RequestLog
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *RequestLog) UnmarshalJSON(data []byte) error {
-	type noMethod RequestLog
+	type NoMethod RequestLog
 	var s1 struct {
 		Cost gensupport.JSONFloat64 `json:"cost"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1972,8 +2009,8 @@ type SourceLocation struct {
 }
 
 func (s *SourceLocation) MarshalJSON() ([]byte, error) {
-	type noMethod SourceLocation
-	raw := noMethod(*s)
+	type NoMethod SourceLocation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2006,8 +2043,8 @@ type SourceReference struct {
 }
 
 func (s *SourceReference) MarshalJSON() ([]byte, error) {
-	type noMethod SourceReference
-	raw := noMethod(*s)
+	type NoMethod SourceReference
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2025,11 +2062,12 @@ type WriteLogEntriesRequest struct {
 	// entries earlier in the list will sort before the entries later in the
 	// list. See the entries.list method.Log entries with timestamps that
 	// are more than the logs retention period in the past or more than 24
-	// hours in the future might be discarded. Discarding does not return an
-	// error.To improve throughput and to avoid exceeding the quota limit
-	// for calls to entries.write, you should try to include several log
-	// entries in this list, rather than calling this method for each
-	// individual log entry.
+	// hours in the future will not be available when calling entries.list.
+	// However, those log entries can still be exported with LogSinks.To
+	// improve throughput and to avoid exceeding the quota limit for calls
+	// to entries.write, you should try to include several log entries in
+	// this list, rather than calling this method for each individual log
+	// entry.
 	Entries []*LogEntry `json:"entries,omitempty"`
 
 	// Labels: Optional. Default labels that are added to the labels field
@@ -2089,8 +2127,8 @@ type WriteLogEntriesRequest struct {
 }
 
 func (s *WriteLogEntriesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod WriteLogEntriesRequest
-	raw := noMethod(*s)
+	type NoMethod WriteLogEntriesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2203,7 +2241,7 @@ func (c *BillingAccountsExclusionsCreateCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2332,7 +2370,7 @@ func (c *BillingAccountsExclusionsDeleteCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2472,7 +2510,7 @@ func (c *BillingAccountsExclusionsGetCall) Do(opts ...googleapi.CallOption) (*Lo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2633,7 +2671,7 @@ func (c *BillingAccountsExclusionsListCall) Do(opts ...googleapi.CallOption) (*L
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2812,7 +2850,7 @@ func (c *BillingAccountsExclusionsPatchCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2949,7 +2987,7 @@ func (c *BillingAccountsLogsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3109,7 +3147,7 @@ func (c *BillingAccountsLogsListCall) Do(opts ...googleapi.CallOption) (*ListLog
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3297,7 +3335,7 @@ func (c *BillingAccountsSinksCreateCall) Do(opts ...googleapi.CallOption) (*LogS
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3432,7 +3470,7 @@ func (c *BillingAccountsSinksDeleteCall) Do(opts ...googleapi.CallOption) (*Empt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3572,7 +3610,7 @@ func (c *BillingAccountsSinksGetCall) Do(opts ...googleapi.CallOption) (*LogSink
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3733,7 +3771,7 @@ func (c *BillingAccountsSinksListCall) Do(opts ...googleapi.CallOption) (*ListSi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3934,7 +3972,7 @@ func (c *BillingAccountsSinksPatchCall) Do(opts ...googleapi.CallOption) (*LogSi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4115,7 +4153,7 @@ func (c *BillingAccountsSinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogS
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4259,7 +4297,7 @@ func (c *EntriesListCall) Do(opts ...googleapi.CallOption) (*ListLogEntriesRespo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4407,7 +4445,7 @@ func (c *EntriesWriteCall) Do(opts ...googleapi.CallOption) (*WriteLogEntriesRes
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4429,6 +4467,759 @@ func (c *EntriesWriteCall) Do(opts ...googleapi.CallOption) (*WriteLogEntriesRes
 	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/logging.admin",
 	//     "https://www.googleapis.com/auth/logging.write"
+	//   ]
+	// }
+
+}
+
+// method id "logging.exclusions.create":
+
+type ExclusionsCreateCall struct {
+	s            *Service
+	parent       string
+	logexclusion *LogExclusion
+	urlParams_   gensupport.URLParams
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Create: Creates a new exclusion in a specified parent resource. Only
+// log entries belonging to that resource can be excluded. You can have
+// up to 10 exclusions in a resource.
+func (r *ExclusionsService) Create(parent string, logexclusion *LogExclusion) *ExclusionsCreateCall {
+	c := &ExclusionsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.logexclusion = logexclusion
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ExclusionsCreateCall) Fields(s ...googleapi.Field) *ExclusionsCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ExclusionsCreateCall) Context(ctx context.Context) *ExclusionsCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ExclusionsCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ExclusionsCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.logexclusion)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+parent}/exclusions")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.exclusions.create" call.
+// Exactly one of *LogExclusion or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *LogExclusion.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ExclusionsCreateCall) Do(opts ...googleapi.CallOption) (*LogExclusion, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &LogExclusion{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a new exclusion in a specified parent resource. Only log entries belonging to that resource can be excluded. You can have up to 10 exclusions in a resource.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/exclusions",
+	//   "httpMethod": "POST",
+	//   "id": "logging.exclusions.create",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "parent": {
+	//       "description": "Required. The parent resource in which to create the exclusion:\n\"projects/[PROJECT_ID]\"\n\"organizations/[ORGANIZATION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]\"\n\"folders/[FOLDER_ID]\"\nExamples: \"projects/my-logging-project\", \"organizations/123456789\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+parent}/exclusions",
+	//   "request": {
+	//     "$ref": "LogExclusion"
+	//   },
+	//   "response": {
+	//     "$ref": "LogExclusion"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/logging.admin"
+	//   ]
+	// }
+
+}
+
+// method id "logging.exclusions.delete":
+
+type ExclusionsDeleteCall struct {
+	s          *Service
+	name       string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes an exclusion.
+func (r *ExclusionsService) Delete(name string) *ExclusionsDeleteCall {
+	c := &ExclusionsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ExclusionsDeleteCall) Fields(s ...googleapi.Field) *ExclusionsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ExclusionsDeleteCall) Context(ctx context.Context) *ExclusionsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ExclusionsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ExclusionsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.exclusions.delete" call.
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Empty.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *ExclusionsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Empty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes an exclusion.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/exclusions/{exclusionsId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "logging.exclusions.delete",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The resource name of an existing exclusion to delete:\n\"projects/[PROJECT_ID]/exclusions/[EXCLUSION_ID]\"\n\"organizations/[ORGANIZATION_ID]/exclusions/[EXCLUSION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/exclusions/[EXCLUSION_ID]\"\n\"folders/[FOLDER_ID]/exclusions/[EXCLUSION_ID]\"\nExample: \"projects/my-project-id/exclusions/my-exclusion-id\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+/exclusions/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+name}",
+	//   "response": {
+	//     "$ref": "Empty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/logging.admin"
+	//   ]
+	// }
+
+}
+
+// method id "logging.exclusions.get":
+
+type ExclusionsGetCall struct {
+	s            *Service
+	name         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets the description of an exclusion.
+func (r *ExclusionsService) Get(name string) *ExclusionsGetCall {
+	c := &ExclusionsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ExclusionsGetCall) Fields(s ...googleapi.Field) *ExclusionsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ExclusionsGetCall) IfNoneMatch(entityTag string) *ExclusionsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ExclusionsGetCall) Context(ctx context.Context) *ExclusionsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ExclusionsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ExclusionsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.exclusions.get" call.
+// Exactly one of *LogExclusion or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *LogExclusion.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ExclusionsGetCall) Do(opts ...googleapi.CallOption) (*LogExclusion, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &LogExclusion{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets the description of an exclusion.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/exclusions/{exclusionsId}",
+	//   "httpMethod": "GET",
+	//   "id": "logging.exclusions.get",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The resource name of an existing exclusion:\n\"projects/[PROJECT_ID]/exclusions/[EXCLUSION_ID]\"\n\"organizations/[ORGANIZATION_ID]/exclusions/[EXCLUSION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/exclusions/[EXCLUSION_ID]\"\n\"folders/[FOLDER_ID]/exclusions/[EXCLUSION_ID]\"\nExample: \"projects/my-project-id/exclusions/my-exclusion-id\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+/exclusions/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+name}",
+	//   "response": {
+	//     "$ref": "LogExclusion"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
+	//     "https://www.googleapis.com/auth/logging.admin",
+	//     "https://www.googleapis.com/auth/logging.read"
+	//   ]
+	// }
+
+}
+
+// method id "logging.exclusions.list":
+
+type ExclusionsListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists all the exclusions in a parent resource.
+func (r *ExclusionsService) List(parent string) *ExclusionsListCall {
+	c := &ExclusionsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of results to return from this request. Non-positive values are
+// ignored. The presence of nextPageToken in the response indicates that
+// more results might be available.
+func (c *ExclusionsListCall) PageSize(pageSize int64) *ExclusionsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": If present, then
+// retrieve the next batch of results from the preceding call to this
+// method. pageToken must be the value of nextPageToken from the
+// previous response. The values of other method parameters should be
+// identical to those in the previous call.
+func (c *ExclusionsListCall) PageToken(pageToken string) *ExclusionsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ExclusionsListCall) Fields(s ...googleapi.Field) *ExclusionsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *ExclusionsListCall) IfNoneMatch(entityTag string) *ExclusionsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ExclusionsListCall) Context(ctx context.Context) *ExclusionsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ExclusionsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ExclusionsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+parent}/exclusions")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.exclusions.list" call.
+// Exactly one of *ListExclusionsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListExclusionsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ExclusionsListCall) Do(opts ...googleapi.CallOption) (*ListExclusionsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListExclusionsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists all the exclusions in a parent resource.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/exclusions",
+	//   "httpMethod": "GET",
+	//   "id": "logging.exclusions.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "pageSize": {
+	//       "description": "Optional. The maximum number of results to return from this request. Non-positive values are ignored. The presence of nextPageToken in the response indicates that more results might be available.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "Optional. If present, then retrieve the next batch of results from the preceding call to this method. pageToken must be the value of nextPageToken from the previous response. The values of other method parameters should be identical to those in the previous call.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The parent resource whose exclusions are to be listed.\n\"projects/[PROJECT_ID]\"\n\"organizations/[ORGANIZATION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]\"\n\"folders/[FOLDER_ID]\"\n",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+parent}/exclusions",
+	//   "response": {
+	//     "$ref": "ListExclusionsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
+	//     "https://www.googleapis.com/auth/logging.admin",
+	//     "https://www.googleapis.com/auth/logging.read"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *ExclusionsListCall) Pages(ctx context.Context, f func(*ListExclusionsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "logging.exclusions.patch":
+
+type ExclusionsPatchCall struct {
+	s            *Service
+	name         string
+	logexclusion *LogExclusion
+	urlParams_   gensupport.URLParams
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Patch: Changes one or more properties of an existing exclusion.
+func (r *ExclusionsService) Patch(name string, logexclusion *LogExclusion) *ExclusionsPatchCall {
+	c := &ExclusionsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.logexclusion = logexclusion
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Required. A
+// nonempty list of fields to change in the existing exclusion. New
+// values for the fields are taken from the corresponding fields in the
+// LogExclusion included in this request. Fields not mentioned in
+// update_mask are not changed and are ignored in the request.For
+// example, to change the filter and description of an exclusion,
+// specify an update_mask of "filter,description".
+func (c *ExclusionsPatchCall) UpdateMask(updateMask string) *ExclusionsPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ExclusionsPatchCall) Fields(s ...googleapi.Field) *ExclusionsPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ExclusionsPatchCall) Context(ctx context.Context) *ExclusionsPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ExclusionsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ExclusionsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.logexclusion)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.exclusions.patch" call.
+// Exactly one of *LogExclusion or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *LogExclusion.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *ExclusionsPatchCall) Do(opts ...googleapi.CallOption) (*LogExclusion, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &LogExclusion{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Changes one or more properties of an existing exclusion.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/exclusions/{exclusionsId}",
+	//   "httpMethod": "PATCH",
+	//   "id": "logging.exclusions.patch",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "Required. The resource name of the exclusion to update:\n\"projects/[PROJECT_ID]/exclusions/[EXCLUSION_ID]\"\n\"organizations/[ORGANIZATION_ID]/exclusions/[EXCLUSION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/exclusions/[EXCLUSION_ID]\"\n\"folders/[FOLDER_ID]/exclusions/[EXCLUSION_ID]\"\nExample: \"projects/my-project-id/exclusions/my-exclusion-id\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+/exclusions/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "Required. A nonempty list of fields to change in the existing exclusion. New values for the fields are taken from the corresponding fields in the LogExclusion included in this request. Fields not mentioned in update_mask are not changed and are ignored in the request.For example, to change the filter and description of an exclusion, specify an update_mask of \"filter,description\".",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+name}",
+	//   "request": {
+	//     "$ref": "LogExclusion"
+	//   },
+	//   "response": {
+	//     "$ref": "LogExclusion"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/logging.admin"
 	//   ]
 	// }
 
@@ -4536,7 +5327,7 @@ func (c *FoldersExclusionsCreateCall) Do(opts ...googleapi.CallOption) (*LogExcl
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4665,7 +5456,7 @@ func (c *FoldersExclusionsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4805,7 +5596,7 @@ func (c *FoldersExclusionsGetCall) Do(opts ...googleapi.CallOption) (*LogExclusi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4966,7 +5757,7 @@ func (c *FoldersExclusionsListCall) Do(opts ...googleapi.CallOption) (*ListExclu
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5145,7 +5936,7 @@ func (c *FoldersExclusionsPatchCall) Do(opts ...googleapi.CallOption) (*LogExclu
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5282,7 +6073,7 @@ func (c *FoldersLogsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5442,7 +6233,7 @@ func (c *FoldersLogsListCall) Do(opts ...googleapi.CallOption) (*ListLogsRespons
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5630,7 +6421,7 @@ func (c *FoldersSinksCreateCall) Do(opts ...googleapi.CallOption) (*LogSink, err
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5765,7 +6556,7 @@ func (c *FoldersSinksDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5905,7 +6696,7 @@ func (c *FoldersSinksGetCall) Do(opts ...googleapi.CallOption) (*LogSink, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6066,7 +6857,7 @@ func (c *FoldersSinksListCall) Do(opts ...googleapi.CallOption) (*ListSinksRespo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6267,7 +7058,7 @@ func (c *FoldersSinksPatchCall) Do(opts ...googleapi.CallOption) (*LogSink, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6448,7 +7239,7 @@ func (c *FoldersSinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogSink, err
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6493,6 +7284,328 @@ func (c *FoldersSinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogSink, err
 	//   ]
 	// }
 
+}
+
+// method id "logging.logs.delete":
+
+type LogsDeleteCall struct {
+	s          *Service
+	logName    string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes all the log entries in a log. The log reappears if it
+// receives new entries. Log entries written shortly before the delete
+// operation might not be deleted.
+func (r *LogsService) Delete(logName string) *LogsDeleteCall {
+	c := &LogsDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.logName = logName
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *LogsDeleteCall) Fields(s ...googleapi.Field) *LogsDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *LogsDeleteCall) Context(ctx context.Context) *LogsDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *LogsDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *LogsDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+logName}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"logName": c.logName,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.logs.delete" call.
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Empty.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *LogsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Empty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes all the log entries in a log. The log reappears if it receives new entries. Log entries written shortly before the delete operation might not be deleted.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/logs/{logsId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "logging.logs.delete",
+	//   "parameterOrder": [
+	//     "logName"
+	//   ],
+	//   "parameters": {
+	//     "logName": {
+	//       "description": "Required. The resource name of the log to delete:\n\"projects/[PROJECT_ID]/logs/[LOG_ID]\"\n\"organizations/[ORGANIZATION_ID]/logs/[LOG_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/logs/[LOG_ID]\"\n\"folders/[FOLDER_ID]/logs/[LOG_ID]\"\n[LOG_ID] must be URL-encoded. For example, \"projects/my-project-id/logs/syslog\", \"organizations/1234567890/logs/cloudresourcemanager.googleapis.com%2Factivity\". For more information about log names, see LogEntry.",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+/logs/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+logName}",
+	//   "response": {
+	//     "$ref": "Empty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/logging.admin"
+	//   ]
+	// }
+
+}
+
+// method id "logging.logs.list":
+
+type LogsListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists the logs in projects, organizations, folders, or billing
+// accounts. Only logs that have entries are listed.
+func (r *LogsService) List(parent string) *LogsListCall {
+	c := &LogsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of results to return from this request. Non-positive values are
+// ignored. The presence of nextPageToken in the response indicates that
+// more results might be available.
+func (c *LogsListCall) PageSize(pageSize int64) *LogsListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": If present, then
+// retrieve the next batch of results from the preceding call to this
+// method. pageToken must be the value of nextPageToken from the
+// previous response. The values of other method parameters should be
+// identical to those in the previous call.
+func (c *LogsListCall) PageToken(pageToken string) *LogsListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *LogsListCall) Fields(s ...googleapi.Field) *LogsListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *LogsListCall) IfNoneMatch(entityTag string) *LogsListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *LogsListCall) Context(ctx context.Context) *LogsListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *LogsListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *LogsListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+parent}/logs")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.logs.list" call.
+// Exactly one of *ListLogsResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListLogsResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *LogsListCall) Do(opts ...googleapi.CallOption) (*ListLogsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListLogsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists the logs in projects, organizations, folders, or billing accounts. Only logs that have entries are listed.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/logs",
+	//   "httpMethod": "GET",
+	//   "id": "logging.logs.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "pageSize": {
+	//       "description": "Optional. The maximum number of results to return from this request. Non-positive values are ignored. The presence of nextPageToken in the response indicates that more results might be available.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "Optional. If present, then retrieve the next batch of results from the preceding call to this method. pageToken must be the value of nextPageToken from the previous response. The values of other method parameters should be identical to those in the previous call.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The resource name that owns the logs:\n\"projects/[PROJECT_ID]\"\n\"organizations/[ORGANIZATION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]\"\n\"folders/[FOLDER_ID]\"\n",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+parent}/logs",
+	//   "response": {
+	//     "$ref": "ListLogsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
+	//     "https://www.googleapis.com/auth/logging.admin",
+	//     "https://www.googleapis.com/auth/logging.read"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *LogsListCall) Pages(ctx context.Context, f func(*ListLogsResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
 }
 
 // method id "logging.monitoredResourceDescriptors.list":
@@ -6619,7 +7732,7 @@ func (c *MonitoredResourceDescriptorsListCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6779,7 +7892,7 @@ func (c *OrganizationsExclusionsCreateCall) Do(opts ...googleapi.CallOption) (*L
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6908,7 +8021,7 @@ func (c *OrganizationsExclusionsDeleteCall) Do(opts ...googleapi.CallOption) (*E
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7048,7 +8161,7 @@ func (c *OrganizationsExclusionsGetCall) Do(opts ...googleapi.CallOption) (*LogE
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7209,7 +8322,7 @@ func (c *OrganizationsExclusionsListCall) Do(opts ...googleapi.CallOption) (*Lis
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7388,7 +8501,7 @@ func (c *OrganizationsExclusionsPatchCall) Do(opts ...googleapi.CallOption) (*Lo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7525,7 +8638,7 @@ func (c *OrganizationsLogsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7685,7 +8798,7 @@ func (c *OrganizationsLogsListCall) Do(opts ...googleapi.CallOption) (*ListLogsR
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7873,7 +8986,7 @@ func (c *OrganizationsSinksCreateCall) Do(opts ...googleapi.CallOption) (*LogSin
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8008,7 +9121,7 @@ func (c *OrganizationsSinksDeleteCall) Do(opts ...googleapi.CallOption) (*Empty,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8148,7 +9261,7 @@ func (c *OrganizationsSinksGetCall) Do(opts ...googleapi.CallOption) (*LogSink, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8309,7 +9422,7 @@ func (c *OrganizationsSinksListCall) Do(opts ...googleapi.CallOption) (*ListSink
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8510,7 +9623,7 @@ func (c *OrganizationsSinksPatchCall) Do(opts ...googleapi.CallOption) (*LogSink
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8691,7 +9804,7 @@ func (c *OrganizationsSinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogSin
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8840,7 +9953,7 @@ func (c *ProjectsExclusionsCreateCall) Do(opts ...googleapi.CallOption) (*LogExc
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -8969,7 +10082,7 @@ func (c *ProjectsExclusionsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9109,7 +10222,7 @@ func (c *ProjectsExclusionsGetCall) Do(opts ...googleapi.CallOption) (*LogExclus
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9270,7 +10383,7 @@ func (c *ProjectsExclusionsListCall) Do(opts ...googleapi.CallOption) (*ListExcl
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9449,7 +10562,7 @@ func (c *ProjectsExclusionsPatchCall) Do(opts ...googleapi.CallOption) (*LogExcl
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9586,7 +10699,7 @@ func (c *ProjectsLogsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9746,7 +10859,7 @@ func (c *ProjectsLogsListCall) Do(opts ...googleapi.CallOption) (*ListLogsRespon
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -9913,7 +11026,7 @@ func (c *ProjectsMetricsCreateCall) Do(opts ...googleapi.CallOption) (*LogMetric
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10043,7 +11156,7 @@ func (c *ProjectsMetricsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10184,7 +11297,7 @@ func (c *ProjectsMetricsGetCall) Do(opts ...googleapi.CallOption) (*LogMetric, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10345,7 +11458,7 @@ func (c *ProjectsMetricsListCall) Do(opts ...googleapi.CallOption) (*ListLogMetr
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10512,7 +11625,7 @@ func (c *ProjectsMetricsUpdateCall) Do(opts ...googleapi.CallOption) (*LogMetric
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10670,7 +11783,7 @@ func (c *ProjectsSinksCreateCall) Do(opts ...googleapi.CallOption) (*LogSink, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10805,7 +11918,7 @@ func (c *ProjectsSinksDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -10945,7 +12058,7 @@ func (c *ProjectsSinksGetCall) Do(opts ...googleapi.CallOption) (*LogSink, error
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11106,7 +12219,7 @@ func (c *ProjectsSinksListCall) Do(opts ...googleapi.CallOption) (*ListSinksResp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11307,7 +12420,7 @@ func (c *ProjectsSinksPatchCall) Do(opts ...googleapi.CallOption) (*LogSink, err
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11488,7 +12601,7 @@ func (c *ProjectsSinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogSink, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -11505,6 +12618,811 @@ func (c *ProjectsSinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogSink, er
 	//       "description": "Required. The full resource name of the sink to update, including the parent resource and the sink identifier:\n\"projects/[PROJECT_ID]/sinks/[SINK_ID]\"\n\"organizations/[ORGANIZATION_ID]/sinks/[SINK_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/sinks/[SINK_ID]\"\n\"folders/[FOLDER_ID]/sinks/[SINK_ID]\"\nExample: \"projects/my-project-id/sinks/my-sink-id\".",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/sinks/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "uniqueWriterIdentity": {
+	//       "description": "Optional. See sinks.create for a description of this field. When updating a sink, the effect of this field on the value of writer_identity in the updated sink depends on both the old and new values of this field:\nIf the old and new values of this field are both false or both true, then there is no change to the sink's writer_identity.\nIf the old value is false and the new value is true, then writer_identity is changed to a unique service account.\nIt is an error if the old value is true and the new value is set to false or defaulted to false.",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     },
+	//     "updateMask": {
+	//       "description": "Optional. Field mask that specifies the fields in sink that need an update. A sink field will be overwritten if, and only if, it is in the update mask. name and output only fields cannot be updated.An empty updateMask is temporarily treated as using the following mask for backwards compatibility purposes:  destination,filter,includeChildren At some point in the future, behavior will be removed and specifying an empty updateMask will be an error.For a detailed FieldMask definition, see https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmaskExample: updateMask=filter.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+sinkName}",
+	//   "request": {
+	//     "$ref": "LogSink"
+	//   },
+	//   "response": {
+	//     "$ref": "LogSink"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/logging.admin"
+	//   ]
+	// }
+
+}
+
+// method id "logging.sinks.create":
+
+type SinksCreateCall struct {
+	s          *Service
+	parent     string
+	logsink    *LogSink
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Create: Creates a sink that exports specified log entries to a
+// destination. The export of newly-ingested log entries begins
+// immediately, unless the sink's writer_identity is not permitted to
+// write to the destination. A sink can export log entries only from the
+// resource owning the sink.
+func (r *SinksService) Create(parent string, logsink *LogSink) *SinksCreateCall {
+	c := &SinksCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	c.logsink = logsink
+	return c
+}
+
+// UniqueWriterIdentity sets the optional parameter
+// "uniqueWriterIdentity": Determines the kind of IAM identity returned
+// as writer_identity in the new sink. If this value is omitted or set
+// to false, and if the sink's parent is a project, then the value
+// returned as writer_identity is the same group or service account used
+// by Stackdriver Logging before the addition of writer identities to
+// this API. The sink's destination must be in the same project as the
+// sink itself.If this field is set to true, or if the sink is owned by
+// a non-project resource such as an organization, then the value of
+// writer_identity will be a unique service account used only for
+// exports from the new sink. For more information, see writer_identity
+// in LogSink.
+func (c *SinksCreateCall) UniqueWriterIdentity(uniqueWriterIdentity bool) *SinksCreateCall {
+	c.urlParams_.Set("uniqueWriterIdentity", fmt.Sprint(uniqueWriterIdentity))
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *SinksCreateCall) Fields(s ...googleapi.Field) *SinksCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *SinksCreateCall) Context(ctx context.Context) *SinksCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *SinksCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *SinksCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.logsink)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+parent}/sinks")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.sinks.create" call.
+// Exactly one of *LogSink or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *LogSink.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *SinksCreateCall) Do(opts ...googleapi.CallOption) (*LogSink, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &LogSink{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a sink that exports specified log entries to a destination. The export of newly-ingested log entries begins immediately, unless the sink's writer_identity is not permitted to write to the destination. A sink can export log entries only from the resource owning the sink.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/sinks",
+	//   "httpMethod": "POST",
+	//   "id": "logging.sinks.create",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "parent": {
+	//       "description": "Required. The resource in which to create the sink:\n\"projects/[PROJECT_ID]\"\n\"organizations/[ORGANIZATION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]\"\n\"folders/[FOLDER_ID]\"\nExamples: \"projects/my-logging-project\", \"organizations/123456789\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "uniqueWriterIdentity": {
+	//       "description": "Optional. Determines the kind of IAM identity returned as writer_identity in the new sink. If this value is omitted or set to false, and if the sink's parent is a project, then the value returned as writer_identity is the same group or service account used by Stackdriver Logging before the addition of writer identities to this API. The sink's destination must be in the same project as the sink itself.If this field is set to true, or if the sink is owned by a non-project resource such as an organization, then the value of writer_identity will be a unique service account used only for exports from the new sink. For more information, see writer_identity in LogSink.",
+	//       "location": "query",
+	//       "type": "boolean"
+	//     }
+	//   },
+	//   "path": "v2/{+parent}/sinks",
+	//   "request": {
+	//     "$ref": "LogSink"
+	//   },
+	//   "response": {
+	//     "$ref": "LogSink"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/logging.admin"
+	//   ]
+	// }
+
+}
+
+// method id "logging.sinks.delete":
+
+type SinksDeleteCall struct {
+	s          *Service
+	sinkNameid string
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Delete: Deletes a sink. If the sink has a unique writer_identity,
+// then that service account is also deleted.
+func (r *SinksService) Delete(sinkNameid string) *SinksDeleteCall {
+	c := &SinksDeleteCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.sinkNameid = sinkNameid
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *SinksDeleteCall) Fields(s ...googleapi.Field) *SinksDeleteCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *SinksDeleteCall) Context(ctx context.Context) *SinksDeleteCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *SinksDeleteCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *SinksDeleteCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+sinkName}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("DELETE", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"sinkName": c.sinkNameid,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.sinks.delete" call.
+// Exactly one of *Empty or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Empty.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *SinksDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Empty{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Deletes a sink. If the sink has a unique writer_identity, then that service account is also deleted.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/sinks/{sinksId}",
+	//   "httpMethod": "DELETE",
+	//   "id": "logging.sinks.delete",
+	//   "parameterOrder": [
+	//     "sinkName"
+	//   ],
+	//   "parameters": {
+	//     "sinkName": {
+	//       "description": "Required. The full resource name of the sink to delete, including the parent resource and the sink identifier:\n\"projects/[PROJECT_ID]/sinks/[SINK_ID]\"\n\"organizations/[ORGANIZATION_ID]/sinks/[SINK_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/sinks/[SINK_ID]\"\n\"folders/[FOLDER_ID]/sinks/[SINK_ID]\"\nExample: \"projects/my-project-id/sinks/my-sink-id\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+/sinks/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+sinkName}",
+	//   "response": {
+	//     "$ref": "Empty"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/logging.admin"
+	//   ]
+	// }
+
+}
+
+// method id "logging.sinks.get":
+
+type SinksGetCall struct {
+	s            *Service
+	sinkName     string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Gets a sink.
+func (r *SinksService) Get(sinkName string) *SinksGetCall {
+	c := &SinksGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.sinkName = sinkName
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *SinksGetCall) Fields(s ...googleapi.Field) *SinksGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *SinksGetCall) IfNoneMatch(entityTag string) *SinksGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *SinksGetCall) Context(ctx context.Context) *SinksGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *SinksGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *SinksGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+sinkName}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"sinkName": c.sinkName,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.sinks.get" call.
+// Exactly one of *LogSink or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *LogSink.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *SinksGetCall) Do(opts ...googleapi.CallOption) (*LogSink, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &LogSink{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets a sink.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/sinks/{sinksId}",
+	//   "httpMethod": "GET",
+	//   "id": "logging.sinks.get",
+	//   "parameterOrder": [
+	//     "sinkName"
+	//   ],
+	//   "parameters": {
+	//     "sinkName": {
+	//       "description": "Required. The resource name of the sink:\n\"projects/[PROJECT_ID]/sinks/[SINK_ID]\"\n\"organizations/[ORGANIZATION_ID]/sinks/[SINK_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/sinks/[SINK_ID]\"\n\"folders/[FOLDER_ID]/sinks/[SINK_ID]\"\nExample: \"projects/my-project-id/sinks/my-sink-id\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+/sinks/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+sinkName}",
+	//   "response": {
+	//     "$ref": "LogSink"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
+	//     "https://www.googleapis.com/auth/logging.admin",
+	//     "https://www.googleapis.com/auth/logging.read"
+	//   ]
+	// }
+
+}
+
+// method id "logging.sinks.list":
+
+type SinksListCall struct {
+	s            *Service
+	parent       string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// List: Lists sinks.
+func (r *SinksService) List(parent string) *SinksListCall {
+	c := &SinksListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.parent = parent
+	return c
+}
+
+// PageSize sets the optional parameter "pageSize": The maximum number
+// of results to return from this request. Non-positive values are
+// ignored. The presence of nextPageToken in the response indicates that
+// more results might be available.
+func (c *SinksListCall) PageSize(pageSize int64) *SinksListCall {
+	c.urlParams_.Set("pageSize", fmt.Sprint(pageSize))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": If present, then
+// retrieve the next batch of results from the preceding call to this
+// method. pageToken must be the value of nextPageToken from the
+// previous response. The values of other method parameters should be
+// identical to those in the previous call.
+func (c *SinksListCall) PageToken(pageToken string) *SinksListCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *SinksListCall) Fields(s ...googleapi.Field) *SinksListCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *SinksListCall) IfNoneMatch(entityTag string) *SinksListCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *SinksListCall) Context(ctx context.Context) *SinksListCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *SinksListCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *SinksListCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+parent}/sinks")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"parent": c.parent,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.sinks.list" call.
+// Exactly one of *ListSinksResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *ListSinksResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *SinksListCall) Do(opts ...googleapi.CallOption) (*ListSinksResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &ListSinksResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Lists sinks.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/sinks",
+	//   "httpMethod": "GET",
+	//   "id": "logging.sinks.list",
+	//   "parameterOrder": [
+	//     "parent"
+	//   ],
+	//   "parameters": {
+	//     "pageSize": {
+	//       "description": "Optional. The maximum number of results to return from this request. Non-positive values are ignored. The presence of nextPageToken in the response indicates that more results might be available.",
+	//       "format": "int32",
+	//       "location": "query",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "Optional. If present, then retrieve the next batch of results from the preceding call to this method. pageToken must be the value of nextPageToken from the previous response. The values of other method parameters should be identical to those in the previous call.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parent": {
+	//       "description": "Required. The parent resource whose sinks are to be listed:\n\"projects/[PROJECT_ID]\"\n\"organizations/[ORGANIZATION_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]\"\n\"folders/[FOLDER_ID]\"\n",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v2/{+parent}/sinks",
+	//   "response": {
+	//     "$ref": "ListSinksResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform",
+	//     "https://www.googleapis.com/auth/cloud-platform.read-only",
+	//     "https://www.googleapis.com/auth/logging.admin",
+	//     "https://www.googleapis.com/auth/logging.read"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *SinksListCall) Pages(ctx context.Context, f func(*ListSinksResponse) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "logging.sinks.update":
+
+type SinksUpdateCall struct {
+	s          *Service
+	sinkNameid string
+	logsink    *LogSink
+	urlParams_ gensupport.URLParams
+	ctx_       context.Context
+	header_    http.Header
+}
+
+// Update: Updates a sink. This method replaces the following fields in
+// the existing sink with values from the new sink: destination, and
+// filter. The updated sink might also have a new writer_identity; see
+// the unique_writer_identity field.
+func (r *SinksService) Update(sinkNameid string, logsink *LogSink) *SinksUpdateCall {
+	c := &SinksUpdateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.sinkNameid = sinkNameid
+	c.logsink = logsink
+	return c
+}
+
+// UniqueWriterIdentity sets the optional parameter
+// "uniqueWriterIdentity": See sinks.create for a description of this
+// field. When updating a sink, the effect of this field on the value of
+// writer_identity in the updated sink depends on both the old and new
+// values of this field:
+// If the old and new values of this field are both false or both true,
+// then there is no change to the sink's writer_identity.
+// If the old value is false and the new value is true, then
+// writer_identity is changed to a unique service account.
+// It is an error if the old value is true and the new value is set to
+// false or defaulted to false.
+func (c *SinksUpdateCall) UniqueWriterIdentity(uniqueWriterIdentity bool) *SinksUpdateCall {
+	c.urlParams_.Set("uniqueWriterIdentity", fmt.Sprint(uniqueWriterIdentity))
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": Field mask that
+// specifies the fields in sink that need an update. A sink field will
+// be overwritten if, and only if, it is in the update mask. name and
+// output only fields cannot be updated.An empty updateMask is
+// temporarily treated as using the following mask for backwards
+// compatibility purposes:  destination,filter,includeChildren At some
+// point in the future, behavior will be removed and specifying an empty
+// updateMask will be an error.For a detailed FieldMask definition, see
+// https://developers.google.com/protocol-buffers/docs/reference/google.protobuf#fieldmaskExample:
+// updateMask=filter.
+func (c *SinksUpdateCall) UpdateMask(updateMask string) *SinksUpdateCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *SinksUpdateCall) Fields(s ...googleapi.Field) *SinksUpdateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *SinksUpdateCall) Context(ctx context.Context) *SinksUpdateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *SinksUpdateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *SinksUpdateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.logsink)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v2/{+sinkName}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("PUT", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"sinkName": c.sinkNameid,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "logging.sinks.update" call.
+// Exactly one of *LogSink or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *LogSink.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *SinksUpdateCall) Do(opts ...googleapi.CallOption) (*LogSink, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &LogSink{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Updates a sink. This method replaces the following fields in the existing sink with values from the new sink: destination, and filter. The updated sink might also have a new writer_identity; see the unique_writer_identity field.",
+	//   "flatPath": "v2/{v2Id}/{v2Id1}/sinks/{sinksId}",
+	//   "httpMethod": "PUT",
+	//   "id": "logging.sinks.update",
+	//   "parameterOrder": [
+	//     "sinkName"
+	//   ],
+	//   "parameters": {
+	//     "sinkName": {
+	//       "description": "Required. The full resource name of the sink to update, including the parent resource and the sink identifier:\n\"projects/[PROJECT_ID]/sinks/[SINK_ID]\"\n\"organizations/[ORGANIZATION_ID]/sinks/[SINK_ID]\"\n\"billingAccounts/[BILLING_ACCOUNT_ID]/sinks/[SINK_ID]\"\n\"folders/[FOLDER_ID]/sinks/[SINK_ID]\"\nExample: \"projects/my-project-id/sinks/my-sink-id\".",
+	//       "location": "path",
+	//       "pattern": "^[^/]+/[^/]+/sinks/[^/]+$",
 	//       "required": true,
 	//       "type": "string"
 	//     },

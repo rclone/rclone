@@ -103,7 +103,9 @@ func (client ServicesClient) CheckNameAvailabilityPreparer(checkNameAvailability
 // CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServicesClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
@@ -218,6 +220,7 @@ func (client ServicesClient) CreateOrUpdatePreparer(resourceGroupName string, se
 func (client ServicesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -290,7 +293,9 @@ func (client ServicesClient) DeletePreparer(resourceGroupName string, searchServ
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServicesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -361,7 +366,9 @@ func (client ServicesClient) GetPreparer(resourceGroupName string, searchService
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServicesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -431,7 +438,9 @@ func (client ServicesClient) ListByResourceGroupPreparer(resourceGroupName strin
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServicesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always

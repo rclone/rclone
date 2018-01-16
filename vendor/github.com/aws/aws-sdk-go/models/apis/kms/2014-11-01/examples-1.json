@@ -83,10 +83,11 @@
           "KeyMetadata": {
             "AWSAccountId": "111122223333",
             "Arn": "arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab",
-            "CreationDate": "2017-01-09T12:00:07-08:00",
+            "CreationDate": "2017-07-05T14:04:55-07:00",
             "Description": "",
             "Enabled": true,
             "KeyId": "1234abcd-12ab-34cd-56ef-1234567890ab",
+            "KeyManager": "CUSTOMER",
             "KeyState": "Enabled",
             "KeyUsage": "ENCRYPT_DECRYPT",
             "Origin": "AWS_KMS"
@@ -166,11 +167,12 @@
         "output": {
           "KeyMetadata": {
             "AWSAccountId": "111122223333",
-            "Arn": "arn:aws:kms:us-west-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab",
-            "CreationDate": "2015-10-12T11:45:07-07:00",
+            "Arn": "arn:aws:kms:us-east-2:111122223333:key/1234abcd-12ab-34cd-56ef-1234567890ab",
+            "CreationDate": "2017-07-05T14:04:55-07:00",
             "Description": "",
             "Enabled": true,
             "KeyId": "1234abcd-12ab-34cd-56ef-1234567890ab",
+            "KeyManager": "CUSTOMER",
             "KeyState": "Enabled",
             "KeyUsage": "ENCRYPT_DECRYPT",
             "Origin": "AWS_KMS"

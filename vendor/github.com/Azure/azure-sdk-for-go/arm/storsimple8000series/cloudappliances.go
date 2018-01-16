@@ -95,7 +95,9 @@ func (client CloudAppliancesClient) ListSupportedConfigurationsPreparer(resource
 // ListSupportedConfigurationsSender sends the ListSupportedConfigurations request. The method will close the
 // http.Response Body if it receives an error.
 func (client CloudAppliancesClient) ListSupportedConfigurationsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSupportedConfigurationsResponder handles the response to the ListSupportedConfigurations request. The method always
@@ -191,6 +193,7 @@ func (client CloudAppliancesClient) ProvisionPreparer(parameters CloudAppliance,
 func (client CloudAppliancesClient) ProvisionSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

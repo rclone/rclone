@@ -107,7 +107,9 @@ func (client AuthorizationPoliciesClient) CreateOrUpdatePreparer(resourceGroupNa
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client AuthorizationPoliciesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -174,7 +176,9 @@ func (client AuthorizationPoliciesClient) GetPreparer(resourceGroupName string, 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client AuthorizationPoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -239,7 +243,9 @@ func (client AuthorizationPoliciesClient) ListByHubPreparer(resourceGroupName st
 // ListByHubSender sends the ListByHub request. The method will close the
 // http.Response Body if it receives an error.
 func (client AuthorizationPoliciesClient) ListByHubSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByHubResponder handles the response to the ListByHub request. The method always
@@ -375,7 +381,9 @@ func (client AuthorizationPoliciesClient) RegeneratePrimaryKeyPreparer(resourceG
 // RegeneratePrimaryKeySender sends the RegeneratePrimaryKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client AuthorizationPoliciesClient) RegeneratePrimaryKeySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegeneratePrimaryKeyResponder handles the response to the RegeneratePrimaryKey request. The method always
@@ -442,7 +450,9 @@ func (client AuthorizationPoliciesClient) RegenerateSecondaryKeyPreparer(resourc
 // RegenerateSecondaryKeySender sends the RegenerateSecondaryKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client AuthorizationPoliciesClient) RegenerateSecondaryKeySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateSecondaryKeyResponder handles the response to the RegenerateSecondaryKey request. The method always

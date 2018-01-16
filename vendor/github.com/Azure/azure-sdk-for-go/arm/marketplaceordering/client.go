@@ -1,6 +1,8 @@
 // Package marketplaceordering implements the Azure ARM Marketplaceordering service API version 2015-06-01.
 //
 // REST API for MarketplaceOrdering Agreements.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/marketplaceordering/mgmt/2015-06-01/marketplaceordering
 package marketplaceordering
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

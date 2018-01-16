@@ -108,6 +108,7 @@ func (client ReplicationvCentersClient) CreatePreparer(fabricName string, vCente
 func (client ReplicationvCentersClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -192,6 +193,7 @@ func (client ReplicationvCentersClient) DeletePreparer(fabricName string, vCente
 func (client ReplicationvCentersClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -258,7 +260,9 @@ func (client ReplicationvCentersClient) GetPreparer(fabricName string, vCenterNa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationvCentersClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -321,7 +325,9 @@ func (client ReplicationvCentersClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationvCentersClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -456,7 +462,9 @@ func (client ReplicationvCentersClient) ListByReplicationFabricsPreparer(fabricN
 // ListByReplicationFabricsSender sends the ListByReplicationFabrics request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationvCentersClient) ListByReplicationFabricsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByReplicationFabricsResponder handles the response to the ListByReplicationFabrics request. The method always
@@ -611,6 +619,7 @@ func (client ReplicationvCentersClient) UpdatePreparer(fabricName string, vCente
 func (client ReplicationvCentersClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

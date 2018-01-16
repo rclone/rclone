@@ -118,11 +118,12 @@ func (u *PathRootError) UnmarshalJSON(body []byte) error {
 
 // RootInfo : Information about current user's root.
 type RootInfo struct {
-	// RootNamespaceId : The namespace id for user's root namespace. It will be
-	// the namespace id of the shared team root if the user is member of a CDM
-	// team. Otherwise it will be same as `RootInfo.home_namespace_id`.
+	// RootNamespaceId : The namespace ID for user's root namespace. It will be
+	// the namespace ID of the shared team root if the user is member of a team
+	// with a separate team root. Otherwise it will be same as
+	// `RootInfo.home_namespace_id`.
 	RootNamespaceId string `json:"root_namespace_id"`
-	// HomeNamespaceId : The namespace id for user's home namespace.
+	// HomeNamespaceId : The namespace ID for user's home namespace.
 	HomeNamespaceId string `json:"home_namespace_id"`
 }
 
@@ -205,7 +206,8 @@ func IsRootInfoFromJSON(data []byte) (IsRootInfo, error) {
 	return nil, nil
 }
 
-// TeamRootInfo : Root info when user is member of a CDM team.
+// TeamRootInfo : Root info when user is member of a team with a separate root
+// namespace ID.
 type TeamRootInfo struct {
 	RootInfo
 	// HomePath : The path for user's home directory under the shared team root.
@@ -221,7 +223,8 @@ func NewTeamRootInfo(RootNamespaceId string, HomeNamespaceId string, HomePath st
 	return s
 }
 
-// UserRootInfo : Root info when user is not member of a CDM team.
+// UserRootInfo : Root info when user is not member of a team or the user is a
+// member of a team and the team does not have a separate root namespace.
 type UserRootInfo struct {
 	RootInfo
 }

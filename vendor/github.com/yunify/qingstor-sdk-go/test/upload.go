@@ -1,9 +1,9 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"os/exec"
-	"errors"
 
 	"github.com/DATA-DOG/godog"
 	"github.com/yunify/qingstor-sdk-go/client/upload"

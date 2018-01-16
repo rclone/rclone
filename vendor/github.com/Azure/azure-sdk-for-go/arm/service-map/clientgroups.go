@@ -114,7 +114,9 @@ func (client ClientGroupsClient) GetPreparer(resourceGroupName string, workspace
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClientGroupsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -204,7 +206,9 @@ func (client ClientGroupsClient) GetMembersCountPreparer(resourceGroupName strin
 // GetMembersCountSender sends the GetMembersCount request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClientGroupsClient) GetMembersCountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetMembersCountResponder handles the response to the GetMembersCount request. The method always
@@ -303,7 +307,9 @@ func (client ClientGroupsClient) ListMembersPreparer(resourceGroupName string, w
 // ListMembersSender sends the ListMembers request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClientGroupsClient) ListMembersSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListMembersResponder handles the response to the ListMembers request. The method always

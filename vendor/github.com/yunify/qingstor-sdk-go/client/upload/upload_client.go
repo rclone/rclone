@@ -26,25 +26,25 @@ func Init(bucket *service.Bucket, partSize int) *Uploader {
 // Upload uploads multi parts of large object
 func (u *Uploader) Upload(fd io.Reader, objectKey string) error {
 	if u.partSize < smallestPartSize {
-		logger.Errorf("Part size error")
+		logger.Errorf(nil, "Part size error")
 		return errors.New("the part size is too small")
 	}
 
 	uploadID, err := u.init(objectKey)
 	if err != nil {
-		logger.Errorf("Init multipart upload error" + err.Error())
+		logger.Errorf(nil, "Init multipart upload error, %v.", err)
 		return err
 	}
 
 	partNumbers, err := u.upload(fd, uploadID, objectKey)
 	if err != nil {
-		logger.Errorf("Upload multipart error" + err.Error())
+		logger.Errorf(nil, "Upload multipart error, %v.", err)
 		return err
 	}
 
 	err = u.complete(objectKey, uploadID, partNumbers)
 	if err != nil {
-		logger.Errorf("Complete upload error" + err.Error())
+		logger.Errorf(nil, "Complete upload error, %v.", err)
 		return err
 	}
 
@@ -72,7 +72,7 @@ func (u *Uploader) upload(fd io.Reader, uploadID *string, objectKey string) ([]*
 			break
 		}
 		if err != nil {
-			logger.Errorf("Get next part failed for %v", err)
+			logger.Errorf(nil, "Get next part failed, %v", err)
 			return nil, err
 		}
 		_, err = u.bucket.UploadMultipart(
@@ -84,7 +84,7 @@ func (u *Uploader) upload(fd io.Reader, uploadID *string, objectKey string) ([]*
 			},
 		)
 		if err != nil {
-			logger.Errorf("Upload multipart failed for %v", err)
+			logger.Errorf(nil, "Upload multipart failed, %v", err)
 			return nil, err
 		}
 		partNumbers = append(partNumbers, &service.ObjectPartType{

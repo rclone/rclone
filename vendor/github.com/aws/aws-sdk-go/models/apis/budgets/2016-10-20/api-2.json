@@ -219,7 +219,6 @@
       "required":[
         "BudgetName",
         "BudgetLimit",
-        "CostTypes",
         "TimeUnit",
         "TimePeriod",
         "BudgetType"
@@ -275,15 +274,16 @@
     },
     "CostTypes":{
       "type":"structure",
-      "required":[
-        "IncludeTax",
-        "IncludeSubscription",
-        "UseBlended"
-      ],
       "members":{
-        "IncludeTax":{"shape":"GenericBoolean"},
-        "IncludeSubscription":{"shape":"GenericBoolean"},
-        "UseBlended":{"shape":"GenericBoolean"}
+        "IncludeTax":{"shape":"NullableBoolean"},
+        "IncludeSubscription":{"shape":"NullableBoolean"},
+        "UseBlended":{"shape":"NullableBoolean"},
+        "IncludeRefund":{"shape":"NullableBoolean"},
+        "IncludeCredit":{"shape":"NullableBoolean"},
+        "IncludeUpfront":{"shape":"NullableBoolean"},
+        "IncludeRecurring":{"shape":"NullableBoolean"},
+        "IncludeOtherSubscription":{"shape":"NullableBoolean"},
+        "IncludeSupport":{"shape":"NullableBoolean"}
       }
     },
     "CreateBudgetRequest":{
@@ -497,7 +497,6 @@
       },
       "exception":true
     },
-    "GenericBoolean":{"type":"boolean"},
     "GenericString":{"type":"string"},
     "GenericTimestamp":{"type":"timestamp"},
     "InternalErrorException":{
@@ -580,6 +579,10 @@
       "type":"list",
       "member":{"shape":"Notification"}
     },
+    "NullableBoolean":{
+      "type":"boolean",
+      "box":true
+    },
     "NumericValue":{
       "type":"string",
       "pattern":"[0-9]*(\\.)?[0-9]+"
@@ -603,8 +606,12 @@
       ],
       "members":{
         "SubscriptionType":{"shape":"SubscriptionType"},
-        "Address":{"shape":"GenericString"}
+        "Address":{"shape":"SubscriberAddress"}
       }
+    },
+    "SubscriberAddress":{
+      "type":"string",
+      "min":1
     },
     "Subscribers":{
       "type":"list",

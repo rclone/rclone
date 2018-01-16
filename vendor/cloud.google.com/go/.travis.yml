@@ -1,14 +1,19 @@
 sudo: false
 language: go
 go:
-- 1.6
-- 1.7
-- 1.8
+- 1.6.x
+- 1.7.x
+- 1.8.x
+- 1.9.x
 install:
 - go get -v cloud.google.com/go/...
 script:
-- openssl aes-256-cbc -K $encrypted_a8b3f4fc85f4_key -iv $encrypted_a8b3f4fc85f4_iv -in key.json.enc -out key.json -d
-- GCLOUD_TESTS_GOLANG_PROJECT_ID="dulcet-port-762" GCLOUD_TESTS_GOLANG_KEY="$(pwd)/key.json"
+- openssl aes-256-cbc -K $encrypted_a8b3f4fc85f4_key -iv $encrypted_a8b3f4fc85f4_iv -in keys.tar.enc -out keys.tar -d
+- tar xvf keys.tar
+- GCLOUD_TESTS_GOLANG_PROJECT_ID="dulcet-port-762"
+  GCLOUD_TESTS_GOLANG_KEY="$(pwd)/dulcet-port-762-key.json"
+  GCLOUD_TESTS_GOLANG_FIRESTORE_PROJECT_ID="gcloud-golang-firestore-tests"
+  GCLOUD_TESTS_GOLANG_FIRESTORE_KEY="$(pwd)/gcloud-golang-firestore-tests-key.json"
   ./run-tests.sh $TRAVIS_COMMIT
 env:
   matrix:

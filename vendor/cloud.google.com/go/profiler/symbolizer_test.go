@@ -16,9 +16,10 @@ package profiler
 
 import (
 	"bytes"
-	"reflect"
 	"testing"
 
+	"cloud.google.com/go/internal/testutil"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"github.com/google/pprof/profile"
 )
 
@@ -34,6 +35,9 @@ func (f *fakeFunc) Name() string {
 func (f *fakeFunc) FileLine(_ uintptr) (string, int) {
 	return f.file, f.lineno
 }
+
+var cmpOpt = cmpopts.IgnoreUnexported(profile.Profile{}, profile.Function{},
+	profile.Line{}, profile.Location{}, profile.Sample{}, profile.ValueType{})
 
 // TestRuntimeFunctionTrimming tests if symbolize trims runtime functions as intended.
 func TestRuntimeFunctionTrimming(t *testing.T) {
@@ -116,7 +120,7 @@ func TestRuntimeFunctionTrimming(t *testing.T) {
 	}
 	for i := 0; i < 2; i++ {
 		symbolize(testProfiles[i])
-		if !reflect.DeepEqual(testProfiles[i], wantProfiles[i]) {
+		if !testutil.Equal(testProfiles[i], wantProfiles[i], cmpOpt) {
 			t.Errorf("incorrect trimming (testcase = %d): got {%v}, want {%v}", i, testProfiles[i], wantProfiles[i])
 		}
 	}
@@ -195,7 +199,7 @@ func TestParseAndSymbolize(t *testing.T) {
 		if err != nil {
 			t.Errorf("parsing symbolized profile (testcase = %d) got err: %v, want no error", i, err)
 		}
-		if !reflect.DeepEqual(gotProfile, wantProfile) {
+		if !testutil.Equal(gotProfile, wantProfile, cmpOpt) {
 			t.Errorf("incorrect symbolization (testcase = %d): got {%v}, want {%v}", i, gotProfile, wantProfile)
 		}
 	}

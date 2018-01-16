@@ -93,7 +93,9 @@ func (client GroupClient) CreateOrUpdatePreparer(createOrUpdatePayload Commitmen
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -158,7 +160,9 @@ func (client GroupClient) GetPreparer(resourceGroupName string, commitmentPlanNa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -224,7 +228,9 @@ func (client GroupClient) ListPreparer(skipToken string) (*http.Request, error) 
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -360,7 +366,9 @@ func (client GroupClient) ListInResourceGroupPreparer(resourceGroupName string, 
 // ListInResourceGroupSender sends the ListInResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListInResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListInResourceGroupResponder handles the response to the ListInResourceGroup request. The method always
@@ -498,7 +506,9 @@ func (client GroupClient) PatchPreparer(patchPayload PatchPayload, resourceGroup
 // PatchSender sends the Patch request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) PatchSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // PatchResponder handles the response to the Patch request. The method always
@@ -563,7 +573,9 @@ func (client GroupClient) RemovePreparer(resourceGroupName string, commitmentPla
 // RemoveSender sends the Remove request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) RemoveSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RemoveResponder handles the response to the Remove request. The method always

@@ -114,8 +114,8 @@ type SiteVerificationWebResourceGettokenRequest struct {
 }
 
 func (s *SiteVerificationWebResourceGettokenRequest) MarshalJSON() ([]byte, error) {
-	type noMethod SiteVerificationWebResourceGettokenRequest
-	raw := noMethod(*s)
+	type NoMethod SiteVerificationWebResourceGettokenRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -149,8 +149,8 @@ type SiteVerificationWebResourceGettokenRequestSite struct {
 }
 
 func (s *SiteVerificationWebResourceGettokenRequestSite) MarshalJSON() ([]byte, error) {
-	type noMethod SiteVerificationWebResourceGettokenRequestSite
-	raw := noMethod(*s)
+	type NoMethod SiteVerificationWebResourceGettokenRequestSite
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -189,8 +189,8 @@ type SiteVerificationWebResourceGettokenResponse struct {
 }
 
 func (s *SiteVerificationWebResourceGettokenResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SiteVerificationWebResourceGettokenResponse
-	raw := noMethod(*s)
+	type NoMethod SiteVerificationWebResourceGettokenResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -220,8 +220,8 @@ type SiteVerificationWebResourceListResponse struct {
 }
 
 func (s *SiteVerificationWebResourceListResponse) MarshalJSON() ([]byte, error) {
-	type noMethod SiteVerificationWebResourceListResponse
-	raw := noMethod(*s)
+	type NoMethod SiteVerificationWebResourceListResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -260,8 +260,8 @@ type SiteVerificationWebResourceResource struct {
 }
 
 func (s *SiteVerificationWebResourceResource) MarshalJSON() ([]byte, error) {
-	type noMethod SiteVerificationWebResourceResource
-	raw := noMethod(*s)
+	type NoMethod SiteVerificationWebResourceResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -294,8 +294,8 @@ type SiteVerificationWebResourceResourceSite struct {
 }
 
 func (s *SiteVerificationWebResourceResourceSite) MarshalJSON() ([]byte, error) {
-	type noMethod SiteVerificationWebResourceResourceSite
-	raw := noMethod(*s)
+	type NoMethod SiteVerificationWebResourceResourceSite
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -502,7 +502,7 @@ func (c *WebResourceGetCall) Do(opts ...googleapi.CallOption) (*SiteVerification
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -630,7 +630,7 @@ func (c *WebResourceGetTokenCall) Do(opts ...googleapi.CallOption) (*SiteVerific
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -750,7 +750,7 @@ func (c *WebResourceInsertCall) Do(opts ...googleapi.CallOption) (*SiteVerificat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -887,7 +887,7 @@ func (c *WebResourceListCall) Do(opts ...googleapi.CallOption) (*SiteVerificatio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1008,7 +1008,7 @@ func (c *WebResourcePatchCall) Do(opts ...googleapi.CallOption) (*SiteVerificati
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1142,7 +1142,7 @@ func (c *WebResourceUpdateCall) Do(opts ...googleapi.CallOption) (*SiteVerificat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

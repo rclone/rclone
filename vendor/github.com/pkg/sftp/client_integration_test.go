@@ -627,6 +627,27 @@ func TestClientRename(t *testing.T) {
 	}
 }
 
+func TestClientPosixRename(t *testing.T) {
+	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
+	defer cmd.Wait()
+	defer sftp.Close()
+
+	f, err := ioutil.TempFile("", "sftptest")
+	if err != nil {
+		t.Fatal(err)
+	}
+	f2 := f.Name() + ".new"
+	if err := sftp.PosixRename(f.Name(), f2); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(f.Name()); !os.IsNotExist(err) {
+		t.Fatal(err)
+	}
+	if _, err := os.Lstat(f2); err != nil {
+		t.Fatal(err)
+	}
+}
+
 func TestClientGetwd(t *testing.T) {
 	sftp, cmd := testClient(t, READONLY, NO_DELAY)
 	defer cmd.Wait()

@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -97,6 +97,24 @@ func ExampleClient_AnalyzeSyntax() {
 	// TODO: Fill request struct fields.
 	}
 	resp, err := c.AnalyzeSyntax(ctx, req)
+	if err != nil {
+		// TODO: Handle error.
+	}
+	// TODO: Use resp.
+	_ = resp
+}
+
+func ExampleClient_ClassifyText() {
+	ctx := context.Background()
+	c, err := language.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &languagepb.ClassifyTextRequest{
+	// TODO: Fill request struct fields.
+	}
+	resp, err := c.ClassifyText(ctx, req)
 	if err != nil {
 		// TODO: Handle error.
 	}

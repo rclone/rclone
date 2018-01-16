@@ -120,6 +120,7 @@ func (client GroupClient) CreatePreparer(resourceGroupName string, name string, 
 func (client GroupClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -201,6 +202,7 @@ func (client GroupClient) DeletePreparer(resourceGroupName string, name string, 
 func (client GroupClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -295,6 +297,7 @@ func (client GroupClient) ExportDataPreparer(resourceGroupName string, name stri
 func (client GroupClient) ExportDataSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -363,7 +366,9 @@ func (client GroupClient) ForceRebootPreparer(resourceGroupName string, name str
 // ForceRebootSender sends the ForceReboot request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ForceRebootSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ForceRebootResponder handles the response to the ForceReboot request. The method always
@@ -428,7 +433,9 @@ func (client GroupClient) GetPreparer(resourceGroupName string, name string) (*h
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -521,6 +528,7 @@ func (client GroupClient) ImportDataPreparer(resourceGroupName string, name stri
 func (client GroupClient) ImportDataSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -581,7 +589,9 @@ func (client GroupClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -714,7 +724,9 @@ func (client GroupClient) ListByResourceGroupPreparer(resourceGroupName string) 
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -848,7 +860,9 @@ func (client GroupClient) ListKeysPreparer(resourceGroupName string, name string
 // ListKeysSender sends the ListKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) ListKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListKeysResponder handles the response to the ListKeys request. The method always
@@ -916,7 +930,9 @@ func (client GroupClient) RegenerateKeyPreparer(resourceGroupName string, name s
 // RegenerateKeySender sends the RegenerateKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) RegenerateKeySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateKeyResponder handles the response to the RegenerateKey request. The method always
@@ -984,7 +1000,9 @@ func (client GroupClient) UpdatePreparer(resourceGroupName string, name string, 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client GroupClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

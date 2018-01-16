@@ -110,6 +110,7 @@ func (client SyncAgentsClient) CreateOrUpdatePreparer(resourceGroupName string, 
 func (client SyncAgentsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -194,6 +195,7 @@ func (client SyncAgentsClient) DeletePreparer(resourceGroupName string, serverNa
 func (client SyncAgentsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -261,7 +263,9 @@ func (client SyncAgentsClient) GenerateKeyPreparer(resourceGroupName string, ser
 // GenerateKeySender sends the GenerateKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncAgentsClient) GenerateKeySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GenerateKeyResponder handles the response to the GenerateKey request. The method always
@@ -329,7 +333,9 @@ func (client SyncAgentsClient) GetPreparer(resourceGroupName string, serverName 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncAgentsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -395,7 +401,9 @@ func (client SyncAgentsClient) ListByServerPreparer(resourceGroupName string, se
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncAgentsClient) ListByServerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByServerResponder handles the response to the ListByServer request. The method always
@@ -532,7 +540,9 @@ func (client SyncAgentsClient) ListLinkedDatabasesPreparer(resourceGroupName str
 // ListLinkedDatabasesSender sends the ListLinkedDatabases request. The method will close the
 // http.Response Body if it receives an error.
 func (client SyncAgentsClient) ListLinkedDatabasesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListLinkedDatabasesResponder handles the response to the ListLinkedDatabases request. The method always
