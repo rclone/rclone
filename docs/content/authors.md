@@ -129,3 +129,4 @@ Contributors
   * Chris Redekop <chris-redekop@users.noreply.github.com>
   * Jon Fautley <jon@adenoid.appstal.co.uk>
   * Will Gunn <WillGunn@users.noreply.github.com>
+  * Lucas Bremgartner <lucas@bremis.ch>
