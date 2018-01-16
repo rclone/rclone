@@ -150,7 +150,7 @@ func main() {
 	generateTestProgram(t, fns, "S3")
 	generateTestProgram(t, fns, "Drive")
 	generateTestProgram(t, fns, "GoogleCloudStorage")
-	generateTestProgram(t, fns, "Dropbox")
+	generateTestProgram(t, fns, "Dropbox", buildConstraint("go1.7"))
 	generateTestProgram(t, fns, "AmazonCloudDrive")
 	generateTestProgram(t, fns, "OneDrive")
 	generateTestProgram(t, fns, "Hubic")

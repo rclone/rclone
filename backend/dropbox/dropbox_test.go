@@ -2,6 +2,9 @@
 //
 // Automatically generated - DO NOT EDIT
 // Regenerate with: make gen_tests
+
+// +build go1.7
+
 package dropbox_test
 
 import (
