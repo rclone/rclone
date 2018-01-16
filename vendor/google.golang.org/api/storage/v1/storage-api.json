@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/aAU6-GJtzQTwC546w_DsCPIRIUA\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/aE5XnXblJMQy68d2aZIGrlTQ05U\"",
  "discoveryVersion": "v1",
  "id": "storage:v1",
  "name": "storage",
  "version": "v1",
- "revision": "20170915",
+ "revision": "20171212",
  "title": "Cloud Storage JSON API",
  "description": "Stores and retrieves potentially large, immutable data objects.",
  "ownerDomain": "google.com",
@@ -23,7 +23,7 @@
  "basePath": "/storage/v1/",
  "rootUrl": "https://www.googleapis.com/",
  "servicePath": "storage/v1/",
- "batchPath": "batch",
+ "batchPath": "batch/storage/v1",
  "parameters": {
   "alt": {
    "type": "string",
@@ -114,7 +114,7 @@
      "properties": {
       "requesterPays": {
        "type": "boolean",
-       "description": "When set to true, bucket is requester pays."
+       "description": "When set to true, Requester Pays is enabled for this bucket."
       }
      }
     },
@@ -153,6 +153,10 @@
       }
      }
     },
+    "defaultEventBasedHold": {
+     "type": "boolean",
+     "description": "Defines the default value for Event-Based hold on newly created objects in this bucket. Event-Based hold is a way to retain objects indefinitely until an event occurs, signified by the hold's release. After being released, such objects will be subject to bucket-level retention (if any). One sample use case of this flag is for banks to hold loan documents for at least 3 years after loan is paid in full. Here bucket-level retention is 3 years and the event is loan being paid in full. In this example these objects will be held intact for any number of years until the event has occurred (hold is released) and then 3 more years after that. Objects under Event-Based hold cannot be deleted, overwritten or archived until the hold is removed."
+    },
     "defaultObjectAcl": {
      "type": "array",
      "description": "Default access controls to apply to new objects when no ACL is provided.",
@@ -165,7 +169,8 @@
      "description": "Encryption configuration used by default for newly inserted objects, when no encryption config is specified.",
      "properties": {
       "defaultKmsKeyName": {
-       "type": "string"
+       "type": "string",
+       "description": "A Cloud KMS key that will be used to encrypt objects inserted into this bucket, if no encryption method is specified. Limited availability; usable only by enabled projects."
       }
      }
     },
@@ -175,7 +180,7 @@
     },
     "id": {
      "type": "string",
-     "description": "The ID of the bucket. For buckets, the id and name properities are the same."
+     "description": "The ID of the bucket. For buckets, the id and name properties are the same."
     },
     "kind": {
      "type": "string",
@@ -301,6 +306,26 @@
      "type": "string",
      "description": "The project number of the project the bucket belongs to.",
      "format": "uint64"
+    },
+    "retentionPolicy": {
+     "type": "object",
+     "description": "Defines the retention policy for a bucket. The Retention policy enforces a minimum retention time for all objects contained in the bucket, based on their creation time. Any attempt to overwrite or delete objects younger than the retention period will result in a PERMISSION_DENIED error. An unlocked retention policy can be modified or removed from the bucket via the UpdateBucketMetadata RPC. A locked retention policy cannot be removed or shortened in duration for the lifetime of the bucket. Attempting to remove or decrease period of a locked retention policy will result in a PERMISSION_DENIED error.",
+     "properties": {
+      "effectiveTime": {
+       "type": "string",
+       "description": "The time from which policy was enforced and effective. RFC 3339 format.",
+       "format": "date-time"
+      },
+      "isLocked": {
+       "type": "boolean",
+       "description": "Once locked, an object retention policy cannot be modified."
+      },
+      "retentionPeriod": {
+       "type": "string",
+       "description": "Specifies the duration that objects need to be retained. Retention duration must be greater than zero and less than 100 years. Note that enforcement of retention periods less than a day is not guaranteed. Such periods should only be used for testing purposes.",
+       "format": "int64"
+      }
+     }
     },
     "selfLink": {
      "type": "string",
@@ -607,7 +632,12 @@
     "payload_format": {
      "type": "string",
      "description": "The desired content of the Payload.",
-     "default": "JSON_API_V1"
+     "default": "JSON_API_V1",
+     "annotations": {
+      "required": [
+       "storage.notifications.insert"
+      ]
+     }
     },
     "selfLink": {
      "type": "string",
@@ -711,6 +741,10 @@
      "type": "string",
      "description": "HTTP 1.1 Entity tag for the object."
     },
+    "eventBasedHold": {
+     "type": "boolean",
+     "description": "Defines the Event-Based hold for an object. Event-Based hold is a way to retain objects indefinitely until an event occurs, signified by the hold's release. After being released, such objects will be subject to bucket-level retention (if any). One sample use case of this flag is for banks to hold loan documents for at least 3 years after loan is paid in full. Here bucket-level retention is 3 years and the event is loan being paid in full. In this example these objects will be held intact for any number of years until the event has occurred (hold is released) and then 3 more years after that."
+    },
     "generation": {
      "type": "string",
      "description": "The content generation of this object. Used for object versioning.",
@@ -727,7 +761,7 @@
     },
     "kmsKeyName": {
      "type": "string",
-     "description": "Cloud KMS Key used to encrypt this object, if the object is encrypted by such a key."
+     "description": "Cloud KMS Key used to encrypt this object, if the object is encrypted by such a key. Limited availability; usable only by enabled projects."
     },
     "md5Hash": {
      "type": "string",
@@ -768,6 +802,11 @@
       }
      }
     },
+    "retentionExpirationTime": {
+     "type": "string",
+     "description": "Specifies the earliest time that the object's retention period expires. This value is server-determined and is in RFC 3339 format. Note 1: This field is not provided for objects with an active Event-Based hold, since retention expiration is unknown until the hold is removed. Note 2: This value can be provided even when TemporaryHold is set (so that the user can reason about policy without having to first unset the TemporaryHold).",
+     "format": "date-time"
+    },
     "selfLink": {
      "type": "string",
      "description": "The link to this object."
@@ -780,6 +819,10 @@
     "storageClass": {
      "type": "string",
      "description": "Storage class of the object."
+    },
+    "temporaryHold": {
+     "type": "boolean",
+     "description": "Defines the temporary hold for an object. This flag is used to enforce a temporary hold on an object. While it is set to true, the object is protected against deletion and overwrites. A common use case of this flag is regulatory investigations where objects need to be retained while the investigation is ongoing."
     },
     "timeCreated": {
      "type": "string",
@@ -1090,7 +1133,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1123,7 +1166,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1153,7 +1196,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1185,7 +1228,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1220,7 +1263,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1259,7 +1302,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1308,7 +1351,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1360,7 +1403,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1392,7 +1435,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1477,7 +1520,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request.",
        "location": "query"
       }
      },
@@ -1541,7 +1584,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request.",
        "location": "query"
       }
      },
@@ -1556,6 +1599,44 @@
       "https://www.googleapis.com/auth/cloud-platform.read-only",
       "https://www.googleapis.com/auth/devstorage.full_control",
       "https://www.googleapis.com/auth/devstorage.read_only",
+      "https://www.googleapis.com/auth/devstorage.read_write"
+     ]
+    },
+    "lockRetentionPolicy": {
+     "id": "storage.buckets.lockRetentionPolicy",
+     "path": "b/{bucket}/lockRetentionPolicy",
+     "httpMethod": "POST",
+     "description": "Locks retention policy on a bucket.",
+     "parameters": {
+      "bucket": {
+       "type": "string",
+       "description": "Name of a bucket.",
+       "required": true,
+       "location": "path"
+      },
+      "ifMetagenerationMatch": {
+       "type": "string",
+       "description": "Makes the operation conditional on whether bucket's current metageneration matches the given value.",
+       "required": true,
+       "format": "int64",
+       "location": "query"
+      },
+      "userProject": {
+       "type": "string",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
+       "location": "query"
+      }
+     },
+     "parameterOrder": [
+      "bucket",
+      "ifMetagenerationMatch"
+     ],
+     "response": {
+      "$ref": "Bucket"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/cloud-platform",
+      "https://www.googleapis.com/auth/devstorage.full_control",
       "https://www.googleapis.com/auth/devstorage.read_write"
      ]
     },
@@ -1638,7 +1719,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1670,7 +1751,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1710,7 +1791,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1808,7 +1889,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1871,7 +1952,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1904,7 +1985,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1934,7 +2015,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -1978,7 +2059,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2013,7 +2094,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2052,7 +2133,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2095,7 +2176,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2129,7 +2210,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2162,7 +2243,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2195,7 +2276,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2249,7 +2330,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2295,7 +2376,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2338,7 +2419,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2383,7 +2464,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2431,7 +2512,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2483,7 +2564,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2565,7 +2646,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2583,9 +2664,7 @@
       "https://www.googleapis.com/auth/cloud-platform",
       "https://www.googleapis.com/auth/devstorage.full_control",
       "https://www.googleapis.com/auth/devstorage.read_write"
-     ],
-     "supportsMediaDownload": true,
-     "useMediaDownloadService": true
+     ]
     },
     "copy": {
      "id": "storage.objects.copy",
@@ -2707,7 +2786,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2727,9 +2806,7 @@
       "https://www.googleapis.com/auth/cloud-platform",
       "https://www.googleapis.com/auth/devstorage.full_control",
       "https://www.googleapis.com/auth/devstorage.read_write"
-     ],
-     "supportsMediaDownload": true,
-     "useMediaDownloadService": true
+     ]
     },
     "delete": {
      "id": "storage.objects.delete",
@@ -2781,7 +2858,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2858,7 +2935,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2905,7 +2982,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -2967,7 +3044,7 @@
       },
       "kmsKeyName": {
        "type": "string",
-       "description": "Resource name of the Cloud KMS key, of the form projects/my-project/locations/global/keyRings/my-kr/cryptoKeys/my-key, that will be used to encrypt the object. Overrides the object metadata's kms_key_name value, if any.",
+       "description": "Resource name of the Cloud KMS key, of the form projects/my-project/locations/global/keyRings/my-kr/cryptoKeys/my-key, that will be used to encrypt the object. Overrides the object metadata's kms_key_name value, if any. Limited availability; usable only by enabled projects.",
        "location": "query"
       },
       "name": {
@@ -3011,7 +3088,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -3029,8 +3106,6 @@
       "https://www.googleapis.com/auth/devstorage.full_control",
       "https://www.googleapis.com/auth/devstorage.read_write"
      ],
-     "supportsMediaDownload": true,
-     "useMediaDownloadService": true,
      "supportsMediaUpload": true,
      "mediaUpload": {
       "accept": [
@@ -3098,7 +3173,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       },
       "versions": {
@@ -3126,7 +3201,7 @@
      "id": "storage.objects.patch",
      "path": "b/{bucket}/o/{object}",
      "httpMethod": "PATCH",
-     "description": "Updates an object's metadata. This method supports patch semantics.",
+     "description": "Patches an object's metadata.",
      "parameters": {
       "bucket": {
        "type": "string",
@@ -3361,7 +3436,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -3409,7 +3484,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -3462,7 +3537,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -3566,7 +3641,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       }
      },
@@ -3583,9 +3658,7 @@
      "scopes": [
       "https://www.googleapis.com/auth/cloud-platform",
       "https://www.googleapis.com/auth/devstorage.full_control"
-     ],
-     "supportsMediaDownload": true,
-     "useMediaDownloadService": true
+     ]
     },
     "watchAll": {
      "id": "storage.objects.watchAll",
@@ -3637,7 +3710,7 @@
       },
       "userProject": {
        "type": "string",
-       "description": "The project to be billed for this request, for Requester Pays buckets.",
+       "description": "The project to be billed for this request. Required for Requester Pays buckets.",
        "location": "query"
       },
       "versions": {
@@ -3685,7 +3758,7 @@
         },
         "userProject": {
          "type": "string",
-         "description": "The project to be billed for this request, for Requester Pays buckets.",
+         "description": "The project to be billed for this request.",
          "location": "query"
         }
        },

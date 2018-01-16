@@ -164,3 +164,91 @@ func TestStandaloneSign_CustomURIEscape(t *testing.T) {
 		t.Errorf("expect %v, got %v", e, a)
 	}
 }
+
+func TestStandaloneSign_WithPort(t *testing.T) {
+
+	cases := []struct {
+		description string
+		url            string
+		expectedSig string
+	}{
+		{
+			"default HTTPS port",
+			"https://estest.us-east-1.es.amazonaws.com:443/_search",
+			"AWS4-HMAC-SHA256 Credential=AKID/19700101/us-east-1/es/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token, Signature=e573fc9aa3a156b720976419319be98fb2824a3abc2ddd895ecb1d1611c6a82d",
+		},
+		{
+			"default HTTP port",
+			"http://example.com:80/_search",
+			"AWS4-HMAC-SHA256 Credential=AKID/19700101/us-east-1/es/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token, Signature=54ebe60c4ae03a40948b849e13c333523235f38002e2807059c64a9a8c7cb951",
+		},
+		{
+			"non-standard HTTP port",
+			"http://example.com:9200/_search",
+			"AWS4-HMAC-SHA256 Credential=AKID/19700101/us-east-1/es/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token, Signature=cd9d926a460f8d3b58b57beadbd87666dc667e014c0afaa4cea37b2867f51b4f",
+		},
+		{
+			"non-standard HTTPS port",
+			"https://example.com:9200/_search",
+			"AWS4-HMAC-SHA256 Credential=AKID/19700101/us-east-1/es/aws4_request, SignedHeaders=host;x-amz-date;x-amz-security-token, Signature=cd9d926a460f8d3b58b57beadbd87666dc667e014c0afaa4cea37b2867f51b4f",
+		},
+	}
+
+	for _, c := range cases {
+		signer := v4.NewSigner(unit.Session.Config.Credentials)
+		req, _ := http.NewRequest("GET", c.url, nil)
+		_, err := signer.Sign(req, nil, "es", "us-east-1", time.Unix(0, 0))
+		if err != nil {
+			t.Fatalf("expect no error, got %v", err)
+		}
+
+		actual := req.Header.Get("Authorization")
+		if e, a := c.expectedSig, actual; e != a {
+			t.Errorf("%s, expect %v, got %v", c.description, e, a)
+		}
+	}
+}
+
+func TestStandalonePresign_WithPort(t *testing.T) {
+
+	cases := []struct {
+		description string
+		url            string
+		expectedSig string
+	}{
+		{
+			"default HTTPS port",
+			"https://estest.us-east-1.es.amazonaws.com:443/_search",
+			"0abcf61a351063441296febf4b485734d780634fba8cf1e7d9769315c35255d6",
+		},
+		{
+			"default HTTP port",
+			"http://example.com:80/_search",
+			"fce9976dd6c849c21adfa6d3f3e9eefc651d0e4a2ccd740d43efddcccfdc8179",
+		},
+		{
+			"non-standard HTTP port",
+			"http://example.com:9200/_search",
+			"f33c25a81c735e42bef35ed5e9f720c43940562e3e616ff0777bf6dde75249b0",
+		},
+		{
+			"non-standard HTTPS port",
+			"https://example.com:9200/_search",
+			"f33c25a81c735e42bef35ed5e9f720c43940562e3e616ff0777bf6dde75249b0",
+		},
+	}
+
+	for _, c := range cases {
+		signer := v4.NewSigner(unit.Session.Config.Credentials)
+		req, _ := http.NewRequest("GET", c.url, nil)
+		_, err := signer.Presign(req, nil, "es", "us-east-1", 5 * time.Minute, time.Unix(0, 0))
+		if err != nil {
+			t.Fatalf("expect no error, got %v", err)
+		}
+
+		actual := req.URL.Query().Get("X-Amz-Signature")
+		if e, a := c.expectedSig, actual; e != a {
+			t.Errorf("%s, expect %v, got %v", c.description, e, a)
+		}
+	}
+}

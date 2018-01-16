@@ -97,7 +97,9 @@ func (client JobStreamClient) GetPreparer(resourceGroupName string, automationAc
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobStreamClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -173,7 +175,9 @@ func (client JobStreamClient) ListByJobPreparer(resourceGroupName string, automa
 // ListByJobSender sends the ListByJob request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobStreamClient) ListByJobSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByJobResponder handles the response to the ListByJob request. The method always

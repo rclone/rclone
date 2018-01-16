@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/YvMEbSpUd5h8xmSpskCE_HPECco\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/bw0JROoLapnynZnUYWv2Bypz6Uk\"",
  "discoveryVersion": "v1",
  "id": "admin:reports_v1",
  "name": "admin",
  "canonicalName": "reports",
  "version": "reports_v1",
- "revision": "20170622",
+ "revision": "20180110",
  "title": "Admin Reports API",
  "description": "Fetches reports for the administrators of G Suite customers about the usage, collaboration, security, and risk for their users.",
  "ownerDomain": "google.com",
@@ -309,6 +309,11 @@
        "description": "Obfuscated customer id for the record.",
        "readOnly": true
       },
+      "entityId": {
+       "type": "string",
+       "description": "Object key. Only relevant if entity.type = \"OBJECT\" Note: external-facing name of report is \"Entities\" rather than \"Objects\".",
+       "readOnly": true
+      },
       "profileId": {
        "type": "string",
        "description": "Obfuscated user id for the record.",
@@ -316,12 +321,12 @@
       },
       "type": {
        "type": "string",
-       "description": "The type of item, can be a customer or user.",
+       "description": "The type of item, can be customer, user, or entity (aka. object).",
        "readOnly": true
       },
       "userEmail": {
        "type": "string",
-       "description": "user's email.",
+       "description": "user's email. Only relevant if entity.type = \"USER\"",
        "readOnly": true
       }
      }
@@ -659,11 +664,84 @@
       "parameters": {
        "type": "string",
        "description": "Represents the application name, parameter name pairs to fetch in csv as app_name1:param_name1, app_name2:param_name2.",
-       "pattern": "(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)):[^,]+,)*(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)):[^,]+)",
+       "pattern": "(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)|(meet)):[^,]+,)*(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)|(meet)):[^,]+)",
        "location": "query"
       }
      },
      "parameterOrder": [
+      "date"
+     ],
+     "response": {
+      "$ref": "UsageReports"
+     },
+     "scopes": [
+      "https://www.googleapis.com/auth/admin.reports.usage.readonly"
+     ]
+    }
+   }
+  },
+  "entityUsageReports": {
+   "methods": {
+    "get": {
+     "id": "reports.entityUsageReports.get",
+     "path": "usage/{entityType}/{entityKey}/dates/{date}",
+     "httpMethod": "GET",
+     "description": "Retrieves a report which is a collection of properties / statistics for a set of objects.",
+     "parameters": {
+      "customerId": {
+       "type": "string",
+       "description": "Represents the customer for which the data is to be fetched.",
+       "pattern": "C.+",
+       "location": "query"
+      },
+      "date": {
+       "type": "string",
+       "description": "Represents the date in yyyy-mm-dd format for which the data is to be fetched.",
+       "required": true,
+       "pattern": "(\\d){4}-(\\d){2}-(\\d){2}",
+       "location": "path"
+      },
+      "entityKey": {
+       "type": "string",
+       "description": "Represents the key of object for which the data should be filtered.",
+       "required": true,
+       "location": "path"
+      },
+      "entityType": {
+       "type": "string",
+       "description": "Type of object. Should be one of - gplus_communities.",
+       "required": true,
+       "pattern": "(gplus_communities)",
+       "location": "path"
+      },
+      "filters": {
+       "type": "string",
+       "description": "Represents the set of filters including parameter operator value.",
+       "pattern": "(((gplus)):[a-z0-9_]+[\u003c,\u003c=,==,\u003e=,\u003e,!=][^,]+,)*(((gplus)):[a-z0-9_]+[\u003c,\u003c=,==,\u003e=,\u003e,!=][^,]+)",
+       "location": "query"
+      },
+      "maxResults": {
+       "type": "integer",
+       "description": "Maximum number of results to return. Maximum allowed is 1000",
+       "format": "uint32",
+       "maximum": "1000",
+       "location": "query"
+      },
+      "pageToken": {
+       "type": "string",
+       "description": "Token to specify next page.",
+       "location": "query"
+      },
+      "parameters": {
+       "type": "string",
+       "description": "Represents the application name, parameter name pairs to fetch in csv as app_name1:param_name1, app_name2:param_name2.",
+       "pattern": "(((gplus)):[^,]+,)*(((gplus)):[^,]+)",
+       "location": "query"
+      }
+     },
+     "parameterOrder": [
+      "entityType",
+      "entityKey",
       "date"
      ],
      "response": {

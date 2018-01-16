@@ -4,6 +4,8 @@
 // belonging to different resource groups. However, all the linked resources must belong to the same subscription. Each
 // resource can be linked to 50 other resources. If any of the linked resources are deleted or moved, the link owner
 // must clean up the remaining link.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2016-09-01/links
 package links
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

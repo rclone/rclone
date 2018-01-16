@@ -224,7 +224,7 @@ func TestRecord(t *testing.T) {
 	for i, w := range wantEntries {
 		g, err := readEntry(buf)
 		if err != nil {
-			t.Fatalf("%#d: %v", i+1, err)
+			t.Fatalf("#%d: %v", i+1, err)
 		}
 		if !g.equal(w) {
 			t.Errorf("#%d:\ngot  %+v\nwant %+v", i+1, g, w)

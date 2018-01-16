@@ -125,6 +125,7 @@ func (client WorkspacesClient) CreateOrUpdatePreparer(resourceGroupName string, 
 func (client WorkspacesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -190,7 +191,9 @@ func (client WorkspacesClient) DeletePreparer(resourceGroupName string, workspac
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -264,7 +267,9 @@ func (client WorkspacesClient) DisableIntelligencePackPreparer(resourceGroupName
 // DisableIntelligencePackSender sends the DisableIntelligencePack request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) DisableIntelligencePackSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DisableIntelligencePackResponder handles the response to the DisableIntelligencePack request. The method always
@@ -338,7 +343,9 @@ func (client WorkspacesClient) EnableIntelligencePackPreparer(resourceGroupName 
 // EnableIntelligencePackSender sends the EnableIntelligencePack request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) EnableIntelligencePackSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // EnableIntelligencePackResponder handles the response to the EnableIntelligencePack request. The method always
@@ -402,7 +409,9 @@ func (client WorkspacesClient) GetPreparer(resourceGroupName string, workspaceNa
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -476,7 +485,9 @@ func (client WorkspacesClient) GetSchemaPreparer(resourceGroupName string, works
 // GetSchemaSender sends the GetSchema request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) GetSchemaSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetSchemaResponder handles the response to the GetSchema request. The method always
@@ -575,6 +586,7 @@ func (client WorkspacesClient) GetSearchResultsPreparer(resourceGroupName string
 func (client WorkspacesClient) GetSearchResultsSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -649,7 +661,9 @@ func (client WorkspacesClient) GetSharedKeysPreparer(resourceGroupName string, w
 // GetSharedKeysSender sends the GetSharedKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) GetSharedKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetSharedKeysResponder handles the response to the GetSharedKeys request. The method always
@@ -710,7 +724,9 @@ func (client WorkspacesClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -782,7 +798,9 @@ func (client WorkspacesClient) ListByResourceGroupPreparer(resourceGroupName str
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -857,7 +875,9 @@ func (client WorkspacesClient) ListIntelligencePacksPreparer(resourceGroupName s
 // ListIntelligencePacksSender sends the ListIntelligencePacks request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListIntelligencePacksSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListIntelligencePacksResponder handles the response to the ListIntelligencePacks request. The method always
@@ -919,7 +939,9 @@ func (client WorkspacesClient) ListLinkTargetsPreparer() (*http.Request, error) 
 // ListLinkTargetsSender sends the ListLinkTargets request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListLinkTargetsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListLinkTargetsResponder handles the response to the ListLinkTargets request. The method always
@@ -993,7 +1015,9 @@ func (client WorkspacesClient) ListManagementGroupsPreparer(resourceGroupName st
 // ListManagementGroupsSender sends the ListManagementGroups request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListManagementGroupsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListManagementGroupsResponder handles the response to the ListManagementGroups request. The method always
@@ -1067,7 +1091,9 @@ func (client WorkspacesClient) ListUsagesPreparer(resourceGroupName string, work
 // ListUsagesSender sends the ListUsages request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) ListUsagesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListUsagesResponder handles the response to the ListUsages request. The method always
@@ -1143,7 +1169,9 @@ func (client WorkspacesClient) UpdateSearchResultsPreparer(resourceGroupName str
 // UpdateSearchResultsSender sends the UpdateSearchResults request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspacesClient) UpdateSearchResultsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateSearchResultsResponder handles the response to the UpdateSearchResults request. The method always

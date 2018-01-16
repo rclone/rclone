@@ -62,6 +62,7 @@ func New(client *http.Client) (*Service, error) {
 	s.Activities = NewActivitiesService(s)
 	s.Channels = NewChannelsService(s)
 	s.CustomerUsageReports = NewCustomerUsageReportsService(s)
+	s.EntityUsageReports = NewEntityUsageReportsService(s)
 	s.UserUsageReport = NewUserUsageReportService(s)
 	return s, nil
 }
@@ -76,6 +77,8 @@ type Service struct {
 	Channels *ChannelsService
 
 	CustomerUsageReports *CustomerUsageReportsService
+
+	EntityUsageReports *EntityUsageReportsService
 
 	UserUsageReport *UserUsageReportService
 }
@@ -111,6 +114,15 @@ func NewCustomerUsageReportsService(s *Service) *CustomerUsageReportsService {
 }
 
 type CustomerUsageReportsService struct {
+	s *Service
+}
+
+func NewEntityUsageReportsService(s *Service) *EntityUsageReportsService {
+	rs := &EntityUsageReportsService{s: s}
+	return rs
+}
+
+type EntityUsageReportsService struct {
 	s *Service
 }
 
@@ -159,8 +171,8 @@ type Activities struct {
 }
 
 func (s *Activities) MarshalJSON() ([]byte, error) {
-	type noMethod Activities
-	raw := noMethod(*s)
+	type NoMethod Activities
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -205,8 +217,8 @@ type Activity struct {
 }
 
 func (s *Activity) MarshalJSON() ([]byte, error) {
-	type noMethod Activity
-	raw := noMethod(*s)
+	type NoMethod Activity
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -242,8 +254,8 @@ type ActivityActor struct {
 }
 
 func (s *ActivityActor) MarshalJSON() ([]byte, error) {
-	type noMethod ActivityActor
-	raw := noMethod(*s)
+	type NoMethod ActivityActor
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -275,8 +287,8 @@ type ActivityEvents struct {
 }
 
 func (s *ActivityEvents) MarshalJSON() ([]byte, error) {
-	type noMethod ActivityEvents
-	raw := noMethod(*s)
+	type NoMethod ActivityEvents
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -317,8 +329,8 @@ type ActivityEventsParameters struct {
 }
 
 func (s *ActivityEventsParameters) MarshalJSON() ([]byte, error) {
-	type noMethod ActivityEventsParameters
-	raw := noMethod(*s)
+	type NoMethod ActivityEventsParameters
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -356,8 +368,8 @@ type ActivityId struct {
 }
 
 func (s *ActivityId) MarshalJSON() ([]byte, error) {
-	type noMethod ActivityId
-	raw := noMethod(*s)
+	type NoMethod ActivityId
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -422,8 +434,8 @@ type Channel struct {
 }
 
 func (s *Channel) MarshalJSON() ([]byte, error) {
-	type noMethod Channel
-	raw := noMethod(*s)
+	type NoMethod Channel
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -462,8 +474,8 @@ type UsageReport struct {
 }
 
 func (s *UsageReport) MarshalJSON() ([]byte, error) {
-	type noMethod UsageReport
-	raw := noMethod(*s)
+	type NoMethod UsageReport
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -472,13 +484,18 @@ type UsageReportEntity struct {
 	// CustomerId: Obfuscated customer id for the record.
 	CustomerId string `json:"customerId,omitempty"`
 
+	// EntityId: Object key. Only relevant if entity.type = "OBJECT" Note:
+	// external-facing name of report is "Entities" rather than "Objects".
+	EntityId string `json:"entityId,omitempty"`
+
 	// ProfileId: Obfuscated user id for the record.
 	ProfileId string `json:"profileId,omitempty"`
 
-	// Type: The type of item, can be a customer or user.
+	// Type: The type of item, can be customer, user, or entity (aka.
+	// object).
 	Type string `json:"type,omitempty"`
 
-	// UserEmail: user's email.
+	// UserEmail: user's email. Only relevant if entity.type = "USER"
 	UserEmail string `json:"userEmail,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "CustomerId") to
@@ -499,8 +516,8 @@ type UsageReportEntity struct {
 }
 
 func (s *UsageReportEntity) MarshalJSON() ([]byte, error) {
-	type noMethod UsageReportEntity
-	raw := noMethod(*s)
+	type NoMethod UsageReportEntity
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -541,8 +558,8 @@ type UsageReportParameters struct {
 }
 
 func (s *UsageReportParameters) MarshalJSON() ([]byte, error) {
-	type noMethod UsageReportParameters
-	raw := noMethod(*s)
+	type NoMethod UsageReportParameters
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -585,8 +602,8 @@ type UsageReports struct {
 }
 
 func (s *UsageReports) MarshalJSON() ([]byte, error) {
-	type noMethod UsageReports
-	raw := noMethod(*s)
+	type NoMethod UsageReports
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -618,8 +635,8 @@ type UsageReportsWarnings struct {
 }
 
 func (s *UsageReportsWarnings) MarshalJSON() ([]byte, error) {
-	type noMethod UsageReportsWarnings
-	raw := noMethod(*s)
+	type NoMethod UsageReportsWarnings
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -650,8 +667,8 @@ type UsageReportsWarningsData struct {
 }
 
 func (s *UsageReportsWarningsData) MarshalJSON() ([]byte, error) {
-	type noMethod UsageReportsWarningsData
-	raw := noMethod(*s)
+	type NoMethod UsageReportsWarningsData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -824,7 +841,7 @@ func (c *ActivitiesListCall) Do(opts ...googleapi.CallOption) (*Activities, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1092,7 +1109,7 @@ func (c *ActivitiesWatchCall) Do(opts ...googleapi.CallOption) (*Channel, error)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1402,7 +1419,7 @@ func (c *CustomerUsageReportsGetCall) Do(opts ...googleapi.CallOption) (*UsageRe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1435,7 +1452,7 @@ func (c *CustomerUsageReportsGetCall) Do(opts ...googleapi.CallOption) (*UsageRe
 	//     "parameters": {
 	//       "description": "Represents the application name, parameter name pairs to fetch in csv as app_name1:param_name1, app_name2:param_name2.",
 	//       "location": "query",
-	//       "pattern": "(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)):[^,]+,)*(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)):[^,]+)",
+	//       "pattern": "(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)|(meet)):[^,]+,)*(((accounts)|(app_maker)|(apps_scripts)|(classroom)|(cros)|(gmail)|(calendar)|(docs)|(gplus)|(sites)|(device_management)|(drive)|(meet)):[^,]+)",
 	//       "type": "string"
 	//     }
 	//   },
@@ -1454,6 +1471,253 @@ func (c *CustomerUsageReportsGetCall) Do(opts ...googleapi.CallOption) (*UsageRe
 // A non-nil error returned from f will halt the iteration.
 // The provided context supersedes any context provided to the Context method.
 func (c *CustomerUsageReportsGetCall) Pages(ctx context.Context, f func(*UsageReports) error) error {
+	c.ctx_ = ctx
+	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
+	for {
+		x, err := c.Do()
+		if err != nil {
+			return err
+		}
+		if err := f(x); err != nil {
+			return err
+		}
+		if x.NextPageToken == "" {
+			return nil
+		}
+		c.PageToken(x.NextPageToken)
+	}
+}
+
+// method id "reports.entityUsageReports.get":
+
+type EntityUsageReportsGetCall struct {
+	s            *Service
+	entityType   string
+	entityKey    string
+	date         string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// Get: Retrieves a report which is a collection of properties /
+// statistics for a set of objects.
+func (r *EntityUsageReportsService) Get(entityType string, entityKey string, date string) *EntityUsageReportsGetCall {
+	c := &EntityUsageReportsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.entityType = entityType
+	c.entityKey = entityKey
+	c.date = date
+	return c
+}
+
+// CustomerId sets the optional parameter "customerId": Represents the
+// customer for which the data is to be fetched.
+func (c *EntityUsageReportsGetCall) CustomerId(customerId string) *EntityUsageReportsGetCall {
+	c.urlParams_.Set("customerId", customerId)
+	return c
+}
+
+// Filters sets the optional parameter "filters": Represents the set of
+// filters including parameter operator value.
+func (c *EntityUsageReportsGetCall) Filters(filters string) *EntityUsageReportsGetCall {
+	c.urlParams_.Set("filters", filters)
+	return c
+}
+
+// MaxResults sets the optional parameter "maxResults": Maximum number
+// of results to return. Maximum allowed is 1000
+func (c *EntityUsageReportsGetCall) MaxResults(maxResults int64) *EntityUsageReportsGetCall {
+	c.urlParams_.Set("maxResults", fmt.Sprint(maxResults))
+	return c
+}
+
+// PageToken sets the optional parameter "pageToken": Token to specify
+// next page.
+func (c *EntityUsageReportsGetCall) PageToken(pageToken string) *EntityUsageReportsGetCall {
+	c.urlParams_.Set("pageToken", pageToken)
+	return c
+}
+
+// Parameters sets the optional parameter "parameters": Represents the
+// application name, parameter name pairs to fetch in csv as
+// app_name1:param_name1, app_name2:param_name2.
+func (c *EntityUsageReportsGetCall) Parameters(parameters string) *EntityUsageReportsGetCall {
+	c.urlParams_.Set("parameters", parameters)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *EntityUsageReportsGetCall) Fields(s ...googleapi.Field) *EntityUsageReportsGetCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *EntityUsageReportsGetCall) IfNoneMatch(entityTag string) *EntityUsageReportsGetCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *EntityUsageReportsGetCall) Context(ctx context.Context) *EntityUsageReportsGetCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *EntityUsageReportsGetCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *EntityUsageReportsGetCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "usage/{entityType}/{entityKey}/dates/{date}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"entityType": c.entityType,
+		"entityKey":  c.entityKey,
+		"date":       c.date,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "reports.entityUsageReports.get" call.
+// Exactly one of *UsageReports or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *UsageReports.ServerResponse.Header or (if a response was returned at
+// all) in error.(*googleapi.Error).Header. Use googleapi.IsNotModified
+// to check whether the returned error was because
+// http.StatusNotModified was returned.
+func (c *EntityUsageReportsGetCall) Do(opts ...googleapi.CallOption) (*UsageReports, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &UsageReports{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Retrieves a report which is a collection of properties / statistics for a set of objects.",
+	//   "httpMethod": "GET",
+	//   "id": "reports.entityUsageReports.get",
+	//   "parameterOrder": [
+	//     "entityType",
+	//     "entityKey",
+	//     "date"
+	//   ],
+	//   "parameters": {
+	//     "customerId": {
+	//       "description": "Represents the customer for which the data is to be fetched.",
+	//       "location": "query",
+	//       "pattern": "C.+",
+	//       "type": "string"
+	//     },
+	//     "date": {
+	//       "description": "Represents the date in yyyy-mm-dd format for which the data is to be fetched.",
+	//       "location": "path",
+	//       "pattern": "(\\d){4}-(\\d){2}-(\\d){2}",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "entityKey": {
+	//       "description": "Represents the key of object for which the data should be filtered.",
+	//       "location": "path",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "entityType": {
+	//       "description": "Type of object. Should be one of - gplus_communities.",
+	//       "location": "path",
+	//       "pattern": "(gplus_communities)",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "filters": {
+	//       "description": "Represents the set of filters including parameter operator value.",
+	//       "location": "query",
+	//       "pattern": "(((gplus)):[a-z0-9_]+[\u003c,\u003c=,==,\u003e=,\u003e,!=][^,]+,)*(((gplus)):[a-z0-9_]+[\u003c,\u003c=,==,\u003e=,\u003e,!=][^,]+)",
+	//       "type": "string"
+	//     },
+	//     "maxResults": {
+	//       "description": "Maximum number of results to return. Maximum allowed is 1000",
+	//       "format": "uint32",
+	//       "location": "query",
+	//       "maximum": "1000",
+	//       "type": "integer"
+	//     },
+	//     "pageToken": {
+	//       "description": "Token to specify next page.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
+	//     "parameters": {
+	//       "description": "Represents the application name, parameter name pairs to fetch in csv as app_name1:param_name1, app_name2:param_name2.",
+	//       "location": "query",
+	//       "pattern": "(((gplus)):[^,]+,)*(((gplus)):[^,]+)",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "usage/{entityType}/{entityKey}/dates/{date}",
+	//   "response": {
+	//     "$ref": "UsageReports"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/admin.reports.usage.readonly"
+	//   ]
+	// }
+
+}
+
+// Pages invokes f for each page of results.
+// A non-nil error returned from f will halt the iteration.
+// The provided context supersedes any context provided to the Context method.
+func (c *EntityUsageReportsGetCall) Pages(ctx context.Context, f func(*UsageReports) error) error {
 	c.ctx_ = ctx
 	defer c.PageToken(c.urlParams_.Get("pageToken")) // reset paging to original point
 	for {
@@ -1618,7 +1882,7 @@ func (c *UserUsageReportGetCall) Do(opts ...googleapi.CallOption) (*UsageReports
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

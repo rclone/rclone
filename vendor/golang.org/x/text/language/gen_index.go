@@ -49,7 +49,7 @@ func main() {
 	defer func() {
 		buf := &bytes.Buffer{}
 
-		if _, err = w.WriteGo(buf, "language"); err != nil {
+		if _, err = w.WriteGo(buf, "language", ""); err != nil {
 			log.Fatalf("Error formatting file index.go: %v", err)
 		}
 

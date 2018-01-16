@@ -23,32 +23,32 @@ check: format vet lint
 .PHONY: format
 format:
 	@gofmt -w .
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: vet
 vet:
-	@echo "go tool vet, skipping vendor packages"
+	@echo "Go tool vet, skipping vendor packages"
 	@go tool vet -all ${DIRS_TO_CHECK}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: lint
 lint:
-	@echo "golint, skipping vendor packages"
+	@echo "Golint, skipping vendor packages"
 	@lint=$$(for pkg in ${PKGS_TO_CHECK}; do golint $${pkg}; done); \
 	 lint=$$(echo "$${lint}"); \
 	 if [[ -n $${lint} ]]; then echo "$${lint}"; exit 1; fi
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: update
 .PHONY: test
 test:
-	@echo "run test"
+	@echo "Run test"
 	@go test -v ${PKGS_TO_CHECK}
-	@echo "ok"
+	@echo "Done"
 
 .PHONY: test-coverage
 test-coverage:
-	@echo "run test with coverage"
+	@echo "Run test with coverage"
 	@for pkg in ${PKGS_TO_CHECK}; do \
 		output="coverage$${pkg#${PACKAGE_NAME}}"; \
 		mkdir -p $${output}; \
@@ -58,4 +58,4 @@ test-coverage:
 			              -o "$${output}/profile.html"; \
 		fi; \
 	 done
-	@echo "ok"
+	@echo "Done"

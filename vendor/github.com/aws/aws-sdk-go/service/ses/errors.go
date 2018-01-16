@@ -4,6 +4,15 @@ package ses
 
 const (
 
+	// ErrCodeAccountSendingPausedException for service response error code
+	// "AccountSendingPausedException".
+	//
+	// Indicates that email sending is disabled for your entire Amazon SES account.
+	//
+	// You can enable or disable email sending for your Amazon SES account using
+	// UpdateAccountSendingEnabled.
+	ErrCodeAccountSendingPausedException = "AccountSendingPausedException"
+
 	// ErrCodeAlreadyExistsException for service response error code
 	// "AlreadyExists".
 	//
@@ -29,6 +38,34 @@ const (
 	// Indicates that the configuration set does not exist.
 	ErrCodeConfigurationSetDoesNotExistException = "ConfigurationSetDoesNotExist"
 
+	// ErrCodeConfigurationSetSendingPausedException for service response error code
+	// "ConfigurationSetSendingPausedException".
+	//
+	// Indicates that email sending is disabled for the configuration set.
+	//
+	// You can enable or disable email sending for a configuration set using UpdateConfigurationSetSendingEnabled.
+	ErrCodeConfigurationSetSendingPausedException = "ConfigurationSetSendingPausedException"
+
+	// ErrCodeCustomVerificationEmailInvalidContentException for service response error code
+	// "CustomVerificationEmailInvalidContent".
+	//
+	// Indicates that custom verification email template provided content is invalid.
+	ErrCodeCustomVerificationEmailInvalidContentException = "CustomVerificationEmailInvalidContent"
+
+	// ErrCodeCustomVerificationEmailTemplateAlreadyExistsException for service response error code
+	// "CustomVerificationEmailTemplateAlreadyExists".
+	//
+	// Indicates that a custom verification email template with the name you specified
+	// already exists.
+	ErrCodeCustomVerificationEmailTemplateAlreadyExistsException = "CustomVerificationEmailTemplateAlreadyExists"
+
+	// ErrCodeCustomVerificationEmailTemplateDoesNotExistException for service response error code
+	// "CustomVerificationEmailTemplateDoesNotExist".
+	//
+	// Indicates that a custom verification email template with the name you specified
+	// does not exist.
+	ErrCodeCustomVerificationEmailTemplateDoesNotExistException = "CustomVerificationEmailTemplateDoesNotExist"
+
 	// ErrCodeEventDestinationAlreadyExistsException for service response error code
 	// "EventDestinationAlreadyExists".
 	//
@@ -41,6 +78,14 @@ const (
 	//
 	// Indicates that the event destination does not exist.
 	ErrCodeEventDestinationDoesNotExistException = "EventDestinationDoesNotExist"
+
+	// ErrCodeFromEmailAddressNotVerifiedException for service response error code
+	// "FromEmailAddressNotVerified".
+	//
+	// Indicates that the sender address specified for a custom verification email
+	// is not verified, and is therefore not eligible to send the custom verification
+	// email.
+	ErrCodeFromEmailAddressNotVerifiedException = "FromEmailAddressNotVerified"
 
 	// ErrCodeInvalidCloudWatchDestinationException for service response error code
 	// "InvalidCloudWatchDestination".
@@ -79,6 +124,13 @@ const (
 	// more information about what caused the error.
 	ErrCodeInvalidPolicyException = "InvalidPolicy"
 
+	// ErrCodeInvalidRenderingParameterException for service response error code
+	// "InvalidRenderingParameter".
+	//
+	// Indicates that one or more of the replacement values you provided is invalid.
+	// This error may occur when the TemplateData object contains invalid JSON.
+	ErrCodeInvalidRenderingParameterException = "InvalidRenderingParameter"
+
 	// ErrCodeInvalidS3ConfigurationException for service response error code
 	// "InvalidS3Configuration".
 	//
@@ -102,6 +154,13 @@ const (
 	// could not publish to the topic, possibly due to permissions issues. For information
 	// about giving permissions, see the Amazon SES Developer Guide (http://docs.aws.amazon.com/ses/latest/DeveloperGuide/receiving-email-permissions.html).
 	ErrCodeInvalidSnsTopicException = "InvalidSnsTopic"
+
+	// ErrCodeInvalidTemplateException for service response error code
+	// "InvalidTemplate".
+	//
+	// Indicates that a template could not be created because it contained invalid
+	// JSON.
+	ErrCodeInvalidTemplateException = "InvalidTemplate"
 
 	// ErrCodeInvalidTrackingOptionsException for service response error code
 	// "InvalidTrackingOptions".
@@ -137,6 +196,20 @@ const (
 	// the error stack for more information about what caused the error.
 	ErrCodeMessageRejected = "MessageRejected"
 
+	// ErrCodeMissingRenderingAttributeException for service response error code
+	// "MissingRenderingAttribute".
+	//
+	// Indicates that one or more of the replacement values for the specified template
+	// was not specified. Ensure that the TemplateData object contains references
+	// to all of the replacement tags in the specified template.
+	ErrCodeMissingRenderingAttributeException = "MissingRenderingAttribute"
+
+	// ErrCodeProductionAccessNotGrantedException for service response error code
+	// "ProductionAccessNotGranted".
+	//
+	// Indicates that the account has not been granted production access.
+	ErrCodeProductionAccessNotGrantedException = "ProductionAccessNotGranted"
+
 	// ErrCodeRuleDoesNotExistException for service response error code
 	// "RuleDoesNotExist".
 	//
@@ -148,6 +221,13 @@ const (
 	//
 	// Indicates that the provided receipt rule set does not exist.
 	ErrCodeRuleSetDoesNotExistException = "RuleSetDoesNotExist"
+
+	// ErrCodeTemplateDoesNotExistException for service response error code
+	// "TemplateDoesNotExist".
+	//
+	// Indicates that the Template object you specified does not exist in your Amazon
+	// SES account.
+	ErrCodeTemplateDoesNotExistException = "TemplateDoesNotExist"
 
 	// ErrCodeTrackingOptionsAlreadyExistsException for service response error code
 	// "TrackingOptionsAlreadyExistsException".

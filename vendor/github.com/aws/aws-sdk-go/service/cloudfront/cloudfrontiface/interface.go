@@ -92,6 +92,10 @@ type CloudFrontAPI interface {
 	DeleteDistributionWithContext(aws.Context, *cloudfront.DeleteDistributionInput, ...request.Option) (*cloudfront.DeleteDistributionOutput, error)
 	DeleteDistributionRequest(*cloudfront.DeleteDistributionInput) (*request.Request, *cloudfront.DeleteDistributionOutput)
 
+	DeleteServiceLinkedRole(*cloudfront.DeleteServiceLinkedRoleInput) (*cloudfront.DeleteServiceLinkedRoleOutput, error)
+	DeleteServiceLinkedRoleWithContext(aws.Context, *cloudfront.DeleteServiceLinkedRoleInput, ...request.Option) (*cloudfront.DeleteServiceLinkedRoleOutput, error)
+	DeleteServiceLinkedRoleRequest(*cloudfront.DeleteServiceLinkedRoleInput) (*request.Request, *cloudfront.DeleteServiceLinkedRoleOutput)
+
 	DeleteStreamingDistribution(*cloudfront.DeleteStreamingDistributionInput) (*cloudfront.DeleteStreamingDistributionOutput, error)
 	DeleteStreamingDistributionWithContext(aws.Context, *cloudfront.DeleteStreamingDistributionInput, ...request.Option) (*cloudfront.DeleteStreamingDistributionOutput, error)
 	DeleteStreamingDistributionRequest(*cloudfront.DeleteStreamingDistributionInput) (*request.Request, *cloudfront.DeleteStreamingDistributionOutput)

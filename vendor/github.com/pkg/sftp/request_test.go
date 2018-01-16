@@ -1,8 +1,6 @@
 package sftp
 
 import (
-	"sync"
-
 	"github.com/stretchr/testify/assert"
 
 	"bytes"
@@ -58,12 +56,10 @@ var filecontents = []byte("file-data.")
 
 func testRequest(method string) *Request {
 	request := &Request{
-		Filepath:  "./request_test.go",
-		Method:    method,
-		Attrs:     []byte("foo"),
-		Target:    "foo",
-		state:     &state{},
-		stateLock: &sync.RWMutex{},
+		Filepath: "./request_test.go",
+		Method:   method,
+		Attrs:    []byte("foo"),
+		Target:   "foo",
 	}
 	return request
 }

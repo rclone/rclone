@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/EKUDjWuy8xhU5dHne-WullXJgWw\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/jjPNPRw3vV3kPmpQDcyXQEJTSyY\"",
  "discoveryVersion": "v1",
  "id": "androidpublisher:v1.1",
  "name": "androidpublisher",
  "canonicalName": "Android Publisher",
  "version": "v1.1",
- "revision": "20170913",
+ "revision": "20171207",
  "title": "Google Play Developer API",
  "description": "Lets Android application developers access their Google Play accounts.",
  "ownerDomain": "google.com",
@@ -109,6 +109,11 @@
      "type": "string",
      "description": "The time the product was purchased, in milliseconds since the epoch (Jan 1, 1970).",
      "format": "int64"
+    },
+    "purchaseType": {
+     "type": "integer",
+     "description": "The type of purchase of the inapp product. This field is only set if this purchase was not made using the standard in-app billing flow. Possible values are:  \n- Test (i.e. purchased from a license testing account)",
+     "format": "int32"
     }
    }
   },

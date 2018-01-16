@@ -586,6 +586,30 @@ func (p *sshFxpRenamePacket) UnmarshalBinary(b []byte) error {
 	return nil
 }
 
+type sshFxpPosixRenamePacket struct {
+	ID      uint32
+	Oldpath string
+	Newpath string
+}
+
+func (p sshFxpPosixRenamePacket) id() uint32 { return p.ID }
+
+func (p sshFxpPosixRenamePacket) MarshalBinary() ([]byte, error) {
+	const ext = "posix-rename@openssh.com"
+	l := 1 + 4 + // type(byte) + uint32
+		4 + len(ext) +
+		4 + len(p.Oldpath) +
+		4 + len(p.Newpath)
+
+	b := make([]byte, 0, l)
+	b = append(b, ssh_FXP_EXTENDED)
+	b = marshalUint32(b, p.ID)
+	b = marshalString(b, ext)
+	b = marshalString(b, p.Oldpath)
+	b = marshalString(b, p.Newpath)
+	return b, nil
+}
+
 type sshFxpWritePacket struct {
 	ID     uint32
 	Handle string
@@ -870,6 +894,8 @@ func (p *sshFxpExtendedPacket) UnmarshalBinary(b []byte) error {
 	switch p.ExtendedRequest {
 	case "statvfs@openssh.com":
 		p.SpecificPacket = &sshFxpExtendedPacketStatVFS{}
+	case "posix-rename@openssh.com":
+		p.SpecificPacket = &sshFxpExtendedPacketPosixRename{}
 	default:
 		return errUnknownExtendedPacket
 	}
@@ -895,4 +921,32 @@ func (p *sshFxpExtendedPacketStatVFS) UnmarshalBinary(b []byte) error {
 		return err
 	}
 	return nil
+}
+
+type sshFxpExtendedPacketPosixRename struct {
+	ID              uint32
+	ExtendedRequest string
+	Oldpath         string
+	Newpath         string
+}
+
+func (p sshFxpExtendedPacketPosixRename) id() uint32     { return p.ID }
+func (p sshFxpExtendedPacketPosixRename) readonly() bool { return false }
+func (p *sshFxpExtendedPacketPosixRename) UnmarshalBinary(b []byte) error {
+	var err error
+	if p.ID, b, err = unmarshalUint32Safe(b); err != nil {
+		return err
+	} else if p.ExtendedRequest, b, err = unmarshalStringSafe(b); err != nil {
+		return err
+	} else if p.Oldpath, b, err = unmarshalStringSafe(b); err != nil {
+		return err
+	} else if p.Newpath, b, err = unmarshalStringSafe(b); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (p sshFxpExtendedPacketPosixRename) respond(s *Server) error {
+	err := os.Rename(p.Oldpath, p.Newpath)
+	return s.sendError(p, err)
 }

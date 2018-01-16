@@ -1,6 +1,8 @@
 // Package servermanagement implements the Azure ARM Servermanagement service API version 2016-07-01-preview.
 //
 // REST API for Azure Server Management Service.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/servermanagement/mgmt/2016-07-01-preview/servermanagement
 package servermanagement
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

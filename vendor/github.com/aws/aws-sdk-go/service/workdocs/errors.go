@@ -53,8 +53,8 @@ const (
 	// "FailedDependencyException".
 	//
 	// The AWS Directory Service cannot reach an on-premises instance. Or a dependency
-	// under the control of the organization is failing, such as a connected active
-	// directory.
+	// under the control of the organization is failing, such as a connected Active
+	// Directory.
 	ErrCodeFailedDependencyException = "FailedDependencyException"
 
 	// ErrCodeIllegalUserStateException for service response error code
@@ -66,7 +66,7 @@ const (
 	// ErrCodeInvalidArgumentException for service response error code
 	// "InvalidArgumentException".
 	//
-	// The pagination marker and/or limit fields are not valid.
+	// The pagination marker or limit fields are not valid.
 	ErrCodeInvalidArgumentException = "InvalidArgumentException"
 
 	// ErrCodeInvalidOperationException for service response error code
@@ -74,6 +74,12 @@ const (
 	//
 	// The operation is invalid.
 	ErrCodeInvalidOperationException = "InvalidOperationException"
+
+	// ErrCodeInvalidPasswordException for service response error code
+	// "InvalidPasswordException".
+	//
+	// The password is invalid.
+	ErrCodeInvalidPasswordException = "InvalidPasswordException"
 
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".

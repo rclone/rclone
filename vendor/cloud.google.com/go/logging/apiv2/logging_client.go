@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,7 @@ import (
 	loggingpb "google.golang.org/genproto/googleapis/logging/v2"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 )
 
 // CallOptions contains the retry settings for each method of Client.
@@ -97,8 +98,8 @@ type Client struct {
 	// The call options for this service.
 	CallOptions *CallOptions
 
-	// The metadata to be sent with each request.
-	xGoogHeader []string
+	// The x-goog-* metadata to be sent with each request.
+	xGoogMetadata metadata.MD
 }
 
 // NewClient creates a new logging service v2 client.
@@ -136,7 +137,7 @@ func (c *Client) Close() error {
 func (c *Client) SetGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
-	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
+	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
 }
 
 // ProjectPath returns the path for the project resource.
@@ -162,7 +163,7 @@ func LogPath(project, log string) string {
 // Log entries written shortly before the delete operation might not be
 // deleted.
 func (c *Client) DeleteLog(ctx context.Context, req *loggingpb.DeleteLogRequest, opts ...gax.CallOption) error {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.DeleteLog[0:len(c.CallOptions.DeleteLog):len(c.CallOptions.DeleteLog)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
@@ -172,9 +173,15 @@ func (c *Client) DeleteLog(ctx context.Context, req *loggingpb.DeleteLogRequest,
 	return err
 }
 
-// WriteLogEntries writes log entries to Stackdriver Logging.
+// WriteLogEntries ## Log entry resources
+//
+// Writes log entries to Stackdriver Logging. This API method is the
+// only way to send log entries to Stackdriver Logging. This method
+// is used, directly or indirectly, by the Stackdriver Logging agent
+// (fluentd) and all logging libraries configured to use Stackdriver
+// Logging.
 func (c *Client) WriteLogEntries(ctx context.Context, req *loggingpb.WriteLogEntriesRequest, opts ...gax.CallOption) (*loggingpb.WriteLogEntriesResponse, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.WriteLogEntries[0:len(c.CallOptions.WriteLogEntries):len(c.CallOptions.WriteLogEntries)], opts...)
 	var resp *loggingpb.WriteLogEntriesResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -192,7 +199,7 @@ func (c *Client) WriteLogEntries(ctx context.Context, req *loggingpb.WriteLogEnt
 // Stackdriver Logging.  For ways to export log entries, see
 // Exporting Logs (at /logging/docs/export).
 func (c *Client) ListLogEntries(ctx context.Context, req *loggingpb.ListLogEntriesRequest, opts ...gax.CallOption) *LogEntryIterator {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ListLogEntries[0:len(c.CallOptions.ListLogEntries):len(c.CallOptions.ListLogEntries)], opts...)
 	it := &LogEntryIterator{}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*loggingpb.LogEntry, string, error) {
@@ -228,7 +235,7 @@ func (c *Client) ListLogEntries(ctx context.Context, req *loggingpb.ListLogEntri
 // ListMonitoredResourceDescriptors lists the descriptors for monitored resource types used by Stackdriver
 // Logging.
 func (c *Client) ListMonitoredResourceDescriptors(ctx context.Context, req *loggingpb.ListMonitoredResourceDescriptorsRequest, opts ...gax.CallOption) *MonitoredResourceDescriptorIterator {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ListMonitoredResourceDescriptors[0:len(c.CallOptions.ListMonitoredResourceDescriptors):len(c.CallOptions.ListMonitoredResourceDescriptors)], opts...)
 	it := &MonitoredResourceDescriptorIterator{}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*monitoredrespb.MonitoredResourceDescriptor, string, error) {
@@ -264,7 +271,7 @@ func (c *Client) ListMonitoredResourceDescriptors(ctx context.Context, req *logg
 // ListLogs lists the logs in projects, organizations, folders, or billing accounts.
 // Only logs that have entries are listed.
 func (c *Client) ListLogs(ctx context.Context, req *loggingpb.ListLogsRequest, opts ...gax.CallOption) *StringIterator {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ListLogs[0:len(c.CallOptions.ListLogs):len(c.CallOptions.ListLogs)], opts...)
 	it := &StringIterator{}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]string, string, error) {

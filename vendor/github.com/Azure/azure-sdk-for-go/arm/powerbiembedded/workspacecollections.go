@@ -90,7 +90,9 @@ func (client WorkspaceCollectionsClient) CheckNameAvailabilityPreparer(location 
 // CheckNameAvailabilitySender sends the CheckNameAvailability request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) CheckNameAvailabilitySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CheckNameAvailabilityResponder handles the response to the CheckNameAvailability request. The method always
@@ -168,7 +170,9 @@ func (client WorkspaceCollectionsClient) CreatePreparer(resourceGroupName string
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -249,6 +253,7 @@ func (client WorkspaceCollectionsClient) DeletePreparer(resourceGroupName string
 func (client WorkspaceCollectionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -313,7 +318,9 @@ func (client WorkspaceCollectionsClient) GetAccessKeysPreparer(resourceGroupName
 // GetAccessKeysSender sends the GetAccessKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) GetAccessKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetAccessKeysResponder handles the response to the GetAccessKeys request. The method always
@@ -378,7 +385,9 @@ func (client WorkspaceCollectionsClient) GetByNamePreparer(resourceGroupName str
 // GetByNameSender sends the GetByName request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) GetByNameSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetByNameResponder handles the response to the GetByName request. The method always
@@ -442,7 +451,9 @@ func (client WorkspaceCollectionsClient) ListByResourceGroupPreparer(resourceGro
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -503,7 +514,9 @@ func (client WorkspaceCollectionsClient) ListBySubscriptionPreparer() (*http.Req
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
@@ -569,7 +582,9 @@ func (client WorkspaceCollectionsClient) MigratePreparer(resourceGroupName strin
 // MigrateSender sends the Migrate request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) MigrateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // MigrateResponder handles the response to the Migrate request. The method always
@@ -636,7 +651,9 @@ func (client WorkspaceCollectionsClient) RegenerateKeyPreparer(resourceGroupName
 // RegenerateKeySender sends the RegenerateKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) RegenerateKeySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateKeyResponder handles the response to the RegenerateKey request. The method always
@@ -704,7 +721,9 @@ func (client WorkspaceCollectionsClient) UpdatePreparer(resourceGroupName string
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkspaceCollectionsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

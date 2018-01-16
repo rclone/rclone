@@ -2,6 +2,8 @@
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
+// +build go1.7
+
 package unix_test
 
 import (
@@ -18,11 +20,9 @@ func TestDevices(t *testing.T) {
 		minor uint32
 	}{
 		// well known major/minor numbers according to /dev/MAKEDEV on
-		// NetBSD 7.0
+		// NetBSD 8.0
 		{"/dev/null", 2, 2},
 		{"/dev/zero", 2, 12},
-		{"/dev/ttyp0", 5, 0},
-		{"/dev/ttyp1", 5, 1},
 		{"/dev/random", 46, 0},
 		{"/dev/urandom", 46, 1},
 	}

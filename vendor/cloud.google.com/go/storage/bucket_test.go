@@ -24,6 +24,7 @@ import (
 
 	"cloud.google.com/go/internal/pretty"
 	"cloud.google.com/go/internal/testutil"
+	"google.golang.org/api/googleapi"
 	raw "google.golang.org/api/storage/v1"
 )
 
@@ -52,7 +53,7 @@ func TestBucketAttrsToRawBucket(t *testing.T) {
 		},
 		Location:     "loc",
 		StorageClass: "class",
-		Versioning:   nil, // ignore VersioningEnabled if flase
+		Versioning:   nil, // ignore VersioningEnabled if false
 		Labels:       map[string]string{"label": "value"},
 	}
 	msg, ok, err := pretty.Diff(want, got)
@@ -171,10 +172,20 @@ func TestCallBuilders(t *testing.T) {
 		},
 		{
 			func(b *BucketHandle) (interface{}, error) {
-				return b.newPatchCall(&BucketAttrsToUpdate{VersioningEnabled: false})
+				return b.newPatchCall(&BucketAttrsToUpdate{
+					VersioningEnabled: false,
+					RequesterPays:     false,
+				})
 			},
 			rc.Buckets.Patch("name", &raw.Bucket{
-				Versioning: &raw.BucketVersioning{Enabled: false, ForceSendFields: []string{"Enabled"}},
+				Versioning: &raw.BucketVersioning{
+					Enabled:         false,
+					ForceSendFields: []string{"Enabled"},
+				},
+				Billing: &raw.BucketBilling{
+					RequesterPays:   false,
+					ForceSendFields: []string{"RequesterPays"},
+				},
 			}).Projection("full"),
 			func(req interface{}) { req.(*raw.BucketsPatchCall).IfMetagenerationMatch(metagen).UserProject("p") },
 		},
@@ -207,5 +218,71 @@ func TestCallBuilders(t *testing.T) {
 	}
 	if _, err := bm.newPatchCall(&BucketAttrsToUpdate{}); err == nil {
 		t.Errorf("got nil, want error")
+	}
+}
+
+func TestNewBucket(t *testing.T) {
+	labels := map[string]string{"a": "b"}
+	matchClasses := []string{"MULTI_REGIONAL", "REGIONAL", "STANDARD"}
+	rb := &raw.Bucket{
+		Name:           "name",
+		Location:       "loc",
+		Metageneration: 3,
+		StorageClass:   "sc",
+		TimeCreated:    "2017-10-23T04:05:06Z",
+		Versioning:     &raw.BucketVersioning{Enabled: true},
+		Labels:         labels,
+		Billing:        &raw.BucketBilling{RequesterPays: true},
+		Lifecycle: &raw.BucketLifecycle{
+			Rule: []*raw.BucketLifecycleRule{{
+				Action: &raw.BucketLifecycleRuleAction{
+					Type:         "SetStorageClass",
+					StorageClass: "NEARLINE",
+				},
+				Condition: &raw.BucketLifecycleRuleCondition{
+					Age:                 10,
+					IsLive:              googleapi.Bool(true),
+					CreatedBefore:       "2017-01-02",
+					MatchesStorageClass: matchClasses,
+					NumNewerVersions:    3,
+				},
+			}},
+		},
+		Acl: []*raw.BucketAccessControl{
+			{Bucket: "name", Role: "READER", Email: "joe@example.com", Entity: "allUsers"},
+		},
+	}
+	want := &BucketAttrs{
+		Name:              "name",
+		Location:          "loc",
+		MetaGeneration:    3,
+		StorageClass:      "sc",
+		Created:           time.Date(2017, 10, 23, 4, 5, 6, 0, time.UTC),
+		VersioningEnabled: true,
+		Labels:            labels,
+		RequesterPays:     true,
+		Lifecycle: Lifecycle{
+			Rules: []LifecycleRule{
+				{
+					Action: LifecycleAction{
+						Type:         SetStorageClassAction,
+						StorageClass: "NEARLINE",
+					},
+					Condition: LifecycleCondition{
+						AgeInDays:             10,
+						Liveness:              Live,
+						CreatedBefore:         time.Date(2017, 1, 2, 0, 0, 0, 0, time.UTC),
+						MatchesStorageClasses: matchClasses,
+						NumNewerVersions:      3,
+					},
+				},
+			},
+		},
+		ACL:              []ACLRule{{Entity: "allUsers", Role: RoleReader}},
+		DefaultObjectACL: []ACLRule{},
+	}
+	got := newBucket(rb)
+	if diff := testutil.Diff(got, want); diff != "" {
+		t.Errorf("got=-, want=+:\n%s", diff)
 	}
 }

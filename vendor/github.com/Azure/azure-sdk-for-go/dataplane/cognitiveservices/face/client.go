@@ -1,6 +1,8 @@
 // Package face implements the Azure ARM Face service API version 1.0.
 //
 // An API for face detection, verification, and identification.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package face
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

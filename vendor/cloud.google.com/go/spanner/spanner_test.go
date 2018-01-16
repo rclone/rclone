@@ -114,7 +114,7 @@ func initIntegrationTest() {
 	ctx := context.Background()
 	ts := testutil.TokenSource(ctx, AdminScope, Scope)
 	if ts == nil {
-		log.Print("Integration test skipped: cannot get service account credential from environment variable %v", "GCLOUD_TESTS_GOLANG_KEY")
+		log.Printf("Integration test skipped: cannot get service account credential from environment variable %v", "GCLOUD_TESTS_GOLANG_KEY")
 		return
 	}
 	var err error
@@ -164,7 +164,8 @@ func prepare(ctx context.Context, t *testing.T, statements []string) (client *Cl
 	}
 	return client, dbPath, func() {
 		if err := admin.DropDatabase(ctx, &adminpb.DropDatabaseRequest{dbPath}); err != nil {
-			t.Logf("failed to drop testing database: %v, might need a manual removal", dbPath)
+			t.Logf("failed to drop database %s (error %v), might need a manual removal",
+				dbPath, err)
 		}
 		client.Close()
 	}
@@ -173,7 +174,7 @@ func prepare(ctx context.Context, t *testing.T, statements []string) (client *Cl
 // Test SingleUse transaction.
 func TestSingleUse(t *testing.T) {
 	t.Parallel()
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	// Set up testing environment.
 	client, _, tearDown := prepare(ctx, t, singerDBStatements)
@@ -587,7 +588,7 @@ func TestUpdateDuringRead(t *testing.T) {
 func TestReadWriteTransaction(t *testing.T) {
 	t.Parallel()
 	// Give a longer deadline because of transaction backoffs.
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
 	defer cancel()
 	client, _, tearDown := prepare(ctx, t, singerDBStatements)
 	defer tearDown()
@@ -842,7 +843,7 @@ func TestEarlyTimestamp(t *testing.T) {
 	t.Parallel()
 	// Test that we can get the timestamp from a read-only transaction as
 	// soon as we have read at least one row.
-	ctx, cancel := context.WithTimeout(context.Background(), 45*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 	// Set up testing environment.
 	client, _, tearDown := prepare(ctx, t, readDBStatements)

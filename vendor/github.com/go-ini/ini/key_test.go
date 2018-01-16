@@ -12,7 +12,7 @@
 // License for the specific language governing permissions and limitations
 // under the License.
 
-package ini
+package ini_test
 
 import (
 	"bytes"
@@ -22,16 +22,99 @@ import (
 	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
+	"gopkg.in/ini.v1"
 )
 
-func Test_Key(t *testing.T) {
-	Convey("Test getting and setting values", t, func() {
-		cfg, err := Load([]byte(_CONF_DATA), "testdata/conf.ini")
+func TestKey_AddShadow(t *testing.T) {
+	Convey("Add shadow to a key", t, func() {
+		f, err := ini.ShadowLoad([]byte(`
+[notes]
+-: note1`))
 		So(err, ShouldBeNil)
-		So(cfg, ShouldNotBeNil)
+		So(f, ShouldNotBeNil)
 
-		Convey("Get values in default section", func() {
-			sec := cfg.Section("")
+		k, err := f.Section("").NewKey("NAME", "ini")
+		So(err, ShouldBeNil)
+		So(k, ShouldNotBeNil)
+
+		So(k.AddShadow("ini.v1"), ShouldBeNil)
+		So(k.ValueWithShadows(), ShouldResemble, []string{"ini", "ini.v1"})
+
+		Convey("Add shadow to boolean key", func() {
+			k, err := f.Section("").NewBooleanKey("published")
+			So(err, ShouldBeNil)
+			So(k, ShouldNotBeNil)
+			So(k.AddShadow("beta"), ShouldNotBeNil)
+		})
+
+		Convey("Add shadow to auto-increment key", func() {
+			So(f.Section("notes").Key("#1").AddShadow("beta"), ShouldNotBeNil)
+		})
+	})
+
+	Convey("Shadow is not allowed", t, func() {
+		f := ini.Empty()
+		So(f, ShouldNotBeNil)
+
+		k, err := f.Section("").NewKey("NAME", "ini")
+		So(err, ShouldBeNil)
+		So(k, ShouldNotBeNil)
+
+		So(k.AddShadow("ini.v1"), ShouldNotBeNil)
+	})
+}
+
+// Helpers for slice tests.
+func float64sEqual(values []float64, expected ...float64) {
+	So(values, ShouldHaveLength, len(expected))
+	for i, v := range expected {
+		So(values[i], ShouldEqual, v)
+	}
+}
+
+func intsEqual(values []int, expected ...int) {
+	So(values, ShouldHaveLength, len(expected))
+	for i, v := range expected {
+		So(values[i], ShouldEqual, v)
+	}
+}
+
+func int64sEqual(values []int64, expected ...int64) {
+	So(values, ShouldHaveLength, len(expected))
+	for i, v := range expected {
+		So(values[i], ShouldEqual, v)
+	}
+}
+
+func uintsEqual(values []uint, expected ...uint) {
+	So(values, ShouldHaveLength, len(expected))
+	for i, v := range expected {
+		So(values[i], ShouldEqual, v)
+	}
+}
+
+func uint64sEqual(values []uint64, expected ...uint64) {
+	So(values, ShouldHaveLength, len(expected))
+	for i, v := range expected {
+		So(values[i], ShouldEqual, v)
+	}
+}
+
+func timesEqual(values []time.Time, expected ...time.Time) {
+	So(values, ShouldHaveLength, len(expected))
+	for i, v := range expected {
+		So(values[i].String(), ShouldEqual, v.String())
+	}
+}
+
+func TestKey_Helpers(t *testing.T) {
+	Convey("Getting and setting values", t, func() {
+		f, err := ini.Load(_FULL_CONF)
+		So(err, ShouldBeNil)
+		So(f, ShouldNotBeNil)
+
+		Convey("Get string representation", func() {
+			sec := f.Section("")
 			So(sec, ShouldNotBeNil)
 			So(sec.Key("NAME").Value(), ShouldEqual, "ini")
 			So(sec.Key("NAME").String(), ShouldEqual, "ini")
@@ -40,55 +123,65 @@ func Test_Key(t *testing.T) {
 			}), ShouldEqual, "ini")
 			So(sec.Key("NAME").Comment, ShouldEqual, "; Package name")
 			So(sec.Key("IMPORT_PATH").String(), ShouldEqual, "gopkg.in/ini.v1")
+
+			Convey("With ValueMapper", func() {
+				f.ValueMapper = func(in string) string {
+					if in == "gopkg.in/%(NAME)s.%(VERSION)s" {
+						return "github.com/go-ini/ini"
+					}
+					return in
+				}
+				So(sec.Key("IMPORT_PATH").String(), ShouldEqual, "github.com/go-ini/ini")
+			})
 		})
 
 		Convey("Get values in non-default section", func() {
-			sec := cfg.Section("author")
+			sec := f.Section("author")
 			So(sec, ShouldNotBeNil)
 			So(sec.Key("NAME").String(), ShouldEqual, "Unknwon")
 			So(sec.Key("GITHUB").String(), ShouldEqual, "https://github.com/Unknwon")
 
-			sec = cfg.Section("package")
+			sec = f.Section("package")
 			So(sec, ShouldNotBeNil)
 			So(sec.Key("CLONE_URL").String(), ShouldEqual, "https://gopkg.in/ini.v1")
 		})
 
 		Convey("Get auto-increment key names", func() {
-			keys := cfg.Section("features").Keys()
+			keys := f.Section("features").Keys()
 			for i, k := range keys {
 				So(k.Name(), ShouldEqual, fmt.Sprintf("#%d", i+1))
 			}
 		})
 
 		Convey("Get parent-keys that are available to the child section", func() {
-			parentKeys := cfg.Section("package.sub").ParentKeys()
+			parentKeys := f.Section("package.sub").ParentKeys()
 			for _, k := range parentKeys {
 				So(k.Name(), ShouldEqual, "CLONE_URL")
 			}
 		})
 
 		Convey("Get overwrite value", func() {
-			So(cfg.Section("author").Key("E-MAIL").String(), ShouldEqual, "u@gogs.io")
+			So(f.Section("author").Key("E-MAIL").String(), ShouldEqual, "u@gogs.io")
 		})
 
 		Convey("Get sections", func() {
-			sections := cfg.Sections()
-			for i, name := range []string{DEFAULT_SECTION, "author", "package", "package.sub", "features", "types", "array", "note", "comments", "advance"} {
+			sections := f.Sections()
+			for i, name := range []string{ini.DEFAULT_SECTION, "author", "package", "package.sub", "features", "types", "array", "note", "comments", "string escapes", "advance"} {
 				So(sections[i].Name(), ShouldEqual, name)
 			}
 		})
 
 		Convey("Get parent section value", func() {
-			So(cfg.Section("package.sub").Key("CLONE_URL").String(), ShouldEqual, "https://gopkg.in/ini.v1")
-			So(cfg.Section("package.fake.sub").Key("CLONE_URL").String(), ShouldEqual, "https://gopkg.in/ini.v1")
+			So(f.Section("package.sub").Key("CLONE_URL").String(), ShouldEqual, "https://gopkg.in/ini.v1")
+			So(f.Section("package.fake.sub").Key("CLONE_URL").String(), ShouldEqual, "https://gopkg.in/ini.v1")
 		})
 
 		Convey("Get multiple line value", func() {
-			So(cfg.Section("author").Key("BIO").String(), ShouldEqual, "Gopher.\nCoding addict.\nGood man.\n")
+			So(f.Section("author").Key("BIO").String(), ShouldEqual, "Gopher.\nCoding addict.\nGood man.\n")
 		})
 
 		Convey("Get values with type", func() {
-			sec := cfg.Section("types")
+			sec := f.Section("types")
 			v1, err := sec.Key("BOOL").Bool()
 			So(err, ShouldBeNil)
 			So(v1, ShouldBeTrue)
@@ -168,7 +261,7 @@ func Test_Key(t *testing.T) {
 		})
 
 		Convey("Get value with candidates", func() {
-			sec := cfg.Section("types")
+			sec := f.Section("types")
 			So(sec.Key("STRING").In("", []string{"str", "arr", "types"}), ShouldEqual, "str")
 			So(sec.Key("FLOAT64").InFloat64(0, []float64{1.25, 2.5, 3.75}), ShouldEqual, 1.25)
 			So(sec.Key("INT").InInt(0, []int{10, 20, 30}), ShouldEqual, 10)
@@ -194,7 +287,7 @@ func Test_Key(t *testing.T) {
 		})
 
 		Convey("Get values in range", func() {
-			sec := cfg.Section("types")
+			sec := f.Section("types")
 			So(sec.Key("FLOAT64").RangeFloat64(0, 1, 2), ShouldEqual, 1.25)
 			So(sec.Key("INT").RangeInt(0, 10, 20), ShouldEqual, 10)
 			So(sec.Key("INT").RangeInt64(0, 10, 20), ShouldEqual, 10)
@@ -218,7 +311,7 @@ func Test_Key(t *testing.T) {
 		})
 
 		Convey("Get values into slice", func() {
-			sec := cfg.Section("array")
+			sec := f.Section("array")
 			So(strings.Join(sec.Key("STRINGS").Strings(","), ","), ShouldEqual, "en,zh,de")
 			So(len(sec.Key("STRINGS_404").Strings(",")), ShouldEqual, 0)
 
@@ -243,8 +336,18 @@ func Test_Key(t *testing.T) {
 			timesEqual(vals6, t, t, t)
 		})
 
+		Convey("Test string slice escapes", func() {
+			sec := f.Section("string escapes")
+			So(sec.Key("key1").Strings(","), ShouldResemble, []string{"value1", "value2", "value3"})
+			So(sec.Key("key2").Strings(","), ShouldResemble, []string{"value1, value2"})
+			So(sec.Key("key3").Strings(","), ShouldResemble, []string{`val\ue1`, "value2"})
+			So(sec.Key("key4").Strings(","), ShouldResemble, []string{`value1\`, `value\\2`})
+			So(sec.Key("key5").Strings(",,"), ShouldResemble, []string{"value1,, value2"})
+			So(sec.Key("key6").Strings(" "), ShouldResemble, []string{"aaa", "bbb and space", "ccc"})
+		})
+
 		Convey("Get valid values into slice", func() {
-			sec := cfg.Section("array")
+			sec := f.Section("array")
 			vals1 := sec.Key("FLOAT64S").ValidFloat64s(",")
 			float64sEqual(vals1, 1.1, 2.2, 3.3)
 
@@ -267,7 +370,7 @@ func Test_Key(t *testing.T) {
 		})
 
 		Convey("Get values one type into slice of another type", func() {
-			sec := cfg.Section("array")
+			sec := f.Section("array")
 			vals1 := sec.Key("STRINGS").ValidFloat64s(",")
 			So(vals1, ShouldBeEmpty)
 
@@ -288,7 +391,7 @@ func Test_Key(t *testing.T) {
 		})
 
 		Convey("Get valid values into slice without errors", func() {
-			sec := cfg.Section("array")
+			sec := f.Section("array")
 			vals1, err := sec.Key("FLOAT64S").StrictFloat64s(",")
 			So(err, ShouldBeNil)
 			float64sEqual(vals1, 1.1, 2.2, 3.3)
@@ -317,7 +420,7 @@ func Test_Key(t *testing.T) {
 		})
 
 		Convey("Get invalid values into slice", func() {
-			sec := cfg.Section("array")
+			sec := f.Section("array")
 			vals1, err := sec.Key("STRINGS").StrictFloat64s(",")
 			So(vals1, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
@@ -342,232 +445,79 @@ func Test_Key(t *testing.T) {
 			So(vals6, ShouldBeEmpty)
 			So(err, ShouldNotBeNil)
 		})
-
-		Convey("Get key hash", func() {
-			cfg.Section("").KeysHash()
-		})
-
-		Convey("Set key value", func() {
-			k := cfg.Section("author").Key("NAME")
-			k.SetValue("无闻")
-			So(k.String(), ShouldEqual, "无闻")
-		})
-
-		Convey("Get key strings", func() {
-			So(strings.Join(cfg.Section("types").KeyStrings(), ","), ShouldEqual, "STRING,BOOL,BOOL_FALSE,FLOAT64,INT,TIME,DURATION,UINT")
-		})
-
-		Convey("Delete a key", func() {
-			cfg.Section("package.sub").DeleteKey("UNUSED_KEY")
-			_, err := cfg.Section("package.sub").GetKey("UNUSED_KEY")
-			So(err, ShouldNotBeNil)
-		})
-
-		Convey("Has Key (backwards compatible)", func() {
-			sec := cfg.Section("package.sub")
-			haskey1 := sec.Haskey("UNUSED_KEY")
-			haskey2 := sec.Haskey("CLONE_URL")
-			haskey3 := sec.Haskey("CLONE_URL_NO")
-			So(haskey1, ShouldBeTrue)
-			So(haskey2, ShouldBeTrue)
-			So(haskey3, ShouldBeFalse)
-		})
-
-		Convey("Has Key", func() {
-			sec := cfg.Section("package.sub")
-			haskey1 := sec.HasKey("UNUSED_KEY")
-			haskey2 := sec.HasKey("CLONE_URL")
-			haskey3 := sec.HasKey("CLONE_URL_NO")
-			So(haskey1, ShouldBeTrue)
-			So(haskey2, ShouldBeTrue)
-			So(haskey3, ShouldBeFalse)
-		})
-
-		Convey("Has Value", func() {
-			sec := cfg.Section("author")
-			hasvalue1 := sec.HasValue("Unknwon")
-			hasvalue2 := sec.HasValue("doc")
-			So(hasvalue1, ShouldBeTrue)
-			So(hasvalue2, ShouldBeFalse)
-		})
-	})
-
-	Convey("Test getting and setting bad values", t, func() {
-		cfg, err := Load([]byte(_CONF_DATA), "testdata/conf.ini")
-		So(err, ShouldBeNil)
-		So(cfg, ShouldNotBeNil)
-
-		Convey("Create new key with empty name", func() {
-			k, err := cfg.Section("").NewKey("", "")
-			So(err, ShouldNotBeNil)
-			So(k, ShouldBeNil)
-		})
-
-		Convey("Create new section with empty name", func() {
-			s, err := cfg.NewSection("")
-			So(err, ShouldNotBeNil)
-			So(s, ShouldBeNil)
-		})
-
-		Convey("Create new sections with empty name", func() {
-			So(cfg.NewSections(""), ShouldNotBeNil)
-		})
-
-		Convey("Get section that not exists", func() {
-			s, err := cfg.GetSection("404")
-			So(err, ShouldNotBeNil)
-			So(s, ShouldBeNil)
-
-			s = cfg.Section("404")
-			So(s, ShouldNotBeNil)
-		})
-	})
-
-	Convey("Test key hash clone", t, func() {
-		cfg, err := Load([]byte(strings.Replace("network=tcp,addr=127.0.0.1:6379,db=4,pool_size=100,idle_timeout=180", ",", "\n", -1)))
-		So(err, ShouldBeNil)
-		for _, v := range cfg.Section("").KeysHash() {
-			So(len(v), ShouldBeGreaterThan, 0)
-		}
-	})
-
-	Convey("Key has empty value", t, func() {
-		_conf := `key1=
-key2= ; comment`
-		cfg, err := Load([]byte(_conf))
-		So(err, ShouldBeNil)
-		So(cfg.Section("").Key("key1").Value(), ShouldBeEmpty)
 	})
 }
 
-const _CONF_GIT_CONFIG = `
-[remote "origin"]
-        url = https://github.com/Antergone/test1.git
-        url = https://github.com/Antergone/test2.git
-`
+func TestKey_StringsWithShadows(t *testing.T) {
+	Convey("Get strings of shadows of a key", t, func() {
+		f, err := ini.ShadowLoad([]byte(""))
+		So(err, ShouldBeNil)
+		So(f, ShouldNotBeNil)
 
-func Test_Key_Shadows(t *testing.T) {
-	Convey("Shadows keys", t, func() {
-		Convey("Disable shadows", func() {
-			cfg, err := Load([]byte(_CONF_GIT_CONFIG))
-			So(err, ShouldBeNil)
-			So(cfg.Section(`remote "origin"`).Key("url").String(), ShouldEqual, "https://github.com/Antergone/test2.git")
-		})
+		k, err := f.Section("").NewKey("NUMS", "1,2")
+		So(err, ShouldBeNil)
+		So(k, ShouldNotBeNil)
+		k, err = f.Section("").NewKey("NUMS", "4,5,6")
+		So(err, ShouldBeNil)
+		So(k, ShouldNotBeNil)
 
-		Convey("Enable shadows", func() {
-			cfg, err := ShadowLoad([]byte(_CONF_GIT_CONFIG))
-			So(err, ShouldBeNil)
-			So(cfg.Section(`remote "origin"`).Key("url").String(), ShouldEqual, "https://github.com/Antergone/test1.git")
-			So(strings.Join(cfg.Section(`remote "origin"`).Key("url").ValueWithShadows(), " "), ShouldEqual,
-				"https://github.com/Antergone/test1.git https://github.com/Antergone/test2.git")
+		So(k.StringsWithShadows(","), ShouldResemble, []string{"1", "2", "4", "5", "6"})
+	})
+}
 
-			Convey("Save with shadows", func() {
-				var buf bytes.Buffer
-				_, err := cfg.WriteTo(&buf)
-				So(err, ShouldBeNil)
-				So(buf.String(), ShouldEqual, `[remote "origin"]
-url = https://github.com/Antergone/test1.git
-url = https://github.com/Antergone/test2.git
+func TestKey_SetValue(t *testing.T) {
+	Convey("Set value of key", t, func() {
+		f := ini.Empty()
+		So(f, ShouldNotBeNil)
+
+		k, err := f.Section("").NewKey("NAME", "ini")
+		So(err, ShouldBeNil)
+		So(k, ShouldNotBeNil)
+		So(k.Value(), ShouldEqual, "ini")
+
+		k.SetValue("ini.v1")
+		So(k.Value(), ShouldEqual, "ini.v1")
+	})
+}
+
+func TestKey_NestedValues(t *testing.T) {
+	Convey("Read and write nested values", t, func() {
+		f, err := ini.LoadSources(ini.LoadOptions{
+			AllowNestedValues: true,
+		}, []byte(`
+aws_access_key_id = foo
+aws_secret_access_key = bar
+region = us-west-2
+s3 =
+  max_concurrent_requests=10
+  max_queue_size=1000`))
+		So(err, ShouldBeNil)
+		So(f, ShouldNotBeNil)
+
+		So(f.Section("").Key("s3").NestedValues(), ShouldResemble, []string{"max_concurrent_requests=10", "max_queue_size=1000"})
+
+		var buf bytes.Buffer
+		_, err = f.WriteTo(&buf)
+		So(err, ShouldBeNil)
+		So(buf.String(), ShouldEqual, `aws_access_key_id     = foo
+aws_secret_access_key = bar
+region                = us-west-2
+s3                    = 
+  max_concurrent_requests=10
+  max_queue_size=1000
 
 `)
-			})
-		})
 	})
 }
 
-func newTestFile(block bool) *File {
-	c, _ := Load([]byte(_CONF_DATA))
-	c.BlockMode = block
-	return c
-}
-
-func Benchmark_Key_Value(b *testing.B) {
-	c := newTestFile(true)
-	for i := 0; i < b.N; i++ {
-		c.Section("").Key("NAME").Value()
-	}
-}
-
-func Benchmark_Key_Value_NonBlock(b *testing.B) {
-	c := newTestFile(false)
-	for i := 0; i < b.N; i++ {
-		c.Section("").Key("NAME").Value()
-	}
-}
-
-func Benchmark_Key_Value_ViaSection(b *testing.B) {
-	c := newTestFile(true)
-	sec := c.Section("")
-	for i := 0; i < b.N; i++ {
-		sec.Key("NAME").Value()
-	}
-}
-
-func Benchmark_Key_Value_ViaSection_NonBlock(b *testing.B) {
-	c := newTestFile(false)
-	sec := c.Section("")
-	for i := 0; i < b.N; i++ {
-		sec.Key("NAME").Value()
-	}
-}
-
-func Benchmark_Key_Value_Direct(b *testing.B) {
-	c := newTestFile(true)
-	key := c.Section("").Key("NAME")
-	for i := 0; i < b.N; i++ {
-		key.Value()
-	}
-}
-
-func Benchmark_Key_Value_Direct_NonBlock(b *testing.B) {
-	c := newTestFile(false)
-	key := c.Section("").Key("NAME")
-	for i := 0; i < b.N; i++ {
-		key.Value()
-	}
-}
-
-func Benchmark_Key_String(b *testing.B) {
-	c := newTestFile(true)
-	for i := 0; i < b.N; i++ {
-		_ = c.Section("").Key("NAME").String()
-	}
-}
-
-func Benchmark_Key_String_NonBlock(b *testing.B) {
-	c := newTestFile(false)
-	for i := 0; i < b.N; i++ {
-		_ = c.Section("").Key("NAME").String()
-	}
-}
-
-func Benchmark_Key_String_ViaSection(b *testing.B) {
-	c := newTestFile(true)
-	sec := c.Section("")
-	for i := 0; i < b.N; i++ {
-		_ = sec.Key("NAME").String()
-	}
-}
-
-func Benchmark_Key_String_ViaSection_NonBlock(b *testing.B) {
-	c := newTestFile(false)
-	sec := c.Section("")
-	for i := 0; i < b.N; i++ {
-		_ = sec.Key("NAME").String()
-	}
-}
-
-func Benchmark_Key_SetValue(b *testing.B) {
-	c := newTestFile(true)
-	for i := 0; i < b.N; i++ {
-		c.Section("").Key("NAME").SetValue("10")
-	}
-}
-
-func Benchmark_Key_SetValue_VisSection(b *testing.B) {
-	c := newTestFile(true)
-	sec := c.Section("")
-	for i := 0; i < b.N; i++ {
-		sec.Key("NAME").SetValue("10")
-	}
+func TestRecursiveValues(t *testing.T) {
+	Convey("Recursive values should not reflect on same key", t, func() {
+		f, err := ini.Load([]byte(`
+NAME = ini
+[package]
+NAME = %(NAME)s`))
+		So(err, ShouldBeNil)
+		So(f, ShouldNotBeNil)
+		So(f.Section("package").Key("NAME").String(), ShouldEqual, "ini")
+	})
 }

@@ -66,24 +66,28 @@ const (
 type SkuName string
 
 const (
+	// Basic specifies the basic state for sku name.
+	Basic SkuName = "Basic"
 	// Classic specifies the classic state for sku name.
 	Classic SkuName = "Classic"
-	// ManagedBasic specifies the managed basic state for sku name.
-	ManagedBasic SkuName = "Managed_Basic"
-	// ManagedPremium specifies the managed premium state for sku name.
-	ManagedPremium SkuName = "Managed_Premium"
-	// ManagedStandard specifies the managed standard state for sku name.
-	ManagedStandard SkuName = "Managed_Standard"
+	// Premium specifies the premium state for sku name.
+	Premium SkuName = "Premium"
+	// Standard specifies the standard state for sku name.
+	Standard SkuName = "Standard"
 )
 
 // SkuTier enumerates the values for sku tier.
 type SkuTier string
 
 const (
+	// SkuTierBasic specifies the sku tier basic state for sku tier.
+	SkuTierBasic SkuTier = "Basic"
 	// SkuTierClassic specifies the sku tier classic state for sku tier.
 	SkuTierClassic SkuTier = "Classic"
-	// SkuTierManaged specifies the sku tier managed state for sku tier.
-	SkuTierManaged SkuTier = "Managed"
+	// SkuTierPremium specifies the sku tier premium state for sku tier.
+	SkuTierPremium SkuTier = "Premium"
+	// SkuTierStandard specifies the sku tier standard state for sku tier.
+	SkuTierStandard SkuTier = "Standard"
 )
 
 // WebhookAction enumerates the values for webhook action.

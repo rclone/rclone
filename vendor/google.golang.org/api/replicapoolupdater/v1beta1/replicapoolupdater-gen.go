@@ -144,8 +144,8 @@ type InstanceUpdate struct {
 }
 
 func (s *InstanceUpdate) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceUpdate
-	raw := noMethod(*s)
+	type NoMethod InstanceUpdate
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -173,8 +173,8 @@ type InstanceUpdateError struct {
 }
 
 func (s *InstanceUpdateError) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceUpdateError
-	raw := noMethod(*s)
+	type NoMethod InstanceUpdateError
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -207,8 +207,8 @@ type InstanceUpdateErrorErrors struct {
 }
 
 func (s *InstanceUpdateErrorErrors) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceUpdateErrorErrors
-	raw := noMethod(*s)
+	type NoMethod InstanceUpdateErrorErrors
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -248,8 +248,8 @@ type InstanceUpdateList struct {
 }
 
 func (s *InstanceUpdateList) MarshalJSON() ([]byte, error) {
-	type noMethod InstanceUpdateList
-	raw := noMethod(*s)
+	type NoMethod InstanceUpdateList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -347,8 +347,8 @@ type Operation struct {
 }
 
 func (s *Operation) MarshalJSON() ([]byte, error) {
-	type noMethod Operation
-	raw := noMethod(*s)
+	type NoMethod Operation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -377,8 +377,8 @@ type OperationError struct {
 }
 
 func (s *OperationError) MarshalJSON() ([]byte, error) {
-	type noMethod OperationError
-	raw := noMethod(*s)
+	type NoMethod OperationError
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -411,8 +411,8 @@ type OperationErrorErrors struct {
 }
 
 func (s *OperationErrorErrors) MarshalJSON() ([]byte, error) {
-	type noMethod OperationErrorErrors
-	raw := noMethod(*s)
+	type NoMethod OperationErrorErrors
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -445,8 +445,8 @@ type OperationWarnings struct {
 }
 
 func (s *OperationWarnings) MarshalJSON() ([]byte, error) {
-	type noMethod OperationWarnings
-	raw := noMethod(*s)
+	type NoMethod OperationWarnings
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -475,8 +475,8 @@ type OperationWarningsData struct {
 }
 
 func (s *OperationWarningsData) MarshalJSON() ([]byte, error) {
-	type noMethod OperationWarningsData
-	raw := noMethod(*s)
+	type NoMethod OperationWarningsData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -521,8 +521,8 @@ type OperationList struct {
 }
 
 func (s *OperationList) MarshalJSON() ([]byte, error) {
-	type noMethod OperationList
-	raw := noMethod(*s)
+	type NoMethod OperationList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -628,8 +628,8 @@ type RollingUpdate struct {
 }
 
 func (s *RollingUpdate) MarshalJSON() ([]byte, error) {
-	type noMethod RollingUpdate
-	raw := noMethod(*s)
+	type NoMethod RollingUpdate
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -658,8 +658,8 @@ type RollingUpdateError struct {
 }
 
 func (s *RollingUpdateError) MarshalJSON() ([]byte, error) {
-	type noMethod RollingUpdateError
-	raw := noMethod(*s)
+	type NoMethod RollingUpdateError
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -692,8 +692,8 @@ type RollingUpdateErrorErrors struct {
 }
 
 func (s *RollingUpdateErrorErrors) MarshalJSON() ([]byte, error) {
-	type noMethod RollingUpdateErrorErrors
-	raw := noMethod(*s)
+	type NoMethod RollingUpdateErrorErrors
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -750,8 +750,8 @@ type RollingUpdatePolicy struct {
 }
 
 func (s *RollingUpdatePolicy) MarshalJSON() ([]byte, error) {
-	type noMethod RollingUpdatePolicy
-	raw := noMethod(*s)
+	type NoMethod RollingUpdatePolicy
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -791,8 +791,8 @@ type RollingUpdateList struct {
 }
 
 func (s *RollingUpdateList) MarshalJSON() ([]byte, error) {
-	type noMethod RollingUpdateList
-	raw := noMethod(*s)
+	type NoMethod RollingUpdateList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -897,7 +897,7 @@ func (c *RollingUpdatesCancelCall) Do(opts ...googleapi.CallOption) (*Operation,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1057,7 +1057,7 @@ func (c *RollingUpdatesGetCall) Do(opts ...googleapi.CallOption) (*RollingUpdate
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1209,7 +1209,7 @@ func (c *RollingUpdatesInsertCall) Do(opts ...googleapi.CallOption) (*Operation,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1386,7 +1386,7 @@ func (c *RollingUpdatesListCall) Do(opts ...googleapi.CallOption) (*RollingUpdat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1605,7 +1605,7 @@ func (c *RollingUpdatesListInstanceUpdatesCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1795,7 +1795,7 @@ func (c *RollingUpdatesPauseCall) Do(opts ...googleapi.CallOption) (*Operation, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1942,7 +1942,7 @@ func (c *RollingUpdatesResumeCall) Do(opts ...googleapi.CallOption) (*Operation,
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2090,7 +2090,7 @@ func (c *RollingUpdatesRollbackCall) Do(opts ...googleapi.CallOption) (*Operatio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2249,7 +2249,7 @@ func (c *ZoneOperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2429,7 +2429,7 @@ func (c *ZoneOperationsListCall) Do(opts ...googleapi.CallOption) (*OperationLis
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

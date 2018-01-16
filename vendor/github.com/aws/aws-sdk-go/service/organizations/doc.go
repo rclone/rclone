@@ -63,10 +63,8 @@
 //
 // We welcome your feedback. Send your comments to feedback-awsorganizations@amazon.com
 // (mailto:feedback-awsorganizations@amazon.com) or post your feedback and questions
-// in our private AWS Organizations support forum (http://forums.aws.amazon.com/forum.jspa?forumID=219).
-// If you don't have access to the forum, send a request for access to the email
-// address, along with your forum user ID. For more information about the AWS
-// support forums, see Forums Help (http://forums.aws.amazon.com/help.jspa).
+// in the AWS Organizations support forum (http://forums.aws.amazon.com/forum.jspa?forumID=219).
+// For more information about the AWS support forums, see Forums Help (http://forums.aws.amazon.com/help.jspa).
 //
 // Endpoint to Call When Using the CLI or the AWS API
 //
@@ -123,7 +121,7 @@
 //
 // Using the Client
 //
-// To AWS Organizations with the SDK use the New function to create
+// To contact AWS Organizations with the SDK use the New function to create
 // a new service client. With that client you can make API requests to the service.
 // These clients are safe to use concurrently.
 //

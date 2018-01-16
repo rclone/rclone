@@ -129,6 +129,7 @@ func (client BackupSchedulesClient) CreateOrUpdatePreparer(deviceName string, ba
 func (client BackupSchedulesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -224,6 +225,7 @@ func (client BackupSchedulesClient) DeletePreparer(deviceName string, backupPoli
 func (client BackupSchedulesClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -299,7 +301,9 @@ func (client BackupSchedulesClient) GetPreparer(deviceName string, backupPolicyN
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupSchedulesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -374,7 +378,9 @@ func (client BackupSchedulesClient) ListByBackupPolicyPreparer(deviceName string
 // ListByBackupPolicySender sends the ListByBackupPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupSchedulesClient) ListByBackupPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByBackupPolicyResponder handles the response to the ListByBackupPolicy request. The method always

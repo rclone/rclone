@@ -98,7 +98,9 @@ func (client IosClient) AddAppForMAMPolicyPreparer(hostName string, policyName s
 // AddAppForMAMPolicySender sends the AddAppForMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) AddAppForMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // AddAppForMAMPolicyResponder handles the response to the AddAppForMAMPolicy request. The method always
@@ -172,7 +174,9 @@ func (client IosClient) AddGroupForMAMPolicyPreparer(hostName string, policyName
 // AddGroupForMAMPolicySender sends the AddGroupForMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) AddGroupForMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // AddGroupForMAMPolicyResponder handles the response to the AddGroupForMAMPolicy request. The method always
@@ -238,7 +242,9 @@ func (client IosClient) CreateOrUpdateMAMPolicyPreparer(hostName string, policyN
 // CreateOrUpdateMAMPolicySender sends the CreateOrUpdateMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) CreateOrUpdateMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CreateOrUpdateMAMPolicyResponder handles the response to the CreateOrUpdateMAMPolicy request. The method always
@@ -304,7 +310,9 @@ func (client IosClient) DeleteAppForMAMPolicyPreparer(hostName string, policyNam
 // DeleteAppForMAMPolicySender sends the DeleteAppForMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) DeleteAppForMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteAppForMAMPolicyResponder handles the response to the DeleteAppForMAMPolicy request. The method always
@@ -369,7 +377,9 @@ func (client IosClient) DeleteGroupForMAMPolicyPreparer(hostName string, policyN
 // DeleteGroupForMAMPolicySender sends the DeleteGroupForMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) DeleteGroupForMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteGroupForMAMPolicyResponder handles the response to the DeleteGroupForMAMPolicy request. The method always
@@ -432,7 +442,9 @@ func (client IosClient) DeleteMAMPolicyPreparer(hostName string, policyName stri
 // DeleteMAMPolicySender sends the DeleteMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) DeleteMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteMAMPolicyResponder handles the response to the DeleteMAMPolicy request. The method always
@@ -505,7 +517,9 @@ func (client IosClient) GetAppForMAMPolicyPreparer(hostName string, policyName s
 // GetAppForMAMPolicySender sends the GetAppForMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) GetAppForMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetAppForMAMPolicyResponder handles the response to the GetAppForMAMPolicy request. The method always
@@ -638,7 +652,9 @@ func (client IosClient) GetGroupsForMAMPolicyPreparer(hostName string, policyNam
 // GetGroupsForMAMPolicySender sends the GetGroupsForMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) GetGroupsForMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetGroupsForMAMPolicyResponder handles the response to the GetGroupsForMAMPolicy request. The method always
@@ -780,7 +796,9 @@ func (client IosClient) GetMAMPoliciesPreparer(hostName string, filter string, t
 // GetMAMPoliciesSender sends the GetMAMPolicies request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) GetMAMPoliciesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMPoliciesResponder handles the response to the GetMAMPolicies request. The method always
@@ -917,7 +935,9 @@ func (client IosClient) GetMAMPolicyByNamePreparer(hostName string, policyName s
 // GetMAMPolicyByNameSender sends the GetMAMPolicyByName request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) GetMAMPolicyByNameSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetMAMPolicyByNameResponder handles the response to the GetMAMPolicyByName request. The method always
@@ -984,7 +1004,9 @@ func (client IosClient) PatchMAMPolicyPreparer(hostName string, policyName strin
 // PatchMAMPolicySender sends the PatchMAMPolicy request. The method will close the
 // http.Response Body if it receives an error.
 func (client IosClient) PatchMAMPolicySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // PatchMAMPolicyResponder handles the response to the PatchMAMPolicy request. The method always

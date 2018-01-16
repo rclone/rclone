@@ -15,8 +15,10 @@ import (
 )
 
 // InternalInconsistency indicates the packets sent and the data queued to be
-// written to the file don't match up. It is an unusual error and if you get it
-// you should file a ticket.
+// written to the file don't match up. It is an unusual error and usually is
+// caused by bad behavior server side or connection issues. The error is
+// limited in scope to the call where it happened, the client object is still
+// OK to use as long as the connection is still open.
 var InternalInconsistency = errors.New("internal inconsistency")
 
 // A ClientOption is a function which applies configuration to a Client.
@@ -560,6 +562,26 @@ func (c *Client) RemoveDirectory(path string) error {
 func (c *Client) Rename(oldname, newname string) error {
 	id := c.nextID()
 	typ, data, err := c.sendPacket(sshFxpRenamePacket{
+		ID:      id,
+		Oldpath: oldname,
+		Newpath: newname,
+	})
+	if err != nil {
+		return err
+	}
+	switch typ {
+	case ssh_FXP_STATUS:
+		return normaliseError(unmarshalStatus(id, data))
+	default:
+		return unimplementedPacketErr(typ)
+	}
+}
+
+// PosixRename renames a file using the posix-rename@openssh.com extension
+// which will replace newname if it already exists.
+func (c *Client) PosixRename(oldname, newname string) error {
+	id := c.nextID()
+	typ, data, err := c.sendPacket(sshFxpPosixRenamePacket{
 		ID:      id,
 		Oldpath: oldname,
 		Newpath: newname,

@@ -104,7 +104,9 @@ func (client FunctionsClient) CreateOrReplacePreparer(function Function, resourc
 // CreateOrReplaceSender sends the CreateOrReplace request. The method will close the
 // http.Response Body if it receives an error.
 func (client FunctionsClient) CreateOrReplaceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrReplaceResponder handles the response to the CreateOrReplace request. The method always
@@ -172,7 +174,9 @@ func (client FunctionsClient) DeletePreparer(resourceGroupName string, jobName s
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client FunctionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -239,7 +243,9 @@ func (client FunctionsClient) GetPreparer(resourceGroupName string, jobName stri
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client FunctionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -311,7 +317,9 @@ func (client FunctionsClient) ListByStreamingJobPreparer(resourceGroupName strin
 // ListByStreamingJobSender sends the ListByStreamingJob request. The method will close the
 // http.Response Body if it receives an error.
 func (client FunctionsClient) ListByStreamingJobSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByStreamingJobResponder handles the response to the ListByStreamingJob request. The method always
@@ -454,7 +462,9 @@ func (client FunctionsClient) RetrieveDefaultDefinitionPreparer(resourceGroupNam
 // RetrieveDefaultDefinitionSender sends the RetrieveDefaultDefinition request. The method will close the
 // http.Response Body if it receives an error.
 func (client FunctionsClient) RetrieveDefaultDefinitionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RetrieveDefaultDefinitionResponder handles the response to the RetrieveDefaultDefinition request. The method always
@@ -548,6 +558,7 @@ func (client FunctionsClient) TestPreparer(resourceGroupName string, jobName str
 func (client FunctionsClient) TestSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -627,7 +638,9 @@ func (client FunctionsClient) UpdatePreparer(function Function, resourceGroupNam
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client FunctionsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

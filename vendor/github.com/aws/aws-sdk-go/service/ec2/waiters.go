@@ -1026,6 +1026,11 @@ func (c *EC2) WaitUntilSpotInstanceRequestFulfilledWithContext(ctx aws.Context, 
 				Expected: "fulfilled",
 			},
 			{
+				State:   request.SuccessWaiterState,
+				Matcher: request.PathAllWaiterMatch, Argument: "SpotInstanceRequests[].Status.Code",
+				Expected: "request-canceled-and-instance-running",
+			},
+			{
 				State:   request.FailureWaiterState,
 				Matcher: request.PathAnyWaiterMatch, Argument: "SpotInstanceRequests[].Status.Code",
 				Expected: "schedule-expired",

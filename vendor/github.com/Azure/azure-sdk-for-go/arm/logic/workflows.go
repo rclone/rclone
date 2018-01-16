@@ -89,7 +89,9 @@ func (client WorkflowsClient) CreateOrUpdatePreparer(resourceGroupName string, w
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -154,7 +156,9 @@ func (client WorkflowsClient) DeletePreparer(resourceGroupName string, workflowN
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -218,7 +222,9 @@ func (client WorkflowsClient) DisablePreparer(resourceGroupName string, workflow
 // DisableSender sends the Disable request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) DisableSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DisableResponder handles the response to the Disable request. The method always
@@ -282,7 +288,9 @@ func (client WorkflowsClient) EnablePreparer(resourceGroupName string, workflowN
 // EnableSender sends the Enable request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) EnableSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // EnableResponder handles the response to the Enable request. The method always
@@ -349,7 +357,9 @@ func (client WorkflowsClient) GenerateUpgradedDefinitionPreparer(resourceGroupNa
 // GenerateUpgradedDefinitionSender sends the GenerateUpgradedDefinition request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) GenerateUpgradedDefinitionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GenerateUpgradedDefinitionResponder handles the response to the GenerateUpgradedDefinition request. The method always
@@ -414,7 +424,9 @@ func (client WorkflowsClient) GetPreparer(resourceGroupName string, workflowName
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -485,7 +497,9 @@ func (client WorkflowsClient) ListByResourceGroupPreparer(resourceGroupName stri
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -623,7 +637,9 @@ func (client WorkflowsClient) ListBySubscriptionPreparer(top *int32, filter stri
 // ListBySubscriptionSender sends the ListBySubscription request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) ListBySubscriptionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionResponder handles the response to the ListBySubscription request. The method always
@@ -757,7 +773,9 @@ func (client WorkflowsClient) ListSwaggerPreparer(resourceGroupName string, work
 // ListSwaggerSender sends the ListSwagger request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) ListSwaggerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSwaggerResponder handles the response to the ListSwagger request. The method always
@@ -824,7 +842,9 @@ func (client WorkflowsClient) RegenerateAccessKeyPreparer(resourceGroupName stri
 // RegenerateAccessKeySender sends the RegenerateAccessKey request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) RegenerateAccessKeySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RegenerateAccessKeyResponder handles the response to the RegenerateAccessKey request. The method always
@@ -890,7 +910,9 @@ func (client WorkflowsClient) UpdatePreparer(resourceGroupName string, workflowN
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always
@@ -959,7 +981,9 @@ func (client WorkflowsClient) ValidatePreparer(resourceGroupName string, locatio
 // ValidateSender sends the Validate request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowsClient) ValidateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ValidateResponder handles the response to the Validate request. The method always

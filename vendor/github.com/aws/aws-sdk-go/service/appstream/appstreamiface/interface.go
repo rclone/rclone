@@ -148,6 +148,10 @@ type AppStreamAPI interface {
 	ListAssociatedStacksWithContext(aws.Context, *appstream.ListAssociatedStacksInput, ...request.Option) (*appstream.ListAssociatedStacksOutput, error)
 	ListAssociatedStacksRequest(*appstream.ListAssociatedStacksInput) (*request.Request, *appstream.ListAssociatedStacksOutput)
 
+	ListTagsForResource(*appstream.ListTagsForResourceInput) (*appstream.ListTagsForResourceOutput, error)
+	ListTagsForResourceWithContext(aws.Context, *appstream.ListTagsForResourceInput, ...request.Option) (*appstream.ListTagsForResourceOutput, error)
+	ListTagsForResourceRequest(*appstream.ListTagsForResourceInput) (*request.Request, *appstream.ListTagsForResourceOutput)
+
 	StartFleet(*appstream.StartFleetInput) (*appstream.StartFleetOutput, error)
 	StartFleetWithContext(aws.Context, *appstream.StartFleetInput, ...request.Option) (*appstream.StartFleetOutput, error)
 	StartFleetRequest(*appstream.StartFleetInput) (*request.Request, *appstream.StartFleetOutput)
@@ -163,6 +167,14 @@ type AppStreamAPI interface {
 	StopImageBuilder(*appstream.StopImageBuilderInput) (*appstream.StopImageBuilderOutput, error)
 	StopImageBuilderWithContext(aws.Context, *appstream.StopImageBuilderInput, ...request.Option) (*appstream.StopImageBuilderOutput, error)
 	StopImageBuilderRequest(*appstream.StopImageBuilderInput) (*request.Request, *appstream.StopImageBuilderOutput)
+
+	TagResource(*appstream.TagResourceInput) (*appstream.TagResourceOutput, error)
+	TagResourceWithContext(aws.Context, *appstream.TagResourceInput, ...request.Option) (*appstream.TagResourceOutput, error)
+	TagResourceRequest(*appstream.TagResourceInput) (*request.Request, *appstream.TagResourceOutput)
+
+	UntagResource(*appstream.UntagResourceInput) (*appstream.UntagResourceOutput, error)
+	UntagResourceWithContext(aws.Context, *appstream.UntagResourceInput, ...request.Option) (*appstream.UntagResourceOutput, error)
+	UntagResourceRequest(*appstream.UntagResourceInput) (*request.Request, *appstream.UntagResourceOutput)
 
 	UpdateDirectoryConfig(*appstream.UpdateDirectoryConfigInput) (*appstream.UpdateDirectoryConfigOutput, error)
 	UpdateDirectoryConfigWithContext(aws.Context, *appstream.UpdateDirectoryConfigInput, ...request.Option) (*appstream.UpdateDirectoryConfigOutput, error)

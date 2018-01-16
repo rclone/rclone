@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"KMS",
     "serviceFullName":"AWS Key Management Service",
+    "serviceId":"KMS",
     "signatureVersion":"v4",
     "targetPrefix":"TrentService",
     "uid":"kms-2014-11-01"
@@ -665,7 +666,8 @@
       "type":"structure",
       "required":[
         "KeyId",
-        "GranteePrincipal"
+        "GranteePrincipal",
+        "Operations"
       ],
       "members":{
         "KeyId":{"shape":"KeyIdType"},
@@ -1280,7 +1282,7 @@
     },
     "MarkerType":{
       "type":"string",
-      "max":320,
+      "max":1024,
       "min":1,
       "pattern":"[\\u0020-\\u00FF]*"
     },

@@ -111,6 +111,7 @@ func (client ReplicationNetworkMappingsClient) CreatePreparer(fabricName string,
 func (client ReplicationNetworkMappingsClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -196,6 +197,7 @@ func (client ReplicationNetworkMappingsClient) DeletePreparer(fabricName string,
 func (client ReplicationNetworkMappingsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -263,7 +265,9 @@ func (client ReplicationNetworkMappingsClient) GetPreparer(fabricName string, ne
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationNetworkMappingsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -326,7 +330,9 @@ func (client ReplicationNetworkMappingsClient) ListPreparer() (*http.Request, er
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationNetworkMappingsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -462,7 +468,9 @@ func (client ReplicationNetworkMappingsClient) ListByReplicationNetworksPreparer
 // ListByReplicationNetworksSender sends the ListByReplicationNetworks request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationNetworkMappingsClient) ListByReplicationNetworksSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByReplicationNetworksResponder handles the response to the ListByReplicationNetworks request. The method always
@@ -619,6 +627,7 @@ func (client ReplicationNetworkMappingsClient) UpdatePreparer(fabricName string,
 func (client ReplicationNetworkMappingsClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

@@ -4,6 +4,8 @@
 // Commitment Association resources. They support CRUD operations for commitment plans, get and list operations for
 // commitment associations, moving commitment associations between commitment plans, and retrieving commitment plan
 // usage history.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/machinelearning/mgmt/2016-05-01-preview/commitmentplans
 package commitmentplans
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -63,7 +63,7 @@ func (client GeographicHierarchiesClient) GetDefault() (result GeographicHierarc
 
 // GetDefaultPreparer prepares the GetDefault request.
 func (client GeographicHierarchiesClient) GetDefaultPreparer() (*http.Request, error) {
-	const APIVersion = "2017-09-01-preview"
+	const APIVersion = "2017-05-01"
 	queryParameters := map[string]interface{}{
 		"api-version": APIVersion,
 	}
@@ -79,7 +79,9 @@ func (client GeographicHierarchiesClient) GetDefaultPreparer() (*http.Request, e
 // GetDefaultSender sends the GetDefault request. The method will close the
 // http.Response Body if it receives an error.
 func (client GeographicHierarchiesClient) GetDefaultSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetDefaultResponder handles the response to the GetDefault request. The method always

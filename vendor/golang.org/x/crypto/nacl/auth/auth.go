@@ -47,7 +47,7 @@ func Sum(m []byte, key *[KeySize]byte) *[Size]byte {
 
 // Verify checks that digest is a valid authenticator of message m under the
 // given secret key. Verify does not leak timing information.
-func Verify(digest []byte, m []byte, key *[32]byte) bool {
+func Verify(digest []byte, m []byte, key *[KeySize]byte) bool {
 	if len(digest) != Size {
 		return false
 	}

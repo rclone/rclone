@@ -12,10 +12,18 @@ import (
 	"golang.org/x/text/message/catalog"
 )
 
-// DefaultCatalog is used by SetString.
-var DefaultCatalog *catalog.Catalog = defaultCatalog
+// MatchLanguage reports the matched tag obtained from language.MatchStrings for
+// the Matcher of the DefaultCatalog.
+func MatchLanguage(preferred ...string) language.Tag {
+	c := DefaultCatalog
+	tag, _ := language.MatchStrings(c.Matcher(), preferred...)
+	return tag
+}
 
-var defaultCatalog = catalog.New()
+// DefaultCatalog is used by SetString.
+var DefaultCatalog catalog.Catalog = defaultCatalog
+
+var defaultCatalog = catalog.NewBuilder()
 
 // SetString calls SetString on the initial default Catalog.
 func SetString(tag language.Tag, key string, msg string) error {

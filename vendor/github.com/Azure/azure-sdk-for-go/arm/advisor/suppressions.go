@@ -92,7 +92,9 @@ func (client SuppressionsClient) CreatePreparer(resourceURI string, recommendati
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -159,7 +161,9 @@ func (client SuppressionsClient) DeletePreparer(resourceURI string, recommendati
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -224,7 +228,9 @@ func (client SuppressionsClient) GetPreparer(resourceURI string, recommendationI
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -295,7 +301,9 @@ func (client SuppressionsClient) ListPreparer(top *int32, skipToken string) (*ht
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client SuppressionsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

@@ -78,7 +78,7 @@ func TestBasics(t *testing.T) {
 	if err != nil {
 		t.Errorf("client.Delete: %v", err)
 	}
-	if !reflect.DeepEqual(x0, x1) {
+	if !testutil.Equal(x0, x1) {
 		t.Errorf("compare: x0=%v, x1=%v", x0, x1)
 	}
 }
@@ -117,7 +117,7 @@ func TestTopLevelKeyLoaded(t *testing.T) {
 	}
 
 	// The two keys should be absolutely identical.
-	if !reflect.DeepEqual(e.K, k) {
+	if !testutil.Equal(e.K, k) {
 		t.Fatalf("e.K not equal to k; got %#v, want %#v", e.K, k)
 	}
 
@@ -142,7 +142,7 @@ func TestListValues(t *testing.T) {
 	if err := client.Get(ctx, k, &p1); err != nil {
 		t.Errorf("client.Get: %v", err)
 	}
-	if !reflect.DeepEqual(p0, p1) {
+	if !testutil.Equal(p0, p1) {
 		t.Errorf("compare:\np0=%v\np1=%#v", p0, p1)
 	}
 	if err = client.Delete(ctx, k); err != nil {
@@ -402,7 +402,7 @@ func TestFilters(t *testing.T) {
 		if err != nil {
 			t.Errorf("client.GetAll: %v", err)
 		}
-		if !reflect.DeepEqual(got, want) {
+		if !testutil.Equal(got, want) {
 			t.Errorf("compare: got=%v, want=%v", got, want)
 		}
 	}, func() {
@@ -421,7 +421,7 @@ func TestFilters(t *testing.T) {
 		if err != nil {
 			t.Errorf("client.GetAll: %v", err)
 		}
-		if !reflect.DeepEqual(got, want) {
+		if !testutil.Equal(got, want) {
 			t.Errorf("compare: got=%v, want=%v", got, want)
 		}
 	})
@@ -730,10 +730,10 @@ func TestGetAllWithFieldMismatch(t *testing.T) {
 		{X: 22},
 	}
 	getKeys, err := client.GetAll(ctx, NewQuery("GetAllThing").Ancestor(parent), &got)
-	if len(getKeys) != 3 && !reflect.DeepEqual(getKeys, putKeys) {
+	if len(getKeys) != 3 && !testutil.Equal(getKeys, putKeys) {
 		t.Errorf("client.GetAll: keys differ\ngetKeys=%v\nputKeys=%v", getKeys, putKeys)
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testutil.Equal(got, want) {
 		t.Errorf("client.GetAll: entities differ\ngot =%v\nwant=%v", got, want)
 	}
 	if _, ok := err.(*ErrFieldMismatch); !ok {
@@ -858,7 +858,7 @@ loop:
 			got = append(got, dst.I)
 		}
 		sort.Ints(got)
-		if !reflect.DeepEqual(got, tc.want) {
+		if !testutil.Equal(got, tc.want) {
 			t.Errorf("elems %q: got %+v want %+v", tc.desc, got, tc.want)
 			continue
 		}
@@ -994,7 +994,7 @@ func TestNilPointers(t *testing.T) {
 	xs := make([]*X, 2)
 	if err := client.GetMulti(ctx, keys, xs); err != nil {
 		t.Errorf("GetMulti: %v", err)
-	} else if !reflect.DeepEqual(xs, src) {
+	} else if !testutil.Equal(xs, src) {
 		t.Errorf("GetMulti fetched %v, want %v", xs, src)
 	}
 

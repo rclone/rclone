@@ -50,6 +50,17 @@ func errnoErr(e syscall.Errno) error {
 	return e
 }
 
+// clen returns the index of the first NULL byte in n or len(n) if n contains no
+// NULL byte or len(n) if n contains no NULL byte
+func clen(n []byte) int {
+	for i := 0; i < len(n); i++ {
+		if n[i] == 0 {
+			return i
+		}
+	}
+	return len(n)
+}
+
 // Mmap manager, for use by operating system-specific implementations.
 
 type mmapper struct {

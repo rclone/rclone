@@ -169,7 +169,7 @@ func (e *Encoder) addVar(key string, m Message) error {
 	case err == ErrIncomplete:
 		if Handle(e.buf[0]) != msgFirst {
 			seq := &Encoder{root: e.root, parent: e}
-			seq.EncodeMessageType(First)
+			seq.EncodeMessageType(msgFirst)
 			e.flushTo(seq)
 			e = seq
 		}

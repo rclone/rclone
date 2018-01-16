@@ -101,8 +101,8 @@ type ListMetricRequest struct {
 }
 
 func (s *ListMetricRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ListMetricRequest
-	raw := noMethod(*s)
+	type NoMethod ListMetricRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -141,8 +141,8 @@ type ListMetricResponse struct {
 }
 
 func (s *ListMetricResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListMetricResponse
-	raw := noMethod(*s)
+	type NoMethod ListMetricResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -275,7 +275,7 @@ func (c *MetricDescriptorsListCall) Do(opts ...googleapi.CallOption) (*ListMetri
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

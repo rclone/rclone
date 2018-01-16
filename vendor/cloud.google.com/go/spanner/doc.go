@@ -278,7 +278,7 @@ You pass in a function to ReadWriteTransaction, and the client will handle the
 retries automatically. Use the transaction's BufferWrite method to buffer
 mutations, which will all be executed at the end of the transaction:
 
-    _, err := client.ReadWriteTransaction(ctx, func(txn *spanner.ReadWriteTransaction) error {
+    _, err := client.ReadWriteTransaction(ctx, func(ctx context.Context, txn *spanner.ReadWriteTransaction) error {
         var balance int64
         row, err := txn.ReadRow(ctx, "Accounts", spanner.Key{"alice"}, []string{"balance"})
         if err != nil {

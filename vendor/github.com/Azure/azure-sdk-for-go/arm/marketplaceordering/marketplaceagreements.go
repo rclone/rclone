@@ -93,7 +93,9 @@ func (client MarketplaceAgreementsClient) CreatePreparer(offerType string, publi
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client MarketplaceAgreementsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -162,7 +164,9 @@ func (client MarketplaceAgreementsClient) GetPreparer(offerType string, publishe
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client MarketplaceAgreementsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always

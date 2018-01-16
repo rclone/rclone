@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"json",
     "serviceFullName":"Amazon Lightsail",
+    "serviceId":"Lightsail",
     "signatureVersion":"v4",
     "targetPrefix":"Lightsail_20161128",
     "uid":"lightsail-2016-11-28"
@@ -19,6 +20,60 @@
       },
       "input":{"shape":"AllocateStaticIpRequest"},
       "output":{"shape":"AllocateStaticIpResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "AttachDisk":{
+      "name":"AttachDisk",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"AttachDiskRequest"},
+      "output":{"shape":"AttachDiskResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "AttachInstancesToLoadBalancer":{
+      "name":"AttachInstancesToLoadBalancer",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"AttachInstancesToLoadBalancerRequest"},
+      "output":{"shape":"AttachInstancesToLoadBalancerResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "AttachLoadBalancerTlsCertificate":{
+      "name":"AttachLoadBalancerTlsCertificate",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"AttachLoadBalancerTlsCertificateRequest"},
+      "output":{"shape":"AttachLoadBalancerTlsCertificateResult"},
       "errors":[
         {"shape":"ServiceException"},
         {"shape":"InvalidInputException"},
@@ -55,6 +110,60 @@
       },
       "input":{"shape":"CloseInstancePublicPortsRequest"},
       "output":{"shape":"CloseInstancePublicPortsResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "CreateDisk":{
+      "name":"CreateDisk",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateDiskRequest"},
+      "output":{"shape":"CreateDiskResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "CreateDiskFromSnapshot":{
+      "name":"CreateDiskFromSnapshot",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateDiskFromSnapshotRequest"},
+      "output":{"shape":"CreateDiskFromSnapshotResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "CreateDiskSnapshot":{
+      "name":"CreateDiskSnapshot",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateDiskSnapshotRequest"},
+      "output":{"shape":"CreateDiskSnapshotResult"},
       "errors":[
         {"shape":"ServiceException"},
         {"shape":"InvalidInputException"},
@@ -173,6 +282,78 @@
         {"shape":"UnauthenticatedException"}
       ]
     },
+    "CreateLoadBalancer":{
+      "name":"CreateLoadBalancer",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateLoadBalancerRequest"},
+      "output":{"shape":"CreateLoadBalancerResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "CreateLoadBalancerTlsCertificate":{
+      "name":"CreateLoadBalancerTlsCertificate",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateLoadBalancerTlsCertificateRequest"},
+      "output":{"shape":"CreateLoadBalancerTlsCertificateResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "DeleteDisk":{
+      "name":"DeleteDisk",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteDiskRequest"},
+      "output":{"shape":"DeleteDiskResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "DeleteDiskSnapshot":{
+      "name":"DeleteDiskSnapshot",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteDiskSnapshotRequest"},
+      "output":{"shape":"DeleteDiskSnapshotResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
     "DeleteDomain":{
       "name":"DeleteDomain",
       "http":{
@@ -263,6 +444,78 @@
         {"shape":"UnauthenticatedException"}
       ]
     },
+    "DeleteLoadBalancer":{
+      "name":"DeleteLoadBalancer",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteLoadBalancerRequest"},
+      "output":{"shape":"DeleteLoadBalancerResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "DeleteLoadBalancerTlsCertificate":{
+      "name":"DeleteLoadBalancerTlsCertificate",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteLoadBalancerTlsCertificateRequest"},
+      "output":{"shape":"DeleteLoadBalancerTlsCertificateResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "DetachDisk":{
+      "name":"DetachDisk",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DetachDiskRequest"},
+      "output":{"shape":"DetachDiskResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "DetachInstancesFromLoadBalancer":{
+      "name":"DetachInstancesFromLoadBalancer",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DetachInstancesFromLoadBalancerRequest"},
+      "output":{"shape":"DetachInstancesFromLoadBalancerResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
     "DetachStaticIp":{
       "name":"DetachStaticIp",
       "http":{
@@ -343,6 +596,78 @@
       },
       "input":{"shape":"GetBundlesRequest"},
       "output":{"shape":"GetBundlesResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetDisk":{
+      "name":"GetDisk",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetDiskRequest"},
+      "output":{"shape":"GetDiskResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetDiskSnapshot":{
+      "name":"GetDiskSnapshot",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetDiskSnapshotRequest"},
+      "output":{"shape":"GetDiskSnapshotResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetDiskSnapshots":{
+      "name":"GetDiskSnapshots",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetDiskSnapshotsRequest"},
+      "output":{"shape":"GetDiskSnapshotsResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetDisks":{
+      "name":"GetDisks",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetDisksRequest"},
+      "output":{"shape":"GetDisksResult"},
       "errors":[
         {"shape":"ServiceException"},
         {"shape":"InvalidInputException"},
@@ -559,6 +884,78 @@
       },
       "input":{"shape":"GetKeyPairsRequest"},
       "output":{"shape":"GetKeyPairsResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetLoadBalancer":{
+      "name":"GetLoadBalancer",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetLoadBalancerRequest"},
+      "output":{"shape":"GetLoadBalancerResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetLoadBalancerMetricData":{
+      "name":"GetLoadBalancerMetricData",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetLoadBalancerMetricDataRequest"},
+      "output":{"shape":"GetLoadBalancerMetricDataResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetLoadBalancerTlsCertificates":{
+      "name":"GetLoadBalancerTlsCertificates",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetLoadBalancerTlsCertificatesRequest"},
+      "output":{"shape":"GetLoadBalancerTlsCertificatesResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
+    },
+    "GetLoadBalancers":{
+      "name":"GetLoadBalancers",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetLoadBalancersRequest"},
+      "output":{"shape":"GetLoadBalancersResult"},
       "errors":[
         {"shape":"ServiceException"},
         {"shape":"InvalidInputException"},
@@ -874,6 +1271,24 @@
         {"shape":"AccountSetupInProgressException"},
         {"shape":"UnauthenticatedException"}
       ]
+    },
+    "UpdateLoadBalancerAttribute":{
+      "name":"UpdateLoadBalancerAttribute",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateLoadBalancerAttributeRequest"},
+      "output":{"shape":"UpdateLoadBalancerAttributeResult"},
+      "errors":[
+        {"shape":"ServiceException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"NotFoundException"},
+        {"shape":"OperationFailureException"},
+        {"shape":"AccessDeniedException"},
+        {"shape":"AccountSetupInProgressException"},
+        {"shape":"UnauthenticatedException"}
+      ]
     }
   },
   "shapes":{
@@ -917,6 +1332,59 @@
         "operations":{"shape":"OperationList"}
       }
     },
+    "AttachDiskRequest":{
+      "type":"structure",
+      "required":[
+        "diskName",
+        "instanceName",
+        "diskPath"
+      ],
+      "members":{
+        "diskName":{"shape":"ResourceName"},
+        "instanceName":{"shape":"ResourceName"},
+        "diskPath":{"shape":"NonEmptyString"}
+      }
+    },
+    "AttachDiskResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "AttachInstancesToLoadBalancerRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "instanceNames"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "instanceNames":{"shape":"ResourceNameList"}
+      }
+    },
+    "AttachInstancesToLoadBalancerResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "AttachLoadBalancerTlsCertificateRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "certificateName"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "certificateName":{"shape":"ResourceName"}
+      }
+    },
+    "AttachLoadBalancerTlsCertificateResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
     "AttachStaticIpRequest":{
       "type":"structure",
       "required":[
@@ -933,6 +1401,11 @@
       "members":{
         "operations":{"shape":"OperationList"}
       }
+    },
+    "AttachedDiskMap":{
+      "type":"map",
+      "key":{"shape":"ResourceName"},
+      "value":{"shape":"DiskMapList"}
     },
     "AvailabilityZone":{
       "type":"structure",
@@ -959,7 +1432,8 @@
         "version":{"shape":"string"},
         "versionCode":{"shape":"string"},
         "productUrl":{"shape":"string"},
-        "licenseUrl":{"shape":"string"}
+        "licenseUrl":{"shape":"string"},
+        "platform":{"shape":"InstancePlatform"}
       }
     },
     "BlueprintList":{
@@ -985,7 +1459,8 @@
         "name":{"shape":"string"},
         "power":{"shape":"integer"},
         "ramSizeInGb":{"shape":"float"},
-        "transferPerMonthInGb":{"shape":"integer"}
+        "transferPerMonthInGb":{"shape":"integer"},
+        "supportedPlatforms":{"shape":"InstancePlatformList"}
       }
     },
     "BundleList":{
@@ -1007,6 +1482,63 @@
       "type":"structure",
       "members":{
         "operation":{"shape":"Operation"}
+      }
+    },
+    "CreateDiskFromSnapshotRequest":{
+      "type":"structure",
+      "required":[
+        "diskName",
+        "diskSnapshotName",
+        "availabilityZone",
+        "sizeInGb"
+      ],
+      "members":{
+        "diskName":{"shape":"ResourceName"},
+        "diskSnapshotName":{"shape":"ResourceName"},
+        "availabilityZone":{"shape":"NonEmptyString"},
+        "sizeInGb":{"shape":"integer"}
+      }
+    },
+    "CreateDiskFromSnapshotResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "CreateDiskRequest":{
+      "type":"structure",
+      "required":[
+        "diskName",
+        "availabilityZone",
+        "sizeInGb"
+      ],
+      "members":{
+        "diskName":{"shape":"ResourceName"},
+        "availabilityZone":{"shape":"NonEmptyString"},
+        "sizeInGb":{"shape":"integer"}
+      }
+    },
+    "CreateDiskResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "CreateDiskSnapshotRequest":{
+      "type":"structure",
+      "required":[
+        "diskName",
+        "diskSnapshotName"
+      ],
+      "members":{
+        "diskName":{"shape":"ResourceName"},
+        "diskSnapshotName":{"shape":"ResourceName"}
+      }
+    },
+    "CreateDiskSnapshotResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
       }
     },
     "CreateDomainEntryRequest":{
@@ -1066,6 +1598,7 @@
       ],
       "members":{
         "instanceNames":{"shape":"StringList"},
+        "attachedDiskMapping":{"shape":"AttachedDiskMap"},
         "availabilityZone":{"shape":"string"},
         "instanceSnapshotName":{"shape":"ResourceName"},
         "bundleId":{"shape":"NonEmptyString"},
@@ -1120,6 +1653,73 @@
         "publicKeyBase64":{"shape":"Base64"},
         "privateKeyBase64":{"shape":"Base64"},
         "operation":{"shape":"Operation"}
+      }
+    },
+    "CreateLoadBalancerRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "instancePort"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "instancePort":{"shape":"Port"},
+        "healthCheckPath":{"shape":"string"},
+        "certificateName":{"shape":"ResourceName"},
+        "certificateDomainName":{"shape":"DomainName"},
+        "certificateAlternativeNames":{"shape":"DomainNameList"}
+      }
+    },
+    "CreateLoadBalancerResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "CreateLoadBalancerTlsCertificateRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "certificateName",
+        "certificateDomainName"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "certificateName":{"shape":"ResourceName"},
+        "certificateDomainName":{"shape":"DomainName"},
+        "certificateAlternativeNames":{"shape":"DomainNameList"}
+      }
+    },
+    "CreateLoadBalancerTlsCertificateResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "DeleteDiskRequest":{
+      "type":"structure",
+      "required":["diskName"],
+      "members":{
+        "diskName":{"shape":"ResourceName"}
+      }
+    },
+    "DeleteDiskResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "DeleteDiskSnapshotRequest":{
+      "type":"structure",
+      "required":["diskSnapshotName"],
+      "members":{
+        "diskSnapshotName":{"shape":"ResourceName"}
+      }
+    },
+    "DeleteDiskSnapshotResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
       }
     },
     "DeleteDomainEntryRequest":{
@@ -1191,6 +1791,67 @@
         "operation":{"shape":"Operation"}
       }
     },
+    "DeleteLoadBalancerRequest":{
+      "type":"structure",
+      "required":["loadBalancerName"],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"}
+      }
+    },
+    "DeleteLoadBalancerResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "DeleteLoadBalancerTlsCertificateRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "certificateName"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "certificateName":{"shape":"ResourceName"},
+        "force":{"shape":"boolean"}
+      }
+    },
+    "DeleteLoadBalancerTlsCertificateResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "DetachDiskRequest":{
+      "type":"structure",
+      "required":["diskName"],
+      "members":{
+        "diskName":{"shape":"ResourceName"}
+      }
+    },
+    "DetachDiskResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "DetachInstancesFromLoadBalancerRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "instanceNames"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "instanceNames":{"shape":"ResourceNameList"}
+      }
+    },
+    "DetachInstancesFromLoadBalancerResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
     "DetachStaticIpRequest":{
       "type":"structure",
       "required":["staticIpName"],
@@ -1214,18 +1875,75 @@
         "location":{"shape":"ResourceLocation"},
         "resourceType":{"shape":"ResourceType"},
         "sizeInGb":{"shape":"integer"},
-        "gbInUse":{"shape":"integer"},
         "isSystemDisk":{"shape":"boolean"},
         "iops":{"shape":"integer"},
         "path":{"shape":"string"},
-        "attachedTo":{"shape":"string"},
+        "state":{"shape":"DiskState"},
+        "attachedTo":{"shape":"ResourceName"},
         "isAttached":{"shape":"boolean"},
-        "attachmentState":{"shape":"string"}
+        "attachmentState":{
+          "shape":"string",
+          "deprecated":true
+        },
+        "gbInUse":{
+          "shape":"integer",
+          "deprecated":true
+        }
       }
     },
     "DiskList":{
       "type":"list",
       "member":{"shape":"Disk"}
+    },
+    "DiskMap":{
+      "type":"structure",
+      "members":{
+        "originalDiskPath":{"shape":"NonEmptyString"},
+        "newDiskName":{"shape":"ResourceName"}
+      }
+    },
+    "DiskMapList":{
+      "type":"list",
+      "member":{"shape":"DiskMap"}
+    },
+    "DiskSnapshot":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"ResourceName"},
+        "arn":{"shape":"NonEmptyString"},
+        "supportCode":{"shape":"string"},
+        "createdAt":{"shape":"IsoDate"},
+        "location":{"shape":"ResourceLocation"},
+        "resourceType":{"shape":"ResourceType"},
+        "sizeInGb":{"shape":"integer"},
+        "state":{"shape":"DiskSnapshotState"},
+        "progress":{"shape":"string"},
+        "fromDiskName":{"shape":"ResourceName"},
+        "fromDiskArn":{"shape":"NonEmptyString"}
+      }
+    },
+    "DiskSnapshotList":{
+      "type":"list",
+      "member":{"shape":"DiskSnapshot"}
+    },
+    "DiskSnapshotState":{
+      "type":"string",
+      "enum":[
+        "pending",
+        "completed",
+        "error",
+        "unknown"
+      ]
+    },
+    "DiskState":{
+      "type":"string",
+      "enum":[
+        "pending",
+        "error",
+        "available",
+        "in-use",
+        "unknown"
+      ]
     },
     "Domain":{
       "type":"structure",
@@ -1245,8 +1963,12 @@
         "id":{"shape":"NonEmptyString"},
         "name":{"shape":"DomainName"},
         "target":{"shape":"string"},
+        "isAlias":{"shape":"boolean"},
         "type":{"shape":"DomainEntryType"},
-        "options":{"shape":"DomainEntryOptions"}
+        "options":{
+          "shape":"DomainEntryOptions",
+          "deprecated":true
+        }
       }
     },
     "DomainEntryList":{
@@ -1265,6 +1987,10 @@
       "member":{"shape":"Domain"}
     },
     "DomainName":{"type":"string"},
+    "DomainNameList":{
+      "type":"list",
+      "member":{"shape":"DomainName"}
+    },
     "DownloadDefaultKeyPairRequest":{
       "type":"structure",
       "members":{
@@ -1315,6 +2041,58 @@
       "type":"structure",
       "members":{
         "bundles":{"shape":"BundleList"},
+        "nextPageToken":{"shape":"string"}
+      }
+    },
+    "GetDiskRequest":{
+      "type":"structure",
+      "required":["diskName"],
+      "members":{
+        "diskName":{"shape":"ResourceName"}
+      }
+    },
+    "GetDiskResult":{
+      "type":"structure",
+      "members":{
+        "disk":{"shape":"Disk"}
+      }
+    },
+    "GetDiskSnapshotRequest":{
+      "type":"structure",
+      "required":["diskSnapshotName"],
+      "members":{
+        "diskSnapshotName":{"shape":"ResourceName"}
+      }
+    },
+    "GetDiskSnapshotResult":{
+      "type":"structure",
+      "members":{
+        "diskSnapshot":{"shape":"DiskSnapshot"}
+      }
+    },
+    "GetDiskSnapshotsRequest":{
+      "type":"structure",
+      "members":{
+        "pageToken":{"shape":"string"}
+      }
+    },
+    "GetDiskSnapshotsResult":{
+      "type":"structure",
+      "members":{
+        "diskSnapshots":{"shape":"DiskSnapshotList"},
+        "nextPageToken":{"shape":"string"}
+      }
+    },
+    "GetDisksRequest":{
+      "type":"structure",
+      "members":{
+        "pageToken":{"shape":"string"}
+      }
+    },
+    "GetDisksResult":{
+      "type":"structure",
+      "members":{
+        "disks":{"shape":"DiskList"},
         "nextPageToken":{"shape":"string"}
       }
     },
@@ -1490,6 +2268,73 @@
         "nextPageToken":{"shape":"string"}
       }
     },
+    "GetLoadBalancerMetricDataRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "metricName",
+        "period",
+        "startTime",
+        "endTime",
+        "unit",
+        "statistics"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "metricName":{"shape":"LoadBalancerMetricName"},
+        "period":{"shape":"MetricPeriod"},
+        "startTime":{"shape":"timestamp"},
+        "endTime":{"shape":"timestamp"},
+        "unit":{"shape":"MetricUnit"},
+        "statistics":{"shape":"MetricStatisticList"}
+      }
+    },
+    "GetLoadBalancerMetricDataResult":{
+      "type":"structure",
+      "members":{
+        "metricName":{"shape":"LoadBalancerMetricName"},
+        "metricData":{"shape":"MetricDatapointList"}
+      }
+    },
+    "GetLoadBalancerRequest":{
+      "type":"structure",
+      "required":["loadBalancerName"],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"}
+      }
+    },
+    "GetLoadBalancerResult":{
+      "type":"structure",
+      "members":{
+        "loadBalancer":{"shape":"LoadBalancer"}
+      }
+    },
+    "GetLoadBalancerTlsCertificatesRequest":{
+      "type":"structure",
+      "required":["loadBalancerName"],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"}
+      }
+    },
+    "GetLoadBalancerTlsCertificatesResult":{
+      "type":"structure",
+      "members":{
+        "tlsCertificates":{"shape":"LoadBalancerTlsCertificateList"}
+      }
+    },
+    "GetLoadBalancersRequest":{
+      "type":"structure",
+      "members":{
+        "pageToken":{"shape":"string"}
+      }
+    },
+    "GetLoadBalancersResult":{
+      "type":"structure",
+      "members":{
+        "loadBalancers":{"shape":"LoadBalancerList"},
+        "nextPageToken":{"shape":"string"}
+      }
+    },
     "GetOperationRequest":{
       "type":"structure",
       "required":["operationId"],
@@ -1620,6 +2465,7 @@
         "expiresAt":{"shape":"IsoDate"},
         "ipAddress":{"shape":"IpAddress"},
         "password":{"shape":"string"},
+        "passwordData":{"shape":"PasswordData"},
         "privateKey":{"shape":"string"},
         "protocol":{"shape":"InstanceAccessProtocol"},
         "instanceName":{"shape":"ResourceName"},
@@ -1640,6 +2486,45 @@
         "disks":{"shape":"DiskList"},
         "ramSizeInGb":{"shape":"float"}
       }
+    },
+    "InstanceHealthReason":{
+      "type":"string",
+      "enum":[
+        "Lb.RegistrationInProgress",
+        "Lb.InitialHealthChecking",
+        "Lb.InternalError",
+        "Instance.ResponseCodeMismatch",
+        "Instance.Timeout",
+        "Instance.FailedHealthChecks",
+        "Instance.NotRegistered",
+        "Instance.NotInUse",
+        "Instance.DeregistrationInProgress",
+        "Instance.InvalidState",
+        "Instance.IpUnusable"
+      ]
+    },
+    "InstanceHealthState":{
+      "type":"string",
+      "enum":[
+        "initial",
+        "healthy",
+        "unhealthy",
+        "unused",
+        "draining",
+        "unavailable"
+      ]
+    },
+    "InstanceHealthSummary":{
+      "type":"structure",
+      "members":{
+        "instanceName":{"shape":"ResourceName"},
+        "instanceHealth":{"shape":"InstanceHealthState"},
+        "instanceHealthReason":{"shape":"InstanceHealthReason"}
+      }
+    },
+    "InstanceHealthSummaryList":{
+      "type":"list",
+      "member":{"shape":"InstanceHealthSummary"}
     },
     "InstanceList":{
       "type":"list",
@@ -1662,6 +2547,17 @@
         "monthlyTransfer":{"shape":"MonthlyTransfer"},
         "ports":{"shape":"InstancePortInfoList"}
       }
+    },
+    "InstancePlatform":{
+      "type":"string",
+      "enum":[
+        "LINUX_UNIX",
+        "WINDOWS"
+      ]
+    },
+    "InstancePlatformList":{
+      "type":"list",
+      "member":{"shape":"InstancePlatform"}
     },
     "InstancePortInfo":{
       "type":"structure",
@@ -1703,6 +2599,7 @@
         "resourceType":{"shape":"ResourceType"},
         "state":{"shape":"InstanceSnapshotState"},
         "progress":{"shape":"string"},
+        "fromAttachedDisks":{"shape":"DiskList"},
         "fromInstanceName":{"shape":"ResourceName"},
         "fromInstanceArn":{"shape":"NonEmptyString"},
         "fromBlueprintId":{"shape":"string"},
@@ -1774,6 +2671,208 @@
     "KeyPairList":{
       "type":"list",
       "member":{"shape":"KeyPair"}
+    },
+    "LoadBalancer":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"ResourceName"},
+        "arn":{"shape":"NonEmptyString"},
+        "supportCode":{"shape":"string"},
+        "createdAt":{"shape":"IsoDate"},
+        "location":{"shape":"ResourceLocation"},
+        "resourceType":{"shape":"ResourceType"},
+        "dnsName":{"shape":"NonEmptyString"},
+        "state":{"shape":"LoadBalancerState"},
+        "protocol":{"shape":"LoadBalancerProtocol"},
+        "publicPorts":{"shape":"PortList"},
+        "healthCheckPath":{"shape":"NonEmptyString"},
+        "instancePort":{"shape":"integer"},
+        "instanceHealthSummary":{"shape":"InstanceHealthSummaryList"},
+        "tlsCertificateSummaries":{"shape":"LoadBalancerTlsCertificateSummaryList"},
+        "configurationOptions":{"shape":"LoadBalancerConfigurationOptions"}
+      }
+    },
+    "LoadBalancerAttributeName":{
+      "type":"string",
+      "enum":[
+        "HealthCheckPath",
+        "SessionStickinessEnabled",
+        "SessionStickiness_LB_CookieDurationSeconds"
+      ]
+    },
+    "LoadBalancerConfigurationOptions":{
+      "type":"map",
+      "key":{"shape":"LoadBalancerAttributeName"},
+      "value":{"shape":"string"}
+    },
+    "LoadBalancerList":{
+      "type":"list",
+      "member":{"shape":"LoadBalancer"}
+    },
+    "LoadBalancerMetricName":{
+      "type":"string",
+      "enum":[
+        "ClientTLSNegotiationErrorCount",
+        "HealthyHostCount",
+        "UnhealthyHostCount",
+        "HTTPCode_LB_4XX_Count",
+        "HTTPCode_LB_5XX_Count",
+        "HTTPCode_Instance_2XX_Count",
+        "HTTPCode_Instance_3XX_Count",
+        "HTTPCode_Instance_4XX_Count",
+        "HTTPCode_Instance_5XX_Count",
+        "InstanceResponseTime",
+        "RejectedConnectionCount",
+        "RequestCount"
+      ]
+    },
+    "LoadBalancerProtocol":{
+      "type":"string",
+      "enum":[
+        "HTTP_HTTPS",
+        "HTTP"
+      ]
+    },
+    "LoadBalancerState":{
+      "type":"string",
+      "enum":[
+        "active",
+        "provisioning",
+        "active_impaired",
+        "failed",
+        "unknown"
+      ]
+    },
+    "LoadBalancerTlsCertificate":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"ResourceName"},
+        "arn":{"shape":"NonEmptyString"},
+        "supportCode":{"shape":"string"},
+        "createdAt":{"shape":"IsoDate"},
+        "location":{"shape":"ResourceLocation"},
+        "resourceType":{"shape":"ResourceType"},
+        "loadBalancerName":{"shape":"ResourceName"},
+        "isAttached":{"shape":"boolean"},
+        "status":{"shape":"LoadBalancerTlsCertificateStatus"},
+        "domainName":{"shape":"DomainName"},
+        "domainValidationRecords":{"shape":"LoadBalancerTlsCertificateDomainValidationRecordList"},
+        "failureReason":{"shape":"LoadBalancerTlsCertificateFailureReason"},
+        "issuedAt":{"shape":"IsoDate"},
+        "issuer":{"shape":"NonEmptyString"},
+        "keyAlgorithm":{"shape":"NonEmptyString"},
+        "notAfter":{"shape":"IsoDate"},
+        "notBefore":{"shape":"IsoDate"},
+        "renewalSummary":{"shape":"LoadBalancerTlsCertificateRenewalSummary"},
+        "revocationReason":{"shape":"LoadBalancerTlsCertificateRevocationReason"},
+        "revokedAt":{"shape":"IsoDate"},
+        "serial":{"shape":"NonEmptyString"},
+        "signatureAlgorithm":{"shape":"NonEmptyString"},
+        "subject":{"shape":"NonEmptyString"},
+        "subjectAlternativeNames":{"shape":"StringList"}
+      }
+    },
+    "LoadBalancerTlsCertificateDomainStatus":{
+      "type":"string",
+      "enum":[
+        "PENDING_VALIDATION",
+        "FAILED",
+        "SUCCESS"
+      ]
+    },
+    "LoadBalancerTlsCertificateDomainValidationOption":{
+      "type":"structure",
+      "members":{
+        "domainName":{"shape":"DomainName"},
+        "validationStatus":{"shape":"LoadBalancerTlsCertificateDomainStatus"}
+      }
+    },
+    "LoadBalancerTlsCertificateDomainValidationOptionList":{
+      "type":"list",
+      "member":{"shape":"LoadBalancerTlsCertificateDomainValidationOption"}
+    },
+    "LoadBalancerTlsCertificateDomainValidationRecord":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"NonEmptyString"},
+        "type":{"shape":"NonEmptyString"},
+        "value":{"shape":"NonEmptyString"},
+        "validationStatus":{"shape":"LoadBalancerTlsCertificateDomainStatus"},
+        "domainName":{"shape":"DomainName"}
+      }
+    },
+    "LoadBalancerTlsCertificateDomainValidationRecordList":{
+      "type":"list",
+      "member":{"shape":"LoadBalancerTlsCertificateDomainValidationRecord"}
+    },
+    "LoadBalancerTlsCertificateFailureReason":{
+      "type":"string",
+      "enum":[
+        "NO_AVAILABLE_CONTACTS",
+        "ADDITIONAL_VERIFICATION_REQUIRED",
+        "DOMAIN_NOT_ALLOWED",
+        "INVALID_PUBLIC_DOMAIN",
+        "OTHER"
+      ]
+    },
+    "LoadBalancerTlsCertificateList":{
+      "type":"list",
+      "member":{"shape":"LoadBalancerTlsCertificate"}
+    },
+    "LoadBalancerTlsCertificateRenewalStatus":{
+      "type":"string",
+      "enum":[
+        "PENDING_AUTO_RENEWAL",
+        "PENDING_VALIDATION",
+        "SUCCESS",
+        "FAILED"
+      ]
+    },
+    "LoadBalancerTlsCertificateRenewalSummary":{
+      "type":"structure",
+      "members":{
+        "renewalStatus":{"shape":"LoadBalancerTlsCertificateRenewalStatus"},
+        "domainValidationOptions":{"shape":"LoadBalancerTlsCertificateDomainValidationOptionList"}
+      }
+    },
+    "LoadBalancerTlsCertificateRevocationReason":{
+      "type":"string",
+      "enum":[
+        "UNSPECIFIED",
+        "KEY_COMPROMISE",
+        "CA_COMPROMISE",
+        "AFFILIATION_CHANGED",
+        "SUPERCEDED",
+        "CESSATION_OF_OPERATION",
+        "CERTIFICATE_HOLD",
+        "REMOVE_FROM_CRL",
+        "PRIVILEGE_WITHDRAWN",
+        "A_A_COMPROMISE"
+      ]
+    },
+    "LoadBalancerTlsCertificateStatus":{
+      "type":"string",
+      "enum":[
+        "PENDING_VALIDATION",
+        "ISSUED",
+        "INACTIVE",
+        "EXPIRED",
+        "VALIDATION_TIMED_OUT",
+        "REVOKED",
+        "FAILED",
+        "UNKNOWN"
+      ]
+    },
+    "LoadBalancerTlsCertificateSummary":{
+      "type":"structure",
+      "members":{
+        "name":{"shape":"ResourceName"},
+        "isAttached":{"shape":"boolean"}
+      }
+    },
+    "LoadBalancerTlsCertificateSummaryList":{
+      "type":"list",
+      "member":{"shape":"LoadBalancerTlsCertificateSummary"}
     },
     "MetricDatapoint":{
       "type":"structure",
@@ -1948,8 +3047,30 @@
         "DeleteDomain",
         "CreateInstanceSnapshot",
         "DeleteInstanceSnapshot",
-        "CreateInstancesFromSnapshot"
+        "CreateInstancesFromSnapshot",
+        "CreateLoadBalancer",
+        "DeleteLoadBalancer",
+        "AttachInstancesToLoadBalancer",
+        "DetachInstancesFromLoadBalancer",
+        "UpdateLoadBalancerAttribute",
+        "CreateLoadBalancerTlsCertificate",
+        "DeleteLoadBalancerTlsCertificate",
+        "AttachLoadBalancerTlsCertificate",
+        "CreateDisk",
+        "DeleteDisk",
+        "AttachDisk",
+        "DetachDisk",
+        "CreateDiskSnapshot",
+        "DeleteDiskSnapshot",
+        "CreateDiskFromSnapshot"
       ]
+    },
+    "PasswordData":{
+      "type":"structure",
+      "members":{
+        "ciphertext":{"shape":"string"},
+        "keyPairName":{"shape":"ResourceName"}
+      }
     },
     "PeerVpcRequest":{
       "type":"structure",
@@ -1985,6 +3106,10 @@
     "PortInfoList":{
       "type":"list",
       "member":{"shape":"PortInfo"}
+    },
+    "PortList":{
+      "type":"list",
+      "member":{"shape":"Port"}
     },
     "PortState":{
       "type":"string",
@@ -2077,6 +3202,10 @@
       "type":"string",
       "pattern":"\\w[\\w\\-]*\\w"
     },
+    "ResourceNameList":{
+      "type":"list",
+      "member":{"shape":"ResourceName"}
+    },
     "ResourceType":{
       "type":"string",
       "enum":[
@@ -2085,7 +3214,11 @@
         "KeyPair",
         "InstanceSnapshot",
         "Domain",
-        "PeeredVpc"
+        "PeeredVpc",
+        "LoadBalancer",
+        "LoadBalancerTlsCertificate",
+        "Disk",
+        "DiskSnapshot"
       ]
     },
     "ServiceException":{
@@ -2134,7 +3267,8 @@
       "type":"structure",
       "required":["instanceName"],
       "members":{
-        "instanceName":{"shape":"ResourceName"}
+        "instanceName":{"shape":"ResourceName"},
+        "force":{"shape":"boolean"}
       }
     },
     "StopInstanceResult":{
@@ -2146,6 +3280,11 @@
     "StringList":{
       "type":"list",
       "member":{"shape":"string"}
+    },
+    "StringMax256":{
+      "type":"string",
+      "max":256,
+      "min":1
     },
     "UnauthenticatedException":{
       "type":"structure",
@@ -2180,6 +3319,25 @@
       }
     },
     "UpdateDomainEntryResult":{
+      "type":"structure",
+      "members":{
+        "operations":{"shape":"OperationList"}
+      }
+    },
+    "UpdateLoadBalancerAttributeRequest":{
+      "type":"structure",
+      "required":[
+        "loadBalancerName",
+        "attributeName",
+        "attributeValue"
+      ],
+      "members":{
+        "loadBalancerName":{"shape":"ResourceName"},
+        "attributeName":{"shape":"LoadBalancerAttributeName"},
+        "attributeValue":{"shape":"StringMax256"}
+      }
+    },
+    "UpdateLoadBalancerAttributeResult":{
       "type":"structure",
       "members":{
         "operations":{"shape":"OperationList"}

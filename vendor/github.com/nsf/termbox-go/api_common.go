@@ -148,7 +148,7 @@ const (
 // using bitwise OR ('|'). Although, colors cannot be combined. But you can
 // combine attributes and a single color.
 //
-// It's worth mentioning that some platforms don't support certain attibutes.
+// It's worth mentioning that some platforms don't support certain attributes.
 // For example windows console doesn't support AttrUnderline. And on some
 // terminals applying AttrBold to background may result in blinking text. Use
 // them with caution and test your code on various terminals.

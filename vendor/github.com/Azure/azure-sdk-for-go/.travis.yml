@@ -2,16 +2,14 @@ sudo: false
 
 language: go
 go:
-  - 1.8
-  - 1.9
+  - 1.8.x
+  - 1.9.x
 
 install:
   - go get -u github.com/golang/lint/golint
-  - go get -u github.com/Masterminds/glide
-  - go get -u golang.org/x/net/context
-  - go get -u gopkg.in/godo.v2/cmd/godo
+  - go get -u github.com/golang/dep/cmd/dep
   - export GO15VENDOREXPERIMENT=1
-  - glide install
+  - dep ensure
 
 script:
   - bash rungas.sh
@@ -21,24 +19,30 @@ script:
   - test -z "$(gofmt -s -l -w storage | tee /dev/stderr)"
   - test -z "$(gofmt -s -l -w Gododir | tee /dev/stderr)"
   - test -z "$(gofmt -s -l -w $(find ./datalake-store/* -type d -print) | tee /dev/stderr)"
-  # - test -z "$(gofmt -s -l -w $(find ./dataplane/* -type d -print) | tee /dev/stderr)"
+  - test -z "$(gofmt -s -l -w $(find ./services/* -type d -print) | tee /dev/stderr)"
   - test -z "$(go build $(find ./* -type d -print | grep -v '^./vendor$' | grep -v '^./storage$') | tee /dev/stderr)"
   - test -z "$(go vet $(find ./arm/* -type d -print) | tee /dev/stderr)"
   - test -z "$(golint ./arm/... | tee /dev/stderr)"
   - go build ./arm/examples/...
+  - go build ./profiles/...
+  - test -z "$(go fmt ./profiles/... | tee /dev/stderr)"
+  - test -z "$(go vet ./profiles/... | tee /dev/stderr)"
+  # - test -z "$(golint ./profiles/... | tee /dev/stderr)" # This line should be uncommented once Aliases include comments.
+  - go build ./services/...
+  - test -z "$(go fmt ./services/... | tee /dev/stderr)"
+  - test -z "$(go vet ./services/... | tee /dev/stderr)"
+  # - test -z "$(golint ./services/... | tee /dev/stderr)"
   - go test -v ./management/...
   - go test -v ./arm/...
   - go test -v ./storage/...
+  - bash ./tools/profileBuilder/test.sh
   - go test -v ./datalake-store/...
   - go test -v ./dataplane/...
   - test -z "$(golint ./management/... |  grep -v 'should have comment' | grep -v 'stutters' | tee /dev/stderr)"
   - test -z "$(golint ./storage/... | tee /dev/stderr)"
-  # - test -z "$(golint ./datalake-store/... | tee /dev/stderr)"
-  # - test -z "$(golint ./dataplane/... | tee /dev/stderr)"
   - go vet ./management/...
   - go vet ./storage/...
   - go vet ./datalake-store/...
   - go vet ./dataplane/...
   - test -z "$(golint ./Gododir/... | tee /dev/stderr)"
   - go vet ./Gododir/...
-  

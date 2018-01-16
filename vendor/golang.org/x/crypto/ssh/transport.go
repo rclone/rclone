@@ -6,6 +6,7 @@ package ssh
 
 import (
 	"bufio"
+	"bytes"
 	"errors"
 	"io"
 	"log"
@@ -76,17 +77,17 @@ type connectionState struct {
 // both directions are triggered by reading and writing a msgNewKey packet
 // respectively.
 func (t *transport) prepareKeyChange(algs *algorithms, kexResult *kexResult) error {
-	if ciph, err := newPacketCipher(t.reader.dir, algs.r, kexResult); err != nil {
+	ciph, err := newPacketCipher(t.reader.dir, algs.r, kexResult)
+	if err != nil {
 		return err
-	} else {
-		t.reader.pendingKeyChange <- ciph
 	}
+	t.reader.pendingKeyChange <- ciph
 
-	if ciph, err := newPacketCipher(t.writer.dir, algs.w, kexResult); err != nil {
+	ciph, err = newPacketCipher(t.writer.dir, algs.w, kexResult)
+	if err != nil {
 		return err
-	} else {
-		t.writer.pendingKeyChange <- ciph
 	}
+	t.writer.pendingKeyChange <- ciph
 
 	return nil
 }
@@ -139,7 +140,7 @@ func (s *connectionState) readPacket(r *bufio.Reader) ([]byte, error) {
 			case cipher := <-s.pendingKeyChange:
 				s.packetCipher = cipher
 			default:
-				return nil, errors.New("ssh: got bogus newkeys message.")
+				return nil, errors.New("ssh: got bogus newkeys message")
 			}
 
 		case msgDisconnect:
@@ -254,7 +255,7 @@ func newPacketCipher(d direction, algs directionAlgorithms, kex *kexResult) (pac
 	iv, key, macKey := generateKeys(d, algs, kex)
 
 	if algs.Cipher == gcmCipherID {
-		return newGCMCipher(iv, key, macKey)
+		return newGCMCipher(iv, key)
 	}
 
 	if algs.Cipher == aes128cbcID {
@@ -342,7 +343,7 @@ func readVersion(r io.Reader) ([]byte, error) {
 	var ok bool
 	var buf [1]byte
 
-	for len(versionString) < maxVersionStringBytes {
+	for length := 0; length < maxVersionStringBytes; length++ {
 		_, err := io.ReadFull(r, buf[:])
 		if err != nil {
 			return nil, err
@@ -350,6 +351,13 @@ func readVersion(r io.Reader) ([]byte, error) {
 		// The RFC says that the version should be terminated with \r\n
 		// but several SSH servers actually only send a \n.
 		if buf[0] == '\n' {
+			if !bytes.HasPrefix(versionString, []byte("SSH-")) {
+				// RFC 4253 says we need to ignore all version string lines
+				// except the one containing the SSH version (provided that
+				// all the lines do not exceed 255 bytes in total).
+				versionString = versionString[:0]
+				continue
+			}
 			ok = true
 			break
 		}

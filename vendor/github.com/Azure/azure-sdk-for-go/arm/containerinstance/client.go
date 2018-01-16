@@ -1,6 +1,6 @@
 // Package containerinstance implements the Azure ARM Containerinstance service API version 2017-08-01-preview.
 //
-//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/containerinstance/mgmt/2017-08-01-preview/containerinstance
 package containerinstance
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

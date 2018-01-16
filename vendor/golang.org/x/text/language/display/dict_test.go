@@ -16,7 +16,7 @@ func TestLinking(t *testing.T) {
 	compact := getSize(t, `display.English.Languages().Name(language.English)`)
 
 	if d := base - compact; d < 1.5*1024*1024 {
-		t.Errorf("size(base)-size(compact) was %d; want > 1.5MB", base, compact)
+		t.Errorf("size(base) - size(compact) = %d - %d = was %d; want > 1.5MB", base, compact, d)
 	}
 }
 

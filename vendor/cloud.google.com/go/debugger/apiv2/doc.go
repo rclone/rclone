@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,10 @@
 
 // AUTO-GENERATED CODE. DO NOT EDIT.
 
-// Package debugger is an experimental, auto-generated package for the
+// Package debugger is an auto-generated package for the
 // Stackdriver Debugger API.
+//
+//   NOTE: This package is in alpha. It is not stable, and is likely to change.
 //
 // Examines the call stack and variables of a running application
 // without stopping or slowing it down.
@@ -28,11 +30,15 @@ import (
 	"google.golang.org/grpc/metadata"
 )
 
-func insertXGoog(ctx context.Context, val []string) context.Context {
-	md, _ := metadata.FromOutgoingContext(ctx)
-	md = md.Copy()
-	md["x-goog-api-client"] = val
-	return metadata.NewOutgoingContext(ctx, md)
+func insertMetadata(ctx context.Context, mds ...metadata.MD) context.Context {
+	out, _ := metadata.FromOutgoingContext(ctx)
+	out = out.Copy()
+	for _, md := range mds {
+		for k, v := range md {
+			out[k] = append(out[k], v...)
+		}
+	}
+	return metadata.NewOutgoingContext(ctx, out)
 }
 
 // DefaultAuthScopes reports the default set of authentication scopes to use with this package.

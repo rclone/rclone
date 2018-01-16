@@ -3,43 +3,43 @@
 // Package opsworkscm provides the client and types for making API
 // requests to AWS OpsWorks for Chef Automate.
 //
-// AWS OpsWorks for Chef Automate is a service that runs and manages configuration
-// management servers.
+// AWS OpsWorks for configuration management (CM) is a service that runs and
+// manages configuration management servers.
 //
 // Glossary of terms
 //
 //    * Server: A configuration management server that can be highly-available.
-//    The configuration manager runs on your instances by using various AWS
-//    services, such as Amazon Elastic Compute Cloud (EC2), and potentially
-//    Amazon Relational Database Service (RDS). A server is a generic abstraction
-//    over the configuration manager that you want to use, much like Amazon
-//    RDS. In AWS OpsWorks for Chef Automate, you do not start or stop servers.
-//    After you create servers, they continue to run until they are deleted.
+//    The configuration management server runs on an Amazon Elastic Compute
+//    Cloud (EC2) instance, and may use various other AWS services, such as
+//    Amazon Relational Database Service (RDS) and Elastic Load Balancing. A
+//    server is a generic abstraction over the configuration manager that you
+//    want to use, much like Amazon RDS. In AWS OpsWorks CM, you do not start
+//    or stop servers. After you create servers, they continue to run until
+//    they are deleted.
 //
-//    * Engine: The specific configuration manager that you want to use (such
-//    as Chef) is the engine.
+//    * Engine: The engine is the specific configuration manager that you want
+//    to use. Valid values in this release include Chef and Puppet.
 //
 //    * Backup: This is an application-level backup of the data that the configuration
-//    manager stores. A backup creates a .tar.gz file that is stored in an Amazon
-//    Simple Storage Service (S3) bucket in your account. AWS OpsWorks for Chef
-//    Automate creates the S3 bucket when you launch the first instance. A backup
-//    maintains a snapshot of all of a server's important attributes at the
-//    time of the backup.
+//    manager stores. AWS OpsWorks CM creates an S3 bucket for backups when
+//    you launch the first server. A backup maintains a snapshot of a server's
+//    configuration-related attributes at the time the backup starts.
 //
 //    * Events: Events are always related to a server. Events are written during
-//    server creation, when health checks run, when backups are created, etc.
-//    When you delete a server, the server's events are also deleted.
+//    server creation, when health checks run, when backups are created, when
+//    system maintenance is performed, etc. When you delete a server, the server's
+//    events are also deleted.
 //
-//    * AccountAttributes: Every account has attributes that are assigned in
-//    the AWS OpsWorks for Chef Automate database. These attributes store information
-//    about configuration limits (servers, backups, etc.) and your customer
-//    account.
+//    * Account attributes: Every account has attributes that are assigned in
+//    the AWS OpsWorks CM database. These attributes store information about
+//    configuration limits (servers, backups, etc.) and your customer account.
+//
 //
 // Endpoints
 //
-// AWS OpsWorks for Chef Automate supports the following endpoints, all HTTPS.
-// You must connect to one of the following endpoints. Chef servers can only
-// be accessed or managed within the endpoint in which they are created.
+// AWS OpsWorks CM supports the following endpoints, all HTTPS. You must connect
+// to one of the following endpoints. Your servers can only be accessed or managed
+// within the endpoint in which they are created.
 //
 //    * opsworks-cm.us-east-1.amazonaws.com
 //
@@ -59,7 +59,7 @@
 //
 // Using the Client
 //
-// To AWS OpsWorks for Chef Automate with the SDK use the New function to create
+// To contact AWS OpsWorks for Chef Automate with the SDK use the New function to create
 // a new service client. With that client you can make API requests to the service.
 // These clients are safe to use concurrently.
 //

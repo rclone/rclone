@@ -2,8 +2,8 @@
   "version": "2.0",
   "service": "<p>AWS Batch enables you to run batch computing workloads on the AWS Cloud. Batch computing is a common way for developers, scientists, and engineers to access large amounts of compute resources, and AWS Batch removes the undifferentiated heavy lifting of configuring and managing the required infrastructure. AWS Batch will be familiar to users of traditional batch computing software. This service can efficiently provision resources in response to jobs submitted in order to eliminate capacity constraints, reduce compute costs, and deliver results quickly.</p> <p>As a fully managed service, AWS Batch enables developers, scientists, and engineers to run batch computing workloads of any scale. AWS Batch automatically provisions compute resources and optimizes the workload distribution based on the quantity and scale of the workloads. With AWS Batch, there is no need to install or manage batch computing software, which allows you to focus on analyzing results and solving problems. AWS Batch reduces operational complexities, saves time, and reduces costs, which makes it easy for developers, scientists, and engineers to run their batch jobs in the AWS Cloud.</p>",
   "operations": {
-    "CancelJob": "<p>Cancels jobs in an AWS Batch job queue. Jobs that are in the <code>SUBMITTED</code>, <code>PENDING</code>, or <code>RUNNABLE</code> state are cancelled. Jobs that have progressed to <code>STARTING</code> or <code>RUNNING</code> are not cancelled (but the API operation still succeeds, even if no jobs are cancelled); these jobs must be terminated with the <a>TerminateJob</a> operation.</p>",
-    "CreateComputeEnvironment": "<p>Creates an AWS Batch compute environment. You can create <code>MANAGED</code> or <code>UNMANAGED</code> compute environments.</p> <p>In a managed compute environment, AWS Batch manages the compute resources within the environment, based on the compute resources that you specify. Instances launched into a managed compute environment use a recent, approved version of the Amazon ECS-optimized AMI. You can choose to use Amazon EC2 On-Demand instances in your managed compute environment, or you can use Amazon EC2 Spot instances that only launch when the Spot bid price is below a specified percentage of the On-Demand price.</p> <p>In an unmanaged compute environment, you can manage your own compute resources. This provides more compute resource configuration options, such as using a custom AMI, but you must ensure that your AMI meets the Amazon ECS container instance AMI specification. For more information, see <a href=\"http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container_instance_AMIs.html\">Container Instance AMIs</a> in the <i>Amazon EC2 Container Service Developer Guide</i>. After you have created your unmanaged compute environment, you can use the <a>DescribeComputeEnvironments</a> operation to find the Amazon ECS cluster that is associated with it and then manually launch your container instances into that Amazon ECS cluster. For more information, see <a href=\"http://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_container_instance.html\">Launching an Amazon ECS Container Instance</a> in the <i>Amazon EC2 Container Service Developer Guide</i>.</p>",
+    "CancelJob": "<p>Cancels a job in an AWS Batch job queue. Jobs that are in the <code>SUBMITTED</code>, <code>PENDING</code>, or <code>RUNNABLE</code> state are cancelled. Jobs that have progressed to <code>STARTING</code> or <code>RUNNING</code> are not cancelled (but the API operation still succeeds, even if no job is cancelled); these jobs must be terminated with the <a>TerminateJob</a> operation.</p>",
+    "CreateComputeEnvironment": "<p>Creates an AWS Batch compute environment. You can create <code>MANAGED</code> or <code>UNMANAGED</code> compute environments.</p> <p>In a managed compute environment, AWS Batch manages the compute resources within the environment, based on the compute resources that you specify. Instances launched into a managed compute environment use a recent, approved version of the Amazon ECS-optimized AMI. You can choose to use Amazon EC2 On-Demand Instances in your managed compute environment, or you can use Amazon EC2 Spot Instances that only launch when the Spot bid price is below a specified percentage of the On-Demand price.</p> <p>In an unmanaged compute environment, you can manage your own compute resources. This provides more compute resource configuration options, such as using a custom AMI, but you must ensure that your AMI meets the Amazon ECS container instance AMI specification. For more information, see <a href=\"http://docs.aws.amazon.com/AmazonECS/latest/developerguide/container_instance_AMIs.html\">Container Instance AMIs</a> in the <i>Amazon Elastic Container Service Developer Guide</i>. After you have created your unmanaged compute environment, you can use the <a>DescribeComputeEnvironments</a> operation to find the Amazon ECS cluster that is associated with it and then manually launch your container instances into that Amazon ECS cluster. For more information, see <a href=\"http://docs.aws.amazon.com/AmazonECS/latest/developerguide/launch_container_instance.html\">Launching an Amazon ECS Container Instance</a> in the <i>Amazon Elastic Container Service Developer Guide</i>.</p>",
     "CreateJobQueue": "<p>Creates an AWS Batch job queue. When you create a job queue, you associate one or more compute environments to the queue and assign an order of preference for the compute environments.</p> <p>You also set a priority to the job queue that determines the order in which the AWS Batch scheduler places jobs onto its associated compute environments. For example, if a compute environment is associated with more than one job queue, the job queue with a higher priority is given preference for scheduling jobs to that compute environment.</p>",
     "DeleteComputeEnvironment": "<p>Deletes an AWS Batch compute environment.</p> <p>Before you can delete a compute environment, you must set its state to <code>DISABLED</code> with the <a>UpdateComputeEnvironment</a> API operation and disassociate it from any job queues with the <a>UpdateJobQueue</a> API operation.</p>",
     "DeleteJobQueue": "<p>Deletes the specified job queue. You must first disable submissions for a queue with the <a>UpdateJobQueue</a> operation. All jobs in the queue are terminated when you delete a job queue.</p> <p>It is not necessary to disassociate compute environments from a queue before submitting a <code>DeleteJobQueue</code> request. </p>",
@@ -15,11 +15,41 @@
     "ListJobs": "<p>Returns a list of task jobs for a specified job queue. You can filter the results by job status with the <code>jobStatus</code> parameter. If you do not specify a status, only <code>RUNNING</code> jobs are returned.</p>",
     "RegisterJobDefinition": "<p>Registers an AWS Batch job definition. </p>",
     "SubmitJob": "<p>Submits an AWS Batch job from a job definition. Parameters specified during <a>SubmitJob</a> override parameters defined in the job definition. </p>",
-    "TerminateJob": "<p>Terminates jobs in a job queue. Jobs that are in the <code>STARTING</code> or <code>RUNNING</code> state are terminated, which causes them to transition to <code>FAILED</code>. Jobs that have not progressed to the <code>STARTING</code> state are cancelled.</p>",
+    "TerminateJob": "<p>Terminates a job in a job queue. Jobs that are in the <code>STARTING</code> or <code>RUNNING</code> state are terminated, which causes them to transition to <code>FAILED</code>. Jobs that have not progressed to the <code>STARTING</code> state are cancelled.</p>",
     "UpdateComputeEnvironment": "<p>Updates an AWS Batch compute environment.</p>",
     "UpdateJobQueue": "<p>Updates a job queue.</p>"
   },
   "shapes": {
+    "ArrayJobDependency": {
+      "base": null,
+      "refs": {
+        "JobDependency$type": "<p>The type of the job dependency.</p>"
+      }
+    },
+    "ArrayJobStatusSummary": {
+      "base": null,
+      "refs": {
+        "ArrayPropertiesDetail$statusSummary": "<p>A summary of the number of array job children in each available job status. This parameter is returned for parent array jobs.</p>"
+      }
+    },
+    "ArrayProperties": {
+      "base": "<p>An object representing an AWS Batch array job.</p>",
+      "refs": {
+        "SubmitJobRequest$arrayProperties": "<p>The array properties for the submitted job, such as the size of the array. The array size can be between 2 and 10,000. If you specify array properties for a job, it becomes an array job. For more information, see <a href=\"http://docs.aws.amazon.com/batch/latest/userguide/array_jobs.html\">Array Jobs</a> in the <i>AWS Batch User Guide</i>.</p>"
+      }
+    },
+    "ArrayPropertiesDetail": {
+      "base": "<p>An object representing the array properties of a job.</p>",
+      "refs": {
+        "JobDetail$arrayProperties": "<p>The array properties of the job, if it is an array job.</p>"
+      }
+    },
+    "ArrayPropertiesSummary": {
+      "base": "<p>An object representing the array properties of a job.</p>",
+      "refs": {
+        "JobSummary$arrayProperties": "<p>The array properties of the job, if it is an array job.</p>"
+      }
+    },
     "AttemptContainerDetail": {
       "base": "<p>An object representing the details of a container that is part of a job attempt.</p>",
       "refs": {
@@ -86,7 +116,7 @@
       }
     },
     "ClientException": {
-      "base": "<p>These errors are usually caused by a client action, such as using an action or resource on behalf of a user that doesn't have permission to use the action or resource, or specifying an identifier that is not valid. </p>",
+      "base": "<p>These errors are usually caused by a client action, such as using an action or resource on behalf of a user that doesn't have permissions to use the action or resource, or specifying an identifier that is not valid. </p>",
       "refs": {
       }
     },
@@ -111,7 +141,7 @@
     "ComputeEnvironmentOrders": {
       "base": null,
       "refs": {
-        "CreateJobQueueRequest$computeEnvironmentOrder": "<p>The set of compute environments mapped to a job queue and their order relative to each other. The job scheduler uses this parameter to determine which compute environment should execute a given job. Compute environments must be in the <code>VALID</code> state before you can associate them with a job queue. You can associate up to 3 compute environments with a job queue.</p>",
+        "CreateJobQueueRequest$computeEnvironmentOrder": "<p>The set of compute environments mapped to a job queue and their order relative to each other. The job scheduler uses this parameter to determine which compute environment should execute a given job. Compute environments must be in the <code>VALID</code> state before you can associate them with a job queue. You can associate up to three compute environments with a job queue.</p>",
         "JobQueueDetail$computeEnvironmentOrder": "<p>The compute environments that are attached to the job queue and the order in which job placement is preferred. Compute environments are selected for job placement in ascending order.</p>",
         "UpdateJobQueueRequest$computeEnvironmentOrder": "<p>Details the set of compute environments mapped to a job queue and their order relative to each other. This is one of the parameters used by the job scheduler to determine which compute environment should execute a given job. </p>"
       }
@@ -146,6 +176,12 @@
       "refs": {
         "JobDefinition$containerProperties": "<p>An object with various properties specific to container-based jobs. </p>",
         "RegisterJobDefinitionRequest$containerProperties": "<p>An object with various properties specific for container-based jobs. This parameter is required if the <code>type</code> parameter is <code>container</code>.</p>"
+      }
+    },
+    "ContainerSummary": {
+      "base": "<p>An object representing summary details of a container within a job.</p>",
+      "refs": {
+        "JobSummary$container": "<p>An object representing the details of the container that is associated with the job.</p>"
       }
     },
     "CreateComputeEnvironmentRequest": {
@@ -241,20 +277,26 @@
     "EnvironmentVariables": {
       "base": null,
       "refs": {
-        "ContainerDetail$environment": "<p>The environment variables to pass to a container.</p>",
-        "ContainerOverrides$environment": "<p>The environment variables to send to the container. You can add new environment variables, which are added to the container at launch, or you can override the existing environment variables from the Docker image or the job definition.</p>",
-        "ContainerProperties$environment": "<p>The environment variables to pass to a container. This parameter maps to <code>Env</code> in the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container\">Create a container</a> section of the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/\">Docker Remote API</a> and the <code>--env</code> option to <a href=\"https://docs.docker.com/engine/reference/run/\">docker run</a>.</p> <important> <p>We do not recommend using plain text environment variables for sensitive information, such as credential data.</p> </important>"
+        "ContainerDetail$environment": "<p>The environment variables to pass to a container.</p> <note> <p>Environment variables must not start with <code>AWS_BATCH</code>; this naming convention is reserved for variables that are set by the AWS Batch service.</p> </note>",
+        "ContainerOverrides$environment": "<p>The environment variables to send to the container. You can add new environment variables, which are added to the container at launch, or you can override the existing environment variables from the Docker image or the job definition.</p> <note> <p>Environment variables must not start with <code>AWS_BATCH</code>; this naming convention is reserved for variables that are set by the AWS Batch service.</p> </note>",
+        "ContainerProperties$environment": "<p>The environment variables to pass to a container. This parameter maps to <code>Env</code> in the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container\">Create a container</a> section of the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/\">Docker Remote API</a> and the <code>--env</code> option to <a href=\"https://docs.docker.com/engine/reference/run/\">docker run</a>.</p> <important> <p>We do not recommend using plaintext environment variables for sensitive information, such as credential data.</p> </important> <note> <p>Environment variables must not start with <code>AWS_BATCH</code>; this naming convention is reserved for variables that are set by the AWS Batch service.</p> </note>"
       }
     },
     "Host": {
       "base": "<p>The contents of the <code>host</code> parameter determine whether your data volume persists on the host container instance and where it is stored. If the host parameter is empty, then the Docker daemon assigns a host path for your data volume, but the data is not guaranteed to persist after the containers associated with it stop running.</p>",
       "refs": {
-        "Volume$host": "<p>The contents of the <code>host</code> parameter determine whether your data volume persists on the host container instance and where it is stored. If the host parameter is empty, then the Docker daemon assigns a host path for your data volume, but the data is not guaranteed to persist after the containers associated with it stop running.</p>"
+        "Volume$host": "<p>The contents of the <code>host</code> parameter determine whether your data volume persists on the host container instance and where it is stored. If the host parameter is empty, then the Docker daemon assigns a host path for your data volume. However, the data is not guaranteed to persist after the containers associated with it stop running.</p>"
       }
     },
     "Integer": {
       "base": null,
       "refs": {
+        "ArrayJobStatusSummary$value": null,
+        "ArrayProperties$size": "<p>The size of the array job.</p>",
+        "ArrayPropertiesDetail$size": "<p>The size of the array job. This parameter is returned for parent array jobs.</p>",
+        "ArrayPropertiesDetail$index": "<p>The job index within the array that is associated with this job. This parameter is returned for array job children.</p>",
+        "ArrayPropertiesSummary$size": "<p>The size of the array job. This parameter is returned for parent array jobs.</p>",
+        "ArrayPropertiesSummary$index": "<p>The job index within the array that is associated with this job. This parameter is returned for children of array jobs.</p>",
         "AttemptContainerDetail$exitCode": "<p>The exit code for the job attempt. A non-zero exit code is considered a failure.</p>",
         "ComputeEnvironmentOrder$order": "<p>The order of the compute environment.</p>",
         "ComputeResource$minvCpus": "<p>The minimum number of EC2 vCPUs that an environment should maintain. </p>",
@@ -269,8 +311,9 @@
         "ContainerDetail$exitCode": "<p>The exit code to return upon completion.</p>",
         "ContainerOverrides$vcpus": "<p>The number of vCPUs to reserve for the container. This value overrides the value set in the job definition.</p>",
         "ContainerOverrides$memory": "<p>The number of MiB of memory reserved for the job. This value overrides the value set in the job definition.</p>",
-        "ContainerProperties$vcpus": "<p>The number of vCPUs reserved for the container. This parameter maps to <code>CpuShares</code> in the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container\">Create a container</a> section of the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/\">Docker Remote API</a> and the <code>--cpu-shares</code> option to <a href=\"https://docs.docker.com/engine/reference/run/\">docker run</a>. Each vCPU is equivalent to 1,024 CPU shares. You must specify at least 1 vCPU.</p>",
+        "ContainerProperties$vcpus": "<p>The number of vCPUs reserved for the container. This parameter maps to <code>CpuShares</code> in the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container\">Create a container</a> section of the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/\">Docker Remote API</a> and the <code>--cpu-shares</code> option to <a href=\"https://docs.docker.com/engine/reference/run/\">docker run</a>. Each vCPU is equivalent to 1,024 CPU shares. You must specify at least one vCPU.</p>",
         "ContainerProperties$memory": "<p>The hard limit (in MiB) of memory to present to the container. If your container attempts to exceed the memory specified here, the container is killed. This parameter maps to <code>Memory</code> in the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container\">Create a container</a> section of the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/\">Docker Remote API</a> and the <code>--memory</code> option to <a href=\"https://docs.docker.com/engine/reference/run/\">docker run</a>. You must specify at least 4 MiB of memory for a job.</p>",
+        "ContainerSummary$exitCode": "<p>The exit code to return upon completion.</p>",
         "CreateJobQueueRequest$priority": "<p>The priority of the job queue. Job queues with a higher priority (or a higher integer value for the <code>priority</code> parameter) are evaluated first when associated with same compute environment. Priority is determined in descending order, for example, a job queue with a priority value of <code>10</code> is given scheduling preference over a job queue with a priority value of <code>1</code>.</p>",
         "DescribeComputeEnvironmentsRequest$maxResults": "<p>The maximum number of cluster results returned by <code>DescribeComputeEnvironments</code> in paginated output. When this parameter is used, <code>DescribeComputeEnvironments</code> only returns <code>maxResults</code> results in a single page along with a <code>nextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>DescribeComputeEnvironments</code> request with the returned <code>nextToken</code> value. This value can be between 1 and 100. If this parameter is not used, then <code>DescribeComputeEnvironments</code> returns up to 100 results and a <code>nextToken</code> value if applicable.</p>",
         "DescribeJobDefinitionsRequest$maxResults": "<p>The maximum number of results returned by <code>DescribeJobDefinitions</code> in paginated output. When this parameter is used, <code>DescribeJobDefinitions</code> only returns <code>maxResults</code> results in a single page along with a <code>nextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>DescribeJobDefinitions</code> request with the returned <code>nextToken</code> value. This value can be between 1 and 100. If this parameter is not used, then <code>DescribeJobDefinitions</code> returns up to 100 results and a <code>nextToken</code> value if applicable.</p>",
@@ -279,7 +322,7 @@
         "JobQueueDetail$priority": "<p>The priority of the job queue. </p>",
         "ListJobsRequest$maxResults": "<p>The maximum number of results returned by <code>ListJobs</code> in paginated output. When this parameter is used, <code>ListJobs</code> only returns <code>maxResults</code> results in a single page along with a <code>nextToken</code> response element. The remaining results of the initial request can be seen by sending another <code>ListJobs</code> request with the returned <code>nextToken</code> value. This value can be between 1 and 100. If this parameter is not used, then <code>ListJobs</code> returns up to 100 results and a <code>nextToken</code> value if applicable.</p>",
         "RegisterJobDefinitionResponse$revision": "<p>The revision of the job definition.</p>",
-        "RetryStrategy$attempts": "<p>The number of times to move a job to the <code>RUNNABLE</code> status. You may specify between 1 and 10 attempts. If <code>attempts</code> is greater than one, the job is retried if it fails until it has moved to <code>RUNNABLE</code> that many times.</p>",
+        "RetryStrategy$attempts": "<p>The number of times to move a job to the <code>RUNNABLE</code> status. You may specify between 1 and 10 attempts. If the value of <code>attempts</code> is greater than one, the job is retried if it fails until it has moved to <code>RUNNABLE</code> that many times.</p>",
         "Ulimit$hardLimit": "<p>The hard limit for the <code>ulimit</code> type.</p>",
         "Ulimit$softLimit": "<p>The soft limit for the <code>ulimit</code> type.</p>",
         "UpdateJobQueueRequest$priority": "<p>The priority of the job queue. Job queues with a higher priority (or a higher integer value for the <code>priority</code> parameter) are evaluated first when associated with same compute environment. Priority is determined in descending order, for example, a job queue with a priority value of <code>10</code> is given scheduling preference over a job queue with a priority value of <code>1</code>.</p>"
@@ -327,7 +370,7 @@
       "base": null,
       "refs": {
         "JobDetail$dependsOn": "<p>A list of job names or IDs on which this job depends.</p>",
-        "SubmitJobRequest$dependsOn": "<p>A list of job IDs on which this job depends. A job can depend upon a maximum of 20 jobs. </p>"
+        "SubmitJobRequest$dependsOn": "<p>A list of dependencies for the job. A job can depend upon a maximum of 20 jobs. You can specify a <code>SEQUENTIAL</code> type dependency without specifying a job ID for array jobs so that each child array job completes sequentially, starting at index 0. You can also specify an <code>N_TO_N</code> type dependency with a job ID for array jobs so that each index child of this job must wait for the corresponding index child of each dependency to complete before it can begin.</p>"
       }
     },
     "JobDetail": {
@@ -358,6 +401,7 @@
       "base": null,
       "refs": {
         "JobDetail$status": "<p>The current status for the job.</p>",
+        "JobSummary$status": "<p>The current status for the job.</p>",
         "ListJobsRequest$jobStatus": "<p>The job status with which to filter jobs in the specified queue. If you do not specify a status, only <code>RUNNING</code> jobs are returned.</p>"
       }
     },
@@ -392,11 +436,14 @@
     "Long": {
       "base": null,
       "refs": {
-        "AttemptDetail$startedAt": "<p>The Unix timestamp for when the attempt was started (when the task transitioned from the <code>PENDING</code> state to the <code>RUNNING</code> state).</p>",
-        "AttemptDetail$stoppedAt": "<p>The Unix timestamp for when the attempt was stopped (when the task transitioned from the <code>RUNNING</code> state to the <code>STOPPED</code> state).</p>",
-        "JobDetail$createdAt": "<p>The Unix timestamp for when the job was created (when the task entered the <code>PENDING</code> state). </p>",
-        "JobDetail$startedAt": "<p>The Unix timestamp for when the job was started (when the task transitioned from the <code>PENDING</code> state to the <code>RUNNING</code> state). </p>",
-        "JobDetail$stoppedAt": "<p>The Unix timestamp for when the job was stopped (when the task transitioned from the <code>RUNNING</code> state to the <code>STOPPED</code> state).</p>"
+        "AttemptDetail$startedAt": "<p>The Unix time stamp for when the attempt was started (when the attempt transitioned from the <code>STARTING</code> state to the <code>RUNNING</code> state).</p>",
+        "AttemptDetail$stoppedAt": "<p>The Unix time stamp for when the attempt was stopped (when the attempt transitioned from the <code>RUNNING</code> state to a terminal state, such as <code>SUCCEEDED</code> or <code>FAILED</code>).</p>",
+        "JobDetail$createdAt": "<p>The Unix time stamp for when the job was created. For non-array jobs and parent array jobs, this is when the job entered the <code>SUBMITTED</code> state (at the time <a>SubmitJob</a> was called). For array child jobs, this is when the child job was spawned by its parent and entered the <code>PENDING</code> state.</p>",
+        "JobDetail$startedAt": "<p>The Unix time stamp for when the job was started (when the job transitioned from the <code>STARTING</code> state to the <code>RUNNING</code> state).</p>",
+        "JobDetail$stoppedAt": "<p>The Unix time stamp for when the job was stopped (when the job transitioned from the <code>RUNNING</code> state to a terminal state, such as <code>SUCCEEDED</code> or <code>FAILED</code>).</p>",
+        "JobSummary$createdAt": "<p>The Unix time stamp for when the job was created. For non-array jobs and parent array jobs, this is when the job entered the <code>SUBMITTED</code> state (at the time <a>SubmitJob</a> was called). For array child jobs, this is when the child job was spawned by its parent and entered the <code>PENDING</code> state.</p>",
+        "JobSummary$startedAt": "<p>The Unix time stamp for when the job was started (when the job transitioned from the <code>STARTING</code> state to the <code>RUNNING</code> state).</p>",
+        "JobSummary$stoppedAt": "<p>The Unix time stamp for when the job was stopped (when the job transitioned from the <code>RUNNING</code> state to a terminal state, such as <code>SUCCEEDED</code> or <code>FAILED</code>).</p>"
       }
     },
     "MountPoint": {
@@ -448,13 +495,14 @@
     "String": {
       "base": null,
       "refs": {
+        "ArrayJobStatusSummary$key": null,
         "AttemptContainerDetail$containerInstanceArn": "<p>The Amazon Resource Name (ARN) of the Amazon ECS container instance that hosts the job attempt.</p>",
-        "AttemptContainerDetail$taskArn": "<p>The Amazon Resource Name (ARN) of the Amazon ECS task that is associated with the job attempt.</p>",
+        "AttemptContainerDetail$taskArn": "<p>The Amazon Resource Name (ARN) of the Amazon ECS task that is associated with the job attempt. Each container attempt receives a task ARN when they reach the <code>STARTING</code> status.</p>",
         "AttemptContainerDetail$reason": "<p>A short (255 max characters) human-readable string to provide additional details about a running or stopped container.</p>",
         "AttemptContainerDetail$logStreamName": "<p>The name of the CloudWatch Logs log stream associated with the container. The log group for AWS Batch jobs is <code>/aws/batch/job</code>. Each container attempt receives a log stream name when they reach the <code>RUNNING</code> status.</p>",
         "AttemptDetail$statusReason": "<p>A short, human-readable string to provide additional details about the current status of the job attempt.</p>",
-        "CancelJobRequest$jobId": "<p>A list of up to 100 job IDs to cancel.</p>",
-        "CancelJobRequest$reason": "<p>A message to attach to the job that explains the reason for cancelling it. This message is returned by future <a>DescribeJobs</a> operations on the job. This message is also recorded in the AWS Batch activity logs. </p>",
+        "CancelJobRequest$jobId": "<p>The AWS Batch job ID of the job to cancel.</p>",
+        "CancelJobRequest$reason": "<p>A message to attach to the job that explains the reason for canceling it. This message is returned by future <a>DescribeJobs</a> operations on the job. This message is also recorded in the AWS Batch activity logs. </p>",
         "ClientException$message": null,
         "ComputeEnvironmentDetail$computeEnvironmentName": "<p>The name of the compute environment. </p>",
         "ComputeEnvironmentDetail$computeEnvironmentArn": "<p>The Amazon Resource Name (ARN) of the compute environment. </p>",
@@ -471,12 +519,13 @@
         "ContainerDetail$user": "<p>The user name to use inside the container.</p>",
         "ContainerDetail$reason": "<p>A short (255 max characters) human-readable string to provide additional details about a running or stopped container.</p>",
         "ContainerDetail$containerInstanceArn": "<p>The Amazon Resource Name (ARN) of the container instance on which the container is running.</p>",
-        "ContainerDetail$taskArn": "<p>The Amazon Resource Name (ARN) of the Amazon ECS task that is associated with the container job.</p>",
+        "ContainerDetail$taskArn": "<p>The Amazon Resource Name (ARN) of the Amazon ECS task that is associated with the container job. Each container attempt receives a task ARN when they reach the <code>STARTING</code> status.</p>",
         "ContainerDetail$logStreamName": "<p>The name of the CloudWatch Logs log stream associated with the container. The log group for AWS Batch jobs is <code>/aws/batch/job</code>. Each container attempt receives a log stream name when they reach the <code>RUNNING</code> status.</p>",
         "ContainerProperties$image": "<p>The image used to start a container. This string is passed directly to the Docker daemon. Images in the Docker Hub registry are available by default. Other repositories are specified with <code> <i>repository-url</i>/<i>image</i>:<i>tag</i> </code>. Up to 255 letters (uppercase and lowercase), numbers, hyphens, underscores, colons, periods, forward slashes, and number signs are allowed. This parameter maps to <code>Image</code> in the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container\">Create a container</a> section of the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/\">Docker Remote API</a> and the <code>IMAGE</code> parameter of <a href=\"https://docs.docker.com/engine/reference/run/\">docker run</a>.</p> <ul> <li> <p>Images in Amazon ECR repositories use the full registry and repository URI (for example, <code>012345678910.dkr.ecr.&lt;region-name&gt;.amazonaws.com/&lt;repository-name&gt;</code>). </p> </li> <li> <p>Images in official repositories on Docker Hub use a single name (for example, <code>ubuntu</code> or <code>mongo</code>).</p> </li> <li> <p>Images in other repositories on Docker Hub are qualified with an organization name (for example, <code>amazon/amazon-ecs-agent</code>).</p> </li> <li> <p>Images in other online repositories are qualified further by a domain name (for example, <code>quay.io/assemblyline/ubuntu</code>).</p> </li> </ul>",
         "ContainerProperties$jobRoleArn": "<p>The Amazon Resource Name (ARN) of the IAM role that the container can assume for AWS permissions.</p>",
         "ContainerProperties$user": "<p>The user name to use inside the container. This parameter maps to <code>User</code> in the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/#create-a-container\">Create a container</a> section of the <a href=\"https://docs.docker.com/engine/reference/api/docker_remote_api_v1.23/\">Docker Remote API</a> and the <code>--user</code> option to <a href=\"https://docs.docker.com/engine/reference/run/\">docker run</a>.</p>",
-        "CreateComputeEnvironmentRequest$computeEnvironmentName": "<p>The name for your compute environment. Up to 128 letters (uppercase and lowercase), numbers, and underscores are allowed.</p>",
+        "ContainerSummary$reason": "<p>A short (255 max characters) human-readable string to provide additional details about a running or stopped container.</p>",
+        "CreateComputeEnvironmentRequest$computeEnvironmentName": "<p>The name for your compute environment. Up to 128 letters (uppercase and lowercase), numbers, hyphens, and underscores are allowed.</p>",
         "CreateComputeEnvironmentRequest$serviceRole": "<p>The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch to make calls to other AWS services on your behalf.</p> <p>If your specified role has a path other than <code>/</code>, then you must either specify the full role ARN (this is recommended) or prefix the role name with the path.</p> <note> <p>Depending on how you created your AWS Batch service role, its ARN may contain the <code>service-role</code> path prefix. When you only specify the name of the service role, AWS Batch assumes that your ARN does not use the <code>service-role</code> path prefix. Because of this, we recommend that you specify the full ARN of your service role when you create compute environments.</p> </note>",
         "CreateComputeEnvironmentResponse$computeEnvironmentName": "<p>The name of the compute environment.</p>",
         "CreateComputeEnvironmentResponse$computeEnvironmentArn": "<p>The Amazon Resource Name (ARN) of the compute environment. </p>",
@@ -510,9 +559,11 @@
         "JobQueueDetail$statusReason": "<p>A short, human-readable string to provide additional details about the current status of the job queue.</p>",
         "JobSummary$jobId": "<p>The ID of the job.</p>",
         "JobSummary$jobName": "<p>The name of the job.</p>",
-        "KeyValuePair$name": "<p>The name of the key value pair. For environment variables, this is the name of the environment variable.</p>",
-        "KeyValuePair$value": "<p>The value of the key value pair. For environment variables, this is the value of the environment variable.</p>",
+        "JobSummary$statusReason": "<p>A short, human-readable string to provide additional details about the current status of the job.</p>",
+        "KeyValuePair$name": "<p>The name of the key-value pair. For environment variables, this is the name of the environment variable.</p>",
+        "KeyValuePair$value": "<p>The value of the key-value pair. For environment variables, this is the value of the environment variable.</p>",
         "ListJobsRequest$jobQueue": "<p>The name or full Amazon Resource Name (ARN) of the job queue with which to list jobs.</p>",
+        "ListJobsRequest$arrayJobId": "<p>The job ID for an array job. Specifying an array job ID with this parameter lists all child jobs from within the specified array.</p>",
         "ListJobsRequest$nextToken": "<p>The <code>nextToken</code> value returned from a previous paginated <code>ListJobs</code> request where <code>maxResults</code> was used and the results exceeded the value of that parameter. Pagination continues from the end of the previous results that returned the <code>nextToken</code> value. This value is <code>null</code> when there are no more results to return.</p> <note> <p>This token should be treated as an opaque identifier that is only used to retrieve the next items in a list and not for other programmatic purposes.</p> </note>",
         "ListJobsResponse$nextToken": "<p>The <code>nextToken</code> value to include in a future <code>ListJobs</code> request. When the results of a <code>ListJobs</code> request exceed <code>maxResults</code>, this value can be used to retrieve the next page of results. This value is <code>null</code> when there are no more results to return.</p>",
         "MountPoint$containerPath": "<p>The path on the container at which to mount the host volume.</p>",
@@ -525,14 +576,14 @@
         "ServerException$message": null,
         "StringList$member": null,
         "SubmitJobRequest$jobName": "<p>The name of the job. The first character must be alphanumeric, and up to 128 letters (uppercase and lowercase), numbers, hyphens, and underscores are allowed. </p>",
-        "SubmitJobRequest$jobQueue": "<p>The job queue into which the job will be submitted. You can specify either the name or the Amazon Resource Name (ARN) of the queue. </p>",
+        "SubmitJobRequest$jobQueue": "<p>The job queue into which the job is submitted. You can specify either the name or the Amazon Resource Name (ARN) of the queue. </p>",
         "SubmitJobRequest$jobDefinition": "<p>The job definition used by this job. This value can be either a <code>name:revision</code> or the Amazon Resource Name (ARN) for the job definition.</p>",
         "SubmitJobResponse$jobName": "<p>The name of the job. </p>",
         "SubmitJobResponse$jobId": "<p>The unique identifier for the job.</p>",
         "TagsMap$key": null,
         "TagsMap$value": null,
-        "TerminateJobRequest$jobId": "<p>Job IDs to be terminated. Up to 100 jobs can be specified.</p>",
-        "TerminateJobRequest$reason": "<p>A message to attach to the job that explains the reason for cancelling it. This message is returned by future <a>DescribeJobs</a> operations on the job. This message is also recorded in the AWS Batch activity logs. </p>",
+        "TerminateJobRequest$jobId": "<p>The AWS Batch job ID of the job to terminate.</p>",
+        "TerminateJobRequest$reason": "<p>A message to attach to the job that explains the reason for canceling it. This message is returned by future <a>DescribeJobs</a> operations on the job. This message is also recorded in the AWS Batch activity logs. </p>",
         "Ulimit$name": "<p>The <code>type</code> of the <code>ulimit</code>.</p>",
         "UpdateComputeEnvironmentRequest$computeEnvironment": "<p>The name or full Amazon Resource Name (ARN) of the compute environment to update.</p>",
         "UpdateComputeEnvironmentRequest$serviceRole": "<p>The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch to make calls to other AWS services on your behalf.</p> <p>If your specified role has a path other than <code>/</code>, then you must either specify the full role ARN (this is recommended) or prefix the role name with the path.</p> <note> <p>Depending on how you created your AWS Batch service role, its ARN may contain the <code>service-role</code> path prefix. When you only specify the name of the service role, AWS Batch assumes that your ARN does not use the <code>service-role</code> path prefix. Because of this, we recommend that you specify the full ARN of your service role when you create compute environments.</p> </note>",
@@ -547,7 +598,7 @@
     "StringList": {
       "base": null,
       "refs": {
-        "ComputeResource$instanceTypes": "<p>The instances types that may launched.</p>",
+        "ComputeResource$instanceTypes": "<p>The instances types that may be launched. You can specify instance families to launch any instance type within those families (for example, <code>c4</code> or <code>p3</code>), or you can specify specific sizes within a family (such as <code>c4.8xlarge</code>). You can also choose <code>optimal</code> to pick instance types (from the latest C, M, and R instance families) on the fly that match the demand of your job queues.</p>",
         "ComputeResource$subnets": "<p>The VPC subnets into which the compute resources are launched. </p>",
         "ComputeResource$securityGroupIds": "<p>The EC2 security group that is associated with instances launched in the compute environment. </p>",
         "ContainerDetail$command": "<p>The command that is passed to the container. </p>",

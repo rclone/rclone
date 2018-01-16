@@ -88,7 +88,9 @@ func (client BackupVaultConfigsClient) GetPreparer(resourceGroupName string, vau
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupVaultConfigsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -156,7 +158,9 @@ func (client BackupVaultConfigsClient) UpdatePreparer(resourceGroupName string, 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupVaultConfigsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

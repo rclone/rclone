@@ -48,6 +48,7 @@ static PVOID cgofuse_init_winfsp(VOID);
 
 static CRITICAL_SECTION cgofuse_lock;
 static PVOID cgofuse_module = 0;
+static BOOLEAN cgofuse_stat_ex = FALSE;
 
 static inline PVOID cgofuse_init_fast(int hardfail)
 {
@@ -243,6 +244,9 @@ extern int hostFtruncate(char *path, fuse_off_t off, struct fuse_file_info *fi);
 extern int hostFgetattr(char *path, fuse_stat_t *stbuf, struct fuse_file_info *fi);
 //extern int hostLock(char *path, struct fuse_file_info *fi, int cmd, struct fuse_flock *lock);
 extern int hostUtimens(char *path, fuse_timespec_t tv[2]);
+extern int hostSetchgtime(char *path, fuse_timespec_t *tv);
+extern int hostSetcrtime(char *path, fuse_timespec_t *tv);
+extern int hostChflags(char *path, uint32_t flags);
 
 static inline void hostAsgnCconninfo(struct fuse_conn_info *conn,
 	bool capCaseInsensitive,
@@ -253,6 +257,10 @@ static inline void hostAsgnCconninfo(struct fuse_conn_info *conn,
 		FUSE_ENABLE_CASE_INSENSITIVE(conn);
 #elif defined(__linux__)
 #elif defined(_WIN32)
+#if defined(FSP_FUSE_CAP_STAT_EX)
+	conn->want |= conn->capable & FSP_FUSE_CAP_STAT_EX;
+	cgofuse_stat_ex = 0 != (conn->want & FSP_FUSE_CAP_STAT_EX); // hack!
+#endif
 	if (capCaseInsensitive)
 		conn->want |= conn->capable & FSP_FUSE_CAP_CASE_INSENSITIVE;
 	if (capReaddirPlus)
@@ -301,7 +309,8 @@ static inline void hostCstatFromFusestat(fuse_stat_t *stbuf,
 	int64_t ctimSec, int64_t ctimNsec,
 	int64_t blksize,
 	int64_t blocks,
-	int64_t birthtimSec, int64_t birthtimNsec)
+	int64_t birthtimSec, int64_t birthtimNsec,
+	uint32_t flags)
 {
 	memset(stbuf, 0, sizeof *stbuf);
 	stbuf->st_dev = dev;
@@ -312,18 +321,46 @@ static inline void hostCstatFromFusestat(fuse_stat_t *stbuf,
 	stbuf->st_gid = gid;
 	stbuf->st_rdev = rdev;
 	stbuf->st_size = size;
+	stbuf->st_blksize = blksize;
+	stbuf->st_blocks = blocks;
 #if defined(__APPLE__)
 	stbuf->st_atimespec.tv_sec = atimSec; stbuf->st_atimespec.tv_nsec = atimNsec;
 	stbuf->st_mtimespec.tv_sec = mtimSec; stbuf->st_mtimespec.tv_nsec = mtimNsec;
 	stbuf->st_ctimespec.tv_sec = ctimSec; stbuf->st_ctimespec.tv_nsec = ctimNsec;
-	stbuf->st_birthtimespec.tv_sec = birthtimSec; stbuf->st_birthtimespec.tv_nsec = birthtimNsec;
+	if (0 != birthtimSec)
+	{
+		stbuf->st_birthtimespec.tv_sec = birthtimSec;
+		stbuf->st_birthtimespec.tv_nsec = birthtimNsec;
+	}
+	else
+	{
+		stbuf->st_birthtimespec.tv_sec = ctimSec;
+		stbuf->st_birthtimespec.tv_nsec = ctimNsec;
+	}
+	stbuf->st_flags = flags;
+#elif defined(_WIN32)
+	stbuf->st_atim.tv_sec = atimSec; stbuf->st_atim.tv_nsec = atimNsec;
+	stbuf->st_mtim.tv_sec = mtimSec; stbuf->st_mtim.tv_nsec = mtimNsec;
+	stbuf->st_ctim.tv_sec = ctimSec; stbuf->st_ctim.tv_nsec = ctimNsec;
+	if (0 != birthtimSec)
+	{
+		stbuf->st_birthtim.tv_sec = birthtimSec;
+		stbuf->st_birthtim.tv_nsec = birthtimNsec;
+	}
+	else
+	{
+		stbuf->st_birthtim.tv_sec = ctimSec;
+		stbuf->st_birthtim.tv_nsec = ctimNsec;
+	}
+#if defined(FSP_FUSE_CAP_STAT_EX)
+	if (cgofuse_stat_ex)
+		((struct fuse_stat_ex *)stbuf)->st_flags = flags;
+#endif
 #else
 	stbuf->st_atim.tv_sec = atimSec; stbuf->st_atim.tv_nsec = atimNsec;
 	stbuf->st_mtim.tv_sec = mtimSec; stbuf->st_mtim.tv_nsec = mtimNsec;
 	stbuf->st_ctim.tv_sec = ctimSec; stbuf->st_ctim.tv_nsec = ctimNsec;
 #endif
-	stbuf->st_blksize = blksize;
-	stbuf->st_blocks = blocks;
 }
 
 static inline int hostFilldir(fuse_fill_dir_t filler, void *buf,
@@ -449,6 +486,11 @@ static int hostMount(int argc, char *argv[], void *data)
 		.fgetattr = (int (*)())hostFgetattr,
 		//.lock = (int (*)())hostFlock,
 		.utimens = (int (*)())hostUtimens,
+#if defined(__APPLE__) || (defined(_WIN32) && defined(FSP_FUSE_CAP_STAT_EX))
+		.setchgtime = (int (*)())hostSetchgtime,
+		.setcrtime = (int (*)())hostSetcrtime,
+		.chflags = (int (*)())hostChflags,
+#endif
 	};
 #if defined(__GNUC__)
 #pragma GCC diagnostic pop
@@ -574,7 +616,8 @@ func copyCstatFromFusestat(dst *C.fuse_stat_t, src *Stat_t) {
 		C.int64_t(src.Ctim.Sec), C.int64_t(src.Ctim.Nsec),
 		C.int64_t(src.Blksize),
 		C.int64_t(src.Blocks),
-		C.int64_t(src.Birthtim.Sec), C.int64_t(src.Birthtim.Nsec))
+		C.int64_t(src.Birthtim.Sec), C.int64_t(src.Birthtim.Nsec),
+		C.uint32_t(src.Flags))
 }
 
 func copyFusetimespecFromCtimespec(dst *Timespec, src *C.fuse_timespec_t) {
@@ -1000,6 +1043,52 @@ func hostUtimens(path0 *C.char, tmsp0 *C.fuse_timespec_t) (errc0 C.int) {
 		errc := fsop.Utimens(path, tmsp[:])
 		return C.int(errc)
 	}
+}
+
+//export hostSetchgtime
+func hostSetchgtime(path0 *C.char, tmsp0 *C.fuse_timespec_t) (errc0 C.int) {
+	defer recoverAsErrno(&errc0)
+	fsop := hostHandleGet(C.fuse_get_context().private_data).fsop
+	intf, ok := fsop.(FileSystemSetchgtime)
+	if !ok {
+		// say we did it!
+		return 0
+	}
+	path := C.GoString(path0)
+	tmsp := Timespec{}
+	copyFusetimespecFromCtimespec(&tmsp, tmsp0)
+	errc := intf.Setchgtime(path, tmsp)
+	return C.int(errc)
+}
+
+//export hostSetcrtime
+func hostSetcrtime(path0 *C.char, tmsp0 *C.fuse_timespec_t) (errc0 C.int) {
+	defer recoverAsErrno(&errc0)
+	fsop := hostHandleGet(C.fuse_get_context().private_data).fsop
+	intf, ok := fsop.(FileSystemSetcrtime)
+	if !ok {
+		// say we did it!
+		return 0
+	}
+	path := C.GoString(path0)
+	tmsp := Timespec{}
+	copyFusetimespecFromCtimespec(&tmsp, tmsp0)
+	errc := intf.Setcrtime(path, tmsp)
+	return C.int(errc)
+}
+
+//export hostChflags
+func hostChflags(path0 *C.char, flags C.uint32_t) (errc0 C.int) {
+	defer recoverAsErrno(&errc0)
+	fsop := hostHandleGet(C.fuse_get_context().private_data).fsop
+	intf, ok := fsop.(FileSystemChflags)
+	if !ok {
+		// say we did it!
+		return 0
+	}
+	path := C.GoString(path0)
+	errc := intf.Chflags(path, uint32(flags))
+	return C.int(errc)
 }
 
 // NewFileSystemHost creates a file system host.

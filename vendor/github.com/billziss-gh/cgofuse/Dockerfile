@@ -33,8 +33,8 @@ RUN \
 # install WinFsp-FUSE
 RUN \
     wget -q -O winfsp.zip --no-check-certificate \
-        https://github.com/billziss-gh/winfsp/archive/v1.0.zip && \
-    7z e winfsp.zip 'winfsp-1.0/inc/fuse/*' -o/usr/local/include/winfsp
+        https://github.com/billziss-gh/winfsp/archive/release/1.2.zip && \
+    7z e winfsp.zip 'winfsp-release-1.2/inc/fuse/*' -o/usr/local/include/winfsp
 
 ENV \
     OSXCROSS_NO_INCLUDE_PATH_WARNINGS 1

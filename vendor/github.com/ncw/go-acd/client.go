@@ -44,6 +44,7 @@ type Client struct {
 	// Services used for talking to different parts of the API.
 	Account *AccountService
 	Nodes   *NodesService
+	Changes *ChangesService
 }
 
 // NewClient returns a new Amazon Cloud Drive API client. If a nil httpClient is
@@ -66,6 +67,7 @@ func NewClient(httpClient *http.Client) *Client {
 
 	c.Account = &AccountService{client: c}
 	c.Nodes = &NodesService{client: c}
+	c.Changes = &ChangesService{client: c}
 
 	return c
 }

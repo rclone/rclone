@@ -125,6 +125,7 @@ func (client EndpointsClient) CreatePreparer(resourceGroupName string, profileNa
 func (client EndpointsClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -221,6 +222,7 @@ func (client EndpointsClient) DeletePreparer(resourceGroupName string, profileNa
 func (client EndpointsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -297,7 +299,9 @@ func (client EndpointsClient) GetPreparer(resourceGroupName string, profileName 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client EndpointsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -371,7 +375,9 @@ func (client EndpointsClient) ListByProfilePreparer(resourceGroupName string, pr
 // ListByProfileSender sends the ListByProfile request. The method will close the
 // http.Response Body if it receives an error.
 func (client EndpointsClient) ListByProfileSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByProfileResponder handles the response to the ListByProfile request. The method always
@@ -516,7 +522,9 @@ func (client EndpointsClient) ListResourceUsagePreparer(resourceGroupName string
 // ListResourceUsageSender sends the ListResourceUsage request. The method will close the
 // http.Response Body if it receives an error.
 func (client EndpointsClient) ListResourceUsageSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResourceUsageResponder handles the response to the ListResourceUsage request. The method always
@@ -686,6 +694,7 @@ func (client EndpointsClient) LoadContentPreparer(resourceGroupName string, prof
 func (client EndpointsClient) LoadContentSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -786,6 +795,7 @@ func (client EndpointsClient) PurgeContentPreparer(resourceGroupName string, pro
 func (client EndpointsClient) PurgeContentSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -881,6 +891,7 @@ func (client EndpointsClient) StartPreparer(resourceGroupName string, profileNam
 func (client EndpointsClient) StartSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -976,6 +987,7 @@ func (client EndpointsClient) StopPreparer(resourceGroupName string, profileName
 func (client EndpointsClient) StopSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1076,6 +1088,7 @@ func (client EndpointsClient) UpdatePreparer(resourceGroupName string, profileNa
 func (client EndpointsClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1156,7 +1169,9 @@ func (client EndpointsClient) ValidateCustomDomainPreparer(resourceGroupName str
 // ValidateCustomDomainSender sends the ValidateCustomDomain request. The method will close the
 // http.Response Body if it receives an error.
 func (client EndpointsClient) ValidateCustomDomainSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ValidateCustomDomainResponder handles the response to the ValidateCustomDomain request. The method always

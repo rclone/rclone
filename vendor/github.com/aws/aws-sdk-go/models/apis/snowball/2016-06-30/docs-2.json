@@ -35,7 +35,7 @@
         "Address$AddressId": "<p>The unique ID for an address.</p>",
         "ClusterMetadata$AddressId": "<p>The automatically generated ID for a specific address.</p>",
         "ClusterMetadata$ForwardingAddressId": "<p>The ID of the address that you want a cluster shipped to, after it will be shipped to its primary address. This field is not supported in most regions.</p>",
-        "CreateClusterRequest$AddressId": "<p>The ID for the address that you want the cluster shipped to.&gt;</p>",
+        "CreateClusterRequest$AddressId": "<p>The ID for the address that you want the cluster shipped to.</p>",
         "CreateClusterRequest$ForwardingAddressId": "<p>The forwarding address ID for a cluster. This field is not supported in most regions.</p>",
         "CreateJobRequest$AddressId": "<p>The ID for the address that you want the Snowball shipped to.</p>",
         "CreateJobRequest$ForwardingAddressId": "<p>The forwarding address ID for a job. This field is not supported in most regions.</p>",
@@ -476,8 +476,8 @@
     "Shipment": {
       "base": "<p>The <code>Status</code> and <code>TrackingNumber</code> information for an inbound or outbound shipment.</p>",
       "refs": {
-        "ShippingDetails$InboundShipment": "<p>The <code>Status</code> and <code>TrackingNumber</code> values for a Snowball being delivered to the address that you specified for a particular job.</p>",
-        "ShippingDetails$OutboundShipment": "<p>The <code>Status</code> and <code>TrackingNumber</code> values for a Snowball being returned to AWS for a particular job.</p>"
+        "ShippingDetails$InboundShipment": "<p>The <code>Status</code> and <code>TrackingNumber</code> values for a Snowball being returned to AWS for a particular job.</p>",
+        "ShippingDetails$OutboundShipment": "<p>The <code>Status</code> and <code>TrackingNumber</code> values for a Snowball being delivered to the address that you specified for a particular job.</p>"
       }
     },
     "ShippingDetails": {

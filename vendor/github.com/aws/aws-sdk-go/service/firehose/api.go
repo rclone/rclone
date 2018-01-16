@@ -36,7 +36,7 @@ const opCreateDeliveryStream = "CreateDeliveryStream"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStream
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStream
 func (c *Firehose) CreateDeliveryStreamRequest(input *CreateDeliveryStreamInput) (req *request.Request, output *CreateDeliveryStreamOutput) {
 	op := &request.Operation{
 		Name:       opCreateDeliveryStream,
@@ -125,7 +125,7 @@ func (c *Firehose) CreateDeliveryStreamRequest(input *CreateDeliveryStreamInput)
 //   * ErrCodeResourceInUseException "ResourceInUseException"
 //   The resource is already in use and not available for this operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStream
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStream
 func (c *Firehose) CreateDeliveryStream(input *CreateDeliveryStreamInput) (*CreateDeliveryStreamOutput, error) {
 	req, out := c.CreateDeliveryStreamRequest(input)
 	return out, req.Send()
@@ -172,7 +172,7 @@ const opDeleteDeliveryStream = "DeleteDeliveryStream"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStream
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStream
 func (c *Firehose) DeleteDeliveryStreamRequest(input *DeleteDeliveryStreamInput) (req *request.Request, output *DeleteDeliveryStreamOutput) {
 	op := &request.Operation{
 		Name:       opDeleteDeliveryStream,
@@ -218,7 +218,7 @@ func (c *Firehose) DeleteDeliveryStreamRequest(input *DeleteDeliveryStreamInput)
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The specified resource could not be found.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStream
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStream
 func (c *Firehose) DeleteDeliveryStream(input *DeleteDeliveryStreamInput) (*DeleteDeliveryStreamOutput, error) {
 	req, out := c.DeleteDeliveryStreamRequest(input)
 	return out, req.Send()
@@ -265,7 +265,7 @@ const opDescribeDeliveryStream = "DescribeDeliveryStream"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStream
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStream
 func (c *Firehose) DescribeDeliveryStreamRequest(input *DescribeDeliveryStreamInput) (req *request.Request, output *DescribeDeliveryStreamOutput) {
 	op := &request.Operation{
 		Name:       opDescribeDeliveryStream,
@@ -300,7 +300,7 @@ func (c *Firehose) DescribeDeliveryStreamRequest(input *DescribeDeliveryStreamIn
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   The specified resource could not be found.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStream
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStream
 func (c *Firehose) DescribeDeliveryStream(input *DescribeDeliveryStreamInput) (*DescribeDeliveryStreamOutput, error) {
 	req, out := c.DescribeDeliveryStreamRequest(input)
 	return out, req.Send()
@@ -317,88 +317,6 @@ func (c *Firehose) DescribeDeliveryStream(input *DescribeDeliveryStreamInput) (*
 // for more information on using Contexts.
 func (c *Firehose) DescribeDeliveryStreamWithContext(ctx aws.Context, input *DescribeDeliveryStreamInput, opts ...request.Option) (*DescribeDeliveryStreamOutput, error) {
 	req, out := c.DescribeDeliveryStreamRequest(input)
-	req.SetContext(ctx)
-	req.ApplyOptions(opts...)
-	return out, req.Send()
-}
-
-const opGetKinesisStream = "GetKinesisStream"
-
-// GetKinesisStreamRequest generates a "aws/request.Request" representing the
-// client's request for the GetKinesisStream operation. The "output" return
-// value will be populated with the request's response once the request complets
-// successfuly.
-//
-// Use "Send" method on the returned Request to send the API call to the service.
-// the "output" return value is not valid until after Send returns without error.
-//
-// See GetKinesisStream for more information on using the GetKinesisStream
-// API call, and error handling.
-//
-// This method is useful when you want to inject custom logic or configuration
-// into the SDK's request lifecycle. Such as custom headers, or retry logic.
-//
-//
-//    // Example sending a request using the GetKinesisStreamRequest method.
-//    req, resp := client.GetKinesisStreamRequest(params)
-//
-//    err := req.Send()
-//    if err == nil { // resp is now filled
-//        fmt.Println(resp)
-//    }
-//
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/GetKinesisStream
-func (c *Firehose) GetKinesisStreamRequest(input *GetKinesisStreamInput) (req *request.Request, output *GetKinesisStreamOutput) {
-	op := &request.Operation{
-		Name:       opGetKinesisStream,
-		HTTPMethod: "POST",
-		HTTPPath:   "/",
-	}
-
-	if input == nil {
-		input = &GetKinesisStreamInput{}
-	}
-
-	output = &GetKinesisStreamOutput{}
-	req = c.newRequest(op, input, output)
-	return
-}
-
-// GetKinesisStream API operation for Amazon Kinesis Firehose.
-//
-// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
-// with awserr.Error's Code and Message methods to get detailed information about
-// the error.
-//
-// See the AWS API reference guide for Amazon Kinesis Firehose's
-// API operation GetKinesisStream for usage and error information.
-//
-// Returned Error Codes:
-//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
-//   The specified resource could not be found.
-//
-//   * ErrCodeInvalidArgumentException "InvalidArgumentException"
-//   The specified input parameter has a value that is not valid.
-//
-//   * ErrCodeInvalidStreamTypeException "InvalidStreamTypeException"
-//
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/GetKinesisStream
-func (c *Firehose) GetKinesisStream(input *GetKinesisStreamInput) (*GetKinesisStreamOutput, error) {
-	req, out := c.GetKinesisStreamRequest(input)
-	return out, req.Send()
-}
-
-// GetKinesisStreamWithContext is the same as GetKinesisStream with the addition of
-// the ability to pass a context and additional request options.
-//
-// See GetKinesisStream for details on how to use this API operation.
-//
-// The context must be non-nil and will be used for request cancellation. If
-// the context is nil a panic will occur. In the future the SDK may create
-// sub-contexts for http.Requests. See https://golang.org/pkg/context/
-// for more information on using Contexts.
-func (c *Firehose) GetKinesisStreamWithContext(ctx aws.Context, input *GetKinesisStreamInput, opts ...request.Option) (*GetKinesisStreamOutput, error) {
-	req, out := c.GetKinesisStreamRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -429,7 +347,7 @@ const opListDeliveryStreams = "ListDeliveryStreams"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreams
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreams
 func (c *Firehose) ListDeliveryStreamsRequest(input *ListDeliveryStreamsInput) (req *request.Request, output *ListDeliveryStreamsOutput) {
 	op := &request.Operation{
 		Name:       opListDeliveryStreams,
@@ -464,7 +382,7 @@ func (c *Firehose) ListDeliveryStreamsRequest(input *ListDeliveryStreamsInput) (
 //
 // See the AWS API reference guide for Amazon Kinesis Firehose's
 // API operation ListDeliveryStreams for usage and error information.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreams
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreams
 func (c *Firehose) ListDeliveryStreams(input *ListDeliveryStreamsInput) (*ListDeliveryStreamsOutput, error) {
 	req, out := c.ListDeliveryStreamsRequest(input)
 	return out, req.Send()
@@ -511,7 +429,7 @@ const opPutRecord = "PutRecord"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecord
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecord
 func (c *Firehose) PutRecordRequest(input *PutRecordInput) (req *request.Request, output *PutRecordOutput) {
 	op := &request.Operation{
 		Name:       opPutRecord,
@@ -584,7 +502,7 @@ func (c *Firehose) PutRecordRequest(input *PutRecordInput) (req *request.Request
 //   been exceeded. For more information about limits and how to request an increase,
 //   see Amazon Kinesis Firehose Limits (http://docs.aws.amazon.com/firehose/latest/dev/limits.html).
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecord
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecord
 func (c *Firehose) PutRecord(input *PutRecordInput) (*PutRecordOutput, error) {
 	req, out := c.PutRecordRequest(input)
 	return out, req.Send()
@@ -631,7 +549,7 @@ const opPutRecordBatch = "PutRecordBatch"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatch
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatch
 func (c *Firehose) PutRecordBatchRequest(input *PutRecordBatchInput) (req *request.Request, output *PutRecordBatchOutput) {
 	op := &request.Operation{
 		Name:       opPutRecordBatch,
@@ -729,7 +647,7 @@ func (c *Firehose) PutRecordBatchRequest(input *PutRecordBatchInput) (req *reque
 //   been exceeded. For more information about limits and how to request an increase,
 //   see Amazon Kinesis Firehose Limits (http://docs.aws.amazon.com/firehose/latest/dev/limits.html).
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatch
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatch
 func (c *Firehose) PutRecordBatch(input *PutRecordBatchInput) (*PutRecordBatchOutput, error) {
 	req, out := c.PutRecordBatchRequest(input)
 	return out, req.Send()
@@ -776,7 +694,7 @@ const opUpdateDestination = "UpdateDestination"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestination
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestination
 func (c *Firehose) UpdateDestinationRequest(input *UpdateDestinationInput) (req *request.Request, output *UpdateDestinationOutput) {
 	op := &request.Operation{
 		Name:       opUpdateDestination,
@@ -847,7 +765,7 @@ func (c *Firehose) UpdateDestinationRequest(input *UpdateDestinationInput) (req 
 //   Another modification has already happened. Fetch VersionId again and use
 //   it to update the destination.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestination
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestination
 func (c *Firehose) UpdateDestination(input *UpdateDestinationInput) (*UpdateDestinationOutput, error) {
 	req, out := c.UpdateDestinationRequest(input)
 	return out, req.Send()
@@ -872,7 +790,7 @@ func (c *Firehose) UpdateDestinationWithContext(ctx aws.Context, input *UpdateDe
 // Describes hints for the buffering to perform before delivering data to the
 // destination. Please note that these options are treated as hints, and therefore
 // Kinesis Firehose may choose to use different values when it is optimal.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/BufferingHints
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/BufferingHints
 type BufferingHints struct {
 	_ struct{} `type:"structure"`
 
@@ -928,7 +846,7 @@ func (s *BufferingHints) SetSizeInMBs(v int64) *BufferingHints {
 }
 
 // Describes the Amazon CloudWatch logging options for your delivery stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CloudWatchLoggingOptions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CloudWatchLoggingOptions
 type CloudWatchLoggingOptions struct {
 	_ struct{} `type:"structure"`
 
@@ -973,7 +891,7 @@ func (s *CloudWatchLoggingOptions) SetLogStreamName(v string) *CloudWatchLogging
 }
 
 // Describes a COPY command for Amazon Redshift.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CopyCommand
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CopyCommand
 type CopyCommand struct {
 	_ struct{} `type:"structure"`
 
@@ -1052,7 +970,7 @@ func (s *CopyCommand) SetDataTableName(v string) *CopyCommand {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStreamInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStreamInput
 type CreateDeliveryStreamInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1086,6 +1004,9 @@ type CreateDeliveryStreamInput struct {
 
 	// [Deprecated] The destination in Amazon S3. You can specify only one destination.
 	S3DestinationConfiguration *S3DestinationConfiguration `deprecated:"true" type:"structure"`
+
+	// The destination in Splunk. You can specify only one destination.
+	SplunkDestinationConfiguration *SplunkDestinationConfiguration `type:"structure"`
 }
 
 // String returns the string representation
@@ -1130,6 +1051,11 @@ func (s *CreateDeliveryStreamInput) Validate() error {
 	if s.S3DestinationConfiguration != nil {
 		if err := s.S3DestinationConfiguration.Validate(); err != nil {
 			invalidParams.AddNested("S3DestinationConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.SplunkDestinationConfiguration != nil {
+		if err := s.SplunkDestinationConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("SplunkDestinationConfiguration", err.(request.ErrInvalidParams))
 		}
 	}
 
@@ -1181,7 +1107,13 @@ func (s *CreateDeliveryStreamInput) SetS3DestinationConfiguration(v *S3Destinati
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStreamOutput
+// SetSplunkDestinationConfiguration sets the SplunkDestinationConfiguration field's value.
+func (s *CreateDeliveryStreamInput) SetSplunkDestinationConfiguration(v *SplunkDestinationConfiguration) *CreateDeliveryStreamInput {
+	s.SplunkDestinationConfiguration = v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/CreateDeliveryStreamOutput
 type CreateDeliveryStreamOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1205,7 +1137,7 @@ func (s *CreateDeliveryStreamOutput) SetDeliveryStreamARN(v string) *CreateDeliv
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStreamInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStreamInput
 type DeleteDeliveryStreamInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1247,7 +1179,7 @@ func (s *DeleteDeliveryStreamInput) SetDeliveryStreamName(v string) *DeleteDeliv
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStreamOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeleteDeliveryStreamOutput
 type DeleteDeliveryStreamOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1263,7 +1195,7 @@ func (s DeleteDeliveryStreamOutput) GoString() string {
 }
 
 // Contains information about a delivery stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeliveryStreamDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DeliveryStreamDescription
 type DeliveryStreamDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -1391,7 +1323,7 @@ func (s *DeliveryStreamDescription) SetVersionId(v string) *DeliveryStreamDescri
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStreamInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStreamInput
 type DescribeDeliveryStreamInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1459,7 +1391,7 @@ func (s *DescribeDeliveryStreamInput) SetLimit(v int64) *DescribeDeliveryStreamI
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStreamOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DescribeDeliveryStreamOutput
 type DescribeDeliveryStreamOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1486,7 +1418,7 @@ func (s *DescribeDeliveryStreamOutput) SetDeliveryStreamDescription(v *DeliveryS
 }
 
 // Describes the destination for a delivery stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DestinationDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/DestinationDescription
 type DestinationDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -1506,6 +1438,9 @@ type DestinationDescription struct {
 
 	// [Deprecated] The destination in Amazon S3.
 	S3DestinationDescription *S3DestinationDescription `type:"structure"`
+
+	// The destination in Splunk.
+	SplunkDestinationDescription *SplunkDestinationDescription `type:"structure"`
 }
 
 // String returns the string representation
@@ -1548,9 +1483,15 @@ func (s *DestinationDescription) SetS3DestinationDescription(v *S3DestinationDes
 	return s
 }
 
+// SetSplunkDestinationDescription sets the SplunkDestinationDescription field's value.
+func (s *DestinationDescription) SetSplunkDestinationDescription(v *SplunkDestinationDescription) *DestinationDescription {
+	s.SplunkDestinationDescription = v
+	return s
+}
+
 // Describes the buffering to perform before delivering data to the Amazon ES
 // destination.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchBufferingHints
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchBufferingHints
 type ElasticsearchBufferingHints struct {
 	_ struct{} `type:"structure"`
 
@@ -1606,7 +1547,7 @@ func (s *ElasticsearchBufferingHints) SetSizeInMBs(v int64) *ElasticsearchBuffer
 }
 
 // Describes the configuration of a destination in Amazon ES.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchDestinationConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchDestinationConfiguration
 type ElasticsearchDestinationConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -1799,7 +1740,7 @@ func (s *ElasticsearchDestinationConfiguration) SetTypeName(v string) *Elasticse
 }
 
 // The destination description in Amazon ES.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchDestinationDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchDestinationDescription
 type ElasticsearchDestinationDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -1914,7 +1855,7 @@ func (s *ElasticsearchDestinationDescription) SetTypeName(v string) *Elasticsear
 }
 
 // Describes an update for a destination in Amazon ES.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchDestinationUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchDestinationUpdate
 type ElasticsearchDestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -2067,7 +2008,7 @@ func (s *ElasticsearchDestinationUpdate) SetTypeName(v string) *ElasticsearchDes
 
 // Configures retry behavior in case Kinesis Firehose is unable to deliver documents
 // to Amazon ES.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchRetryOptions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ElasticsearchRetryOptions
 type ElasticsearchRetryOptions struct {
 	_ struct{} `type:"structure"`
 
@@ -2096,7 +2037,7 @@ func (s *ElasticsearchRetryOptions) SetDurationInSeconds(v int64) *Elasticsearch
 }
 
 // Describes the encryption for a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/EncryptionConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/EncryptionConfiguration
 type EncryptionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -2146,7 +2087,7 @@ func (s *EncryptionConfiguration) SetNoEncryptionConfig(v string) *EncryptionCon
 }
 
 // Describes the configuration of a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ExtendedS3DestinationConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ExtendedS3DestinationConfiguration
 type ExtendedS3DestinationConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -2303,7 +2244,7 @@ func (s *ExtendedS3DestinationConfiguration) SetS3BackupMode(v string) *Extended
 }
 
 // Describes a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ExtendedS3DestinationDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ExtendedS3DestinationDescription
 type ExtendedS3DestinationDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -2424,7 +2365,7 @@ func (s *ExtendedS3DestinationDescription) SetS3BackupMode(v string) *ExtendedS3
 }
 
 // Describes an update for a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ExtendedS3DestinationUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ExtendedS3DestinationUpdate
 type ExtendedS3DestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -2570,79 +2511,8 @@ func (s *ExtendedS3DestinationUpdate) SetS3BackupUpdate(v *S3DestinationUpdate) 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/GetKinesisStreamInput
-type GetKinesisStreamInput struct {
-	_ struct{} `type:"structure"`
-
-	// DeliveryStreamARN is a required field
-	DeliveryStreamARN *string `min:"1" type:"string" required:"true"`
-}
-
-// String returns the string representation
-func (s GetKinesisStreamInput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s GetKinesisStreamInput) GoString() string {
-	return s.String()
-}
-
-// Validate inspects the fields of the type to determine if they are valid.
-func (s *GetKinesisStreamInput) Validate() error {
-	invalidParams := request.ErrInvalidParams{Context: "GetKinesisStreamInput"}
-	if s.DeliveryStreamARN == nil {
-		invalidParams.Add(request.NewErrParamRequired("DeliveryStreamARN"))
-	}
-	if s.DeliveryStreamARN != nil && len(*s.DeliveryStreamARN) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("DeliveryStreamARN", 1))
-	}
-
-	if invalidParams.Len() > 0 {
-		return invalidParams
-	}
-	return nil
-}
-
-// SetDeliveryStreamARN sets the DeliveryStreamARN field's value.
-func (s *GetKinesisStreamInput) SetDeliveryStreamARN(v string) *GetKinesisStreamInput {
-	s.DeliveryStreamARN = &v
-	return s
-}
-
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/GetKinesisStreamOutput
-type GetKinesisStreamOutput struct {
-	_ struct{} `type:"structure"`
-
-	CredentialsForReadingKinesisStream *SessionCredentials `type:"structure"`
-
-	KinesisStreamARN *string `min:"1" type:"string"`
-}
-
-// String returns the string representation
-func (s GetKinesisStreamOutput) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s GetKinesisStreamOutput) GoString() string {
-	return s.String()
-}
-
-// SetCredentialsForReadingKinesisStream sets the CredentialsForReadingKinesisStream field's value.
-func (s *GetKinesisStreamOutput) SetCredentialsForReadingKinesisStream(v *SessionCredentials) *GetKinesisStreamOutput {
-	s.CredentialsForReadingKinesisStream = v
-	return s
-}
-
-// SetKinesisStreamARN sets the KinesisStreamARN field's value.
-func (s *GetKinesisStreamOutput) SetKinesisStreamARN(v string) *GetKinesisStreamOutput {
-	s.KinesisStreamARN = &v
-	return s
-}
-
 // Describes an encryption key for a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/KMSEncryptionConfig
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/KMSEncryptionConfig
 type KMSEncryptionConfig struct {
 	_ struct{} `type:"structure"`
 
@@ -2687,7 +2557,7 @@ func (s *KMSEncryptionConfig) SetAWSKMSKeyARN(v string) *KMSEncryptionConfig {
 
 // The stream and role ARNs for a Kinesis stream used as the source for a delivery
 // stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/KinesisStreamSourceConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/KinesisStreamSourceConfiguration
 type KinesisStreamSourceConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -2748,7 +2618,7 @@ func (s *KinesisStreamSourceConfiguration) SetRoleARN(v string) *KinesisStreamSo
 
 // Details about a Kinesis stream used as the source for a Kinesis Firehose
 // delivery stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/KinesisStreamSourceDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/KinesisStreamSourceDescription
 type KinesisStreamSourceDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -2791,7 +2661,7 @@ func (s *KinesisStreamSourceDescription) SetRoleARN(v string) *KinesisStreamSour
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreamsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreamsInput
 type ListDeliveryStreamsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2809,7 +2679,7 @@ type ListDeliveryStreamsInput struct {
 	// The name of the delivery stream to start the list with.
 	ExclusiveStartDeliveryStreamName *string `min:"1" type:"string"`
 
-	// The maximum number of delivery streams to list.
+	// The maximum number of delivery streams to list. The default value is 10.
 	Limit *int64 `min:"1" type:"integer"`
 }
 
@@ -2857,7 +2727,7 @@ func (s *ListDeliveryStreamsInput) SetLimit(v int64) *ListDeliveryStreamsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreamsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ListDeliveryStreamsOutput
 type ListDeliveryStreamsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2895,7 +2765,7 @@ func (s *ListDeliveryStreamsOutput) SetHasMoreDeliveryStreams(v bool) *ListDeliv
 }
 
 // Describes a data processing configuration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ProcessingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ProcessingConfiguration
 type ProcessingConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -2949,7 +2819,7 @@ func (s *ProcessingConfiguration) SetProcessors(v []*Processor) *ProcessingConfi
 }
 
 // Describes a data processor.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/Processor
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/Processor
 type Processor struct {
 	_ struct{} `type:"structure"`
 
@@ -3008,7 +2878,7 @@ func (s *Processor) SetType(v string) *Processor {
 }
 
 // Describes the processor parameter.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ProcessorParameter
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/ProcessorParameter
 type ProcessorParameter struct {
 	_ struct{} `type:"structure"`
 
@@ -3064,7 +2934,7 @@ func (s *ProcessorParameter) SetParameterValue(v string) *ProcessorParameter {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatchInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatchInput
 type PutRecordBatchInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3133,7 +3003,7 @@ func (s *PutRecordBatchInput) SetRecords(v []*Record) *PutRecordBatchInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatchOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatchOutput
 type PutRecordBatchOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3175,7 +3045,7 @@ func (s *PutRecordBatchOutput) SetRequestResponses(v []*PutRecordBatchResponseEn
 // If the record is successfully added to your delivery stream, it receives
 // a record ID. If the record fails to be added to your delivery stream, the
 // result includes an error code and an error message.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatchResponseEntry
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordBatchResponseEntry
 type PutRecordBatchResponseEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -3217,7 +3087,7 @@ func (s *PutRecordBatchResponseEntry) SetRecordId(v string) *PutRecordBatchRespo
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordInput
 type PutRecordInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3278,7 +3148,7 @@ func (s *PutRecordInput) SetRecord(v *Record) *PutRecordInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/PutRecordOutput
 type PutRecordOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3305,7 +3175,7 @@ func (s *PutRecordOutput) SetRecordId(v string) *PutRecordOutput {
 }
 
 // The unit of data in a delivery stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/Record
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/Record
 type Record struct {
 	_ struct{} `type:"structure"`
 
@@ -3348,7 +3218,7 @@ func (s *Record) SetData(v []byte) *Record {
 }
 
 // Describes the configuration of a destination in Amazon Redshift.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftDestinationConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftDestinationConfiguration
 type RedshiftDestinationConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -3541,7 +3411,7 @@ func (s *RedshiftDestinationConfiguration) SetUsername(v string) *RedshiftDestin
 }
 
 // Describes a destination in Amazon Redshift.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftDestinationDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftDestinationDescription
 type RedshiftDestinationDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -3658,7 +3528,7 @@ func (s *RedshiftDestinationDescription) SetUsername(v string) *RedshiftDestinat
 }
 
 // Describes an update for a destination in Amazon Redshift.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftDestinationUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftDestinationUpdate
 type RedshiftDestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -3821,7 +3691,7 @@ func (s *RedshiftDestinationUpdate) SetUsername(v string) *RedshiftDestinationUp
 
 // Configures retry behavior in case Kinesis Firehose is unable to deliver documents
 // to Amazon Redshift.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftRetryOptions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/RedshiftRetryOptions
 type RedshiftRetryOptions struct {
 	_ struct{} `type:"structure"`
 
@@ -3850,7 +3720,7 @@ func (s *RedshiftRetryOptions) SetDurationInSeconds(v int64) *RedshiftRetryOptio
 }
 
 // Describes the configuration of a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/S3DestinationConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/S3DestinationConfiguration
 type S3DestinationConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -3975,7 +3845,7 @@ func (s *S3DestinationConfiguration) SetRoleARN(v string) *S3DestinationConfigur
 }
 
 // Describes a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/S3DestinationDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/S3DestinationDescription
 type S3DestinationDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4070,7 +3940,7 @@ func (s *S3DestinationDescription) SetRoleARN(v string) *S3DestinationDescriptio
 }
 
 // Describes an update for a destination in Amazon S3.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/S3DestinationUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/S3DestinationUpdate
 type S3DestinationUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -4184,60 +4054,9 @@ func (s *S3DestinationUpdate) SetRoleARN(v string) *S3DestinationUpdate {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/SessionCredentials
-type SessionCredentials struct {
-	_ struct{} `type:"structure"`
-
-	// AccessKeyId is a required field
-	AccessKeyId *string `type:"string" required:"true"`
-
-	// Expiration is a required field
-	Expiration *time.Time `type:"timestamp" timestampFormat:"unix" required:"true"`
-
-	// SecretAccessKey is a required field
-	SecretAccessKey *string `type:"string" required:"true"`
-
-	// SessionToken is a required field
-	SessionToken *string `type:"string" required:"true"`
-}
-
-// String returns the string representation
-func (s SessionCredentials) String() string {
-	return awsutil.Prettify(s)
-}
-
-// GoString returns the string representation
-func (s SessionCredentials) GoString() string {
-	return s.String()
-}
-
-// SetAccessKeyId sets the AccessKeyId field's value.
-func (s *SessionCredentials) SetAccessKeyId(v string) *SessionCredentials {
-	s.AccessKeyId = &v
-	return s
-}
-
-// SetExpiration sets the Expiration field's value.
-func (s *SessionCredentials) SetExpiration(v time.Time) *SessionCredentials {
-	s.Expiration = &v
-	return s
-}
-
-// SetSecretAccessKey sets the SecretAccessKey field's value.
-func (s *SessionCredentials) SetSecretAccessKey(v string) *SessionCredentials {
-	s.SecretAccessKey = &v
-	return s
-}
-
-// SetSessionToken sets the SessionToken field's value.
-func (s *SessionCredentials) SetSessionToken(v string) *SessionCredentials {
-	s.SessionToken = &v
-	return s
-}
-
 // Details about a Kinesis stream used as the source for a Kinesis Firehose
 // delivery stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/SourceDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/SourceDescription
 type SourceDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4261,7 +4080,423 @@ func (s *SourceDescription) SetKinesisStreamSourceDescription(v *KinesisStreamSo
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestinationInput
+// Describes the configuration of a destination in Splunk.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/SplunkDestinationConfiguration
+type SplunkDestinationConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The CloudWatch logging options for your delivery stream.
+	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
+
+	// The amount of time that Kinesis Firehose waits to receive an acknowledgment
+	// from Splunk after it sends it data. At the end of the timeout period Kinesis
+	// Firehose either tries to send the data again or considers it an error, based
+	// on your retry settings.
+	HECAcknowledgmentTimeoutInSeconds *int64 `min:"180" type:"integer"`
+
+	// The HTTP Event Collector (HEC) endpoint to which Kinesis Firehose sends your
+	// data.
+	//
+	// HECEndpoint is a required field
+	HECEndpoint *string `type:"string" required:"true"`
+
+	// This type can be either "Raw" or "Event".
+	//
+	// HECEndpointType is a required field
+	HECEndpointType *string `type:"string" required:"true" enum:"HECEndpointType"`
+
+	// This is a GUID you obtain from your Splunk cluster when you create a new
+	// HEC endpoint.
+	//
+	// HECToken is a required field
+	HECToken *string `type:"string" required:"true"`
+
+	// The data processing configuration.
+	ProcessingConfiguration *ProcessingConfiguration `type:"structure"`
+
+	// The retry behavior in case Kinesis Firehose is unable to deliver data to
+	// Splunk or if it doesn't receive an acknowledgment of receipt from Splunk.
+	RetryOptions *SplunkRetryOptions `type:"structure"`
+
+	// Defines how documents should be delivered to Amazon S3. When set to FailedDocumentsOnly,
+	// Kinesis Firehose writes any data that could not be indexed to the configured
+	// Amazon S3 destination. When set to AllDocuments, Kinesis Firehose delivers
+	// all incoming records to Amazon S3, and also writes failed documents to Amazon
+	// S3. Default value is FailedDocumentsOnly.
+	S3BackupMode *string `type:"string" enum:"SplunkS3BackupMode"`
+
+	// The configuration for the backup Amazon S3 location.
+	//
+	// S3Configuration is a required field
+	S3Configuration *S3DestinationConfiguration `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s SplunkDestinationConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SplunkDestinationConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SplunkDestinationConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SplunkDestinationConfiguration"}
+	if s.HECAcknowledgmentTimeoutInSeconds != nil && *s.HECAcknowledgmentTimeoutInSeconds < 180 {
+		invalidParams.Add(request.NewErrParamMinValue("HECAcknowledgmentTimeoutInSeconds", 180))
+	}
+	if s.HECEndpoint == nil {
+		invalidParams.Add(request.NewErrParamRequired("HECEndpoint"))
+	}
+	if s.HECEndpointType == nil {
+		invalidParams.Add(request.NewErrParamRequired("HECEndpointType"))
+	}
+	if s.HECToken == nil {
+		invalidParams.Add(request.NewErrParamRequired("HECToken"))
+	}
+	if s.S3Configuration == nil {
+		invalidParams.Add(request.NewErrParamRequired("S3Configuration"))
+	}
+	if s.ProcessingConfiguration != nil {
+		if err := s.ProcessingConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("ProcessingConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3Configuration != nil {
+		if err := s.S3Configuration.Validate(); err != nil {
+			invalidParams.AddNested("S3Configuration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCloudWatchLoggingOptions sets the CloudWatchLoggingOptions field's value.
+func (s *SplunkDestinationConfiguration) SetCloudWatchLoggingOptions(v *CloudWatchLoggingOptions) *SplunkDestinationConfiguration {
+	s.CloudWatchLoggingOptions = v
+	return s
+}
+
+// SetHECAcknowledgmentTimeoutInSeconds sets the HECAcknowledgmentTimeoutInSeconds field's value.
+func (s *SplunkDestinationConfiguration) SetHECAcknowledgmentTimeoutInSeconds(v int64) *SplunkDestinationConfiguration {
+	s.HECAcknowledgmentTimeoutInSeconds = &v
+	return s
+}
+
+// SetHECEndpoint sets the HECEndpoint field's value.
+func (s *SplunkDestinationConfiguration) SetHECEndpoint(v string) *SplunkDestinationConfiguration {
+	s.HECEndpoint = &v
+	return s
+}
+
+// SetHECEndpointType sets the HECEndpointType field's value.
+func (s *SplunkDestinationConfiguration) SetHECEndpointType(v string) *SplunkDestinationConfiguration {
+	s.HECEndpointType = &v
+	return s
+}
+
+// SetHECToken sets the HECToken field's value.
+func (s *SplunkDestinationConfiguration) SetHECToken(v string) *SplunkDestinationConfiguration {
+	s.HECToken = &v
+	return s
+}
+
+// SetProcessingConfiguration sets the ProcessingConfiguration field's value.
+func (s *SplunkDestinationConfiguration) SetProcessingConfiguration(v *ProcessingConfiguration) *SplunkDestinationConfiguration {
+	s.ProcessingConfiguration = v
+	return s
+}
+
+// SetRetryOptions sets the RetryOptions field's value.
+func (s *SplunkDestinationConfiguration) SetRetryOptions(v *SplunkRetryOptions) *SplunkDestinationConfiguration {
+	s.RetryOptions = v
+	return s
+}
+
+// SetS3BackupMode sets the S3BackupMode field's value.
+func (s *SplunkDestinationConfiguration) SetS3BackupMode(v string) *SplunkDestinationConfiguration {
+	s.S3BackupMode = &v
+	return s
+}
+
+// SetS3Configuration sets the S3Configuration field's value.
+func (s *SplunkDestinationConfiguration) SetS3Configuration(v *S3DestinationConfiguration) *SplunkDestinationConfiguration {
+	s.S3Configuration = v
+	return s
+}
+
+// Describes a destination in Splunk.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/SplunkDestinationDescription
+type SplunkDestinationDescription struct {
+	_ struct{} `type:"structure"`
+
+	// The CloudWatch logging options for your delivery stream.
+	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
+
+	// The amount of time that Kinesis Firehose waits to receive an acknowledgment
+	// from Splunk after it sends it data. At the end of the timeout period Kinesis
+	// Firehose either tries to send the data again or considers it an error, based
+	// on your retry settings.
+	HECAcknowledgmentTimeoutInSeconds *int64 `min:"180" type:"integer"`
+
+	// The HTTP Event Collector (HEC) endpoint to which Kinesis Firehose sends your
+	// data.
+	HECEndpoint *string `type:"string"`
+
+	// This type can be either "Raw" or "Event".
+	HECEndpointType *string `type:"string" enum:"HECEndpointType"`
+
+	// This is a GUID you obtain from your Splunk cluster when you create a new
+	// HEC endpoint.
+	HECToken *string `type:"string"`
+
+	// The data processing configuration.
+	ProcessingConfiguration *ProcessingConfiguration `type:"structure"`
+
+	// The retry behavior in case Kinesis Firehose is unable to deliver data to
+	// Splunk or if it doesn't receive an acknowledgment of receipt from Splunk.
+	RetryOptions *SplunkRetryOptions `type:"structure"`
+
+	// Defines how documents should be delivered to Amazon S3. When set to FailedDocumentsOnly,
+	// Kinesis Firehose writes any data that could not be indexed to the configured
+	// Amazon S3 destination. When set to AllDocuments, Kinesis Firehose delivers
+	// all incoming records to Amazon S3, and also writes failed documents to Amazon
+	// S3. Default value is FailedDocumentsOnly.
+	S3BackupMode *string `type:"string" enum:"SplunkS3BackupMode"`
+
+	// The Amazon S3 destination.>
+	S3DestinationDescription *S3DestinationDescription `type:"structure"`
+}
+
+// String returns the string representation
+func (s SplunkDestinationDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SplunkDestinationDescription) GoString() string {
+	return s.String()
+}
+
+// SetCloudWatchLoggingOptions sets the CloudWatchLoggingOptions field's value.
+func (s *SplunkDestinationDescription) SetCloudWatchLoggingOptions(v *CloudWatchLoggingOptions) *SplunkDestinationDescription {
+	s.CloudWatchLoggingOptions = v
+	return s
+}
+
+// SetHECAcknowledgmentTimeoutInSeconds sets the HECAcknowledgmentTimeoutInSeconds field's value.
+func (s *SplunkDestinationDescription) SetHECAcknowledgmentTimeoutInSeconds(v int64) *SplunkDestinationDescription {
+	s.HECAcknowledgmentTimeoutInSeconds = &v
+	return s
+}
+
+// SetHECEndpoint sets the HECEndpoint field's value.
+func (s *SplunkDestinationDescription) SetHECEndpoint(v string) *SplunkDestinationDescription {
+	s.HECEndpoint = &v
+	return s
+}
+
+// SetHECEndpointType sets the HECEndpointType field's value.
+func (s *SplunkDestinationDescription) SetHECEndpointType(v string) *SplunkDestinationDescription {
+	s.HECEndpointType = &v
+	return s
+}
+
+// SetHECToken sets the HECToken field's value.
+func (s *SplunkDestinationDescription) SetHECToken(v string) *SplunkDestinationDescription {
+	s.HECToken = &v
+	return s
+}
+
+// SetProcessingConfiguration sets the ProcessingConfiguration field's value.
+func (s *SplunkDestinationDescription) SetProcessingConfiguration(v *ProcessingConfiguration) *SplunkDestinationDescription {
+	s.ProcessingConfiguration = v
+	return s
+}
+
+// SetRetryOptions sets the RetryOptions field's value.
+func (s *SplunkDestinationDescription) SetRetryOptions(v *SplunkRetryOptions) *SplunkDestinationDescription {
+	s.RetryOptions = v
+	return s
+}
+
+// SetS3BackupMode sets the S3BackupMode field's value.
+func (s *SplunkDestinationDescription) SetS3BackupMode(v string) *SplunkDestinationDescription {
+	s.S3BackupMode = &v
+	return s
+}
+
+// SetS3DestinationDescription sets the S3DestinationDescription field's value.
+func (s *SplunkDestinationDescription) SetS3DestinationDescription(v *S3DestinationDescription) *SplunkDestinationDescription {
+	s.S3DestinationDescription = v
+	return s
+}
+
+// Describes an update for a destination in Splunk.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/SplunkDestinationUpdate
+type SplunkDestinationUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// The CloudWatch logging options for your delivery stream.
+	CloudWatchLoggingOptions *CloudWatchLoggingOptions `type:"structure"`
+
+	// The amount of time that Kinesis Firehose waits to receive an acknowledgment
+	// from Splunk after it sends it data. At the end of the timeout period Kinesis
+	// Firehose either tries to send the data again or considers it an error, based
+	// on your retry settings.
+	HECAcknowledgmentTimeoutInSeconds *int64 `min:"180" type:"integer"`
+
+	// The HTTP Event Collector (HEC) endpoint to which Kinesis Firehose sends your
+	// data.
+	HECEndpoint *string `type:"string"`
+
+	// This type can be either "Raw" or "Event".
+	HECEndpointType *string `type:"string" enum:"HECEndpointType"`
+
+	// This is a GUID you obtain from your Splunk cluster when you create a new
+	// HEC endpoint.
+	HECToken *string `type:"string"`
+
+	// The data processing configuration.
+	ProcessingConfiguration *ProcessingConfiguration `type:"structure"`
+
+	// The retry behavior in case Kinesis Firehose is unable to deliver data to
+	// Splunk or if it doesn't receive an acknowledgment of receipt from Splunk.
+	RetryOptions *SplunkRetryOptions `type:"structure"`
+
+	// Defines how documents should be delivered to Amazon S3. When set to FailedDocumentsOnly,
+	// Kinesis Firehose writes any data that could not be indexed to the configured
+	// Amazon S3 destination. When set to AllDocuments, Kinesis Firehose delivers
+	// all incoming records to Amazon S3, and also writes failed documents to Amazon
+	// S3. Default value is FailedDocumentsOnly.
+	S3BackupMode *string `type:"string" enum:"SplunkS3BackupMode"`
+
+	// Your update to the configuration of the backup Amazon S3 location.
+	S3Update *S3DestinationUpdate `type:"structure"`
+}
+
+// String returns the string representation
+func (s SplunkDestinationUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SplunkDestinationUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *SplunkDestinationUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "SplunkDestinationUpdate"}
+	if s.HECAcknowledgmentTimeoutInSeconds != nil && *s.HECAcknowledgmentTimeoutInSeconds < 180 {
+		invalidParams.Add(request.NewErrParamMinValue("HECAcknowledgmentTimeoutInSeconds", 180))
+	}
+	if s.ProcessingConfiguration != nil {
+		if err := s.ProcessingConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("ProcessingConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3Update != nil {
+		if err := s.S3Update.Validate(); err != nil {
+			invalidParams.AddNested("S3Update", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetCloudWatchLoggingOptions sets the CloudWatchLoggingOptions field's value.
+func (s *SplunkDestinationUpdate) SetCloudWatchLoggingOptions(v *CloudWatchLoggingOptions) *SplunkDestinationUpdate {
+	s.CloudWatchLoggingOptions = v
+	return s
+}
+
+// SetHECAcknowledgmentTimeoutInSeconds sets the HECAcknowledgmentTimeoutInSeconds field's value.
+func (s *SplunkDestinationUpdate) SetHECAcknowledgmentTimeoutInSeconds(v int64) *SplunkDestinationUpdate {
+	s.HECAcknowledgmentTimeoutInSeconds = &v
+	return s
+}
+
+// SetHECEndpoint sets the HECEndpoint field's value.
+func (s *SplunkDestinationUpdate) SetHECEndpoint(v string) *SplunkDestinationUpdate {
+	s.HECEndpoint = &v
+	return s
+}
+
+// SetHECEndpointType sets the HECEndpointType field's value.
+func (s *SplunkDestinationUpdate) SetHECEndpointType(v string) *SplunkDestinationUpdate {
+	s.HECEndpointType = &v
+	return s
+}
+
+// SetHECToken sets the HECToken field's value.
+func (s *SplunkDestinationUpdate) SetHECToken(v string) *SplunkDestinationUpdate {
+	s.HECToken = &v
+	return s
+}
+
+// SetProcessingConfiguration sets the ProcessingConfiguration field's value.
+func (s *SplunkDestinationUpdate) SetProcessingConfiguration(v *ProcessingConfiguration) *SplunkDestinationUpdate {
+	s.ProcessingConfiguration = v
+	return s
+}
+
+// SetRetryOptions sets the RetryOptions field's value.
+func (s *SplunkDestinationUpdate) SetRetryOptions(v *SplunkRetryOptions) *SplunkDestinationUpdate {
+	s.RetryOptions = v
+	return s
+}
+
+// SetS3BackupMode sets the S3BackupMode field's value.
+func (s *SplunkDestinationUpdate) SetS3BackupMode(v string) *SplunkDestinationUpdate {
+	s.S3BackupMode = &v
+	return s
+}
+
+// SetS3Update sets the S3Update field's value.
+func (s *SplunkDestinationUpdate) SetS3Update(v *S3DestinationUpdate) *SplunkDestinationUpdate {
+	s.S3Update = v
+	return s
+}
+
+// Configures retry behavior in case Kinesis Firehose is unable to deliver documents
+// to Splunk or if it doesn't receive an acknowledgment from Splunk.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/SplunkRetryOptions
+type SplunkRetryOptions struct {
+	_ struct{} `type:"structure"`
+
+	// The total amount of time that Kinesis Firehose spends on retries. This duration
+	// starts after the initial attempt to send data to Splunk fails and doesn't
+	// include the periods during which Kinesis Firehose waits for acknowledgment
+	// from Splunk after each attempt.
+	DurationInSeconds *int64 `type:"integer"`
+}
+
+// String returns the string representation
+func (s SplunkRetryOptions) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s SplunkRetryOptions) GoString() string {
+	return s.String()
+}
+
+// SetDurationInSeconds sets the DurationInSeconds field's value.
+func (s *SplunkRetryOptions) SetDurationInSeconds(v int64) *SplunkRetryOptions {
+	s.DurationInSeconds = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestinationInput
 type UpdateDestinationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4296,6 +4531,9 @@ type UpdateDestinationInput struct {
 
 	// [Deprecated] Describes an update for a destination in Amazon S3.
 	S3DestinationUpdate *S3DestinationUpdate `deprecated:"true" type:"structure"`
+
+	// Describes an update for a destination in Splunk.
+	SplunkDestinationUpdate *SplunkDestinationUpdate `type:"structure"`
 }
 
 // String returns the string representation
@@ -4349,6 +4587,11 @@ func (s *UpdateDestinationInput) Validate() error {
 			invalidParams.AddNested("S3DestinationUpdate", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.SplunkDestinationUpdate != nil {
+		if err := s.SplunkDestinationUpdate.Validate(); err != nil {
+			invalidParams.AddNested("SplunkDestinationUpdate", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4398,7 +4641,13 @@ func (s *UpdateDestinationInput) SetS3DestinationUpdate(v *S3DestinationUpdate) 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestinationOutput
+// SetSplunkDestinationUpdate sets the SplunkDestinationUpdate field's value.
+func (s *UpdateDestinationInput) SetSplunkDestinationUpdate(v *SplunkDestinationUpdate) *UpdateDestinationInput {
+	s.SplunkDestinationUpdate = v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/firehose-2015-08-04/UpdateDestinationOutput
 type UpdateDestinationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4472,6 +4721,14 @@ const (
 )
 
 const (
+	// HECEndpointTypeRaw is a HECEndpointType enum value
+	HECEndpointTypeRaw = "Raw"
+
+	// HECEndpointTypeEvent is a HECEndpointType enum value
+	HECEndpointTypeEvent = "Event"
+)
+
+const (
 	// NoEncryptionConfigNoEncryption is a NoEncryptionConfig enum value
 	NoEncryptionConfigNoEncryption = "NoEncryption"
 )
@@ -4482,6 +4739,15 @@ const (
 
 	// ProcessorParameterNameNumberOfRetries is a ProcessorParameterName enum value
 	ProcessorParameterNameNumberOfRetries = "NumberOfRetries"
+
+	// ProcessorParameterNameRoleArn is a ProcessorParameterName enum value
+	ProcessorParameterNameRoleArn = "RoleArn"
+
+	// ProcessorParameterNameBufferSizeInMbs is a ProcessorParameterName enum value
+	ProcessorParameterNameBufferSizeInMbs = "BufferSizeInMBs"
+
+	// ProcessorParameterNameBufferIntervalInSeconds is a ProcessorParameterName enum value
+	ProcessorParameterNameBufferIntervalInSeconds = "BufferIntervalInSeconds"
 )
 
 const (
@@ -4503,4 +4769,12 @@ const (
 
 	// S3BackupModeEnabled is a S3BackupMode enum value
 	S3BackupModeEnabled = "Enabled"
+)
+
+const (
+	// SplunkS3BackupModeFailedEventsOnly is a SplunkS3BackupMode enum value
+	SplunkS3BackupModeFailedEventsOnly = "FailedEventsOnly"
+
+	// SplunkS3BackupModeAllEvents is a SplunkS3BackupMode enum value
+	SplunkS3BackupModeAllEvents = "AllEvents"
 )

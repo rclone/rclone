@@ -5,14 +5,11 @@
 package internal
 
 import (
-	"bufio"
 	"crypto/rsa"
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
 	"fmt"
-	"io"
-	"strings"
 )
 
 // ParseKey converts the binary contents of a private key file
@@ -37,39 +34,4 @@ func ParseKey(key []byte) (*rsa.PrivateKey, error) {
 		return nil, errors.New("private key is invalid")
 	}
 	return parsed, nil
-}
-
-func ParseINI(ini io.Reader) (map[string]map[string]string, error) {
-	result := map[string]map[string]string{
-		"": {}, // root section
-	}
-	scanner := bufio.NewScanner(ini)
-	currentSection := ""
-	for scanner.Scan() {
-		line := strings.TrimSpace(scanner.Text())
-		if strings.HasPrefix(line, ";") {
-			// comment.
-			continue
-		}
-		if strings.HasPrefix(line, "[") && strings.HasSuffix(line, "]") {
-			currentSection = strings.TrimSpace(line[1 : len(line)-1])
-			result[currentSection] = map[string]string{}
-			continue
-		}
-		parts := strings.SplitN(line, "=", 2)
-		if len(parts) == 2 && parts[0] != "" {
-			result[currentSection][strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-		}
-	}
-	if err := scanner.Err(); err != nil {
-		return nil, fmt.Errorf("error scanning ini: %v", err)
-	}
-	return result, nil
-}
-
-func CondVal(v string) []string {
-	if v == "" {
-		return nil
-	}
-	return []string{v}
 }

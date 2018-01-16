@@ -10,6 +10,7 @@
     "DeleteBucket": "Deletes the bucket. All objects (including all object versions and Delete Markers) in the bucket must be deleted before the bucket itself can be deleted.",
     "DeleteBucketAnalyticsConfiguration": "Deletes an analytics configuration for the bucket (specified by the analytics configuration ID).",
     "DeleteBucketCors": "Deletes the cors configuration information set for the bucket.",
+    "DeleteBucketEncryption": "Deletes the server-side encryption configuration from the bucket.",
     "DeleteBucketInventoryConfiguration": "Deletes an inventory configuration (identified by the inventory ID) from the bucket.",
     "DeleteBucketLifecycle": "Deletes the lifecycle configuration from the bucket.",
     "DeleteBucketMetricsConfiguration": "Deletes a metrics configuration (specified by the metrics configuration ID) from the bucket.",
@@ -24,6 +25,7 @@
     "GetBucketAcl": "Gets the access control policy for the bucket.",
     "GetBucketAnalyticsConfiguration": "Gets an analytics configuration for the bucket (specified by the analytics configuration ID).",
     "GetBucketCors": "Returns the cors configuration for the bucket.",
+    "GetBucketEncryption": "Returns the server-side encryption configuration of a bucket.",
     "GetBucketInventoryConfiguration": "Returns an inventory configuration (identified by the inventory ID) from the bucket.",
     "GetBucketLifecycle": "Deprecated, see the GetBucketLifecycleConfiguration operation.",
     "GetBucketLifecycleConfiguration": "Returns the lifecycle configuration information set on the bucket.",
@@ -57,6 +59,7 @@
     "PutBucketAcl": "Sets the permissions on a bucket using access control lists (ACL).",
     "PutBucketAnalyticsConfiguration": "Sets an analytics configuration for the bucket (specified by the analytics configuration ID).",
     "PutBucketCors": "Sets the cors configuration for a bucket.",
+    "PutBucketEncryption": "Creates a new server-side encryption configuration (or replaces an existing one, if present).",
     "PutBucketInventoryConfiguration": "Adds an inventory configuration (identified by the inventory ID) from the bucket.",
     "PutBucketLifecycle": "Deprecated, see the PutBucketLifecycleConfiguration operation.",
     "PutBucketLifecycleConfiguration": "Sets lifecycle configuration for your bucket. If a lifecycle configuration exists, it replaces it.",
@@ -129,10 +132,17 @@
         "PutObjectAclRequest$AccessControlPolicy": null
       }
     },
+    "AccessControlTranslation": {
+      "base": "Container for information regarding the access control for replicas.",
+      "refs": {
+        "Destination$AccessControlTranslation": "Container for information regarding the access control for replicas."
+      }
+    },
     "AccountId": {
       "base": null,
       "refs": {
         "AnalyticsS3BucketDestination$BucketAccountId": "The account ID that owns the destination bucket. If no account ID is provided, the owner will not be validated prior to exporting data.",
+        "Destination$Account": "Account ID of the destination bucket. Currently this is only being verified if Access Control Translation is enabled",
         "InventoryS3BucketDestination$AccountId": "The ID of the account that owns the destination bucket."
       }
     },
@@ -303,6 +313,7 @@
         "CreateMultipartUploadRequest$Bucket": null,
         "DeleteBucketAnalyticsConfigurationRequest$Bucket": "The name of the bucket from which an analytics configuration is deleted.",
         "DeleteBucketCorsRequest$Bucket": null,
+        "DeleteBucketEncryptionRequest$Bucket": "The name of the bucket containing the server-side encryption configuration to delete.",
         "DeleteBucketInventoryConfigurationRequest$Bucket": "The name of the bucket containing the inventory configuration to delete.",
         "DeleteBucketLifecycleRequest$Bucket": null,
         "DeleteBucketMetricsConfigurationRequest$Bucket": "The name of the bucket containing the metrics configuration to delete.",
@@ -319,6 +330,7 @@
         "GetBucketAclRequest$Bucket": null,
         "GetBucketAnalyticsConfigurationRequest$Bucket": "The name of the bucket from which an analytics configuration is retrieved.",
         "GetBucketCorsRequest$Bucket": null,
+        "GetBucketEncryptionRequest$Bucket": "The name of the bucket from which the server-side encryption configuration is retrieved.",
         "GetBucketInventoryConfigurationRequest$Bucket": "The name of the bucket containing the inventory configuration to retrieve.",
         "GetBucketLifecycleConfigurationRequest$Bucket": null,
         "GetBucketLifecycleRequest$Bucket": null,
@@ -356,6 +368,7 @@
         "PutBucketAclRequest$Bucket": null,
         "PutBucketAnalyticsConfigurationRequest$Bucket": "The name of the bucket to which an analytics configuration is stored.",
         "PutBucketCorsRequest$Bucket": null,
+        "PutBucketEncryptionRequest$Bucket": "The name of the bucket for which the server-side encryption configuration is set.",
         "PutBucketInventoryConfigurationRequest$Bucket": "The name of the bucket where the inventory configuration will be stored.",
         "PutBucketLifecycleConfigurationRequest$Bucket": null,
         "PutBucketLifecycleRequest$Bucket": null,
@@ -373,6 +386,7 @@
         "PutObjectRequest$Bucket": "Name of the bucket to which the PUT operation was initiated.",
         "PutObjectTaggingRequest$Bucket": null,
         "RestoreObjectRequest$Bucket": null,
+        "S3Location$BucketName": "The name of the bucket where the restore results will be placed.",
         "UploadPartCopyRequest$Bucket": null,
         "UploadPartRequest$Bucket": "Name of the bucket to which the multipart upload was initiated."
       }
@@ -409,6 +423,18 @@
         "GetBucketCorsOutput$CORSRules": null
       }
     },
+    "CSVInput": {
+      "base": "Describes how a CSV-formatted input object is formatted.",
+      "refs": {
+        "InputSerialization$CSV": "Describes the serialization of a CSV-encoded object."
+      }
+    },
+    "CSVOutput": {
+      "base": "Describes how CSV-formatted results are formatted.",
+      "refs": {
+        "OutputSerialization$CSV": "Describes the serialization of CSV-encoded Select results."
+      }
+    },
     "CacheControl": {
       "base": null,
       "refs": {
@@ -441,6 +467,12 @@
       "base": null,
       "refs": {
         "Error$Code": null
+      }
+    },
+    "Comments": {
+      "base": null,
+      "refs": {
+        "CSVInput$Comments": "Single character used to indicate a row should be ignored when present at the start of a row."
       }
     },
     "CommonPrefix": {
@@ -492,6 +524,12 @@
         "RoutingRule$Condition": "A container for describing a condition that must be met for the specified redirect to apply. For example, 1. If request is for pages in the /docs folder, redirect to the /documents folder. 2. If request results in HTTP error 4xx, redirect request to another host where you might process the error."
       }
     },
+    "ConfirmRemoveSelfBucketAccess": {
+      "base": null,
+      "refs": {
+        "PutBucketPolicyRequest$ConfirmRemoveSelfBucketAccess": "Set this parameter to true to confirm that you want to remove your permissions to change this bucket policy in the future."
+      }
+    },
     "ContentDisposition": {
       "base": null,
       "refs": {
@@ -536,6 +574,7 @@
       "refs": {
         "PutBucketAclRequest$ContentMD5": null,
         "PutBucketCorsRequest$ContentMD5": null,
+        "PutBucketEncryptionRequest$ContentMD5": "The base64-encoded 128-bit MD5 digest of the server-side encryption configuration.",
         "PutBucketLifecycleRequest$ContentMD5": null,
         "PutBucketLoggingRequest$ContentMD5": null,
         "PutBucketNotificationRequest$ContentMD5": null,
@@ -703,7 +742,7 @@
         "LifecycleExpiration$Days": "Indicates the lifetime, in days, of the objects that are subject to the rule. The value must be a non-zero positive integer.",
         "NoncurrentVersionExpiration$NoncurrentDays": "Specifies the number of days an object is noncurrent before Amazon S3 can perform the associated action. For information about the noncurrent days calculations, see <a href=\"http://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html\">How Amazon S3 Calculates When an Object Became Noncurrent</a> in the Amazon Simple Storage Service Developer Guide.",
         "NoncurrentVersionTransition$NoncurrentDays": "Specifies the number of days an object is noncurrent before Amazon S3 can perform the associated action. For information about the noncurrent days calculations, see <a href=\"http://docs.aws.amazon.com/AmazonS3/latest/dev/s3-access-control.html\">How Amazon S3 Calculates When an Object Became Noncurrent</a> in the Amazon Simple Storage Service Developer Guide.",
-        "RestoreRequest$Days": "Lifetime of the active copy in days",
+        "RestoreRequest$Days": "Lifetime of the active copy in days. Do not use with restores that specify OutputLocation.",
         "Transition$Days": "Indicates the lifetime, in days, of the objects that are subject to the rule. The value must be a non-zero positive integer."
       }
     },
@@ -725,6 +764,11 @@
       }
     },
     "DeleteBucketCorsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DeleteBucketEncryptionRequest": {
       "base": null,
       "refs": {
       }
@@ -851,10 +895,16 @@
         "ListObjectsV2Request$Delimiter": "A delimiter is a character you use to group keys."
       }
     },
-    "Destination": {
+    "Description": {
       "base": null,
       "refs": {
-        "ReplicationRule$Destination": null
+        "RestoreRequest$Description": "The optional description for the job."
+      }
+    },
+    "Destination": {
+      "base": "Container for replication destination information.",
+      "refs": {
+        "ReplicationRule$Destination": "Container for replication destination information."
       }
     },
     "DisplayName": {
@@ -898,6 +948,18 @@
         "ListObjectsRequest$EncodingType": null,
         "ListObjectsV2Output$EncodingType": "Encoding type used by Amazon S3 to encode object keys in the response.",
         "ListObjectsV2Request$EncodingType": "Encoding type used by Amazon S3 to encode object keys in the response."
+      }
+    },
+    "Encryption": {
+      "base": "Describes the server-side encryption that will be applied to the restore results.",
+      "refs": {
+        "S3Location$Encryption": null
+      }
+    },
+    "EncryptionConfiguration": {
+      "base": "Container for information regarding encryption based configuration for replicas.",
+      "refs": {
+        "Destination$EncryptionConfiguration": "Container for information regarding encryption based configuration for replicas."
       }
     },
     "Error": {
@@ -984,10 +1046,35 @@
         "CORSRule$ExposeHeaders": "One or more headers in the response that you want customers to be able to access from their applications (for example, from a JavaScript XMLHttpRequest object)."
       }
     },
+    "Expression": {
+      "base": null,
+      "refs": {
+        "SelectParameters$Expression": "The expression that is used to query the object."
+      }
+    },
+    "ExpressionType": {
+      "base": null,
+      "refs": {
+        "SelectParameters$ExpressionType": "The type of the provided expression (e.g., SQL)."
+      }
+    },
     "FetchOwner": {
       "base": null,
       "refs": {
         "ListObjectsV2Request$FetchOwner": "The owner field is not present in listV2 by default, if you want to return owner field with each key in the result then set the fetch owner field to true"
+      }
+    },
+    "FieldDelimiter": {
+      "base": null,
+      "refs": {
+        "CSVInput$FieldDelimiter": "Value used to separate individual fields in a record.",
+        "CSVOutput$FieldDelimiter": "Value used to separate individual fields in a record."
+      }
+    },
+    "FileHeaderInfo": {
+      "base": null,
+      "refs": {
+        "CSVInput$FileHeaderInfo": "Describes the first line of input. Valid values: None, Ignore, Use."
       }
     },
     "FilterRule": {
@@ -1050,6 +1137,16 @@
       }
     },
     "GetBucketCorsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetBucketEncryptionOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetBucketEncryptionRequest": {
       "base": null,
       "refs": {
       }
@@ -1222,7 +1319,7 @@
     "GlacierJobParameters": {
       "base": null,
       "refs": {
-        "RestoreRequest$GlacierJobParameters": "Glacier related prameters pertaining to this job."
+        "RestoreRequest$GlacierJobParameters": "Glacier related parameters pertaining to this job. Do not use with restores that specify OutputLocation."
       }
     },
     "Grant": {
@@ -1295,7 +1392,8 @@
       "refs": {
         "AccessControlPolicy$Grants": "A list of grants.",
         "GetBucketAclOutput$Grants": "A list of grants.",
-        "GetObjectAclOutput$Grants": "A list of grants."
+        "GetObjectAclOutput$Grants": "A list of grants.",
+        "S3Location$AccessControlList": "A list of grants that control access to the staged results."
       }
     },
     "HeadBucketRequest": {
@@ -1391,6 +1489,12 @@
         "MultipartUpload$Initiator": "Identifies who initiated the multipart upload."
       }
     },
+    "InputSerialization": {
+      "base": "Describes the serialization format of the object.",
+      "refs": {
+        "SelectParameters$InputSerialization": "Describes the serialization format of the object."
+      }
+    },
     "InventoryConfiguration": {
       "base": null,
       "refs": {
@@ -1409,6 +1513,12 @@
       "base": null,
       "refs": {
         "InventoryConfiguration$Destination": "Contains information about where to publish the inventory results."
+      }
+    },
+    "InventoryEncryption": {
+      "base": "Contains the type of server-side encryption used to encrypt the inventory results.",
+      "refs": {
+        "InventoryS3BucketDestination$Encryption": "Contains the type of server-side encryption used to encrypt the inventory results."
       }
     },
     "InventoryFilter": {
@@ -1492,6 +1602,12 @@
         "ListObjectsOutput$IsTruncated": "A flag that indicates whether or not Amazon S3 returned all of the results that satisfied the search criteria.",
         "ListObjectsV2Output$IsTruncated": "A flag that indicates whether or not Amazon S3 returned all of the results that satisfied the search criteria.",
         "ListPartsOutput$IsTruncated": "Indicates whether the returned list of parts is truncated."
+      }
+    },
+    "KMSContext": {
+      "base": null,
+      "refs": {
+        "Encryption$KMSContext": "If the encryption type is aws:kms, this optional value can be used to specify the encryption context for the restore results."
       }
     },
     "KeyCount": {
@@ -1676,6 +1792,12 @@
         "CreateBucketOutput$Location": null
       }
     },
+    "LocationPrefix": {
+      "base": null,
+      "refs": {
+        "S3Location$Prefix": "The prefix that is prepended to the restore results for this request."
+      }
+    },
     "LoggingEnabled": {
       "base": null,
       "refs": {
@@ -1763,16 +1885,24 @@
         "CopyObjectRequest$MetadataDirective": "Specifies whether the metadata is copied from the source object or replaced with metadata provided in the request."
       }
     },
+    "MetadataEntry": {
+      "base": "A metadata key-value pair to store with an object.",
+      "refs": {
+        "UserMetadata$member": null
+      }
+    },
     "MetadataKey": {
       "base": null,
       "refs": {
-        "Metadata$key": null
+        "Metadata$key": null,
+        "MetadataEntry$Name": null
       }
     },
     "MetadataValue": {
       "base": null,
       "refs": {
-        "Metadata$value": null
+        "Metadata$value": null,
+        "MetadataEntry$Value": null
       }
     },
     "MetricsAndOperator": {
@@ -1965,7 +2095,8 @@
         "CopyObjectRequest$ACL": "The canned ACL to apply to the object.",
         "CreateMultipartUploadRequest$ACL": "The canned ACL to apply to the object.",
         "PutObjectAclRequest$ACL": "The canned ACL to apply to the object.",
-        "PutObjectRequest$ACL": "The canned ACL to apply to the object."
+        "PutObjectRequest$ACL": "The canned ACL to apply to the object.",
+        "S3Location$CannedACL": "The canned ACL to apply to the restore results."
       }
     },
     "ObjectIdentifier": {
@@ -2079,6 +2210,18 @@
         "ObjectVersion$StorageClass": "The class of storage used to store the object."
       }
     },
+    "OutputLocation": {
+      "base": "Describes the location where the restore job's output is stored.",
+      "refs": {
+        "RestoreRequest$OutputLocation": "Describes the location where the restore job's output is stored."
+      }
+    },
+    "OutputSerialization": {
+      "base": "Describes how results of the Select job are serialized.",
+      "refs": {
+        "SelectParameters$OutputSerialization": "Describes how the results of the Select job are serialized."
+      }
+    },
     "Owner": {
       "base": null,
       "refs": {
@@ -2091,6 +2234,12 @@
         "MultipartUpload$Owner": null,
         "Object$Owner": null,
         "ObjectVersion$Owner": null
+      }
+    },
+    "OwnerOverride": {
+      "base": null,
+      "refs": {
+        "AccessControlTranslation$Owner": "The override value for the owner of the replica object."
       }
     },
     "Part": {
@@ -2199,6 +2348,11 @@
       }
     },
     "PutBucketCorsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "PutBucketEncryptionRequest": {
       "base": null,
       "refs": {
       }
@@ -2329,11 +2483,38 @@
         "Delete$Quiet": "Element to enable quiet mode for the request. When you add this element, you must set its value to true."
       }
     },
+    "QuoteCharacter": {
+      "base": null,
+      "refs": {
+        "CSVInput$QuoteCharacter": "Value used for escaping where the field delimiter is part of the value.",
+        "CSVOutput$QuoteCharacter": "Value used for escaping where the field delimiter is part of the value."
+      }
+    },
+    "QuoteEscapeCharacter": {
+      "base": null,
+      "refs": {
+        "CSVInput$QuoteEscapeCharacter": "Single character used for escaping the quote character inside an already escaped value.",
+        "CSVOutput$QuoteEscapeCharacter": "Single character used for escaping the quote character inside an already escaped value."
+      }
+    },
+    "QuoteFields": {
+      "base": null,
+      "refs": {
+        "CSVOutput$QuoteFields": "Indicates whether or not all output fields should be quoted."
+      }
+    },
     "Range": {
       "base": null,
       "refs": {
         "GetObjectRequest$Range": "Downloads the specified range bytes of an object. For more information about the HTTP Range header, go to http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35.",
         "HeadObjectRequest$Range": "Downloads the specified range bytes of an object. For more information about the HTTP Range header, go to http://www.w3.org/Protocols/rfc2616/rfc2616-sec14.html#sec14.35."
+      }
+    },
+    "RecordDelimiter": {
+      "base": null,
+      "refs": {
+        "CSVInput$RecordDelimiter": "Value used to separate individual records.",
+        "CSVOutput$RecordDelimiter": "Value used to separate individual records."
       }
     },
     "Redirect": {
@@ -2361,6 +2542,12 @@
         "Redirect$ReplaceKeyWith": "The specific object key to use in the redirect request. For example, redirect request to error.html. Not required if one of the sibling is present. Can be present only if ReplaceKeyPrefixWith is not provided."
       }
     },
+    "ReplicaKmsKeyID": {
+      "base": null,
+      "refs": {
+        "EncryptionConfiguration$ReplicaKmsKeyID": "The id of the KMS key used to encrypt the replica object."
+      }
+    },
     "ReplicationConfiguration": {
       "base": "Container for replication rules. You can add as many as 1,000 rules. Total replication configuration size can be up to 2 MB.",
       "refs": {
@@ -2369,7 +2556,7 @@
       }
     },
     "ReplicationRule": {
-      "base": null,
+      "base": "Container for information about a particular replication rule.",
       "refs": {
         "ReplicationRules$member": null
       }
@@ -2496,10 +2683,22 @@
       "refs": {
       }
     },
-    "RestoreRequest": {
+    "RestoreOutputPath": {
       "base": null,
       "refs": {
+        "RestoreObjectOutput$RestoreOutputPath": "Indicates the path in the provided S3 output location where Select results will be restored to."
+      }
+    },
+    "RestoreRequest": {
+      "base": "Container for restore job parameters.",
+      "refs": {
         "RestoreObjectRequest$RestoreRequest": null
+      }
+    },
+    "RestoreRequestType": {
+      "base": null,
+      "refs": {
+        "RestoreRequest$Type": "Type of restore request."
       }
     },
     "Role": {
@@ -2538,6 +2737,12 @@
       "base": "Container for object key name prefix and suffix filtering rules.",
       "refs": {
         "NotificationConfigurationFilter$Key": null
+      }
+    },
+    "S3Location": {
+      "base": "Describes an S3 location that will receive the results of the restore request.",
+      "refs": {
+        "OutputLocation$S3": "Describes an S3 location that will receive the results of the restore request."
       }
     },
     "SSECustomerAlgorithm": {
@@ -2590,6 +2795,12 @@
         "UploadPartRequest$SSECustomerKeyMD5": "Specifies the 128-bit MD5 digest of the encryption key according to RFC 1321. Amazon S3 uses this header for a message integrity check to ensure the encryption key was transmitted without error."
       }
     },
+    "SSEKMS": {
+      "base": "Specifies the use of SSE-KMS to encrypt delievered Inventory reports.",
+      "refs": {
+        "InventoryEncryption$SSEKMS": "Specifies the use of SSE-KMS to encrypt delievered Inventory reports."
+      }
+    },
     "SSEKMSKeyId": {
       "base": null,
       "refs": {
@@ -2598,12 +2809,27 @@
         "CopyObjectRequest$SSEKMSKeyId": "Specifies the AWS KMS key ID to use for object encryption. All GET and PUT requests for an object protected by AWS KMS will fail if not made via SSL or using SigV4. Documentation on configuring any of the officially supported AWS SDKs and CLI can be found at http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingAWSSDK.html#specify-signature-version",
         "CreateMultipartUploadOutput$SSEKMSKeyId": "If present, specifies the ID of the AWS Key Management Service (KMS) master encryption key that was used for the object.",
         "CreateMultipartUploadRequest$SSEKMSKeyId": "Specifies the AWS KMS key ID to use for object encryption. All GET and PUT requests for an object protected by AWS KMS will fail if not made via SSL or using SigV4. Documentation on configuring any of the officially supported AWS SDKs and CLI can be found at http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingAWSSDK.html#specify-signature-version",
+        "Encryption$KMSKeyId": "If the encryption type is aws:kms, this optional value specifies the AWS KMS key ID to use for encryption of job results.",
         "GetObjectOutput$SSEKMSKeyId": "If present, specifies the ID of the AWS Key Management Service (KMS) master encryption key that was used for the object.",
         "HeadObjectOutput$SSEKMSKeyId": "If present, specifies the ID of the AWS Key Management Service (KMS) master encryption key that was used for the object.",
         "PutObjectOutput$SSEKMSKeyId": "If present, specifies the ID of the AWS Key Management Service (KMS) master encryption key that was used for the object.",
         "PutObjectRequest$SSEKMSKeyId": "Specifies the AWS KMS key ID to use for object encryption. All GET and PUT requests for an object protected by AWS KMS will fail if not made via SSL or using SigV4. Documentation on configuring any of the officially supported AWS SDKs and CLI can be found at http://docs.aws.amazon.com/AmazonS3/latest/dev/UsingAWSSDK.html#specify-signature-version",
+        "SSEKMS$KeyId": "Specifies the ID of the AWS Key Management Service (KMS) master encryption key to use for encrypting Inventory reports.",
+        "ServerSideEncryptionByDefault$KMSMasterKeyID": "KMS master key ID to use for the default encryption. This parameter is allowed if SSEAlgorithm is aws:kms.",
         "UploadPartCopyOutput$SSEKMSKeyId": "If present, specifies the ID of the AWS Key Management Service (KMS) master encryption key that was used for the object.",
         "UploadPartOutput$SSEKMSKeyId": "If present, specifies the ID of the AWS Key Management Service (KMS) master encryption key that was used for the object."
+      }
+    },
+    "SSES3": {
+      "base": "Specifies the use of SSE-S3 to encrypt delievered Inventory reports.",
+      "refs": {
+        "InventoryEncryption$SSES3": "Specifies the use of SSE-S3 to encrypt delievered Inventory reports."
+      }
+    },
+    "SelectParameters": {
+      "base": "Describes the parameters for Select job types.",
+      "refs": {
+        "RestoreRequest$SelectParameters": "Describes the parameters for Select job types."
       }
     },
     "ServerSideEncryption": {
@@ -2614,12 +2840,39 @@
         "CopyObjectRequest$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
         "CreateMultipartUploadOutput$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
         "CreateMultipartUploadRequest$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
+        "Encryption$EncryptionType": "The server-side encryption algorithm used when storing job results in Amazon S3 (e.g., AES256, aws:kms).",
         "GetObjectOutput$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
         "HeadObjectOutput$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
         "PutObjectOutput$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
         "PutObjectRequest$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
+        "ServerSideEncryptionByDefault$SSEAlgorithm": "Server-side encryption algorithm to use for the default encryption.",
         "UploadPartCopyOutput$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms).",
         "UploadPartOutput$ServerSideEncryption": "The Server-side encryption algorithm used when storing this object in S3 (e.g., AES256, aws:kms)."
+      }
+    },
+    "ServerSideEncryptionByDefault": {
+      "base": "Describes the default server-side encryption to apply to new objects in the bucket. If Put Object request does not specify any server-side encryption, this default encryption will be applied.",
+      "refs": {
+        "ServerSideEncryptionRule$ApplyServerSideEncryptionByDefault": "Describes the default server-side encryption to apply to new objects in the bucket. If Put Object request does not specify any server-side encryption, this default encryption will be applied."
+      }
+    },
+    "ServerSideEncryptionConfiguration": {
+      "base": "Container for server-side encryption configuration rules. Currently S3 supports one rule only.",
+      "refs": {
+        "GetBucketEncryptionOutput$ServerSideEncryptionConfiguration": null,
+        "PutBucketEncryptionRequest$ServerSideEncryptionConfiguration": null
+      }
+    },
+    "ServerSideEncryptionRule": {
+      "base": "Container for information about a particular server-side encryption configuration rule.",
+      "refs": {
+        "ServerSideEncryptionRules$member": null
+      }
+    },
+    "ServerSideEncryptionRules": {
+      "base": null,
+      "refs": {
+        "ServerSideEncryptionConfiguration$Rules": "Container for information about a particular server-side encryption configuration rule."
       }
     },
     "Size": {
@@ -2628,6 +2881,24 @@
         "Object$Size": null,
         "ObjectVersion$Size": "Size in bytes of the object.",
         "Part$Size": "Size of the uploaded part data."
+      }
+    },
+    "SourceSelectionCriteria": {
+      "base": "Container for filters that define which source objects should be replicated.",
+      "refs": {
+        "ReplicationRule$SourceSelectionCriteria": "Container for filters that define which source objects should be replicated."
+      }
+    },
+    "SseKmsEncryptedObjects": {
+      "base": "Container for filter information of selection of KMS Encrypted S3 objects.",
+      "refs": {
+        "SourceSelectionCriteria$SseKmsEncryptedObjects": "Container for filter information of selection of KMS Encrypted S3 objects."
+      }
+    },
+    "SseKmsEncryptedObjectsStatus": {
+      "base": null,
+      "refs": {
+        "SseKmsEncryptedObjects$Status": "The replication for KMS encrypted S3 objects is disabled if status is not Enabled."
       }
     },
     "StartAfter": {
@@ -2647,7 +2918,8 @@
         "HeadObjectOutput$StorageClass": null,
         "ListPartsOutput$StorageClass": "The class of storage used to store the object.",
         "MultipartUpload$StorageClass": "The class of storage used to store the object.",
-        "PutObjectRequest$StorageClass": "The type of storage to use for the object. Defaults to 'STANDARD'."
+        "PutObjectRequest$StorageClass": "The type of storage to use for the object. Defaults to 'STANDARD'.",
+        "S3Location$StorageClass": "The class of storage used to store the restore results."
       }
     },
     "StorageClassAnalysis": {
@@ -2704,7 +2976,8 @@
       "base": null,
       "refs": {
         "PutBucketTaggingRequest$Tagging": null,
-        "PutObjectTaggingRequest$Tagging": null
+        "PutObjectTaggingRequest$Tagging": null,
+        "S3Location$Tagging": "The tag-set that is applied to the restore results."
       }
     },
     "TaggingDirective": {
@@ -2748,7 +3021,8 @@
     "Tier": {
       "base": null,
       "refs": {
-        "GlacierJobParameters$Tier": "Glacier retrieval tier at which the restore will be processed."
+        "GlacierJobParameters$Tier": "Glacier retrieval tier at which the restore will be processed.",
+        "RestoreRequest$Tier": "Glacier retrieval tier at which the restore will be processed."
       }
     },
     "Token": {
@@ -2846,6 +3120,12 @@
     "UploadPartRequest": {
       "base": null,
       "refs": {
+      }
+    },
+    "UserMetadata": {
+      "base": null,
+      "refs": {
+        "S3Location$UserMetadata": "A list of metadata to store with the restore results in S3."
       }
     },
     "Value": {

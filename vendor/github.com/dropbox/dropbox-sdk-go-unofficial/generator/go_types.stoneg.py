@@ -4,6 +4,7 @@ import shutil
 from stone.backend import CodeBackend
 from stone.ir import (
     is_boolean_type,
+    is_list_type,
     is_nullable_type,
     is_primitive_type,
     is_struct_type,
@@ -16,6 +17,8 @@ from go_helpers import (
     fmt_type,
     fmt_var,
     generate_doc,
+    needs_base_type,
+    _needs_base_type
 )
 
 
@@ -26,10 +29,6 @@ class GoTypesBackend(CodeBackend):
                     self.target_folder_path)
         for namespace in api.namespaces.values():
             self._generate_namespace(namespace)
-            if namespace.name == 'files' or namespace.name == 'sharing':
-                self.logger.info('Copying metadata.go to files')
-                shutil.copy(os.path.join(rsrc_folder, namespace.name, 'metadata.go'),
-                            os.path.join(self.target_folder_path, namespace.name))
 
     def _generate_namespace(self, namespace):
         file_name = os.path.join(self.target_folder_path, namespace.name,
@@ -90,6 +89,39 @@ class GoTypesBackend(CodeBackend):
                 self.emit('// ExtraHeaders can be used to pass Range, If-None-Match headers')
                 self.emit('ExtraHeaders map[string]string `json:"-"`')
         self._generate_struct_builder(struct)
+        self.emit()
+        if needs_base_type(struct):
+            self.emit('// UnmarshalJSON deserializes into a %s instance' % struct.name)
+            with self.block('func (u *%s) UnmarshalJSON(b []byte) error' % struct.name):
+                with self.block('type wrap struct'):
+                    for field in struct.all_fields:
+                        self._generate_field(field, namespace=struct.namespace,
+                                             raw=_needs_base_type(field.data_type))
+                self.emit('var w wrap')
+                with self.block('if err := json.Unmarshal(b, &w); err != nil'):
+                    self.emit('return err')
+                for field in struct.all_fields:
+                    dt = field.data_type
+                    fn = fmt_var(field.name)
+                    tn = fmt_type(dt, namespace=struct.namespace, use_interface=True)
+                    if _needs_base_type(dt):
+                        if is_list_type(dt):
+                            self.emit("u.{0} = make({1}, len(w.{0}))".format(fn, tn))
+                            # Grab the underlying type to get the correct Is...FromJSON method
+                            tn = fmt_type(dt.data_type, namespace=struct.namespace, use_interface=True)
+                            with self.block("for i, e := range w.{0}".format(fn)):
+                                self.emit("v, err := {1}FromJSON(e)".format(fn, tn))
+                                with self.block('if err != nil'):
+                                    self.emit('return err')
+                                self.emit("u.{0}[i] = v".format(fn))
+                        else:
+                            self.emit("{0}, err := {1}FromJSON(w.{0})".format(fn, tn))
+                            with self.block('if err != nil'):
+                                self.emit('return err')
+                            self.emit("u.{0} = {0}".format(fn))
+                    else:
+                        self.emit("u.{0} = w.{0}".format(fn))
+                self.emit('return nil')
 
     def _generate_struct_builder(self, struct):
         fields = ["%s %s" % (fmt_var(field.name),
@@ -122,14 +154,11 @@ class GoTypesBackend(CodeBackend):
     def _generate_field(self, field, union_field=False, namespace=None, raw=False):
         generate_doc(self, field)
         field_name = fmt_var(field.name)
-        type_name = fmt_type(field.data_type, namespace, use_interface=True)
+        type_name = fmt_type(field.data_type, namespace, use_interface=True, raw=raw)
         json_tag = '`json:"%s"`' % field.name
         if is_nullable_type(field.data_type) or union_field:
             json_tag = '`json:"%s,omitempty"`' % field.name
-        if raw:
-            self.emit('%s json.RawMessage %s' % (field_name, json_tag))
-        else:
-            self.emit('%s %s %s' % (field_name, type_name, json_tag))
+        self.emit('%s %s %s' % (field_name, type_name, json_tag))
 
     def _generate_union(self, union):
         self._generate_union_helper(union)
@@ -187,8 +216,7 @@ class GoTypesBackend(CodeBackend):
                         if is_union_type(field.data_type):
                             self.emit('err = json.Unmarshal(w.{0}, &u.{0})'
                                             .format(field_name))
-                        elif is_struct_type(field.data_type) and \
-                            field.data_type.has_enumerated_subtypes():
+                        elif _needs_base_type(field.data_type):
                             self.emit("u.{0}, err = Is{1}FromJSON(body)"
                                       .format(field_name, field.data_type.name))
                         else:

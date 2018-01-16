@@ -10,13 +10,13 @@ import (
 
 func checkOmit(t *testing.T, found, unexpected string) {
 	if strings.Contains(found, unexpected) {
-		t.Errorf("Unexpected response.\nGot: %q\nBut should not have!\n", unexpected)
+		t.Errorf("Got: %q\nBut should not have!\n", unexpected)
 	}
 }
 
 func check(t *testing.T, found, expected string) {
 	if !strings.Contains(found, expected) {
-		t.Errorf("Unexpected response.\nExpecting to contain: \n %q\nGot:\n %q\n", expected, found)
+		t.Errorf("Expecting to contain: \n %q\nGot:\n %q\n", expected, found)
 	}
 }
 
@@ -33,162 +33,164 @@ func runShellCheck(s string) error {
 		return err
 	}
 	go func() {
-		defer stdin.Close()
 		stdin.Write([]byte(s))
+		stdin.Close()
 	}()
 
 	return cmd.Run()
 }
 
 // World worst custom function, just keep telling you to enter hello!
-const (
-	bashCompletionFunc = `__custom_func() {
-COMPREPLY=( "hello" )
+const bashCompletionFunc = `__custom_func() {
+	COMPREPLY=( "hello" )
 }
 `
-)
 
 func TestBashCompletions(t *testing.T) {
-	c := initializeWithRootCmd()
-	cmdEcho.AddCommand(cmdTimes)
-	c.AddCommand(cmdEcho, cmdPrint, cmdDeprecated, cmdColon)
+	rootCmd := &Command{
+		Use:                    "root",
+		ArgAliases:             []string{"pods", "nodes", "services", "replicationcontrollers", "po", "no", "svc", "rc"},
+		ValidArgs:              []string{"pod", "node", "service", "replicationcontroller"},
+		BashCompletionFunction: bashCompletionFunc,
+		Run: emptyRun,
+	}
+	rootCmd.Flags().IntP("introot", "i", -1, "help message for flag introot")
+	rootCmd.MarkFlagRequired("introot")
 
-	// custom completion function
-	c.BashCompletionFunction = bashCompletionFunc
+	// Filename.
+	rootCmd.Flags().String("filename", "", "Enter a filename")
+	rootCmd.MarkFlagFilename("filename", "json", "yaml", "yml")
 
-	// required flag
-	c.MarkFlagRequired("introot")
+	// Persistent filename.
+	rootCmd.PersistentFlags().String("persistent-filename", "", "Enter a filename")
+	rootCmd.MarkPersistentFlagFilename("persistent-filename")
+	rootCmd.MarkPersistentFlagRequired("persistent-filename")
 
-	// valid nouns
-	validArgs := []string{"pod", "node", "service", "replicationcontroller"}
-	c.ValidArgs = validArgs
+	// Filename extensions.
+	rootCmd.Flags().String("filename-ext", "", "Enter a filename (extension limited)")
+	rootCmd.MarkFlagFilename("filename-ext")
+	rootCmd.Flags().String("custom", "", "Enter a filename (extension limited)")
+	rootCmd.MarkFlagCustom("custom", "__complete_custom")
 
-	// noun aliases
-	argAliases := []string{"pods", "nodes", "services", "replicationcontrollers", "po", "no", "svc", "rc"}
-	c.ArgAliases = argAliases
+	// Subdirectories in a given directory.
+	rootCmd.Flags().String("theme", "", "theme to use (located in /themes/THEMENAME/)")
+	rootCmd.Flags().SetAnnotation("theme", BashCompSubdirsInDir, []string{"themes"})
 
-	// filename
-	var flagval string
-	c.Flags().StringVar(&flagval, "filename", "", "Enter a filename")
-	c.MarkFlagFilename("filename", "json", "yaml", "yml")
+	echoCmd := &Command{
+		Use:     "echo [string to echo]",
+		Aliases: []string{"say"},
+		Short:   "Echo anything to the screen",
+		Long:    "an utterly useless command for testing.",
+		Example: "Just run cobra-test echo",
+		Run:     emptyRun,
+	}
 
-	// persistent filename
-	var flagvalPersistent string
-	c.PersistentFlags().StringVar(&flagvalPersistent, "persistent-filename", "", "Enter a filename")
-	c.MarkPersistentFlagFilename("persistent-filename")
-	c.MarkPersistentFlagRequired("persistent-filename")
+	printCmd := &Command{
+		Use:   "print [string to print]",
+		Args:  MinimumNArgs(1),
+		Short: "Print anything to the screen",
+		Long:  "an absolutely utterly useless command for testing.",
+		Run:   emptyRun,
+	}
 
-	// filename extensions
-	var flagvalExt string
-	c.Flags().StringVar(&flagvalExt, "filename-ext", "", "Enter a filename (extension limited)")
-	c.MarkFlagFilename("filename-ext")
+	deprecatedCmd := &Command{
+		Use:        "deprecated [can't do anything here]",
+		Args:       NoArgs,
+		Short:      "A command which is deprecated",
+		Long:       "an absolutely utterly useless command for testing deprecation!.",
+		Deprecated: "Please use echo instead",
+		Run:        emptyRun,
+	}
 
-	// filename extensions
-	var flagvalCustom string
-	c.Flags().StringVar(&flagvalCustom, "custom", "", "Enter a filename (extension limited)")
-	c.MarkFlagCustom("custom", "__complete_custom")
+	colonCmd := &Command{
+		Use: "cmd:colon",
+		Run: emptyRun,
+	}
 
-	// subdirectories in a given directory
-	var flagvalTheme string
-	c.Flags().StringVar(&flagvalTheme, "theme", "", "theme to use (located in /themes/THEMENAME/)")
-	c.Flags().SetAnnotation("theme", BashCompSubdirsInDir, []string{"themes"})
+	timesCmd := &Command{
+		Use:        "times [# times] [string to echo]",
+		SuggestFor: []string{"counts"},
+		Args:       OnlyValidArgs,
+		ValidArgs:  []string{"one", "two", "three", "four"},
+		Short:      "Echo anything to the screen more times",
+		Long:       "a slightly useless command for testing.",
+		Run:        emptyRun,
+	}
 
-	out := new(bytes.Buffer)
-	c.GenBashCompletion(out)
-	str := out.String()
+	echoCmd.AddCommand(timesCmd)
+	rootCmd.AddCommand(echoCmd, printCmd, deprecatedCmd, colonCmd)
 
-	check(t, str, "_cobra-test")
-	check(t, str, "_cobra-test_echo")
-	check(t, str, "_cobra-test_echo_times")
-	check(t, str, "_cobra-test_print")
-	check(t, str, "_cobra-test_cmd__colon")
+	buf := new(bytes.Buffer)
+	rootCmd.GenBashCompletion(buf)
+	output := buf.String()
+
+	check(t, output, "_root")
+	check(t, output, "_root_echo")
+	check(t, output, "_root_echo_times")
+	check(t, output, "_root_print")
+	check(t, output, "_root_cmd__colon")
 
 	// check for required flags
-	check(t, str, `must_have_one_flag+=("--introot=")`)
-	check(t, str, `must_have_one_flag+=("--persistent-filename=")`)
+	check(t, output, `must_have_one_flag+=("--introot=")`)
+	check(t, output, `must_have_one_flag+=("--persistent-filename=")`)
 	// check for custom completion function
-	check(t, str, `COMPREPLY=( "hello" )`)
+	check(t, output, `COMPREPLY=( "hello" )`)
 	// check for required nouns
-	check(t, str, `must_have_one_noun+=("pod")`)
+	check(t, output, `must_have_one_noun+=("pod")`)
 	// check for noun aliases
-	check(t, str, `noun_aliases+=("pods")`)
-	check(t, str, `noun_aliases+=("rc")`)
-	checkOmit(t, str, `must_have_one_noun+=("pods")`)
+	check(t, output, `noun_aliases+=("pods")`)
+	check(t, output, `noun_aliases+=("rc")`)
+	checkOmit(t, output, `must_have_one_noun+=("pods")`)
 	// check for filename extension flags
-	check(t, str, `flags_completion+=("_filedir")`)
+	check(t, output, `flags_completion+=("_filedir")`)
 	// check for filename extension flags
-	check(t, str, `must_have_one_noun+=("three")`)
+	check(t, output, `must_have_one_noun+=("three")`)
 	// check for filename extension flags
-	check(t, str, `flags_completion+=("__handle_filename_extension_flag json|yaml|yml")`)
+	check(t, output, `flags_completion+=("__handle_filename_extension_flag json|yaml|yml")`)
 	// check for custom flags
-	check(t, str, `flags_completion+=("__complete_custom")`)
+	check(t, output, `flags_completion+=("__complete_custom")`)
 	// check for subdirs_in_dir flags
-	check(t, str, `flags_completion+=("__handle_subdirs_in_dir_flag themes")`)
+	check(t, output, `flags_completion+=("__handle_subdirs_in_dir_flag themes")`)
 
-	checkOmit(t, str, cmdDeprecated.Name())
+	checkOmit(t, output, deprecatedCmd.Name())
 
-	// if available, run shellcheck against the script
+	// If available, run shellcheck against the script.
 	if err := exec.Command("which", "shellcheck").Run(); err != nil {
 		return
 	}
-	err := runShellCheck(str)
-	if err != nil {
+	if err := runShellCheck(output); err != nil {
 		t.Fatalf("shellcheck failed: %v", err)
 	}
 }
 
 func TestBashCompletionHiddenFlag(t *testing.T) {
-	var cmdTrue = &Command{
-		Use: "does nothing",
-		Run: func(cmd *Command, args []string) {},
-	}
+	c := &Command{Use: "c", Run: emptyRun}
 
-	const flagName = "hidden-foo-bar-baz"
+	const flagName = "hiddenFlag"
+	c.Flags().Bool(flagName, false, "")
+	c.Flags().MarkHidden(flagName)
 
-	var flagValue bool
-	cmdTrue.Flags().BoolVar(&flagValue, flagName, false, "hidden flag")
-	cmdTrue.Flags().MarkHidden(flagName)
+	buf := new(bytes.Buffer)
+	c.GenBashCompletion(buf)
+	output := buf.String()
 
-	out := new(bytes.Buffer)
-	cmdTrue.GenBashCompletion(out)
-	bashCompletion := out.String()
-	if strings.Contains(bashCompletion, flagName) {
-		t.Errorf("expected completion to not include %q flag: Got %v", flagName, bashCompletion)
+	if strings.Contains(output, flagName) {
+		t.Errorf("Expected completion to not include %q flag: Got %v", flagName, output)
 	}
 }
 
 func TestBashCompletionDeprecatedFlag(t *testing.T) {
-	var cmdTrue = &Command{
-		Use: "does nothing",
-		Run: func(cmd *Command, args []string) {},
-	}
+	c := &Command{Use: "c", Run: emptyRun}
 
-	const flagName = "deprecated-foo-bar-baz"
-
-	var flagValue bool
-	cmdTrue.Flags().BoolVar(&flagValue, flagName, false, "hidden flag")
-	cmdTrue.Flags().MarkDeprecated(flagName, "use --does-not-exist instead")
-
-	out := new(bytes.Buffer)
-	cmdTrue.GenBashCompletion(out)
-	bashCompletion := out.String()
-	if strings.Contains(bashCompletion, flagName) {
-		t.Errorf("expected completion to not include %q flag: Got %v", flagName, bashCompletion)
-	}
-}
-
-func BenchmarkBashCompletion(b *testing.B) {
-	c := initializeWithRootCmd()
-	cmdEcho.AddCommand(cmdTimes)
-	c.AddCommand(cmdEcho, cmdPrint, cmdDeprecated, cmdColon)
+	const flagName = "deprecated-flag"
+	c.Flags().Bool(flagName, false, "")
+	c.Flags().MarkDeprecated(flagName, "use --not-deprecated instead")
 
 	buf := new(bytes.Buffer)
+	c.GenBashCompletion(buf)
+	output := buf.String()
 
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		buf.Reset()
-		if err := c.GenBashCompletion(buf); err != nil {
-			b.Fatal(err)
-		}
+	if strings.Contains(output, flagName) {
+		t.Errorf("expected completion to not include %q flag: Got %v", flagName, output)
 	}
 }

@@ -30,11 +30,6 @@ type hasHandle interface {
 	getHandle() string
 }
 
-type isOpener interface {
-	hasPath
-	isOpener()
-}
-
 type notReadOnly interface {
 	notReadOnly()
 }
@@ -52,12 +47,10 @@ func (p sshFxpStatvfsPacket) getPath() string  { return p.Path }
 func (p sshFxpRemovePacket) getPath() string   { return p.Filename }
 func (p sshFxpRenamePacket) getPath() string   { return p.Oldpath }
 func (p sshFxpSymlinkPacket) getPath() string  { return p.Targetpath }
+func (p sshFxpOpendirPacket) getPath() string  { return p.Path }
+func (p sshFxpOpenPacket) getPath() string     { return p.Path }
 
-// Openers implement hasPath and isOpener
-func (p sshFxpOpendirPacket) getPath() string { return p.Path }
-func (p sshFxpOpendirPacket) isOpener()       {}
-func (p sshFxpOpenPacket) getPath() string    { return p.Path }
-func (p sshFxpOpenPacket) isOpener()          {}
+func (p sshFxpExtendedPacketPosixRename) getPath() string { return p.Oldpath }
 
 // hasHandle
 func (p sshFxpFstatPacket) getHandle() string    { return p.Handle }
@@ -67,14 +60,15 @@ func (p sshFxpWritePacket) getHandle() string    { return p.Handle }
 func (p sshFxpReaddirPacket) getHandle() string  { return p.Handle }
 
 // notReadOnly
-func (p sshFxpWritePacket) notReadOnly()    {}
-func (p sshFxpSetstatPacket) notReadOnly()  {}
-func (p sshFxpFsetstatPacket) notReadOnly() {}
-func (p sshFxpRemovePacket) notReadOnly()   {}
-func (p sshFxpMkdirPacket) notReadOnly()    {}
-func (p sshFxpRmdirPacket) notReadOnly()    {}
-func (p sshFxpRenamePacket) notReadOnly()   {}
-func (p sshFxpSymlinkPacket) notReadOnly()  {}
+func (p sshFxpWritePacket) notReadOnly()               {}
+func (p sshFxpSetstatPacket) notReadOnly()             {}
+func (p sshFxpFsetstatPacket) notReadOnly()            {}
+func (p sshFxpRemovePacket) notReadOnly()              {}
+func (p sshFxpMkdirPacket) notReadOnly()               {}
+func (p sshFxpRmdirPacket) notReadOnly()               {}
+func (p sshFxpRenamePacket) notReadOnly()              {}
+func (p sshFxpSymlinkPacket) notReadOnly()             {}
+func (p sshFxpExtendedPacketPosixRename) notReadOnly() {}
 
 // this has a handle, but is only used for close
 func (p sshFxpClosePacket) getHandle() string { return p.Handle }

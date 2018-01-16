@@ -11,5 +11,7 @@ before_install:
 - sudo $TRAVIS_BUILD_DIR/.travis/prepare.sh "$FTP_SERVER"
 - sudo sysctl net.ipv6.conf.lo.disable_ipv6=0
 - go get github.com/mattn/goveralls
+- go get github.com/golang/lint/golint
 script:
 - goveralls -v
+- golint -set_exit_status $(go list ./...)

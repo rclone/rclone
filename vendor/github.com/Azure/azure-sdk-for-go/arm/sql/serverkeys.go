@@ -113,6 +113,7 @@ func (client ServerKeysClient) CreateOrUpdatePreparer(resourceGroupName string, 
 func (client ServerKeysClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -197,6 +198,7 @@ func (client ServerKeysClient) DeletePreparer(resourceGroupName string, serverNa
 func (client ServerKeysClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -264,7 +266,9 @@ func (client ServerKeysClient) GetPreparer(resourceGroupName string, serverName 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerKeysClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -330,7 +334,9 @@ func (client ServerKeysClient) ListByServerPreparer(resourceGroupName string, se
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServerKeysClient) ListByServerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByServerResponder handles the response to the ListByServer request. The method always

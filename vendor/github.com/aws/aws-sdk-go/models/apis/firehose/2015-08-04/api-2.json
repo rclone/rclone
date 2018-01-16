@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"Firehose",
     "serviceFullName":"Amazon Kinesis Firehose",
+    "serviceId":"Firehose",
     "signatureVersion":"v4",
     "targetPrefix":"Firehose_20150804",
     "uid":"firehose-2015-08-04"
@@ -50,21 +51,6 @@
       "errors":[
         {"shape":"ResourceNotFoundException"}
       ]
-    },
-    "GetKinesisStream":{
-      "name":"GetKinesisStream",
-      "http":{
-        "method":"POST",
-        "requestUri":"/"
-      },
-      "input":{"shape":"GetKinesisStreamInput"},
-      "output":{"shape":"GetKinesisStreamOutput"},
-      "errors":[
-        {"shape":"ResourceNotFoundException"},
-        {"shape":"InvalidArgumentException"},
-        {"shape":"InvalidStreamTypeException"}
-      ],
-      "internalonly":true
     },
     "ListDeliveryStreams":{
       "name":"ListDeliveryStreams",
@@ -126,7 +112,6 @@
       "min":1,
       "pattern":"arn:.*"
     },
-    "AccessKeyId":{"type":"string"},
     "BooleanObject":{"type":"boolean"},
     "BucketARN":{
       "type":"string",
@@ -193,7 +178,8 @@
         },
         "ExtendedS3DestinationConfiguration":{"shape":"ExtendedS3DestinationConfiguration"},
         "RedshiftDestinationConfiguration":{"shape":"RedshiftDestinationConfiguration"},
-        "ElasticsearchDestinationConfiguration":{"shape":"ElasticsearchDestinationConfiguration"}
+        "ElasticsearchDestinationConfiguration":{"shape":"ElasticsearchDestinationConfiguration"},
+        "SplunkDestinationConfiguration":{"shape":"SplunkDestinationConfiguration"}
       }
     },
     "CreateDeliveryStreamOutput":{
@@ -315,7 +301,8 @@
         "S3DestinationDescription":{"shape":"S3DestinationDescription"},
         "ExtendedS3DestinationDescription":{"shape":"ExtendedS3DestinationDescription"},
         "RedshiftDestinationDescription":{"shape":"RedshiftDestinationDescription"},
-        "ElasticsearchDestinationDescription":{"shape":"ElasticsearchDestinationDescription"}
+        "ElasticsearchDestinationDescription":{"shape":"ElasticsearchDestinationDescription"},
+        "SplunkDestinationDescription":{"shape":"SplunkDestinationDescription"}
       }
     },
     "DestinationDescriptionList":{
@@ -507,21 +494,20 @@
         "S3BackupUpdate":{"shape":"S3DestinationUpdate"}
       }
     },
-    "FirehoseSource":{"type":"string"},
-    "GetKinesisStreamInput":{
-      "type":"structure",
-      "required":["DeliveryStreamARN"],
-      "members":{
-        "DeliveryStreamARN":{"shape":"DeliveryStreamARN"}
-      }
+    "HECAcknowledgmentTimeoutInSeconds":{
+      "type":"integer",
+      "max":600,
+      "min":180
     },
-    "GetKinesisStreamOutput":{
-      "type":"structure",
-      "members":{
-        "KinesisStreamARN":{"shape":"KinesisStreamARN"},
-        "CredentialsForReadingKinesisStream":{"shape":"SessionCredentials"}
-      }
+    "HECEndpoint":{"type":"string"},
+    "HECEndpointType":{
+      "type":"string",
+      "enum":[
+        "Raw",
+        "Event"
+      ]
     },
+    "HECToken":{"type":"string"},
     "IntervalInSeconds":{
       "type":"integer",
       "max":900,
@@ -531,14 +517,6 @@
       "type":"structure",
       "members":{
         "message":{"shape":"ErrorMessage"}
-      },
-      "exception":true
-    },
-    "InvalidStreamTypeException":{
-      "type":"structure",
-      "members":{
-        "message":{"shape":"ErrorMessage"},
-        "source":{"shape":"FirehoseSource"}
       },
       "exception":true
     },
@@ -659,7 +637,10 @@
       "type":"string",
       "enum":[
         "LambdaArn",
-        "NumberOfRetries"
+        "NumberOfRetries",
+        "RoleArn",
+        "BufferSizeInMBs",
+        "BufferIntervalInSeconds"
       ]
     },
     "ProcessorParameterValue":{
@@ -896,7 +877,6 @@
         "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"}
       }
     },
-    "SecretAccessKey":{"type":"string"},
     "ServiceUnavailableException":{
       "type":"structure",
       "members":{
@@ -905,22 +885,6 @@
       "exception":true,
       "fault":true
     },
-    "SessionCredentials":{
-      "type":"structure",
-      "required":[
-        "AccessKeyId",
-        "SecretAccessKey",
-        "SessionToken",
-        "Expiration"
-      ],
-      "members":{
-        "AccessKeyId":{"shape":"AccessKeyId"},
-        "SecretAccessKey":{"shape":"SecretAccessKey"},
-        "SessionToken":{"shape":"SessionToken"},
-        "Expiration":{"shape":"Timestamp"}
-      }
-    },
-    "SessionToken":{"type":"string"},
     "SizeInMBs":{
       "type":"integer",
       "max":128,
@@ -931,6 +895,72 @@
       "members":{
         "KinesisStreamSourceDescription":{"shape":"KinesisStreamSourceDescription"}
       }
+    },
+    "SplunkDestinationConfiguration":{
+      "type":"structure",
+      "required":[
+        "HECEndpoint",
+        "HECEndpointType",
+        "HECToken",
+        "S3Configuration"
+      ],
+      "members":{
+        "HECEndpoint":{"shape":"HECEndpoint"},
+        "HECEndpointType":{"shape":"HECEndpointType"},
+        "HECToken":{"shape":"HECToken"},
+        "HECAcknowledgmentTimeoutInSeconds":{"shape":"HECAcknowledgmentTimeoutInSeconds"},
+        "RetryOptions":{"shape":"SplunkRetryOptions"},
+        "S3BackupMode":{"shape":"SplunkS3BackupMode"},
+        "S3Configuration":{"shape":"S3DestinationConfiguration"},
+        "ProcessingConfiguration":{"shape":"ProcessingConfiguration"},
+        "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"}
+      }
+    },
+    "SplunkDestinationDescription":{
+      "type":"structure",
+      "members":{
+        "HECEndpoint":{"shape":"HECEndpoint"},
+        "HECEndpointType":{"shape":"HECEndpointType"},
+        "HECToken":{"shape":"HECToken"},
+        "HECAcknowledgmentTimeoutInSeconds":{"shape":"HECAcknowledgmentTimeoutInSeconds"},
+        "RetryOptions":{"shape":"SplunkRetryOptions"},
+        "S3BackupMode":{"shape":"SplunkS3BackupMode"},
+        "S3DestinationDescription":{"shape":"S3DestinationDescription"},
+        "ProcessingConfiguration":{"shape":"ProcessingConfiguration"},
+        "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"}
+      }
+    },
+    "SplunkDestinationUpdate":{
+      "type":"structure",
+      "members":{
+        "HECEndpoint":{"shape":"HECEndpoint"},
+        "HECEndpointType":{"shape":"HECEndpointType"},
+        "HECToken":{"shape":"HECToken"},
+        "HECAcknowledgmentTimeoutInSeconds":{"shape":"HECAcknowledgmentTimeoutInSeconds"},
+        "RetryOptions":{"shape":"SplunkRetryOptions"},
+        "S3BackupMode":{"shape":"SplunkS3BackupMode"},
+        "S3Update":{"shape":"S3DestinationUpdate"},
+        "ProcessingConfiguration":{"shape":"ProcessingConfiguration"},
+        "CloudWatchLoggingOptions":{"shape":"CloudWatchLoggingOptions"}
+      }
+    },
+    "SplunkRetryDurationInSeconds":{
+      "type":"integer",
+      "max":7200,
+      "min":0
+    },
+    "SplunkRetryOptions":{
+      "type":"structure",
+      "members":{
+        "DurationInSeconds":{"shape":"SplunkRetryDurationInSeconds"}
+      }
+    },
+    "SplunkS3BackupMode":{
+      "type":"string",
+      "enum":[
+        "FailedEventsOnly",
+        "AllEvents"
+      ]
     },
     "Timestamp":{"type":"timestamp"},
     "UpdateDestinationInput":{
@@ -950,7 +980,8 @@
         },
         "ExtendedS3DestinationUpdate":{"shape":"ExtendedS3DestinationUpdate"},
         "RedshiftDestinationUpdate":{"shape":"RedshiftDestinationUpdate"},
-        "ElasticsearchDestinationUpdate":{"shape":"ElasticsearchDestinationUpdate"}
+        "ElasticsearchDestinationUpdate":{"shape":"ElasticsearchDestinationUpdate"},
+        "SplunkDestinationUpdate":{"shape":"SplunkDestinationUpdate"}
       }
     },
     "UpdateDestinationOutput":{

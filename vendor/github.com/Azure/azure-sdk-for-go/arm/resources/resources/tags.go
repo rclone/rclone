@@ -87,7 +87,9 @@ func (client TagsClient) CreateOrUpdatePreparer(tagName string) (*http.Request, 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client TagsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -152,7 +154,9 @@ func (client TagsClient) CreateOrUpdateValuePreparer(tagName string, tagValue st
 // CreateOrUpdateValueSender sends the CreateOrUpdateValue request. The method will close the
 // http.Response Body if it receives an error.
 func (client TagsClient) CreateOrUpdateValueSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateValueResponder handles the response to the CreateOrUpdateValue request. The method always
@@ -216,7 +220,9 @@ func (client TagsClient) DeletePreparer(tagName string) (*http.Request, error) {
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client TagsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -280,7 +286,9 @@ func (client TagsClient) DeleteValuePreparer(tagName string, tagValue string) (*
 // DeleteValueSender sends the DeleteValue request. The method will close the
 // http.Response Body if it receives an error.
 func (client TagsClient) DeleteValueSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteValueResponder handles the response to the DeleteValue request. The method always
@@ -340,7 +348,9 @@ func (client TagsClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client TagsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

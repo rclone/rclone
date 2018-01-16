@@ -2,6 +2,8 @@ tree [![Build status][travis-image]][travis-url] [![License][license-image]][lic
 ---
 > An implementation of the [`tree`](http://mama.indstate.edu/users/ice/tree/) command written in Go, that can be used  programmatically.
 
+<img src="https://raw.githubusercontent.com/a8m/tree/assets/assets/tree.png" height="300" alt="tree command">
+
 #### Installation:
 ```sh
 $ go get github.com/a8m/tree/cmd/tree

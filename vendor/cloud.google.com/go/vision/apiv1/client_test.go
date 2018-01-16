@@ -194,7 +194,7 @@ func TestAnnotateOneError(t *testing.T) {
 	_, err = c.annotateOne(ctx,
 		&pb.Image{Source: &pb.ImageSource{ImageUri: "http://foo.jpg"}},
 		nil, pb.Feature_LOGO_DETECTION, 1, nil)
-	if grpc.Code(err) != codes.NotFound {
-		t.Errorf("got %v, want NotFound")
+	if c := grpc.Code(err); c != codes.NotFound {
+		t.Errorf("got %v, want NotFound", c)
 	}
 }

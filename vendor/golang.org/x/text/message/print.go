@@ -9,6 +9,7 @@ import (
 	"fmt" // TODO: consider copying interfaces from package fmt to avoid dependency.
 	"math"
 	"reflect"
+	"sync"
 	"unicode/utf8"
 
 	"golang.org/x/text/internal/format"
@@ -37,21 +38,42 @@ const (
 	invReflectString = "<invalid reflect.Value>"
 )
 
+var printerPool = sync.Pool{
+	New: func() interface{} { return new(printer) },
+}
+
+// newPrinter allocates a new printer struct or grabs a cached one.
+func newPrinter(pp *Printer) *printer {
+	p := printerPool.Get().(*printer)
+	p.Printer = *pp
+	// TODO: cache most of the following call.
+	p.catContext = pp.cat.Context(pp.tag, p)
+
+	p.panicking = false
+	p.erroring = false
+	p.fmt.init(&p.Buffer)
+	return p
+}
+
+// free saves used printer structs in printerFree; avoids an allocation per invocation.
+func (p *printer) free() {
+	p.Buffer.Reset()
+	p.arg = nil
+	p.value = reflect.Value{}
+	printerPool.Put(p)
+}
+
 // printer is used to store a printer's state.
 // It implements "golang.org/x/text/internal/format".State.
 type printer struct {
+	Printer
+
 	// the context for looking up message translations
 	catContext *catalog.Context
-	// the language
-	tag language.Tag
 
 	// buffer for accumulating output.
 	bytes.Buffer
 
-	// retain arguments across calls.
-	args []interface{}
-	// retain current argument number across calls
-	argNum int
 	// arg holds the current item, as an interface{}.
 	arg interface{}
 	// value is used instead of arg for reflect values.
@@ -60,47 +82,31 @@ type printer struct {
 	// fmt is used to format basic items such as integers or strings.
 	fmt formatInfo
 
-	// reordered records whether the format string used argument reordering.
-	reordered bool
-	// goodArgNum records whether the most recent reordering directive was valid.
-	goodArgNum bool
 	// panicking is set by catchPanic to avoid infinite panic, recover, panic, ... recursion.
 	panicking bool
 	// erroring is set when printing an error string to guard against calling handleMethods.
 	erroring bool
-
-	toDecimal    number.Formatter
-	toScientific number.Formatter
-}
-
-func (p *printer) reset() {
-	p.Buffer.Reset()
-	p.argNum = 0
-	p.reordered = false
-	p.panicking = false
-	p.erroring = false
-	p.fmt.init(&p.Buffer)
 }
 
 // Language implements "golang.org/x/text/internal/format".State.
 func (p *printer) Language() language.Tag { return p.tag }
 
-func (p *printer) Width() (wid int, ok bool) { return p.fmt.wid, p.fmt.widPresent }
+func (p *printer) Width() (wid int, ok bool) { return p.fmt.Width, p.fmt.WidthPresent }
 
-func (p *printer) Precision() (prec int, ok bool) { return p.fmt.prec, p.fmt.precPresent }
+func (p *printer) Precision() (prec int, ok bool) { return p.fmt.Prec, p.fmt.PrecPresent }
 
 func (p *printer) Flag(b int) bool {
 	switch b {
 	case '-':
-		return p.fmt.minus
+		return p.fmt.Minus
 	case '+':
-		return p.fmt.plus || p.fmt.plusV
+		return p.fmt.Plus || p.fmt.PlusV
 	case '#':
-		return p.fmt.sharp || p.fmt.sharpV
+		return p.fmt.Sharp || p.fmt.SharpV
 	case ' ':
-		return p.fmt.space
+		return p.fmt.Space
 	case '0':
-		return p.fmt.zero
+		return p.fmt.Zero
 	}
 	return false
 }
@@ -114,28 +120,6 @@ func getField(v reflect.Value, i int) reflect.Value {
 		val = val.Elem()
 	}
 	return val
-}
-
-// tooLarge reports whether the magnitude of the integer is
-// too large to be used as a formatting width or precision.
-func tooLarge(x int) bool {
-	const max int = 1e6
-	return x > max || x < -max
-}
-
-// parsenum converts ASCII to integer.  num is 0 (and isnum is false) if no number present.
-func parsenum(s string, start, end int) (num int, isnum bool, newi int) {
-	if start >= end {
-		return 0, false, end
-	}
-	for newi = start; newi < end && '0' <= s[newi] && s[newi] <= '9'; newi++ {
-		if tooLarge(num) {
-			return 0, false, end // Overflow; crazy long number most likely.
-		}
-		num = num*10 + int(s[newi]-'0')
-		isnum = true
-	}
-	return
 }
 
 func (p *printer) unknownType(v reflect.Value) {
@@ -181,23 +165,23 @@ func (p *printer) fmtBool(v bool, verb rune) {
 // fmt0x64 formats a uint64 in hexadecimal and prefixes it with 0x or
 // not, as requested, by temporarily setting the sharp flag.
 func (p *printer) fmt0x64(v uint64, leading0x bool) {
-	sharp := p.fmt.sharp
-	p.fmt.sharp = leading0x
+	sharp := p.fmt.Sharp
+	p.fmt.Sharp = leading0x
 	p.fmt.fmt_integer(v, 16, unsigned, ldigits)
-	p.fmt.sharp = sharp
+	p.fmt.Sharp = sharp
 }
 
 // fmtInteger formats a signed or unsigned integer.
 func (p *printer) fmtInteger(v uint64, isSigned bool, verb rune) {
 	switch verb {
 	case 'v':
-		if p.fmt.sharpV && !isSigned {
+		if p.fmt.SharpV && !isSigned {
 			p.fmt0x64(v, true)
 			return
 		}
 		fallthrough
 	case 'd':
-		if p.fmt.sharp || p.fmt.sharpV {
+		if p.fmt.Sharp || p.fmt.SharpV {
 			p.fmt.fmt_integer(v, 10, isSigned, ldigits)
 		} else {
 			p.fmtDecimalInt(v, isSigned)
@@ -235,19 +219,19 @@ func (p *printer) fmtFloat(v float64, size int, verb rune) {
 		verb = 'g'
 		fallthrough
 	case 'g', 'G':
-		if p.fmt.sharp || p.fmt.sharpV {
+		if p.fmt.Sharp || p.fmt.SharpV {
 			p.fmt.fmt_float(v, size, verb, -1)
 		} else {
 			p.fmtVariableFloat(v, size)
 		}
 	case 'e', 'E':
-		if p.fmt.sharp || p.fmt.sharpV {
+		if p.fmt.Sharp || p.fmt.SharpV {
 			p.fmt.fmt_float(v, size, verb, 6)
 		} else {
 			p.fmtScientific(v, size, 6)
 		}
 	case 'f', 'F':
-		if p.fmt.sharp || p.fmt.sharpV {
+		if p.fmt.Sharp || p.fmt.SharpV {
 			p.fmt.fmt_float(v, size, verb, 6)
 		} else {
 			p.fmtDecimalFloat(v, size, 6)
@@ -259,9 +243,9 @@ func (p *printer) fmtFloat(v float64, size int, verb rune) {
 
 func (p *printer) setFlags(f *number.Formatter) {
 	f.Flags &^= number.ElideSign
-	if p.fmt.plus || p.fmt.space {
+	if p.fmt.Plus || p.fmt.Space {
 		f.Flags |= number.AlwaysSign
-		if !p.fmt.plus {
+		if !p.fmt.Plus {
 			f.Flags |= number.ElideSign
 		}
 	} else {
@@ -271,13 +255,13 @@ func (p *printer) setFlags(f *number.Formatter) {
 
 func (p *printer) updatePadding(f *number.Formatter) {
 	f.Flags &^= number.PadMask
-	if p.fmt.minus {
+	if p.fmt.Minus {
 		f.Flags |= number.PadAfterSuffix
 	} else {
 		f.Flags |= number.PadBeforePrefix
 	}
 	f.PadRune = ' '
-	f.FormatWidth = uint16(p.fmt.wid)
+	f.FormatWidth = uint16(p.fmt.Width)
 }
 
 func (p *printer) initDecimal(minFrac, maxFrac int) {
@@ -288,15 +272,15 @@ func (p *printer) initDecimal(minFrac, maxFrac int) {
 	f.MaxFractionDigits = int16(maxFrac)
 	p.setFlags(f)
 	f.PadRune = 0
-	if p.fmt.widPresent {
-		if p.fmt.zero {
-			wid := p.fmt.wid
+	if p.fmt.WidthPresent {
+		if p.fmt.Zero {
+			wid := p.fmt.Width
 			// Use significant integers for this.
 			// TODO: this is not the same as width, but so be it.
 			if f.MinFractionDigits > 0 {
 				wid -= 1 + int(f.MinFractionDigits)
 			}
-			if p.fmt.plus || p.fmt.space {
+			if p.fmt.Plus || p.fmt.Space {
 				wid--
 			}
 			if wid > 0 && wid > int(f.MinIntegerDigits) {
@@ -319,9 +303,9 @@ func (p *printer) initScientific(minFrac, maxFrac int) {
 	f.MinExponentDigits = 2
 	p.setFlags(f)
 	f.PadRune = 0
-	if p.fmt.widPresent {
+	if p.fmt.WidthPresent {
 		f.Flags &^= number.PadMask
-		if p.fmt.zero {
+		if p.fmt.Zero {
 			f.PadRune = f.Digit(0)
 			f.Flags |= number.PadAfterPrefix
 		} else {
@@ -336,13 +320,13 @@ func (p *printer) fmtDecimalInt(v uint64, isSigned bool) {
 	var d number.Decimal
 
 	f := &p.toDecimal
-	if p.fmt.precPresent {
+	if p.fmt.PrecPresent {
 		p.setFlags(f)
-		f.MinIntegerDigits = uint8(p.fmt.prec)
+		f.MinIntegerDigits = uint8(p.fmt.Prec)
 		f.MaxIntegerDigits = 0
 		f.MinFractionDigits = 0
 		f.MaxFractionDigits = 0
-		if p.fmt.widPresent {
+		if p.fmt.WidthPresent {
 			p.updatePadding(f)
 		}
 	} else {
@@ -356,8 +340,8 @@ func (p *printer) fmtDecimalInt(v uint64, isSigned bool) {
 
 func (p *printer) fmtDecimalFloat(v float64, size, prec int) {
 	var d number.Decimal
-	if p.fmt.precPresent {
-		prec = p.fmt.prec
+	if p.fmt.PrecPresent {
+		prec = p.fmt.Prec
 	}
 	p.initDecimal(prec, prec)
 	d.ConvertFloat(p.toDecimal.RoundingContext, v, size)
@@ -368,8 +352,8 @@ func (p *printer) fmtDecimalFloat(v float64, size, prec int) {
 
 func (p *printer) fmtVariableFloat(v float64, size int) {
 	prec := -1
-	if p.fmt.precPresent {
-		prec = p.fmt.prec
+	if p.fmt.PrecPresent {
+		prec = p.fmt.Prec
 	}
 	var d number.Decimal
 	p.initScientific(0, prec)
@@ -408,8 +392,8 @@ func (p *printer) fmtVariableFloat(v float64, size int) {
 
 func (p *printer) fmtScientific(v float64, size, prec int) {
 	var d number.Decimal
-	if p.fmt.precPresent {
-		prec = p.fmt.prec
+	if p.fmt.PrecPresent {
+		prec = p.fmt.Prec
 	}
 	p.initScientific(prec, prec)
 	rc := p.toScientific.RoundingContext
@@ -457,11 +441,11 @@ func (p *printer) fmtComplex(v complex128, size int, verb rune) {
 			p.WriteString("i)")
 			return
 		}
-		oldPlus := p.fmt.plus
-		p.fmt.plus = true
+		oldPlus := p.fmt.Plus
+		p.fmt.Plus = true
 		p.fmtFloat(imag(v), size/2, verb)
 		p.WriteString("i)") // TODO: use symbol?
-		p.fmt.plus = oldPlus
+		p.fmt.Plus = oldPlus
 	default:
 		p.badVerb(verb)
 	}
@@ -470,7 +454,7 @@ func (p *printer) fmtComplex(v complex128, size int, verb rune) {
 func (p *printer) fmtString(v string, verb rune) {
 	switch verb {
 	case 'v':
-		if p.fmt.sharpV {
+		if p.fmt.SharpV {
 			p.fmt.fmt_q(v)
 		} else {
 			p.fmt.fmt_s(v)
@@ -491,7 +475,7 @@ func (p *printer) fmtString(v string, verb rune) {
 func (p *printer) fmtBytes(v []byte, verb rune, typeString string) {
 	switch verb {
 	case 'v', 'd':
-		if p.fmt.sharpV {
+		if p.fmt.SharpV {
 			p.WriteString(typeString)
 			if v == nil {
 				p.WriteString(nilParenString)
@@ -540,7 +524,7 @@ func (p *printer) fmtPointer(value reflect.Value, verb rune) {
 
 	switch verb {
 	case 'v':
-		if p.fmt.sharpV {
+		if p.fmt.SharpV {
 			p.WriteByte('(')
 			p.WriteString(value.Type().String())
 			p.WriteString(")(")
@@ -554,14 +538,14 @@ func (p *printer) fmtPointer(value reflect.Value, verb rune) {
 			if u == 0 {
 				p.fmt.padString(nilAngleString)
 			} else {
-				p.fmt0x64(uint64(u), !p.fmt.sharp)
+				p.fmt0x64(uint64(u), !p.fmt.Sharp)
 			}
 		}
 	case 'p':
-		p.fmt0x64(uint64(u), !p.fmt.sharp)
+		p.fmt0x64(uint64(u), !p.fmt.Sharp)
 	case 'b', 'o', 'd', 'x', 'X':
 		if verb == 'd' {
-			p.fmt.sharp = true // Print as standard go. TODO: does this make sense?
+			p.fmt.Sharp = true // Print as standard go. TODO: does this make sense?
 		}
 		p.fmtInteger(uint64(u), unsigned, verb)
 	default:
@@ -585,9 +569,9 @@ func (p *printer) catchPanic(arg interface{}, verb rune) {
 			panic(err)
 		}
 
-		oldFlags := p.fmt.fmtFlags
+		oldFlags := p.fmt.Parser
 		// For this output we want default behavior.
-		p.fmt.clearflags()
+		p.fmt.ClearFlags()
 
 		p.WriteString(percentBangString)
 		p.WriteRune(verb)
@@ -597,7 +581,7 @@ func (p *printer) catchPanic(arg interface{}, verb rune) {
 		p.panicking = false
 		p.WriteByte(')')
 
-		p.fmt.fmtFlags = oldFlags
+		p.fmt.Parser = oldFlags
 	}
 }
 
@@ -620,7 +604,7 @@ func (p *printer) handleMethods(verb rune) (handled bool) {
 	}
 
 	// If we're doing Go syntax and the argument knows how to supply it, take care of it now.
-	if p.fmt.sharpV {
+	if p.fmt.SharpV {
 		if stringer, ok := p.arg.(fmt.GoStringer); ok {
 			handled = true
 			defer p.catchPanic(p.arg, verb)
@@ -781,7 +765,7 @@ func (p *printer) printValue(value reflect.Value, verb rune, depth int) {
 	case reflect.String:
 		p.fmtString(f.String(), verb)
 	case reflect.Map:
-		if p.fmt.sharpV {
+		if p.fmt.SharpV {
 			p.WriteString(f.Type().String())
 			if f.IsNil() {
 				p.WriteString(nilParenString)
@@ -794,7 +778,7 @@ func (p *printer) printValue(value reflect.Value, verb rune, depth int) {
 		keys := f.MapKeys()
 		for i, key := range keys {
 			if i > 0 {
-				if p.fmt.sharpV {
+				if p.fmt.SharpV {
 					p.WriteString(commaSpaceString)
 				} else {
 					p.WriteByte(' ')
@@ -804,25 +788,25 @@ func (p *printer) printValue(value reflect.Value, verb rune, depth int) {
 			p.WriteByte(':')
 			p.printValue(f.MapIndex(key), verb, depth+1)
 		}
-		if p.fmt.sharpV {
+		if p.fmt.SharpV {
 			p.WriteByte('}')
 		} else {
 			p.WriteByte(']')
 		}
 	case reflect.Struct:
-		if p.fmt.sharpV {
+		if p.fmt.SharpV {
 			p.WriteString(f.Type().String())
 		}
 		p.WriteByte('{')
 		for i := 0; i < f.NumField(); i++ {
 			if i > 0 {
-				if p.fmt.sharpV {
+				if p.fmt.SharpV {
 					p.WriteString(commaSpaceString)
 				} else {
 					p.WriteByte(' ')
 				}
 			}
-			if p.fmt.plusV || p.fmt.sharpV {
+			if p.fmt.PlusV || p.fmt.SharpV {
 				if name := f.Type().Field(i).Name; name != "" {
 					p.WriteString(name)
 					p.WriteByte(':')
@@ -834,7 +818,7 @@ func (p *printer) printValue(value reflect.Value, verb rune, depth int) {
 	case reflect.Interface:
 		value := f.Elem()
 		if !value.IsValid() {
-			if p.fmt.sharpV {
+			if p.fmt.SharpV {
 				p.WriteString(f.Type().String())
 				p.WriteString(nilParenString)
 			} else {
@@ -867,7 +851,7 @@ func (p *printer) printValue(value reflect.Value, verb rune, depth int) {
 				return
 			}
 		}
-		if p.fmt.sharpV {
+		if p.fmt.SharpV {
 			p.WriteString(f.Type().String())
 			if f.Kind() == reflect.Slice && f.IsNil() {
 				p.WriteString(nilParenString)
@@ -910,81 +894,6 @@ func (p *printer) printValue(value reflect.Value, verb rune, depth int) {
 	}
 }
 
-// intFromArg gets the argNumth element of a. On return, isInt reports whether the argument has integer type.
-func (p *printer) intFromArg() (num int, isInt bool) {
-	if p.argNum < len(p.args) {
-		arg := p.args[p.argNum]
-		num, isInt = arg.(int) // Almost always OK.
-		if !isInt {
-			// Work harder.
-			switch v := reflect.ValueOf(arg); v.Kind() {
-			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				n := v.Int()
-				if int64(int(n)) == n {
-					num = int(n)
-					isInt = true
-				}
-			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64, reflect.Uintptr:
-				n := v.Uint()
-				if int64(n) >= 0 && uint64(int(n)) == n {
-					num = int(n)
-					isInt = true
-				}
-			default:
-				// Already 0, false.
-			}
-		}
-		p.argNum++
-		if tooLarge(num) {
-			num = 0
-			isInt = false
-		}
-	}
-	return
-}
-
-// parseArgNumber returns the value of the bracketed number, minus 1
-// (explicit argument numbers are one-indexed but we want zero-indexed).
-// The opening bracket is known to be present at format[0].
-// The returned values are the index, the number of bytes to consume
-// up to the closing paren, if present, and whether the number parsed
-// ok. The bytes to consume will be 1 if no closing paren is present.
-func parseArgNumber(format string) (index int, wid int, ok bool) {
-	// There must be at least 3 bytes: [n].
-	if len(format) < 3 {
-		return 0, 1, false
-	}
-
-	// Find closing bracket.
-	for i := 1; i < len(format); i++ {
-		if format[i] == ']' {
-			width, ok, newi := parsenum(format, 1, i)
-			if !ok || newi != i {
-				return 0, i + 1, false
-			}
-			return width - 1, i + 1, true // arg numbers are one-indexed and skip paren.
-		}
-	}
-	return 0, 1, false
-}
-
-// updateArgNumber returns the next argument to evaluate, which is either the value of the passed-in
-// argNum or the value of the bracketed integer that begins format[i:]. It also returns
-// the new value of i, that is, the index of the next byte of the format to process.
-func (p *printer) updateArgNumber(format string, i int) (newi int, found bool) {
-	if len(format) <= i || format[i] != '[' {
-		return i, false
-	}
-	p.reordered = true
-	index, wid, ok := parseArgNumber(format[i:])
-	if ok && 0 <= index && index < len(p.args) {
-		p.argNum = index
-		return i + wid, true
-	}
-	p.goodArgNum = false
-	return i + wid, ok
-}
-
 func (p *printer) badArgNum(verb rune) {
 	p.WriteString(percentBangString)
 	p.WriteRune(verb)
@@ -997,151 +906,27 @@ func (p *printer) missingArg(verb rune) {
 	p.WriteString(missingString)
 }
 
-func (p *printer) doPrintf(format string) {
-	end := len(format)
-	afterIndex := false // previous item in format was an index like [3].
-formatLoop:
-	for i := 0; i < end; {
-		p.goodArgNum = true
-		lasti := i
-		for i < end && format[i] != '%' {
-			i++
-		}
-		if i > lasti {
-			p.WriteString(format[lasti:i])
-		}
-		if i >= end {
-			// done processing format string
-			break
-		}
-
-		// Process one verb
-		i++
-
-		// Do we have flags?
-		p.fmt.clearflags()
-	simpleFormat:
-		for ; i < end; i++ {
-			c := format[i]
-			switch c {
-			case '#':
-				p.fmt.sharp = true
-			case '0':
-				p.fmt.zero = !p.fmt.minus // Only allow zero padding to the left.
-			case '+':
-				p.fmt.plus = true
-			case '-':
-				p.fmt.minus = true
-				p.fmt.zero = false // Do not pad with zeros to the right.
-			case ' ':
-				p.fmt.space = true
-			default:
-				// Fast path for common case of ascii lower case simple verbs
-				// without precision or width or argument indices.
-				if 'a' <= c && c <= 'z' && p.argNum < len(p.args) {
-					if c == 'v' {
-						// Go syntax
-						p.fmt.sharpV = p.fmt.sharp
-						p.fmt.sharp = false
-						// Struct-field syntax
-						p.fmt.plusV = p.fmt.plus
-						p.fmt.plus = false
-					}
-					p.printArg(p.Arg(p.argNum+1), rune(c))
-					p.argNum++
-					i++
-					continue formatLoop
-				}
-				// Format is more complex than simple flags and a verb or is malformed.
-				break simpleFormat
-			}
-		}
-
-		// Do we have an explicit argument index?
-		i, afterIndex = p.updateArgNumber(format, i)
-
-		// Do we have width?
-		if i < end && format[i] == '*' {
-			i++
-			p.fmt.wid, p.fmt.widPresent = p.intFromArg()
-
-			if !p.fmt.widPresent {
-				p.WriteString(badWidthString)
-			}
-
-			// We have a negative width, so take its value and ensure
-			// that the minus flag is set
-			if p.fmt.wid < 0 {
-				p.fmt.wid = -p.fmt.wid
-				p.fmt.minus = true
-				p.fmt.zero = false // Do not pad with zeros to the right.
-			}
-			afterIndex = false
-		} else {
-			p.fmt.wid, p.fmt.widPresent, i = parsenum(format, i, end)
-			if afterIndex && p.fmt.widPresent { // "%[3]2d"
-				p.goodArgNum = false
-			}
-		}
-
-		// Do we have precision?
-		if i+1 < end && format[i] == '.' {
-			i++
-			if afterIndex { // "%[3].2d"
-				p.goodArgNum = false
-			}
-			i, afterIndex = p.updateArgNumber(format, i)
-			if i < end && format[i] == '*' {
-				i++
-				p.fmt.prec, p.fmt.precPresent = p.intFromArg()
-				// Negative precision arguments don't make sense
-				if p.fmt.prec < 0 {
-					p.fmt.prec = 0
-					p.fmt.precPresent = false
-				}
-				if !p.fmt.precPresent {
-					p.WriteString(badPrecString)
-				}
-				afterIndex = false
-			} else {
-				p.fmt.prec, p.fmt.precPresent, i = parsenum(format, i, end)
-				if !p.fmt.precPresent {
-					p.fmt.prec = 0
-					p.fmt.precPresent = true
-				}
-			}
-		}
-
-		if !afterIndex {
-			i, afterIndex = p.updateArgNumber(format, i)
-		}
-
-		if i >= end {
+func (p *printer) doPrintf(fmt string) {
+	for p.fmt.Parser.SetFormat(fmt); p.fmt.Scan(); {
+		switch p.fmt.Status {
+		case format.StatusText:
+			p.WriteString(p.fmt.Text())
+		case format.StatusSubstitution:
+			p.printArg(p.Arg(p.fmt.ArgNum), p.fmt.Verb)
+		case format.StatusBadWidthSubstitution:
+			p.WriteString(badWidthString)
+			p.printArg(p.Arg(p.fmt.ArgNum), p.fmt.Verb)
+		case format.StatusBadPrecSubstitution:
+			p.WriteString(badPrecString)
+			p.printArg(p.Arg(p.fmt.ArgNum), p.fmt.Verb)
+		case format.StatusNoVerb:
 			p.WriteString(noVerbString)
-			break
-		}
-
-		verb, w := utf8.DecodeRuneInString(format[i:])
-		i += w
-
-		switch {
-		case verb == '%': // Percent does not absorb operands and ignores f.wid and f.prec.
-			p.WriteByte('%')
-		case !p.goodArgNum:
-			p.badArgNum(verb)
-		case p.argNum >= len(p.args): // No argument left over to print for the current verb.
-			p.missingArg(verb)
-		case verb == 'v':
-			// Go syntax
-			p.fmt.sharpV = p.fmt.sharp
-			p.fmt.sharp = false
-			// Struct-field syntax
-			p.fmt.plusV = p.fmt.plus
-			p.fmt.plus = false
-			fallthrough
+		case format.StatusBadArgNum:
+			p.badArgNum(p.fmt.Verb)
+		case format.StatusMissingArg:
+			p.missingArg(p.fmt.Verb)
 		default:
-			p.printArg(p.args[p.argNum], verb)
-			p.argNum++
+			panic("unreachable")
 		}
 	}
 
@@ -1149,10 +934,10 @@ formatLoop:
 	// argument. Note that this behavior is necessarily different from fmt:
 	// different variants of messages may opt to drop some or all of the
 	// arguments.
-	if !p.reordered && p.argNum < len(p.args) && p.argNum != 0 {
-		p.fmt.clearflags()
+	if !p.fmt.Reordered && p.fmt.ArgNum < len(p.fmt.Args) && p.fmt.ArgNum != 0 {
+		p.fmt.ClearFlags()
 		p.WriteString(extraString)
-		for i, arg := range p.args[p.argNum:] {
+		for i, arg := range p.fmt.Args[p.fmt.ArgNum:] {
 			if i > 0 {
 				p.WriteString(commaSpaceString)
 			}
@@ -1160,7 +945,7 @@ formatLoop:
 				p.WriteString(nilAngleString)
 			} else {
 				p.WriteString(reflect.TypeOf(arg).String())
-				p.WriteByte('=')
+				p.WriteString("=")
 				p.printArg(arg, 'v')
 			}
 		}

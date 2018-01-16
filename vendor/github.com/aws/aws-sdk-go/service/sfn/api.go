@@ -35,7 +35,7 @@ const opCreateActivity = "CreateActivity"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivity
 func (c *SFN) CreateActivityRequest(input *CreateActivityInput) (req *request.Request, output *CreateActivityOutput) {
 	op := &request.Operation{
 		Name:       opCreateActivity,
@@ -54,7 +54,12 @@ func (c *SFN) CreateActivityRequest(input *CreateActivityInput) (req *request.Re
 
 // CreateActivity API operation for AWS Step Functions.
 //
-// Creates an activity.
+// Creates an activity. An activity is a task which you write in any programming
+// language and host on any machine which has access to AWS Step Functions.
+// Activities must poll Step Functions using the GetActivityTask API action
+// and respond using SendTask* API actions. This function lets Step Functions
+// know the existence of your activity and returns an identifier for use in
+// a state machine and when polling from the activity.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -71,7 +76,7 @@ func (c *SFN) CreateActivityRequest(input *CreateActivityInput) (req *request.Re
 //   * ErrCodeInvalidName "InvalidName"
 //   The provided name is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivity
 func (c *SFN) CreateActivity(input *CreateActivityInput) (*CreateActivityOutput, error) {
 	req, out := c.CreateActivityRequest(input)
 	return out, req.Send()
@@ -118,7 +123,7 @@ const opCreateStateMachine = "CreateStateMachine"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachine
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachine
 func (c *SFN) CreateStateMachineRequest(input *CreateStateMachineInput) (req *request.Request, output *CreateStateMachineOutput) {
 	op := &request.Operation{
 		Name:       opCreateStateMachine,
@@ -137,7 +142,10 @@ func (c *SFN) CreateStateMachineRequest(input *CreateStateMachineInput) (req *re
 
 // CreateStateMachine API operation for AWS Step Functions.
 //
-// Creates a state machine.
+// Creates a state machine. A state machine consists of a collection of states
+// that can do work (Task states), determine to which states to transition next
+// (Choice states), stop an execution with an error (Fail states), and so on.
+// State machines are specified using a JSON-based, structured language.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -167,7 +175,7 @@ func (c *SFN) CreateStateMachineRequest(input *CreateStateMachineInput) (req *re
 //   The maximum number of state machines has been reached. Existing state machines
 //   must be deleted before a new state machine can be created.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachine
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachine
 func (c *SFN) CreateStateMachine(input *CreateStateMachineInput) (*CreateStateMachineOutput, error) {
 	req, out := c.CreateStateMachineRequest(input)
 	return out, req.Send()
@@ -214,7 +222,7 @@ const opDeleteActivity = "DeleteActivity"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivity
 func (c *SFN) DeleteActivityRequest(input *DeleteActivityInput) (req *request.Request, output *DeleteActivityOutput) {
 	op := &request.Operation{
 		Name:       opDeleteActivity,
@@ -246,7 +254,7 @@ func (c *SFN) DeleteActivityRequest(input *DeleteActivityInput) (req *request.Re
 //   * ErrCodeInvalidArn "InvalidArn"
 //   The provided Amazon Resource Name (ARN) is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivity
 func (c *SFN) DeleteActivity(input *DeleteActivityInput) (*DeleteActivityOutput, error) {
 	req, out := c.DeleteActivityRequest(input)
 	return out, req.Send()
@@ -293,7 +301,7 @@ const opDeleteStateMachine = "DeleteStateMachine"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachine
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachine
 func (c *SFN) DeleteStateMachineRequest(input *DeleteStateMachineInput) (req *request.Request, output *DeleteStateMachineOutput) {
 	op := &request.Operation{
 		Name:       opDeleteStateMachine,
@@ -312,8 +320,12 @@ func (c *SFN) DeleteStateMachineRequest(input *DeleteStateMachineInput) (req *re
 
 // DeleteStateMachine API operation for AWS Step Functions.
 //
-// Deletes a state machine. This is an asynchronous operation-- it sets the
-// state machine's status to "DELETING" and begins the delete process.
+// Deletes a state machine. This is an asynchronous operation: It sets the state
+// machine's status to DELETING and begins the deletion process. Each state
+// machine execution is deleted the next time it makes a state transition.
+//
+// The state machine itself is deleted after all executions are completed or
+// deleted.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -326,7 +338,7 @@ func (c *SFN) DeleteStateMachineRequest(input *DeleteStateMachineInput) (req *re
 //   * ErrCodeInvalidArn "InvalidArn"
 //   The provided Amazon Resource Name (ARN) is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachine
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachine
 func (c *SFN) DeleteStateMachine(input *DeleteStateMachineInput) (*DeleteStateMachineOutput, error) {
 	req, out := c.DeleteStateMachineRequest(input)
 	return out, req.Send()
@@ -373,7 +385,7 @@ const opDescribeActivity = "DescribeActivity"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivity
 func (c *SFN) DescribeActivityRequest(input *DescribeActivityInput) (req *request.Request, output *DescribeActivityOutput) {
 	op := &request.Operation{
 		Name:       opDescribeActivity,
@@ -408,7 +420,7 @@ func (c *SFN) DescribeActivityRequest(input *DescribeActivityInput) (req *reques
 //   * ErrCodeInvalidArn "InvalidArn"
 //   The provided Amazon Resource Name (ARN) is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivity
 func (c *SFN) DescribeActivity(input *DescribeActivityInput) (*DescribeActivityOutput, error) {
 	req, out := c.DescribeActivityRequest(input)
 	return out, req.Send()
@@ -455,7 +467,7 @@ const opDescribeExecution = "DescribeExecution"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecution
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecution
 func (c *SFN) DescribeExecutionRequest(input *DescribeExecutionInput) (req *request.Request, output *DescribeExecutionOutput) {
 	op := &request.Operation{
 		Name:       opDescribeExecution,
@@ -490,7 +502,7 @@ func (c *SFN) DescribeExecutionRequest(input *DescribeExecutionInput) (req *requ
 //   * ErrCodeInvalidArn "InvalidArn"
 //   The provided Amazon Resource Name (ARN) is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecution
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecution
 func (c *SFN) DescribeExecution(input *DescribeExecutionInput) (*DescribeExecutionOutput, error) {
 	req, out := c.DescribeExecutionRequest(input)
 	return out, req.Send()
@@ -537,7 +549,7 @@ const opDescribeStateMachine = "DescribeStateMachine"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachine
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachine
 func (c *SFN) DescribeStateMachineRequest(input *DescribeStateMachineInput) (req *request.Request, output *DescribeStateMachineOutput) {
 	op := &request.Operation{
 		Name:       opDescribeStateMachine,
@@ -572,7 +584,7 @@ func (c *SFN) DescribeStateMachineRequest(input *DescribeStateMachineInput) (req
 //   * ErrCodeStateMachineDoesNotExist "StateMachineDoesNotExist"
 //   The specified state machine does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachine
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachine
 func (c *SFN) DescribeStateMachine(input *DescribeStateMachineInput) (*DescribeStateMachineOutput, error) {
 	req, out := c.DescribeStateMachineRequest(input)
 	return out, req.Send()
@@ -589,6 +601,88 @@ func (c *SFN) DescribeStateMachine(input *DescribeStateMachineInput) (*DescribeS
 // for more information on using Contexts.
 func (c *SFN) DescribeStateMachineWithContext(ctx aws.Context, input *DescribeStateMachineInput, opts ...request.Option) (*DescribeStateMachineOutput, error) {
 	req, out := c.DescribeStateMachineRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDescribeStateMachineForExecution = "DescribeStateMachineForExecution"
+
+// DescribeStateMachineForExecutionRequest generates a "aws/request.Request" representing the
+// client's request for the DescribeStateMachineForExecution operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DescribeStateMachineForExecution for more information on using the DescribeStateMachineForExecution
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DescribeStateMachineForExecutionRequest method.
+//    req, resp := client.DescribeStateMachineForExecutionRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineForExecution
+func (c *SFN) DescribeStateMachineForExecutionRequest(input *DescribeStateMachineForExecutionInput) (req *request.Request, output *DescribeStateMachineForExecutionOutput) {
+	op := &request.Operation{
+		Name:       opDescribeStateMachineForExecution,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DescribeStateMachineForExecutionInput{}
+	}
+
+	output = &DescribeStateMachineForExecutionOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DescribeStateMachineForExecution API operation for AWS Step Functions.
+//
+// Describes the state machine associated with a specific execution.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Step Functions's
+// API operation DescribeStateMachineForExecution for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeExecutionDoesNotExist "ExecutionDoesNotExist"
+//   The specified execution does not exist.
+//
+//   * ErrCodeInvalidArn "InvalidArn"
+//   The provided Amazon Resource Name (ARN) is invalid.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineForExecution
+func (c *SFN) DescribeStateMachineForExecution(input *DescribeStateMachineForExecutionInput) (*DescribeStateMachineForExecutionOutput, error) {
+	req, out := c.DescribeStateMachineForExecutionRequest(input)
+	return out, req.Send()
+}
+
+// DescribeStateMachineForExecutionWithContext is the same as DescribeStateMachineForExecution with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DescribeStateMachineForExecution for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SFN) DescribeStateMachineForExecutionWithContext(ctx aws.Context, input *DescribeStateMachineForExecutionInput, opts ...request.Option) (*DescribeStateMachineForExecutionOutput, error) {
+	req, out := c.DescribeStateMachineForExecutionRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -619,7 +713,7 @@ const opGetActivityTask = "GetActivityTask"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTask
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTask
 func (c *SFN) GetActivityTaskRequest(input *GetActivityTaskInput) (req *request.Request, output *GetActivityTaskOutput) {
 	op := &request.Operation{
 		Name:       opGetActivityTask,
@@ -638,13 +732,13 @@ func (c *SFN) GetActivityTaskRequest(input *GetActivityTaskInput) (req *request.
 
 // GetActivityTask API operation for AWS Step Functions.
 //
-// Used by workers to retrieve a task (with the specified activity ARN) scheduled
-// for execution by a running state machine. This initiates a long poll, where
-// the service holds the HTTP connection open and responds as soon as a task
-// becomes available (i.e. an execution of a task of this type is needed.) The
-// maximum time the service holds on to the request before responding is 60
-// seconds. If no task is available within 60 seconds, the poll will return
-// an empty result, that is, the taskToken returned is an empty string.
+// Used by workers to retrieve a task (with the specified activity ARN) which
+// has been scheduled for execution by a running state machine. This initiates
+// a long poll, where the service holds the HTTP connection open and responds
+// as soon as a task becomes available (i.e. an execution of a task of this
+// type is needed.) The maximum time the service holds on to the request before
+// responding is 60 seconds. If no task is available within 60 seconds, the
+// poll returns a taskToken with a null string.
 //
 // Workers should set their client side socket timeout to at least 65 seconds
 // (5 seconds higher than the maximum time the service may hold the poll request).
@@ -667,7 +761,7 @@ func (c *SFN) GetActivityTaskRequest(input *GetActivityTaskInput) (req *request.
 //   * ErrCodeInvalidArn "InvalidArn"
 //   The provided Amazon Resource Name (ARN) is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTask
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTask
 func (c *SFN) GetActivityTask(input *GetActivityTaskInput) (*GetActivityTaskOutput, error) {
 	req, out := c.GetActivityTaskRequest(input)
 	return out, req.Send()
@@ -714,7 +808,7 @@ const opGetExecutionHistory = "GetExecutionHistory"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistory
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistory
 func (c *SFN) GetExecutionHistoryRequest(input *GetExecutionHistoryInput) (req *request.Request, output *GetExecutionHistoryOutput) {
 	op := &request.Operation{
 		Name:       opGetExecutionHistory,
@@ -741,9 +835,11 @@ func (c *SFN) GetExecutionHistoryRequest(input *GetExecutionHistoryInput) (req *
 //
 // Returns the history of the specified execution as a list of events. By default,
 // the results are returned in ascending order of the timeStamp of the events.
-// Use the reverseOrder parameter to get the latest events first. The results
-// may be split into multiple pages. To retrieve subsequent pages, make the
-// call again using the nextToken returned by the previous call.
+// Use the reverseOrder parameter to get the latest events first.
+//
+// If a nextToken is returned by a previous call, there are more results available.
+// To retrieve the next page of results, make the call again using the returned
+// token in nextToken. Keep all other arguments unchanged.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -762,7 +858,7 @@ func (c *SFN) GetExecutionHistoryRequest(input *GetExecutionHistoryInput) (req *
 //   * ErrCodeInvalidToken "InvalidToken"
 //   The provided token is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistory
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistory
 func (c *SFN) GetExecutionHistory(input *GetExecutionHistoryInput) (*GetExecutionHistoryOutput, error) {
 	req, out := c.GetExecutionHistoryRequest(input)
 	return out, req.Send()
@@ -859,7 +955,7 @@ const opListActivities = "ListActivities"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivities
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivities
 func (c *SFN) ListActivitiesRequest(input *ListActivitiesInput) (req *request.Request, output *ListActivitiesOutput) {
 	op := &request.Operation{
 		Name:       opListActivities,
@@ -884,9 +980,11 @@ func (c *SFN) ListActivitiesRequest(input *ListActivitiesInput) (req *request.Re
 
 // ListActivities API operation for AWS Step Functions.
 //
-// Lists the existing activities. The results may be split into multiple pages.
-// To retrieve subsequent pages, make the call again using the nextToken returned
-// by the previous call.
+// Lists the existing activities.
+//
+// If a nextToken is returned by a previous call, there are more results available.
+// To retrieve the next page of results, make the call again using the returned
+// token in nextToken. Keep all other arguments unchanged.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -899,7 +997,7 @@ func (c *SFN) ListActivitiesRequest(input *ListActivitiesInput) (req *request.Re
 //   * ErrCodeInvalidToken "InvalidToken"
 //   The provided token is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivities
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivities
 func (c *SFN) ListActivities(input *ListActivitiesInput) (*ListActivitiesOutput, error) {
 	req, out := c.ListActivitiesRequest(input)
 	return out, req.Send()
@@ -996,7 +1094,7 @@ const opListExecutions = "ListExecutions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutions
 func (c *SFN) ListExecutionsRequest(input *ListExecutionsInput) (req *request.Request, output *ListExecutionsOutput) {
 	op := &request.Operation{
 		Name:       opListExecutions,
@@ -1022,8 +1120,10 @@ func (c *SFN) ListExecutionsRequest(input *ListExecutionsInput) (req *request.Re
 // ListExecutions API operation for AWS Step Functions.
 //
 // Lists the executions of a state machine that meet the filtering criteria.
-// The results may be split into multiple pages. To retrieve subsequent pages,
-// make the call again using the nextToken returned by the previous call.
+//
+// If a nextToken is returned by a previous call, there are more results available.
+// To retrieve the next page of results, make the call again using the returned
+// token in nextToken. Keep all other arguments unchanged.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1042,7 +1142,7 @@ func (c *SFN) ListExecutionsRequest(input *ListExecutionsInput) (req *request.Re
 //   * ErrCodeStateMachineDoesNotExist "StateMachineDoesNotExist"
 //   The specified state machine does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutions
 func (c *SFN) ListExecutions(input *ListExecutionsInput) (*ListExecutionsOutput, error) {
 	req, out := c.ListExecutionsRequest(input)
 	return out, req.Send()
@@ -1139,7 +1239,7 @@ const opListStateMachines = "ListStateMachines"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachines
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachines
 func (c *SFN) ListStateMachinesRequest(input *ListStateMachinesInput) (req *request.Request, output *ListStateMachinesOutput) {
 	op := &request.Operation{
 		Name:       opListStateMachines,
@@ -1164,9 +1264,11 @@ func (c *SFN) ListStateMachinesRequest(input *ListStateMachinesInput) (req *requ
 
 // ListStateMachines API operation for AWS Step Functions.
 //
-// Lists the existing state machines. The results may be split into multiple
-// pages. To retrieve subsequent pages, make the call again using the nextToken
-// returned by the previous call.
+// Lists the existing state machines.
+//
+// If a nextToken is returned by a previous call, there are more results available.
+// To retrieve the next page of results, make the call again using the returned
+// token in nextToken. Keep all other arguments unchanged.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -1179,7 +1281,7 @@ func (c *SFN) ListStateMachinesRequest(input *ListStateMachinesInput) (req *requ
 //   * ErrCodeInvalidToken "InvalidToken"
 //   The provided token is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachines
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachines
 func (c *SFN) ListStateMachines(input *ListStateMachinesInput) (*ListStateMachinesOutput, error) {
 	req, out := c.ListStateMachinesRequest(input)
 	return out, req.Send()
@@ -1276,7 +1378,7 @@ const opSendTaskFailure = "SendTaskFailure"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailure
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailure
 func (c *SFN) SendTaskFailureRequest(input *SendTaskFailureInput) (req *request.Request, output *SendTaskFailureOutput) {
 	op := &request.Operation{
 		Name:       opSendTaskFailure,
@@ -1312,7 +1414,7 @@ func (c *SFN) SendTaskFailureRequest(input *SendTaskFailureInput) (req *request.
 //
 //   * ErrCodeTaskTimedOut "TaskTimedOut"
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailure
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailure
 func (c *SFN) SendTaskFailure(input *SendTaskFailureInput) (*SendTaskFailureOutput, error) {
 	req, out := c.SendTaskFailureRequest(input)
 	return out, req.Send()
@@ -1359,7 +1461,7 @@ const opSendTaskHeartbeat = "SendTaskHeartbeat"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeat
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeat
 func (c *SFN) SendTaskHeartbeatRequest(input *SendTaskHeartbeatInput) (req *request.Request, output *SendTaskHeartbeatOutput) {
 	op := &request.Operation{
 		Name:       opSendTaskHeartbeat,
@@ -1383,7 +1485,7 @@ func (c *SFN) SendTaskHeartbeatRequest(input *SendTaskHeartbeatInput) (req *requ
 // clock. The Heartbeat threshold is specified in the state machine's Amazon
 // States Language definition. This action does not in itself create an event
 // in the execution history. However, if the task times out, the execution history
-// will contain an ActivityTimedOut event.
+// contains an ActivityTimedOut event.
 //
 // The Timeout of a task, defined in the state machine's Amazon States Language
 // definition, is its maximum allowed duration, regardless of the number of
@@ -1407,7 +1509,7 @@ func (c *SFN) SendTaskHeartbeatRequest(input *SendTaskHeartbeatInput) (req *requ
 //
 //   * ErrCodeTaskTimedOut "TaskTimedOut"
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeat
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeat
 func (c *SFN) SendTaskHeartbeat(input *SendTaskHeartbeatInput) (*SendTaskHeartbeatOutput, error) {
 	req, out := c.SendTaskHeartbeatRequest(input)
 	return out, req.Send()
@@ -1454,7 +1556,7 @@ const opSendTaskSuccess = "SendTaskSuccess"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccess
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccess
 func (c *SFN) SendTaskSuccessRequest(input *SendTaskSuccessInput) (req *request.Request, output *SendTaskSuccessOutput) {
 	op := &request.Operation{
 		Name:       opSendTaskSuccess,
@@ -1494,7 +1596,7 @@ func (c *SFN) SendTaskSuccessRequest(input *SendTaskSuccessInput) (req *request.
 //
 //   * ErrCodeTaskTimedOut "TaskTimedOut"
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccess
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccess
 func (c *SFN) SendTaskSuccess(input *SendTaskSuccessInput) (*SendTaskSuccessOutput, error) {
 	req, out := c.SendTaskSuccessRequest(input)
 	return out, req.Send()
@@ -1541,7 +1643,7 @@ const opStartExecution = "StartExecution"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecution
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecution
 func (c *SFN) StartExecutionRequest(input *StartExecutionInput) (req *request.Request, output *StartExecutionOutput) {
 	op := &request.Operation{
 		Name:       opStartExecution,
@@ -1575,7 +1677,9 @@ func (c *SFN) StartExecutionRequest(input *StartExecutionInput) (req *request.Re
 //   must end or be stopped before a new execution can be started.
 //
 //   * ErrCodeExecutionAlreadyExists "ExecutionAlreadyExists"
-//   An execution with the same name already exists.
+//   The execution has the same name as another execution (but a different input).
+//
+//   Executions with the same name and input are considered idempotent.
 //
 //   * ErrCodeInvalidArn "InvalidArn"
 //   The provided Amazon Resource Name (ARN) is invalid.
@@ -1592,7 +1696,7 @@ func (c *SFN) StartExecutionRequest(input *StartExecutionInput) (req *request.Re
 //   * ErrCodeStateMachineDeleting "StateMachineDeleting"
 //   The specified state machine is being deleted.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecution
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecution
 func (c *SFN) StartExecution(input *StartExecutionInput) (*StartExecutionOutput, error) {
 	req, out := c.StartExecutionRequest(input)
 	return out, req.Send()
@@ -1639,7 +1743,7 @@ const opStopExecution = "StopExecution"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecution
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecution
 func (c *SFN) StopExecutionRequest(input *StopExecutionInput) (req *request.Request, output *StopExecutionOutput) {
 	op := &request.Operation{
 		Name:       opStopExecution,
@@ -1674,7 +1778,7 @@ func (c *SFN) StopExecutionRequest(input *StopExecutionInput) (req *request.Requ
 //   * ErrCodeInvalidArn "InvalidArn"
 //   The provided Amazon Resource Name (ARN) is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecution
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecution
 func (c *SFN) StopExecution(input *StopExecutionInput) (*StopExecutionOutput, error) {
 	req, out := c.StopExecutionRequest(input)
 	return out, req.Send()
@@ -1696,7 +1800,107 @@ func (c *SFN) StopExecutionWithContext(ctx aws.Context, input *StopExecutionInpu
 	return out, req.Send()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityFailedEventDetails
+const opUpdateStateMachine = "UpdateStateMachine"
+
+// UpdateStateMachineRequest generates a "aws/request.Request" representing the
+// client's request for the UpdateStateMachine operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See UpdateStateMachine for more information on using the UpdateStateMachine
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the UpdateStateMachineRequest method.
+//    req, resp := client.UpdateStateMachineRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/UpdateStateMachine
+func (c *SFN) UpdateStateMachineRequest(input *UpdateStateMachineInput) (req *request.Request, output *UpdateStateMachineOutput) {
+	op := &request.Operation{
+		Name:       opUpdateStateMachine,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &UpdateStateMachineInput{}
+	}
+
+	output = &UpdateStateMachineOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// UpdateStateMachine API operation for AWS Step Functions.
+//
+// Updates an existing state machine by modifying its definition and/or roleArn.
+// Running executions will continue to use the previous definition and roleArn.
+//
+// All StartExecution calls within a few seconds will use the updated definition
+// and roleArn. Executions started immediately after calling UpdateStateMachine
+// may use the previous state machine definition and roleArn. You must include
+// at least one of definition or roleArn or you will receive a MissingRequiredParameter
+// error.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for AWS Step Functions's
+// API operation UpdateStateMachine for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeInvalidArn "InvalidArn"
+//   The provided Amazon Resource Name (ARN) is invalid.
+//
+//   * ErrCodeInvalidDefinition "InvalidDefinition"
+//   The provided Amazon States Language definition is invalid.
+//
+//   * ErrCodeMissingRequiredParameter "MissingRequiredParameter"
+//   Request is missing a required parameter. This error occurs if both definition
+//   and roleArn are not specified.
+//
+//   * ErrCodeStateMachineDeleting "StateMachineDeleting"
+//   The specified state machine is being deleted.
+//
+//   * ErrCodeStateMachineDoesNotExist "StateMachineDoesNotExist"
+//   The specified state machine does not exist.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/UpdateStateMachine
+func (c *SFN) UpdateStateMachine(input *UpdateStateMachineInput) (*UpdateStateMachineOutput, error) {
+	req, out := c.UpdateStateMachineRequest(input)
+	return out, req.Send()
+}
+
+// UpdateStateMachineWithContext is the same as UpdateStateMachine with the addition of
+// the ability to pass a context and additional request options.
+//
+// See UpdateStateMachine for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *SFN) UpdateStateMachineWithContext(ctx aws.Context, input *UpdateStateMachineInput, opts ...request.Option) (*UpdateStateMachineOutput, error) {
+	req, out := c.UpdateStateMachineRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+// Contains details about an activity which failed during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityFailedEventDetails
 type ActivityFailedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1729,7 +1933,8 @@ func (s *ActivityFailedEventDetails) SetError(v string) *ActivityFailedEventDeta
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityListItem
+// Contains details about an activity.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityListItem
 type ActivityListItem struct {
 	_ struct{} `type:"structure"`
 
@@ -1738,12 +1943,24 @@ type ActivityListItem struct {
 	// ActivityArn is a required field
 	ActivityArn *string `locationName:"activityArn" min:"1" type:"string" required:"true"`
 
-	// The date the activity was created.
+	// The date the activity is created.
 	//
 	// CreationDate is a required field
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix" required:"true"`
 
 	// The name of the activity.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -1777,7 +1994,9 @@ func (s *ActivityListItem) SetName(v string) *ActivityListItem {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityScheduleFailedEventDetails
+// Contains details about an activity schedule failure which occurred during
+// an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityScheduleFailedEventDetails
 type ActivityScheduleFailedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1810,7 +2029,8 @@ func (s *ActivityScheduleFailedEventDetails) SetError(v string) *ActivitySchedul
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityScheduledEventDetails
+// Contains details about an activity scheduled during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityScheduledEventDetails
 type ActivityScheduledEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1863,11 +2083,12 @@ func (s *ActivityScheduledEventDetails) SetTimeoutInSeconds(v int64) *ActivitySc
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityStartedEventDetails
+// Contains details about the start of an activity during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityStartedEventDetails
 type ActivityStartedEventDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The name of the worker that the task was assigned to. These names are provided
+	// The name of the worker that the task is assigned to. These names are provided
 	// by the workers when calling GetActivityTask.
 	WorkerName *string `locationName:"workerName" type:"string"`
 }
@@ -1888,7 +2109,9 @@ func (s *ActivityStartedEventDetails) SetWorkerName(v string) *ActivityStartedEv
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivitySucceededEventDetails
+// Contains details about an activity which successfully terminated during an
+// execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivitySucceededEventDetails
 type ActivitySucceededEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1912,7 +2135,8 @@ func (s *ActivitySucceededEventDetails) SetOutput(v string) *ActivitySucceededEv
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityTimedOutEventDetails
+// Contains details about an activity timeout which occurred during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ActivityTimedOutEventDetails
 type ActivityTimedOutEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -1945,12 +2169,26 @@ func (s *ActivityTimedOutEventDetails) SetError(v string) *ActivityTimedOutEvent
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivityInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivityInput
 type CreateActivityInput struct {
 	_ struct{} `type:"structure"`
 
 	// The name of the activity to create. This name must be unique for your AWS
-	// account and region.
+	// account and region for 90 days. For more information, see  Limits Related
+	// to State Machine Executions (http://docs.aws.amazon.com/step-functions/latest/dg/limits.html#service-limits-state-machine-executions)
+	// in the AWS Step Functions Developer Guide.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -1988,7 +2226,7 @@ func (s *CreateActivityInput) SetName(v string) *CreateActivityInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivityOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateActivityOutput
 type CreateActivityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1997,7 +2235,7 @@ type CreateActivityOutput struct {
 	// ActivityArn is a required field
 	ActivityArn *string `locationName:"activityArn" min:"1" type:"string" required:"true"`
 
-	// The date the activity was created.
+	// The date the activity is created.
 	//
 	// CreationDate is a required field
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix" required:"true"`
@@ -2025,7 +2263,7 @@ func (s *CreateActivityOutput) SetCreationDate(v time.Time) *CreateActivityOutpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachineInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachineInput
 type CreateStateMachineInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2035,7 +2273,21 @@ type CreateStateMachineInput struct {
 	Definition *string `locationName:"definition" min:"1" type:"string" required:"true"`
 
 	// The name of the state machine. This name must be unique for your AWS account
-	// and region.
+	// and region for 90 days. For more information, see  Limits Related to State
+	// Machine Executions (http://docs.aws.amazon.com/step-functions/latest/dg/limits.html#service-limits-state-machine-executions)
+	// in the AWS Step Functions Developer Guide.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -2102,11 +2354,11 @@ func (s *CreateStateMachineInput) SetRoleArn(v string) *CreateStateMachineInput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachineOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/CreateStateMachineOutput
 type CreateStateMachineOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The date the state machine was created.
+	// The date the state machine is created.
 	//
 	// CreationDate is a required field
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix" required:"true"`
@@ -2139,7 +2391,7 @@ func (s *CreateStateMachineOutput) SetStateMachineArn(v string) *CreateStateMach
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivityInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivityInput
 type DeleteActivityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2181,7 +2433,7 @@ func (s *DeleteActivityInput) SetActivityArn(v string) *DeleteActivityInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivityOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteActivityOutput
 type DeleteActivityOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2196,7 +2448,7 @@ func (s DeleteActivityOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachineInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachineInput
 type DeleteStateMachineInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2238,7 +2490,7 @@ func (s *DeleteStateMachineInput) SetStateMachineArn(v string) *DeleteStateMachi
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachineOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DeleteStateMachineOutput
 type DeleteStateMachineOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2253,7 +2505,7 @@ func (s DeleteStateMachineOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivityInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivityInput
 type DescribeActivityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2295,7 +2547,7 @@ func (s *DescribeActivityInput) SetActivityArn(v string) *DescribeActivityInput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivityOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeActivityOutput
 type DescribeActivityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2304,12 +2556,24 @@ type DescribeActivityOutput struct {
 	// ActivityArn is a required field
 	ActivityArn *string `locationName:"activityArn" min:"1" type:"string" required:"true"`
 
-	// The date the activity was created.
+	// The date the activity is created.
 	//
 	// CreationDate is a required field
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix" required:"true"`
 
 	// The name of the activity.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -2343,7 +2607,7 @@ func (s *DescribeActivityOutput) SetName(v string) *DescribeActivityOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecutionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecutionInput
 type DescribeExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2385,7 +2649,7 @@ func (s *DescribeExecutionInput) SetExecutionArn(v string) *DescribeExecutionInp
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecutionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeExecutionOutput
 type DescribeExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2394,18 +2658,33 @@ type DescribeExecutionOutput struct {
 	// ExecutionArn is a required field
 	ExecutionArn *string `locationName:"executionArn" min:"1" type:"string" required:"true"`
 
-	// The JSON input data of the execution.
+	// The string that contains the JSON input data of the execution.
 	//
 	// Input is a required field
 	Input *string `locationName:"input" type:"string" required:"true"`
 
 	// The name of the execution.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	Name *string `locationName:"name" min:"1" type:"string"`
 
 	// The JSON output data of the execution.
+	//
+	// This field is set only if the execution succeeds. If the execution fails,
+	// this field is null.
 	Output *string `locationName:"output" type:"string"`
 
-	// The date the execution was started.
+	// The date the execution is started.
 	//
 	// StartDate is a required field
 	StartDate *time.Time `locationName:"startDate" type:"timestamp" timestampFormat:"unix" required:"true"`
@@ -2482,7 +2761,122 @@ func (s *DescribeExecutionOutput) SetStopDate(v time.Time) *DescribeExecutionOut
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineForExecutionInput
+type DescribeStateMachineForExecutionInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the execution you want state machine information
+	// for.
+	//
+	// ExecutionArn is a required field
+	ExecutionArn *string `locationName:"executionArn" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeStateMachineForExecutionInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeStateMachineForExecutionInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DescribeStateMachineForExecutionInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DescribeStateMachineForExecutionInput"}
+	if s.ExecutionArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("ExecutionArn"))
+	}
+	if s.ExecutionArn != nil && len(*s.ExecutionArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ExecutionArn", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetExecutionArn sets the ExecutionArn field's value.
+func (s *DescribeStateMachineForExecutionInput) SetExecutionArn(v string) *DescribeStateMachineForExecutionInput {
+	s.ExecutionArn = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineForExecutionOutput
+type DescribeStateMachineForExecutionOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon States Language definition of the state machine.
+	//
+	// Definition is a required field
+	Definition *string `locationName:"definition" min:"1" type:"string" required:"true"`
+
+	// The name of the state machine associated with the execution.
+	//
+	// Name is a required field
+	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
+
+	// The Amazon Resource Name (ARN) of the IAM role of the State Machine for the
+	// execution.
+	//
+	// RoleArn is a required field
+	RoleArn *string `locationName:"roleArn" min:"1" type:"string" required:"true"`
+
+	// The Amazon Resource Name (ARN) of the state machine associated with the execution.
+	//
+	// StateMachineArn is a required field
+	StateMachineArn *string `locationName:"stateMachineArn" min:"1" type:"string" required:"true"`
+
+	// The date and time the state machine associated with an execution was updated.
+	// For a newly created state machine, this is the creation date.
+	//
+	// UpdateDate is a required field
+	UpdateDate *time.Time `locationName:"updateDate" type:"timestamp" timestampFormat:"unix" required:"true"`
+}
+
+// String returns the string representation
+func (s DescribeStateMachineForExecutionOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DescribeStateMachineForExecutionOutput) GoString() string {
+	return s.String()
+}
+
+// SetDefinition sets the Definition field's value.
+func (s *DescribeStateMachineForExecutionOutput) SetDefinition(v string) *DescribeStateMachineForExecutionOutput {
+	s.Definition = &v
+	return s
+}
+
+// SetName sets the Name field's value.
+func (s *DescribeStateMachineForExecutionOutput) SetName(v string) *DescribeStateMachineForExecutionOutput {
+	s.Name = &v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *DescribeStateMachineForExecutionOutput) SetRoleArn(v string) *DescribeStateMachineForExecutionOutput {
+	s.RoleArn = &v
+	return s
+}
+
+// SetStateMachineArn sets the StateMachineArn field's value.
+func (s *DescribeStateMachineForExecutionOutput) SetStateMachineArn(v string) *DescribeStateMachineForExecutionOutput {
+	s.StateMachineArn = &v
+	return s
+}
+
+// SetUpdateDate sets the UpdateDate field's value.
+func (s *DescribeStateMachineForExecutionOutput) SetUpdateDate(v time.Time) *DescribeStateMachineForExecutionOutput {
+	s.UpdateDate = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineInput
 type DescribeStateMachineInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2524,11 +2918,11 @@ func (s *DescribeStateMachineInput) SetStateMachineArn(v string) *DescribeStateM
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/DescribeStateMachineOutput
 type DescribeStateMachineOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The date the state machine was created.
+	// The date the state machine is created.
 	//
 	// CreationDate is a required field
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix" required:"true"`
@@ -2540,11 +2934,24 @@ type DescribeStateMachineOutput struct {
 
 	// The name of the state machine.
 	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
+	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
 
-	// The Amazon Resource Name (ARN) of the IAM role used for executing this state
-	// machine.
+	// The Amazon Resource Name (ARN) of the IAM role used when creating this state
+	// machine. (The IAM role maintains security by granting Step Functions access
+	// to AWS resources.)
 	//
 	// RoleArn is a required field
 	RoleArn *string `locationName:"roleArn" min:"1" type:"string" required:"true"`
@@ -2604,7 +3011,8 @@ func (s *DescribeStateMachineOutput) SetStatus(v string) *DescribeStateMachineOu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionAbortedEventDetails
+// Contains details about an abort of an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionAbortedEventDetails
 type ExecutionAbortedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -2637,7 +3045,8 @@ func (s *ExecutionAbortedEventDetails) SetError(v string) *ExecutionAbortedEvent
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionFailedEventDetails
+// Contains details about an execution failure event.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionFailedEventDetails
 type ExecutionFailedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -2670,7 +3079,8 @@ func (s *ExecutionFailedEventDetails) SetError(v string) *ExecutionFailedEventDe
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionListItem
+// Contains details about an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionListItem
 type ExecutionListItem struct {
 	_ struct{} `type:"structure"`
 
@@ -2680,6 +3090,18 @@ type ExecutionListItem struct {
 	ExecutionArn *string `locationName:"executionArn" min:"1" type:"string" required:"true"`
 
 	// The name of the execution.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -2749,7 +3171,8 @@ func (s *ExecutionListItem) SetStopDate(v time.Time) *ExecutionListItem {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionStartedEventDetails
+// Contains details about the start of the execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionStartedEventDetails
 type ExecutionStartedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -2783,7 +3206,8 @@ func (s *ExecutionStartedEventDetails) SetRoleArn(v string) *ExecutionStartedEve
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionSucceededEventDetails
+// Contains details about the successful termination of the execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionSucceededEventDetails
 type ExecutionSucceededEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -2807,7 +3231,8 @@ func (s *ExecutionSucceededEventDetails) SetOutput(v string) *ExecutionSucceeded
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionTimedOutEventDetails
+// Contains details about the execution timeout which occurred during the execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ExecutionTimedOutEventDetails
 type ExecutionTimedOutEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -2840,17 +3265,18 @@ func (s *ExecutionTimedOutEventDetails) SetError(v string) *ExecutionTimedOutEve
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTaskInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTaskInput
 type GetActivityTaskInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the activity to retrieve tasks from.
+	// The Amazon Resource Name (ARN) of the activity to retrieve tasks from (assigned
+	// when you create the task using CreateActivity.)
 	//
 	// ActivityArn is a required field
 	ActivityArn *string `locationName:"activityArn" min:"1" type:"string" required:"true"`
 
-	// An arbitrary name may be provided in order to identify the worker that the
-	// task is assigned to. This name will be used when it is logged in the execution
+	// You can provide an arbitrary name in order to identify the worker that the
+	// task is assigned to. This name is used when it is logged in the execution
 	// history.
 	WorkerName *string `locationName:"workerName" min:"1" type:"string"`
 }
@@ -2896,11 +3322,11 @@ func (s *GetActivityTaskInput) SetWorkerName(v string) *GetActivityTaskInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTaskOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetActivityTaskOutput
 type GetActivityTaskOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The JSON input data for the task.
+	// The string that contains the JSON input data for the task.
 	Input *string `locationName:"input" type:"string"`
 
 	// A token that identifies the scheduled task. This token must be copied and
@@ -2931,7 +3357,7 @@ func (s *GetActivityTaskOutput) SetTaskToken(v string) *GetActivityTaskOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistoryInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistoryInput
 type GetExecutionHistoryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2940,15 +3366,15 @@ type GetExecutionHistoryInput struct {
 	// ExecutionArn is a required field
 	ExecutionArn *string `locationName:"executionArn" min:"1" type:"string" required:"true"`
 
-	// The maximum number of results that will be returned per call. nextToken can
-	// be used to obtain further pages of results. The default is 100 and the maximum
-	// allowed page size is 1000.
+	// The maximum number of results that are returned per call. You can use nextToken
+	// to obtain further pages of results. The default is 100 and the maximum allowed
+	// page size is 100. A value of 0 uses the default.
 	//
-	// This is an upper limit only; the actual number of results returned per call
-	// may be fewer than the specified maximum.
+	// This is only an upper limit. The actual number of results returned per call
+	// might be fewer than the specified maximum.
 	MaxResults *int64 `locationName:"maxResults" type:"integer"`
 
-	// If a nextToken was returned by a previous call, there are more results available.
+	// If a nextToken is returned by a previous call, there are more results available.
 	// To retrieve the next page of results, make the call again using the returned
 	// token in nextToken. Keep all other arguments unchanged.
 	//
@@ -3013,7 +3439,7 @@ func (s *GetExecutionHistoryInput) SetReverseOrder(v bool) *GetExecutionHistoryI
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistoryOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/GetExecutionHistoryOutput
 type GetExecutionHistoryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3022,9 +3448,9 @@ type GetExecutionHistoryOutput struct {
 	// Events is a required field
 	Events []*HistoryEvent `locationName:"events" type:"list" required:"true"`
 
-	// If a nextToken is returned, there are more results available. To retrieve
-	// the next page of results, make the call again using the returned token in
-	// nextToken. Keep all other arguments unchanged.
+	// If a nextToken is returned by a previous call, there are more results available.
+	// To retrieve the next page of results, make the call again using the returned
+	// token in nextToken. Keep all other arguments unchanged.
 	//
 	// The configured maxResults determines how many results can be returned in
 	// a single call.
@@ -3053,30 +3479,44 @@ func (s *GetExecutionHistoryOutput) SetNextToken(v string) *GetExecutionHistoryO
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/HistoryEvent
+// Contains details about the events of an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/HistoryEvent
 type HistoryEvent struct {
 	_ struct{} `type:"structure"`
 
+	// Contains details about an activity which failed during an execution.
 	ActivityFailedEventDetails *ActivityFailedEventDetails `locationName:"activityFailedEventDetails" type:"structure"`
 
+	// Contains details about an activity schedule event which failed during an
+	// execution.
 	ActivityScheduleFailedEventDetails *ActivityScheduleFailedEventDetails `locationName:"activityScheduleFailedEventDetails" type:"structure"`
 
+	// Contains details about an activity scheduled during an execution.
 	ActivityScheduledEventDetails *ActivityScheduledEventDetails `locationName:"activityScheduledEventDetails" type:"structure"`
 
+	// Contains details about the start of an activity during an execution.
 	ActivityStartedEventDetails *ActivityStartedEventDetails `locationName:"activityStartedEventDetails" type:"structure"`
 
+	// Contains details about an activity which successfully terminated during an
+	// execution.
 	ActivitySucceededEventDetails *ActivitySucceededEventDetails `locationName:"activitySucceededEventDetails" type:"structure"`
 
+	// Contains details about an activity timeout which occurred during an execution.
 	ActivityTimedOutEventDetails *ActivityTimedOutEventDetails `locationName:"activityTimedOutEventDetails" type:"structure"`
 
+	// Contains details about an abort of an execution.
 	ExecutionAbortedEventDetails *ExecutionAbortedEventDetails `locationName:"executionAbortedEventDetails" type:"structure"`
 
+	// Contains details about an execution failure event.
 	ExecutionFailedEventDetails *ExecutionFailedEventDetails `locationName:"executionFailedEventDetails" type:"structure"`
 
+	// Contains details about the start of the execution.
 	ExecutionStartedEventDetails *ExecutionStartedEventDetails `locationName:"executionStartedEventDetails" type:"structure"`
 
+	// Contains details about the successful termination of the execution.
 	ExecutionSucceededEventDetails *ExecutionSucceededEventDetails `locationName:"executionSucceededEventDetails" type:"structure"`
 
+	// Contains details about the execution timeout which occurred during the execution.
 	ExecutionTimedOutEventDetails *ExecutionTimedOutEventDetails `locationName:"executionTimedOutEventDetails" type:"structure"`
 
 	// The id of the event. Events are numbered sequentially, starting at one.
@@ -3084,26 +3524,38 @@ type HistoryEvent struct {
 	// Id is a required field
 	Id *int64 `locationName:"id" type:"long" required:"true"`
 
+	// Contains details about a lambda function which failed during an execution.
 	LambdaFunctionFailedEventDetails *LambdaFunctionFailedEventDetails `locationName:"lambdaFunctionFailedEventDetails" type:"structure"`
 
+	// Contains details about a failed lambda function schedule event which occurred
+	// during an execution.
 	LambdaFunctionScheduleFailedEventDetails *LambdaFunctionScheduleFailedEventDetails `locationName:"lambdaFunctionScheduleFailedEventDetails" type:"structure"`
 
+	// Contains details about a lambda function scheduled during an execution.
 	LambdaFunctionScheduledEventDetails *LambdaFunctionScheduledEventDetails `locationName:"lambdaFunctionScheduledEventDetails" type:"structure"`
 
+	// Contains details about a lambda function which failed to start during an
+	// execution.
 	LambdaFunctionStartFailedEventDetails *LambdaFunctionStartFailedEventDetails `locationName:"lambdaFunctionStartFailedEventDetails" type:"structure"`
 
+	// Contains details about a lambda function which terminated successfully during
+	// an execution.
 	LambdaFunctionSucceededEventDetails *LambdaFunctionSucceededEventDetails `locationName:"lambdaFunctionSucceededEventDetails" type:"structure"`
 
+	// Contains details about a lambda function timeout which occurred during an
+	// execution.
 	LambdaFunctionTimedOutEventDetails *LambdaFunctionTimedOutEventDetails `locationName:"lambdaFunctionTimedOutEventDetails" type:"structure"`
 
 	// The id of the previous event.
 	PreviousEventId *int64 `locationName:"previousEventId" type:"long"`
 
+	// Contains details about a state entered during an execution.
 	StateEnteredEventDetails *StateEnteredEventDetails `locationName:"stateEnteredEventDetails" type:"structure"`
 
+	// Contains details about an exit from a state during an execution.
 	StateExitedEventDetails *StateExitedEventDetails `locationName:"stateExitedEventDetails" type:"structure"`
 
-	// The date the event occured.
+	// The date the event occurred.
 	//
 	// Timestamp is a required field
 	Timestamp *time.Time `locationName:"timestamp" type:"timestamp" timestampFormat:"unix" required:"true"`
@@ -3262,7 +3714,8 @@ func (s *HistoryEvent) SetType(v string) *HistoryEvent {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionFailedEventDetails
+// Contains details about a lambda function which failed during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionFailedEventDetails
 type LambdaFunctionFailedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -3295,7 +3748,9 @@ func (s *LambdaFunctionFailedEventDetails) SetError(v string) *LambdaFunctionFai
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionScheduleFailedEventDetails
+// Contains details about a failed lambda function schedule event which occurred
+// during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionScheduleFailedEventDetails
 type LambdaFunctionScheduleFailedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -3328,7 +3783,8 @@ func (s *LambdaFunctionScheduleFailedEventDetails) SetError(v string) *LambdaFun
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionScheduledEventDetails
+// Contains details about a lambda function scheduled during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionScheduledEventDetails
 type LambdaFunctionScheduledEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -3372,7 +3828,9 @@ func (s *LambdaFunctionScheduledEventDetails) SetTimeoutInSeconds(v int64) *Lamb
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionStartFailedEventDetails
+// Contains details about a lambda function which failed to start during an
+// execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionStartFailedEventDetails
 type LambdaFunctionStartFailedEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -3405,7 +3863,9 @@ func (s *LambdaFunctionStartFailedEventDetails) SetError(v string) *LambdaFuncti
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionSucceededEventDetails
+// Contains details about a lambda function which successfully terminated during
+// an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionSucceededEventDetails
 type LambdaFunctionSucceededEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -3429,7 +3889,9 @@ func (s *LambdaFunctionSucceededEventDetails) SetOutput(v string) *LambdaFunctio
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionTimedOutEventDetails
+// Contains details about a lambda function timeout which occurred during an
+// execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/LambdaFunctionTimedOutEventDetails
 type LambdaFunctionTimedOutEventDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -3462,19 +3924,19 @@ func (s *LambdaFunctionTimedOutEventDetails) SetError(v string) *LambdaFunctionT
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivitiesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivitiesInput
 type ListActivitiesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of results that will be returned per call. nextToken can
-	// be used to obtain further pages of results. The default is 100 and the maximum
-	// allowed page size is 1000.
+	// The maximum number of results that are returned per call. You can use nextToken
+	// to obtain further pages of results. The default is 100 and the maximum allowed
+	// page size is 100. A value of 0 uses the default.
 	//
-	// This is an upper limit only; the actual number of results returned per call
-	// may be fewer than the specified maximum.
+	// This is only an upper limit. The actual number of results returned per call
+	// might be fewer than the specified maximum.
 	MaxResults *int64 `locationName:"maxResults" type:"integer"`
 
-	// If a nextToken was returned by a previous call, there are more results available.
+	// If a nextToken is returned by a previous call, there are more results available.
 	// To retrieve the next page of results, make the call again using the returned
 	// token in nextToken. Keep all other arguments unchanged.
 	//
@@ -3518,7 +3980,7 @@ func (s *ListActivitiesInput) SetNextToken(v string) *ListActivitiesInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivitiesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListActivitiesOutput
 type ListActivitiesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3527,9 +3989,9 @@ type ListActivitiesOutput struct {
 	// Activities is a required field
 	Activities []*ActivityListItem `locationName:"activities" type:"list" required:"true"`
 
-	// If a nextToken is returned, there are more results available. To retrieve
-	// the next page of results, make the call again using the returned token in
-	// nextToken. Keep all other arguments unchanged.
+	// If a nextToken is returned by a previous call, there are more results available.
+	// To retrieve the next page of results, make the call again using the returned
+	// token in nextToken. Keep all other arguments unchanged.
 	//
 	// The configured maxResults determines how many results can be returned in
 	// a single call.
@@ -3558,19 +4020,19 @@ func (s *ListActivitiesOutput) SetNextToken(v string) *ListActivitiesOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutionsInput
 type ListExecutionsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of results that will be returned per call. nextToken can
-	// be used to obtain further pages of results. The default is 100 and the maximum
-	// allowed page size is 1000.
+	// The maximum number of results that are returned per call. You can use nextToken
+	// to obtain further pages of results. The default is 100 and the maximum allowed
+	// page size is 100. A value of 0 uses the default.
 	//
-	// This is an upper limit only; the actual number of results returned per call
-	// may be fewer than the specified maximum.
+	// This is only an upper limit. The actual number of results returned per call
+	// might be fewer than the specified maximum.
 	MaxResults *int64 `locationName:"maxResults" type:"integer"`
 
-	// If a nextToken was returned by a previous call, there are more results available.
+	// If a nextToken is returned by a previous call, there are more results available.
 	// To retrieve the next page of results, make the call again using the returned
 	// token in nextToken. Keep all other arguments unchanged.
 	//
@@ -3578,8 +4040,7 @@ type ListExecutionsInput struct {
 	// a single call.
 	NextToken *string `locationName:"nextToken" min:"1" type:"string"`
 
-	// The Amazon Resource Name (ARN) of the state machine whose executions will
-	// be listed.
+	// The Amazon Resource Name (ARN) of the state machine whose executions is listed.
 	//
 	// StateMachineArn is a required field
 	StateMachineArn *string `locationName:"stateMachineArn" min:"1" type:"string" required:"true"`
@@ -3642,7 +4103,7 @@ func (s *ListExecutionsInput) SetStatusFilter(v string) *ListExecutionsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListExecutionsOutput
 type ListExecutionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3651,9 +4112,9 @@ type ListExecutionsOutput struct {
 	// Executions is a required field
 	Executions []*ExecutionListItem `locationName:"executions" type:"list" required:"true"`
 
-	// If a nextToken is returned, there are more results available. To retrieve
-	// the next page of results, make the call again using the returned token in
-	// nextToken. Keep all other arguments unchanged.
+	// If a nextToken is returned by a previous call, there are more results available.
+	// To retrieve the next page of results, make the call again using the returned
+	// token in nextToken. Keep all other arguments unchanged.
 	//
 	// The configured maxResults determines how many results can be returned in
 	// a single call.
@@ -3682,19 +4143,19 @@ func (s *ListExecutionsOutput) SetNextToken(v string) *ListExecutionsOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachinesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachinesInput
 type ListStateMachinesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The maximum number of results that will be returned per call. nextToken can
-	// be used to obtain further pages of results. The default is 100 and the maximum
-	// allowed page size is 1000.
+	// The maximum number of results that are returned per call. You can use nextToken
+	// to obtain further pages of results. The default is 100 and the maximum allowed
+	// page size is 100. A value of 0 uses the default.
 	//
-	// This is an upper limit only; the actual number of results returned per call
-	// may be fewer than the specified maximum.
+	// This is only an upper limit. The actual number of results returned per call
+	// might be fewer than the specified maximum.
 	MaxResults *int64 `locationName:"maxResults" type:"integer"`
 
-	// If a nextToken was returned by a previous call, there are more results available.
+	// If a nextToken is returned by a previous call, there are more results available.
 	// To retrieve the next page of results, make the call again using the returned
 	// token in nextToken. Keep all other arguments unchanged.
 	//
@@ -3738,13 +4199,13 @@ func (s *ListStateMachinesInput) SetNextToken(v string) *ListStateMachinesInput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachinesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/ListStateMachinesOutput
 type ListStateMachinesOutput struct {
 	_ struct{} `type:"structure"`
 
-	// If a nextToken is returned, there are more results available. To retrieve
-	// the next page of results, make the call again using the returned token in
-	// nextToken. Keep all other arguments unchanged.
+	// If a nextToken is returned by a previous call, there are more results available.
+	// To retrieve the next page of results, make the call again using the returned
+	// token in nextToken. Keep all other arguments unchanged.
 	//
 	// The configured maxResults determines how many results can be returned in
 	// a single call.
@@ -3776,7 +4237,7 @@ func (s *ListStateMachinesOutput) SetStateMachines(v []*StateMachineListItem) *L
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailureInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailureInput
 type SendTaskFailureInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3837,7 +4298,7 @@ func (s *SendTaskFailureInput) SetTaskToken(v string) *SendTaskFailureInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailureOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskFailureOutput
 type SendTaskFailureOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3852,12 +4313,12 @@ func (s SendTaskFailureOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeatInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeatInput
 type SendTaskHeartbeatInput struct {
 	_ struct{} `type:"structure"`
 
 	// The token that represents this task. Task tokens are generated by the service
-	// when the tasks are assigned to a worker (see GetActivityTask::taskToken).
+	// when the tasks are assigned to a worker (see GetActivityTaskOutput$taskToken).
 	//
 	// TaskToken is a required field
 	TaskToken *string `locationName:"taskToken" min:"1" type:"string" required:"true"`
@@ -3895,7 +4356,7 @@ func (s *SendTaskHeartbeatInput) SetTaskToken(v string) *SendTaskHeartbeatInput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeatOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskHeartbeatOutput
 type SendTaskHeartbeatOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3910,7 +4371,7 @@ func (s SendTaskHeartbeatOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccessInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccessInput
 type SendTaskSuccessInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3920,7 +4381,7 @@ type SendTaskSuccessInput struct {
 	Output *string `locationName:"output" type:"string" required:"true"`
 
 	// The token that represents this task. Task tokens are generated by the service
-	// when the tasks are assigned to a worker (see GetActivityTask::taskToken).
+	// when the tasks are assigned to a worker (see GetActivityTaskOutput$taskToken).
 	//
 	// TaskToken is a required field
 	TaskToken *string `locationName:"taskToken" min:"1" type:"string" required:"true"`
@@ -3967,7 +4428,7 @@ func (s *SendTaskSuccessInput) SetTaskToken(v string) *SendTaskSuccessInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccessOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/SendTaskSuccessOutput
 type SendTaskSuccessOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3982,15 +4443,48 @@ func (s SendTaskSuccessOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecutionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecutionInput
 type StartExecutionInput struct {
 	_ struct{} `type:"structure"`
 
-	// The JSON input data for the execution.
+	// The string that contains the JSON input data for the execution, for example:
+	//
+	// "input": "{\"first_name\" : \"test\"}"
+	//
+	// If you don't include any JSON input data, you still must include the two
+	// braces, for example: "input": "{}"
 	Input *string `locationName:"input" type:"string"`
 
 	// The name of the execution. This name must be unique for your AWS account
-	// and region.
+	// and region for 90 days. For more information, see  Limits Related to State
+	// Machine Executions (http://docs.aws.amazon.com/step-functions/latest/dg/limits.html#service-limits-state-machine-executions)
+	// in the AWS Step Functions Developer Guide.
+	//
+	// An execution can't use the name of another execution for 90 days.
+	//
+	// When you make multiple StartExecution calls with the same name, the new execution
+	// doesn't run and the following rules apply:
+	//
+	// When the original execution is open and the execution input from the new
+	// call is different, the ExecutionAlreadyExists message is returned.
+	//
+	// When the original execution is open and the execution input from the new
+	// call is identical, the Success message is returned.
+	//
+	// When the original execution is closed, the ExecutionAlreadyExists message
+	// is returned regardless of input.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	Name *string `locationName:"name" min:"1" type:"string"`
 
 	// The Amazon Resource Name (ARN) of the state machine to execute.
@@ -4046,7 +4540,7 @@ func (s *StartExecutionInput) SetStateMachineArn(v string) *StartExecutionInput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecutionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StartExecutionOutput
 type StartExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4055,7 +4549,7 @@ type StartExecutionOutput struct {
 	// ExecutionArn is a required field
 	ExecutionArn *string `locationName:"executionArn" min:"1" type:"string" required:"true"`
 
-	// The date the execution was started.
+	// The date the execution is started.
 	//
 	// StartDate is a required field
 	StartDate *time.Time `locationName:"startDate" type:"timestamp" timestampFormat:"unix" required:"true"`
@@ -4083,11 +4577,12 @@ func (s *StartExecutionOutput) SetStartDate(v time.Time) *StartExecutionOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StateEnteredEventDetails
+// Contains details about a state entered during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StateEnteredEventDetails
 type StateEnteredEventDetails struct {
 	_ struct{} `type:"structure"`
 
-	// The JSON input data to the state.
+	// The string that contains the JSON input data for the state.
 	Input *string `locationName:"input" type:"string"`
 
 	// The name of the state.
@@ -4118,11 +4613,24 @@ func (s *StateEnteredEventDetails) SetName(v string) *StateEnteredEventDetails {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StateExitedEventDetails
+// Contains details about an exit from a state during an execution.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StateExitedEventDetails
 type StateExitedEventDetails struct {
 	_ struct{} `type:"structure"`
 
 	// The name of the state.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -4153,16 +4661,29 @@ func (s *StateExitedEventDetails) SetOutput(v string) *StateExitedEventDetails {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StateMachineListItem
+// Contains details about the state machine.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StateMachineListItem
 type StateMachineListItem struct {
 	_ struct{} `type:"structure"`
 
-	// The date the state machine was created.
+	// The date the state machine is created.
 	//
 	// CreationDate is a required field
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix" required:"true"`
 
 	// The name of the state machine.
+	//
+	// A name must not contain:
+	//
+	//    * whitespace
+	//
+	//    * brackets < > { } [ ]
+	//
+	//    * wildcard characters ? *
+	//
+	//    * special characters " # % \ ^ | ~ ` $ & , ; : /
+	//
+	//    * control characters (U+0000-001F, U+007F-009F)
 	//
 	// Name is a required field
 	Name *string `locationName:"name" min:"1" type:"string" required:"true"`
@@ -4201,7 +4722,7 @@ func (s *StateMachineListItem) SetStateMachineArn(v string) *StateMachineListIte
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecutionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecutionInput
 type StopExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4261,11 +4782,11 @@ func (s *StopExecutionInput) SetExecutionArn(v string) *StopExecutionInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecutionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/StopExecutionOutput
 type StopExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The date the execution was stopped.
+	// The date the execution is stopped.
 	//
 	// StopDate is a required field
 	StopDate *time.Time `locationName:"stopDate" type:"timestamp" timestampFormat:"unix" required:"true"`
@@ -4284,6 +4805,98 @@ func (s StopExecutionOutput) GoString() string {
 // SetStopDate sets the StopDate field's value.
 func (s *StopExecutionOutput) SetStopDate(v time.Time) *StopExecutionOutput {
 	s.StopDate = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/UpdateStateMachineInput
+type UpdateStateMachineInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon States Language definition of the state machine.
+	Definition *string `locationName:"definition" min:"1" type:"string"`
+
+	// The Amazon Resource Name (ARN) of the IAM role of the state machine.
+	RoleArn *string `locationName:"roleArn" min:"1" type:"string"`
+
+	// The Amazon Resource Name (ARN) of the state machine.
+	//
+	// StateMachineArn is a required field
+	StateMachineArn *string `locationName:"stateMachineArn" min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateStateMachineInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateStateMachineInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *UpdateStateMachineInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "UpdateStateMachineInput"}
+	if s.Definition != nil && len(*s.Definition) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("Definition", 1))
+	}
+	if s.RoleArn != nil && len(*s.RoleArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleArn", 1))
+	}
+	if s.StateMachineArn == nil {
+		invalidParams.Add(request.NewErrParamRequired("StateMachineArn"))
+	}
+	if s.StateMachineArn != nil && len(*s.StateMachineArn) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("StateMachineArn", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetDefinition sets the Definition field's value.
+func (s *UpdateStateMachineInput) SetDefinition(v string) *UpdateStateMachineInput {
+	s.Definition = &v
+	return s
+}
+
+// SetRoleArn sets the RoleArn field's value.
+func (s *UpdateStateMachineInput) SetRoleArn(v string) *UpdateStateMachineInput {
+	s.RoleArn = &v
+	return s
+}
+
+// SetStateMachineArn sets the StateMachineArn field's value.
+func (s *UpdateStateMachineInput) SetStateMachineArn(v string) *UpdateStateMachineInput {
+	s.StateMachineArn = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/states-2016-11-23/UpdateStateMachineOutput
+type UpdateStateMachineOutput struct {
+	_ struct{} `type:"structure"`
+
+	// The date and time the state machine was updated.
+	//
+	// UpdateDate is a required field
+	UpdateDate *time.Time `locationName:"updateDate" type:"timestamp" timestampFormat:"unix" required:"true"`
+}
+
+// String returns the string representation
+func (s UpdateStateMachineOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s UpdateStateMachineOutput) GoString() string {
+	return s.String()
+}
+
+// SetUpdateDate sets the UpdateDate field's value.
+func (s *UpdateStateMachineOutput) SetUpdateDate(v time.Time) *UpdateStateMachineOutput {
+	s.UpdateDate = &v
 	return s
 }
 
@@ -4374,6 +4987,9 @@ const (
 	// HistoryEventTypeSucceedStateExited is a HistoryEventType enum value
 	HistoryEventTypeSucceedStateExited = "SucceedStateExited"
 
+	// HistoryEventTypeTaskStateAborted is a HistoryEventType enum value
+	HistoryEventTypeTaskStateAborted = "TaskStateAborted"
+
 	// HistoryEventTypeTaskStateEntered is a HistoryEventType enum value
 	HistoryEventTypeTaskStateEntered = "TaskStateEntered"
 
@@ -4386,11 +5002,26 @@ const (
 	// HistoryEventTypePassStateExited is a HistoryEventType enum value
 	HistoryEventTypePassStateExited = "PassStateExited"
 
+	// HistoryEventTypeParallelStateAborted is a HistoryEventType enum value
+	HistoryEventTypeParallelStateAborted = "ParallelStateAborted"
+
 	// HistoryEventTypeParallelStateEntered is a HistoryEventType enum value
 	HistoryEventTypeParallelStateEntered = "ParallelStateEntered"
 
 	// HistoryEventTypeParallelStateExited is a HistoryEventType enum value
 	HistoryEventTypeParallelStateExited = "ParallelStateExited"
+
+	// HistoryEventTypeParallelStateFailed is a HistoryEventType enum value
+	HistoryEventTypeParallelStateFailed = "ParallelStateFailed"
+
+	// HistoryEventTypeParallelStateStarted is a HistoryEventType enum value
+	HistoryEventTypeParallelStateStarted = "ParallelStateStarted"
+
+	// HistoryEventTypeParallelStateSucceeded is a HistoryEventType enum value
+	HistoryEventTypeParallelStateSucceeded = "ParallelStateSucceeded"
+
+	// HistoryEventTypeWaitStateAborted is a HistoryEventType enum value
+	HistoryEventTypeWaitStateAborted = "WaitStateAborted"
 
 	// HistoryEventTypeWaitStateEntered is a HistoryEventType enum value
 	HistoryEventTypeWaitStateEntered = "WaitStateEntered"

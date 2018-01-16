@@ -13,17 +13,22 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/stretchr/testify/assert"
 )
 
 func assertMD5(t *testing.T, req *request.Request) {
 	err := req.Build()
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
 
 	b, _ := ioutil.ReadAll(req.HTTPRequest.Body)
 	out := md5.Sum(b)
-	assert.NotEmpty(t, b)
-	assert.Equal(t, base64.StdEncoding.EncodeToString(out[:]), req.HTTPRequest.Header.Get("Content-MD5"))
+	if len(b) == 0 {
+		t.Error("expected non-empty value")
+	}
+	if e, a := base64.StdEncoding.EncodeToString(out[:]), req.HTTPRequest.Header.Get("Content-MD5"); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
 }
 
 func TestMD5InPutBucketCors(t *testing.T) {
@@ -115,7 +120,9 @@ const (
 
 func TestPutObjectMetadataWithUnicode(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		assert.Equal(t, utf8Value, r.Header.Get(metaKeyPrefix+utf8KeySuffix))
+		if e, a := utf8Value, r.Header.Get(metaKeyPrefix+utf8KeySuffix); e != a {
+			t.Errorf("expected %s, but received %s", e, a)
+		}
 	}))
 	svc := s3.New(unit.Session, &aws.Config{
 		Endpoint:   aws.String(server.URL),
@@ -133,7 +140,9 @@ func TestPutObjectMetadataWithUnicode(t *testing.T) {
 		}(),
 	})
 
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
 }
 
 func TestGetObjectMetadataWithUnicode(t *testing.T) {
@@ -150,9 +159,13 @@ func TestGetObjectMetadataWithUnicode(t *testing.T) {
 		Key:    aws.String("my_key"),
 	})
 
-	assert.NoError(t, err)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
 	resp.Body.Close()
 
-	assert.Equal(t, utf8Value, *resp.Metadata[utf8KeySuffix])
+	if e, a := utf8Value, *resp.Metadata[utf8KeySuffix]; e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
 
 }

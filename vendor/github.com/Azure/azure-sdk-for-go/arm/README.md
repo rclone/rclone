@@ -91,6 +91,62 @@ post,
 [Developer's Guide to Auth with Azure Resource Manager API](http://www.dushyantgill.com/blog/2015/05/23/developers-guide-to-auth-with-azure-resource-manager-api/),
 that is also quite helpful.
 
+### Use an authentication file
+
+This SDK also supports authentication with a JSON file containing credentials for the service principal. In the Azure CLI, you can create a service principal and its authentication file with this command:
+
+``` bash
+az ad sp create-for-rbac --sdk-auth > mycredentials.json
+```
+
+Save this file in a secure location on your system where your code can read it. Set an environment variable with the full path to the file:
+
+``` bash
+export AZURE_AUTH_LOCATION=/secure/location/mycredentials.json
+```
+
+``` powershell
+$env:AZURE_AUTH_LOCATION= "/secure/location/mycredentials.json"
+```
+
+The file looks like this, in case you want to create it yourself:
+
+``` json
+{
+    "clientId": "<your service principal client ID>",
+    "clientSecret": "your service principal client secret",
+    "subscriptionId": "<your Azure Subsription ID>",
+    "tenantId": "<your tenant ID>",
+    "activeDirectoryEndpointUrl": "https://login.microsoftonline.com",
+    "resourceManagerEndpointUrl": "https://management.azure.com/",
+    "activeDirectoryGraphResourceId": "https://graph.windows.net/",
+    "sqlManagementEndpointUrl": "https://management.core.windows.net:8443/",
+    "galleryEndpointUrl": "https://gallery.azure.com/",
+    "managementEndpointUrl": "https://management.core.windows.net/"
+}
+```
+
+Clients can be created later like this:
+
+``` go
+package main
+
+import (
+  "github.com/Azure/go-autorest/autorest/azure/auth"
+  "github.com/Azure/azure-sdk-for-go/arm/storage"
+)
+
+func main() {
+  authentication, err := auth.GetClientSetup(storage.DefaultBaseURI)
+  if err != nil {
+ 	  panic(err)
+	}
+  client := storage.NewAccountsClientWithBaseURI(authentication.BaseURI, authentication.SubscriptionID)
+  client.Authorizer = authentication
+}
+
+```
+
 ### Complete source code
 
 Get code for a full example of [authenticating to Azure via certificate or device authorization](https://github.com/Azure/go-autorest/tree/master/autorest/azure/example).

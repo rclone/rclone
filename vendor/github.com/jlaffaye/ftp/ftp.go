@@ -74,17 +74,13 @@ func DialTimeout(addr string, timeout time.Duration) (*ServerConn, error) {
 
 	// Use the resolved IP address in case addr contains a domain name
 	// If we use the domain name, we might not resolve to the same IP.
-	remoteAddr := tconn.RemoteAddr().String()
-	host, _, err := net.SplitHostPort(remoteAddr)
-	if err != nil {
-		return nil, err
-	}
+	remoteAddr := tconn.RemoteAddr().(*net.TCPAddr)
 
 	conn := textproto.NewConn(tconn)
 
 	c := &ServerConn{
 		conn:     conn,
-		host:     host,
+		host:     remoteAddr.IP.String(),
 		timeout:  timeout,
 		features: make(map[string]string),
 	}
@@ -135,11 +131,9 @@ func (c *ServerConn) Login(user, password string) error {
 	}
 
 	// Switch to UTF-8
-	if err := c.setUTF8(); err != nil {
-		return err
-	}
+	err = c.setUTF8()
 
-	return nil
+	return err
 }
 
 // feat issues a FEAT FTP command to list the additional commands supported by
@@ -354,14 +348,14 @@ func (c *ServerConn) NameList(path string) (entries []string, err error) {
 // List issues a LIST FTP command.
 func (c *ServerConn) List(path string) (entries []*Entry, err error) {
 	var cmd string
-	var parseFunc func(string) (*Entry, error)
+	var parser parseFunc
 
 	if c.mlstSupported {
 		cmd = "MLSD"
-		parseFunc = parseRFC3659ListLine
+		parser = parseRFC3659ListLine
 	} else {
 		cmd = "LIST"
-		parseFunc = parseListLine
+		parser = parseListLine
 	}
 
 	conn, err := c.cmdDataConnFrom(0, "%s %s", cmd, path)
@@ -373,8 +367,9 @@ func (c *ServerConn) List(path string) (entries []*Entry, err error) {
 	defer r.Close()
 
 	scanner := bufio.NewScanner(r)
+	now := time.Now()
 	for scanner.Scan() {
-		entry, err := parseFunc(scanner.Text())
+		entry, err := parser(scanner.Text(), now)
 		if err == nil {
 			entries = append(entries, entry)
 		}

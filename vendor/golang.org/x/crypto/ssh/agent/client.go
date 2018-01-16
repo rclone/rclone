@@ -98,7 +98,7 @@ const (
 	agentAddIdentity         = 17
 	agentRemoveIdentity      = 18
 	agentRemoveAllIdentities = 19
-	agentAddIdConstrained    = 25
+	agentAddIDConstrained    = 25
 
 	// 3.3 Key-type independent requests from client to agent
 	agentAddSmartcardKey            = 20
@@ -515,7 +515,7 @@ func (c *client) insertKey(s interface{}, comment string, constraints []byte) er
 
 	// if constraints are present then the message type needs to be changed.
 	if len(constraints) != 0 {
-		req[0] = agentAddIdConstrained
+		req[0] = agentAddIDConstrained
 	}
 
 	resp, err := c.call(req)
@@ -577,11 +577,11 @@ func (c *client) Add(key AddedKey) error {
 		constraints = append(constraints, agentConstrainConfirm)
 	}
 
-	if cert := key.Certificate; cert == nil {
+	cert := key.Certificate
+	if cert == nil {
 		return c.insertKey(key.PrivateKey, key.Comment, constraints)
-	} else {
-		return c.insertCert(key.PrivateKey, cert, key.Comment, constraints)
 	}
+	return c.insertCert(key.PrivateKey, cert, key.Comment, constraints)
 }
 
 func (c *client) insertCert(s interface{}, cert *ssh.Certificate, comment string, constraints []byte) error {
@@ -633,7 +633,7 @@ func (c *client) insertCert(s interface{}, cert *ssh.Certificate, comment string
 
 	// if constraints are present then the message type needs to be changed.
 	if len(constraints) != 0 {
-		req[0] = agentAddIdConstrained
+		req[0] = agentAddIDConstrained
 	}
 
 	signer, err := ssh.NewSignerFromKey(s)

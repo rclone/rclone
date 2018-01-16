@@ -7,6 +7,7 @@ package disco
 import (
 	"io/ioutil"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -260,5 +261,17 @@ func TestSchemaErrors(t *testing.T) {
 		if err := s.init(nil); err == nil {
 			t.Errorf("%+v: got nil, want error", s)
 		}
+	}
+}
+
+func TestErrorDoc(t *testing.T) {
+	bytes, err := ioutil.ReadFile("testdata/error.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := NewDocument(bytes); err == nil {
+		t.Error("got nil, want error")
+	} else if !strings.Contains(err.Error(), "404") {
+		t.Errorf("got %v, want 404", err)
 	}
 }

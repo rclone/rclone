@@ -97,7 +97,9 @@ func (client TestJobStreamsClient) GetPreparer(resourceGroupName string, automat
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client TestJobStreamsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -173,7 +175,9 @@ func (client TestJobStreamsClient) ListByTestJobPreparer(resourceGroupName strin
 // ListByTestJobSender sends the ListByTestJob request. The method will close the
 // http.Response Body if it receives an error.
 func (client TestJobStreamsClient) ListByTestJobSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByTestJobResponder handles the response to the ListByTestJob request. The method always

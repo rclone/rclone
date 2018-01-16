@@ -92,7 +92,9 @@ func (client RecommendedElasticPoolsClient) GetPreparer(resourceGroupName string
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendedElasticPoolsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -158,7 +160,9 @@ func (client RecommendedElasticPoolsClient) ListByServerPreparer(resourceGroupNa
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendedElasticPoolsClient) ListByServerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByServerResponder handles the response to the ListByServer request. The method always
@@ -226,7 +230,9 @@ func (client RecommendedElasticPoolsClient) ListMetricsPreparer(resourceGroupNam
 // ListMetricsSender sends the ListMetrics request. The method will close the
 // http.Response Body if it receives an error.
 func (client RecommendedElasticPoolsClient) ListMetricsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListMetricsResponder handles the response to the ListMetrics request. The method always

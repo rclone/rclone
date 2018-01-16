@@ -178,7 +178,7 @@ type Container struct {
 }
 
 func (s *Container) MarshalJSON() ([]byte, error) {
-	type noMethod Container
-	raw := noMethod(*s)
+	type NoMethod Container
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

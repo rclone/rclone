@@ -120,6 +120,7 @@ func (client EnvironmentsClient) CreateOrUpdatePreparer(resourceGroupName string
 func (client EnvironmentsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -205,6 +206,7 @@ func (client EnvironmentsClient) DeletePreparer(resourceGroupName string, labNam
 func (client EnvironmentsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -276,7 +278,9 @@ func (client EnvironmentsClient) GetPreparer(resourceGroupName string, labName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -357,7 +361,9 @@ func (client EnvironmentsClient) ListPreparer(resourceGroupName string, labName 
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client EnvironmentsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

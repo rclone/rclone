@@ -142,11 +142,17 @@ func (bw *BufferedFileWriter) Write(p []byte) (int, error) {
 }
 
 // Flush flushes the buffer.
-func (bw *BufferedFileWriter) Flush() {
+func (bw *BufferedFileWriter) Flush() (err error) {
 	bw.mu.Lock()
-	bw.BufWriter.Flush()
-	bw.OrigWriter.f.Sync()
-	bw.mu.Unlock()
+	defer bw.mu.Unlock()
+
+	if err = bw.BufWriter.Flush(); err != nil {
+		return err
+	}
+	if err = bw.OrigWriter.f.Sync(); err != nil {
+		return err
+	}
+	return
 }
 
 // flushDaemon periodically flushes the log file buffers.
@@ -155,9 +161,6 @@ func (bw *BufferedFileWriter) flushDaemon(interval time.Duration) {
 		bw.Flush()
 	}
 }
-
-const bufferSize = 256 * 1024
-const flushInterval = 30 * time.Second
 
 // NewBufferedFileWriter opens a buffered file that is periodically flushed.
 func NewBufferedFileWriter(w *FileWriter) *BufferedFileWriter {
@@ -174,3 +177,6 @@ func NewBufferedFileWriterSize(w *FileWriter, size int, flush time.Duration) *Bu
 	go bw.flushDaemon(flush)
 	return &bw
 }
+
+const bufferSize = 256 * 1024
+const flushInterval = 30 * time.Second

@@ -71,7 +71,7 @@ const (
 	//    BLOCK, or COUNT.
 	//
 	//    * You tried to update a ByteMatchSet with a FieldToMatchType other than
-	//    HEADER, QUERY_STRING, or URI.
+	//    HEADER, METHOD, QUERY_STRING, URI, or BODY.
 	//
 	//    * You tried to update a ByteMatchSet with a Field of HEADER but no value
 	//    for Data.
@@ -79,6 +79,12 @@ const (
 	//    * Your request references an ARN that is malformed, or corresponds to
 	//    a resource with which a web ACL cannot be associated.
 	ErrCodeWAFInvalidParameterException = "WAFInvalidParameterException"
+
+	// ErrCodeWAFInvalidRegexPatternException for service response error code
+	// "WAFInvalidRegexPatternException".
+	//
+	// The regular expression (regex) you specified in RegexPatternString is invalid.
+	ErrCodeWAFInvalidRegexPatternException = "WAFInvalidRegexPatternException"
 
 	// ErrCodeWAFLimitsExceededException for service response error code
 	// "WAFLimitsExceededException".
@@ -148,6 +154,12 @@ const (
 	// The operation failed because you tried to create, update, or delete an object
 	// by using a change token that has already been used.
 	ErrCodeWAFStaleDataException = "WAFStaleDataException"
+
+	// ErrCodeWAFSubscriptionNotFoundException for service response error code
+	// "WAFSubscriptionNotFoundException".
+	//
+	// The specified subscription does not exist.
+	ErrCodeWAFSubscriptionNotFoundException = "WAFSubscriptionNotFoundException"
 
 	// ErrCodeWAFUnavailableEntityException for service response error code
 	// "WAFUnavailableEntityException".

@@ -10,6 +10,14 @@ const (
 	// You are not authorized to perform the action.
 	ErrCodeAccessDeniedException = "AccessDeniedException"
 
+	// ErrCodeIdempotentParameterMismatchException for service response error code
+	// "IdempotentParameterMismatchException".
+	//
+	// A ClientRequestToken input parameter was reused with an operation, but at
+	// least one of the other input parameters is different from the previous call
+	// to the operation.
+	ErrCodeIdempotentParameterMismatchException = "IdempotentParameterMismatchException"
+
 	// ErrCodeImageTooLargeException for service response error code
 	// "ImageTooLargeException".
 	//
@@ -48,6 +56,10 @@ const (
 	// Amazon Rekognition is unable to access the S3 object specified in the request.
 	ErrCodeInvalidS3ObjectException = "InvalidS3ObjectException"
 
+	// ErrCodeLimitExceededException for service response error code
+	// "LimitExceededException".
+	ErrCodeLimitExceededException = "LimitExceededException"
+
 	// ErrCodeProvisionedThroughputExceededException for service response error code
 	// "ProvisionedThroughputExceededException".
 	//
@@ -61,10 +73,14 @@ const (
 	// A collection with the specified ID already exists.
 	ErrCodeResourceAlreadyExistsException = "ResourceAlreadyExistsException"
 
+	// ErrCodeResourceInUseException for service response error code
+	// "ResourceInUseException".
+	ErrCodeResourceInUseException = "ResourceInUseException"
+
 	// ErrCodeResourceNotFoundException for service response error code
 	// "ResourceNotFoundException".
 	//
-	// Collection specified in the request is not found.
+	// The collection specified in the request cannot be found.
 	ErrCodeResourceNotFoundException = "ResourceNotFoundException"
 
 	// ErrCodeThrottlingException for service response error code
@@ -73,4 +89,11 @@ const (
 	// Amazon Rekognition is temporarily unable to process the request. Try your
 	// call again.
 	ErrCodeThrottlingException = "ThrottlingException"
+
+	// ErrCodeVideoTooLargeException for service response error code
+	// "VideoTooLargeException".
+	//
+	// The file size or duration of the supplied media is too large. The maximum
+	// file size is 8GB. The maximum duration is 2 hours.
+	ErrCodeVideoTooLargeException = "VideoTooLargeException"
 )

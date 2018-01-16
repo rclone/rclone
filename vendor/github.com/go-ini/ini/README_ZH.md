@@ -94,7 +94,7 @@ skip-name-resolve
 默认情况下这被认为是缺失值而无法完成解析，但可以通过高级的加载选项对它们进行处理：
 
 ```go
-cfg, err := LoadSources(LoadOptions{AllowBooleanKeys: true}, "my.cnf"))
+cfg, err := ini.LoadSources(ini.LoadOptions{AllowBooleanKeys: true}, "my.cnf"))
 ```
 
 这些键的值永远为 `true`，且在保存到文件时也只会输出键名。
@@ -118,7 +118,7 @@ key, err := sec.NewBooleanKey("skip-host-cache")
 除此之外，您还可以通过 `LoadOptions` 完全忽略行内注释：
 
 ```go
-cfg, err := LoadSources(LoadOptions{IgnoreInlineComment: true}, "app.ini"))
+cfg, err := ini.LoadSources(ini.LoadOptions{IgnoreInlineComment: true}, "app.ini"))
 ```
 
 ### 操作分区（Section）
@@ -322,6 +322,20 @@ foo = "some value" // foo: some value
 bar = 'some value' // bar: some value
 ```
 
+有时您会获得像从 [Crowdin](https://crowdin.com/) 网站下载的文件那样具有特殊格式的值（值使用双引号括起来，内部的双引号被转义）：
+
+```ini
+create_repo="创建了仓库 <a href=\"%s\">%s</a>"
+```
+
+那么，怎么自动地将这类值进行处理呢？
+
+```go
+cfg, err := ini.LoadSources(ini.LoadOptions{UnescapeValueDoubleQuotes: true}, "en-US.ini"))
+cfg.Section("<name of your section>").Key("create_repo").String() 
+// You got: 创建了仓库 <a href="%s">%s</a>
+```
+
 这就是全部了？哈哈，当然不是。
 
 #### 操作键值的辅助方法
@@ -473,7 +487,7 @@ cfg.Section("package.sub").ParentKeys() // ["CLONE_URL"]
 如果遇到一些比较特殊的分区，它们不包含常见的键值对，而是没有固定格式的纯文本，则可以使用 `LoadOptions.UnparsableSections` 进行处理：
 
 ```go
-cfg, err := LoadSources(LoadOptions{UnparseableSections: []string{"COMMENTS"}}, `[COMMENTS]
+cfg, err := LoadSources(ini.LoadOptions{UnparseableSections: []string{"COMMENTS"}}, `[COMMENTS]
 <1><L.Slide#2> This slide has the fuel listed in the wrong units <e.1>`))
 
 body := cfg.Section("COMMENTS").Body()
@@ -564,7 +578,7 @@ p := &Person{
 
 ```go
 type Embeded struct {
-	Dates  []time.Time `delim:"|"`
+	Dates  []time.Time `delim:"|" comment:"Time data"`
 	Places []string    `ini:"places,omitempty"`
 	None   []int       `ini:",omitempty"`
 }
@@ -572,10 +586,10 @@ type Embeded struct {
 type Author struct {
 	Name      string `ini:"NAME"`
 	Male      bool
-	Age       int
+	Age       int `comment:"Author's age"`
 	GPA       float64
 	NeverMind string `ini:"-"`
-	*Embeded
+	*Embeded `comment:"Embeded section"`
 }
 
 func main() {
@@ -596,10 +610,13 @@ func main() {
 ```ini
 NAME = Unknwon
 Male = true
+; Author's age
 Age = 21
 GPA = 2.8
 
+; Embeded section
 [Embeded]
+; Time data
 Dates = 2015-08-07T22:14:22+08:00|2015-08-07T22:14:22+08:00
 places = HangZhou,Boston
 ```

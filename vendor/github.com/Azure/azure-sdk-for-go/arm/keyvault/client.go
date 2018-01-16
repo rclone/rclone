@@ -1,6 +1,8 @@
 // Package keyvault implements the Azure ARM Keyvault service API version 2016-10-01.
 //
 // The Azure management API provides a RESTful set of web services that interact with Azure Key Vault.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/keyvault/mgmt/2016-10-01/keyvault
 package keyvault
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

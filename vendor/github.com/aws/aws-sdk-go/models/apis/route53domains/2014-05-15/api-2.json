@@ -24,6 +24,19 @@
         {"shape":"UnsupportedTLD"}
       ]
     },
+    "CheckDomainTransferability":{
+      "name":"CheckDomainTransferability",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CheckDomainTransferabilityRequest"},
+      "output":{"shape":"CheckDomainTransferabilityResponse"},
+      "errors":[
+        {"shape":"InvalidInput"},
+        {"shape":"UnsupportedTLD"}
+      ]
+    },
     "DeleteTagsForDomain":{
       "name":"DeleteTagsForDomain",
       "http":{
@@ -374,6 +387,21 @@
         "Availability":{"shape":"DomainAvailability"}
       }
     },
+    "CheckDomainTransferabilityRequest":{
+      "type":"structure",
+      "required":["DomainName"],
+      "members":{
+        "DomainName":{"shape":"DomainName"},
+        "AuthCode":{"shape":"DomainAuthCode"}
+      }
+    },
+    "CheckDomainTransferabilityResponse":{
+      "type":"structure",
+      "required":["Transferability"],
+      "members":{
+        "Transferability":{"shape":"DomainTransferability"}
+      }
+    },
     "City":{
       "type":"string",
       "max":255
@@ -721,8 +749,7 @@
     },
     "DomainName":{
       "type":"string",
-      "max":255,
-      "pattern":"[a-zA-Z0-9_\\-.]*"
+      "max":255
     },
     "DomainStatus":{"type":"string"},
     "DomainStatusList":{
@@ -753,6 +780,12 @@
     "DomainSummaryList":{
       "type":"list",
       "member":{"shape":"DomainSummary"}
+    },
+    "DomainTransferability":{
+      "type":"structure",
+      "members":{
+        "Transferable":{"shape":"Transferable"}
+      }
     },
     "DuplicateRequest":{
       "type":"structure",
@@ -831,11 +864,16 @@
         "ES_LEGAL_FORM",
         "FI_BUSINESS_NUMBER",
         "FI_ID_NUMBER",
+        "FI_NATIONALITY",
+        "FI_ORGANIZATION_TYPE",
         "IT_PIN",
+        "IT_REGISTRANT_ENTITY_TYPE",
         "RU_PASSPORT_DATA",
         "SE_ID_NUMBER",
         "SG_ID_NUMBER",
-        "VAT_NUMBER"
+        "VAT_NUMBER",
+        "UK_CONTACT_TYPE",
+        "UK_COMPANY_NUMBER"
       ]
     },
     "ExtraParamValue":{
@@ -1064,7 +1102,16 @@
         "UPDATE_DOMAIN_CONTACT",
         "UPDATE_NAMESERVER",
         "CHANGE_PRIVACY_PROTECTION",
-        "DOMAIN_LOCK"
+        "DOMAIN_LOCK",
+        "ENABLE_AUTORENEW",
+        "DISABLE_AUTORENEW",
+        "ADD_DNSSEC",
+        "REMOVE_DNSSEC",
+        "EXPIRE_DOMAIN",
+        "TRANSFER_OUT_DOMAIN",
+        "CHANGE_DOMAIN_OWNER",
+        "RENEW_DOMAIN",
+        "PUSH_DOMAIN"
       ]
     },
     "PageMarker":{
@@ -1226,6 +1273,14 @@
         "OperationId":{"shape":"OperationId"}
       }
     },
+    "Transferable":{
+      "type":"string",
+      "enum":[
+        "TRANSFERABLE",
+        "UNTRANSFERABLE",
+        "DONT_KNOW"
+      ]
+    },
     "UnsupportedTLD":{
       "type":"structure",
       "members":{
@@ -1275,7 +1330,10 @@
       ],
       "members":{
         "DomainName":{"shape":"DomainName"},
-        "FIAuthKey":{"shape":"FIAuthKey"},
+        "FIAuthKey":{
+          "shape":"FIAuthKey",
+          "deprecated":true
+        },
         "Nameservers":{"shape":"NameserverList"}
       }
     },

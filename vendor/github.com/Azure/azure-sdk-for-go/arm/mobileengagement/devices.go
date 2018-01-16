@@ -91,7 +91,9 @@ func (client DevicesClient) GetByDeviceIDPreparer(resourceGroupName string, appC
 // GetByDeviceIDSender sends the GetByDeviceID request. The method will close the
 // http.Response Body if it receives an error.
 func (client DevicesClient) GetByDeviceIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetByDeviceIDResponder handles the response to the GetByDeviceID request. The method always
@@ -159,7 +161,9 @@ func (client DevicesClient) GetByUserIDPreparer(resourceGroupName string, appCol
 // GetByUserIDSender sends the GetByUserID request. The method will close the
 // http.Response Body if it receives an error.
 func (client DevicesClient) GetByUserIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetByUserIDResponder handles the response to the GetByUserID request. The method always
@@ -260,7 +264,9 @@ func (client DevicesClient) ListPreparer(resourceGroupName string, appCollection
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client DevicesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -406,7 +412,9 @@ func (client DevicesClient) TagByDeviceIDPreparer(resourceGroupName string, appC
 // TagByDeviceIDSender sends the TagByDeviceID request. The method will close the
 // http.Response Body if it receives an error.
 func (client DevicesClient) TagByDeviceIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // TagByDeviceIDResponder handles the response to the TagByDeviceID request. The method always
@@ -483,7 +491,9 @@ func (client DevicesClient) TagByUserIDPreparer(resourceGroupName string, appCol
 // TagByUserIDSender sends the TagByUserID request. The method will close the
 // http.Response Body if it receives an error.
 func (client DevicesClient) TagByUserIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // TagByUserIDResponder handles the response to the TagByUserID request. The method always

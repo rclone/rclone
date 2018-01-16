@@ -89,7 +89,9 @@ func (client ClusterVersionsClient) GetPreparer(location string, environment str
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClusterVersionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -153,7 +155,9 @@ func (client ClusterVersionsClient) ListPreparer(location string) (*http.Request
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClusterVersionsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -288,7 +292,9 @@ func (client ClusterVersionsClient) ListByEnvironmentPreparer(location string, e
 // ListByEnvironmentSender sends the ListByEnvironment request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClusterVersionsClient) ListByEnvironmentSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByEnvironmentResponder handles the response to the ListByEnvironment request. The method always
@@ -423,7 +429,9 @@ func (client ClusterVersionsClient) ListByVersionPreparer(location string, clust
 // ListByVersionSender sends the ListByVersion request. The method will close the
 // http.Response Body if it receives an error.
 func (client ClusterVersionsClient) ListByVersionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByVersionResponder handles the response to the ListByVersion request. The method always

@@ -1850,7 +1850,7 @@
       {
         "input": {
           "Bucket": "examplebucket",
-          "CopySource": "bucketname/sourceobjectkey",
+          "CopySource": "/bucketname/sourceobjectkey",
           "Key": "examplelargeobject",
           "PartNumber": "1",
           "UploadId": "exampleuoh_10OhKhT7YukE9bjzTPRiuaCotmZM_pFngJFir9OZNrSr5cWa3cq3LZSUsfjI4FI7PkP91We7Nrw--"

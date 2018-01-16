@@ -233,6 +233,21 @@
         {"shape":"PreconditionFailed"}
       ]
     },
+    "DeleteServiceLinkedRole":{
+      "name":"DeleteServiceLinkedRole2017_03_25",
+      "http":{
+        "method":"DELETE",
+        "requestUri":"/2017-03-25/service-linked-role/{RoleName}",
+        "responseCode":204
+      },
+      "input":{"shape":"DeleteServiceLinkedRoleRequest"},
+      "errors":[
+        {"shape":"InvalidArgument"},
+        {"shape":"AccessDenied"},
+        {"shape":"ResourceInUse"},
+        {"shape":"NoSuchResource"}
+      ]
+    },
     "DeleteStreamingDistribution":{
       "name":"DeleteStreamingDistribution2017_03_25",
       "http":{
@@ -1051,6 +1066,17 @@
           "shape":"string",
           "location":"header",
           "locationName":"If-Match"
+        }
+      }
+    },
+    "DeleteServiceLinkedRoleRequest":{
+      "type":"structure",
+      "required":["RoleName"],
+      "members":{
+        "RoleName":{
+          "shape":"string",
+          "location":"uri",
+          "locationName":"RoleName"
         }
       }
     },
@@ -1937,7 +1963,10 @@
       "type":"string",
       "enum":[
         "SSLv3",
-        "TLSv1"
+        "TLSv1",
+        "TLSv1_2016",
+        "TLSv1.1_2016",
+        "TLSv1.2_2018"
       ]
     },
     "MissingBody":{
@@ -2113,6 +2142,14 @@
     "ResourceARN":{
       "type":"string",
       "pattern":"arn:aws:cloudfront::[0-9]+:.*"
+    },
+    "ResourceInUse":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"string"}
+      },
+      "error":{"httpStatusCode":409},
+      "exception":true
     },
     "Restrictions":{
       "type":"structure",

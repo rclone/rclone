@@ -5,6 +5,7 @@
     "AddTags": "<p>Attaches tags to an existing Elasticsearch domain. Tags are a set of case-sensitive key value pairs. An Elasticsearch domain may have up to 10 tags. See <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-managedomains.html#es-managedomains-awsresorcetagging\" target=\"_blank\"> Tagging Amazon Elasticsearch Service Domains for more information.</a></p>",
     "CreateElasticsearchDomain": "<p>Creates a new Elasticsearch domain. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-createupdatedomains.html#es-createdomains\" target=\"_blank\">Creating Elasticsearch Domains</a> in the <i>Amazon Elasticsearch Service Developer Guide</i>.</p>",
     "DeleteElasticsearchDomain": "<p>Permanently deletes the specified Elasticsearch domain and all of its data. Once a domain is deleted, it cannot be recovered.</p>",
+    "DeleteElasticsearchServiceRole": "<p>Deletes the service-linked role that Elasticsearch Service uses to manage and maintain VPC domains. Role deletion will fail if any existing VPC domains use the role. You must delete any such Elasticsearch domains before deleting the role. See <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html#es-enabling-slr\" target=\"_blank\">Deleting Elasticsearch Service Role</a> in <i>VPC Endpoints for Amazon Elasticsearch Service Domains</i>.</p>",
     "DescribeElasticsearchDomain": "<p>Returns domain configuration information about the specified Elasticsearch domain, including the domain ID, domain endpoint, and domain ARN.</p>",
     "DescribeElasticsearchDomainConfig": "<p>Provides cluster configuration information about the specified Elasticsearch domain, such as the state, creation date, update version, and update date for cluster options.</p>",
     "DescribeElasticsearchDomains": "<p>Returns domain configuration information about the specified Elasticsearch domains, including the domain ID, domain endpoint, and domain ARN.</p>",
@@ -78,7 +79,15 @@
         "ElasticsearchDomainStatus$Created": "<p>The domain creation status. <code>True</code> if the creation of an Elasticsearch domain is complete. <code>False</code> if domain creation is still in progress.</p>",
         "ElasticsearchDomainStatus$Deleted": "<p>The domain deletion status. <code>True</code> if a delete request has been received for the domain but resource cleanup is still in progress. <code>False</code> if the domain has not been deleted. Once domain deletion is complete, the status of the domain is no longer returned.</p>",
         "ElasticsearchDomainStatus$Processing": "<p>The status of the Elasticsearch domain configuration. <code>True</code> if Amazon Elasticsearch Service is processing configuration changes. <code>False</code> if the configuration is active.</p>",
+        "EncryptionAtRestOptions$Enabled": "<p>Specifies the option to enable Encryption At Rest.</p>",
+        "LogPublishingOption$Enabled": "<p> Specifies whether given log publishing option is enabled or not.</p>",
         "OptionStatus$PendingDeletion": "<p>Indicates whether the Elasticsearch domain is being deleted.</p>"
+      }
+    },
+    "CloudWatchLogsLogGroupArn": {
+      "base": "<p>ARN of the Cloudwatch log group to which log needs to be published.</p>",
+      "refs": {
+        "LogPublishingOption$CloudWatchLogsLogGroupArn": null
       }
     },
     "CreateElasticsearchDomainRequest": {
@@ -275,6 +284,26 @@
         "ListElasticsearchInstanceTypesRequest$ElasticsearchVersion": "<p>Version of Elasticsearch for which list of supported elasticsearch instance types are needed. </p>"
       }
     },
+    "EncryptionAtRestOptions": {
+      "base": "<p>Specifies the Encryption At Rest Options.</p>",
+      "refs": {
+        "CreateElasticsearchDomainRequest$EncryptionAtRestOptions": "<p>Specifies the Encryption At Rest Options.</p>",
+        "ElasticsearchDomainStatus$EncryptionAtRestOptions": "<p> Specifies the status of the <code>EncryptionAtRestOptions</code>.</p>",
+        "EncryptionAtRestOptionsStatus$Options": "<p> Specifies the Encryption At Rest options for the specified Elasticsearch domain.</p>"
+      }
+    },
+    "EncryptionAtRestOptionsStatus": {
+      "base": "<p> Status of the Encryption At Rest options for the specified Elasticsearch domain.</p>",
+      "refs": {
+        "ElasticsearchDomainConfig$EncryptionAtRestOptions": "<p>Specifies the <code>EncryptionAtRestOptions</code> for the Elasticsearch domain.</p>"
+      }
+    },
+    "EndpointsMap": {
+      "base": null,
+      "refs": {
+        "ElasticsearchDomainStatus$Endpoints": "<p>Map containing the Elasticsearch domain endpoints used to submit index and search requests. Example <code>key, value</code>: <code>'vpc','vpc-endpoint-h2dsd34efgyghrtguk5gt6j2foh4.us-east-1.es.amazonaws.com'</code>.</p>"
+      }
+    },
     "ErrorMessage": {
       "base": null,
       "refs": {
@@ -317,6 +346,12 @@
     "InvalidTypeException": {
       "base": "<p>An exception for trying to create or access sub-resource that is either invalid or not supported. Gives http status code of 409.</p>",
       "refs": {
+      }
+    },
+    "KmsKeyId": {
+      "base": null,
+      "refs": {
+        "EncryptionAtRestOptions$KmsKeyId": "<p> Specifies the KMS Key ID for Encryption At Rest options.</p>"
       }
     },
     "LimitExceededException": {
@@ -391,6 +426,33 @@
       "refs": {
       }
     },
+    "LogPublishingOption": {
+      "base": "<p>Log Publishing option that is set for given domain. <br/>Attributes and their details: <ul> <li>CloudWatchLogsLogGroupArn: ARN of the Cloudwatch log group to which log needs to be published.</li> <li>Enabled: Whether the log publishing for given log type is enabled or not</li> </ul> </p>",
+      "refs": {
+        "LogPublishingOptions$value": null
+      }
+    },
+    "LogPublishingOptions": {
+      "base": null,
+      "refs": {
+        "CreateElasticsearchDomainRequest$LogPublishingOptions": "<p>Map of <code>LogType</code> and <code>LogPublishingOption</code>, each containing options to publish a given type of Elasticsearch log.</p>",
+        "ElasticsearchDomainStatus$LogPublishingOptions": "<p>Log publishing options for the given domain.</p>",
+        "LogPublishingOptionsStatus$Options": "<p>The log publishing options configured for the Elasticsearch domain.</p>",
+        "UpdateElasticsearchDomainConfigRequest$LogPublishingOptions": "<p>Map of <code>LogType</code> and <code>LogPublishingOption</code>, each containing options to publish a given type of Elasticsearch log.</p>"
+      }
+    },
+    "LogPublishingOptionsStatus": {
+      "base": "<p>The configured log publishing options for the domain and their current status.</p>",
+      "refs": {
+        "ElasticsearchDomainConfig$LogPublishingOptions": "<p>Log publishing options for the given domain.</p>"
+      }
+    },
+    "LogType": {
+      "base": "<p>Type of Log File, it can be one of the following: <ul> <li>INDEX_SLOW_LOGS: Index slow logs contains insert requests that took more time than configured index query log threshold to execute.</li> <li>SEARCH_SLOW_LOGS: Search slow logs contains search queries that took more time than configured search query log threshold to execute.</li> </ul> </p>",
+      "refs": {
+        "LogPublishingOptions$key": null
+      }
+    },
     "MaxResults": {
       "base": "<p> Set this value to limit the number of results returned. </p>",
       "refs": {
@@ -433,7 +495,10 @@
         "EBSOptionsStatus$Status": "<p> Specifies the status of the EBS options for the specified Elasticsearch domain.</p>",
         "ElasticsearchClusterConfigStatus$Status": "<p> Specifies the status of the configuration for the specified Elasticsearch domain.</p>",
         "ElasticsearchVersionStatus$Status": "<p> Specifies the status of the Elasticsearch version options for the specified Elasticsearch domain.</p>",
-        "SnapshotOptionsStatus$Status": "<p>Specifies the status of a daily automated snapshot.</p>"
+        "EncryptionAtRestOptionsStatus$Status": "<p> Specifies the status of the Encryption At Rest options for the specified Elasticsearch domain.</p>",
+        "LogPublishingOptionsStatus$Status": "<p>The status of the log publishing options for the Elasticsearch domain. See <code>OptionStatus</code> for the status information that's included. </p>",
+        "SnapshotOptionsStatus$Status": "<p>Specifies the status of a daily automated snapshot.</p>",
+        "VPCDerivedInfoStatus$Status": "<p> Specifies the status of the VPC options for the specified Elasticsearch domain.</p>"
       }
     },
     "PolicyDocument": {
@@ -463,7 +528,8 @@
     "ServiceUrl": {
       "base": "<p>The endpoint to which service requests are submitted. For example, <code>search-imdb-movies-oopcnjfn6ugofer3zx5iadxxca.eu-west-1.es.amazonaws.com</code> or <code>doc-imdb-movies-oopcnjfn6ugofer3zx5iadxxca.eu-west-1.es.amazonaws.com</code>.</p>",
       "refs": {
-        "ElasticsearchDomainStatus$Endpoint": "<p>The Elasticsearch domain endpoint that you use to submit index and search requests.</p>"
+        "ElasticsearchDomainStatus$Endpoint": "<p>The Elasticsearch domain endpoint that you use to submit index and search requests.</p>",
+        "EndpointsMap$value": null
       }
     },
     "SnapshotOptions": {
@@ -522,13 +588,20 @@
       "refs": {
         "AdvancedOptions$key": null,
         "AdvancedOptions$value": null,
-        "StringList$member": null
+        "EndpointsMap$key": null,
+        "StringList$member": null,
+        "VPCDerivedInfo$VPCId": "<p>The VPC Id for the Elasticsearch domain. Exists only if the domain was created with VPCOptions.</p>"
       }
     },
     "StringList": {
       "base": null,
       "refs": {
-        "RemoveTagsRequest$TagKeys": "<p>Specifies the <code>TagKey</code> list which you want to remove from the Elasticsearch domain.</p>"
+        "RemoveTagsRequest$TagKeys": "<p>Specifies the <code>TagKey</code> list which you want to remove from the Elasticsearch domain.</p>",
+        "VPCDerivedInfo$SubnetIds": "<p>Specifies the subnets for VPC endpoint.</p>",
+        "VPCDerivedInfo$AvailabilityZones": "<p>The availability zones for the Elasticsearch domain. Exists only if the domain was created with VPCOptions.</p>",
+        "VPCDerivedInfo$SecurityGroupIds": "<p>Specifies the security groups for VPC endpoint.</p>",
+        "VPCOptions$SubnetIds": "<p>Specifies the subnets for VPC endpoint.</p>",
+        "VPCOptions$SecurityGroupIds": "<p>Specifies the security groups for VPC endpoint.</p>"
       }
     },
     "Tag": {
@@ -577,6 +650,26 @@
       "refs": {
         "OptionStatus$CreationDate": "<p>Timestamp which tells the creation date for the entity.</p>",
         "OptionStatus$UpdateDate": "<p>Timestamp which tells the last updated time for the entity.</p>"
+      }
+    },
+    "VPCDerivedInfo": {
+      "base": "<p>Options to specify the subnets and security groups for VPC endpoint. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html\" target=\"_blank\"> VPC Endpoints for Amazon Elasticsearch Service Domains</a>.</p>",
+      "refs": {
+        "ElasticsearchDomainStatus$VPCOptions": "<p>The <code>VPCOptions</code> for the specified domain. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html\" target=\"_blank\">VPC Endpoints for Amazon Elasticsearch Service Domains</a>.</p>",
+        "VPCDerivedInfoStatus$Options": "<p> Specifies the VPC options for the specified Elasticsearch domain.</p>"
+      }
+    },
+    "VPCDerivedInfoStatus": {
+      "base": "<p> Status of the VPC options for the specified Elasticsearch domain.</p>",
+      "refs": {
+        "ElasticsearchDomainConfig$VPCOptions": "<p>The <code>VPCOptions</code> for the specified domain. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html\" target=\"_blank\">VPC Endpoints for Amazon Elasticsearch Service Domains</a>.</p>"
+      }
+    },
+    "VPCOptions": {
+      "base": "<p>Options to specify the subnets and security groups for VPC endpoint. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html\" target=\"_blank\"> VPC Endpoints for Amazon Elasticsearch Service Domains</a>.</p>",
+      "refs": {
+        "CreateElasticsearchDomainRequest$VPCOptions": "<p>Options to specify the subnets and security groups for VPC endpoint. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html#es-creating-vpc\" target=\"_blank\">Creating a VPC</a> in <i>VPC Endpoints for Amazon Elasticsearch Service Domains</i></p>",
+        "UpdateElasticsearchDomainConfigRequest$VPCOptions": "<p>Options to specify the subnets and security groups for VPC endpoint. For more information, see <a href=\"http://docs.aws.amazon.com/elasticsearch-service/latest/developerguide/es-vpc.html#es-creating-vpc\" target=\"_blank\">Creating a VPC</a> in <i>VPC Endpoints for Amazon Elasticsearch Service Domains</i></p>"
       }
     },
     "ValidationException": {

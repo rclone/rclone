@@ -95,7 +95,9 @@ func (client ExtensionsClient) CreatePreparer(resourceGroupName string, body Ext
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExtensionsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -162,7 +164,9 @@ func (client ExtensionsClient) DeletePreparer(resourceGroupName string, accountR
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExtensionsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -228,7 +232,9 @@ func (client ExtensionsClient) GetPreparer(resourceGroupName string, accountReso
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExtensionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -294,7 +300,9 @@ func (client ExtensionsClient) ListByAccountPreparer(resourceGroupName string, a
 // ListByAccountSender sends the ListByAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExtensionsClient) ListByAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAccountResponder handles the response to the ListByAccount request. The method always
@@ -364,7 +372,9 @@ func (client ExtensionsClient) UpdatePreparer(resourceGroupName string, body Ext
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExtensionsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

@@ -20,14 +20,17 @@ package pubsub
 
 import (
 	"io"
-	"reflect"
 	"strconv"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"cloud.google.com/go/internal/testutil"
+
 	tspb "github.com/golang/protobuf/ptypes/timestamp"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 	"golang.org/x/net/context"
 	"google.golang.org/api/option"
 	pb "google.golang.org/genproto/googleapis/pubsub/v1"
@@ -89,8 +92,7 @@ func testStreamingPullIteration(t *testing.T, client *Client, server *fakeServer
 			t.Errorf("%d: no message for ackID %q", i, want.ackID)
 			continue
 		}
-		got.doneFunc = nil // Don't compare done; it's a function.
-		if !reflect.DeepEqual(got, want) {
+		if !testutil.Equal(got, want, cmp.AllowUnexported(Message{}), cmpopts.IgnoreTypes(func(string, bool) {})) {
 			t.Errorf("%d: got\n%#v\nwant\n%#v", i, got, want)
 		}
 	}

@@ -38,7 +38,7 @@ const opAcceptMatch = "AcceptMatch"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatch
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatch
 func (c *GameLift) AcceptMatchRequest(input *AcceptMatchInput) (req *request.Request, output *AcceptMatchOutput) {
 	op := &request.Operation{
 		Name:       opAcceptMatch,
@@ -114,7 +114,7 @@ func (c *GameLift) AcceptMatchRequest(input *AcceptMatchInput) (req *request.Req
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatch
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatch
 func (c *GameLift) AcceptMatch(input *AcceptMatchInput) (*AcceptMatchOutput, error) {
 	req, out := c.AcceptMatchRequest(input)
 	return out, req.Send()
@@ -161,7 +161,7 @@ const opCreateAlias = "CreateAlias"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAlias
 func (c *GameLift) CreateAliasRequest(input *CreateAliasInput) (req *request.Request, output *CreateAliasOutput) {
 	op := &request.Operation{
 		Name:       opCreateAlias,
@@ -243,7 +243,7 @@ func (c *GameLift) CreateAliasRequest(input *CreateAliasInput) (req *request.Req
 //   The requested operation would cause the resource to exceed the allowed service
 //   limit. Resolve the issue before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAlias
 func (c *GameLift) CreateAlias(input *CreateAliasInput) (*CreateAliasOutput, error) {
 	req, out := c.CreateAliasRequest(input)
 	return out, req.Send()
@@ -290,7 +290,7 @@ const opCreateBuild = "CreateBuild"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuild
 func (c *GameLift) CreateBuildRequest(input *CreateBuildInput) (req *request.Request, output *CreateBuildOutput) {
 	op := &request.Operation{
 		Name:       opCreateBuild,
@@ -365,7 +365,7 @@ func (c *GameLift) CreateBuildRequest(input *CreateBuildInput) (req *request.Req
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuild
 func (c *GameLift) CreateBuild(input *CreateBuildInput) (*CreateBuildOutput, error) {
 	req, out := c.CreateBuildRequest(input)
 	return out, req.Send()
@@ -412,7 +412,7 @@ const opCreateFleet = "CreateFleet"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleet
 func (c *GameLift) CreateFleetRequest(input *CreateFleetInput) (req *request.Request, output *CreateFleetOutput) {
 	op := &request.Operation{
 		Name:       opCreateFleet,
@@ -559,7 +559,7 @@ func (c *GameLift) CreateFleetRequest(input *CreateFleetInput) (req *request.Req
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleet
 func (c *GameLift) CreateFleet(input *CreateFleetInput) (*CreateFleetOutput, error) {
 	req, out := c.CreateFleetRequest(input)
 	return out, req.Send()
@@ -606,7 +606,7 @@ const opCreateGameSession = "CreateGameSession"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSession
 func (c *GameLift) CreateGameSessionRequest(input *CreateGameSessionInput) (req *request.Request, output *CreateGameSessionOutput) {
 	op := &request.Operation{
 		Name:       opCreateGameSession,
@@ -731,7 +731,7 @@ func (c *GameLift) CreateGameSessionRequest(input *CreateGameSessionInput) (req 
 //   A game session with this custom ID string already exists in this fleet. Resolve
 //   this conflict before retrying this request.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSession
 func (c *GameLift) CreateGameSession(input *CreateGameSessionInput) (*CreateGameSessionOutput, error) {
 	req, out := c.CreateGameSessionRequest(input)
 	return out, req.Send()
@@ -778,7 +778,7 @@ const opCreateGameSessionQueue = "CreateGameSessionQueue"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueue
 func (c *GameLift) CreateGameSessionQueueRequest(input *CreateGameSessionQueueInput) (req *request.Request, output *CreateGameSessionQueueOutput) {
 	op := &request.Operation{
 		Name:       opCreateGameSessionQueue,
@@ -862,7 +862,7 @@ func (c *GameLift) CreateGameSessionQueueRequest(input *CreateGameSessionQueueIn
 //   The requested operation would cause the resource to exceed the allowed service
 //   limit. Resolve the issue before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueue
 func (c *GameLift) CreateGameSessionQueue(input *CreateGameSessionQueueInput) (*CreateGameSessionQueueOutput, error) {
 	req, out := c.CreateGameSessionQueueRequest(input)
 	return out, req.Send()
@@ -909,7 +909,7 @@ const opCreateMatchmakingConfiguration = "CreateMatchmakingConfiguration"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfiguration
 func (c *GameLift) CreateMatchmakingConfigurationRequest(input *CreateMatchmakingConfigurationInput) (req *request.Request, output *CreateMatchmakingConfigurationOutput) {
 	op := &request.Operation{
 		Name:       opCreateMatchmakingConfiguration,
@@ -1001,7 +1001,7 @@ func (c *GameLift) CreateMatchmakingConfigurationRequest(input *CreateMatchmakin
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfiguration
 func (c *GameLift) CreateMatchmakingConfiguration(input *CreateMatchmakingConfigurationInput) (*CreateMatchmakingConfigurationOutput, error) {
 	req, out := c.CreateMatchmakingConfigurationRequest(input)
 	return out, req.Send()
@@ -1048,7 +1048,7 @@ const opCreateMatchmakingRuleSet = "CreateMatchmakingRuleSet"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSet
 func (c *GameLift) CreateMatchmakingRuleSetRequest(input *CreateMatchmakingRuleSetInput) (req *request.Request, output *CreateMatchmakingRuleSetOutput) {
 	op := &request.Operation{
 		Name:       opCreateMatchmakingRuleSet,
@@ -1125,7 +1125,7 @@ func (c *GameLift) CreateMatchmakingRuleSetRequest(input *CreateMatchmakingRuleS
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSet
 func (c *GameLift) CreateMatchmakingRuleSet(input *CreateMatchmakingRuleSetInput) (*CreateMatchmakingRuleSetOutput, error) {
 	req, out := c.CreateMatchmakingRuleSetRequest(input)
 	return out, req.Send()
@@ -1172,7 +1172,7 @@ const opCreatePlayerSession = "CreatePlayerSession"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSession
 func (c *GameLift) CreatePlayerSessionRequest(input *CreatePlayerSessionInput) (req *request.Request, output *CreatePlayerSessionOutput) {
 	op := &request.Operation{
 		Name:       opCreatePlayerSession,
@@ -1258,7 +1258,7 @@ func (c *GameLift) CreatePlayerSessionRequest(input *CreatePlayerSessionInput) (
 //   A service resource associated with the request could not be found. Clients
 //   should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSession
 func (c *GameLift) CreatePlayerSession(input *CreatePlayerSessionInput) (*CreatePlayerSessionOutput, error) {
 	req, out := c.CreatePlayerSessionRequest(input)
 	return out, req.Send()
@@ -1305,7 +1305,7 @@ const opCreatePlayerSessions = "CreatePlayerSessions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessions
 func (c *GameLift) CreatePlayerSessionsRequest(input *CreatePlayerSessionsInput) (req *request.Request, output *CreatePlayerSessionsOutput) {
 	op := &request.Operation{
 		Name:       opCreatePlayerSessions,
@@ -1392,7 +1392,7 @@ func (c *GameLift) CreatePlayerSessionsRequest(input *CreatePlayerSessionsInput)
 //   A service resource associated with the request could not be found. Clients
 //   should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessions
 func (c *GameLift) CreatePlayerSessions(input *CreatePlayerSessionsInput) (*CreatePlayerSessionsOutput, error) {
 	req, out := c.CreatePlayerSessionsRequest(input)
 	return out, req.Send()
@@ -1439,7 +1439,7 @@ const opCreateVpcPeeringAuthorization = "CreateVpcPeeringAuthorization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorization
 func (c *GameLift) CreateVpcPeeringAuthorizationRequest(input *CreateVpcPeeringAuthorizationInput) (req *request.Request, output *CreateVpcPeeringAuthorizationOutput) {
 	op := &request.Operation{
 		Name:       opCreateVpcPeeringAuthorization,
@@ -1525,7 +1525,7 @@ func (c *GameLift) CreateVpcPeeringAuthorizationRequest(input *CreateVpcPeeringA
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorization
 func (c *GameLift) CreateVpcPeeringAuthorization(input *CreateVpcPeeringAuthorizationInput) (*CreateVpcPeeringAuthorizationOutput, error) {
 	req, out := c.CreateVpcPeeringAuthorizationRequest(input)
 	return out, req.Send()
@@ -1572,7 +1572,7 @@ const opCreateVpcPeeringConnection = "CreateVpcPeeringConnection"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnection
 func (c *GameLift) CreateVpcPeeringConnectionRequest(input *CreateVpcPeeringConnectionInput) (req *request.Request, output *CreateVpcPeeringConnectionOutput) {
 	op := &request.Operation{
 		Name:       opCreateVpcPeeringConnection,
@@ -1653,7 +1653,7 @@ func (c *GameLift) CreateVpcPeeringConnectionRequest(input *CreateVpcPeeringConn
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnection
 func (c *GameLift) CreateVpcPeeringConnection(input *CreateVpcPeeringConnectionInput) (*CreateVpcPeeringConnectionOutput, error) {
 	req, out := c.CreateVpcPeeringConnectionRequest(input)
 	return out, req.Send()
@@ -1700,7 +1700,7 @@ const opDeleteAlias = "DeleteAlias"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAlias
 func (c *GameLift) DeleteAliasRequest(input *DeleteAliasInput) (req *request.Request, output *DeleteAliasOutput) {
 	op := &request.Operation{
 		Name:       opDeleteAlias,
@@ -1763,7 +1763,7 @@ func (c *GameLift) DeleteAliasRequest(input *DeleteAliasInput) (req *request.Req
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAlias
 func (c *GameLift) DeleteAlias(input *DeleteAliasInput) (*DeleteAliasOutput, error) {
 	req, out := c.DeleteAliasRequest(input)
 	return out, req.Send()
@@ -1810,7 +1810,7 @@ const opDeleteBuild = "DeleteBuild"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuild
 func (c *GameLift) DeleteBuildRequest(input *DeleteBuildInput) (req *request.Request, output *DeleteBuildOutput) {
 	op := &request.Operation{
 		Name:       opDeleteBuild,
@@ -1874,7 +1874,7 @@ func (c *GameLift) DeleteBuildRequest(input *DeleteBuildInput) (req *request.Req
 //   One or more parameter values in the request are invalid. Correct the invalid
 //   parameter values before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuild
 func (c *GameLift) DeleteBuild(input *DeleteBuildInput) (*DeleteBuildOutput, error) {
 	req, out := c.DeleteBuildRequest(input)
 	return out, req.Send()
@@ -1921,7 +1921,7 @@ const opDeleteFleet = "DeleteFleet"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleet
 func (c *GameLift) DeleteFleetRequest(input *DeleteFleetInput) (req *request.Request, output *DeleteFleetOutput) {
 	op := &request.Operation{
 		Name:       opDeleteFleet,
@@ -2021,7 +2021,7 @@ func (c *GameLift) DeleteFleetRequest(input *DeleteFleetInput) (req *request.Req
 //   One or more parameter values in the request are invalid. Correct the invalid
 //   parameter values before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleet
 func (c *GameLift) DeleteFleet(input *DeleteFleetInput) (*DeleteFleetOutput, error) {
 	req, out := c.DeleteFleetRequest(input)
 	return out, req.Send()
@@ -2068,7 +2068,7 @@ const opDeleteGameSessionQueue = "DeleteGameSessionQueue"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueue
 func (c *GameLift) DeleteGameSessionQueueRequest(input *DeleteGameSessionQueueInput) (req *request.Request, output *DeleteGameSessionQueueOutput) {
 	op := &request.Operation{
 		Name:       opDeleteGameSessionQueue,
@@ -2125,7 +2125,7 @@ func (c *GameLift) DeleteGameSessionQueueRequest(input *DeleteGameSessionQueueIn
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueue
 func (c *GameLift) DeleteGameSessionQueue(input *DeleteGameSessionQueueInput) (*DeleteGameSessionQueueOutput, error) {
 	req, out := c.DeleteGameSessionQueueRequest(input)
 	return out, req.Send()
@@ -2172,7 +2172,7 @@ const opDeleteMatchmakingConfiguration = "DeleteMatchmakingConfiguration"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfiguration
 func (c *GameLift) DeleteMatchmakingConfigurationRequest(input *DeleteMatchmakingConfigurationInput) (req *request.Request, output *DeleteMatchmakingConfigurationOutput) {
 	op := &request.Operation{
 		Name:       opDeleteMatchmakingConfiguration,
@@ -2235,7 +2235,7 @@ func (c *GameLift) DeleteMatchmakingConfigurationRequest(input *DeleteMatchmakin
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfiguration
 func (c *GameLift) DeleteMatchmakingConfiguration(input *DeleteMatchmakingConfigurationInput) (*DeleteMatchmakingConfigurationOutput, error) {
 	req, out := c.DeleteMatchmakingConfigurationRequest(input)
 	return out, req.Send()
@@ -2282,7 +2282,7 @@ const opDeleteScalingPolicy = "DeleteScalingPolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicy
 func (c *GameLift) DeleteScalingPolicyRequest(input *DeleteScalingPolicyInput) (req *request.Request, output *DeleteScalingPolicyOutput) {
 	op := &request.Operation{
 		Name:       opDeleteScalingPolicy,
@@ -2375,7 +2375,7 @@ func (c *GameLift) DeleteScalingPolicyRequest(input *DeleteScalingPolicyInput) (
 //   A service resource associated with the request could not be found. Clients
 //   should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicy
 func (c *GameLift) DeleteScalingPolicy(input *DeleteScalingPolicyInput) (*DeleteScalingPolicyOutput, error) {
 	req, out := c.DeleteScalingPolicyRequest(input)
 	return out, req.Send()
@@ -2422,7 +2422,7 @@ const opDeleteVpcPeeringAuthorization = "DeleteVpcPeeringAuthorization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorization
 func (c *GameLift) DeleteVpcPeeringAuthorizationRequest(input *DeleteVpcPeeringAuthorizationInput) (req *request.Request, output *DeleteVpcPeeringAuthorizationOutput) {
 	op := &request.Operation{
 		Name:       opDeleteVpcPeeringAuthorization,
@@ -2483,7 +2483,7 @@ func (c *GameLift) DeleteVpcPeeringAuthorizationRequest(input *DeleteVpcPeeringA
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorization
 func (c *GameLift) DeleteVpcPeeringAuthorization(input *DeleteVpcPeeringAuthorizationInput) (*DeleteVpcPeeringAuthorizationOutput, error) {
 	req, out := c.DeleteVpcPeeringAuthorizationRequest(input)
 	return out, req.Send()
@@ -2530,7 +2530,7 @@ const opDeleteVpcPeeringConnection = "DeleteVpcPeeringConnection"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnection
 func (c *GameLift) DeleteVpcPeeringConnectionRequest(input *DeleteVpcPeeringConnectionInput) (req *request.Request, output *DeleteVpcPeeringConnectionOutput) {
 	op := &request.Operation{
 		Name:       opDeleteVpcPeeringConnection,
@@ -2597,7 +2597,7 @@ func (c *GameLift) DeleteVpcPeeringConnectionRequest(input *DeleteVpcPeeringConn
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnection
 func (c *GameLift) DeleteVpcPeeringConnection(input *DeleteVpcPeeringConnectionInput) (*DeleteVpcPeeringConnectionOutput, error) {
 	req, out := c.DeleteVpcPeeringConnectionRequest(input)
 	return out, req.Send()
@@ -2644,7 +2644,7 @@ const opDescribeAlias = "DescribeAlias"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAlias
 func (c *GameLift) DescribeAliasRequest(input *DescribeAliasInput) (req *request.Request, output *DescribeAliasOutput) {
 	op := &request.Operation{
 		Name:       opDescribeAlias,
@@ -2707,7 +2707,7 @@ func (c *GameLift) DescribeAliasRequest(input *DescribeAliasInput) (req *request
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAlias
 func (c *GameLift) DescribeAlias(input *DescribeAliasInput) (*DescribeAliasOutput, error) {
 	req, out := c.DescribeAliasRequest(input)
 	return out, req.Send()
@@ -2754,7 +2754,7 @@ const opDescribeBuild = "DescribeBuild"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuild
 func (c *GameLift) DescribeBuildRequest(input *DescribeBuildInput) (req *request.Request, output *DescribeBuildOutput) {
 	op := &request.Operation{
 		Name:       opDescribeBuild,
@@ -2812,7 +2812,7 @@ func (c *GameLift) DescribeBuildRequest(input *DescribeBuildInput) (req *request
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuild
 func (c *GameLift) DescribeBuild(input *DescribeBuildInput) (*DescribeBuildOutput, error) {
 	req, out := c.DescribeBuildRequest(input)
 	return out, req.Send()
@@ -2859,7 +2859,7 @@ const opDescribeEC2InstanceLimits = "DescribeEC2InstanceLimits"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimits
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimits
 func (c *GameLift) DescribeEC2InstanceLimitsRequest(input *DescribeEC2InstanceLimitsInput) (req *request.Request, output *DescribeEC2InstanceLimitsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeEC2InstanceLimits,
@@ -2952,7 +2952,7 @@ func (c *GameLift) DescribeEC2InstanceLimitsRequest(input *DescribeEC2InstanceLi
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimits
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimits
 func (c *GameLift) DescribeEC2InstanceLimits(input *DescribeEC2InstanceLimitsInput) (*DescribeEC2InstanceLimitsOutput, error) {
 	req, out := c.DescribeEC2InstanceLimitsRequest(input)
 	return out, req.Send()
@@ -2999,7 +2999,7 @@ const opDescribeFleetAttributes = "DescribeFleetAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributes
 func (c *GameLift) DescribeFleetAttributesRequest(input *DescribeFleetAttributesInput) (req *request.Request, output *DescribeFleetAttributesOutput) {
 	op := &request.Operation{
 		Name:       opDescribeFleetAttributes,
@@ -3098,7 +3098,7 @@ func (c *GameLift) DescribeFleetAttributesRequest(input *DescribeFleetAttributes
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributes
 func (c *GameLift) DescribeFleetAttributes(input *DescribeFleetAttributesInput) (*DescribeFleetAttributesOutput, error) {
 	req, out := c.DescribeFleetAttributesRequest(input)
 	return out, req.Send()
@@ -3145,7 +3145,7 @@ const opDescribeFleetCapacity = "DescribeFleetCapacity"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacity
 func (c *GameLift) DescribeFleetCapacityRequest(input *DescribeFleetCapacityInput) (req *request.Request, output *DescribeFleetCapacityOutput) {
 	op := &request.Operation{
 		Name:       opDescribeFleetCapacity,
@@ -3245,7 +3245,7 @@ func (c *GameLift) DescribeFleetCapacityRequest(input *DescribeFleetCapacityInpu
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacity
 func (c *GameLift) DescribeFleetCapacity(input *DescribeFleetCapacityInput) (*DescribeFleetCapacityOutput, error) {
 	req, out := c.DescribeFleetCapacityRequest(input)
 	return out, req.Send()
@@ -3292,7 +3292,7 @@ const opDescribeFleetEvents = "DescribeFleetEvents"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEvents
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEvents
 func (c *GameLift) DescribeFleetEventsRequest(input *DescribeFleetEventsInput) (req *request.Request, output *DescribeFleetEventsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeFleetEvents,
@@ -3384,7 +3384,7 @@ func (c *GameLift) DescribeFleetEventsRequest(input *DescribeFleetEventsInput) (
 //   One or more parameter values in the request are invalid. Correct the invalid
 //   parameter values before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEvents
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEvents
 func (c *GameLift) DescribeFleetEvents(input *DescribeFleetEventsInput) (*DescribeFleetEventsOutput, error) {
 	req, out := c.DescribeFleetEventsRequest(input)
 	return out, req.Send()
@@ -3431,7 +3431,7 @@ const opDescribeFleetPortSettings = "DescribeFleetPortSettings"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettings
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettings
 func (c *GameLift) DescribeFleetPortSettingsRequest(input *DescribeFleetPortSettingsInput) (req *request.Request, output *DescribeFleetPortSettingsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeFleetPortSettings,
@@ -3525,7 +3525,7 @@ func (c *GameLift) DescribeFleetPortSettingsRequest(input *DescribeFleetPortSett
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettings
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettings
 func (c *GameLift) DescribeFleetPortSettings(input *DescribeFleetPortSettingsInput) (*DescribeFleetPortSettingsOutput, error) {
 	req, out := c.DescribeFleetPortSettingsRequest(input)
 	return out, req.Send()
@@ -3572,7 +3572,7 @@ const opDescribeFleetUtilization = "DescribeFleetUtilization"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilization
 func (c *GameLift) DescribeFleetUtilizationRequest(input *DescribeFleetUtilizationInput) (req *request.Request, output *DescribeFleetUtilizationOutput) {
 	op := &request.Operation{
 		Name:       opDescribeFleetUtilization,
@@ -3670,7 +3670,7 @@ func (c *GameLift) DescribeFleetUtilizationRequest(input *DescribeFleetUtilizati
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilization
 func (c *GameLift) DescribeFleetUtilization(input *DescribeFleetUtilizationInput) (*DescribeFleetUtilizationOutput, error) {
 	req, out := c.DescribeFleetUtilizationRequest(input)
 	return out, req.Send()
@@ -3717,7 +3717,7 @@ const opDescribeGameSessionDetails = "DescribeGameSessionDetails"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetails
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetails
 func (c *GameLift) DescribeGameSessionDetailsRequest(input *DescribeGameSessionDetailsInput) (req *request.Request, output *DescribeGameSessionDetailsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeGameSessionDetails,
@@ -3801,7 +3801,7 @@ func (c *GameLift) DescribeGameSessionDetailsRequest(input *DescribeGameSessionD
 //   Such requests should only be retried if the routing strategy for the specified
 //   alias is modified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetails
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetails
 func (c *GameLift) DescribeGameSessionDetails(input *DescribeGameSessionDetailsInput) (*DescribeGameSessionDetailsOutput, error) {
 	req, out := c.DescribeGameSessionDetailsRequest(input)
 	return out, req.Send()
@@ -3848,7 +3848,7 @@ const opDescribeGameSessionPlacement = "DescribeGameSessionPlacement"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacement
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacement
 func (c *GameLift) DescribeGameSessionPlacementRequest(input *DescribeGameSessionPlacementInput) (req *request.Request, output *DescribeGameSessionPlacementOutput) {
 	op := &request.Operation{
 		Name:       opDescribeGameSessionPlacement,
@@ -3917,7 +3917,7 @@ func (c *GameLift) DescribeGameSessionPlacementRequest(input *DescribeGameSessio
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacement
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacement
 func (c *GameLift) DescribeGameSessionPlacement(input *DescribeGameSessionPlacementInput) (*DescribeGameSessionPlacementOutput, error) {
 	req, out := c.DescribeGameSessionPlacementRequest(input)
 	return out, req.Send()
@@ -3964,7 +3964,7 @@ const opDescribeGameSessionQueues = "DescribeGameSessionQueues"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueues
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueues
 func (c *GameLift) DescribeGameSessionQueuesRequest(input *DescribeGameSessionQueuesInput) (req *request.Request, output *DescribeGameSessionQueuesOutput) {
 	op := &request.Operation{
 		Name:       opDescribeGameSessionQueues,
@@ -4023,7 +4023,7 @@ func (c *GameLift) DescribeGameSessionQueuesRequest(input *DescribeGameSessionQu
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueues
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueues
 func (c *GameLift) DescribeGameSessionQueues(input *DescribeGameSessionQueuesInput) (*DescribeGameSessionQueuesOutput, error) {
 	req, out := c.DescribeGameSessionQueuesRequest(input)
 	return out, req.Send()
@@ -4070,7 +4070,7 @@ const opDescribeGameSessions = "DescribeGameSessions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessions
 func (c *GameLift) DescribeGameSessionsRequest(input *DescribeGameSessionsInput) (req *request.Request, output *DescribeGameSessionsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeGameSessions,
@@ -4155,7 +4155,7 @@ func (c *GameLift) DescribeGameSessionsRequest(input *DescribeGameSessionsInput)
 //   Such requests should only be retried if the routing strategy for the specified
 //   alias is modified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessions
 func (c *GameLift) DescribeGameSessions(input *DescribeGameSessionsInput) (*DescribeGameSessionsOutput, error) {
 	req, out := c.DescribeGameSessionsRequest(input)
 	return out, req.Send()
@@ -4202,7 +4202,7 @@ const opDescribeInstances = "DescribeInstances"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstances
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstances
 func (c *GameLift) DescribeInstancesRequest(input *DescribeInstancesInput) (req *request.Request, output *DescribeInstancesOutput) {
 	op := &request.Operation{
 		Name:       opDescribeInstances,
@@ -4254,7 +4254,7 @@ func (c *GameLift) DescribeInstancesRequest(input *DescribeInstancesInput) (req 
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstances
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstances
 func (c *GameLift) DescribeInstances(input *DescribeInstancesInput) (*DescribeInstancesOutput, error) {
 	req, out := c.DescribeInstancesRequest(input)
 	return out, req.Send()
@@ -4301,7 +4301,7 @@ const opDescribeMatchmaking = "DescribeMatchmaking"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmaking
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmaking
 func (c *GameLift) DescribeMatchmakingRequest(input *DescribeMatchmakingInput) (req *request.Request, output *DescribeMatchmakingOutput) {
 	op := &request.Operation{
 		Name:       opDescribeMatchmaking,
@@ -4364,7 +4364,7 @@ func (c *GameLift) DescribeMatchmakingRequest(input *DescribeMatchmakingInput) (
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmaking
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmaking
 func (c *GameLift) DescribeMatchmaking(input *DescribeMatchmakingInput) (*DescribeMatchmakingOutput, error) {
 	req, out := c.DescribeMatchmakingRequest(input)
 	return out, req.Send()
@@ -4411,7 +4411,7 @@ const opDescribeMatchmakingConfigurations = "DescribeMatchmakingConfigurations"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurations
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurations
 func (c *GameLift) DescribeMatchmakingConfigurationsRequest(input *DescribeMatchmakingConfigurationsInput) (req *request.Request, output *DescribeMatchmakingConfigurationsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeMatchmakingConfigurations,
@@ -4475,7 +4475,7 @@ func (c *GameLift) DescribeMatchmakingConfigurationsRequest(input *DescribeMatch
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurations
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurations
 func (c *GameLift) DescribeMatchmakingConfigurations(input *DescribeMatchmakingConfigurationsInput) (*DescribeMatchmakingConfigurationsOutput, error) {
 	req, out := c.DescribeMatchmakingConfigurationsRequest(input)
 	return out, req.Send()
@@ -4522,7 +4522,7 @@ const opDescribeMatchmakingRuleSets = "DescribeMatchmakingRuleSets"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSets
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSets
 func (c *GameLift) DescribeMatchmakingRuleSetsRequest(input *DescribeMatchmakingRuleSetsInput) (req *request.Request, output *DescribeMatchmakingRuleSetsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeMatchmakingRuleSets,
@@ -4587,7 +4587,7 @@ func (c *GameLift) DescribeMatchmakingRuleSetsRequest(input *DescribeMatchmaking
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSets
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSets
 func (c *GameLift) DescribeMatchmakingRuleSets(input *DescribeMatchmakingRuleSetsInput) (*DescribeMatchmakingRuleSetsOutput, error) {
 	req, out := c.DescribeMatchmakingRuleSetsRequest(input)
 	return out, req.Send()
@@ -4634,7 +4634,7 @@ const opDescribePlayerSessions = "DescribePlayerSessions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessions
 func (c *GameLift) DescribePlayerSessionsRequest(input *DescribePlayerSessionsInput) (req *request.Request, output *DescribePlayerSessionsOutput) {
 	op := &request.Operation{
 		Name:       opDescribePlayerSessions,
@@ -4707,7 +4707,7 @@ func (c *GameLift) DescribePlayerSessionsRequest(input *DescribePlayerSessionsIn
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessions
 func (c *GameLift) DescribePlayerSessions(input *DescribePlayerSessionsInput) (*DescribePlayerSessionsOutput, error) {
 	req, out := c.DescribePlayerSessionsRequest(input)
 	return out, req.Send()
@@ -4754,7 +4754,7 @@ const opDescribeRuntimeConfiguration = "DescribeRuntimeConfiguration"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfiguration
 func (c *GameLift) DescribeRuntimeConfigurationRequest(input *DescribeRuntimeConfigurationInput) (req *request.Request, output *DescribeRuntimeConfigurationOutput) {
 	op := &request.Operation{
 		Name:       opDescribeRuntimeConfiguration,
@@ -4845,7 +4845,7 @@ func (c *GameLift) DescribeRuntimeConfigurationRequest(input *DescribeRuntimeCon
 //   One or more parameter values in the request are invalid. Correct the invalid
 //   parameter values before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfiguration
 func (c *GameLift) DescribeRuntimeConfiguration(input *DescribeRuntimeConfigurationInput) (*DescribeRuntimeConfigurationOutput, error) {
 	req, out := c.DescribeRuntimeConfigurationRequest(input)
 	return out, req.Send()
@@ -4892,7 +4892,7 @@ const opDescribeScalingPolicies = "DescribeScalingPolicies"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPolicies
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPolicies
 func (c *GameLift) DescribeScalingPoliciesRequest(input *DescribeScalingPoliciesInput) (req *request.Request, output *DescribeScalingPoliciesOutput) {
 	op := &request.Operation{
 		Name:       opDescribeScalingPolicies,
@@ -4986,7 +4986,7 @@ func (c *GameLift) DescribeScalingPoliciesRequest(input *DescribeScalingPolicies
 //   A service resource associated with the request could not be found. Clients
 //   should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPolicies
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPolicies
 func (c *GameLift) DescribeScalingPolicies(input *DescribeScalingPoliciesInput) (*DescribeScalingPoliciesOutput, error) {
 	req, out := c.DescribeScalingPoliciesRequest(input)
 	return out, req.Send()
@@ -5033,7 +5033,7 @@ const opDescribeVpcPeeringAuthorizations = "DescribeVpcPeeringAuthorizations"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizations
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizations
 func (c *GameLift) DescribeVpcPeeringAuthorizationsRequest(input *DescribeVpcPeeringAuthorizationsInput) (req *request.Request, output *DescribeVpcPeeringAuthorizationsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeVpcPeeringAuthorizations,
@@ -5090,7 +5090,7 @@ func (c *GameLift) DescribeVpcPeeringAuthorizationsRequest(input *DescribeVpcPee
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizations
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizations
 func (c *GameLift) DescribeVpcPeeringAuthorizations(input *DescribeVpcPeeringAuthorizationsInput) (*DescribeVpcPeeringAuthorizationsOutput, error) {
 	req, out := c.DescribeVpcPeeringAuthorizationsRequest(input)
 	return out, req.Send()
@@ -5137,7 +5137,7 @@ const opDescribeVpcPeeringConnections = "DescribeVpcPeeringConnections"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnections
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnections
 func (c *GameLift) DescribeVpcPeeringConnectionsRequest(input *DescribeVpcPeeringConnectionsInput) (req *request.Request, output *DescribeVpcPeeringConnectionsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeVpcPeeringConnections,
@@ -5203,7 +5203,7 @@ func (c *GameLift) DescribeVpcPeeringConnectionsRequest(input *DescribeVpcPeerin
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnections
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnections
 func (c *GameLift) DescribeVpcPeeringConnections(input *DescribeVpcPeeringConnectionsInput) (*DescribeVpcPeeringConnectionsOutput, error) {
 	req, out := c.DescribeVpcPeeringConnectionsRequest(input)
 	return out, req.Send()
@@ -5250,7 +5250,7 @@ const opGetGameSessionLogUrl = "GetGameSessionLogUrl"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrl
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrl
 func (c *GameLift) GetGameSessionLogUrlRequest(input *GetGameSessionLogUrlInput) (req *request.Request, output *GetGameSessionLogUrlOutput) {
 	op := &request.Operation{
 		Name:       opGetGameSessionLogUrl,
@@ -5324,7 +5324,7 @@ func (c *GameLift) GetGameSessionLogUrlRequest(input *GetGameSessionLogUrlInput)
 //   One or more parameter values in the request are invalid. Correct the invalid
 //   parameter values before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrl
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrl
 func (c *GameLift) GetGameSessionLogUrl(input *GetGameSessionLogUrlInput) (*GetGameSessionLogUrlOutput, error) {
 	req, out := c.GetGameSessionLogUrlRequest(input)
 	return out, req.Send()
@@ -5371,7 +5371,7 @@ const opGetInstanceAccess = "GetInstanceAccess"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccess
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccess
 func (c *GameLift) GetInstanceAccessRequest(input *GetInstanceAccessInput) (req *request.Request, output *GetInstanceAccessOutput) {
 	op := &request.Operation{
 		Name:       opGetInstanceAccess,
@@ -5431,7 +5431,7 @@ func (c *GameLift) GetInstanceAccessRequest(input *GetInstanceAccessInput) (req 
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccess
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccess
 func (c *GameLift) GetInstanceAccess(input *GetInstanceAccessInput) (*GetInstanceAccessOutput, error) {
 	req, out := c.GetInstanceAccessRequest(input)
 	return out, req.Send()
@@ -5478,7 +5478,7 @@ const opListAliases = "ListAliases"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliases
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliases
 func (c *GameLift) ListAliasesRequest(input *ListAliasesInput) (req *request.Request, output *ListAliasesOutput) {
 	op := &request.Operation{
 		Name:       opListAliases,
@@ -5537,7 +5537,7 @@ func (c *GameLift) ListAliasesRequest(input *ListAliasesInput) (req *request.Req
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliases
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliases
 func (c *GameLift) ListAliases(input *ListAliasesInput) (*ListAliasesOutput, error) {
 	req, out := c.ListAliasesRequest(input)
 	return out, req.Send()
@@ -5584,7 +5584,7 @@ const opListBuilds = "ListBuilds"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuilds
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuilds
 func (c *GameLift) ListBuildsRequest(input *ListBuildsInput) (req *request.Request, output *ListBuildsOutput) {
 	op := &request.Operation{
 		Name:       opListBuilds,
@@ -5642,7 +5642,7 @@ func (c *GameLift) ListBuildsRequest(input *ListBuildsInput) (req *request.Reque
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuilds
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuilds
 func (c *GameLift) ListBuilds(input *ListBuildsInput) (*ListBuildsOutput, error) {
 	req, out := c.ListBuildsRequest(input)
 	return out, req.Send()
@@ -5689,7 +5689,7 @@ const opListFleets = "ListFleets"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleets
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleets
 func (c *GameLift) ListFleetsRequest(input *ListFleetsInput) (req *request.Request, output *ListFleetsOutput) {
 	op := &request.Operation{
 		Name:       opListFleets,
@@ -5782,7 +5782,7 @@ func (c *GameLift) ListFleetsRequest(input *ListFleetsInput) (req *request.Reque
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleets
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleets
 func (c *GameLift) ListFleets(input *ListFleetsInput) (*ListFleetsOutput, error) {
 	req, out := c.ListFleetsRequest(input)
 	return out, req.Send()
@@ -5829,7 +5829,7 @@ const opPutScalingPolicy = "PutScalingPolicy"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicy
 func (c *GameLift) PutScalingPolicyRequest(input *PutScalingPolicyInput) (req *request.Request, output *PutScalingPolicyOutput) {
 	op := &request.Operation{
 		Name:       opPutScalingPolicy,
@@ -5939,7 +5939,7 @@ func (c *GameLift) PutScalingPolicyRequest(input *PutScalingPolicyInput) (req *r
 //   A service resource associated with the request could not be found. Clients
 //   should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicy
 func (c *GameLift) PutScalingPolicy(input *PutScalingPolicyInput) (*PutScalingPolicyOutput, error) {
 	req, out := c.PutScalingPolicyRequest(input)
 	return out, req.Send()
@@ -5986,7 +5986,7 @@ const opRequestUploadCredentials = "RequestUploadCredentials"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentials
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentials
 func (c *GameLift) RequestUploadCredentialsRequest(input *RequestUploadCredentialsInput) (req *request.Request, output *RequestUploadCredentialsOutput) {
 	op := &request.Operation{
 		Name:       opRequestUploadCredentials,
@@ -6033,7 +6033,7 @@ func (c *GameLift) RequestUploadCredentialsRequest(input *RequestUploadCredentia
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentials
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentials
 func (c *GameLift) RequestUploadCredentials(input *RequestUploadCredentialsInput) (*RequestUploadCredentialsOutput, error) {
 	req, out := c.RequestUploadCredentialsRequest(input)
 	return out, req.Send()
@@ -6080,7 +6080,7 @@ const opResolveAlias = "ResolveAlias"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAlias
 func (c *GameLift) ResolveAliasRequest(input *ResolveAliasInput) (req *request.Request, output *ResolveAliasOutput) {
 	op := &request.Operation{
 		Name:       opResolveAlias,
@@ -6146,7 +6146,7 @@ func (c *GameLift) ResolveAliasRequest(input *ResolveAliasInput) (req *request.R
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAlias
 func (c *GameLift) ResolveAlias(input *ResolveAliasInput) (*ResolveAliasOutput, error) {
 	req, out := c.ResolveAliasRequest(input)
 	return out, req.Send()
@@ -6193,7 +6193,7 @@ const opSearchGameSessions = "SearchGameSessions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessions
 func (c *GameLift) SearchGameSessionsRequest(input *SearchGameSessionsInput) (req *request.Request, output *SearchGameSessionsOutput) {
 	op := &request.Operation{
 		Name:       opSearchGameSessions,
@@ -6309,7 +6309,7 @@ func (c *GameLift) SearchGameSessionsRequest(input *SearchGameSessionsInput) (re
 //   Such requests should only be retried if the routing strategy for the specified
 //   alias is modified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessions
 func (c *GameLift) SearchGameSessions(input *SearchGameSessionsInput) (*SearchGameSessionsOutput, error) {
 	req, out := c.SearchGameSessionsRequest(input)
 	return out, req.Send()
@@ -6356,7 +6356,7 @@ const opStartGameSessionPlacement = "StartGameSessionPlacement"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacement
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacement
 func (c *GameLift) StartGameSessionPlacementRequest(input *StartGameSessionPlacementInput) (req *request.Request, output *StartGameSessionPlacementOutput) {
 	op := &request.Operation{
 		Name:       opStartGameSessionPlacement,
@@ -6463,7 +6463,7 @@ func (c *GameLift) StartGameSessionPlacementRequest(input *StartGameSessionPlace
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacement
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacement
 func (c *GameLift) StartGameSessionPlacement(input *StartGameSessionPlacementInput) (*StartGameSessionPlacementOutput, error) {
 	req, out := c.StartGameSessionPlacementRequest(input)
 	return out, req.Send()
@@ -6510,7 +6510,7 @@ const opStartMatchmaking = "StartMatchmaking"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmaking
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmaking
 func (c *GameLift) StartMatchmakingRequest(input *StartMatchmakingInput) (req *request.Request, output *StartMatchmakingOutput) {
 	op := &request.Operation{
 		Name:       opStartMatchmaking,
@@ -6625,7 +6625,7 @@ func (c *GameLift) StartMatchmakingRequest(input *StartMatchmakingInput) (req *r
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmaking
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmaking
 func (c *GameLift) StartMatchmaking(input *StartMatchmakingInput) (*StartMatchmakingOutput, error) {
 	req, out := c.StartMatchmakingRequest(input)
 	return out, req.Send()
@@ -6672,7 +6672,7 @@ const opStopGameSessionPlacement = "StopGameSessionPlacement"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacement
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacement
 func (c *GameLift) StopGameSessionPlacementRequest(input *StopGameSessionPlacementInput) (req *request.Request, output *StopGameSessionPlacementOutput) {
 	op := &request.Operation{
 		Name:       opStopGameSessionPlacement,
@@ -6741,7 +6741,7 @@ func (c *GameLift) StopGameSessionPlacementRequest(input *StopGameSessionPlaceme
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacement
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacement
 func (c *GameLift) StopGameSessionPlacement(input *StopGameSessionPlacementInput) (*StopGameSessionPlacementOutput, error) {
 	req, out := c.StopGameSessionPlacementRequest(input)
 	return out, req.Send()
@@ -6788,7 +6788,7 @@ const opStopMatchmaking = "StopMatchmaking"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmaking
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmaking
 func (c *GameLift) StopMatchmakingRequest(input *StopMatchmakingInput) (req *request.Request, output *StopMatchmakingOutput) {
 	op := &request.Operation{
 		Name:       opStopMatchmaking,
@@ -6845,7 +6845,7 @@ func (c *GameLift) StopMatchmakingRequest(input *StopMatchmakingInput) (req *req
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmaking
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmaking
 func (c *GameLift) StopMatchmaking(input *StopMatchmakingInput) (*StopMatchmakingOutput, error) {
 	req, out := c.StopMatchmakingRequest(input)
 	return out, req.Send()
@@ -6892,7 +6892,7 @@ const opUpdateAlias = "UpdateAlias"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAlias
 func (c *GameLift) UpdateAliasRequest(input *UpdateAliasInput) (req *request.Request, output *UpdateAliasOutput) {
 	op := &request.Operation{
 		Name:       opUpdateAlias,
@@ -6954,7 +6954,7 @@ func (c *GameLift) UpdateAliasRequest(input *UpdateAliasInput) (req *request.Req
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAlias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAlias
 func (c *GameLift) UpdateAlias(input *UpdateAliasInput) (*UpdateAliasOutput, error) {
 	req, out := c.UpdateAliasRequest(input)
 	return out, req.Send()
@@ -7001,7 +7001,7 @@ const opUpdateBuild = "UpdateBuild"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuild
 func (c *GameLift) UpdateBuildRequest(input *UpdateBuildInput) (req *request.Request, output *UpdateBuildOutput) {
 	op := &request.Operation{
 		Name:       opUpdateBuild,
@@ -7061,7 +7061,7 @@ func (c *GameLift) UpdateBuildRequest(input *UpdateBuildInput) (req *request.Req
 //   the request. Clients can retry such requests immediately or after a waiting
 //   period.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuild
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuild
 func (c *GameLift) UpdateBuild(input *UpdateBuildInput) (*UpdateBuildOutput, error) {
 	req, out := c.UpdateBuildRequest(input)
 	return out, req.Send()
@@ -7108,7 +7108,7 @@ const opUpdateFleetAttributes = "UpdateFleetAttributes"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributes
 func (c *GameLift) UpdateFleetAttributesRequest(input *UpdateFleetAttributesInput) (req *request.Request, output *UpdateFleetAttributesOutput) {
 	op := &request.Operation{
 		Name:       opUpdateFleetAttributes,
@@ -7213,7 +7213,7 @@ func (c *GameLift) UpdateFleetAttributesRequest(input *UpdateFleetAttributesInpu
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributes
 func (c *GameLift) UpdateFleetAttributes(input *UpdateFleetAttributesInput) (*UpdateFleetAttributesOutput, error) {
 	req, out := c.UpdateFleetAttributesRequest(input)
 	return out, req.Send()
@@ -7260,7 +7260,7 @@ const opUpdateFleetCapacity = "UpdateFleetCapacity"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacity
 func (c *GameLift) UpdateFleetCapacityRequest(input *UpdateFleetCapacityInput) (req *request.Request, output *UpdateFleetCapacityOutput) {
 	op := &request.Operation{
 		Name:       opUpdateFleetCapacity,
@@ -7377,7 +7377,7 @@ func (c *GameLift) UpdateFleetCapacityRequest(input *UpdateFleetCapacityInput) (
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacity
 func (c *GameLift) UpdateFleetCapacity(input *UpdateFleetCapacityInput) (*UpdateFleetCapacityOutput, error) {
 	req, out := c.UpdateFleetCapacityRequest(input)
 	return out, req.Send()
@@ -7424,7 +7424,7 @@ const opUpdateFleetPortSettings = "UpdateFleetPortSettings"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettings
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettings
 func (c *GameLift) UpdateFleetPortSettingsRequest(input *UpdateFleetPortSettingsInput) (req *request.Request, output *UpdateFleetPortSettingsOutput) {
 	op := &request.Operation{
 		Name:       opUpdateFleetPortSettings,
@@ -7532,7 +7532,7 @@ func (c *GameLift) UpdateFleetPortSettingsRequest(input *UpdateFleetPortSettings
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettings
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettings
 func (c *GameLift) UpdateFleetPortSettings(input *UpdateFleetPortSettingsInput) (*UpdateFleetPortSettingsOutput, error) {
 	req, out := c.UpdateFleetPortSettingsRequest(input)
 	return out, req.Send()
@@ -7579,7 +7579,7 @@ const opUpdateGameSession = "UpdateGameSession"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSession
 func (c *GameLift) UpdateGameSessionRequest(input *UpdateGameSessionInput) (req *request.Request, output *UpdateGameSessionOutput) {
 	op := &request.Operation{
 		Name:       opUpdateGameSession,
@@ -7662,7 +7662,7 @@ func (c *GameLift) UpdateGameSessionRequest(input *UpdateGameSessionInput) (req 
 //   One or more parameter values in the request are invalid. Correct the invalid
 //   parameter values before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSession
 func (c *GameLift) UpdateGameSession(input *UpdateGameSessionInput) (*UpdateGameSessionOutput, error) {
 	req, out := c.UpdateGameSessionRequest(input)
 	return out, req.Send()
@@ -7709,7 +7709,7 @@ const opUpdateGameSessionQueue = "UpdateGameSessionQueue"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueue
 func (c *GameLift) UpdateGameSessionQueueRequest(input *UpdateGameSessionQueueInput) (req *request.Request, output *UpdateGameSessionQueueOutput) {
 	op := &request.Operation{
 		Name:       opUpdateGameSessionQueue,
@@ -7767,7 +7767,7 @@ func (c *GameLift) UpdateGameSessionQueueRequest(input *UpdateGameSessionQueueIn
 //   * ErrCodeUnauthorizedException "UnauthorizedException"
 //   The client failed authentication. Clients should not retry such requests.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueue
 func (c *GameLift) UpdateGameSessionQueue(input *UpdateGameSessionQueueInput) (*UpdateGameSessionQueueOutput, error) {
 	req, out := c.UpdateGameSessionQueueRequest(input)
 	return out, req.Send()
@@ -7814,7 +7814,7 @@ const opUpdateMatchmakingConfiguration = "UpdateMatchmakingConfiguration"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfiguration
 func (c *GameLift) UpdateMatchmakingConfigurationRequest(input *UpdateMatchmakingConfigurationInput) (req *request.Request, output *UpdateMatchmakingConfigurationOutput) {
 	op := &request.Operation{
 		Name:       opUpdateMatchmakingConfiguration,
@@ -7876,7 +7876,7 @@ func (c *GameLift) UpdateMatchmakingConfigurationRequest(input *UpdateMatchmakin
 //   * ErrCodeUnsupportedRegionException "UnsupportedRegionException"
 //   The requested operation is not supported in the region specified.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfiguration
 func (c *GameLift) UpdateMatchmakingConfiguration(input *UpdateMatchmakingConfigurationInput) (*UpdateMatchmakingConfigurationOutput, error) {
 	req, out := c.UpdateMatchmakingConfigurationRequest(input)
 	return out, req.Send()
@@ -7923,7 +7923,7 @@ const opUpdateRuntimeConfiguration = "UpdateRuntimeConfiguration"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfiguration
 func (c *GameLift) UpdateRuntimeConfigurationRequest(input *UpdateRuntimeConfigurationInput) (req *request.Request, output *UpdateRuntimeConfigurationOutput) {
 	op := &request.Operation{
 		Name:       opUpdateRuntimeConfiguration,
@@ -8032,7 +8032,7 @@ func (c *GameLift) UpdateRuntimeConfigurationRequest(input *UpdateRuntimeConfigu
 //   a resource associated with the request and/or the fleet. Resolve the conflict
 //   before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfiguration
 func (c *GameLift) UpdateRuntimeConfiguration(input *UpdateRuntimeConfigurationInput) (*UpdateRuntimeConfigurationOutput, error) {
 	req, out := c.UpdateRuntimeConfigurationRequest(input)
 	return out, req.Send()
@@ -8079,7 +8079,7 @@ const opValidateMatchmakingRuleSet = "ValidateMatchmakingRuleSet"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSet
 func (c *GameLift) ValidateMatchmakingRuleSetRequest(input *ValidateMatchmakingRuleSetInput) (req *request.Request, output *ValidateMatchmakingRuleSetOutput) {
 	op := &request.Operation{
 		Name:       opValidateMatchmakingRuleSet,
@@ -8138,7 +8138,7 @@ func (c *GameLift) ValidateMatchmakingRuleSetRequest(input *ValidateMatchmakingR
 //   One or more parameter values in the request are invalid. Correct the invalid
 //   parameter values before retrying.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSet
 func (c *GameLift) ValidateMatchmakingRuleSet(input *ValidateMatchmakingRuleSetInput) (*ValidateMatchmakingRuleSetOutput, error) {
 	req, out := c.ValidateMatchmakingRuleSetRequest(input)
 	return out, req.Send()
@@ -8161,7 +8161,7 @@ func (c *GameLift) ValidateMatchmakingRuleSetWithContext(ctx aws.Context, input 
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatchInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatchInput
 type AcceptMatchInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8233,7 +8233,7 @@ func (s *AcceptMatchInput) SetTicketId(v string) *AcceptMatchInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatchOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AcceptMatchOutput
 type AcceptMatchOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -8263,7 +8263,7 @@ func (s AcceptMatchOutput) GoString() string {
 //    * DeleteAlias
 //
 //    * ResolveAlias
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Alias
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Alias
 type Alias struct {
 	_ struct{} `type:"structure"`
 
@@ -8348,7 +8348,7 @@ func (s *Alias) SetRoutingStrategy(v *RoutingStrategy) *Alias {
 // specify an attribute value using any of the valid data types: string, number,
 // string array or data map. Each AttributeValue object can use only one of
 // the available properties.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AttributeValue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AttributeValue
 type AttributeValue struct {
 	_ struct{} `type:"structure"`
 
@@ -8418,7 +8418,7 @@ func (s *AttributeValue) SetSL(v []*string) *AttributeValue {
 // Temporary access credentials used for uploading game build files to Amazon
 // GameLift. They are valid for a limited time. If they expire before you upload
 // your game build, get a new set by calling RequestUploadCredentials.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AwsCredentials
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/AwsCredentials
 type AwsCredentials struct {
 	_ struct{} `type:"structure"`
 
@@ -8474,7 +8474,7 @@ func (s *AwsCredentials) SetSessionToken(v string) *AwsCredentials {
 //    * UpdateBuild
 //
 //    * DeleteBuild
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Build
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Build
 type Build struct {
 	_ struct{} `type:"structure"`
 
@@ -8571,7 +8571,7 @@ func (s *Build) SetVersion(v string) *Build {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAliasInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAliasInput
 type CreateAliasInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8641,7 +8641,7 @@ func (s *CreateAliasInput) SetRoutingStrategy(v *RoutingStrategy) *CreateAliasIn
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAliasOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateAliasOutput
 type CreateAliasOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8666,7 +8666,7 @@ func (s *CreateAliasOutput) SetAlias(v *Alias) *CreateAliasOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuildInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuildInput
 type CreateBuildInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8749,7 +8749,7 @@ func (s *CreateBuildInput) SetVersion(v string) *CreateBuildInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuildOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateBuildOutput
 type CreateBuildOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8792,7 +8792,7 @@ func (s *CreateBuildOutput) SetUploadCredentials(v *AwsCredentials) *CreateBuild
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleetInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleetInput
 type CreateFleetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9040,7 +9040,7 @@ func (s *CreateFleetInput) SetServerLaunchPath(v string) *CreateFleetInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleetOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateFleetOutput
 type CreateFleetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9065,7 +9065,7 @@ func (s *CreateFleetOutput) SetFleetAttributes(v *FleetAttributes) *CreateFleetO
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionInput
 type CreateGameSessionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9226,7 +9226,7 @@ func (s *CreateGameSessionInput) SetName(v string) *CreateGameSessionInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionOutput
 type CreateGameSessionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9251,7 +9251,7 @@ func (s *CreateGameSessionOutput) SetGameSession(v *GameSession) *CreateGameSess
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueueInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueueInput
 type CreateGameSessionQueueInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9345,7 +9345,7 @@ func (s *CreateGameSessionQueueInput) SetTimeoutInSeconds(v int64) *CreateGameSe
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueueOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateGameSessionQueueOutput
 type CreateGameSessionQueueOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9370,7 +9370,7 @@ func (s *CreateGameSessionQueueOutput) SetGameSessionQueue(v *GameSessionQueue) 
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfigurationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfigurationInput
 type CreateMatchmakingConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9581,7 +9581,7 @@ func (s *CreateMatchmakingConfigurationInput) SetRuleSetName(v string) *CreateMa
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfigurationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingConfigurationOutput
 type CreateMatchmakingConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9606,7 +9606,7 @@ func (s *CreateMatchmakingConfigurationOutput) SetConfiguration(v *MatchmakingCo
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSetInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSetInput
 type CreateMatchmakingRuleSetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9668,7 +9668,7 @@ func (s *CreateMatchmakingRuleSetInput) SetRuleSetBody(v string) *CreateMatchmak
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSetOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateMatchmakingRuleSetOutput
 type CreateMatchmakingRuleSetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9695,7 +9695,7 @@ func (s *CreateMatchmakingRuleSetOutput) SetRuleSet(v *MatchmakingRuleSet) *Crea
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionInput
 type CreatePlayerSessionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9768,7 +9768,7 @@ func (s *CreatePlayerSessionInput) SetPlayerId(v string) *CreatePlayerSessionInp
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionOutput
 type CreatePlayerSessionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9793,7 +9793,7 @@ func (s *CreatePlayerSessionOutput) SetPlayerSession(v *PlayerSession) *CreatePl
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionsInput
 type CreatePlayerSessionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9865,7 +9865,7 @@ func (s *CreatePlayerSessionsInput) SetPlayerIds(v []*string) *CreatePlayerSessi
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreatePlayerSessionsOutput
 type CreatePlayerSessionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9890,7 +9890,7 @@ func (s *CreatePlayerSessionsOutput) SetPlayerSessions(v []*PlayerSession) *Crea
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorizationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorizationInput
 type CreateVpcPeeringAuthorizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9955,7 +9955,7 @@ func (s *CreateVpcPeeringAuthorizationInput) SetPeerVpcId(v string) *CreateVpcPe
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorizationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringAuthorizationOutput
 type CreateVpcPeeringAuthorizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9980,7 +9980,7 @@ func (s *CreateVpcPeeringAuthorizationOutput) SetVpcPeeringAuthorization(v *VpcP
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnectionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnectionInput
 type CreateVpcPeeringConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10059,7 +10059,7 @@ func (s *CreateVpcPeeringConnectionInput) SetPeerVpcId(v string) *CreateVpcPeeri
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnectionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/CreateVpcPeeringConnectionOutput
 type CreateVpcPeeringConnectionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10075,7 +10075,7 @@ func (s CreateVpcPeeringConnectionOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAliasInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAliasInput
 type DeleteAliasInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10114,7 +10114,7 @@ func (s *DeleteAliasInput) SetAliasId(v string) *DeleteAliasInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAliasOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteAliasOutput
 type DeleteAliasOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10130,7 +10130,7 @@ func (s DeleteAliasOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuildInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuildInput
 type DeleteBuildInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10169,7 +10169,7 @@ func (s *DeleteBuildInput) SetBuildId(v string) *DeleteBuildInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuildOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteBuildOutput
 type DeleteBuildOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10185,7 +10185,7 @@ func (s DeleteBuildOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleetInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleetInput
 type DeleteFleetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10224,7 +10224,7 @@ func (s *DeleteFleetInput) SetFleetId(v string) *DeleteFleetInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleetOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteFleetOutput
 type DeleteFleetOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10240,7 +10240,7 @@ func (s DeleteFleetOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueueInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueueInput
 type DeleteGameSessionQueueInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10283,7 +10283,7 @@ func (s *DeleteGameSessionQueueInput) SetName(v string) *DeleteGameSessionQueueI
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueueOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteGameSessionQueueOutput
 type DeleteGameSessionQueueOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10299,7 +10299,7 @@ func (s DeleteGameSessionQueueOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfigurationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfigurationInput
 type DeleteMatchmakingConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10341,7 +10341,7 @@ func (s *DeleteMatchmakingConfigurationInput) SetName(v string) *DeleteMatchmaki
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfigurationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteMatchmakingConfigurationOutput
 type DeleteMatchmakingConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10357,7 +10357,7 @@ func (s DeleteMatchmakingConfigurationOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicyInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicyInput
 type DeleteScalingPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10414,7 +10414,7 @@ func (s *DeleteScalingPolicyInput) SetName(v string) *DeleteScalingPolicyInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicyOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteScalingPolicyOutput
 type DeleteScalingPolicyOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10430,7 +10430,7 @@ func (s DeleteScalingPolicyOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorizationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorizationInput
 type DeleteVpcPeeringAuthorizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10494,7 +10494,7 @@ func (s *DeleteVpcPeeringAuthorizationInput) SetPeerVpcId(v string) *DeleteVpcPe
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorizationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringAuthorizationOutput
 type DeleteVpcPeeringAuthorizationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10510,7 +10510,7 @@ func (s DeleteVpcPeeringAuthorizationOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnectionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnectionInput
 type DeleteVpcPeeringConnectionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10568,7 +10568,7 @@ func (s *DeleteVpcPeeringConnectionInput) SetVpcPeeringConnectionId(v string) *D
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnectionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DeleteVpcPeeringConnectionOutput
 type DeleteVpcPeeringConnectionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -10584,7 +10584,7 @@ func (s DeleteVpcPeeringConnectionOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAliasInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAliasInput
 type DescribeAliasInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10624,7 +10624,7 @@ func (s *DescribeAliasInput) SetAliasId(v string) *DescribeAliasInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAliasOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeAliasOutput
 type DescribeAliasOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10649,7 +10649,7 @@ func (s *DescribeAliasOutput) SetAlias(v *Alias) *DescribeAliasOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuildInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuildInput
 type DescribeBuildInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10689,7 +10689,7 @@ func (s *DescribeBuildInput) SetBuildId(v string) *DescribeBuildInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuildOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeBuildOutput
 type DescribeBuildOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10714,7 +10714,7 @@ func (s *DescribeBuildOutput) SetBuild(v *Build) *DescribeBuildOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimitsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimitsInput
 type DescribeEC2InstanceLimitsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10744,7 +10744,7 @@ func (s *DescribeEC2InstanceLimitsInput) SetEC2InstanceType(v string) *DescribeE
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimitsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeEC2InstanceLimitsOutput
 type DescribeEC2InstanceLimitsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10770,7 +10770,7 @@ func (s *DescribeEC2InstanceLimitsOutput) SetEC2InstanceLimits(v []*EC2InstanceL
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributesInput
 type DescribeFleetAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10838,7 +10838,7 @@ func (s *DescribeFleetAttributesInput) SetNextToken(v string) *DescribeFleetAttr
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetAttributesOutput
 type DescribeFleetAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10875,7 +10875,7 @@ func (s *DescribeFleetAttributesOutput) SetNextToken(v string) *DescribeFleetAtt
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacityInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacityInput
 type DescribeFleetCapacityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10943,7 +10943,7 @@ func (s *DescribeFleetCapacityInput) SetNextToken(v string) *DescribeFleetCapaci
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacityOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetCapacityOutput
 type DescribeFleetCapacityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10981,7 +10981,7 @@ func (s *DescribeFleetCapacityOutput) SetNextToken(v string) *DescribeFleetCapac
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEventsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEventsInput
 type DescribeFleetEventsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11071,7 +11071,7 @@ func (s *DescribeFleetEventsInput) SetStartTime(v time.Time) *DescribeFleetEvent
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEventsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetEventsOutput
 type DescribeFleetEventsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11107,7 +11107,7 @@ func (s *DescribeFleetEventsOutput) SetNextToken(v string) *DescribeFleetEventsO
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettingsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettingsInput
 type DescribeFleetPortSettingsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11147,7 +11147,7 @@ func (s *DescribeFleetPortSettingsInput) SetFleetId(v string) *DescribeFleetPort
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettingsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetPortSettingsOutput
 type DescribeFleetPortSettingsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11172,7 +11172,7 @@ func (s *DescribeFleetPortSettingsOutput) SetInboundPermissions(v []*IpPermissio
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilizationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilizationInput
 type DescribeFleetUtilizationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11240,7 +11240,7 @@ func (s *DescribeFleetUtilizationInput) SetNextToken(v string) *DescribeFleetUti
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilizationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeFleetUtilizationOutput
 type DescribeFleetUtilizationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11277,7 +11277,7 @@ func (s *DescribeFleetUtilizationOutput) SetNextToken(v string) *DescribeFleetUt
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetailsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetailsInput
 type DescribeGameSessionDetailsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11376,7 +11376,7 @@ func (s *DescribeGameSessionDetailsInput) SetStatusFilter(v string) *DescribeGam
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetailsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionDetailsOutput
 type DescribeGameSessionDetailsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11413,7 +11413,7 @@ func (s *DescribeGameSessionDetailsOutput) SetNextToken(v string) *DescribeGameS
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacementInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacementInput
 type DescribeGameSessionPlacementInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11456,7 +11456,7 @@ func (s *DescribeGameSessionPlacementInput) SetPlacementId(v string) *DescribeGa
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacementOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionPlacementOutput
 type DescribeGameSessionPlacementOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11481,7 +11481,7 @@ func (s *DescribeGameSessionPlacementOutput) SetGameSessionPlacement(v *GameSess
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueuesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueuesInput
 type DescribeGameSessionQueuesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11544,7 +11544,7 @@ func (s *DescribeGameSessionQueuesInput) SetNextToken(v string) *DescribeGameSes
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueuesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionQueuesOutput
 type DescribeGameSessionQueuesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11580,7 +11580,7 @@ func (s *DescribeGameSessionQueuesOutput) SetNextToken(v string) *DescribeGameSe
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionsInput
 type DescribeGameSessionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11679,7 +11679,7 @@ func (s *DescribeGameSessionsInput) SetStatusFilter(v string) *DescribeGameSessi
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeGameSessionsOutput
 type DescribeGameSessionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11716,7 +11716,7 @@ func (s *DescribeGameSessionsOutput) SetNextToken(v string) *DescribeGameSession
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstancesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstancesInput
 type DescribeInstancesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11793,7 +11793,7 @@ func (s *DescribeInstancesInput) SetNextToken(v string) *DescribeInstancesInput 
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstancesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeInstancesOutput
 type DescribeInstancesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11829,7 +11829,7 @@ func (s *DescribeInstancesOutput) SetNextToken(v string) *DescribeInstancesOutpu
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurationsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurationsInput
 type DescribeMatchmakingConfigurationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11905,7 +11905,7 @@ func (s *DescribeMatchmakingConfigurationsInput) SetRuleSetName(v string) *Descr
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurationsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingConfigurationsOutput
 type DescribeMatchmakingConfigurationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11941,7 +11941,7 @@ func (s *DescribeMatchmakingConfigurationsOutput) SetNextToken(v string) *Descri
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingInput
 type DescribeMatchmakingInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11982,7 +11982,7 @@ func (s *DescribeMatchmakingInput) SetTicketIds(v []*string) *DescribeMatchmakin
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingOutput
 type DescribeMatchmakingOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12007,7 +12007,7 @@ func (s *DescribeMatchmakingOutput) SetTicketList(v []*MatchmakingTicket) *Descr
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSetsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSetsInput
 type DescribeMatchmakingRuleSetsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12073,7 +12073,7 @@ func (s *DescribeMatchmakingRuleSetsInput) SetNextToken(v string) *DescribeMatch
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSetsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeMatchmakingRuleSetsOutput
 type DescribeMatchmakingRuleSetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12111,7 +12111,7 @@ func (s *DescribeMatchmakingRuleSetsOutput) SetRuleSets(v []*MatchmakingRuleSet)
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessionsInput
 type DescribePlayerSessionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12224,7 +12224,7 @@ func (s *DescribePlayerSessionsInput) SetPlayerSessionStatusFilter(v string) *De
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribePlayerSessionsOutput
 type DescribePlayerSessionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12261,7 +12261,7 @@ func (s *DescribePlayerSessionsOutput) SetPlayerSessions(v []*PlayerSession) *De
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfigurationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfigurationInput
 type DescribeRuntimeConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12301,7 +12301,7 @@ func (s *DescribeRuntimeConfigurationInput) SetFleetId(v string) *DescribeRuntim
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfigurationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeRuntimeConfigurationOutput
 type DescribeRuntimeConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12327,7 +12327,7 @@ func (s *DescribeRuntimeConfigurationOutput) SetRuntimeConfiguration(v *RuntimeC
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPoliciesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPoliciesInput
 type DescribeScalingPoliciesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12419,7 +12419,7 @@ func (s *DescribeScalingPoliciesInput) SetStatusFilter(v string) *DescribeScalin
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPoliciesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeScalingPoliciesOutput
 type DescribeScalingPoliciesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12454,7 +12454,7 @@ func (s *DescribeScalingPoliciesOutput) SetScalingPolicies(v []*ScalingPolicy) *
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizationsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizationsInput
 type DescribeVpcPeeringAuthorizationsInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -12469,7 +12469,7 @@ func (s DescribeVpcPeeringAuthorizationsInput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizationsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringAuthorizationsOutput
 type DescribeVpcPeeringAuthorizationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12495,7 +12495,7 @@ func (s *DescribeVpcPeeringAuthorizationsOutput) SetVpcPeeringAuthorizations(v [
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnectionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnectionsInput
 type DescribeVpcPeeringConnectionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12520,7 +12520,7 @@ func (s *DescribeVpcPeeringConnectionsInput) SetFleetId(v string) *DescribeVpcPe
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnectionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DescribeVpcPeeringConnectionsOutput
 type DescribeVpcPeeringConnectionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12546,7 +12546,7 @@ func (s *DescribeVpcPeeringConnectionsOutput) SetVpcPeeringConnections(v []*VpcP
 
 // Player information for use when creating player sessions using a game session
 // placement request with StartGameSessionPlacement.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DesiredPlayerSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/DesiredPlayerSession
 type DesiredPlayerSession struct {
 	_ struct{} `type:"structure"`
 
@@ -12645,7 +12645,7 @@ func (s *DesiredPlayerSession) SetPlayerId(v string) *DesiredPlayerSession {
 // DescribeEC2InstanceLimits
 //
 //    * DeleteFleet
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/EC2InstanceCounts
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/EC2InstanceCounts
 type EC2InstanceCounts struct {
 	_ struct{} `type:"structure"`
 
@@ -12727,7 +12727,7 @@ func (s *EC2InstanceCounts) SetTERMINATING(v int64) *EC2InstanceCounts {
 
 // Maximum number of instances allowed based on the Amazon Elastic Compute Cloud
 // (Amazon EC2) instance type. Instance limits can be retrieved by calling DescribeEC2InstanceLimits.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/EC2InstanceLimit
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/EC2InstanceLimit
 type EC2InstanceLimit struct {
 	_ struct{} `type:"structure"`
 
@@ -12777,7 +12777,7 @@ func (s *EC2InstanceLimit) SetInstanceLimit(v int64) *EC2InstanceLimit {
 // Log entry describing an event that involves Amazon GameLift resources (such
 // as a fleet). In addition to tracking activity, event codes and messages can
 // provide additional information for troubleshooting and debugging problems.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Event
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Event
 type Event struct {
 	_ struct{} `type:"structure"`
 
@@ -12985,7 +12985,7 @@ func (s *Event) SetResourceId(v string) *Event {
 // DescribeEC2InstanceLimits
 //
 //    * DeleteFleet
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/FleetAttributes
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/FleetAttributes
 type FleetAttributes struct {
 	_ struct{} `type:"structure"`
 
@@ -13228,7 +13228,7 @@ func (s *FleetAttributes) SetTerminationTime(v time.Time) *FleetAttributes {
 // DescribeEC2InstanceLimits
 //
 //    * DeleteFleet
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/FleetCapacity
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/FleetCapacity
 type FleetCapacity struct {
 	_ struct{} `type:"structure"`
 
@@ -13320,7 +13320,7 @@ func (s *FleetCapacity) SetInstanceType(v string) *FleetCapacity {
 // DescribeEC2InstanceLimits
 //
 //    * DeleteFleet
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/FleetUtilization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/FleetUtilization
 type FleetUtilization struct {
 	_ struct{} `type:"structure"`
 
@@ -13391,7 +13391,7 @@ func (s *FleetUtilization) SetMaximumPlayerSessionCount(v int64) *FleetUtilizati
 // when initiating a new game session; the server process uses the properties
 // as appropriate. For more information, see the  Amazon GameLift Developer
 // Guide (http://docs.aws.amazon.com/gamelift/latest/developerguide/gamelift-sdk-client-api.html#gamelift-sdk-client-api-create).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameProperty
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameProperty
 type GameProperty struct {
 	_ struct{} `type:"structure"`
 
@@ -13474,7 +13474,7 @@ func (s *GameProperty) SetValue(v string) *GameProperty {
 // DescribeGameSessionPlacement
 //
 // StopGameSessionPlacement
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSession
 type GameSession struct {
 	_ struct{} `type:"structure"`
 
@@ -13638,7 +13638,7 @@ func (s *GameSession) SetTerminationTime(v time.Time) *GameSession {
 // the game session endpoint and player sessions for each player in the original
 // matchmaking request, is added to the MatchmakingTicket, which can be retrieved
 // by calling DescribeMatchmaking.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionConnectionInfo
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionConnectionInfo
 type GameSessionConnectionInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -13694,7 +13694,7 @@ func (s *GameSessionConnectionInfo) SetPort(v int64) *GameSessionConnectionInfo 
 }
 
 // A game session's properties plus the protection policy currently in force.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionDetail
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionDetail
 type GameSessionDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -13744,7 +13744,7 @@ func (s *GameSessionDetail) SetProtectionPolicy(v string) *GameSessionDetail {
 //    * DescribeGameSessionPlacement
 //
 //    * StopGameSessionPlacement
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionPlacement
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionPlacement
 type GameSessionPlacement struct {
 	_ struct{} `type:"structure"`
 
@@ -13968,7 +13968,7 @@ func (s *GameSessionPlacement) SetStatus(v string) *GameSessionPlacement {
 //    * UpdateGameSessionQueue
 //
 //    * DeleteGameSessionQueue
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionQueue
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionQueue
 type GameSessionQueue struct {
 	_ struct{} `type:"structure"`
 
@@ -14055,7 +14055,7 @@ func (s *GameSessionQueue) SetTimeoutInSeconds(v int64) *GameSessionQueue {
 //    * UpdateGameSessionQueue
 //
 //    * DeleteGameSessionQueue
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionQueueDestination
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GameSessionQueueDestination
 type GameSessionQueueDestination struct {
 	_ struct{} `type:"structure"`
 
@@ -14095,7 +14095,7 @@ func (s *GameSessionQueueDestination) SetDestinationArn(v string) *GameSessionQu
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrlInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrlInput
 type GetGameSessionLogUrlInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14138,7 +14138,7 @@ func (s *GetGameSessionLogUrlInput) SetGameSessionId(v string) *GetGameSessionLo
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrlOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetGameSessionLogUrlOutput
 type GetGameSessionLogUrlOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14163,7 +14163,7 @@ func (s *GetGameSessionLogUrlOutput) SetPreSignedUrl(v string) *GetGameSessionLo
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccessInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccessInput
 type GetInstanceAccessInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14221,7 +14221,7 @@ func (s *GetInstanceAccessInput) SetInstanceId(v string) *GetInstanceAccessInput
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccessOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/GetInstanceAccessOutput
 type GetInstanceAccessOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14248,7 +14248,7 @@ func (s *GetInstanceAccessOutput) SetInstanceAccess(v *InstanceAccess) *GetInsta
 
 // Properties that describe an instance of a virtual computing resource that
 // hosts one or more game servers. A fleet may contain zero or more instances.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Instance
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Instance
 type Instance struct {
 	_ struct{} `type:"structure"`
 
@@ -14341,7 +14341,7 @@ func (s *Instance) SetType(v string) *Instance {
 
 // Information required to remotely connect to a fleet instance. Access is requested
 // by calling GetInstanceAccess.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/InstanceAccess
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/InstanceAccess
 type InstanceAccess struct {
 	_ struct{} `type:"structure"`
 
@@ -14404,7 +14404,7 @@ func (s *InstanceAccess) SetOperatingSystem(v string) *InstanceAccess {
 // Set of credentials required to remotely access a fleet instance. Access credentials
 // are requested by calling GetInstanceAccess and returned in an InstanceAccess
 // object.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/InstanceCredentials
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/InstanceCredentials
 type InstanceCredentials struct {
 	_ struct{} `type:"structure"`
 
@@ -14444,7 +14444,7 @@ func (s *InstanceCredentials) SetUserName(v string) *InstanceCredentials {
 // is assigned a unique combination of IP address and port number, which must
 // fall into the fleet's allowed ranges. This combination is included in the
 // GameSession object.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/IpPermission
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/IpPermission
 type IpPermission struct {
 	_ struct{} `type:"structure"`
 
@@ -14535,7 +14535,7 @@ func (s *IpPermission) SetToPort(v int64) *IpPermission {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliasesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliasesInput
 type ListAliasesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14621,7 +14621,7 @@ func (s *ListAliasesInput) SetRoutingStrategyType(v string) *ListAliasesInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliasesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListAliasesOutput
 type ListAliasesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14657,7 +14657,7 @@ func (s *ListAliasesOutput) SetNextToken(v string) *ListAliasesOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuildsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuildsInput
 type ListBuildsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14733,7 +14733,7 @@ func (s *ListBuildsInput) SetStatus(v string) *ListBuildsInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuildsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListBuildsOutput
 type ListBuildsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14769,7 +14769,7 @@ func (s *ListBuildsOutput) SetNextToken(v string) *ListBuildsOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleetsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleetsInput
 type ListFleetsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -14833,7 +14833,7 @@ func (s *ListFleetsInput) SetNextToken(v string) *ListFleetsInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleetsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ListFleetsOutput
 type ListFleetsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -14876,7 +14876,7 @@ func (s *ListFleetsOutput) SetNextToken(v string) *ListFleetsOutput {
 //
 // When players connect to the match's game session, they must include both
 // player ID and player session ID in order to claim their assigned player slot.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchedPlayerSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchedPlayerSession
 type MatchedPlayerSession struct {
 	_ struct{} `type:"structure"`
 
@@ -14911,7 +14911,7 @@ func (s *MatchedPlayerSession) SetPlayerSessionId(v string) *MatchedPlayerSessio
 
 // Guidelines for use with FlexMatch to match players into games. All matchmaking
 // requests must specify a matchmaking configuration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchmakingConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchmakingConfiguration
 type MatchmakingConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -15100,7 +15100,7 @@ func (s *MatchmakingConfiguration) SetRuleSetName(v string) *MatchmakingConfigur
 //    instead of making them wait indefinitely for the best possible match.
 //    For example, you might use an expansion to increase the maximum skill
 //    variance between players after 30 seconds.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchmakingRuleSet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchmakingRuleSet
 type MatchmakingRuleSet struct {
 	_ struct{} `type:"structure"`
 
@@ -15150,7 +15150,7 @@ func (s *MatchmakingRuleSet) SetRuleSetName(v string) *MatchmakingRuleSet {
 // is uniquely identified by a ticket ID, supplied by the requester, when creating
 // a matchmaking request with StartMatchmaking. Tickets can be retrieved by
 // calling DescribeMatchmaking with the ticket ID.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchmakingTicket
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/MatchmakingTicket
 type MatchmakingTicket struct {
 	_ struct{} `type:"structure"`
 
@@ -15314,7 +15314,7 @@ func (s *MatchmakingTicket) SetTicketId(v string) *MatchmakingTicket {
 // DescribeGameSessionPlacement
 //
 // StopGameSessionPlacement
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlacedPlayerSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlacedPlayerSession
 type PlacedPlayerSession struct {
 	_ struct{} `type:"structure"`
 
@@ -15350,7 +15350,7 @@ func (s *PlacedPlayerSession) SetPlayerSessionId(v string) *PlacedPlayerSession 
 // Represents a player in matchmaking. When starting a matchmaking request,
 // a player has a player ID, attributes, and may have latency data. Team information
 // is added after a match has been successfully completed.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Player
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/Player
 type Player struct {
 	_ struct{} `type:"structure"`
 
@@ -15445,7 +15445,7 @@ func (s *Player) SetTeam(v string) *Player {
 // region. The relative difference between a player's latency values for multiple
 // regions are used to determine which fleets are best suited to place a new
 // game session for the player.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlayerLatency
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlayerLatency
 type PlayerLatency struct {
 	_ struct{} `type:"structure"`
 
@@ -15519,7 +15519,7 @@ func (s *PlayerLatency) SetRegionIdentifier(v string) *PlayerLatency {
 //    * UpdateGameSessionQueue
 //
 //    * DeleteGameSessionQueue
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlayerLatencyPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlayerLatencyPolicy
 type PlayerLatencyPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -15582,7 +15582,7 @@ func (s *PlayerLatencyPolicy) SetPolicyDurationSeconds(v int64) *PlayerLatencyPo
 // DescribeGameSessionPlacement
 //
 // StopGameSessionPlacement
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlayerSession
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PlayerSession
 type PlayerSession struct {
 	_ struct{} `type:"structure"`
 
@@ -15707,7 +15707,7 @@ func (s *PlayerSession) SetTerminationTime(v time.Time) *PlayerSession {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicyInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicyInput
 type PutScalingPolicyInput struct {
 	_ struct{} `type:"structure"`
 
@@ -15885,7 +15885,7 @@ func (s *PutScalingPolicyInput) SetThreshold(v float64) *PutScalingPolicyInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicyOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/PutScalingPolicyOutput
 type PutScalingPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -15911,7 +15911,7 @@ func (s *PutScalingPolicyOutput) SetName(v string) *PutScalingPolicyOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentialsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentialsInput
 type RequestUploadCredentialsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -15951,7 +15951,7 @@ func (s *RequestUploadCredentialsInput) SetBuildId(v string) *RequestUploadCrede
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentialsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RequestUploadCredentialsOutput
 type RequestUploadCredentialsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -15987,7 +15987,7 @@ func (s *RequestUploadCredentialsOutput) SetUploadCredentials(v *AwsCredentials)
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAliasInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAliasInput
 type ResolveAliasInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16027,7 +16027,7 @@ func (s *ResolveAliasInput) SetAliasId(v string) *ResolveAliasInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAliasOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResolveAliasOutput
 type ResolveAliasOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -16062,7 +16062,7 @@ func (s *ResolveAliasOutput) SetFleetId(v string) *ResolveAliasOutput {
 // minutes, on receiving a CreateGameSession request, Amazon GameLift checks
 // that the player (identified by CreatorId) has created fewer than 10 game
 // sessions in the past 60 minutes.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResourceCreationLimitPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ResourceCreationLimitPolicy
 type ResourceCreationLimitPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -16141,7 +16141,7 @@ func (s *ResourceCreationLimitPolicy) SetPolicyPeriodInMinutes(v int64) *Resourc
 // DescribeEC2InstanceLimits
 //
 //    * DeleteFleet
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RoutingStrategy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RoutingStrategy
 type RoutingStrategy struct {
 	_ struct{} `type:"structure"`
 
@@ -16257,7 +16257,7 @@ func (s *RoutingStrategy) SetType(v string) *RoutingStrategy {
 // DescribeEC2InstanceLimits
 //
 //    * DeleteFleet
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RuntimeConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/RuntimeConfiguration
 type RuntimeConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -16337,7 +16337,7 @@ func (s *RuntimeConfiguration) SetServerProcesses(v []*ServerProcess) *RuntimeCo
 // be stored for access by Amazon GameLift. This location is specified in a
 // CreateBuild request. For more details, see the Create a Build with Files
 // in Amazon S3 (http://docs.aws.amazon.com/gamelift/latest/developerguide/gamelift-build-cli-uploading.html#gamelift-build-cli-uploading-create-build).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/S3Location
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/S3Location
 type S3Location struct {
 	_ struct{} `type:"structure"`
 
@@ -16445,7 +16445,7 @@ func (s *S3Location) SetRoleArn(v string) *S3Location {
 // DescribeEC2InstanceLimits
 //
 //    * DeleteFleet
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ScalingPolicy
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ScalingPolicy
 type ScalingPolicy struct {
 	_ struct{} `type:"structure"`
 
@@ -16592,7 +16592,7 @@ func (s *ScalingPolicy) SetThreshold(v float64) *ScalingPolicy {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessionsInput
 type SearchGameSessionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -16741,7 +16741,7 @@ func (s *SearchGameSessionsInput) SetSortExpression(v string) *SearchGameSession
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/SearchGameSessionsOutput
 type SearchGameSessionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -16782,7 +16782,7 @@ func (s *SearchGameSessionsOutput) SetNextToken(v string) *SearchGameSessionsOut
 // optional launch parameters, and the number of server processes with this
 // configuration to maintain concurrently on the instance. Server process configurations
 // make up a fleet's RuntimeConfiguration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ServerProcess
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ServerProcess
 type ServerProcess struct {
 	_ struct{} `type:"structure"`
 
@@ -16860,7 +16860,7 @@ func (s *ServerProcess) SetParameters(v string) *ServerProcess {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacementInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacementInput
 type StartGameSessionPlacementInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17028,7 +17028,7 @@ func (s *StartGameSessionPlacementInput) SetPlayerLatencies(v []*PlayerLatency) 
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacementOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartGameSessionPlacementOutput
 type StartGameSessionPlacementOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17055,7 +17055,7 @@ func (s *StartGameSessionPlacementOutput) SetGameSessionPlacement(v *GameSession
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmakingInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmakingInput
 type StartMatchmakingInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17139,7 +17139,7 @@ func (s *StartMatchmakingInput) SetTicketId(v string) *StartMatchmakingInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmakingOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StartMatchmakingOutput
 type StartMatchmakingOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17166,7 +17166,7 @@ func (s *StartMatchmakingOutput) SetMatchmakingTicket(v *MatchmakingTicket) *Sta
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacementInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacementInput
 type StopGameSessionPlacementInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17209,7 +17209,7 @@ func (s *StopGameSessionPlacementInput) SetPlacementId(v string) *StopGameSessio
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacementOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopGameSessionPlacementOutput
 type StopGameSessionPlacementOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17235,7 +17235,7 @@ func (s *StopGameSessionPlacementOutput) SetGameSessionPlacement(v *GameSessionP
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmakingInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmakingInput
 type StopMatchmakingInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17277,7 +17277,7 @@ func (s *StopMatchmakingInput) SetTicketId(v string) *StopMatchmakingInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmakingOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/StopMatchmakingOutput
 type StopMatchmakingOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -17293,7 +17293,7 @@ func (s StopMatchmakingOutput) GoString() string {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAliasInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAliasInput
 type UpdateAliasInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17367,7 +17367,7 @@ func (s *UpdateAliasInput) SetRoutingStrategy(v *RoutingStrategy) *UpdateAliasIn
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAliasOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateAliasOutput
 type UpdateAliasOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17392,7 +17392,7 @@ func (s *UpdateAliasOutput) SetAlias(v *Alias) *UpdateAliasOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuildInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuildInput
 type UpdateBuildInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17458,7 +17458,7 @@ func (s *UpdateBuildInput) SetVersion(v string) *UpdateBuildInput {
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuildOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateBuildOutput
 type UpdateBuildOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17483,7 +17483,7 @@ func (s *UpdateBuildOutput) SetBuild(v *Build) *UpdateBuildOutput {
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributesInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributesInput
 type UpdateFleetAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17588,7 +17588,7 @@ func (s *UpdateFleetAttributesInput) SetResourceCreationLimitPolicy(v *ResourceC
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributesOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetAttributesOutput
 type UpdateFleetAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17613,7 +17613,7 @@ func (s *UpdateFleetAttributesOutput) SetFleetId(v string) *UpdateFleetAttribute
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacityInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacityInput
 type UpdateFleetCapacityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17682,7 +17682,7 @@ func (s *UpdateFleetCapacityInput) SetMinSize(v int64) *UpdateFleetCapacityInput
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacityOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetCapacityOutput
 type UpdateFleetCapacityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17707,7 +17707,7 @@ func (s *UpdateFleetCapacityOutput) SetFleetId(v string) *UpdateFleetCapacityOut
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettingsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettingsInput
 type UpdateFleetPortSettingsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17785,7 +17785,7 @@ func (s *UpdateFleetPortSettingsInput) SetInboundPermissionRevocations(v []*IpPe
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettingsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateFleetPortSettingsOutput
 type UpdateFleetPortSettingsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17810,7 +17810,7 @@ func (s *UpdateFleetPortSettingsOutput) SetFleetId(v string) *UpdateFleetPortSet
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionInput
 type UpdateGameSessionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -17900,7 +17900,7 @@ func (s *UpdateGameSessionInput) SetProtectionPolicy(v string) *UpdateGameSessio
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionOutput
 type UpdateGameSessionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -17925,7 +17925,7 @@ func (s *UpdateGameSessionOutput) SetGameSession(v *GameSession) *UpdateGameSess
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueueInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueueInput
 type UpdateGameSessionQueueInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18019,7 +18019,7 @@ func (s *UpdateGameSessionQueueInput) SetTimeoutInSeconds(v int64) *UpdateGameSe
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueueOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateGameSessionQueueOutput
 type UpdateGameSessionQueueOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -18044,7 +18044,7 @@ func (s *UpdateGameSessionQueueOutput) SetGameSessionQueue(v *GameSessionQueue) 
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfigurationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfigurationInput
 type UpdateMatchmakingConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18236,7 +18236,7 @@ func (s *UpdateMatchmakingConfigurationInput) SetRuleSetName(v string) *UpdateMa
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfigurationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateMatchmakingConfigurationOutput
 type UpdateMatchmakingConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -18261,7 +18261,7 @@ func (s *UpdateMatchmakingConfigurationOutput) SetConfiguration(v *MatchmakingCo
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfigurationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfigurationInput
 type UpdateRuntimeConfigurationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18325,7 +18325,7 @@ func (s *UpdateRuntimeConfigurationInput) SetRuntimeConfiguration(v *RuntimeConf
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfigurationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/UpdateRuntimeConfigurationOutput
 type UpdateRuntimeConfigurationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -18351,7 +18351,7 @@ func (s *UpdateRuntimeConfigurationOutput) SetRuntimeConfiguration(v *RuntimeCon
 }
 
 // Represents the input for a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSetInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSetInput
 type ValidateMatchmakingRuleSetInput struct {
 	_ struct{} `type:"structure"`
 
@@ -18394,7 +18394,7 @@ func (s *ValidateMatchmakingRuleSetInput) SetRuleSetBody(v string) *ValidateMatc
 }
 
 // Represents the returned data in response to a request action.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSetOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/ValidateMatchmakingRuleSetOutput
 type ValidateMatchmakingRuleSetOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -18436,7 +18436,7 @@ func (s *ValidateMatchmakingRuleSetOutput) SetValid(v bool) *ValidateMatchmaking
 //    * DescribeVpcPeeringConnections
 //
 //    * DeleteVpcPeeringConnection
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/VpcPeeringAuthorization
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/VpcPeeringAuthorization
 type VpcPeeringAuthorization struct {
 	_ struct{} `type:"structure"`
 
@@ -18519,7 +18519,7 @@ func (s *VpcPeeringAuthorization) SetPeerVpcId(v string) *VpcPeeringAuthorizatio
 //    * DescribeVpcPeeringConnections
 //
 //    * DeleteVpcPeeringConnection
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/VpcPeeringConnection
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/VpcPeeringConnection
 type VpcPeeringConnection struct {
 	_ struct{} `type:"structure"`
 
@@ -18603,7 +18603,7 @@ func (s *VpcPeeringConnection) SetVpcPeeringConnectionId(v string) *VpcPeeringCo
 // with a VpcPeeringConnection object. Status codes and messages are provided
 // from EC2 (). (http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_VpcPeeringConnectionStateReason.html)
 // Connection status information is also communicated as a fleet Event.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/VpcPeeringConnectionStatus
+// See also, https://docs.aws.amazon.com/goto/WebAPI/gamelift-2015-10-01/VpcPeeringConnectionStatus
 type VpcPeeringConnectionStatus struct {
 	_ struct{} `type:"structure"`
 

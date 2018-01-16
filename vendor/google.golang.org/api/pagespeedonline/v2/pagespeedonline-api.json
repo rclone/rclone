@@ -1,11 +1,11 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/5bET14Wb_tD2YUoj5aAgBlN7I1k\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/n_okqqqS0ZMnhnemXmv18_Z2rZY\"",
  "discoveryVersion": "v1",
  "id": "pagespeedonline:v2",
  "name": "pagespeedonline",
  "version": "v2",
- "revision": "20161204",
+ "revision": "20180108",
  "title": "PageSpeed Insights API",
  "description": "Analyzes the performance of a web page and provides tailored suggestions to make that page faster.",
  "ownerDomain": "google.com",
@@ -215,6 +215,10 @@
    "id": "Result",
    "type": "object",
    "properties": {
+    "captchaResult": {
+     "type": "string",
+     "description": "The captcha verify result"
+    },
     "formattedResults": {
      "type": "object",
      "description": "Localized PageSpeed results. Contains a ruleResults entry for each PageSpeed rule instantiated and run by the server.",

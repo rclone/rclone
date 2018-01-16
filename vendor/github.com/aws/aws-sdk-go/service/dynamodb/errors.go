@@ -4,11 +4,42 @@ package dynamodb
 
 const (
 
+	// ErrCodeBackupInUseException for service response error code
+	// "BackupInUseException".
+	//
+	// There is another ongoing conflicting backup control plane operation on the
+	// table. The backups is either being created, deleted or restored to a table.
+	ErrCodeBackupInUseException = "BackupInUseException"
+
+	// ErrCodeBackupNotFoundException for service response error code
+	// "BackupNotFoundException".
+	//
+	// Backup not found for the given BackupARN.
+	ErrCodeBackupNotFoundException = "BackupNotFoundException"
+
 	// ErrCodeConditionalCheckFailedException for service response error code
 	// "ConditionalCheckFailedException".
 	//
 	// A condition specified in the operation could not be evaluated.
 	ErrCodeConditionalCheckFailedException = "ConditionalCheckFailedException"
+
+	// ErrCodeContinuousBackupsUnavailableException for service response error code
+	// "ContinuousBackupsUnavailableException".
+	//
+	// Backups have not yet been enabled for this table.
+	ErrCodeContinuousBackupsUnavailableException = "ContinuousBackupsUnavailableException"
+
+	// ErrCodeGlobalTableAlreadyExistsException for service response error code
+	// "GlobalTableAlreadyExistsException".
+	//
+	// The specified global table already exists.
+	ErrCodeGlobalTableAlreadyExistsException = "GlobalTableAlreadyExistsException"
+
+	// ErrCodeGlobalTableNotFoundException for service response error code
+	// "GlobalTableNotFoundException".
+	//
+	// The specified global table does not exist.
+	ErrCodeGlobalTableNotFoundException = "GlobalTableNotFoundException"
 
 	// ErrCodeInternalServerError for service response error code
 	// "InternalServerError".
@@ -47,6 +78,18 @@ const (
 	// in the Amazon DynamoDB Developer Guide.
 	ErrCodeProvisionedThroughputExceededException = "ProvisionedThroughputExceededException"
 
+	// ErrCodeReplicaAlreadyExistsException for service response error code
+	// "ReplicaAlreadyExistsException".
+	//
+	// The specified replica is already part of the global table.
+	ErrCodeReplicaAlreadyExistsException = "ReplicaAlreadyExistsException"
+
+	// ErrCodeReplicaNotFoundException for service response error code
+	// "ReplicaNotFoundException".
+	//
+	// The specified replica is no longer part of the global table.
+	ErrCodeReplicaNotFoundException = "ReplicaNotFoundException"
+
 	// ErrCodeResourceInUseException for service response error code
 	// "ResourceInUseException".
 	//
@@ -61,4 +104,23 @@ const (
 	// The operation tried to access a nonexistent table or index. The resource
 	// might not be specified correctly, or its status might not be ACTIVE.
 	ErrCodeResourceNotFoundException = "ResourceNotFoundException"
+
+	// ErrCodeTableAlreadyExistsException for service response error code
+	// "TableAlreadyExistsException".
+	//
+	// A table with the name already exists.
+	ErrCodeTableAlreadyExistsException = "TableAlreadyExistsException"
+
+	// ErrCodeTableInUseException for service response error code
+	// "TableInUseException".
+	//
+	// A table by that name is either being created or deleted.
+	ErrCodeTableInUseException = "TableInUseException"
+
+	// ErrCodeTableNotFoundException for service response error code
+	// "TableNotFoundException".
+	//
+	// A table with the name TableName does not currently exist within the subscriber's
+	// account.
+	ErrCodeTableNotFoundException = "TableNotFoundException"
 )

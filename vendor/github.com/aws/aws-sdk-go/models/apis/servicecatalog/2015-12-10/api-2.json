@@ -1866,6 +1866,7 @@
         "CreatedTime":{"shape":"ProvisioningArtifactCreatedTime"}
       }
     },
+    "ProvisioningArtifactActive":{"type":"boolean"},
     "ProvisioningArtifactCreatedTime":{"type":"timestamp"},
     "ProvisioningArtifactDescription":{"type":"string"},
     "ProvisioningArtifactDetail":{
@@ -1875,7 +1876,8 @@
         "Name":{"shape":"ProvisioningArtifactName"},
         "Description":{"shape":"ProvisioningArtifactName"},
         "Type":{"shape":"ProvisioningArtifactType"},
-        "CreatedTime":{"shape":"CreationTime"}
+        "CreatedTime":{"shape":"CreationTime"},
+        "Active":{"shape":"ProvisioningArtifactActive"}
       }
     },
     "ProvisioningArtifactDetails":{
@@ -2374,7 +2376,8 @@
         "ProductId":{"shape":"Id"},
         "ProvisioningArtifactId":{"shape":"Id"},
         "Name":{"shape":"ProvisioningArtifactName"},
-        "Description":{"shape":"ProvisioningArtifactDescription"}
+        "Description":{"shape":"ProvisioningArtifactDescription"},
+        "Active":{"shape":"ProvisioningArtifactActive"}
       }
     },
     "UpdateProvisioningArtifactOutput":{

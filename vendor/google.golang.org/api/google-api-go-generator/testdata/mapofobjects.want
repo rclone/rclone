@@ -86,8 +86,8 @@ type Entity struct {
 }
 
 func (s *Entity) MarshalJSON() ([]byte, error) {
-	type noMethod Entity
-	raw := noMethod(*s)
+	type NoMethod Entity
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -115,7 +115,7 @@ type EntityProperties struct {
 }
 
 func (s *EntityProperties) MarshalJSON() ([]byte, error) {
-	type noMethod EntityProperties
-	raw := noMethod(*s)
+	type NoMethod EntityProperties
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

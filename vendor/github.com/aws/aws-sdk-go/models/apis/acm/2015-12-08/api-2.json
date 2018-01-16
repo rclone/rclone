@@ -158,7 +158,7 @@
       "type":"string",
       "max":2048,
       "min":20,
-      "pattern":"arn:[\\w+=/,.@-]+:[\\w+=/,.@-]+:[\\w+=/,.@-]*:[0-9]+:[\\w+=,.@-]+(/[\\w+=/,.@-]+)*"
+      "pattern":"arn:[\\w+=/,.@-]+:[\\w+=/,.@-]+:[\\w+=/,.@-]*:[0-9]+:[\\w+=,.@-]+(/[\\w+=,.@-]+)*"
     },
     "CertificateBody":{
       "type":"string",
@@ -205,7 +205,9 @@
         "InUseBy":{"shape":"InUseList"},
         "FailureReason":{"shape":"FailureReason"},
         "Type":{"shape":"CertificateType"},
-        "RenewalSummary":{"shape":"RenewalSummary"}
+        "RenewalSummary":{"shape":"RenewalSummary"},
+        "KeyUsages":{"shape":"KeyUsageList"},
+        "ExtendedKeyUsages":{"shape":"ExtendedKeyUsageList"}
       }
     },
     "CertificateStatus":{
@@ -289,7 +291,9 @@
         "DomainName":{"shape":"DomainNameString"},
         "ValidationEmails":{"shape":"ValidationEmailList"},
         "ValidationDomain":{"shape":"DomainNameString"},
-        "ValidationStatus":{"shape":"DomainStatus"}
+        "ValidationStatus":{"shape":"DomainStatus"},
+        "ResourceRecord":{"shape":"ResourceRecord"},
+        "ValidationMethod":{"shape":"ValidationMethod"}
       }
     },
     "DomainValidationList":{
@@ -315,6 +319,38 @@
       "max":100,
       "min":1
     },
+    "ExtendedKeyUsage":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"ExtendedKeyUsageName"},
+        "OID":{"shape":"String"}
+      }
+    },
+    "ExtendedKeyUsageFilterList":{
+      "type":"list",
+      "member":{"shape":"ExtendedKeyUsageName"}
+    },
+    "ExtendedKeyUsageList":{
+      "type":"list",
+      "member":{"shape":"ExtendedKeyUsage"}
+    },
+    "ExtendedKeyUsageName":{
+      "type":"string",
+      "enum":[
+        "TLS_WEB_SERVER_AUTHENTICATION",
+        "TLS_WEB_CLIENT_AUTHENTICATION",
+        "CODE_SIGNING",
+        "EMAIL_PROTECTION",
+        "TIME_STAMPING",
+        "OCSP_SIGNING",
+        "IPSEC_END_SYSTEM",
+        "IPSEC_TUNNEL",
+        "IPSEC_USER",
+        "ANY",
+        "NONE",
+        "CUSTOM"
+      ]
+    },
     "FailureReason":{
       "type":"string",
       "enum":[
@@ -322,8 +358,17 @@
         "ADDITIONAL_VERIFICATION_REQUIRED",
         "DOMAIN_NOT_ALLOWED",
         "INVALID_PUBLIC_DOMAIN",
+        "CAA_ERROR",
         "OTHER"
       ]
+    },
+    "Filters":{
+      "type":"structure",
+      "members":{
+        "extendedKeyUsage":{"shape":"ExtendedKeyUsageFilterList"},
+        "keyUsage":{"shape":"KeyUsageFilterList"},
+        "keyTypes":{"shape":"KeyAlgorithmList"}
+      }
     },
     "GetCertificateRequest":{
       "type":"structure",
@@ -401,7 +446,44 @@
       "enum":[
         "RSA_2048",
         "RSA_1024",
-        "EC_prime256v1"
+        "RSA_4096",
+        "EC_prime256v1",
+        "EC_secp384r1",
+        "EC_secp521r1"
+      ]
+    },
+    "KeyAlgorithmList":{
+      "type":"list",
+      "member":{"shape":"KeyAlgorithm"}
+    },
+    "KeyUsage":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"KeyUsageName"}
+      }
+    },
+    "KeyUsageFilterList":{
+      "type":"list",
+      "member":{"shape":"KeyUsageName"}
+    },
+    "KeyUsageList":{
+      "type":"list",
+      "member":{"shape":"KeyUsage"}
+    },
+    "KeyUsageName":{
+      "type":"string",
+      "enum":[
+        "DIGITAL_SIGNATURE",
+        "NON_REPUDIATION",
+        "KEY_ENCIPHERMENT",
+        "DATA_ENCIPHERMENT",
+        "KEY_AGREEMENT",
+        "CERTIFICATE_SIGNING",
+        "CRL_SIGNING",
+        "ENCIPHER_ONLY",
+        "DECIPHER_ONLY",
+        "ANY",
+        "CUSTOM"
       ]
     },
     "LimitExceededException":{
@@ -415,6 +497,7 @@
       "type":"structure",
       "members":{
         "CertificateStatuses":{"shape":"CertificateStatuses"},
+        "Includes":{"shape":"Filters"},
         "NextToken":{"shape":"NextToken"},
         "MaxItems":{"shape":"MaxItems"}
       }
@@ -456,6 +539,10 @@
       "min":1,
       "sensitive":true
     },
+    "RecordType":{
+      "type":"string",
+      "enum":["CNAME"]
+    },
     "RemoveTagsFromCertificateRequest":{
       "type":"structure",
       "required":[
@@ -492,6 +579,7 @@
       "required":["DomainName"],
       "members":{
         "DomainName":{"shape":"DomainNameString"},
+        "ValidationMethod":{"shape":"ValidationMethod"},
         "SubjectAlternativeNames":{"shape":"DomainList"},
         "IdempotencyToken":{"shape":"IdempotencyToken"},
         "DomainValidationOptions":{"shape":"DomainValidationOptionList"}
@@ -536,6 +624,19 @@
         "message":{"shape":"String"}
       },
       "exception":true
+    },
+    "ResourceRecord":{
+      "type":"structure",
+      "required":[
+        "Name",
+        "Type",
+        "Value"
+      ],
+      "members":{
+        "Name":{"shape":"String"},
+        "Type":{"shape":"RecordType"},
+        "Value":{"shape":"String"}
+      }
     },
     "RevocationReason":{
       "type":"string",
@@ -590,6 +691,13 @@
     "ValidationEmailList":{
       "type":"list",
       "member":{"shape":"String"}
+    },
+    "ValidationMethod":{
+      "type":"string",
+      "enum":[
+        "EMAIL",
+        "DNS"
+      ]
     }
   }
 }

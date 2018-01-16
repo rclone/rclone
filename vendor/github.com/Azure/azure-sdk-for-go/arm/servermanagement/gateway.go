@@ -123,6 +123,7 @@ func (client GatewayClient) CreatePreparer(resourceGroupName string, gatewayName
 func (client GatewayClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -200,7 +201,9 @@ func (client GatewayClient) DeletePreparer(resourceGroupName string, gatewayName
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -280,7 +283,9 @@ func (client GatewayClient) GetPreparer(resourceGroupName string, gatewayName st
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -376,6 +381,7 @@ func (client GatewayClient) GetProfilePreparer(resourceGroupName string, gateway
 func (client GatewayClient) GetProfileSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -437,7 +443,9 @@ func (client GatewayClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -577,7 +585,9 @@ func (client GatewayClient) ListForResourceGroupPreparer(resourceGroupName strin
 // ListForResourceGroupSender sends the ListForResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client GatewayClient) ListForResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListForResourceGroupResponder handles the response to the ListForResourceGroup request. The method always
@@ -742,6 +752,7 @@ func (client GatewayClient) RegenerateProfilePreparer(resourceGroupName string, 
 func (client GatewayClient) RegenerateProfileSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -841,6 +852,7 @@ func (client GatewayClient) UpdatePreparer(resourceGroupName string, gatewayName
 func (client GatewayClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -937,6 +949,7 @@ func (client GatewayClient) UpgradePreparer(resourceGroupName string, gatewayNam
 func (client GatewayClient) UpgradeSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

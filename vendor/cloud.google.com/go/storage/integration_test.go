@@ -20,6 +20,7 @@ import (
 	"crypto/md5"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"hash/crc32"
@@ -114,7 +115,7 @@ func config(ctx context.Context) (*Client, string) {
 	return client, p + suffix
 }
 
-func TestBucketMethods(t *testing.T) {
+func TestIntegration_BucketMethods(t *testing.T) {
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -308,12 +309,8 @@ func TestIntegration_ConditionalDelete(t *testing.T) {
 	}
 }
 
-func TestObjects(t *testing.T) {
-	// TODO(djd): there are a lot of closely-related tests here which share
-	// a common setup. Once we can depend on Go 1.7 features, we should refactor
-	// this test to use the sub-test feature. This will increase the readability
-	// of this test, and should also reduce the time it takes to execute.
-	// https://golang.org/pkg/testing/#hdr-Subtests_and_Sub_benchmarks
+func TestIntegration_Objects(t *testing.T) {
+	// TODO(jba): Use subtests (Go 1.7).
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -385,33 +382,6 @@ func TestObjects(t *testing.T) {
 		if err := rc.Close(); err != nil {
 			t.Errorf("%v Close: %v", obj, err)
 		}
-
-		// Test SignedURL
-		opts := &SignedURLOptions{
-			GoogleAccessID: "xxx@clientid",
-			PrivateKey:     dummyKey("rsa"),
-			Method:         "GET",
-			MD5:            "ICy5YqxZB1uWSwcVLSNLcA==",
-			Expires:        time.Date(2020, time.October, 2, 10, 0, 0, 0, time.UTC),
-			ContentType:    "application/json",
-			Headers:        []string{"x-header1", "x-header2"},
-		}
-		u, err := SignedURL(bucket, obj, opts)
-		if err != nil {
-			t.Fatalf("SignedURL(%q, %q) errored with %v", bucket, obj, err)
-		}
-		res, err := client.hc.Get(u)
-		if err != nil {
-			t.Fatalf("Can't get URL %q: %v", u, err)
-		}
-		slurp, err = ioutil.ReadAll(res.Body)
-		if err != nil {
-			t.Fatalf("Can't ReadAll signed object %v, errored with %v", obj, err)
-		}
-		if got, want := slurp, contents[obj]; !bytes.Equal(got, want) {
-			t.Errorf("Contents (%v) = %q; want %q", obj, got, want)
-		}
-		res.Body.Close()
 	}
 
 	obj := objects[0]
@@ -762,7 +732,116 @@ func testObjectIterator(t *testing.T, bkt *BucketHandle, objects []string) {
 	// TODO(jba): test query.Delimiter != ""
 }
 
-func TestACL(t *testing.T) {
+func TestIntegration_SignedURL(t *testing.T) {
+	// To test SignedURL, we need a real user email and private key. Extract them
+	// from the JSON key file.
+	jwtConf, err := testutil.JWTConfig()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if jwtConf == nil {
+		t.Skip("JSON key file is not present")
+	}
+
+	ctx := context.Background()
+	client, bucket := testConfig(ctx, t)
+	defer client.Close()
+
+	bkt := client.Bucket(bucket)
+	obj := "signedURL"
+	contents := []byte("This is a test of SignedURL.\n")
+	md5 := "Jyxvgwm9n2MsrGTMPbMeYA==" // base64-encoded MD5 of contents
+	if err := writeObject(ctx, bkt.Object(obj), "text/plain", contents); err != nil {
+		t.Fatalf("writing: %v", err)
+	}
+	for _, test := range []struct {
+		desc    string
+		opts    SignedURLOptions
+		headers map[string][]string
+		fail    bool
+	}{
+		{
+			desc: "basic",
+		},
+		{
+			desc:    "MD5 sent and matches",
+			opts:    SignedURLOptions{MD5: md5},
+			headers: map[string][]string{"Content-MD5": {md5}},
+		},
+		{
+			desc: "MD5 not sent",
+			opts: SignedURLOptions{MD5: md5},
+			fail: true,
+		},
+		{
+			desc:    "Content-Type sent and matches",
+			opts:    SignedURLOptions{ContentType: "text/plain"},
+			headers: map[string][]string{"Content-Type": {"text/plain"}},
+		},
+		{
+			desc:    "Content-Type sent but does not match",
+			opts:    SignedURLOptions{ContentType: "text/plain"},
+			headers: map[string][]string{"Content-Type": {"application/json"}},
+			fail:    true,
+		},
+		{
+			desc: "Canonical headers sent and match",
+			opts: SignedURLOptions{Headers: []string{
+				" X-Goog-Foo: Bar baz ",
+				"X-Goog-Novalue", // ignored: no value
+				"X-Google-Foo",   // ignored: wrong prefix
+			}},
+			headers: map[string][]string{"X-Goog-foo": {"Bar baz  "}},
+		},
+		{
+			desc:    "Canonical headers sent but don't match",
+			opts:    SignedURLOptions{Headers: []string{" X-Goog-Foo: Bar baz"}},
+			headers: map[string][]string{"X-Goog-Foo": {"bar baz"}},
+			fail:    true,
+		},
+	} {
+		opts := test.opts
+		opts.GoogleAccessID = jwtConf.Email
+		opts.PrivateKey = jwtConf.PrivateKey
+		opts.Method = "GET"
+		opts.Expires = time.Now().Add(time.Hour)
+		u, err := SignedURL(bucket, obj, &opts)
+		if err != nil {
+			t.Errorf("%s: SignedURL: %v", test.desc, err)
+			continue
+		}
+		got, err := getURL(u, test.headers)
+		if err != nil && !test.fail {
+			t.Errorf("%s: getURL %q: %v", test.desc, u, err)
+		} else if err == nil && !bytes.Equal(got, contents) {
+			t.Errorf("%s: got %q, want %q", test.desc, got, contents)
+		}
+	}
+}
+
+// Make a GET request to a URL using an unauthenticated client, and return its contents.
+func getURL(url string, headers map[string][]string) ([]byte, error) {
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header = headers
+	res, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer res.Body.Close()
+	bytes, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return nil, err
+	}
+	if res.StatusCode != 200 {
+		return nil, fmt.Errorf("code=%d, body=%s", res.StatusCode, string(bytes))
+	}
+	return bytes, nil
+}
+
+func TestIntegration_ACL(t *testing.T) {
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -831,7 +910,7 @@ func hasRule(acl []ACLRule, rule ACLRule) bool {
 	return false
 }
 
-func TestValidObjectNames(t *testing.T) {
+func TestIntegration_ValidObjectNames(t *testing.T) {
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -868,7 +947,7 @@ func TestValidObjectNames(t *testing.T) {
 	}
 }
 
-func TestWriterContentType(t *testing.T) {
+func TestIntegration_WriterContentType(t *testing.T) {
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
 	defer client.Close()
@@ -912,7 +991,7 @@ func TestWriterContentType(t *testing.T) {
 	}
 }
 
-func TestZeroSizedObject(t *testing.T) {
+func TestIntegration_ZeroSizedObject(t *testing.T) {
 	t.Parallel()
 	ctx := context.Background()
 	client, bucket := testConfig(ctx, t)
@@ -1011,7 +1090,7 @@ func TestIntegration_Encryption(t *testing.T) {
 		}
 		gotContents := string(got)
 		if gotContents != wantContents {
-			t.Errorf("%s: got %q, want %q", gotContents, wantContents)
+			t.Errorf("%s: got %q, want %q", msg, gotContents, wantContents)
 		}
 	}
 
@@ -1333,11 +1412,69 @@ func TestIntegration_BucketIAM(t *testing.T) {
 }
 
 func TestIntegration_RequesterPays(t *testing.T) {
+	// This test needs a second project and user (token source) to test
+	// all possibilities. Since we need these things for Firestore already,
+	// we use them here.
+	//
+	// There are up to three entities involved in a requester-pays call:
+	//
+	// 1. The user making the request. Here, we use
+	//    a. The account used to create the token source used for all our
+	//       integration tests (see testutil.TokenSource).
+	//    b. The account used for the Firestore tests.
+	// 2. The project that owns the requester-pays bucket. Here, that
+	//    is the test project ID (see testutil.ProjID).
+	// 3. The project provided as the userProject parameter of the request;
+	//    the project to be billed. This test uses:
+	//    a. The project that owns the requester-pays bucket (same as (2))
+	//    b. Another project (the Firestore project).
+	//
+	// The following must hold for this test to work:
+	// - (1a) must have resourcemanager.projects.createBillingAssignment permission
+	//       (Owner role) on (2) (the project, not the bucket).
+	// - (1b) must NOT have that permission on (2).
+	// - (1b) must have serviceusage.services.use permission (Editor role) on (3b).
+	// - (1b) must NOT have that permission on (3a).
+	// - (1a) must NOT have that permission on (3b).
+	const wantErrorCode = 400
+
 	ctx := context.Background()
 	client, bucketName := testConfig(ctx, t)
 	defer client.Close()
-	b := client.Bucket(bucketName + "-rp")
+	bucketName += "-rp"
+	b := client.Bucket(bucketName)
 	projID := testutil.ProjID()
+	// Use Firestore project as a project that does not contain the bucket.
+	otherProjID := os.Getenv(envFirestoreProjID)
+	if otherProjID == "" {
+		t.Fatalf("need a second project (env var %s)", envFirestoreProjID)
+	}
+	ts := testutil.TokenSourceEnv(ctx, envFirestorePrivateKey, ScopeFullControl)
+	if ts == nil {
+		t.Fatalf("need a second account (env var %s)", envFirestorePrivateKey)
+	}
+	otherClient, err := NewClient(ctx, option.WithTokenSource(ts))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer otherClient.Close()
+	ob := otherClient.Bucket(bucketName)
+	user, err := keyFileEmail(os.Getenv("GCLOUD_TESTS_GOLANG_KEY"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherUser, err := keyFileEmail(os.Getenv(envFirestorePrivateKey))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Create a requester-pays bucket. The bucket is contained in the project projID.
+	if err := b.Create(ctx, projID, &BucketAttrs{RequesterPays: true}); err != nil {
+		t.Fatal(err)
+	}
+	if err := b.ACL().Set(ctx, ACLEntity("user-"+otherUser), RoleOwner); err != nil {
+		t.Fatal(err)
+	}
 
 	// Extract the error code from err if it's a googleapi.Error.
 	errCode := func(err error) int {
@@ -1350,42 +1487,80 @@ func TestIntegration_RequesterPays(t *testing.T) {
 		return -1
 	}
 
-	// Call f twice on b, first without and then with a user project.
-	call := func(msg string, f func(b *BucketHandle) error) {
-		if err := f(b); err == nil {
-			if got, want := errCode(err), 400; got != want {
-				t.Errorf("%s: got error code %d, want %d", msg, got, want)
-			}
+	// Call f under various conditions.
+	// Here b and ob refer to the same bucket, but b is bound to client,
+	// while ob is bound to otherClient. The clients differ in their credentials,
+	// i.e. the identity of the user making the RPC: b's user is an Owner on the
+	// bucket's containing project, ob's is not.
+	call := func(msg string, f func(*BucketHandle) error) {
+		// user: an Owner on the containing project
+		// userProject: absent
+		// result: success, by the rule permitting access by owners of the containing bucket.
+		if err := f(b); err != nil {
+			t.Errorf("%s: %v, want nil\n"+
+				"confirm that %s is an Owner on %s",
+				msg, err, user, projID)
 		}
+		// user: an Owner on the containing project
+		// userProject: containing project
+		// result: success, by the same rule as above; userProject is unnecessary but allowed.
 		if err := f(b.UserProject(projID)); err != nil {
 			t.Errorf("%s: got %v, want nil", msg, err)
 		}
+		// user: not an Owner on the containing project
+		// userProject: absent
+		// result: failure, by the standard requester-pays rule
+		err := f(ob)
+		if got, want := errCode(err), wantErrorCode; got != want {
+			t.Errorf("%s: got error %s, want code %d\n"+
+				"confirm that %s is NOT an Owner on %s",
+				msg, err, want, otherUser, projID)
+		}
+		// user: not an Owner on the containing project
+		// userProject: not the containing one, but user has Editor role on it
+		// result: success, by the standard requester-pays rule
+		if err := f(ob.UserProject(otherProjID)); err != nil {
+			t.Errorf("%s: got %v, want nil\n"+
+				"confirm that %s is an Editor on %s and that that project has billing enabled",
+				msg, err, otherUser, otherProjID)
+		}
+		// user: not an Owner on the containing project
+		// userProject: the containing one, on which the user does NOT have Editor permission.
+		// result: failure
+		err = f(ob.UserProject("veener-jba"))
+		if got, want := errCode(err), 403; got != want {
+			t.Errorf("%s: got error %s, want code %d\n"+
+				"confirm that %s is NOT an Editor on %s",
+				msg, err, want, otherUser, "veener-jba")
+		}
 	}
 
-	// Create a requester-pays bucket.
-	err := b.Create(ctx, projID, &BucketAttrs{RequesterPays: true})
-	if err != nil {
-		t.Fatal(err)
-	}
 	// Getting its attributes requires a user project.
 	var attrs *BucketAttrs
-	call("Bucket attrs", func(b *BucketHandle) (err error) {
-		attrs, err = b.Attrs(ctx)
+	call("Bucket attrs", func(b *BucketHandle) error {
+		a, err := b.Attrs(ctx)
+		if a != nil {
+			attrs = a
+		}
 		return err
 	})
-	if got, want := attrs.RequesterPays, true; got != want {
-		t.Fatalf("attr.RequesterPays = %b, want %b", got, want)
+	if attrs != nil {
+		if got, want := attrs.RequesterPays, true; got != want {
+			t.Fatalf("attr.RequesterPays = %t, want %t", got, want)
+		}
 	}
-
 	// Object operations.
 	call("write object", func(b *BucketHandle) error {
 		return writeObject(ctx, b.Object("foo"), "text/plain", []byte("hello"))
 	})
-	// // TODO(jba): add read test when XML API has requester-pays support.
-	// callObject("object attrs", o, func(o *ObjectHandle) error {
-	// 	_, err := o.Attrs(ctx)
-	// 	return err
-	// })
+	call("read object", func(b *BucketHandle) error {
+		_, err := readObject(ctx, b.Object("foo"))
+		return err
+	})
+	call("object attrs", func(b *BucketHandle) error {
+		_, err := b.Object("foo").Attrs(ctx)
+		return err
+	})
 	call("update object", func(b *BucketHandle) error {
 		_, err := b.Object("foo").Update(ctx, ObjectAttrsToUpdate{ContentLanguage: "en"})
 		return err
@@ -1401,7 +1576,13 @@ func TestIntegration_RequesterPays(t *testing.T) {
 		return err
 	})
 	call("bucket acl delete", func(b *BucketHandle) error {
-		return b.ACL().Delete(ctx, entity)
+		err := b.ACL().Delete(ctx, entity)
+		if errCode(err) == 404 {
+			// Since we call the function multiple times, it will
+			// fail with NotFound for all but the first.
+			return nil
+		}
+		return err
 	})
 	call("default object acl set", func(b *BucketHandle) error {
 		return b.DefaultObjectACL().Set(ctx, entity, RoleReader)
@@ -1411,7 +1592,11 @@ func TestIntegration_RequesterPays(t *testing.T) {
 		return err
 	})
 	call("default object acl delete", func(b *BucketHandle) error {
-		return b.DefaultObjectACL().Delete(ctx, entity)
+		err := b.DefaultObjectACL().Delete(ctx, entity)
+		if errCode(err) == 404 {
+			return nil
+		}
+		return err
 	})
 	call("object acl set", func(b *BucketHandle) error {
 		return b.Object("foo").ACL().Set(ctx, entity, RoleReader)
@@ -1421,7 +1606,11 @@ func TestIntegration_RequesterPays(t *testing.T) {
 		return err
 	})
 	call("object acl delete", func(b *BucketHandle) error {
-		return b.Object("foo").ACL().Delete(ctx, entity)
+		err := b.Object("foo").ACL().Delete(ctx, entity)
+		if errCode(err) == 404 {
+			return nil
+		}
+		return err
 	})
 
 	// Copy and compose.
@@ -1436,16 +1625,145 @@ func TestIntegration_RequesterPays(t *testing.T) {
 
 	// Deletion.
 	call("delete object", func(b *BucketHandle) error {
-		return b.Object("foo").Delete(ctx)
+		err := b.Object("foo").Delete(ctx)
+		if err == ErrObjectNotExist {
+			return nil
+		}
+		return err
 	})
 	for _, obj := range []string{"copy", "compose"} {
 		if err := b.UserProject(projID).Object(obj).Delete(ctx); err != nil {
 			t.Fatalf("could not delete %q: %v", obj, err)
 		}
 	}
-	call("delete bucket", func(b *BucketHandle) error {
-		return b.Delete(ctx)
-	})
+	if err := b.Delete(ctx); err != nil {
+		t.Fatalf("deleting bucket: %v", err)
+	}
+}
+
+// TODO(jba): move to testutil, factor out from firestore/integration_test.go.
+const (
+	envFirestoreProjID     = "GCLOUD_TESTS_GOLANG_FIRESTORE_PROJECT_ID"
+	envFirestorePrivateKey = "GCLOUD_TESTS_GOLANG_FIRESTORE_KEY"
+)
+
+func keyFileEmail(filename string) (string, error) {
+	bytes, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return "", err
+	}
+	var v struct {
+		ClientEmail string `json:"client_email"`
+	}
+	if err := json.Unmarshal(bytes, &v); err != nil {
+		return "", err
+	}
+	return v.ClientEmail, nil
+}
+
+func TestNotifications(t *testing.T) {
+	ctx := context.Background()
+	client, bucket := testConfig(ctx, t)
+	defer client.Close()
+	bkt := client.Bucket(bucket)
+
+	checkNotifications := func(msg string, want map[string]*Notification) {
+		got, err := bkt.Notifications(ctx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if diff := testutil.Diff(got, want); diff != "" {
+			t.Errorf("%s: got=-, want=+:\n%s", msg, diff)
+		}
+	}
+	checkNotifications("initial", map[string]*Notification{})
+
+	nArg := &Notification{
+		TopicProjectID: testutil.ProjID(),
+		TopicID:        "go-storage-notification-test",
+		PayloadFormat:  NoPayload,
+	}
+	n, err := bkt.AddNotification(ctx, nArg)
+	if err != nil {
+		t.Fatal(err)
+	}
+	nArg.ID = n.ID
+	if !testutil.Equal(n, nArg) {
+		t.Errorf("got %+v, want %+v", n, nArg)
+	}
+	checkNotifications("after add", map[string]*Notification{n.ID: n})
+
+	if err := bkt.DeleteNotification(ctx, n.ID); err != nil {
+		t.Fatal(err)
+	}
+	checkNotifications("after delete", map[string]*Notification{})
+}
+
+func TestIntegration_Public(t *testing.T) {
+	// Confirm that an unauthenticated client can access a public bucket.
+
+	// See https://cloud.google.com/storage/docs/public-datasets/landsat
+	const landsatBucket = "gcp-public-data-landsat"
+	const landsatPrefix = "LC08/PRE/044/034/LC80440342016259LGN00/"
+	const landsatObject = landsatPrefix + "LC80440342016259LGN00_MTL.txt"
+
+	// Create an unauthenticated client.
+	ctx := context.Background()
+	client, err := NewClient(ctx, option.WithoutAuthentication())
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer client.Close()
+	bkt := client.Bucket(landsatBucket)
+	obj := bkt.Object(landsatObject)
+
+	// Read a public object.
+	bytes, err := readObject(ctx, obj)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := len(bytes), 7903; got != want {
+		t.Errorf("len(bytes) = %d, want %d", got, want)
+	}
+
+	// List objects in a public bucket.
+	iter := bkt.Objects(ctx, &Query{Prefix: landsatPrefix})
+	gotCount := 0
+	for {
+		_, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+		gotCount++
+	}
+	if wantCount := 13; gotCount != wantCount {
+		t.Errorf("object count: got %d, want %d", gotCount, wantCount)
+	}
+
+	errCode := func(err error) int {
+		if err, ok := err.(*googleapi.Error); !ok {
+			return -1
+		} else {
+			return err.Code
+		}
+	}
+
+	// Reading from or writing to a non-public bucket fails.
+	c, bucketName := testConfig(ctx, t)
+	defer c.Close()
+	nonPublicObj := client.Bucket(bucketName).Object("noauth")
+	// Oddly, reading returns 403 but writing returns 401.
+	_, err = readObject(ctx, nonPublicObj)
+	if got, want := errCode(err), 403; got != want {
+		t.Errorf("got code %d; want %d\nerror: %v", got, want, err)
+	}
+	err = writeObject(ctx, nonPublicObj, "text/plain", []byte("b"))
+	if got, want := errCode(err), 401; got != want {
+		t.Errorf("got code %d; want %d\nerror: %v", got, want, err)
+	}
 }
 
 func writeObject(ctx context.Context, obj *ObjectHandle, contentType string, contents []byte) error {

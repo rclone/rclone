@@ -226,8 +226,8 @@ type AuditConfig struct {
 }
 
 func (s *AuditConfig) MarshalJSON() ([]byte, error) {
-	type noMethod AuditConfig
-	raw := noMethod(*s)
+	type NoMethod AuditConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -287,8 +287,8 @@ type AuditLogConfig struct {
 }
 
 func (s *AuditLogConfig) MarshalJSON() ([]byte, error) {
-	type noMethod AuditLogConfig
-	raw := noMethod(*s)
+	type NoMethod AuditLogConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -362,8 +362,8 @@ type Binding struct {
 }
 
 func (s *Binding) MarshalJSON() ([]byte, error) {
-	type noMethod Binding
-	raw := noMethod(*s)
+	type NoMethod Binding
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -486,8 +486,8 @@ type Device struct {
 }
 
 func (s *Device) MarshalJSON() ([]byte, error) {
-	type noMethod Device
-	raw := noMethod(*s)
+	type NoMethod Device
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -554,8 +554,8 @@ type DeviceConfig struct {
 }
 
 func (s *DeviceConfig) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceConfig
-	raw := noMethod(*s)
+	type NoMethod DeviceConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -583,8 +583,8 @@ type DeviceConfigData struct {
 }
 
 func (s *DeviceConfigData) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceConfigData
-	raw := noMethod(*s)
+	type NoMethod DeviceConfigData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -621,8 +621,8 @@ type DeviceCredential struct {
 }
 
 func (s *DeviceCredential) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceCredential
-	raw := noMethod(*s)
+	type NoMethod DeviceCredential
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -671,8 +671,8 @@ type DeviceRegistry struct {
 }
 
 func (s *DeviceRegistry) MarshalJSON() ([]byte, error) {
-	type noMethod DeviceRegistry
-	raw := noMethod(*s)
+	type NoMethod DeviceRegistry
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -743,145 +743,13 @@ type Expr struct {
 }
 
 func (s *Expr) MarshalJSON() ([]byte, error) {
-	type noMethod Expr
-	raw := noMethod(*s)
+	type NoMethod Expr
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // GetIamPolicyRequest: Request message for `GetIamPolicy` method.
 type GetIamPolicyRequest struct {
-}
-
-// HttpDeviceConfig: The device configuration obtained from Cloud IoT
-// Core.
-type HttpDeviceConfig struct {
-	// BinaryData: Data in binary format.
-	BinaryData string `json:"binaryData,omitempty"`
-
-	// Version: The version of the configuration in Cloud IoT Core.
-	Version int64 `json:"version,omitempty,string"`
-
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-
-	// ForceSendFields is a list of field names (e.g. "BinaryData") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "BinaryData") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *HttpDeviceConfig) MarshalJSON() ([]byte, error) {
-	type noMethod HttpDeviceConfig
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// HttpDeviceState: The device state reported to Cloud IoT Core.
-type HttpDeviceState struct {
-	// BinaryData: Data in binary format.
-	BinaryData string `json:"binaryData,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "BinaryData") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "BinaryData") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *HttpDeviceState) MarshalJSON() ([]byte, error) {
-	type noMethod HttpDeviceState
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// HttpPublishEventRequest: Request for `PublishEvent`.
-type HttpPublishEventRequest struct {
-	// BinaryData: Payload data in binary format.
-	BinaryData string `json:"binaryData,omitempty"`
-
-	// SubFolder: Optional subfolder for the telemetry event. This can be
-	// used to classify
-	// types of events, and is included in the Pub/Sub message attributes.
-	SubFolder string `json:"subFolder,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "BinaryData") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "BinaryData") to include in
-	// API requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *HttpPublishEventRequest) MarshalJSON() ([]byte, error) {
-	type noMethod HttpPublishEventRequest
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
-}
-
-// HttpPublishEventResponse: Response for `PublishEvent`.
-type HttpPublishEventResponse struct {
-	// ServerResponse contains the HTTP response code and headers from the
-	// server.
-	googleapi.ServerResponse `json:"-"`
-}
-
-// HttpSetDeviceStateRequest: Request for `SetDeviceState`.
-type HttpSetDeviceStateRequest struct {
-	// State: The device state.
-	State *HttpDeviceState `json:"state,omitempty"`
-
-	// ForceSendFields is a list of field names (e.g. "State") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
-	ForceSendFields []string `json:"-"`
-
-	// NullFields is a list of field names (e.g. "State") to include in API
-	// requests with the JSON null value. By default, fields with empty
-	// values are omitted from API requests. However, any field with an
-	// empty value appearing in NullFields will be sent to the server as
-	// null. It is an error if a field in this list has a non-empty value.
-	// This may be used to include null fields in Patch requests.
-	NullFields []string `json:"-"`
-}
-
-func (s *HttpSetDeviceStateRequest) MarshalJSON() ([]byte, error) {
-	type noMethod HttpSetDeviceStateRequest
-	raw := noMethod(*s)
-	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 // ListDeviceConfigVersionsResponse: Response for
@@ -914,8 +782,8 @@ type ListDeviceConfigVersionsResponse struct {
 }
 
 func (s *ListDeviceConfigVersionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDeviceConfigVersionsResponse
-	raw := noMethod(*s)
+	type NoMethod ListDeviceConfigVersionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -954,8 +822,8 @@ type ListDeviceRegistriesResponse struct {
 }
 
 func (s *ListDeviceRegistriesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDeviceRegistriesResponse
-	raw := noMethod(*s)
+	type NoMethod ListDeviceRegistriesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -991,8 +859,8 @@ type ListDevicesResponse struct {
 }
 
 func (s *ListDevicesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListDevicesResponse
-	raw := noMethod(*s)
+	type NoMethod ListDevicesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1031,8 +899,8 @@ type ModifyCloudToDeviceConfigRequest struct {
 }
 
 func (s *ModifyCloudToDeviceConfigRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ModifyCloudToDeviceConfigRequest
-	raw := noMethod(*s)
+	type NoMethod ModifyCloudToDeviceConfigRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1068,8 +936,8 @@ type MqttConfig struct {
 }
 
 func (s *MqttConfig) MarshalJSON() ([]byte, error) {
-	type noMethod MqttConfig
-	raw := noMethod(*s)
+	type NoMethod MqttConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1100,8 +968,8 @@ type NotificationConfig struct {
 }
 
 func (s *NotificationConfig) MarshalJSON() ([]byte, error) {
-	type noMethod NotificationConfig
-	raw := noMethod(*s)
+	type NoMethod NotificationConfig
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1140,7 +1008,7 @@ func (s *NotificationConfig) MarshalJSON() ([]byte, error) {
 //     }
 //
 // For a description of IAM and its features, see the
-// [IAM developer's guide](https://cloud.google.com/iam).
+// [IAM developer's guide](https://cloud.google.com/iam/docs).
 type Policy struct {
 	// AuditConfigs: Specifies cloud audit logging configuration for this
 	// policy.
@@ -1172,7 +1040,7 @@ type Policy struct {
 
 	IamOwned bool `json:"iamOwned,omitempty"`
 
-	// Version: Version of the `Policy`. The default version is 0.
+	// Version: Deprecated.
 	Version int64 `json:"version,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1197,8 +1065,8 @@ type Policy struct {
 }
 
 func (s *Policy) MarshalJSON() ([]byte, error) {
-	type noMethod Policy
-	raw := noMethod(*s)
+	type NoMethod Policy
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1252,8 +1120,8 @@ type PublicKeyCredential struct {
 }
 
 func (s *PublicKeyCredential) MarshalJSON() ([]byte, error) {
-	type noMethod PublicKeyCredential
-	raw := noMethod(*s)
+	type NoMethod PublicKeyCredential
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1294,8 +1162,8 @@ type SetIamPolicyRequest struct {
 }
 
 func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
-	type noMethod SetIamPolicyRequest
-	raw := noMethod(*s)
+	type NoMethod SetIamPolicyRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1413,8 +1281,8 @@ type Status struct {
 }
 
 func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1448,8 +1316,8 @@ type TestIamPermissionsRequest struct {
 }
 
 func (s *TestIamPermissionsRequest) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsRequest
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1483,8 +1351,8 @@ type TestIamPermissionsResponse struct {
 }
 
 func (s *TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod TestIamPermissionsResponse
-	raw := noMethod(*s)
+	type NoMethod TestIamPermissionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1588,7 +1456,7 @@ func (c *ProjectsLocationsRegistriesCreateCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1717,7 +1585,7 @@ func (c *ProjectsLocationsRegistriesDeleteCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1857,7 +1725,7 @@ func (c *ProjectsLocationsRegistriesGetCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1993,7 +1861,7 @@ func (c *ProjectsLocationsRegistriesGetIamPolicyCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2158,7 +2026,7 @@ func (c *ProjectsLocationsRegistriesListCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2335,7 +2203,7 @@ func (c *ProjectsLocationsRegistriesPatchCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2479,7 +2347,7 @@ func (c *ProjectsLocationsRegistriesSetIamPolicyCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2619,7 +2487,7 @@ func (c *ProjectsLocationsRegistriesTestIamPermissionsCall) Do(opts ...googleapi
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2755,7 +2623,7 @@ func (c *ProjectsLocationsRegistriesDevicesCreateCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2884,7 +2752,7 @@ func (c *ProjectsLocationsRegistriesDevicesDeleteCall) Do(opts ...googleapi.Call
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3024,7 +2892,7 @@ func (c *ProjectsLocationsRegistriesDevicesGetCall) Do(opts ...googleapi.CallOpt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3053,163 +2921,6 @@ func (c *ProjectsLocationsRegistriesDevicesGetCall) Do(opts ...googleapi.CallOpt
 	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/cloudiot"
 	//   ]
-	// }
-
-}
-
-// method id "cloudiot.projects.locations.registries.devices.getConfig":
-
-type ProjectsLocationsRegistriesDevicesGetConfigCall struct {
-	s            *Service
-	name         string
-	urlParams_   gensupport.URLParams
-	ifNoneMatch_ string
-	ctx_         context.Context
-	header_      http.Header
-}
-
-// GetConfig: Gets the configuration of a device.
-func (r *ProjectsLocationsRegistriesDevicesService) GetConfig(name string) *ProjectsLocationsRegistriesDevicesGetConfigCall {
-	c := &ProjectsLocationsRegistriesDevicesGetConfigCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.name = name
-	return c
-}
-
-// LocalVersion sets the optional parameter "localVersion": If zero,
-// returns the current device configuration from Cloud IoT Core.
-// If nonzero, specifies the local version of the configuration on the
-// device.
-// The server returns config data only if a higher (newer) version
-// is
-// available from Cloud IoT Core.
-// If this value is higher than the latest version available in Cloud
-// IoT
-// Core, returns an `OUT_OF_RANGE` error.
-func (c *ProjectsLocationsRegistriesDevicesGetConfigCall) LocalVersion(localVersion int64) *ProjectsLocationsRegistriesDevicesGetConfigCall {
-	c.urlParams_.Set("localVersion", fmt.Sprint(localVersion))
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *ProjectsLocationsRegistriesDevicesGetConfigCall) Fields(s ...googleapi.Field) *ProjectsLocationsRegistriesDevicesGetConfigCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// IfNoneMatch sets the optional parameter which makes the operation
-// fail if the object's ETag matches the given value. This is useful for
-// getting updates only after the object has changed since the last
-// request. Use googleapi.IsNotModified to check whether the response
-// error from Do is the result of In-None-Match.
-func (c *ProjectsLocationsRegistriesDevicesGetConfigCall) IfNoneMatch(entityTag string) *ProjectsLocationsRegistriesDevicesGetConfigCall {
-	c.ifNoneMatch_ = entityTag
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *ProjectsLocationsRegistriesDevicesGetConfigCall) Context(ctx context.Context) *ProjectsLocationsRegistriesDevicesGetConfigCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *ProjectsLocationsRegistriesDevicesGetConfigCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsRegistriesDevicesGetConfigCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	if c.ifNoneMatch_ != "" {
-		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
-	}
-	var body io.Reader = nil
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}/config")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("GET", urls, body)
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"name": c.name,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "cloudiot.projects.locations.registries.devices.getConfig" call.
-// Exactly one of *HttpDeviceConfig or error will be non-nil. Any
-// non-2xx status code is an error. Response headers are in either
-// *HttpDeviceConfig.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *ProjectsLocationsRegistriesDevicesGetConfigCall) Do(opts ...googleapi.CallOption) (*HttpDeviceConfig, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &HttpDeviceConfig{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Gets the configuration of a device.",
-	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/registries/{registriesId}/devices/{devicesId}/config",
-	//   "httpMethod": "GET",
-	//   "id": "cloudiot.projects.locations.registries.devices.getConfig",
-	//   "parameterOrder": [
-	//     "name"
-	//   ],
-	//   "parameters": {
-	//     "localVersion": {
-	//       "description": "If zero, returns the current device configuration from Cloud IoT Core.\nIf nonzero, specifies the local version of the configuration on the device.\nThe server returns config data only if a higher (newer) version is\navailable from Cloud IoT Core.\nIf this value is higher than the latest version available in Cloud IoT\nCore, returns an `OUT_OF_RANGE` error.",
-	//       "format": "int64",
-	//       "location": "query",
-	//       "type": "string"
-	//     },
-	//     "name": {
-	//       "description": "The name of the device. For example,\n`projects/p0/locations/us-central1/registries/registry0/devices/device0`.",
-	//       "location": "path",
-	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+/devices/[^/]+$",
-	//       "required": true,
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "v1beta1/{+name}/config",
-	//   "response": {
-	//     "$ref": "HttpDeviceConfig"
-	//   }
 	// }
 
 }
@@ -3374,7 +3085,7 @@ func (c *ProjectsLocationsRegistriesDevicesListCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3562,7 +3273,7 @@ func (c *ProjectsLocationsRegistriesDevicesModifyCloudToDeviceConfigCall) Do(opt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3709,7 +3420,7 @@ func (c *ProjectsLocationsRegistriesDevicesPatchCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3747,270 +3458,6 @@ func (c *ProjectsLocationsRegistriesDevicesPatchCall) Do(opts ...googleapi.CallO
 	//     "https://www.googleapis.com/auth/cloud-platform",
 	//     "https://www.googleapis.com/auth/cloudiot"
 	//   ]
-	// }
-
-}
-
-// method id "cloudiot.projects.locations.registries.devices.publishEvent":
-
-type ProjectsLocationsRegistriesDevicesPublishEventCall struct {
-	s                       *Service
-	name                    string
-	httppublisheventrequest *HttpPublishEventRequest
-	urlParams_              gensupport.URLParams
-	ctx_                    context.Context
-	header_                 http.Header
-}
-
-// PublishEvent: Publishes a telemetry event for a device.
-func (r *ProjectsLocationsRegistriesDevicesService) PublishEvent(name string, httppublisheventrequest *HttpPublishEventRequest) *ProjectsLocationsRegistriesDevicesPublishEventCall {
-	c := &ProjectsLocationsRegistriesDevicesPublishEventCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.name = name
-	c.httppublisheventrequest = httppublisheventrequest
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *ProjectsLocationsRegistriesDevicesPublishEventCall) Fields(s ...googleapi.Field) *ProjectsLocationsRegistriesDevicesPublishEventCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *ProjectsLocationsRegistriesDevicesPublishEventCall) Context(ctx context.Context) *ProjectsLocationsRegistriesDevicesPublishEventCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *ProjectsLocationsRegistriesDevicesPublishEventCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsRegistriesDevicesPublishEventCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.httppublisheventrequest)
-	if err != nil {
-		return nil, err
-	}
-	reqHeaders.Set("Content-Type", "application/json")
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:publishEvent")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("POST", urls, body)
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"name": c.name,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "cloudiot.projects.locations.registries.devices.publishEvent" call.
-// Exactly one of *HttpPublishEventResponse or error will be non-nil.
-// Any non-2xx status code is an error. Response headers are in either
-// *HttpPublishEventResponse.ServerResponse.Header or (if a response was
-// returned at all) in error.(*googleapi.Error).Header. Use
-// googleapi.IsNotModified to check whether the returned error was
-// because http.StatusNotModified was returned.
-func (c *ProjectsLocationsRegistriesDevicesPublishEventCall) Do(opts ...googleapi.CallOption) (*HttpPublishEventResponse, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &HttpPublishEventResponse{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Publishes a telemetry event for a device.",
-	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/registries/{registriesId}/devices/{devicesId}:publishEvent",
-	//   "httpMethod": "POST",
-	//   "id": "cloudiot.projects.locations.registries.devices.publishEvent",
-	//   "parameterOrder": [
-	//     "name"
-	//   ],
-	//   "parameters": {
-	//     "name": {
-	//       "description": "The name of the device. For example,\n`projects/p0/locations/us-central1/registries/registry0/devices/device0`.",
-	//       "location": "path",
-	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+/devices/[^/]+$",
-	//       "required": true,
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "v1beta1/{+name}:publishEvent",
-	//   "request": {
-	//     "$ref": "HttpPublishEventRequest"
-	//   },
-	//   "response": {
-	//     "$ref": "HttpPublishEventResponse"
-	//   }
-	// }
-
-}
-
-// method id "cloudiot.projects.locations.registries.devices.setState":
-
-type ProjectsLocationsRegistriesDevicesSetStateCall struct {
-	s                         *Service
-	name                      string
-	httpsetdevicestaterequest *HttpSetDeviceStateRequest
-	urlParams_                gensupport.URLParams
-	ctx_                      context.Context
-	header_                   http.Header
-}
-
-// SetState: Sets the state of a device.
-func (r *ProjectsLocationsRegistriesDevicesService) SetState(name string, httpsetdevicestaterequest *HttpSetDeviceStateRequest) *ProjectsLocationsRegistriesDevicesSetStateCall {
-	c := &ProjectsLocationsRegistriesDevicesSetStateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
-	c.name = name
-	c.httpsetdevicestaterequest = httpsetdevicestaterequest
-	return c
-}
-
-// Fields allows partial responses to be retrieved. See
-// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
-// for more information.
-func (c *ProjectsLocationsRegistriesDevicesSetStateCall) Fields(s ...googleapi.Field) *ProjectsLocationsRegistriesDevicesSetStateCall {
-	c.urlParams_.Set("fields", googleapi.CombineFields(s))
-	return c
-}
-
-// Context sets the context to be used in this call's Do method. Any
-// pending HTTP request will be aborted if the provided context is
-// canceled.
-func (c *ProjectsLocationsRegistriesDevicesSetStateCall) Context(ctx context.Context) *ProjectsLocationsRegistriesDevicesSetStateCall {
-	c.ctx_ = ctx
-	return c
-}
-
-// Header returns an http.Header that can be modified by the caller to
-// add HTTP headers to the request.
-func (c *ProjectsLocationsRegistriesDevicesSetStateCall) Header() http.Header {
-	if c.header_ == nil {
-		c.header_ = make(http.Header)
-	}
-	return c.header_
-}
-
-func (c *ProjectsLocationsRegistriesDevicesSetStateCall) doRequest(alt string) (*http.Response, error) {
-	reqHeaders := make(http.Header)
-	for k, v := range c.header_ {
-		reqHeaders[k] = v
-	}
-	reqHeaders.Set("User-Agent", c.s.userAgent())
-	var body io.Reader = nil
-	body, err := googleapi.WithoutDataWrapper.JSONReader(c.httpsetdevicestaterequest)
-	if err != nil {
-		return nil, err
-	}
-	reqHeaders.Set("Content-Type", "application/json")
-	c.urlParams_.Set("alt", alt)
-	urls := googleapi.ResolveRelative(c.s.BasePath, "v1beta1/{+name}:setState")
-	urls += "?" + c.urlParams_.Encode()
-	req, _ := http.NewRequest("POST", urls, body)
-	req.Header = reqHeaders
-	googleapi.Expand(req.URL, map[string]string{
-		"name": c.name,
-	})
-	return gensupport.SendRequest(c.ctx_, c.s.client, req)
-}
-
-// Do executes the "cloudiot.projects.locations.registries.devices.setState" call.
-// Exactly one of *Empty or error will be non-nil. Any non-2xx status
-// code is an error. Response headers are in either
-// *Empty.ServerResponse.Header or (if a response was returned at all)
-// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
-// check whether the returned error was because http.StatusNotModified
-// was returned.
-func (c *ProjectsLocationsRegistriesDevicesSetStateCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
-	gensupport.SetOptions(c.urlParams_, opts...)
-	res, err := c.doRequest("json")
-	if res != nil && res.StatusCode == http.StatusNotModified {
-		if res.Body != nil {
-			res.Body.Close()
-		}
-		return nil, &googleapi.Error{
-			Code:   res.StatusCode,
-			Header: res.Header,
-		}
-	}
-	if err != nil {
-		return nil, err
-	}
-	defer googleapi.CloseBody(res)
-	if err := googleapi.CheckResponse(res); err != nil {
-		return nil, err
-	}
-	ret := &Empty{
-		ServerResponse: googleapi.ServerResponse{
-			Header:         res.Header,
-			HTTPStatusCode: res.StatusCode,
-		},
-	}
-	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
-		return nil, err
-	}
-	return ret, nil
-	// {
-	//   "description": "Sets the state of a device.",
-	//   "flatPath": "v1beta1/projects/{projectsId}/locations/{locationsId}/registries/{registriesId}/devices/{devicesId}:setState",
-	//   "httpMethod": "POST",
-	//   "id": "cloudiot.projects.locations.registries.devices.setState",
-	//   "parameterOrder": [
-	//     "name"
-	//   ],
-	//   "parameters": {
-	//     "name": {
-	//       "description": "The name of the device. For example,\n`projects/p0/locations/us-central1/registries/registry0/devices/device0`.",
-	//       "location": "path",
-	//       "pattern": "^projects/[^/]+/locations/[^/]+/registries/[^/]+/devices/[^/]+$",
-	//       "required": true,
-	//       "type": "string"
-	//     }
-	//   },
-	//   "path": "v1beta1/{+name}:setState",
-	//   "request": {
-	//     "$ref": "HttpSetDeviceStateRequest"
-	//   },
-	//   "response": {
-	//     "$ref": "Empty"
-	//   }
 	// }
 
 }
@@ -4134,7 +3581,7 @@ func (c *ProjectsLocationsRegistriesDevicesConfigVersionsListCall) Do(opts ...go
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

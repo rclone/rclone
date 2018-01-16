@@ -123,6 +123,7 @@ func (client HardwareComponentGroupsClient) ChangeControllerPowerStatePreparer(d
 func (client HardwareComponentGroupsClient) ChangeControllerPowerStateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -195,7 +196,9 @@ func (client HardwareComponentGroupsClient) ListByDevicePreparer(deviceName stri
 // ListByDeviceSender sends the ListByDevice request. The method will close the
 // http.Response Body if it receives an error.
 func (client HardwareComponentGroupsClient) ListByDeviceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDeviceResponder handles the response to the ListByDevice request. The method always

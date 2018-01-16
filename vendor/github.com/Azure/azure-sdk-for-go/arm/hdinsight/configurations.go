@@ -89,7 +89,9 @@ func (client ConfigurationsClient) GetPreparer(resourceGroupName string, cluster
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ConfigurationsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -175,6 +177,7 @@ func (client ConfigurationsClient) UpdateHTTPSettingsPreparer(resourceGroupName 
 func (client ConfigurationsClient) UpdateHTTPSettingsSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

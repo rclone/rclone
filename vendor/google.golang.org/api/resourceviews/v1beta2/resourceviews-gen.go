@@ -139,8 +139,8 @@ type Label struct {
 }
 
 func (s *Label) MarshalJSON() ([]byte, error) {
-	type noMethod Label
-	raw := noMethod(*s)
+	type NoMethod Label
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -171,8 +171,8 @@ type ListResourceResponseItem struct {
 }
 
 func (s *ListResourceResponseItem) MarshalJSON() ([]byte, error) {
-	type noMethod ListResourceResponseItem
-	raw := noMethod(*s)
+	type NoMethod ListResourceResponseItem
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -291,8 +291,8 @@ type Operation struct {
 }
 
 func (s *Operation) MarshalJSON() ([]byte, error) {
-	type noMethod Operation
-	raw := noMethod(*s)
+	type NoMethod Operation
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -321,8 +321,8 @@ type OperationError struct {
 }
 
 func (s *OperationError) MarshalJSON() ([]byte, error) {
-	type noMethod OperationError
-	raw := noMethod(*s)
+	type NoMethod OperationError
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -355,8 +355,8 @@ type OperationErrorErrors struct {
 }
 
 func (s *OperationErrorErrors) MarshalJSON() ([]byte, error) {
-	type noMethod OperationErrorErrors
-	raw := noMethod(*s)
+	type NoMethod OperationErrorErrors
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -389,8 +389,8 @@ type OperationWarnings struct {
 }
 
 func (s *OperationWarnings) MarshalJSON() ([]byte, error) {
-	type noMethod OperationWarnings
-	raw := noMethod(*s)
+	type NoMethod OperationWarnings
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -419,8 +419,8 @@ type OperationWarningsData struct {
 }
 
 func (s *OperationWarningsData) MarshalJSON() ([]byte, error) {
-	type noMethod OperationWarningsData
-	raw := noMethod(*s)
+	type NoMethod OperationWarningsData
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -464,8 +464,8 @@ type OperationList struct {
 }
 
 func (s *OperationList) MarshalJSON() ([]byte, error) {
-	type noMethod OperationList
-	raw := noMethod(*s)
+	type NoMethod OperationList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -531,8 +531,8 @@ type ResourceView struct {
 }
 
 func (s *ResourceView) MarshalJSON() ([]byte, error) {
-	type noMethod ResourceView
-	raw := noMethod(*s)
+	type NoMethod ResourceView
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -562,8 +562,8 @@ type ServiceEndpoint struct {
 }
 
 func (s *ServiceEndpoint) MarshalJSON() ([]byte, error) {
-	type noMethod ServiceEndpoint
-	raw := noMethod(*s)
+	type NoMethod ServiceEndpoint
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -591,8 +591,8 @@ type ZoneViewsAddResourcesRequest struct {
 }
 
 func (s *ZoneViewsAddResourcesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ZoneViewsAddResourcesRequest
-	raw := noMethod(*s)
+	type NoMethod ZoneViewsAddResourcesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -625,8 +625,8 @@ type ZoneViewsGetServiceResponse struct {
 }
 
 func (s *ZoneViewsGetServiceResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ZoneViewsGetServiceResponse
-	raw := noMethod(*s)
+	type NoMethod ZoneViewsGetServiceResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -667,8 +667,8 @@ type ZoneViewsList struct {
 }
 
 func (s *ZoneViewsList) MarshalJSON() ([]byte, error) {
-	type noMethod ZoneViewsList
-	raw := noMethod(*s)
+	type NoMethod ZoneViewsList
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -707,8 +707,8 @@ type ZoneViewsListResourcesResponse struct {
 }
 
 func (s *ZoneViewsListResourcesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ZoneViewsListResourcesResponse
-	raw := noMethod(*s)
+	type NoMethod ZoneViewsListResourcesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -736,8 +736,8 @@ type ZoneViewsRemoveResourcesRequest struct {
 }
 
 func (s *ZoneViewsRemoveResourcesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ZoneViewsRemoveResourcesRequest
-	raw := noMethod(*s)
+	type NoMethod ZoneViewsRemoveResourcesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -772,8 +772,8 @@ type ZoneViewsSetServiceRequest struct {
 }
 
 func (s *ZoneViewsSetServiceRequest) MarshalJSON() ([]byte, error) {
-	type noMethod ZoneViewsSetServiceRequest
-	raw := noMethod(*s)
+	type NoMethod ZoneViewsSetServiceRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -890,7 +890,7 @@ func (c *ZoneOperationsGetCall) Do(opts ...googleapi.CallOption) (*Operation, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1076,7 +1076,7 @@ func (c *ZoneOperationsListCall) Do(opts ...googleapi.CallOption) (*OperationLis
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1266,7 +1266,7 @@ func (c *ZoneViewsAddResourcesCall) Do(opts ...googleapi.CallOption) (*Operation
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1414,7 +1414,7 @@ func (c *ZoneViewsDeleteCall) Do(opts ...googleapi.CallOption) (*Operation, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1573,7 +1573,7 @@ func (c *ZoneViewsGetCall) Do(opts ...googleapi.CallOption) (*ResourceView, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1730,7 +1730,7 @@ func (c *ZoneViewsGetServiceCall) Do(opts ...googleapi.CallOption) (*ZoneViewsGe
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -1884,7 +1884,7 @@ func (c *ZoneViewsInsertCall) Do(opts ...googleapi.CallOption) (*Operation, erro
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2053,7 +2053,7 @@ func (c *ZoneViewsListCall) Do(opts ...googleapi.CallOption) (*ZoneViewsList, er
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2293,7 +2293,7 @@ func (c *ZoneViewsListResourcesCall) Do(opts ...googleapi.CallOption) (*ZoneView
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2517,7 +2517,7 @@ func (c *ZoneViewsRemoveResourcesCall) Do(opts ...googleapi.CallOption) (*Operat
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -2673,7 +2673,7 @@ func (c *ZoneViewsSetServiceCall) Do(opts ...googleapi.CallOption) (*Operation, 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

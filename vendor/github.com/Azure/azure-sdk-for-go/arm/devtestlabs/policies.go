@@ -99,7 +99,9 @@ func (client PoliciesClient) CreateOrUpdatePreparer(resourceGroupName string, la
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client PoliciesClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -167,7 +169,9 @@ func (client PoliciesClient) DeletePreparer(resourceGroupName string, labName st
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client PoliciesClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -238,7 +242,9 @@ func (client PoliciesClient) GetPreparer(resourceGroupName string, labName strin
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client PoliciesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -319,7 +325,9 @@ func (client PoliciesClient) ListPreparer(resourceGroupName string, labName stri
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client PoliciesClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -458,7 +466,9 @@ func (client PoliciesClient) UpdatePreparer(resourceGroupName string, labName st
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client PoliciesClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

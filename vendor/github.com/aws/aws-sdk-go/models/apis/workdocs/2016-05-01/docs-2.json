@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<p>The WorkDocs API is designed for the following use cases:</p> <ul> <li> <p>File Migration: File migration applications are supported for users who want to migrate their files from an on-premise or off-premise file system or service. Users can insert files into a user directory structure, as well as allow for basic metadata changes, such as modifications to the permissions of files.</p> </li> <li> <p>Security: Support security applications are supported for users who have additional security needs, such as anti-virus or data loss prevention. The APIs, in conjunction with Amazon CloudTrail, allow these applications to detect when changes occur in Amazon WorkDocs, so the application can take the necessary actions and replace the target file. The application can also choose to email the user if the target file violates the policy.</p> </li> <li> <p>eDiscovery/Analytics: General administrative applications are supported, such as eDiscovery and analytics. These applications can choose to mimic and/or record the actions in an Amazon WorkDocs site, in conjunction with Amazon CloudTrails, to replicate data for eDiscovery, backup, or analytical applications.</p> </li> </ul> <p>All Amazon WorkDocs APIs are Amazon authenticated, certificate-signed APIs. They not only require the use of the AWS SDK, but also allow for the exclusive use of IAM users and roles to help facilitate access, trust, and permission policies. By creating a role and allowing an IAM user to access the Amazon WorkDocs site, the IAM user gains full administrative visibility into the entire Amazon WorkDocs site (or as set in the IAM policy). This includes, but is not limited to, the ability to modify file permissions and upload any file to any user. This allows developers to perform the three use cases above, as well as give users the ability to grant access on a selective basis using the IAM model.</p>",
+  "service": "<p>The WorkDocs API is designed for the following use cases:</p> <ul> <li> <p>File Migration: File migration applications are supported for users who want to migrate their files from an on-premises or off-premises file system or service. Users can insert files into a user directory structure, as well as allow for basic metadata changes, such as modifications to the permissions of files.</p> </li> <li> <p>Security: Support security applications are supported for users who have additional security needs, such as antivirus or data loss prevention. The API actions, along with AWS CloudTrail, allow these applications to detect when changes occur in Amazon WorkDocs. Then, the application can take the necessary actions and replace the target file. If the target file violates the policy, the application can also choose to email the user.</p> </li> <li> <p>eDiscovery/Analytics: General administrative applications are supported, such as eDiscovery and analytics. These applications can choose to mimic or record the actions in an Amazon WorkDocs site, along with AWS CloudTrail, to replicate data for eDiscovery, backup, or analytical applications.</p> </li> </ul> <p>All Amazon WorkDocs API actions are Amazon authenticated and certificate-signed. They not only require the use of the AWS SDK, but also allow for the exclusive use of IAM users and roles to help facilitate access, trust, and permission policies. By creating a role and allowing an IAM user to access the Amazon WorkDocs site, the IAM user gains full administrative visibility into the entire Amazon WorkDocs site (or as set in the IAM policy). This includes, but is not limited to, the ability to modify file permissions and upload any file to any user. This allows developers to perform the three use cases above, as well as give users the ability to grant access on a selective basis using the IAM model.</p>",
   "operations": {
     "AbortDocumentVersionUpload": "<p>Aborts the upload of the specified document version that was previously initiated by <a>InitiateDocumentVersionUpload</a>. The client should make this call only when it no longer intends to upload the document version, or fails to do so.</p>",
     "ActivateUser": "<p>Activates the specified user. Only active users can access Amazon WorkDocs.</p>",
@@ -24,9 +24,10 @@
     "DescribeComments": "<p>List all the comments for the specified document version.</p>",
     "DescribeDocumentVersions": "<p>Retrieves the document versions for the specified document.</p> <p>By default, only active versions are returned.</p>",
     "DescribeFolderContents": "<p>Describes the contents of the specified folder, including its documents and subfolders.</p> <p>By default, Amazon WorkDocs returns the first 100 active document and folder metadata items. If there are more results, the response includes a marker that you can use to request the next set of results. You can also request initialized documents.</p>",
+    "DescribeGroups": "<p>Describes the groups specified by query.</p>",
     "DescribeNotificationSubscriptions": "<p>Lists the specified notification subscriptions.</p>",
     "DescribeResourcePermissions": "<p>Describes the permissions of a specified resource.</p>",
-    "DescribeRootFolders": "<p>Describes the current user's special folders; the <code>RootFolder</code> and the <code>RecyleBin</code>. <code>RootFolder</code> is the root of user's files and folders and <code>RecyleBin</code> is the root of recycled items. This is not a valid action for SigV4 (administrative API) clients.</p>",
+    "DescribeRootFolders": "<p>Describes the current user's special folders; the <code>RootFolder</code> and the <code>RecycleBin</code>. <code>RootFolder</code> is the root of user's files and folders and <code>RecycleBin</code> is the root of recycled items. This is not a valid action for SigV4 (administrative API) clients.</p>",
     "DescribeUsers": "<p>Describes the specified users. You can describe all users or filter the results (for example, by status or organization).</p> <p>By default, Amazon WorkDocs returns the first 24 active or pending users. If there are more results, the response includes a marker that you can use to request the next set of results.</p>",
     "GetCurrentUser": "<p>Retrieves details of the current user for whom the authentication token was generated. This is not a valid action for SigV4 (administrative API) clients.</p>",
     "GetDocument": "<p>Retrieves details of a document.</p>",
@@ -83,42 +84,49 @@
     "AuthenticationHeaderType": {
       "base": null,
       "refs": {
-        "AbortDocumentVersionUploadRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "ActivateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "AddResourcePermissionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "CreateCommentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "CreateCustomMetadataRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "CreateFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "CreateLabelsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "CreateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeactivateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeleteCommentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeleteCustomMetadataRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeleteDocumentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeleteFolderContentsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeleteFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeleteLabelsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DeleteUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DescribeActivitiesRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DescribeCommentsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DescribeDocumentVersionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DescribeFolderContentsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DescribeResourcePermissionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DescribeRootFoldersRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "DescribeUsersRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "GetCurrentUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token.</p>",
-        "GetDocumentPathRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "GetDocumentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "GetDocumentVersionRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "GetFolderPathRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "GetFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "InitiateDocumentVersionUploadRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "RemoveAllResourcePermissionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "RemoveResourcePermissionRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "UpdateDocumentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "UpdateDocumentVersionRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "UpdateFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>",
-        "UpdateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. This field should not be set when using administrative API actions, as in accessing the API using AWS credentials.</p>"
+        "AbortDocumentVersionUploadRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "ActivateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "AddResourcePermissionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "CreateCommentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "CreateCustomMetadataRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "CreateFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "CreateLabelsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "CreateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeactivateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeleteCommentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeleteCustomMetadataRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeleteDocumentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeleteFolderContentsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeleteFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeleteLabelsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DeleteUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeActivitiesRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeCommentsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeDocumentVersionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeFolderContentsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeGroupsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeResourcePermissionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeRootFoldersRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "DescribeUsersRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "GetCurrentUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "GetDocumentPathRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "GetDocumentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "GetDocumentVersionRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "GetFolderPathRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "GetFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "InitiateDocumentVersionUploadRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "RemoveAllResourcePermissionsRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "RemoveResourcePermissionRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "UpdateDocumentRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "UpdateDocumentVersionRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "UpdateFolderRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>",
+        "UpdateUserRequest$AuthenticationToken": "<p>Amazon WorkDocs authentication token. Do not set this field when using administrative API actions, as in accessing the API using AWS credentials.</p>"
+      }
+    },
+    "BooleanEnumType": {
+      "base": null,
+      "refs": {
+        "UpdateUserRequest$GrantPoweruserPrivileges": "<p>Boolean value to determine whether the user is granted Poweruser privileges.</p>"
       }
     },
     "BooleanType": {
@@ -129,7 +137,8 @@
         "DeleteLabelsRequest$DeleteAll": "<p>Flag to request removal of all labels from the specified resource.</p>",
         "GetDocumentRequest$IncludeCustomMetadata": "<p>Set this to <code>TRUE</code> to include custom metadata in the response.</p>",
         "GetDocumentVersionRequest$IncludeCustomMetadata": "<p>Set this to TRUE to include custom metadata in the response.</p>",
-        "GetFolderRequest$IncludeCustomMetadata": "<p>Set to TRUE to include custom metadata in the response.</p>"
+        "GetFolderRequest$IncludeCustomMetadata": "<p>Set to TRUE to include custom metadata in the response.</p>",
+        "NotificationOptions$SendEmail": "<p>Boolean value to indicate an email notification should be sent to the receipients.</p>"
       }
     },
     "Comment": {
@@ -167,7 +176,7 @@
       "base": null,
       "refs": {
         "Comment$Status": "<p>The status of the comment.</p>",
-        "CommentMetadata$CommentStatus": null
+        "CommentMetadata$CommentStatus": "<p>The status of the comment.</p>"
       }
     },
     "CommentTextType": {
@@ -382,6 +391,16 @@
       "refs": {
       }
     },
+    "DescribeGroupsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeGroupsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DescribeNotificationSubscriptionsRequest": {
       "base": null,
       "refs": {
@@ -555,6 +574,7 @@
         "IllegalUserStateException$Message": null,
         "InvalidArgumentException$Message": null,
         "InvalidOperationException$Message": null,
+        "InvalidPasswordException$Message": null,
         "LimitExceededException$Message": null,
         "ProhibitedStateException$Message": null,
         "ResourceAlreadyCheckedOutException$Message": null,
@@ -567,7 +587,7 @@
       }
     },
     "FailedDependencyException": {
-      "base": "<p>The AWS Directory Service cannot reach an on-premises instance. Or a dependency under the control of the organization is failing, such as a connected active directory.</p>",
+      "base": "<p>The AWS Directory Service cannot reach an on-premises instance. Or a dependency under the control of the organization is failing, such as a connected Active Directory.</p>",
       "refs": {
       }
     },
@@ -673,6 +693,7 @@
     "GroupMetadataList": {
       "base": null,
       "refs": {
+        "DescribeGroupsResponse$Groups": "<p>The list of groups.</p>",
         "Participants$Groups": "<p>The list of user groups.</p>"
       }
     },
@@ -716,7 +737,9 @@
         "DeleteUserRequest$UserId": "<p>The ID of the user.</p>",
         "DescribeActivitiesRequest$OrganizationId": "<p>The ID of the organization. This is a mandatory parameter when using administrative API (SigV4) requests.</p>",
         "DescribeActivitiesRequest$UserId": "<p>The ID of the user who performed the action. The response includes activities pertaining to this user. This is an optional parameter and is only applicable for administrative API (SigV4) requests.</p>",
+        "DescribeGroupsRequest$OrganizationId": "<p>The ID of the organization.</p>",
         "DescribeNotificationSubscriptionsRequest$OrganizationId": "<p>The ID of the organization.</p>",
+        "DescribeResourcePermissionsRequest$PrincipalId": "<p>The ID of the principal to filter permissions by.</p>",
         "DescribeUsersRequest$OrganizationId": "<p>The ID of the organization.</p>",
         "DocumentMetadata$CreatorId": "<p>The ID of the creator.</p>",
         "DocumentVersionMetadata$CreatorId": "<p>The ID of the creator.</p>",
@@ -753,7 +776,7 @@
       }
     },
     "InvalidArgumentException": {
-      "base": "<p>The pagination marker and/or limit fields are not valid.</p>",
+      "base": "<p>The pagination marker or limit fields are not valid.</p>",
       "refs": {
       }
     },
@@ -762,19 +785,9 @@
       "refs": {
       }
     },
-    "Label": {
-      "base": null,
+    "InvalidPasswordException": {
+      "base": "<p>The password is invalid.</p>",
       "refs": {
-        "Labels$member": null
-      }
-    },
-    "Labels": {
-      "base": null,
-      "refs": {
-        "CreateLabelsRequest$Labels": "<p>List of labels to add to the resource.</p>",
-        "DeleteLabelsRequest$Labels": "<p>List of labels to delete from the resource.</p>",
-        "DocumentMetadata$Labels": "<p>List of labels on the document.</p>",
-        "FolderMetadata$Labels": "<p>List of labels on the folder.</p>"
       }
     },
     "LimitExceededException": {
@@ -807,16 +820,25 @@
     "MarkerType": {
       "base": null,
       "refs": {
-        "DescribeActivitiesRequest$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
+        "DescribeActivitiesRequest$Marker": "<p>The marker for the next set of results.</p>",
         "DescribeActivitiesResponse$Marker": "<p>The marker for the next set of results.</p>",
         "DescribeCommentsRequest$Marker": "<p>The marker for the next set of results. This marker was received from a previous call.</p>",
-        "DescribeCommentsResponse$Marker": "<p>The marker for the next set of results. This marker was received from a previous call.</p>"
+        "DescribeCommentsResponse$Marker": "<p>The marker for the next set of results. This marker was received from a previous call.</p>",
+        "DescribeGroupsRequest$Marker": "<p>The marker for the next set of results. (You received this marker from a previous call.)</p>",
+        "DescribeGroupsResponse$Marker": "<p>The marker to use when requesting the next set of results. If there are no additional results, the string is empty.</p>"
       }
     },
     "MessageType": {
       "base": null,
       "refs": {
+        "NotificationOptions$EmailMessage": "<p>Text value to be included in the email body.</p>",
         "ShareResult$StatusMessage": "<p>The status message.</p>"
+      }
+    },
+    "NotificationOptions": {
+      "base": "<p>Set of options which defines notification preferences of given action.</p>",
+      "refs": {
+        "AddResourcePermissionsRequest$NotificationOptions": "<p>The notification options.</p>"
       }
     },
     "OrderType": {
@@ -852,7 +874,7 @@
       }
     },
     "Participants": {
-      "base": "<p>Describes the users and/or user groups.</p>",
+      "base": "<p>Describes the users or user groups.</p>",
       "refs": {
         "Activity$Participants": "<p>The list of users or groups impacted by this action. This is an optional field and is filled for the following sharing activities: DOCUMENT_SHARED, DOCUMENT_SHARED, DOCUMENT_UNSHARED, FOLDER_SHARED, FOLDER_UNSHARED.</p>"
       }
@@ -873,6 +895,12 @@
       "base": null,
       "refs": {
         "Principal$Roles": "<p>The permission information for the resource.</p>"
+      }
+    },
+    "PositiveIntegerType": {
+      "base": null,
+      "refs": {
+        "DescribeGroupsRequest$Limit": "<p>The maximum number of items to return with this call.</p>"
       }
     },
     "PositiveSizeType": {
@@ -978,7 +1006,7 @@
         "FolderMetadata$Name": "<p>The name of the folder.</p>",
         "InitiateDocumentVersionUploadRequest$Name": "<p>The name of the document.</p>",
         "ResourceMetadata$Name": "<p>The name of the resource.</p>",
-        "ResourceMetadata$OriginalName": "<p>The original name of the resource prior to a rename operation.</p>",
+        "ResourceMetadata$OriginalName": "<p>The original name of the resource before a rename operation.</p>",
         "ResourcePathComponent$Name": "<p>The name of the resource path.</p>",
         "UpdateDocumentRequest$Name": "<p>The name of the document.</p>",
         "UpdateFolderRequest$Name": "<p>The name of the folder.</p>"
@@ -1014,8 +1042,8 @@
       "refs": {
         "DocumentMetadata$ResourceState": "<p>The resource state.</p>",
         "FolderMetadata$ResourceState": "<p>The resource state of the folder.</p>",
-        "UpdateDocumentRequest$ResourceState": "<p>The resource state of the document. Note that only ACTIVE and RECYCLED are supported.</p>",
-        "UpdateFolderRequest$ResourceState": "<p>The resource state of the folder. Note that only ACTIVE and RECYCLED are accepted values from the API.</p>"
+        "UpdateDocumentRequest$ResourceState": "<p>The resource state of the document. Only ACTIVE and RECYCLED are supported.</p>",
+        "UpdateFolderRequest$ResourceState": "<p>The resource state of the folder. Only ACTIVE and RECYCLED are accepted values from the API.</p>"
       }
     },
     "ResourceType": {
@@ -1041,6 +1069,7 @@
     "SearchQueryType": {
       "base": null,
       "refs": {
+        "DescribeGroupsRequest$SearchQuery": "<p>A query to describe groups by group name.</p>",
         "DescribeUsersRequest$Query": "<p>A query to filter users by user name.</p>"
       }
     },
@@ -1079,6 +1108,21 @@
         "ShareResult$Status": "<p>The status.</p>"
       }
     },
+    "SharedLabel": {
+      "base": null,
+      "refs": {
+        "SharedLabels$member": null
+      }
+    },
+    "SharedLabels": {
+      "base": null,
+      "refs": {
+        "CreateLabelsRequest$Labels": "<p>List of labels to add to the resource.</p>",
+        "DeleteLabelsRequest$Labels": "<p>List of labels to delete from the resource.</p>",
+        "DocumentMetadata$Labels": "<p>List of labels on the document.</p>",
+        "FolderMetadata$Labels": "<p>List of labels on the folder.</p>"
+      }
+    },
     "SignedHeaderMap": {
       "base": null,
       "refs": {
@@ -1093,7 +1137,7 @@
         "FolderMetadata$Size": "<p>The size of the folder metadata.</p>",
         "FolderMetadata$LatestVersionSize": "<p>The size of the latest version of the folder metadata.</p>",
         "InitiateDocumentVersionUploadRequest$DocumentSizeInBytes": "<p>The size of the document, in bytes.</p>",
-        "UserStorageMetadata$StorageUtilizedInBytes": "<p>The amount of storage utilized, in bytes.</p>"
+        "UserStorageMetadata$StorageUtilizedInBytes": "<p>The amount of storage used, in bytes.</p>"
       }
     },
     "StorageLimitExceededException": {
@@ -1143,7 +1187,7 @@
     "SubscriptionProtocolType": {
       "base": null,
       "refs": {
-        "CreateNotificationSubscriptionRequest$Protocol": "<p>The protocol to use. The supported value is https, which delivers JSON-encoded messasges using HTTPS POST.</p>",
+        "CreateNotificationSubscriptionRequest$Protocol": "<p>The protocol to use. The supported value is https, which delivers JSON-encoded messages using HTTPS POST.</p>",
         "Subscription$Protocol": "<p>The protocol of the subscription.</p>"
       }
     },
@@ -1166,19 +1210,19 @@
       "refs": {
         "Activity$TimeStamp": "<p>The timestamp when the action was performed.</p>",
         "Comment$CreatedTimestamp": "<p>The time that the comment was created.</p>",
-        "CommentMetadata$CreatedTimestamp": null,
-        "DescribeActivitiesRequest$StartTime": "<p>The timestamp that determines the starting time of the activities; the response includes the activities performed after the specified timestamp.</p>",
-        "DescribeActivitiesRequest$EndTime": "<p>The timestamp that determines the end time of the activities; the response includes the activities performed before the specified timestamp.</p>",
+        "CommentMetadata$CreatedTimestamp": "<p>The timestamp that the comment was created.</p>",
+        "DescribeActivitiesRequest$StartTime": "<p>The timestamp that determines the starting time of the activities. The response includes the activities performed after the specified timestamp.</p>",
+        "DescribeActivitiesRequest$EndTime": "<p>The timestamp that determines the end time of the activities. The response includes the activities performed before the specified timestamp.</p>",
         "DocumentMetadata$CreatedTimestamp": "<p>The time when the document was created.</p>",
         "DocumentMetadata$ModifiedTimestamp": "<p>The time when the document was updated.</p>",
-        "DocumentVersionMetadata$CreatedTimestamp": "<p>The time stamp when the document was first uploaded.</p>",
-        "DocumentVersionMetadata$ModifiedTimestamp": "<p>The time stamp when the document was last uploaded.</p>",
-        "DocumentVersionMetadata$ContentCreatedTimestamp": "<p>The time stamp when the content of the document was originally created.</p>",
-        "DocumentVersionMetadata$ContentModifiedTimestamp": "<p>The time stamp when the content of the document was modified.</p>",
+        "DocumentVersionMetadata$CreatedTimestamp": "<p>The timestamp when the document was first uploaded.</p>",
+        "DocumentVersionMetadata$ModifiedTimestamp": "<p>The timestamp when the document was last uploaded.</p>",
+        "DocumentVersionMetadata$ContentCreatedTimestamp": "<p>The timestamp when the content of the document was originally created.</p>",
+        "DocumentVersionMetadata$ContentModifiedTimestamp": "<p>The timestamp when the content of the document was modified.</p>",
         "FolderMetadata$CreatedTimestamp": "<p>The time when the folder was created.</p>",
         "FolderMetadata$ModifiedTimestamp": "<p>The time when the folder was updated.</p>",
-        "InitiateDocumentVersionUploadRequest$ContentCreatedTimestamp": "<p>The time stamp when the content of the document was originally created.</p>",
-        "InitiateDocumentVersionUploadRequest$ContentModifiedTimestamp": "<p>The time stamp when the content of the document was modified.</p>",
+        "InitiateDocumentVersionUploadRequest$ContentCreatedTimestamp": "<p>The timestamp when the content of the document was originally created.</p>",
+        "InitiateDocumentVersionUploadRequest$ContentModifiedTimestamp": "<p>The timestamp when the content of the document was modified.</p>",
         "User$CreatedTimestamp": "<p>The time when the user was created.</p>",
         "User$ModifiedTimestamp": "<p>The time when the user was modified.</p>"
       }
@@ -1329,7 +1373,7 @@
       "refs": {
         "CreateUserRequest$Username": "<p>The login name of the user.</p>",
         "User$Username": "<p>The login name of the user.</p>",
-        "UserMetadata$Username": "<p>The username of the user.</p>"
+        "UserMetadata$Username": "<p>The name of the user.</p>"
       }
     }
   }

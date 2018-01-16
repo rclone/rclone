@@ -212,8 +212,8 @@ type AndroidAppInfo struct {
 }
 
 func (s *AndroidAppInfo) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidAppInfo
-	raw := noMethod(*s)
+	type NoMethod AndroidAppInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -238,11 +238,7 @@ type AndroidInstrumentationTest struct {
 	TestTargets []string `json:"testTargets,omitempty"`
 
 	// UseOrchestrator: The flag indicates whether Android Test Orchestrator
-	// will be used to run test or not. Test orchestrator is used if either:
-	// - orchestrator_option field is USE_ORCHESTRATOR, and test runner is
-	// compatible with orchestrator. Or - orchestrator_option field is
-	// unspecified or ORCHESTRATOR_OPTION_UNSPECIFIED, and test runner is
-	// compatible with orchestrator.
+	// will be used to run test or not.
 	UseOrchestrator bool `json:"useOrchestrator,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "TestPackageId") to
@@ -263,8 +259,8 @@ type AndroidInstrumentationTest struct {
 }
 
 func (s *AndroidInstrumentationTest) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidInstrumentationTest
-	raw := noMethod(*s)
+	type NoMethod AndroidInstrumentationTest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -309,8 +305,8 @@ type AndroidRoboTest struct {
 }
 
 func (s *AndroidRoboTest) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidRoboTest
-	raw := noMethod(*s)
+	type NoMethod AndroidRoboTest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -348,8 +344,8 @@ type AndroidTest struct {
 }
 
 func (s *AndroidTest) MarshalJSON() ([]byte, error) {
-	type noMethod AndroidTest
-	raw := noMethod(*s)
+	type NoMethod AndroidTest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -409,22 +405,29 @@ func (s *AndroidTest) MarshalJSON() ([]byte, error) {
 // { "@type": "type.googleapis.com/google.protobuf.Duration", "value":
 // "1.212s" }
 type Any struct {
-	// TypeUrl: A URL/resource name whose content describes the type of the
-	// serialized protocol buffer message.
+	// TypeUrl: A URL/resource name that uniquely identifies the type of the
+	// serialized protocol buffer message. The last segment of the URL's
+	// path must represent the fully qualified name of the type (as in
+	// `path/google.protobuf.Duration`). The name should be in a canonical
+	// form (e.g., leading "." is not accepted).
 	//
-	// For URLs which use the scheme `http`, `https`, or no scheme, the
-	// following restrictions and interpretations apply:
+	// In practice, teams usually precompile into the binary all types that
+	// they expect it to use in the context of Any. However, for URLs which
+	// use the scheme `http`, `https`, or no scheme, one can optionally set
+	// up a type server that maps type URLs to message definitions as
+	// follows:
 	//
-	// * If no scheme is provided, `https` is assumed. * The last segment of
-	// the URL's path must represent the fully qualified name of the type
-	// (as in `path/google.protobuf.Duration`). The name should be in a
-	// canonical form (e.g., leading "." is not accepted). * An HTTP GET on
-	// the URL must yield a [google.protobuf.Type][] value in binary format,
-	// or produce an error. * Applications are allowed to cache lookup
-	// results based on the URL, or have them precompiled into a binary to
-	// avoid any lookup. Therefore, binary compatibility needs to be
-	// preserved on changes to types. (Use versioned type names to manage
-	// breaking changes.)
+	// * If no scheme is provided, `https` is assumed. * An HTTP GET on the
+	// URL must yield a [google.protobuf.Type][] value in binary format, or
+	// produce an error. * Applications are allowed to cache lookup results
+	// based on the URL, or have them precompiled into a binary to avoid any
+	// lookup. Therefore, binary compatibility needs to be preserved on
+	// changes to types. (Use versioned type names to manage breaking
+	// changes.)
+	//
+	// Note: this functionality is not currently available in the official
+	// protobuf release, and it is not used for type URLs beginning with
+	// type.googleapis.com.
 	//
 	// Schemes other than `http`, `https` (or the empty scheme) might be
 	// used with implementation specific semantics.
@@ -452,8 +455,8 @@ type Any struct {
 }
 
 func (s *Any) MarshalJSON() ([]byte, error) {
-	type noMethod Any
-	raw := noMethod(*s)
+	type NoMethod Any
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -488,8 +491,8 @@ type AppStartTime struct {
 }
 
 func (s *AppStartTime) MarshalJSON() ([]byte, error) {
-	type noMethod AppStartTime
-	raw := noMethod(*s)
+	type NoMethod AppStartTime
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -548,8 +551,8 @@ type BasicPerfSampleSeries struct {
 }
 
 func (s *BasicPerfSampleSeries) MarshalJSON() ([]byte, error) {
-	type noMethod BasicPerfSampleSeries
-	raw := noMethod(*s)
+	type NoMethod BasicPerfSampleSeries
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -579,8 +582,8 @@ type BatchCreatePerfSamplesRequest struct {
 }
 
 func (s *BatchCreatePerfSamplesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod BatchCreatePerfSamplesRequest
-	raw := noMethod(*s)
+	type NoMethod BatchCreatePerfSamplesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -609,8 +612,8 @@ type BatchCreatePerfSamplesResponse struct {
 }
 
 func (s *BatchCreatePerfSamplesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod BatchCreatePerfSamplesResponse
-	raw := noMethod(*s)
+	type NoMethod BatchCreatePerfSamplesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -643,18 +646,18 @@ type CPUInfo struct {
 }
 
 func (s *CPUInfo) MarshalJSON() ([]byte, error) {
-	type noMethod CPUInfo
-	raw := noMethod(*s)
+	type NoMethod CPUInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *CPUInfo) UnmarshalJSON(data []byte) error {
-	type noMethod CPUInfo
+	type NoMethod CPUInfo
 	var s1 struct {
 		CpuSpeedInGhz gensupport.JSONFloat64 `json:"cpuSpeedInGhz"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -745,8 +748,8 @@ type Duration struct {
 }
 
 func (s *Duration) MarshalJSON() ([]byte, error) {
-	type noMethod Duration
-	raw := noMethod(*s)
+	type NoMethod Duration
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -852,8 +855,8 @@ type Execution struct {
 }
 
 func (s *Execution) MarshalJSON() ([]byte, error) {
-	type noMethod Execution
-	raw := noMethod(*s)
+	type NoMethod Execution
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -897,8 +900,8 @@ type FailureDetail struct {
 }
 
 func (s *FailureDetail) MarshalJSON() ([]byte, error) {
-	type noMethod FailureDetail
-	raw := noMethod(*s)
+	type NoMethod FailureDetail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -935,8 +938,104 @@ type FileReference struct {
 }
 
 func (s *FileReference) MarshalJSON() ([]byte, error) {
-	type noMethod FileReference
-	raw := noMethod(*s)
+	type NoMethod FileReference
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// GraphicsStats: Graphics statistics for the App. The information is
+// collected from 'adb shell dumpsys graphicsstats'. For more info see:
+// https://developer.android.com/training/testing/performance.html
+// Statistics will only be present for API 23+.
+type GraphicsStats struct {
+	// Buckets: Histogram of frame render times. There should be 154 buckets
+	// ranging from [5ms, 6ms) to [4950ms, infinity)
+	Buckets []*GraphicsStatsBucket `json:"buckets,omitempty"`
+
+	// HighInputLatencyCount: Total "high input latency" events.
+	HighInputLatencyCount int64 `json:"highInputLatencyCount,omitempty,string"`
+
+	// JankyFrames: Total frames with slow render time. Should be <=
+	// total_frames.
+	JankyFrames int64 `json:"jankyFrames,omitempty,string"`
+
+	// MissedVsyncCount: Total "missed vsync" events.
+	MissedVsyncCount int64 `json:"missedVsyncCount,omitempty,string"`
+
+	// P50Millis: 50th percentile frame render time in milliseconds.
+	P50Millis int64 `json:"p50Millis,omitempty,string"`
+
+	// P90Millis: 90th percentile frame render time in milliseconds.
+	P90Millis int64 `json:"p90Millis,omitempty,string"`
+
+	// P95Millis: 95th percentile frame render time in milliseconds.
+	P95Millis int64 `json:"p95Millis,omitempty,string"`
+
+	// P99Millis: 99th percentile frame render time in milliseconds.
+	P99Millis int64 `json:"p99Millis,omitempty,string"`
+
+	// SlowBitmapUploadCount: Total "slow bitmap upload" events.
+	SlowBitmapUploadCount int64 `json:"slowBitmapUploadCount,omitempty,string"`
+
+	// SlowDrawCount: Total "slow draw" events.
+	SlowDrawCount int64 `json:"slowDrawCount,omitempty,string"`
+
+	// SlowUiThreadCount: Total "slow UI thread" events.
+	SlowUiThreadCount int64 `json:"slowUiThreadCount,omitempty,string"`
+
+	// TotalFrames: Total frames rendered by package.
+	TotalFrames int64 `json:"totalFrames,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "Buckets") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Buckets") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GraphicsStats) MarshalJSON() ([]byte, error) {
+	type NoMethod GraphicsStats
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type GraphicsStatsBucket struct {
+	// FrameCount: Number of frames in the bucket.
+	FrameCount int64 `json:"frameCount,omitempty,string"`
+
+	// RenderMillis: Lower bound of render time in milliseconds.
+	RenderMillis int64 `json:"renderMillis,omitempty,string"`
+
+	// ForceSendFields is a list of field names (e.g. "FrameCount") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "FrameCount") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *GraphicsStatsBucket) MarshalJSON() ([]byte, error) {
+	type NoMethod GraphicsStatsBucket
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -992,8 +1091,8 @@ type History struct {
 }
 
 func (s *History) MarshalJSON() ([]byte, error) {
-	type noMethod History
-	raw := noMethod(*s)
+	type NoMethod History
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1036,8 +1135,8 @@ type Image struct {
 }
 
 func (s *Image) MarshalJSON() ([]byte, error) {
-	type noMethod Image
-	raw := noMethod(*s)
+	type NoMethod Image
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1074,8 +1173,8 @@ type InconclusiveDetail struct {
 }
 
 func (s *InconclusiveDetail) MarshalJSON() ([]byte, error) {
-	type noMethod InconclusiveDetail
-	raw := noMethod(*s)
+	type NoMethod InconclusiveDetail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1113,8 +1212,8 @@ type ListExecutionsResponse struct {
 }
 
 func (s *ListExecutionsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListExecutionsResponse
-	raw := noMethod(*s)
+	type NoMethod ListExecutionsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1156,8 +1255,8 @@ type ListHistoriesResponse struct {
 }
 
 func (s *ListHistoriesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListHistoriesResponse
-	raw := noMethod(*s)
+	type NoMethod ListHistoriesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1188,8 +1287,8 @@ type ListPerfSampleSeriesResponse struct {
 }
 
 func (s *ListPerfSampleSeriesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListPerfSampleSeriesResponse
-	raw := noMethod(*s)
+	type NoMethod ListPerfSampleSeriesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1224,8 +1323,8 @@ type ListPerfSamplesResponse struct {
 }
 
 func (s *ListPerfSamplesResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListPerfSamplesResponse
-	raw := noMethod(*s)
+	type NoMethod ListPerfSamplesResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1255,8 +1354,8 @@ type ListScreenshotClustersResponse struct {
 }
 
 func (s *ListScreenshotClustersResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListScreenshotClustersResponse
-	raw := noMethod(*s)
+	type NoMethod ListScreenshotClustersResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1303,8 +1402,8 @@ type ListStepThumbnailsResponse struct {
 }
 
 func (s *ListStepThumbnailsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListStepThumbnailsResponse
-	raw := noMethod(*s)
+	type NoMethod ListStepThumbnailsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1342,8 +1441,8 @@ type ListStepsResponse struct {
 }
 
 func (s *ListStepsResponse) MarshalJSON() ([]byte, error) {
-	type noMethod ListStepsResponse
-	raw := noMethod(*s)
+	type NoMethod ListStepsResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1374,8 +1473,8 @@ type MemoryInfo struct {
 }
 
 func (s *MemoryInfo) MarshalJSON() ([]byte, error) {
-	type noMethod MemoryInfo
-	raw := noMethod(*s)
+	type NoMethod MemoryInfo
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1445,8 +1544,8 @@ type Outcome struct {
 }
 
 func (s *Outcome) MarshalJSON() ([]byte, error) {
-	type noMethod Outcome
-	raw := noMethod(*s)
+	type NoMethod Outcome
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1476,8 +1575,8 @@ type PerfEnvironment struct {
 }
 
 func (s *PerfEnvironment) MarshalJSON() ([]byte, error) {
-	type noMethod PerfEnvironment
-	raw := noMethod(*s)
+	type NoMethod PerfEnvironment
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1488,6 +1587,11 @@ type PerfMetricsSummary struct {
 
 	// ExecutionId: A tool results execution ID.
 	ExecutionId string `json:"executionId,omitempty"`
+
+	// GraphicsStats: Graphics statistics for the entire run. Statistics are
+	// reset at the beginning of the run and collected at the end of the
+	// run.
+	GraphicsStats *GraphicsStats `json:"graphicsStats,omitempty"`
 
 	// HistoryId: A tool results history ID.
 	HistoryId string `json:"historyId,omitempty"`
@@ -1534,8 +1638,8 @@ type PerfMetricsSummary struct {
 }
 
 func (s *PerfMetricsSummary) MarshalJSON() ([]byte, error) {
-	type noMethod PerfMetricsSummary
-	raw := noMethod(*s)
+	type NoMethod PerfMetricsSummary
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1566,18 +1670,18 @@ type PerfSample struct {
 }
 
 func (s *PerfSample) MarshalJSON() ([]byte, error) {
-	type noMethod PerfSample
-	raw := noMethod(*s)
+	type NoMethod PerfSample
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *PerfSample) UnmarshalJSON(data []byte) error {
-	type noMethod PerfSample
+	type NoMethod PerfSample
 	var s1 struct {
 		Value gensupport.JSONFloat64 `json:"value"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}
@@ -1630,8 +1734,8 @@ type PerfSampleSeries struct {
 }
 
 func (s *PerfSampleSeries) MarshalJSON() ([]byte, error) {
-	type noMethod PerfSampleSeries
-	raw := noMethod(*s)
+	type NoMethod PerfSampleSeries
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1674,8 +1778,8 @@ type ProjectSettings struct {
 }
 
 func (s *ProjectSettings) MarshalJSON() ([]byte, error) {
-	type noMethod ProjectSettings
-	raw := noMethod(*s)
+	type NoMethod ProjectSettings
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1708,8 +1812,8 @@ type PublishXunitXmlFilesRequest struct {
 }
 
 func (s *PublishXunitXmlFilesRequest) MarshalJSON() ([]byte, error) {
-	type noMethod PublishXunitXmlFilesRequest
-	raw := noMethod(*s)
+	type NoMethod PublishXunitXmlFilesRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1747,8 +1851,8 @@ type Screen struct {
 }
 
 func (s *Screen) MarshalJSON() ([]byte, error) {
-	type noMethod Screen
-	raw := noMethod(*s)
+	type NoMethod Screen
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1792,8 +1896,8 @@ type ScreenshotCluster struct {
 }
 
 func (s *ScreenshotCluster) MarshalJSON() ([]byte, error) {
-	type noMethod ScreenshotCluster
-	raw := noMethod(*s)
+	type NoMethod ScreenshotCluster
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1830,8 +1934,8 @@ type SkippedDetail struct {
 }
 
 func (s *SkippedDetail) MarshalJSON() ([]byte, error) {
-	type noMethod SkippedDetail
-	raw := noMethod(*s)
+	type NoMethod SkippedDetail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1858,8 +1962,8 @@ type Specification struct {
 }
 
 func (s *Specification) MarshalJSON() ([]byte, error) {
-	type noMethod Specification
-	raw := noMethod(*s)
+	type NoMethod Specification
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1894,8 +1998,8 @@ type StackTrace struct {
 }
 
 func (s *StackTrace) MarshalJSON() ([]byte, error) {
-	type noMethod StackTrace
-	raw := noMethod(*s)
+	type NoMethod StackTrace
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -1988,8 +2092,8 @@ type Status struct {
 }
 
 func (s *Status) MarshalJSON() ([]byte, error) {
-	type noMethod Status
-	raw := noMethod(*s)
+	type NoMethod Status
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2201,8 +2305,8 @@ type Step struct {
 }
 
 func (s *Step) MarshalJSON() ([]byte, error) {
-	type noMethod Step
-	raw := noMethod(*s)
+	type NoMethod Step
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2229,8 +2333,8 @@ type StepDimensionValueEntry struct {
 }
 
 func (s *StepDimensionValueEntry) MarshalJSON() ([]byte, error) {
-	type noMethod StepDimensionValueEntry
-	raw := noMethod(*s)
+	type NoMethod StepDimensionValueEntry
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2257,8 +2361,8 @@ type StepLabelsEntry struct {
 }
 
 func (s *StepLabelsEntry) MarshalJSON() ([]byte, error) {
-	type noMethod StepLabelsEntry
-	raw := noMethod(*s)
+	type NoMethod StepLabelsEntry
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2285,8 +2389,8 @@ type SuccessDetail struct {
 }
 
 func (s *SuccessDetail) MarshalJSON() ([]byte, error) {
-	type noMethod SuccessDetail
-	raw := noMethod(*s)
+	type NoMethod SuccessDetail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2326,8 +2430,8 @@ type TestCaseReference struct {
 }
 
 func (s *TestCaseReference) MarshalJSON() ([]byte, error) {
-	type noMethod TestCaseReference
-	raw := noMethod(*s)
+	type NoMethod TestCaseReference
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2394,8 +2498,8 @@ type TestExecutionStep struct {
 }
 
 func (s *TestExecutionStep) MarshalJSON() ([]byte, error) {
-	type noMethod TestExecutionStep
-	raw := noMethod(*s)
+	type NoMethod TestExecutionStep
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2422,14 +2526,17 @@ type TestIssue struct {
 	//
 	// Possible values:
 	//   "anr"
+	//   "compatibleWithOrchestrator"
 	//   "fatalException"
+	//   "launcherActivityNotFound"
 	//   "nativeCrash"
+	//   "startActivityNotFound"
 	//   "unspecifiedType"
+	//   "unusedRoboDirective"
 	Type string `json:"type,omitempty"`
 
 	// Warning: Warning message with additional details of the issue. Should
 	// always be a message from com.google.devtools.toolresults.v1.warnings
-	// Required.
 	Warning *Any `json:"warning,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ErrorMessage") to
@@ -2450,8 +2557,8 @@ type TestIssue struct {
 }
 
 func (s *TestIssue) MarshalJSON() ([]byte, error) {
-	type noMethod TestIssue
-	raw := noMethod(*s)
+	type NoMethod TestIssue
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2519,8 +2626,8 @@ type TestSuiteOverview struct {
 }
 
 func (s *TestSuiteOverview) MarshalJSON() ([]byte, error) {
-	type noMethod TestSuiteOverview
-	raw := noMethod(*s)
+	type NoMethod TestSuiteOverview
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2551,8 +2658,8 @@ type TestTiming struct {
 }
 
 func (s *TestTiming) MarshalJSON() ([]byte, error) {
-	type noMethod TestTiming
-	raw := noMethod(*s)
+	type NoMethod TestTiming
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2600,8 +2707,8 @@ type Thumbnail struct {
 }
 
 func (s *Thumbnail) MarshalJSON() ([]byte, error) {
-	type noMethod Thumbnail
-	raw := noMethod(*s)
+	type NoMethod Thumbnail
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2669,7 +2776,7 @@ func (s *Thumbnail) MarshalJSON() ([]byte, error) {
 // The fractional seconds, which can go up to 9 digits (i.e. up to 1
 // nanosecond resolution), are optional. The "Z" suffix indicates the
 // timezone ("UTC"); the timezone is required, though only UTC (as
-// indicated by "Z") is presently supported.
+// indicated by "Z") is currently supported.
 //
 // For example, "2017-01-15T01:30:15.01Z" encodes 15.01 seconds past
 // 01:30 UTC on January 15, 2017.
@@ -2683,7 +2790,7 @@ func (s *Thumbnail) MarshalJSON() ([]byte, error) {
 // [`strftime`](https://docs.python.org/2/library/time.html#time.strftime
 // ) with the time format spec '%Y-%m-%dT%H:%M:%S.%fZ'. Likewise, in
 // Java, one can use the Joda Time's [`ISODateTimeFormat.dateTime()`](
-// http://joda-time.sourceforge.net/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime()) to obtain a formatter capable of generating timestamps in this
+// http://www.joda.org/joda-time/apidocs/org/joda/time/format/ISODateTimeFormat.html#dateTime-- ) to obtain a formatter capable of generating timestamps in this
 // format.
 type Timestamp struct {
 	// Nanos: Non-negative fractions of a second at nanosecond resolution.
@@ -2715,8 +2822,8 @@ type Timestamp struct {
 }
 
 func (s *Timestamp) MarshalJSON() ([]byte, error) {
-	type noMethod Timestamp
-	raw := noMethod(*s)
+	type NoMethod Timestamp
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2783,8 +2890,8 @@ type ToolExecution struct {
 }
 
 func (s *ToolExecution) MarshalJSON() ([]byte, error) {
-	type noMethod ToolExecution
-	raw := noMethod(*s)
+	type NoMethod ToolExecution
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2816,8 +2923,8 @@ type ToolExecutionStep struct {
 }
 
 func (s *ToolExecutionStep) MarshalJSON() ([]byte, error) {
-	type noMethod ToolExecutionStep
-	raw := noMethod(*s)
+	type NoMethod ToolExecutionStep
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2847,8 +2954,8 @@ type ToolExitCode struct {
 }
 
 func (s *ToolExitCode) MarshalJSON() ([]byte, error) {
-	type noMethod ToolExitCode
-	raw := noMethod(*s)
+	type NoMethod ToolExitCode
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -2889,8 +2996,8 @@ type ToolOutputReference struct {
 }
 
 func (s *ToolOutputReference) MarshalJSON() ([]byte, error) {
-	type noMethod ToolOutputReference
-	raw := noMethod(*s)
+	type NoMethod ToolOutputReference
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -3006,7 +3113,7 @@ func (c *ProjectsGetSettingsCall) Do(opts ...googleapi.CallOption) (*ProjectSett
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3156,7 +3263,7 @@ func (c *ProjectsInitializeSettingsCall) Do(opts ...googleapi.CallOption) (*Proj
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3304,7 +3411,7 @@ func (c *ProjectsHistoriesCreateCall) Do(opts ...googleapi.CallOption) (*History
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3458,7 +3565,7 @@ func (c *ProjectsHistoriesGetCall) Do(opts ...googleapi.CallOption) (*History, e
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3637,7 +3744,7 @@ func (c *ProjectsHistoriesListCall) Do(opts ...googleapi.CallOption) (*ListHisto
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3825,7 +3932,7 @@ func (c *ProjectsHistoriesExecutionsCreateCall) Do(opts ...googleapi.CallOption)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -3989,7 +4096,7 @@ func (c *ProjectsHistoriesExecutionsGetCall) Do(opts ...googleapi.CallOption) (*
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4170,7 +4277,7 @@ func (c *ProjectsHistoriesExecutionsListCall) Do(opts ...googleapi.CallOption) (
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4363,7 +4470,7 @@ func (c *ProjectsHistoriesExecutionsPatchCall) Do(opts ...googleapi.CallOption) 
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4531,7 +4638,7 @@ func (c *ProjectsHistoriesExecutionsClustersGetCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4700,7 +4807,7 @@ func (c *ProjectsHistoriesExecutionsClustersListCall) Do(opts ...googleapi.CallO
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -4866,7 +4973,7 @@ func (c *ProjectsHistoriesExecutionsStepsCreateCall) Do(opts ...googleapi.CallOp
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5040,7 +5147,7 @@ func (c *ProjectsHistoriesExecutionsStepsGetCall) Do(opts ...googleapi.CallOptio
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5210,7 +5317,7 @@ func (c *ProjectsHistoriesExecutionsStepsGetPerfMetricsSummaryCall) Do(opts ...g
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5403,7 +5510,7 @@ func (c *ProjectsHistoriesExecutionsStepsListCall) Do(opts ...googleapi.CallOpti
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5608,7 +5715,7 @@ func (c *ProjectsHistoriesExecutionsStepsPatchCall) Do(opts ...googleapi.CallOpt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5784,7 +5891,7 @@ func (c *ProjectsHistoriesExecutionsStepsPublishXunitXmlFilesCall) Do(opts ...go
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -5951,7 +6058,7 @@ func (c *ProjectsHistoriesExecutionsStepsPerfMetricsSummaryCreateCall) Do(opts .
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6118,7 +6225,7 @@ func (c *ProjectsHistoriesExecutionsStepsPerfSampleSeriesCreateCall) Do(opts ...
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6294,7 +6401,7 @@ func (c *ProjectsHistoriesExecutionsStepsPerfSampleSeriesGetCall) Do(opts ...goo
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6489,7 +6596,7 @@ func (c *ProjectsHistoriesExecutionsStepsPerfSampleSeriesListCall) Do(opts ...go
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6681,7 +6788,7 @@ func (c *ProjectsHistoriesExecutionsStepsPerfSampleSeriesSamplesBatchCreateCall)
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -6886,7 +6993,7 @@ func (c *ProjectsHistoriesExecutionsStepsPerfSampleSeriesSamplesListCall) Do(opt
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil
@@ -7115,7 +7222,7 @@ func (c *ProjectsHistoriesExecutionsStepsThumbnailsListCall) Do(opts ...googleap
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

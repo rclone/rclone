@@ -126,6 +126,7 @@ func (client ServersClient) CreatePreparer(resourceGroupName string, serverName 
 func (client ServersClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -225,6 +226,7 @@ func (client ServersClient) DeletePreparer(resourceGroupName string, serverName 
 func (client ServersClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -303,7 +305,9 @@ func (client ServersClient) DissociateGatewayPreparer(resourceGroupName string, 
 // DissociateGatewaySender sends the DissociateGateway request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServersClient) DissociateGatewaySender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DissociateGatewayResponder handles the response to the DissociateGateway request. The method always
@@ -381,7 +385,9 @@ func (client ServersClient) GetDetailsPreparer(resourceGroupName string, serverN
 // GetDetailsSender sends the GetDetails request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServersClient) GetDetailsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetDetailsResponder handles the response to the GetDetails request. The method always
@@ -442,7 +448,9 @@ func (client ServersClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServersClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -515,7 +523,9 @@ func (client ServersClient) ListByResourceGroupPreparer(resourceGroupName string
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServersClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -594,7 +604,9 @@ func (client ServersClient) ListGatewayStatusPreparer(resourceGroupName string, 
 // ListGatewayStatusSender sends the ListGatewayStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServersClient) ListGatewayStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListGatewayStatusResponder handles the response to the ListGatewayStatus request. The method always
@@ -673,7 +685,9 @@ func (client ServersClient) ListSkusForExistingPreparer(resourceGroupName string
 // ListSkusForExistingSender sends the ListSkusForExisting request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServersClient) ListSkusForExistingSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSkusForExistingResponder handles the response to the ListSkusForExisting request. The method always
@@ -734,7 +748,9 @@ func (client ServersClient) ListSkusForNewPreparer() (*http.Request, error) {
 // ListSkusForNewSender sends the ListSkusForNew request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServersClient) ListSkusForNewSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSkusForNewResponder handles the response to the ListSkusForNew request. The method always
@@ -833,6 +849,7 @@ func (client ServersClient) ResumePreparer(resourceGroupName string, serverName 
 func (client ServersClient) ResumeSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -931,6 +948,7 @@ func (client ServersClient) SuspendPreparer(resourceGroupName string, serverName
 func (client ServersClient) SuspendSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1032,6 +1050,7 @@ func (client ServersClient) UpdatePreparer(resourceGroupName string, serverName 
 func (client ServersClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

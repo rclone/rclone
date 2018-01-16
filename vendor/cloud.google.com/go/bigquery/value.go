@@ -243,7 +243,7 @@ func compileToOps(structType reflect.Type, schema Schema) ([]structLoaderOp, err
 }
 
 // determineSetFunc chooses the best function for setting a field of type ftype
-// to a value whose schema field type is sftype. It returns nil if stype
+// to a value whose schema field type is stype. It returns nil if stype
 // is not assignable to ftype.
 // determineSetFunc considers only basic types. See compileToOps for
 // handling of repetition and nesting.
@@ -405,7 +405,7 @@ func valuesToMap(vs []Value, schema Schema) (map[string]Value, error) {
 	m := make(map[string]Value)
 	for i, fieldSchema := range schema {
 		if fieldSchema.Type != RecordFieldType {
-			m[fieldSchema.Name] = vs[i]
+			m[fieldSchema.Name] = toUploadValue(vs[i], fieldSchema)
 			continue
 		}
 		// Nested record, possibly repeated.
@@ -510,14 +510,9 @@ func structFieldToUploadValue(vfield reflect.Value, schemaField *FieldSchema) (i
 			schemaField.Name, vfield.Type())
 	}
 
-	// A non-nested field can be represented by its Go value.
+	// A non-nested field can be represented by its Go value, except for civil times.
 	if schemaField.Type != RecordFieldType {
-		if !schemaField.Repeated || vfield.Len() > 0 {
-			return vfield.Interface(), nil
-		}
-		// The service treats a null repeated field as an error. Return
-		// nil to omit the field entirely.
-		return nil, nil
+		return toUploadValueReflect(vfield, schemaField), nil
 	}
 	// A non-repeated nested field is converted into a map[string]Value.
 	if !schemaField.Repeated {
@@ -543,6 +538,73 @@ func structFieldToUploadValue(vfield reflect.Value, schemaField *FieldSchema) (i
 		vals = append(vals, m)
 	}
 	return vals, nil
+}
+
+func toUploadValue(val interface{}, fs *FieldSchema) interface{} {
+	if fs.Type == TimeFieldType || fs.Type == DateTimeFieldType {
+		return toUploadValueReflect(reflect.ValueOf(val), fs)
+	}
+	return val
+}
+
+func toUploadValueReflect(v reflect.Value, fs *FieldSchema) interface{} {
+	switch fs.Type {
+	case TimeFieldType:
+		return civilToUploadValue(v, fs, func(v reflect.Value) string {
+			return CivilTimeString(v.Interface().(civil.Time))
+		})
+	case DateTimeFieldType:
+		return civilToUploadValue(v, fs, func(v reflect.Value) string {
+			return CivilDateTimeString(v.Interface().(civil.DateTime))
+		})
+	default:
+		if !fs.Repeated || v.Len() > 0 {
+			return v.Interface()
+		}
+		// The service treats a null repeated field as an error. Return
+		// nil to omit the field entirely.
+		return nil
+	}
+}
+
+func civilToUploadValue(v reflect.Value, fs *FieldSchema, cvt func(reflect.Value) string) interface{} {
+	if !fs.Repeated {
+		return cvt(v)
+	}
+	if v.Len() == 0 {
+		return nil
+	}
+	s := make([]string, v.Len())
+	for i := 0; i < v.Len(); i++ {
+		s[i] = cvt(v.Index(i))
+	}
+	return s
+}
+
+// CivilTimeString returns a string representing a civil.Time in a format compatible
+// with BigQuery SQL. It rounds the time to the nearest microsecond and returns a
+// string with six digits of sub-second precision.
+//
+// Use CivilTimeString when using civil.Time in DML, for example in INSERT
+// statements.
+func CivilTimeString(t civil.Time) string {
+	if t.Nanosecond == 0 {
+		return t.String()
+	} else {
+		micro := (t.Nanosecond + 500) / 1000 // round to nearest microsecond
+		t.Nanosecond = 0
+		return t.String() + fmt.Sprintf(".%06d", micro)
+	}
+}
+
+// CivilDateTimeString returns a string representing a civil.DateTime in a format compatible
+// with BigQuery SQL. It separate the date and time with a space, and formats the time
+// with CivilTimeString.
+//
+// Use CivilDateTimeString when using civil.DateTime in DML, for example in INSERT
+// statements.
+func CivilDateTimeString(dt civil.DateTime) string {
+	return dt.Date.String() + " " + CivilTimeString(dt.Time)
 }
 
 // convertRows converts a series of TableRows into a series of Value slices.
@@ -618,7 +680,6 @@ func convertNestedRecord(val map[string]interface{}, schema Schema) (Value, erro
 	for i, cell := range record {
 		// each cell contains a single entry, keyed by "v"
 		val := cell.(map[string]interface{})["v"]
-
 		fs := schema[i]
 		v, err := convertValue(val, fs.Type, fs.Schema)
 		if err != nil {

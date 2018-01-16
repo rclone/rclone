@@ -122,6 +122,7 @@ func (client InteractionsClient) CreateOrUpdatePreparer(resourceGroupName string
 func (client InteractionsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -192,7 +193,9 @@ func (client InteractionsClient) GetPreparer(resourceGroupName string, hubName s
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client InteractionsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -261,7 +264,9 @@ func (client InteractionsClient) ListByHubPreparer(resourceGroupName string, hub
 // ListByHubSender sends the ListByHub request. The method will close the
 // http.Response Body if it receives an error.
 func (client InteractionsClient) ListByHubSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByHubResponder handles the response to the ListByHub request. The method always
@@ -397,7 +402,9 @@ func (client InteractionsClient) SuggestRelationshipLinksPreparer(resourceGroupN
 // SuggestRelationshipLinksSender sends the SuggestRelationshipLinks request. The method will close the
 // http.Response Body if it receives an error.
 func (client InteractionsClient) SuggestRelationshipLinksSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // SuggestRelationshipLinksResponder handles the response to the SuggestRelationshipLinks request. The method always

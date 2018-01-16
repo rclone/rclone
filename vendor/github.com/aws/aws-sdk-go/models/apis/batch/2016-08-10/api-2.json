@@ -221,6 +221,39 @@
     }
   },
   "shapes":{
+    "ArrayJobDependency":{
+      "type":"string",
+      "enum":[
+        "N_TO_N",
+        "SEQUENTIAL"
+      ]
+    },
+    "ArrayJobStatusSummary":{
+      "type":"map",
+      "key":{"shape":"String"},
+      "value":{"shape":"Integer"}
+    },
+    "ArrayProperties":{
+      "type":"structure",
+      "members":{
+        "size":{"shape":"Integer"}
+      }
+    },
+    "ArrayPropertiesDetail":{
+      "type":"structure",
+      "members":{
+        "statusSummary":{"shape":"ArrayJobStatusSummary"},
+        "size":{"shape":"Integer"},
+        "index":{"shape":"Integer"}
+      }
+    },
+    "ArrayPropertiesSummary":{
+      "type":"structure",
+      "members":{
+        "size":{"shape":"Integer"},
+        "index":{"shape":"Integer"}
+      }
+    },
     "AttemptContainerDetail":{
       "type":"structure",
       "members":{
@@ -427,6 +460,13 @@
         "user":{"shape":"String"}
       }
     },
+    "ContainerSummary":{
+      "type":"structure",
+      "members":{
+        "exitCode":{"shape":"Integer"},
+        "reason":{"shape":"String"}
+      }
+    },
     "CreateComputeEnvironmentRequest":{
       "type":"structure",
       "required":[
@@ -629,7 +669,8 @@
     "JobDependency":{
       "type":"structure",
       "members":{
-        "jobId":{"shape":"String"}
+        "jobId":{"shape":"String"},
+        "type":{"shape":"ArrayJobDependency"}
       }
     },
     "JobDependencyList":{
@@ -660,7 +701,8 @@
         "dependsOn":{"shape":"JobDependencyList"},
         "jobDefinition":{"shape":"String"},
         "parameters":{"shape":"ParametersMap"},
-        "container":{"shape":"ContainerDetail"}
+        "container":{"shape":"ContainerDetail"},
+        "arrayProperties":{"shape":"ArrayPropertiesDetail"}
       }
     },
     "JobDetailList":{
@@ -710,7 +752,14 @@
       ],
       "members":{
         "jobId":{"shape":"String"},
-        "jobName":{"shape":"String"}
+        "jobName":{"shape":"String"},
+        "createdAt":{"shape":"Long"},
+        "status":{"shape":"JobStatus"},
+        "statusReason":{"shape":"String"},
+        "startedAt":{"shape":"Long"},
+        "stoppedAt":{"shape":"Long"},
+        "container":{"shape":"ContainerSummary"},
+        "arrayProperties":{"shape":"ArrayPropertiesSummary"}
       }
     },
     "JobSummaryList":{
@@ -726,9 +775,9 @@
     },
     "ListJobsRequest":{
       "type":"structure",
-      "required":["jobQueue"],
       "members":{
         "jobQueue":{"shape":"String"},
+        "arrayJobId":{"shape":"String"},
         "jobStatus":{"shape":"JobStatus"},
         "maxResults":{"shape":"Integer"},
         "nextToken":{"shape":"String"}
@@ -817,6 +866,7 @@
       "members":{
         "jobName":{"shape":"String"},
         "jobQueue":{"shape":"String"},
+        "arrayProperties":{"shape":"ArrayProperties"},
         "dependsOn":{"shape":"JobDependencyList"},
         "jobDefinition":{"shape":"String"},
         "parameters":{"shape":"ParametersMap"},

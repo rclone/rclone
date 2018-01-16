@@ -1,6 +1,6 @@
 // Package servicefabric implements the Azure ARM Servicefabric service API version 2016-09-01.
 //
-//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/servicefabric/mgmt/2016-09-01/servicefabric
 package servicefabric
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

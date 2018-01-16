@@ -3,7 +3,14 @@
 // Package cloudhsm provides the client and types for making API
 // requests to Amazon CloudHSM.
 //
-// AWS CloudHSM Service
+// This is documentation for AWS CloudHSM Classic. For more information, see
+// AWS CloudHSM Classic FAQs (http://aws.amazon.com/cloudhsm/faqs-classic/),
+// the AWS CloudHSM Classic User Guide (http://docs.aws.amazon.com/cloudhsm/classic/userguide/),
+// and the AWS CloudHSM Classic API Reference (http://docs.aws.amazon.com/cloudhsm/classic/APIReference/).
+//
+// For information about the current version of AWS CloudHSM, see AWS CloudHSM
+// (http://aws.amazon.com/cloudhsm/), the AWS CloudHSM User Guide (http://docs.aws.amazon.com/cloudhsm/latest/userguide/),
+// and the AWS CloudHSM API Reference (http://docs.aws.amazon.com/cloudhsm/latest/APIReference/).
 //
 // See https://docs.aws.amazon.com/goto/WebAPI/cloudhsm-2014-05-30 for more information on this service.
 //
@@ -12,7 +19,7 @@
 //
 // Using the Client
 //
-// To Amazon CloudHSM with the SDK use the New function to create
+// To contact Amazon CloudHSM with the SDK use the New function to create
 // a new service client. With that client you can make API requests to the service.
 // These clients are safe to use concurrently.
 //

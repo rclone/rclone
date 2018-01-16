@@ -15,53 +15,28 @@
 // +-------------------------------------------------------------------------
 
 // Package logger provides support for logging to stdout and stderr.
-// Log entries will be logged with format: $timestamp $hostname [$pid]: $severity $message.
 package logger
 
 import (
+	"context"
 	"fmt"
-	"os"
-	"strings"
-	"time"
 
-	"github.com/sirupsen/logrus"
+	"github.com/pengsrc/go-shared/log"
 )
 
 // Logger is the interface of SDK logger.
 type Logger interface {
-	Debugf(format string, args ...interface{})
-	Infof(format string, args ...interface{})
-	Warnf(format string, args ...interface{})
-	Errorf(format string, args ...interface{})
-	Fatalf(format string, args ...interface{})
-	Panicf(format string, args ...interface{})
-}
-
-// LogFormatter is used to format log entry.
-type LogFormatter struct{}
-
-// Format formats a given log entry, returns byte slice and error.
-func (c *LogFormatter) Format(entry *logrus.Entry) ([]byte, error) {
-	level := strings.ToUpper(entry.Level.String())
-	if level == "WARNING" {
-		level = "WARN"
-	}
-	if len(level) < 5 {
-		level = strings.Repeat(" ", 5-len(level)) + level
-	}
-
-	return []byte(fmt.Sprintf(
-		"[%s #%d] %s -- : %s\n",
-		time.Now().Format("2006-01-02T15:04:05.000Z"),
-		os.Getpid(),
-		level,
-		entry.Message),
-	), nil
+	Debugf(ctx context.Context, format string, v ...interface{})
+	Infof(ctx context.Context, format string, v ...interface{})
+	Warnf(ctx context.Context, format string, v ...interface{})
+	Errorf(ctx context.Context, format string, v ...interface{})
+	Fatalf(ctx context.Context, format string, v ...interface{})
+	Panicf(ctx context.Context, format string, v ...interface{})
 }
 
 // CheckLevel checks whether the log level is valid.
 func CheckLevel(level string) error {
-	if _, err := logrus.ParseLevel(level); err != nil {
+	if _, err := log.ParseLevel(level); err != nil {
 		return fmt.Errorf(`log level not valid: "%s"`, level)
 	}
 	return nil
@@ -69,20 +44,20 @@ func CheckLevel(level string) error {
 
 // GetLevel get the log level string.
 func GetLevel() string {
-	if l, ok := instance.(*logrus.Logger); ok {
-		return l.Level.String()
+	if l, ok := instance.(*log.Logger); ok {
+		return l.GetLevel()
 	}
-	return "unknown"
+	return "UNKNOWN"
 }
 
-// SetLevel sets the log level. Valid levels are "debug", "info", "warn", "error", and "fatal".
+// SetLevel sets the log level.
+// Valid levels are "debug", "info", "warn", "error", and "fatal".
 func SetLevel(level string) {
-	if l, ok := instance.(*logrus.Logger); ok {
-		lvl, err := logrus.ParseLevel(level)
+	if l, ok := instance.(*log.Logger); ok {
+		err := l.SetLevel(level)
 		if err != nil {
-			Fatalf(fmt.Sprintf(`log level not valid: "%s"`, level))
+			Fatalf(nil, fmt.Sprintf(`log level not valid: "%s"`, level))
 		}
-		l.Level = lvl
 	}
 }
 
@@ -92,37 +67,36 @@ func SetLogger(l Logger) {
 }
 
 // Debugf logs a message with severity DEBUG.
-func Debugf(format string, v ...interface{}) {
-	instance.Debugf(format, v...)
+func Debugf(ctx context.Context, format string, v ...interface{}) {
+	instance.Debugf(ctx, format, v...)
 }
 
 // Infof logs a message with severity INFO.
-func Infof(format string, v ...interface{}) {
-	instance.Infof(format, v...)
+func Infof(ctx context.Context, format string, v ...interface{}) {
+	instance.Infof(ctx, format, v...)
 }
 
 // Warnf logs a message with severity WARN.
-func Warnf(format string, v ...interface{}) {
-	instance.Warnf(format, v...)
+func Warnf(ctx context.Context, format string, v ...interface{}) {
+	instance.Warnf(ctx, format, v...)
 }
 
 // Errorf logs a message with severity ERROR.
-func Errorf(format string, v ...interface{}) {
-	instance.Errorf(format, v...)
+func Errorf(ctx context.Context, format string, v ...interface{}) {
+	instance.Errorf(ctx, format, v...)
 }
 
 // Fatalf logs a message with severity ERROR followed by a call to os.Exit().
-func Fatalf(format string, v ...interface{}) {
-	instance.Fatalf(format, v...)
+func Fatalf(ctx context.Context, format string, v ...interface{}) {
+	instance.Fatalf(ctx, format, v...)
 }
 
 var instance Logger
 
 func init() {
-	l := logrus.New()
-	l.Formatter = &LogFormatter{}
-	l.Out = os.Stderr
-	l.Level = logrus.WarnLevel
-
+	l, err := log.NewTerminalLogger(log.WarnLevel.String())
+	if err != nil {
+		panic(fmt.Sprintf("failed to initialize QingStor SDK logger: %v", err))
+	}
 	instance = l
 }

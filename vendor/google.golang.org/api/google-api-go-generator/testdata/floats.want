@@ -92,19 +92,19 @@ type Utilization struct {
 }
 
 func (s *Utilization) MarshalJSON() ([]byte, error) {
-	type noMethod Utilization
-	raw := noMethod(*s)
+	type NoMethod Utilization
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
 func (s *Utilization) UnmarshalJSON(data []byte) error {
-	type noMethod Utilization
+	type NoMethod Utilization
 	var s1 struct {
 		Average gensupport.JSONFloat64 `json:"average"`
 		Target  gensupport.JSONFloat64 `json:"target"`
-		*noMethod
+		*NoMethod
 	}
-	s1.noMethod = (*noMethod)(s)
+	s1.NoMethod = (*NoMethod)(s)
 	if err := json.Unmarshal(data, &s1); err != nil {
 		return err
 	}

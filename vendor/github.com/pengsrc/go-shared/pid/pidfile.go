@@ -42,8 +42,5 @@ func New(path string) (*File, error) {
 
 // Remove removes the File.
 func (file File) Remove() error {
-	if err := os.Remove(file.path); err != nil {
-		return err
-	}
-	return nil
+	return os.Remove(file.path)
 }

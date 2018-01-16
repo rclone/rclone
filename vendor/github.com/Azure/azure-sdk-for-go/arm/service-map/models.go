@@ -302,32 +302,6 @@ func (cg ClientGroup) AsMachineGroup() (*MachineGroup, bool) {
 	return nil, false
 }
 
-// ClientGroupProperties is resource properties.
-type ClientGroupProperties struct {
-	ClientsOf ResourceReference `json:"clientsOf,omitempty"`
-}
-
-// UnmarshalJSON is the custom unmarshaler for ClientGroupProperties struct.
-func (cg *ClientGroupProperties) UnmarshalJSON(body []byte) error {
-	var m map[string]*json.RawMessage
-	err := json.Unmarshal(body, &m)
-	if err != nil {
-		return err
-	}
-	var v *json.RawMessage
-
-	v = m["clientsOf"]
-	if v != nil {
-		clientsOf, err := unmarshalResourceReference(*m["clientsOf"])
-		if err != nil {
-			return err
-		}
-		cg.ClientsOf = clientsOf
-	}
-
-	return nil
-}
-
 // ClientGroupMember is represents a member of a client group
 type ClientGroupMember struct {
 	ID                           *string `json:"id,omitempty"`
@@ -370,6 +344,32 @@ type ClientGroupMembersCount struct {
 	GroupID           *string    `json:"groupId,omitempty"`
 	Count             *int32     `json:"count,omitempty"`
 	Accuracy          Accuracy   `json:"accuracy,omitempty"`
+}
+
+// ClientGroupProperties is resource properties.
+type ClientGroupProperties struct {
+	ClientsOf ResourceReference `json:"clientsOf,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for ClientGroupProperties struct.
+func (cg *ClientGroupProperties) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	var v *json.RawMessage
+
+	v = m["clientsOf"]
+	if v != nil {
+		clientsOf, err := unmarshalResourceReference(*m["clientsOf"])
+		if err != nil {
+			return err
+		}
+		cg.ClientsOf = clientsOf
+	}
+
+	return nil
 }
 
 // Connection is a network connection.
@@ -649,24 +649,6 @@ func (m Machine) AsMachineGroup() (*MachineGroup, bool) {
 	return nil, false
 }
 
-// MachineProperties is resource properties.
-type MachineProperties struct {
-	Timestamp                *date.Time                     `json:"timestamp,omitempty"`
-	MonitoringState          MonitoringState                `json:"monitoringState,omitempty"`
-	VirtualizationState      VirtualizationState            `json:"virtualizationState,omitempty"`
-	DisplayName              *string                        `json:"displayName,omitempty"`
-	ComputerName             *string                        `json:"computerName,omitempty"`
-	FullyQualifiedDomainName *string                        `json:"fullyQualifiedDomainName,omitempty"`
-	BootTime                 *date.Time                     `json:"bootTime,omitempty"`
-	Timezone                 *Timezone                      `json:"timezone,omitempty"`
-	Agent                    *AgentConfiguration            `json:"agent,omitempty"`
-	Resources                *MachineResourcesConfiguration `json:"resources,omitempty"`
-	Networking               *NetworkConfiguration          `json:"networking,omitempty"`
-	OperatingSystem          *OperatingSystemConfiguration  `json:"operatingSystem,omitempty"`
-	VirtualMachine           *VirtualMachineConfiguration   `json:"virtualMachine,omitempty"`
-	Hypervisor               *HypervisorConfiguration       `json:"hypervisor,omitempty"`
-}
-
 // MachineCollection is collection of Machine resources.
 type MachineCollection struct {
 	autorest.Response `json:"-"`
@@ -739,12 +721,6 @@ func (mg MachineGroup) AsMachineGroup() (*MachineGroup, bool) {
 	return &mg, true
 }
 
-// MachineGroupProperties is resource properties.
-type MachineGroupProperties struct {
-	DisplayName *string                      `json:"displayName,omitempty"`
-	Machines    *[]MachineReferenceWithHints `json:"machines,omitempty"`
-}
-
 // MachineGroupCollection is collection of Machine Group resources.
 type MachineGroupCollection struct {
 	autorest.Response `json:"-"`
@@ -793,6 +769,30 @@ func (mgmr MachineGroupMapRequest) AsSingleMachineDependencyMapRequest() (*Singl
 // AsMachineGroupMapRequest is the MapRequest implementation for MachineGroupMapRequest.
 func (mgmr MachineGroupMapRequest) AsMachineGroupMapRequest() (*MachineGroupMapRequest, bool) {
 	return &mgmr, true
+}
+
+// MachineGroupProperties is resource properties.
+type MachineGroupProperties struct {
+	DisplayName *string                      `json:"displayName,omitempty"`
+	Machines    *[]MachineReferenceWithHints `json:"machines,omitempty"`
+}
+
+// MachineProperties is resource properties.
+type MachineProperties struct {
+	Timestamp                *date.Time                     `json:"timestamp,omitempty"`
+	MonitoringState          MonitoringState                `json:"monitoringState,omitempty"`
+	VirtualizationState      VirtualizationState            `json:"virtualizationState,omitempty"`
+	DisplayName              *string                        `json:"displayName,omitempty"`
+	ComputerName             *string                        `json:"computerName,omitempty"`
+	FullyQualifiedDomainName *string                        `json:"fullyQualifiedDomainName,omitempty"`
+	BootTime                 *date.Time                     `json:"bootTime,omitempty"`
+	Timezone                 *Timezone                      `json:"timezone,omitempty"`
+	Agent                    *AgentConfiguration            `json:"agent,omitempty"`
+	Resources                *MachineResourcesConfiguration `json:"resources,omitempty"`
+	Networking               *NetworkConfiguration          `json:"networking,omitempty"`
+	OperatingSystem          *OperatingSystemConfiguration  `json:"operatingSystem,omitempty"`
+	VirtualMachine           *VirtualMachineConfiguration   `json:"virtualMachine,omitempty"`
+	Hypervisor               *HypervisorConfiguration       `json:"hypervisor,omitempty"`
 }
 
 // MachineReference is reference to a machine.
@@ -1045,6 +1045,25 @@ func (p Port) AsMachineGroup() (*MachineGroup, bool) {
 	return nil, false
 }
 
+// PortCollection is collection of Port resources.
+type PortCollection struct {
+	autorest.Response `json:"-"`
+	Value             *[]Port `json:"value,omitempty"`
+	NextLink          *string `json:"nextLink,omitempty"`
+}
+
+// PortCollectionPreparer prepares a request to retrieve the next set of results. It returns
+// nil if no more results exist.
+func (client PortCollection) PortCollectionPreparer() (*http.Request, error) {
+	if client.NextLink == nil || len(to.String(client.NextLink)) <= 0 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
 // PortProperties is resource properties.
 type PortProperties struct {
 	MonitoringState MonitoringState   `json:"monitoringState,omitempty"`
@@ -1113,25 +1132,6 @@ func (p *PortProperties) UnmarshalJSON(body []byte) error {
 	}
 
 	return nil
-}
-
-// PortCollection is collection of Port resources.
-type PortCollection struct {
-	autorest.Response `json:"-"`
-	Value             *[]Port `json:"value,omitempty"`
-	NextLink          *string `json:"nextLink,omitempty"`
-}
-
-// PortCollectionPreparer prepares a request to retrieve the next set of results. It returns
-// nil if no more results exist.
-func (client PortCollection) PortCollectionPreparer() (*http.Request, error) {
-	if client.NextLink == nil || len(to.String(client.NextLink)) <= 0 {
-		return nil, nil
-	}
-	return autorest.Prepare(&http.Request{},
-		autorest.AsJSON(),
-		autorest.AsGet(),
-		autorest.WithBaseURL(to.String(client.NextLink)))
 }
 
 // PortReference is reference to a port.
@@ -1231,6 +1231,41 @@ func (p Process) AsClientGroup() (*ClientGroup, bool) {
 // AsMachineGroup is the CoreResource implementation for Process.
 func (p Process) AsMachineGroup() (*MachineGroup, bool) {
 	return nil, false
+}
+
+// ProcessCollection is collection of Process resources.
+type ProcessCollection struct {
+	autorest.Response `json:"-"`
+	Value             *[]Process `json:"value,omitempty"`
+	NextLink          *string    `json:"nextLink,omitempty"`
+}
+
+// ProcessCollectionPreparer prepares a request to retrieve the next set of results. It returns
+// nil if no more results exist.
+func (client ProcessCollection) ProcessCollectionPreparer() (*http.Request, error) {
+	if client.NextLink == nil || len(to.String(client.NextLink)) <= 0 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(client.NextLink)))
+}
+
+// ProcessDetails is describes process metadata.
+type ProcessDetails struct {
+	PersistentKey    *string `json:"persistentKey,omitempty"`
+	PoolID           *int32  `json:"poolId,omitempty"`
+	FirstPid         *int32  `json:"firstPid,omitempty"`
+	Description      *string `json:"description,omitempty"`
+	CompanyName      *string `json:"companyName,omitempty"`
+	InternalName     *string `json:"internalName,omitempty"`
+	ProductName      *string `json:"productName,omitempty"`
+	ProductVersion   *string `json:"productVersion,omitempty"`
+	FileVersion      *string `json:"fileVersion,omitempty"`
+	CommandLine      *string `json:"commandLine,omitempty"`
+	ExecutablePath   *string `json:"executablePath,omitempty"`
+	WorkingDirectory *string `json:"workingDirectory,omitempty"`
 }
 
 // ProcessProperties is resource properties.
@@ -1365,41 +1400,6 @@ func (p *ProcessProperties) UnmarshalJSON(body []byte) error {
 	}
 
 	return nil
-}
-
-// ProcessCollection is collection of Process resources.
-type ProcessCollection struct {
-	autorest.Response `json:"-"`
-	Value             *[]Process `json:"value,omitempty"`
-	NextLink          *string    `json:"nextLink,omitempty"`
-}
-
-// ProcessCollectionPreparer prepares a request to retrieve the next set of results. It returns
-// nil if no more results exist.
-func (client ProcessCollection) ProcessCollectionPreparer() (*http.Request, error) {
-	if client.NextLink == nil || len(to.String(client.NextLink)) <= 0 {
-		return nil, nil
-	}
-	return autorest.Prepare(&http.Request{},
-		autorest.AsJSON(),
-		autorest.AsGet(),
-		autorest.WithBaseURL(to.String(client.NextLink)))
-}
-
-// ProcessDetails is describes process metadata.
-type ProcessDetails struct {
-	PersistentKey    *string `json:"persistentKey,omitempty"`
-	PoolID           *int32  `json:"poolId,omitempty"`
-	FirstPid         *int32  `json:"firstPid,omitempty"`
-	Description      *string `json:"description,omitempty"`
-	CompanyName      *string `json:"companyName,omitempty"`
-	InternalName     *string `json:"internalName,omitempty"`
-	ProductName      *string `json:"productName,omitempty"`
-	ProductVersion   *string `json:"productVersion,omitempty"`
-	FileVersion      *string `json:"fileVersion,omitempty"`
-	CommandLine      *string `json:"commandLine,omitempty"`
-	ExecutablePath   *string `json:"executablePath,omitempty"`
-	WorkingDirectory *string `json:"workingDirectory,omitempty"`
 }
 
 // ProcessReference is reference to a process.

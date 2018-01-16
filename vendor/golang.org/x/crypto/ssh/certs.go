@@ -340,10 +340,10 @@ func (c *CertChecker) Authenticate(conn ConnMetadata, pubKey PublicKey) (*Permis
 // the signature of the certificate.
 func (c *CertChecker) CheckCert(principal string, cert *Certificate) error {
 	if c.IsRevoked != nil && c.IsRevoked(cert) {
-		return fmt.Errorf("ssh: certicate serial %d revoked", cert.Serial)
+		return fmt.Errorf("ssh: certificate serial %d revoked", cert.Serial)
 	}
 
-	for opt, _ := range cert.CriticalOptions {
+	for opt := range cert.CriticalOptions {
 		// sourceAddressCriticalOption will be enforced by
 		// serverAuthenticate
 		if opt == sourceAddressCriticalOption {

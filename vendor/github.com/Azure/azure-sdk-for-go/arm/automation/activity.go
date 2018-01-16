@@ -97,7 +97,9 @@ func (client ActivityClient) GetPreparer(resourceGroupName string, automationAcc
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActivityClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -170,7 +172,9 @@ func (client ActivityClient) ListByModulePreparer(resourceGroupName string, auto
 // ListByModuleSender sends the ListByModule request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActivityClient) ListByModuleSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByModuleResponder handles the response to the ListByModule request. The method always

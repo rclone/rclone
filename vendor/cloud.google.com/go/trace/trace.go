@@ -175,13 +175,31 @@ const (
 	spanKindServer      = `RPC_SERVER`
 	spanKindUnspecified = `SPAN_KIND_UNSPECIFIED`
 	maxStackFrames      = 20
-	labelHost           = `trace.cloud.google.com/http/host`
-	labelMethod         = `trace.cloud.google.com/http/method`
-	labelStackTrace     = `trace.cloud.google.com/stacktrace`
-	labelStatusCode     = `trace.cloud.google.com/http/status_code`
-	labelURL            = `trace.cloud.google.com/http/url`
-	labelSamplingPolicy = `trace.cloud.google.com/sampling_policy`
-	labelSamplingWeight = `trace.cloud.google.com/sampling_weight`
+)
+
+// Stackdriver Trace API predefined labels.
+const (
+	LabelAgent              = `trace.cloud.google.com/agent`
+	LabelComponent          = `trace.cloud.google.com/component`
+	LabelErrorMessage       = `trace.cloud.google.com/error/message`
+	LabelErrorName          = `trace.cloud.google.com/error/name`
+	LabelHTTPClientCity     = `trace.cloud.google.com/http/client_city`
+	LabelHTTPClientCountry  = `trace.cloud.google.com/http/client_country`
+	LabelHTTPClientProtocol = `trace.cloud.google.com/http/client_protocol`
+	LabelHTTPClientRegion   = `trace.cloud.google.com/http/client_region`
+	LabelHTTPHost           = `trace.cloud.google.com/http/host`
+	LabelHTTPMethod         = `trace.cloud.google.com/http/method`
+	LabelHTTPRedirectedURL  = `trace.cloud.google.com/http/redirected_url`
+	LabelHTTPRequestSize    = `trace.cloud.google.com/http/request/size`
+	LabelHTTPResponseSize   = `trace.cloud.google.com/http/response/size`
+	LabelHTTPStatusCode     = `trace.cloud.google.com/http/status_code`
+	LabelHTTPURL            = `trace.cloud.google.com/http/url`
+	LabelHTTPUserAgent      = `trace.cloud.google.com/http/user_agent`
+	LabelPID                = `trace.cloud.google.com/pid`
+	LabelSamplingPolicy     = `trace.cloud.google.com/sampling_policy`
+	LabelSamplingWeight     = `trace.cloud.google.com/sampling_weight`
+	LabelStackTrace         = `trace.cloud.google.com/stacktrace`
+	LabelTID                = `trace.cloud.google.com/tid`
 )
 
 const (
@@ -428,8 +446,8 @@ func configureSpanFromPolicy(s *Span, p SamplingPolicy, ok bool) {
 	}
 	if d.Sample {
 		// This trace is in the random sample, so set the labels.
-		s.SetLabel(labelSamplingPolicy, d.Policy)
-		s.SetLabel(labelSamplingWeight, fmt.Sprint(d.Weight))
+		s.SetLabel(LabelSamplingPolicy, d.Policy)
+		s.SetLabel(LabelSamplingWeight, fmt.Sprint(d.Weight))
 	}
 }
 
@@ -543,11 +561,17 @@ func (t *trace) constructTrace(spans []*Span) *api.Trace {
 		if t.localOptions&optionStack != 0 {
 			sp.setStackLabel()
 		}
-		sp.SetLabel(labelHost, sp.host)
-		sp.SetLabel(labelURL, sp.url)
-		sp.SetLabel(labelMethod, sp.method)
+		if sp.host != "" {
+			sp.SetLabel(LabelHTTPHost, sp.host)
+		}
+		if sp.url != "" {
+			sp.SetLabel(LabelHTTPURL, sp.url)
+		}
+		if sp.method != "" {
+			sp.SetLabel(LabelHTTPMethod, sp.method)
+		}
 		if sp.statusCode != 0 {
-			sp.SetLabel(labelStatusCode, strconv.Itoa(sp.statusCode))
+			sp.SetLabel(LabelHTTPStatusCode, strconv.Itoa(sp.statusCode))
 		}
 		apiSpans[i] = &sp.span
 	}
@@ -813,6 +837,6 @@ func (s *Span) setStackLabel() {
 		lastSigPanic = fn.Name() == "runtime.sigpanic"
 	}
 	if label, err := json.Marshal(stack); err == nil {
-		s.SetLabel(labelStackTrace, string(label))
+		s.SetLabel(LabelStackTrace, string(label))
 	}
 }

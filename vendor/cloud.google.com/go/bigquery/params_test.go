@@ -30,40 +30,79 @@ import (
 )
 
 var scalarTests = []struct {
-	val  interface{}
-	want string
+	val      interface{}            // The Go value
+	wantVal  string                 // paramValue's desired output
+	wantType *bq.QueryParameterType // paramType's desired output
 }{
-	{int64(0), "0"},
-	{3.14, "3.14"},
-	{3.14159e-87, "3.14159e-87"},
-	{true, "true"},
-	{"string", "string"},
-	{"\u65e5\u672c\u8a9e\n", "\u65e5\u672c\u8a9e\n"},
-	{math.NaN(), "NaN"},
-	{[]byte("foo"), "Zm9v"}, // base64 encoding of "foo"
+	{int64(0), "0", int64ParamType},
+	{3.14, "3.14", float64ParamType},
+	{3.14159e-87, "3.14159e-87", float64ParamType},
+	{true, "true", boolParamType},
+	{"string", "string", stringParamType},
+	{"\u65e5\u672c\u8a9e\n", "\u65e5\u672c\u8a9e\n", stringParamType},
+	{math.NaN(), "NaN", float64ParamType},
+	{[]byte("foo"), "Zm9v", bytesParamType}, // base64 encoding of "foo"
 	{time.Date(2016, 3, 20, 4, 22, 9, 5000, time.FixedZone("neg1-2", -3720)),
-		"2016-03-20 04:22:09.000005-01:02"},
-	{civil.Date{2016, 3, 20}, "2016-03-20"},
-	{civil.Time{4, 5, 6, 789000000}, "04:05:06.789000"},
-	{civil.DateTime{civil.Date{2016, 3, 20}, civil.Time{4, 5, 6, 789000000}}, "2016-03-20 04:05:06.789000"},
+		"2016-03-20 04:22:09.000005-01:02",
+		timestampParamType},
+	{civil.Date{2016, 3, 20}, "2016-03-20", dateParamType},
+	{civil.Time{4, 5, 6, 789000000}, "04:05:06.789000", timeParamType},
+	{civil.DateTime{civil.Date{2016, 3, 20}, civil.Time{4, 5, 6, 789000000}},
+		"2016-03-20 04:05:06.789000",
+		dateTimeParamType},
 }
 
-type S1 struct {
-	A int
-	B *S2
-	C bool
-}
+type (
+	S1 struct {
+		A int
+		B *S2
+		C bool
+	}
+	S2 struct {
+		D string
+		e int
+	}
+)
 
-type S2 struct {
-	D string
-	e int
-}
+var (
+	s1 = S1{
+		A: 1,
+		B: &S2{D: "s"},
+		C: true,
+	}
 
-var s1 = S1{
-	A: 1,
-	B: &S2{D: "s"},
-	C: true,
-}
+	s1ParamType = &bq.QueryParameterType{
+		Type: "STRUCT",
+		StructTypes: []*bq.QueryParameterTypeStructTypes{
+			{Name: "A", Type: int64ParamType},
+			{Name: "B", Type: &bq.QueryParameterType{
+				Type: "STRUCT",
+				StructTypes: []*bq.QueryParameterTypeStructTypes{
+					{Name: "D", Type: stringParamType},
+				},
+			}},
+			{Name: "C", Type: boolParamType},
+		},
+	}
+
+	s1ParamValue = bq.QueryParameterValue{
+		StructValues: map[string]bq.QueryParameterValue{
+			"A": sval("1"),
+			"B": bq.QueryParameterValue{
+				StructValues: map[string]bq.QueryParameterValue{
+					"D": sval("s"),
+				},
+			},
+			"C": sval("true"),
+		},
+	}
+
+	s1ParamReturnValue = map[string]interface{}{
+		"A": int64(1),
+		"B": map[string]interface{}{"D": "s"},
+		"C": true,
+	}
+)
 
 func sval(s string) bq.QueryParameterValue {
 	return bq.QueryParameterValue{Value: s}
@@ -76,7 +115,7 @@ func TestParamValueScalar(t *testing.T) {
 			t.Errorf("%v: got %v, want nil", test.val, err)
 			continue
 		}
-		want := sval(test.want)
+		want := sval(test.wantVal)
 		if !testutil.Equal(got, want) {
 			t.Errorf("%v:\ngot  %+v\nwant %+v", test.val, got, want)
 		}
@@ -113,19 +152,8 @@ func TestParamValueStruct(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := bq.QueryParameterValue{
-		StructValues: map[string]bq.QueryParameterValue{
-			"A": sval("1"),
-			"B": bq.QueryParameterValue{
-				StructValues: map[string]bq.QueryParameterValue{
-					"D": sval("s"),
-				},
-			},
-			"C": sval("true"),
-		},
-	}
-	if !testutil.Equal(got, want) {
-		t.Errorf("got  %+v\nwant %+v", got, want)
+	if !testutil.Equal(got, s1ParamValue) {
+		t.Errorf("got  %+v\nwant %+v", got, s1ParamValue)
 	}
 }
 
@@ -141,35 +169,24 @@ func TestParamValueErrors(t *testing.T) {
 }
 
 func TestParamType(t *testing.T) {
+	for _, test := range scalarTests {
+		got, err := paramType(reflect.TypeOf(test.val))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !testutil.Equal(got, test.wantType) {
+			t.Errorf("%v (%T): got %v, want %v", test.val, test.val, got, test.wantType)
+		}
+	}
 	for _, test := range []struct {
 		val  interface{}
 		want *bq.QueryParameterType
 	}{
-		{0, int64ParamType},
 		{uint32(32767), int64ParamType},
-		{3.14, float64ParamType},
-		{float32(3.14), float64ParamType},
-		{math.NaN(), float64ParamType},
-		{true, boolParamType},
-		{"", stringParamType},
-		{"string", stringParamType},
-		{time.Now(), timestampParamType},
 		{[]byte("foo"), bytesParamType},
 		{[]int{}, &bq.QueryParameterType{Type: "ARRAY", ArrayType: int64ParamType}},
 		{[3]bool{}, &bq.QueryParameterType{Type: "ARRAY", ArrayType: boolParamType}},
-		{S1{}, &bq.QueryParameterType{
-			Type: "STRUCT",
-			StructTypes: []*bq.QueryParameterTypeStructTypes{
-				{Name: "A", Type: int64ParamType},
-				{Name: "B", Type: &bq.QueryParameterType{
-					Type: "STRUCT",
-					StructTypes: []*bq.QueryParameterTypeStructTypes{
-						{Name: "D", Type: stringParamType},
-					},
-				}},
-				{Name: "C", Type: boolParamType},
-			},
-		}},
+		{S1{}, s1ParamType},
 	} {
 		got, err := paramType(reflect.TypeOf(test.val))
 		if err != nil {
@@ -192,17 +209,74 @@ func TestParamTypeErrors(t *testing.T) {
 	}
 }
 
-func TestIntegration_ScalarParam(t *testing.T) {
-	c := getClient(t)
+func TestConvertParamValue(t *testing.T) {
+	// Scalars.
 	for _, test := range scalarTests {
-		got, err := paramRoundTrip(c, test.val)
+		pval, err := paramValue(reflect.ValueOf(test.val))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !testutil.Equal(got, test.val, cmp.Comparer(func(t1, t2 time.Time) bool {
-			return t1.Round(time.Microsecond).Equal(t2.Round(time.Microsecond))
-		})) {
-			t.Errorf("\ngot  %#v (%T)\nwant %#v (%T)", got, got, test.val, test.val)
+		ptype, err := paramType(reflect.TypeOf(test.val))
+		if err != nil {
+			t.Fatal(err)
+		}
+		got, err := convertParamValue(&pval, ptype)
+		if err != nil {
+			t.Fatalf("convertParamValue(%+v, %+v): %v", pval, ptype, err)
+		}
+		if !testutil.Equal(got, test.val) {
+			t.Errorf("%#v: got %#v", test.val, got)
+		}
+	}
+	// Arrays.
+	for _, test := range []struct {
+		pval *bq.QueryParameterValue
+		want []interface{}
+	}{
+		{
+			&bq.QueryParameterValue{},
+			nil,
+		},
+		{
+			&bq.QueryParameterValue{
+				ArrayValues: []*bq.QueryParameterValue{{Value: "1"}, {Value: "2"}},
+			},
+			[]interface{}{int64(1), int64(2)},
+		},
+	} {
+		ptype := &bq.QueryParameterType{Type: "ARRAY", ArrayType: int64ParamType}
+		got, err := convertParamValue(test.pval, ptype)
+		if err != nil {
+			t.Fatalf("%+v: %v", test.pval, err)
+		}
+		if !testutil.Equal(got, test.want) {
+			t.Errorf("%+v: got %+v, want %+v", test.pval, got, test.want)
+		}
+	}
+	// Structs.
+	got, err := convertParamValue(&s1ParamValue, s1ParamType)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !testutil.Equal(got, s1ParamReturnValue) {
+		t.Errorf("got %+v, want %+v", got, s1ParamReturnValue)
+	}
+}
+
+func TestIntegration_ScalarParam(t *testing.T) {
+	roundToMicros := cmp.Transformer("RoundToMicros",
+		func(t time.Time) time.Time { return t.Round(time.Microsecond) })
+	c := getClient(t)
+	for _, test := range scalarTests {
+		gotData, gotParam, err := paramRoundTrip(c, test.val)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !testutil.Equal(gotData, test.val, roundToMicros) {
+			t.Errorf("\ngot  %#v (%T)\nwant %#v (%T)", gotData, gotData, test.val, test.val)
+		}
+		if !testutil.Equal(gotParam, test.val, roundToMicros) {
+			t.Errorf("\ngot  %#v (%T)\nwant %#v (%T)", gotParam, gotParam, test.val, test.val)
 		}
 	}
 }
@@ -210,40 +284,78 @@ func TestIntegration_ScalarParam(t *testing.T) {
 func TestIntegration_OtherParam(t *testing.T) {
 	c := getClient(t)
 	for _, test := range []struct {
-		val  interface{}
-		want interface{}
+		val       interface{}
+		wantData  interface{}
+		wantParam interface{}
 	}{
-		{[]int(nil), []Value(nil)},
-		{[]int{}, []Value(nil)},
-		{[]int{1, 2}, []Value{int64(1), int64(2)}},
-		{[3]int{1, 2, 3}, []Value{int64(1), int64(2), int64(3)}},
-		{S1{}, []Value{int64(0), nil, false}},
-		{s1, []Value{int64(1), []Value{"s"}, true}},
+		{[]int(nil), []Value(nil), []interface{}(nil)},
+		{[]int{}, []Value(nil), []interface{}(nil)},
+		{
+			[]int{1, 2},
+			[]Value{int64(1), int64(2)},
+			[]interface{}{int64(1), int64(2)},
+		},
+		{
+			[3]int{1, 2, 3},
+			[]Value{int64(1), int64(2), int64(3)},
+			[]interface{}{int64(1), int64(2), int64(3)},
+		},
+		{
+			S1{},
+			[]Value{int64(0), nil, false},
+			map[string]interface{}{
+				"A": int64(0),
+				"B": nil,
+				"C": false,
+			},
+		},
+		{
+			s1,
+			[]Value{int64(1), []Value{"s"}, true},
+			s1ParamReturnValue,
+		},
 	} {
-		got, err := paramRoundTrip(c, test.val)
+		gotData, gotParam, err := paramRoundTrip(c, test.val)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if !testutil.Equal(got, test.want) {
-			t.Errorf("\ngot  %#v (%T)\nwant %#v (%T)", got, got, test.want, test.want)
+		if !testutil.Equal(gotData, test.wantData) {
+			t.Errorf("%#v:\ngot  %#v (%T)\nwant %#v (%T)",
+				test.val, gotData, gotData, test.wantData, test.wantData)
+		}
+		if !testutil.Equal(gotParam, test.wantParam) {
+			t.Errorf("%#v:\ngot  %#v (%T)\nwant %#v (%T)",
+				test.val, gotParam, gotParam, test.wantParam, test.wantParam)
 		}
 	}
 }
 
-func paramRoundTrip(c *Client, x interface{}) (Value, error) {
+// paramRoundTrip passes x as a query parameter to BigQuery. It returns
+// the resulting data value from running the query and the parameter value from
+// the returned job configuration.
+func paramRoundTrip(c *Client, x interface{}) (data Value, param interface{}, err error) {
+	ctx := context.Background()
 	q := c.Query("select ?")
 	q.Parameters = []QueryParameter{{Value: x}}
-	it, err := q.Read(context.Background())
+	job, err := q.Run(ctx)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
+	}
+	it, err := job.Read(ctx)
+	if err != nil {
+		return nil, nil, err
 	}
 	var val []Value
 	err = it.Next(&val)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if len(val) != 1 {
-		return nil, errors.New("wrong number of values")
+		return nil, nil, errors.New("wrong number of values")
 	}
-	return val[0], nil
+	conf, err := job.Config()
+	if err != nil {
+		return nil, nil, err
+	}
+	return val[0], conf.(*QueryConfig).Parameters[0].Value, nil
 }

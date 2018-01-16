@@ -65,6 +65,12 @@
       "limit_key": "limit",
       "output_token": "position",
       "result_key": "items"
+    },
+    "GetVpcLinks": {
+      "input_token": "position",
+      "limit_key": "limit",
+      "output_token": "position",
+      "result_key": "items"
     }
   }
 }

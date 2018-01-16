@@ -101,7 +101,9 @@ func (client OriginsClient) GetPreparer(resourceGroupName string, profileName st
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client OriginsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -177,7 +179,9 @@ func (client OriginsClient) ListByEndpointPreparer(resourceGroupName string, pro
 // ListByEndpointSender sends the ListByEndpoint request. The method will close the
 // http.Response Body if it receives an error.
 func (client OriginsClient) ListByEndpointSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByEndpointResponder handles the response to the ListByEndpoint request. The method always
@@ -346,6 +350,7 @@ func (client OriginsClient) UpdatePreparer(resourceGroupName string, profileName
 func (client OriginsClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

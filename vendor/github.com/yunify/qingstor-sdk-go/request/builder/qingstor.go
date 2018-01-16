@@ -75,24 +75,24 @@ func (qb *QingStorBuilder) BuildHTTPRequest(o *data.Operation, i *reflect.Value)
 		return nil, err
 	}
 
-	logger.Infof(fmt.Sprintf(
+	logger.Infof(nil, fmt.Sprintf(
 		"Built QingStor request: [%d] %s",
 		convert.StringToUnixTimestamp(httpRequest.Header.Get("Date"), convert.RFC822),
-		httpRequest.URL.String()),
-	)
+		httpRequest.URL.String(),
+	))
 
-	logger.Infof(fmt.Sprintf(
+	logger.Infof(nil, fmt.Sprintf(
 		"QingStor request headers: [%d] %s",
 		convert.StringToUnixTimestamp(httpRequest.Header.Get("Date"), convert.RFC822),
-		fmt.Sprint(httpRequest.Header)),
-	)
+		fmt.Sprint(httpRequest.Header),
+	))
 
 	if qb.baseBuilder.parsedBodyString != "" {
-		logger.Infof(fmt.Sprintf(
+		logger.Infof(nil, fmt.Sprintf(
 			"QingStor request body string: [%d] %s",
 			convert.StringToUnixTimestamp(httpRequest.Header.Get("Date"), convert.RFC822),
-			qb.baseBuilder.parsedBodyString),
-		)
+			qb.baseBuilder.parsedBodyString,
+		))
 	}
 
 	return httpRequest, nil

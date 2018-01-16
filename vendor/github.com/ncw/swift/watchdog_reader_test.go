@@ -106,7 +106,7 @@ func TestWatchdogReaderOnSlowNetwork(t *testing.T) {
 	b := make([]byte, len(byteString))
 	n, err := io.ReadFull(wr, b)
 	if err != nil || n != len(b) || !bytes.Equal(b, byteString) {
-		t.Fatal("Bad read %s %d", err, n)
+		t.Fatalf("Bad read %s %d", err, n)
 	}
 
 	checkTimer(t, firedChan, false)
@@ -129,9 +129,9 @@ func TestWatchdogReaderValidity(t *testing.T) {
 	b := make([]byte, len(byteString))
 	n, err := io.ReadFull(wr, b)
 	if err != nil || n != len(b) {
-		t.Fatal("Read error: %s", err)
+		t.Fatalf("Read error: %s", err)
 	}
 	if !bytes.Equal(b, byteString) {
-		t.Fatal("Bad read: %#v != %#v", string(b), string(byteString))
+		t.Fatalf("Bad read: %#v != %#v", string(b), string(byteString))
 	}
 }

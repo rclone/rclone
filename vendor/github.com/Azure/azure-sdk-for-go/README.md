@@ -19,21 +19,34 @@ $ go get -u github.com/Azure/azure-sdk-for-go/...
 ```
 
 > **IMPORTANT:** We highly suggest vendoring Azure SDK for Go as a dependency. For vendoring dependencies, Azure SDK
-for Go uses [glide](https://github.com/Masterminds/glide).
+for Go uses [dep](https://github.com/golang/dep).
 
 # Versioning
 ## SDK Versions
-The tags in this repository are based on, but do not conform to [SemVer.org's recommendations](http://semver.org/).
+The entire SDK will
+continue to be distributed as a single repository, and be labeled with version tags  that are applicable to the whole
+repository. The tags in this repository are based on, but do not conform to [SemVer.org's recommendations](http://semver.org/).
 For now, the "-beta" tag is an indicator that we are still in preview and still are planning on releasing some breaking
 changes.
 
+While in beta, we will only accept contributions to the `dev` or `master` branches. Once the `beta` tag is removed, we'll
+only contribute new features and Azure API surface space to the most recent major version of our SDK. However, pull requests
+to older major versions will be evaluated and accepted as appropriate. Any critical bugs will be fixed in old versions as well.
+To facilitate pull requests, a branch will be created for each of the major versions accepting support. For example,
+should we have tags denoting the versions, `v11.1.0`, `v11.2.0`, and `v12.0.0`, a branch `v11` would be present for submission
+of PRs.
+
 ## Azure Versions
-Azure services _mostly_ do not use SemVer based versions. Rather, they use profiles identified by dates. One will often
-see this casually referred to as an "APIVersion". At the moment, our SDK only supports the most recent profiles. In
-order to lock to an API version, one must also lock to an SDK version. However, as discussed in 
-[#517](https://github.com/Azure/azure-sdk-for-go/issues/517), our objective is to reorganize and publish independent
-packages for each profile. In that way, we'll be able to have parallel support in a single SDK version for all
-APIVersions supported by Azure.
+Azure services _mostly_ do not use SemVer based versions. Rather, they stamp a set of REST endpoints with a date identifier. One will often
+see these stamps casually referred to as "API Versions". At the moment, our SDK only supports the most recent stamp for each service. In
+order to lock to an API version, one must also lock to an SDK version. However, as discussed in [#517](https://github.com/Azure/azure-sdk-for-go/issues/517),
+our objective is to reorganize and publish an independent package for each stamped API version of each service. In that way, we'll be able to support all API Versions
+in a single SDK Version.
+
+Knowing which API Versions of services are compatbile with one another, and finding which API Versions are available in which environments
+has been a common source of frustration for users. Along with Azure Stack, these problems have led to the development of "Profiles" which are
+aggregations of multiple services at particular API Versions. Using profiles with our SDK will be optional, and to opt-in you will need to be
+running Go 1.9 or higher.
 
 # Documentation
 

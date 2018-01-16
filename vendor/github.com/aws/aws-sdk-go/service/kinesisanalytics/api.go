@@ -36,7 +36,7 @@ const opAddApplicationCloudWatchLoggingOption = "AddApplicationCloudWatchLogging
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOption
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOption
 func (c *KinesisAnalytics) AddApplicationCloudWatchLoggingOptionRequest(input *AddApplicationCloudWatchLoggingOptionInput) (req *request.Request, output *AddApplicationCloudWatchLoggingOptionOutput) {
 	op := &request.Operation{
 		Name:       opAddApplicationCloudWatchLoggingOption,
@@ -81,7 +81,7 @@ func (c *KinesisAnalytics) AddApplicationCloudWatchLoggingOptionRequest(input *A
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOption
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOption
 func (c *KinesisAnalytics) AddApplicationCloudWatchLoggingOption(input *AddApplicationCloudWatchLoggingOptionInput) (*AddApplicationCloudWatchLoggingOptionOutput, error) {
 	req, out := c.AddApplicationCloudWatchLoggingOptionRequest(input)
 	return out, req.Send()
@@ -128,7 +128,7 @@ const opAddApplicationInput = "AddApplicationInput"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInput
 func (c *KinesisAnalytics) AddApplicationInputRequest(input *AddApplicationInputInput) (req *request.Request, output *AddApplicationInputOutput) {
 	op := &request.Operation{
 		Name:       opAddApplicationInput,
@@ -187,7 +187,7 @@ func (c *KinesisAnalytics) AddApplicationInputRequest(input *AddApplicationInput
 //   User-provided application code (query) is invalid. This can be a simple syntax
 //   error.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInput
 func (c *KinesisAnalytics) AddApplicationInput(input *AddApplicationInputInput) (*AddApplicationInputOutput, error) {
 	req, out := c.AddApplicationInputRequest(input)
 	return out, req.Send()
@@ -204,6 +204,98 @@ func (c *KinesisAnalytics) AddApplicationInput(input *AddApplicationInputInput) 
 // for more information on using Contexts.
 func (c *KinesisAnalytics) AddApplicationInputWithContext(ctx aws.Context, input *AddApplicationInputInput, opts ...request.Option) (*AddApplicationInputOutput, error) {
 	req, out := c.AddApplicationInputRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opAddApplicationInputProcessingConfiguration = "AddApplicationInputProcessingConfiguration"
+
+// AddApplicationInputProcessingConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the AddApplicationInputProcessingConfiguration operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See AddApplicationInputProcessingConfiguration for more information on using the AddApplicationInputProcessingConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the AddApplicationInputProcessingConfigurationRequest method.
+//    req, resp := client.AddApplicationInputProcessingConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputProcessingConfiguration
+func (c *KinesisAnalytics) AddApplicationInputProcessingConfigurationRequest(input *AddApplicationInputProcessingConfigurationInput) (req *request.Request, output *AddApplicationInputProcessingConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opAddApplicationInputProcessingConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &AddApplicationInputProcessingConfigurationInput{}
+	}
+
+	output = &AddApplicationInputProcessingConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// AddApplicationInputProcessingConfiguration API operation for Amazon Kinesis Analytics.
+//
+// Adds an InputProcessingConfiguration to an application. An input processor
+// preprocesses records on the input stream before the application's SQL code
+// executes. Currently, the only input processor available is AWS Lambda (https://aws.amazon.com/documentation/lambda/).
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis Analytics's
+// API operation AddApplicationInputProcessingConfiguration for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   Specified application can't be found.
+//
+//   * ErrCodeResourceInUseException "ResourceInUseException"
+//   Application is not available for this operation.
+//
+//   * ErrCodeInvalidArgumentException "InvalidArgumentException"
+//   Specified input parameter value is invalid.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   Exception thrown as a result of concurrent modification to an application.
+//   For example, two individuals attempting to edit the same application at the
+//   same time.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputProcessingConfiguration
+func (c *KinesisAnalytics) AddApplicationInputProcessingConfiguration(input *AddApplicationInputProcessingConfigurationInput) (*AddApplicationInputProcessingConfigurationOutput, error) {
+	req, out := c.AddApplicationInputProcessingConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// AddApplicationInputProcessingConfigurationWithContext is the same as AddApplicationInputProcessingConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See AddApplicationInputProcessingConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisAnalytics) AddApplicationInputProcessingConfigurationWithContext(ctx aws.Context, input *AddApplicationInputProcessingConfigurationInput, opts ...request.Option) (*AddApplicationInputProcessingConfigurationOutput, error) {
+	req, out := c.AddApplicationInputProcessingConfigurationRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -234,7 +326,7 @@ const opAddApplicationOutput = "AddApplicationOutput"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutput
 func (c *KinesisAnalytics) AddApplicationOutputRequest(input *AddApplicationOutputInput) (req *request.Request, output *AddApplicationOutputOutput) {
 	op := &request.Operation{
 		Name:       opAddApplicationOutput,
@@ -257,10 +349,10 @@ func (c *KinesisAnalytics) AddApplicationOutputRequest(input *AddApplicationOutp
 //
 // If you want Amazon Kinesis Analytics to deliver data from an in-application
 // stream within your application to an external destination (such as an Amazon
-// Kinesis stream or a Firehose delivery stream), you add the relevant configuration
-// to your application using this operation. You can configure one or more outputs
-// for your application. Each output configuration maps an in-application stream
-// and an external destination.
+// Kinesis stream, an Amazon Kinesis Firehose delivery stream, or an Amazon
+// Lambda function), you add the relevant configuration to your application
+// using this operation. You can configure one or more outputs for your application.
+// Each output configuration maps an in-application stream and an external destination.
 //
 // You can use one of the output configurations to deliver data from your in-application
 // error stream to an external destination so that you can analyze the errors.
@@ -299,7 +391,7 @@ func (c *KinesisAnalytics) AddApplicationOutputRequest(input *AddApplicationOutp
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutput
 func (c *KinesisAnalytics) AddApplicationOutput(input *AddApplicationOutputInput) (*AddApplicationOutputOutput, error) {
 	req, out := c.AddApplicationOutputRequest(input)
 	return out, req.Send()
@@ -346,7 +438,7 @@ const opAddApplicationReferenceDataSource = "AddApplicationReferenceDataSource"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSource
 func (c *KinesisAnalytics) AddApplicationReferenceDataSourceRequest(input *AddApplicationReferenceDataSourceInput) (req *request.Request, output *AddApplicationReferenceDataSourceOutput) {
 	op := &request.Operation{
 		Name:       opAddApplicationReferenceDataSource,
@@ -403,7 +495,7 @@ func (c *KinesisAnalytics) AddApplicationReferenceDataSourceRequest(input *AddAp
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSource
 func (c *KinesisAnalytics) AddApplicationReferenceDataSource(input *AddApplicationReferenceDataSourceInput) (*AddApplicationReferenceDataSourceOutput, error) {
 	req, out := c.AddApplicationReferenceDataSourceRequest(input)
 	return out, req.Send()
@@ -450,7 +542,7 @@ const opCreateApplication = "CreateApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplication
 func (c *KinesisAnalytics) CreateApplicationRequest(input *CreateApplicationInput) (req *request.Request, output *CreateApplicationOutput) {
 	op := &request.Operation{
 		Name:       opCreateApplication,
@@ -471,9 +563,9 @@ func (c *KinesisAnalytics) CreateApplicationRequest(input *CreateApplicationInpu
 //
 // Creates an Amazon Kinesis Analytics application. You can configure each application
 // with one streaming source as input, application code to process the input,
-// and up to five streaming destinations where you want Amazon Kinesis Analytics
-// to write the output data from your application. For an overview, see How
-// it Works (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works.html).
+// and up to three destinations where you want Amazon Kinesis Analytics to write
+// the output data from your application. For an overview, see How it Works
+// (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works.html).
 //
 // In the input configuration, you map the streaming source to an in-application
 // stream, which you can think of as a constantly updating table. In the mapping,
@@ -485,8 +577,7 @@ func (c *KinesisAnalytics) CreateApplicationRequest(input *CreateApplicationInpu
 // more SQL artifacts like SQL streams or pumps.
 //
 // In the output configuration, you can configure the application to write data
-// from in-application streams created in your applications to up to five streaming
-// destinations.
+// from in-application streams created in your applications to up to three destinations.
 //
 // To read data from your source stream or write data to destination streams,
 // Amazon Kinesis Analytics needs your permissions. You grant these permissions
@@ -517,7 +608,7 @@ func (c *KinesisAnalytics) CreateApplicationRequest(input *CreateApplicationInpu
 //   * ErrCodeInvalidArgumentException "InvalidArgumentException"
 //   Specified input parameter value is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplication
 func (c *KinesisAnalytics) CreateApplication(input *CreateApplicationInput) (*CreateApplicationOutput, error) {
 	req, out := c.CreateApplicationRequest(input)
 	return out, req.Send()
@@ -564,7 +655,7 @@ const opDeleteApplication = "DeleteApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplication
 func (c *KinesisAnalytics) DeleteApplicationRequest(input *DeleteApplicationInput) (req *request.Request, output *DeleteApplicationOutput) {
 	op := &request.Operation{
 		Name:       opDeleteApplication,
@@ -609,7 +700,7 @@ func (c *KinesisAnalytics) DeleteApplicationRequest(input *DeleteApplicationInpu
 //   * ErrCodeResourceInUseException "ResourceInUseException"
 //   Application is not available for this operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplication
 func (c *KinesisAnalytics) DeleteApplication(input *DeleteApplicationInput) (*DeleteApplicationOutput, error) {
 	req, out := c.DeleteApplicationRequest(input)
 	return out, req.Send()
@@ -656,7 +747,7 @@ const opDeleteApplicationCloudWatchLoggingOption = "DeleteApplicationCloudWatchL
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOption
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOption
 func (c *KinesisAnalytics) DeleteApplicationCloudWatchLoggingOptionRequest(input *DeleteApplicationCloudWatchLoggingOptionInput) (req *request.Request, output *DeleteApplicationCloudWatchLoggingOptionOutput) {
 	op := &request.Operation{
 		Name:       opDeleteApplicationCloudWatchLoggingOption,
@@ -701,7 +792,7 @@ func (c *KinesisAnalytics) DeleteApplicationCloudWatchLoggingOptionRequest(input
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOption
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOption
 func (c *KinesisAnalytics) DeleteApplicationCloudWatchLoggingOption(input *DeleteApplicationCloudWatchLoggingOptionInput) (*DeleteApplicationCloudWatchLoggingOptionOutput, error) {
 	req, out := c.DeleteApplicationCloudWatchLoggingOptionRequest(input)
 	return out, req.Send()
@@ -718,6 +809,96 @@ func (c *KinesisAnalytics) DeleteApplicationCloudWatchLoggingOption(input *Delet
 // for more information on using Contexts.
 func (c *KinesisAnalytics) DeleteApplicationCloudWatchLoggingOptionWithContext(ctx aws.Context, input *DeleteApplicationCloudWatchLoggingOptionInput, opts ...request.Option) (*DeleteApplicationCloudWatchLoggingOptionOutput, error) {
 	req, out := c.DeleteApplicationCloudWatchLoggingOptionRequest(input)
+	req.SetContext(ctx)
+	req.ApplyOptions(opts...)
+	return out, req.Send()
+}
+
+const opDeleteApplicationInputProcessingConfiguration = "DeleteApplicationInputProcessingConfiguration"
+
+// DeleteApplicationInputProcessingConfigurationRequest generates a "aws/request.Request" representing the
+// client's request for the DeleteApplicationInputProcessingConfiguration operation. The "output" return
+// value will be populated with the request's response once the request complets
+// successfuly.
+//
+// Use "Send" method on the returned Request to send the API call to the service.
+// the "output" return value is not valid until after Send returns without error.
+//
+// See DeleteApplicationInputProcessingConfiguration for more information on using the DeleteApplicationInputProcessingConfiguration
+// API call, and error handling.
+//
+// This method is useful when you want to inject custom logic or configuration
+// into the SDK's request lifecycle. Such as custom headers, or retry logic.
+//
+//
+//    // Example sending a request using the DeleteApplicationInputProcessingConfigurationRequest method.
+//    req, resp := client.DeleteApplicationInputProcessingConfigurationRequest(params)
+//
+//    err := req.Send()
+//    if err == nil { // resp is now filled
+//        fmt.Println(resp)
+//    }
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationInputProcessingConfiguration
+func (c *KinesisAnalytics) DeleteApplicationInputProcessingConfigurationRequest(input *DeleteApplicationInputProcessingConfigurationInput) (req *request.Request, output *DeleteApplicationInputProcessingConfigurationOutput) {
+	op := &request.Operation{
+		Name:       opDeleteApplicationInputProcessingConfiguration,
+		HTTPMethod: "POST",
+		HTTPPath:   "/",
+	}
+
+	if input == nil {
+		input = &DeleteApplicationInputProcessingConfigurationInput{}
+	}
+
+	output = &DeleteApplicationInputProcessingConfigurationOutput{}
+	req = c.newRequest(op, input, output)
+	return
+}
+
+// DeleteApplicationInputProcessingConfiguration API operation for Amazon Kinesis Analytics.
+//
+// Deletes an InputProcessingConfiguration from an input.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon Kinesis Analytics's
+// API operation DeleteApplicationInputProcessingConfiguration for usage and error information.
+//
+// Returned Error Codes:
+//   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
+//   Specified application can't be found.
+//
+//   * ErrCodeResourceInUseException "ResourceInUseException"
+//   Application is not available for this operation.
+//
+//   * ErrCodeInvalidArgumentException "InvalidArgumentException"
+//   Specified input parameter value is invalid.
+//
+//   * ErrCodeConcurrentModificationException "ConcurrentModificationException"
+//   Exception thrown as a result of concurrent modification to an application.
+//   For example, two individuals attempting to edit the same application at the
+//   same time.
+//
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationInputProcessingConfiguration
+func (c *KinesisAnalytics) DeleteApplicationInputProcessingConfiguration(input *DeleteApplicationInputProcessingConfigurationInput) (*DeleteApplicationInputProcessingConfigurationOutput, error) {
+	req, out := c.DeleteApplicationInputProcessingConfigurationRequest(input)
+	return out, req.Send()
+}
+
+// DeleteApplicationInputProcessingConfigurationWithContext is the same as DeleteApplicationInputProcessingConfiguration with the addition of
+// the ability to pass a context and additional request options.
+//
+// See DeleteApplicationInputProcessingConfiguration for details on how to use this API operation.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *KinesisAnalytics) DeleteApplicationInputProcessingConfigurationWithContext(ctx aws.Context, input *DeleteApplicationInputProcessingConfigurationInput, opts ...request.Option) (*DeleteApplicationInputProcessingConfigurationOutput, error) {
+	req, out := c.DeleteApplicationInputProcessingConfigurationRequest(input)
 	req.SetContext(ctx)
 	req.ApplyOptions(opts...)
 	return out, req.Send()
@@ -748,7 +929,7 @@ const opDeleteApplicationOutput = "DeleteApplicationOutput"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutput
 func (c *KinesisAnalytics) DeleteApplicationOutputRequest(input *DeleteApplicationOutputInput) (req *request.Request, output *DeleteApplicationOutputOutput) {
 	op := &request.Operation{
 		Name:       opDeleteApplicationOutput,
@@ -796,7 +977,7 @@ func (c *KinesisAnalytics) DeleteApplicationOutputRequest(input *DeleteApplicati
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutput
 func (c *KinesisAnalytics) DeleteApplicationOutput(input *DeleteApplicationOutputInput) (*DeleteApplicationOutputOutput, error) {
 	req, out := c.DeleteApplicationOutputRequest(input)
 	return out, req.Send()
@@ -843,7 +1024,7 @@ const opDeleteApplicationReferenceDataSource = "DeleteApplicationReferenceDataSo
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSource
 func (c *KinesisAnalytics) DeleteApplicationReferenceDataSourceRequest(input *DeleteApplicationReferenceDataSourceInput) (req *request.Request, output *DeleteApplicationReferenceDataSourceOutput) {
 	op := &request.Operation{
 		Name:       opDeleteApplicationReferenceDataSource,
@@ -894,7 +1075,7 @@ func (c *KinesisAnalytics) DeleteApplicationReferenceDataSourceRequest(input *De
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSource
 func (c *KinesisAnalytics) DeleteApplicationReferenceDataSource(input *DeleteApplicationReferenceDataSourceInput) (*DeleteApplicationReferenceDataSourceOutput, error) {
 	req, out := c.DeleteApplicationReferenceDataSourceRequest(input)
 	return out, req.Send()
@@ -941,7 +1122,7 @@ const opDescribeApplication = "DescribeApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplication
 func (c *KinesisAnalytics) DescribeApplicationRequest(input *DescribeApplicationInput) (req *request.Request, output *DescribeApplicationOutput) {
 	op := &request.Operation{
 		Name:       opDescribeApplication,
@@ -980,7 +1161,7 @@ func (c *KinesisAnalytics) DescribeApplicationRequest(input *DescribeApplication
 //   * ErrCodeResourceNotFoundException "ResourceNotFoundException"
 //   Specified application can't be found.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplication
 func (c *KinesisAnalytics) DescribeApplication(input *DescribeApplicationInput) (*DescribeApplicationOutput, error) {
 	req, out := c.DescribeApplicationRequest(input)
 	return out, req.Send()
@@ -1027,7 +1208,7 @@ const opDiscoverInputSchema = "DiscoverInputSchema"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchema
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchema
 func (c *KinesisAnalytics) DiscoverInputSchemaRequest(input *DiscoverInputSchemaInput) (req *request.Request, output *DiscoverInputSchemaOutput) {
 	op := &request.Operation{
 		Name:       opDiscoverInputSchema,
@@ -1047,9 +1228,9 @@ func (c *KinesisAnalytics) DiscoverInputSchemaRequest(input *DiscoverInputSchema
 // DiscoverInputSchema API operation for Amazon Kinesis Analytics.
 //
 // Infers a schema by evaluating sample records on the specified streaming source
-// (Amazon Kinesis stream or Amazon Kinesis Firehose delivery stream). In the
-// response, the operation returns the inferred schema and also the sample records
-// that the operation used to infer the schema.
+// (Amazon Kinesis stream or Amazon Kinesis Firehose delivery stream) or S3
+// object. In the response, the operation returns the inferred schema and also
+// the sample records that the operation used to infer the schema.
 //
 // You can use the inferred schema when configuring a streaming source for your
 // application. For conceptual information, see Configuring Application Input
@@ -1085,7 +1266,7 @@ func (c *KinesisAnalytics) DiscoverInputSchemaRequest(input *DiscoverInputSchema
 //   * ErrCodeServiceUnavailableException "ServiceUnavailableException"
 //   The service is unavailable, back off and retry the operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchema
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchema
 func (c *KinesisAnalytics) DiscoverInputSchema(input *DiscoverInputSchemaInput) (*DiscoverInputSchemaOutput, error) {
 	req, out := c.DiscoverInputSchemaRequest(input)
 	return out, req.Send()
@@ -1132,7 +1313,7 @@ const opListApplications = "ListApplications"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplications
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplications
 func (c *KinesisAnalytics) ListApplicationsRequest(input *ListApplicationsInput) (req *request.Request, output *ListApplicationsOutput) {
 	op := &request.Operation{
 		Name:       opListApplications,
@@ -1169,7 +1350,7 @@ func (c *KinesisAnalytics) ListApplicationsRequest(input *ListApplicationsInput)
 //
 // See the AWS API reference guide for Amazon Kinesis Analytics's
 // API operation ListApplications for usage and error information.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplications
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplications
 func (c *KinesisAnalytics) ListApplications(input *ListApplicationsInput) (*ListApplicationsOutput, error) {
 	req, out := c.ListApplicationsRequest(input)
 	return out, req.Send()
@@ -1216,7 +1397,7 @@ const opStartApplication = "StartApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplication
 func (c *KinesisAnalytics) StartApplicationRequest(input *StartApplicationInput) (req *request.Request, output *StartApplicationOutput) {
 	op := &request.Operation{
 		Name:       opStartApplication,
@@ -1271,7 +1452,7 @@ func (c *KinesisAnalytics) StartApplicationRequest(input *StartApplicationInput)
 //   * ErrCodeInvalidApplicationConfigurationException "InvalidApplicationConfigurationException"
 //   User-provided application configuration is not valid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplication
 func (c *KinesisAnalytics) StartApplication(input *StartApplicationInput) (*StartApplicationOutput, error) {
 	req, out := c.StartApplicationRequest(input)
 	return out, req.Send()
@@ -1318,7 +1499,7 @@ const opStopApplication = "StopApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplication
 func (c *KinesisAnalytics) StopApplicationRequest(input *StopApplicationInput) (req *request.Request, output *StopApplicationOutput) {
 	op := &request.Operation{
 		Name:       opStopApplication,
@@ -1360,7 +1541,7 @@ func (c *KinesisAnalytics) StopApplicationRequest(input *StopApplicationInput) (
 //   * ErrCodeResourceInUseException "ResourceInUseException"
 //   Application is not available for this operation.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplication
 func (c *KinesisAnalytics) StopApplication(input *StopApplicationInput) (*StopApplicationOutput, error) {
 	req, out := c.StopApplicationRequest(input)
 	return out, req.Send()
@@ -1407,7 +1588,7 @@ const opUpdateApplication = "UpdateApplication"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplication
 func (c *KinesisAnalytics) UpdateApplicationRequest(input *UpdateApplicationInput) (req *request.Request, output *UpdateApplicationOutput) {
 	op := &request.Operation{
 		Name:       opUpdateApplication,
@@ -1461,7 +1642,7 @@ func (c *KinesisAnalytics) UpdateApplicationRequest(input *UpdateApplicationInpu
 //   For example, two individuals attempting to edit the same application at the
 //   same time.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplication
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplication
 func (c *KinesisAnalytics) UpdateApplication(input *UpdateApplicationInput) (*UpdateApplicationOutput, error) {
 	req, out := c.UpdateApplicationRequest(input)
 	return out, req.Send()
@@ -1483,7 +1664,7 @@ func (c *KinesisAnalytics) UpdateApplicationWithContext(ctx aws.Context, input *
 	return out, req.Send()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOptionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOptionRequest
 type AddApplicationCloudWatchLoggingOptionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1563,7 +1744,7 @@ func (s *AddApplicationCloudWatchLoggingOptionInput) SetCurrentApplicationVersio
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOptionResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationCloudWatchLoggingOptionResponse
 type AddApplicationCloudWatchLoggingOptionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1578,7 +1759,7 @@ func (s AddApplicationCloudWatchLoggingOptionOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputRequest
 type AddApplicationInputInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1594,9 +1775,7 @@ type AddApplicationInputInput struct {
 	// CurrentApplicationVersionId is a required field
 	CurrentApplicationVersionId *int64 `min:"1" type:"long" required:"true"`
 
-	// When you configure the application input, you specify the streaming source,
-	// the in-application stream name that is created, and the mapping between the
-	// two. For more information, see Configuring Application Input (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html).
+	// The Input to add.
 	//
 	// Input is a required field
 	Input *Input `type:"structure" required:"true"`
@@ -1660,7 +1839,7 @@ func (s *AddApplicationInputInput) SetInput(v *Input) *AddApplicationInputInput 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputResponse
 type AddApplicationInputOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1675,7 +1854,122 @@ func (s AddApplicationInputOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutputRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputProcessingConfigurationRequest
+type AddApplicationInputProcessingConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// Name of the application to which you want to add the input processing configuration.
+	//
+	// ApplicationName is a required field
+	ApplicationName *string `min:"1" type:"string" required:"true"`
+
+	// Version of the application to which you want to add the input processing
+	// configuration. You can use the DescribeApplication operation to get the current
+	// application version. If the version specified is not the current version,
+	// the ConcurrentModificationException is returned.
+	//
+	// CurrentApplicationVersionId is a required field
+	CurrentApplicationVersionId *int64 `min:"1" type:"long" required:"true"`
+
+	// The ID of the input configuration to add the input processing configuration
+	// to. You can get a list of the input IDs for an application using the DescribeApplication
+	// operation.
+	//
+	// InputId is a required field
+	InputId *string `min:"1" type:"string" required:"true"`
+
+	// The InputProcessingConfiguration to add to the application.
+	//
+	// InputProcessingConfiguration is a required field
+	InputProcessingConfiguration *InputProcessingConfiguration `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s AddApplicationInputProcessingConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddApplicationInputProcessingConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *AddApplicationInputProcessingConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "AddApplicationInputProcessingConfigurationInput"}
+	if s.ApplicationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationName"))
+	}
+	if s.ApplicationName != nil && len(*s.ApplicationName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ApplicationName", 1))
+	}
+	if s.CurrentApplicationVersionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("CurrentApplicationVersionId"))
+	}
+	if s.CurrentApplicationVersionId != nil && *s.CurrentApplicationVersionId < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("CurrentApplicationVersionId", 1))
+	}
+	if s.InputId == nil {
+		invalidParams.Add(request.NewErrParamRequired("InputId"))
+	}
+	if s.InputId != nil && len(*s.InputId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("InputId", 1))
+	}
+	if s.InputProcessingConfiguration == nil {
+		invalidParams.Add(request.NewErrParamRequired("InputProcessingConfiguration"))
+	}
+	if s.InputProcessingConfiguration != nil {
+		if err := s.InputProcessingConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("InputProcessingConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationName sets the ApplicationName field's value.
+func (s *AddApplicationInputProcessingConfigurationInput) SetApplicationName(v string) *AddApplicationInputProcessingConfigurationInput {
+	s.ApplicationName = &v
+	return s
+}
+
+// SetCurrentApplicationVersionId sets the CurrentApplicationVersionId field's value.
+func (s *AddApplicationInputProcessingConfigurationInput) SetCurrentApplicationVersionId(v int64) *AddApplicationInputProcessingConfigurationInput {
+	s.CurrentApplicationVersionId = &v
+	return s
+}
+
+// SetInputId sets the InputId field's value.
+func (s *AddApplicationInputProcessingConfigurationInput) SetInputId(v string) *AddApplicationInputProcessingConfigurationInput {
+	s.InputId = &v
+	return s
+}
+
+// SetInputProcessingConfiguration sets the InputProcessingConfiguration field's value.
+func (s *AddApplicationInputProcessingConfigurationInput) SetInputProcessingConfiguration(v *InputProcessingConfiguration) *AddApplicationInputProcessingConfigurationInput {
+	s.InputProcessingConfiguration = v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationInputProcessingConfigurationResponse
+type AddApplicationInputProcessingConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s AddApplicationInputProcessingConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s AddApplicationInputProcessingConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutputRequest
 type AddApplicationOutputInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1684,7 +1978,7 @@ type AddApplicationOutputInput struct {
 	// ApplicationName is a required field
 	ApplicationName *string `min:"1" type:"string" required:"true"`
 
-	// Version of the application to which you want add the output configuration.
+	// Version of the application to which you want to add the output configuration.
 	// You can use the DescribeApplication operation to get the current application
 	// version. If the version specified is not the current version, the ConcurrentModificationException
 	// is returned.
@@ -1694,8 +1988,9 @@ type AddApplicationOutputInput struct {
 
 	// An array of objects, each describing one output configuration. In the output
 	// configuration, you specify the name of an in-application stream, a destination
-	// (that is, an Amazon Kinesis stream or an Amazon Kinesis Firehose delivery
-	// stream), and record the formation to use when writing to the destination.
+	// (that is, an Amazon Kinesis stream, an Amazon Kinesis Firehose delivery stream,
+	// or an Amazon Lambda function), and record the formation to use when writing
+	// to the destination.
 	//
 	// Output is a required field
 	Output *Output `type:"structure" required:"true"`
@@ -1759,7 +2054,7 @@ func (s *AddApplicationOutputInput) SetOutput(v *Output) *AddApplicationOutputIn
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutputResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationOutputResponse
 type AddApplicationOutputOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1774,7 +2069,7 @@ func (s AddApplicationOutputOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSourceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSourceRequest
 type AddApplicationReferenceDataSourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1860,7 +2155,7 @@ func (s *AddApplicationReferenceDataSourceInput) SetReferenceDataSource(v *Refer
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSourceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/AddApplicationReferenceDataSourceResponse
 type AddApplicationReferenceDataSourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1877,7 +2172,7 @@ func (s AddApplicationReferenceDataSourceOutput) GoString() string {
 
 // Provides a description of the application, including the application Amazon
 // Resource Name (ARN), status, latest version, and input and output configuration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ApplicationDetail
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ApplicationDetail
 type ApplicationDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -1913,14 +2208,14 @@ type ApplicationDetail struct {
 	// Kinesis Analytics applications, see Working with Amazon CloudWatch Logs (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/cloudwatch-logs.html).
 	CloudWatchLoggingOptionDescriptions []*CloudWatchLoggingOptionDescription `type:"list"`
 
-	// Timestamp when the application version was created.
+	// Time stamp when the application version was created.
 	CreateTimestamp *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// Describes the application input configuration. For more information, see
 	// Configuring Application Input (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html).
 	InputDescriptions []*InputDescription `type:"list"`
 
-	// Timestamp when the application was last updated.
+	// Time stamp when the application was last updated.
 	LastUpdateTimestamp *time.Time `type:"timestamp" timestampFormat:"unix"`
 
 	// Describes the application output configuration. For more information, see
@@ -2016,7 +2311,7 @@ func (s *ApplicationDetail) SetReferenceDataSourceDescriptions(v []*ReferenceDat
 
 // Provides application summary information, including the application Amazon
 // Resource Name (ARN), name, and status.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ApplicationSummary
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ApplicationSummary
 type ApplicationSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -2065,7 +2360,7 @@ func (s *ApplicationSummary) SetApplicationStatus(v string) *ApplicationSummary 
 }
 
 // Describes updates to apply to an existing Amazon Kinesis Analytics application.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ApplicationUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ApplicationUpdate
 type ApplicationUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -2183,7 +2478,7 @@ func (s *ApplicationUpdate) SetReferenceDataSourceUpdates(v []*ReferenceDataSour
 // "name1", "address1"
 //
 // "name2, "address2"
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CSVMappingParameters
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CSVMappingParameters
 type CSVMappingParameters struct {
 	_ struct{} `type:"structure"`
 
@@ -2245,7 +2540,7 @@ func (s *CSVMappingParameters) SetRecordRowDelimiter(v string) *CSVMappingParame
 
 // Provides a description of CloudWatch logging options, including the log stream
 // Amazon Resource Name (ARN) and the role ARN.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CloudWatchLoggingOption
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CloudWatchLoggingOption
 type CloudWatchLoggingOption struct {
 	_ struct{} `type:"structure"`
 
@@ -2307,7 +2602,7 @@ func (s *CloudWatchLoggingOption) SetRoleARN(v string) *CloudWatchLoggingOption 
 }
 
 // Description of the CloudWatch logging option.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CloudWatchLoggingOptionDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CloudWatchLoggingOptionDescription
 type CloudWatchLoggingOptionDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -2356,7 +2651,7 @@ func (s *CloudWatchLoggingOptionDescription) SetRoleARN(v string) *CloudWatchLog
 }
 
 // Describes CloudWatch logging option updates.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CloudWatchLoggingOptionUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CloudWatchLoggingOptionUpdate
 type CloudWatchLoggingOptionUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -2425,7 +2720,7 @@ func (s *CloudWatchLoggingOptionUpdate) SetRoleARNUpdate(v string) *CloudWatchLo
 }
 
 // TBD
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplicationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplicationRequest
 type CreateApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2433,7 +2728,7 @@ type CreateApplicationInput struct {
 	// output. For example, you can write a SQL statement that reads data from one
 	// in-application stream, generates a running average of the number of advertisement
 	// clicks by vendor, and insert resulting rows in another in-application stream
-	// using pumps. For more inforamtion about the typical pattern, see Application
+	// using pumps. For more information about the typical pattern, see Application
 	// Code (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-app-code.html).
 	//
 	// You can provide such series of SQL statements, where output of one statement
@@ -2467,7 +2762,7 @@ type CreateApplicationInput struct {
 	// stream like a table (you can think of it as a constantly updating table).
 	//
 	// For the streaming source, you provide its Amazon Resource Name (ARN) and
-	// format of data on the stream (for example, JSON, CSV, etc). You also must
+	// format of data on the stream (for example, JSON, CSV, etc.). You also must
 	// provide an IAM role that Amazon Kinesis Analytics can assume to read this
 	// stream on your behalf.
 	//
@@ -2478,20 +2773,22 @@ type CreateApplicationInput struct {
 	Inputs []*Input `type:"list"`
 
 	// You can configure application output to write data from any of the in-application
-	// streams to up to five destinations.
+	// streams to up to three destinations.
 	//
 	// These destinations can be Amazon Kinesis streams, Amazon Kinesis Firehose
-	// delivery streams, or both.
+	// delivery streams, Amazon Lambda destinations, or any combination of the three.
 	//
 	// In the configuration, you specify the in-application stream name, the destination
-	// stream Amazon Resource Name (ARN), and the format to use when writing data.
-	// You must also provide an IAM role that Amazon Kinesis Analytics can assume
-	// to write to the destination stream on your behalf.
+	// stream or Lambda function Amazon Resource Name (ARN), and the format to use
+	// when writing data. You must also provide an IAM role that Amazon Kinesis
+	// Analytics can assume to write to the destination stream or Lambda function
+	// on your behalf.
 	//
-	// In the output configuration, you also provide the output stream Amazon Resource
-	// Name (ARN) and the format of data in the stream (for example, JSON, CSV).
-	// You also must provide an IAM role that Amazon Kinesis Analytics can assume
-	// to write to this stream on your behalf.
+	// In the output configuration, you also provide the output stream or Lambda
+	// function ARN. For stream destinations, you provide the format of data in
+	// the stream (for example, JSON, CSV). You also must provide an IAM role that
+	// Amazon Kinesis Analytics can assume to write to the stream or Lambda function
+	// on your behalf.
 	Outputs []*Output `type:"list"`
 }
 
@@ -2588,7 +2885,7 @@ func (s *CreateApplicationInput) SetOutputs(v []*Output) *CreateApplicationInput
 }
 
 // TBD
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/CreateApplicationResponse
 type CreateApplicationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2616,7 +2913,7 @@ func (s *CreateApplicationOutput) SetApplicationSummary(v *ApplicationSummary) *
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOptionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOptionRequest
 type DeleteApplicationCloudWatchLoggingOptionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2626,7 +2923,8 @@ type DeleteApplicationCloudWatchLoggingOptionInput struct {
 	ApplicationName *string `min:"1" type:"string" required:"true"`
 
 	// The CloudWatchLoggingOptionId of the CloudWatch logging option to delete.
-	// You can use the DescribeApplication operation to get the CloudWatchLoggingOptionId.
+	// You can get the CloudWatchLoggingOptionId by using the DescribeApplication
+	// operation.
 	//
 	// CloudWatchLoggingOptionId is a required field
 	CloudWatchLoggingOptionId *string `min:"1" type:"string" required:"true"`
@@ -2693,7 +2991,7 @@ func (s *DeleteApplicationCloudWatchLoggingOptionInput) SetCurrentApplicationVer
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOptionResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationCloudWatchLoggingOptionResponse
 type DeleteApplicationCloudWatchLoggingOptionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2708,7 +3006,7 @@ func (s DeleteApplicationCloudWatchLoggingOptionOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationRequest
 type DeleteApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2764,7 +3062,100 @@ func (s *DeleteApplicationInput) SetCreateTimestamp(v time.Time) *DeleteApplicat
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationInputProcessingConfigurationRequest
+type DeleteApplicationInputProcessingConfigurationInput struct {
+	_ struct{} `type:"structure"`
+
+	// The Kinesis Analytics application name.
+	//
+	// ApplicationName is a required field
+	ApplicationName *string `min:"1" type:"string" required:"true"`
+
+	// The version ID of the Kinesis Analytics application.
+	//
+	// CurrentApplicationVersionId is a required field
+	CurrentApplicationVersionId *int64 `min:"1" type:"long" required:"true"`
+
+	// The ID of the input configuration from which to delete the input processing
+	// configuration. You can get a list of the input IDs for an application by
+	// using the DescribeApplication operation.
+	//
+	// InputId is a required field
+	InputId *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s DeleteApplicationInputProcessingConfigurationInput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteApplicationInputProcessingConfigurationInput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteApplicationInputProcessingConfigurationInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteApplicationInputProcessingConfigurationInput"}
+	if s.ApplicationName == nil {
+		invalidParams.Add(request.NewErrParamRequired("ApplicationName"))
+	}
+	if s.ApplicationName != nil && len(*s.ApplicationName) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ApplicationName", 1))
+	}
+	if s.CurrentApplicationVersionId == nil {
+		invalidParams.Add(request.NewErrParamRequired("CurrentApplicationVersionId"))
+	}
+	if s.CurrentApplicationVersionId != nil && *s.CurrentApplicationVersionId < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("CurrentApplicationVersionId", 1))
+	}
+	if s.InputId == nil {
+		invalidParams.Add(request.NewErrParamRequired("InputId"))
+	}
+	if s.InputId != nil && len(*s.InputId) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("InputId", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetApplicationName sets the ApplicationName field's value.
+func (s *DeleteApplicationInputProcessingConfigurationInput) SetApplicationName(v string) *DeleteApplicationInputProcessingConfigurationInput {
+	s.ApplicationName = &v
+	return s
+}
+
+// SetCurrentApplicationVersionId sets the CurrentApplicationVersionId field's value.
+func (s *DeleteApplicationInputProcessingConfigurationInput) SetCurrentApplicationVersionId(v int64) *DeleteApplicationInputProcessingConfigurationInput {
+	s.CurrentApplicationVersionId = &v
+	return s
+}
+
+// SetInputId sets the InputId field's value.
+func (s *DeleteApplicationInputProcessingConfigurationInput) SetInputId(v string) *DeleteApplicationInputProcessingConfigurationInput {
+	s.InputId = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationInputProcessingConfigurationResponse
+type DeleteApplicationInputProcessingConfigurationOutput struct {
+	_ struct{} `type:"structure"`
+}
+
+// String returns the string representation
+func (s DeleteApplicationInputProcessingConfigurationOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s DeleteApplicationInputProcessingConfigurationOutput) GoString() string {
+	return s.String()
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationResponse
 type DeleteApplicationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2779,7 +3170,7 @@ func (s DeleteApplicationOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutputRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutputRequest
 type DeleteApplicationOutputInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2862,7 +3253,7 @@ func (s *DeleteApplicationOutputInput) SetOutputId(v string) *DeleteApplicationO
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutputResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationOutputResponse
 type DeleteApplicationOutputOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2877,7 +3268,7 @@ func (s DeleteApplicationOutputOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSourceRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSourceRequest
 type DeleteApplicationReferenceDataSourceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2958,7 +3349,7 @@ func (s *DeleteApplicationReferenceDataSourceInput) SetReferenceId(v string) *De
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSourceResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DeleteApplicationReferenceDataSourceResponse
 type DeleteApplicationReferenceDataSourceOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2973,7 +3364,7 @@ func (s DeleteApplicationReferenceDataSourceOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplicationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplicationRequest
 type DescribeApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3015,7 +3406,7 @@ func (s *DescribeApplicationInput) SetApplicationName(v string) *DescribeApplica
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DescribeApplicationResponse
 type DescribeApplicationOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3045,7 +3436,7 @@ func (s *DescribeApplicationOutput) SetApplicationDetail(v *ApplicationDetail) *
 
 // Describes the data format when records are written to the destination. For
 // more information, see Configuring Application Output (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-output.html).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DestinationSchema
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DestinationSchema
 type DestinationSchema struct {
 	_ struct{} `type:"structure"`
 
@@ -3069,26 +3460,27 @@ func (s *DestinationSchema) SetRecordFormatType(v string) *DestinationSchema {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchemaRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchemaRequest
 type DiscoverInputSchemaInput struct {
 	_ struct{} `type:"structure"`
 
+	// The InputProcessingConfiguration to use to preprocess the records before
+	// discovering the schema of the records.
+	InputProcessingConfiguration *InputProcessingConfiguration `type:"structure"`
+
 	// Point at which you want Amazon Kinesis Analytics to start reading records
 	// from the specified streaming source discovery purposes.
-	//
-	// InputStartingPositionConfiguration is a required field
-	InputStartingPositionConfiguration *InputStartingPositionConfiguration `type:"structure" required:"true"`
+	InputStartingPositionConfiguration *InputStartingPositionConfiguration `type:"structure"`
 
 	// Amazon Resource Name (ARN) of the streaming source.
-	//
-	// ResourceARN is a required field
-	ResourceARN *string `min:"1" type:"string" required:"true"`
+	ResourceARN *string `min:"1" type:"string"`
 
 	// ARN of the IAM role that Amazon Kinesis Analytics can assume to access the
 	// stream on your behalf.
-	//
-	// RoleARN is a required field
-	RoleARN *string `min:"1" type:"string" required:"true"`
+	RoleARN *string `min:"1" type:"string"`
+
+	// Specify this parameter to discover a schema from data in an S3 object.
+	S3Configuration *S3Configuration `type:"structure"`
 }
 
 // String returns the string representation
@@ -3104,26 +3496,33 @@ func (s DiscoverInputSchemaInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *DiscoverInputSchemaInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "DiscoverInputSchemaInput"}
-	if s.InputStartingPositionConfiguration == nil {
-		invalidParams.Add(request.NewErrParamRequired("InputStartingPositionConfiguration"))
-	}
-	if s.ResourceARN == nil {
-		invalidParams.Add(request.NewErrParamRequired("ResourceARN"))
-	}
 	if s.ResourceARN != nil && len(*s.ResourceARN) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ResourceARN", 1))
 	}
-	if s.RoleARN == nil {
-		invalidParams.Add(request.NewErrParamRequired("RoleARN"))
-	}
 	if s.RoleARN != nil && len(*s.RoleARN) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("RoleARN", 1))
+	}
+	if s.InputProcessingConfiguration != nil {
+		if err := s.InputProcessingConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("InputProcessingConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.S3Configuration != nil {
+		if err := s.S3Configuration.Validate(); err != nil {
+			invalidParams.AddNested("S3Configuration", err.(request.ErrInvalidParams))
+		}
 	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
 	}
 	return nil
+}
+
+// SetInputProcessingConfiguration sets the InputProcessingConfiguration field's value.
+func (s *DiscoverInputSchemaInput) SetInputProcessingConfiguration(v *InputProcessingConfiguration) *DiscoverInputSchemaInput {
+	s.InputProcessingConfiguration = v
+	return s
 }
 
 // SetInputStartingPositionConfiguration sets the InputStartingPositionConfiguration field's value.
@@ -3144,7 +3543,13 @@ func (s *DiscoverInputSchemaInput) SetRoleARN(v string) *DiscoverInputSchemaInpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchemaResponse
+// SetS3Configuration sets the S3Configuration field's value.
+func (s *DiscoverInputSchemaInput) SetS3Configuration(v *S3Configuration) *DiscoverInputSchemaInput {
+	s.S3Configuration = v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/DiscoverInputSchemaResponse
 type DiscoverInputSchemaOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3156,6 +3561,10 @@ type DiscoverInputSchemaOutput struct {
 	// An array of elements, where each element corresponds to a row in a stream
 	// record (a stream record can have more than one row).
 	ParsedInputRecords [][]*string `type:"list"`
+
+	// Stream data that was modified by the processor specified in the InputProcessingConfiguration
+	// parameter.
+	ProcessedInputRecords []*string `type:"list"`
 
 	// Raw stream data that was sampled to infer the schema.
 	RawInputRecords []*string `type:"list"`
@@ -3183,6 +3592,12 @@ func (s *DiscoverInputSchemaOutput) SetParsedInputRecords(v [][]*string) *Discov
 	return s
 }
 
+// SetProcessedInputRecords sets the ProcessedInputRecords field's value.
+func (s *DiscoverInputSchemaOutput) SetProcessedInputRecords(v []*string) *DiscoverInputSchemaOutput {
+	s.ProcessedInputRecords = v
+	return s
+}
+
 // SetRawInputRecords sets the RawInputRecords field's value.
 func (s *DiscoverInputSchemaOutput) SetRawInputRecords(v []*string) *DiscoverInputSchemaOutput {
 	s.RawInputRecords = v
@@ -3192,16 +3607,22 @@ func (s *DiscoverInputSchemaOutput) SetRawInputRecords(v []*string) *DiscoverInp
 // When you configure the application input, you specify the streaming source,
 // the in-application stream name that is created, and the mapping between the
 // two. For more information, see Configuring Application Input (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/Input
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/Input
 type Input struct {
 	_ struct{} `type:"structure"`
 
 	// Describes the number of in-application streams to create.
 	//
-	// Data from your source will be routed to these in-application input streams.
+	// Data from your source is routed to these in-application input streams.
 	//
 	// (see Configuring Application Input (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html).
 	InputParallelism *InputParallelism `type:"structure"`
+
+	// The InputProcessingConfiguration for the input. An input processor transforms
+	// records as they are received from the stream, before the application's SQL
+	// code executes. Currently, the only input processing configuration available
+	// is InputLambdaProcessor.
+	InputProcessingConfiguration *InputProcessingConfiguration `type:"structure"`
 
 	// Describes the format of the data in the streaming source, and how each data
 	// element maps to corresponding columns in the in-application stream that is
@@ -3213,8 +3634,8 @@ type Input struct {
 	InputSchema *SourceSchema `type:"structure" required:"true"`
 
 	// If the streaming source is an Amazon Kinesis Firehose delivery stream, identifies
-	// the Firehose delivery stream's ARN and an IAM role that enables Amazon Kinesis
-	// Analytics to access the stream on your behalf.
+	// the delivery stream's ARN and an IAM role that enables Amazon Kinesis Analytics
+	// to access the stream on your behalf.
 	//
 	// Note: Either KinesisStreamsInput or KinesisFirehoseInput is required.
 	KinesisFirehoseInput *KinesisFirehoseInput `type:"structure"`
@@ -3226,10 +3647,10 @@ type Input struct {
 	// Note: Either KinesisStreamsInput or KinesisFirehoseInput is required.
 	KinesisStreamsInput *KinesisStreamsInput `type:"structure"`
 
-	// Name prefix to use when creating in-application stream. Suppose you specify
-	// a prefix "MyInApplicationStream". Amazon Kinesis Analytics will then create
+	// Name prefix to use when creating an in-application stream. Suppose that you
+	// specify a prefix "MyInApplicationStream." Amazon Kinesis Analytics then creates
 	// one or more (as per the InputParallelism count you specified) in-application
-	// streams with names "MyInApplicationStream_001", "MyInApplicationStream_002"
+	// streams with names "MyInApplicationStream_001," "MyInApplicationStream_002,"
 	// and so on.
 	//
 	// NamePrefix is a required field
@@ -3263,6 +3684,11 @@ func (s *Input) Validate() error {
 			invalidParams.AddNested("InputParallelism", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.InputProcessingConfiguration != nil {
+		if err := s.InputProcessingConfiguration.Validate(); err != nil {
+			invalidParams.AddNested("InputProcessingConfiguration", err.(request.ErrInvalidParams))
+		}
+	}
 	if s.InputSchema != nil {
 		if err := s.InputSchema.Validate(); err != nil {
 			invalidParams.AddNested("InputSchema", err.(request.ErrInvalidParams))
@@ -3288,6 +3714,12 @@ func (s *Input) Validate() error {
 // SetInputParallelism sets the InputParallelism field's value.
 func (s *Input) SetInputParallelism(v *InputParallelism) *Input {
 	s.InputParallelism = v
+	return s
+}
+
+// SetInputProcessingConfiguration sets the InputProcessingConfiguration field's value.
+func (s *Input) SetInputProcessingConfiguration(v *InputProcessingConfiguration) *Input {
+	s.InputProcessingConfiguration = v
 	return s
 }
 
@@ -3318,7 +3750,7 @@ func (s *Input) SetNamePrefix(v string) *Input {
 // When you start your application, you provide this configuration, which identifies
 // the input source and the point in the input source at which you want the
 // application to start processing records.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputConfiguration
 type InputConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -3377,7 +3809,7 @@ func (s *InputConfiguration) SetInputStartingPositionConfiguration(v *InputStart
 
 // Describes the application input configuration. For more information, see
 // Configuring Application Input (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputDescription
 type InputDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -3392,22 +3824,26 @@ type InputDescription struct {
 	// to the streaming source).
 	InputParallelism *InputParallelism `type:"structure"`
 
+	// The description of the preprocessor that executes on records in this input
+	// before the application's code is run.
+	InputProcessingConfigurationDescription *InputProcessingConfigurationDescription `type:"structure"`
+
 	// Describes the format of the data in the streaming source, and how each data
-	// element maps to corresponding columns created in the in-application stream.
+	// element maps to corresponding columns in the in-application stream that is
+	// being created.
 	InputSchema *SourceSchema `type:"structure"`
 
 	// Point at which the application is configured to read from the input stream.
 	InputStartingPositionConfiguration *InputStartingPositionConfiguration `type:"structure"`
 
 	// If an Amazon Kinesis Firehose delivery stream is configured as a streaming
-	// source, provides the Firehose delivery stream's Amazon Resource Name (ARN)
-	// and an IAM role that enables Amazon Kinesis Analytics to access the stream
-	// on your behalf.
+	// source, provides the delivery stream's ARN and an IAM role that enables Amazon
+	// Kinesis Analytics to access the stream on your behalf.
 	KinesisFirehoseInputDescription *KinesisFirehoseInputDescription `type:"structure"`
 
 	// If an Amazon Kinesis stream is configured as streaming source, provides Amazon
-	// Kinesis stream's ARN and an IAM role that enables Amazon Kinesis Analytics
-	// to access the stream on your behalf.
+	// Kinesis stream's Amazon Resource Name (ARN) and an IAM role that enables
+	// Amazon Kinesis Analytics to access the stream on your behalf.
 	KinesisStreamsInputDescription *KinesisStreamsInputDescription `type:"structure"`
 
 	// In-application name prefix.
@@ -3442,6 +3878,12 @@ func (s *InputDescription) SetInputParallelism(v *InputParallelism) *InputDescri
 	return s
 }
 
+// SetInputProcessingConfigurationDescription sets the InputProcessingConfigurationDescription field's value.
+func (s *InputDescription) SetInputProcessingConfigurationDescription(v *InputProcessingConfigurationDescription) *InputDescription {
+	s.InputProcessingConfigurationDescription = v
+	return s
+}
+
 // SetInputSchema sets the InputSchema field's value.
 func (s *InputDescription) SetInputSchema(v *SourceSchema) *InputDescription {
 	s.InputSchema = v
@@ -3472,10 +3914,164 @@ func (s *InputDescription) SetNamePrefix(v string) *InputDescription {
 	return s
 }
 
+// An object that contains the Amazon Resource Name (ARN) of the AWS Lambda
+// (https://aws.amazon.com/documentation/lambda/) function that is used to preprocess
+// records in the stream, and the ARN of the IAM role that is used to access
+// the AWS Lambda function.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputLambdaProcessor
+type InputLambdaProcessor struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the AWS Lambda (https://aws.amazon.com/documentation/lambda/)
+	// function that operates on records in the stream.
+	//
+	// ResourceARN is a required field
+	ResourceARN *string `min:"1" type:"string" required:"true"`
+
+	// The ARN of the IAM role that is used to access the AWS Lambda function.
+	//
+	// RoleARN is a required field
+	RoleARN *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s InputLambdaProcessor) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputLambdaProcessor) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InputLambdaProcessor) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InputLambdaProcessor"}
+	if s.ResourceARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceARN"))
+	}
+	if s.ResourceARN != nil && len(*s.ResourceARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceARN", 1))
+	}
+	if s.RoleARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("RoleARN"))
+	}
+	if s.RoleARN != nil && len(*s.RoleARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleARN", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceARN sets the ResourceARN field's value.
+func (s *InputLambdaProcessor) SetResourceARN(v string) *InputLambdaProcessor {
+	s.ResourceARN = &v
+	return s
+}
+
+// SetRoleARN sets the RoleARN field's value.
+func (s *InputLambdaProcessor) SetRoleARN(v string) *InputLambdaProcessor {
+	s.RoleARN = &v
+	return s
+}
+
+// An object that contains the Amazon Resource Name (ARN) of the AWS Lambda
+// (https://aws.amazon.com/documentation/lambda/) function that is used to preprocess
+// records in the stream, and the ARN of the IAM role that is used to access
+// the AWS Lambda expression.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputLambdaProcessorDescription
+type InputLambdaProcessorDescription struct {
+	_ struct{} `type:"structure"`
+
+	// The ARN of the AWS Lambda (https://aws.amazon.com/documentation/lambda/)
+	// function that is used to preprocess the records in the stream.
+	ResourceARN *string `min:"1" type:"string"`
+
+	// The ARN of the IAM role that is used to access the AWS Lambda function.
+	RoleARN *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s InputLambdaProcessorDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputLambdaProcessorDescription) GoString() string {
+	return s.String()
+}
+
+// SetResourceARN sets the ResourceARN field's value.
+func (s *InputLambdaProcessorDescription) SetResourceARN(v string) *InputLambdaProcessorDescription {
+	s.ResourceARN = &v
+	return s
+}
+
+// SetRoleARN sets the RoleARN field's value.
+func (s *InputLambdaProcessorDescription) SetRoleARN(v string) *InputLambdaProcessorDescription {
+	s.RoleARN = &v
+	return s
+}
+
+// Represents an update to the InputLambdaProcessor that is used to preprocess
+// the records in the stream.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputLambdaProcessorUpdate
+type InputLambdaProcessorUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// The Amazon Resource Name (ARN) of the new AWS Lambda (https://aws.amazon.com/documentation/lambda/)
+	// function that is used to preprocess the records in the stream.
+	ResourceARNUpdate *string `min:"1" type:"string"`
+
+	// The ARN of the new IAM role that is used to access the AWS Lambda function.
+	RoleARNUpdate *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s InputLambdaProcessorUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputLambdaProcessorUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InputLambdaProcessorUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InputLambdaProcessorUpdate"}
+	if s.ResourceARNUpdate != nil && len(*s.ResourceARNUpdate) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceARNUpdate", 1))
+	}
+	if s.RoleARNUpdate != nil && len(*s.RoleARNUpdate) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleARNUpdate", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceARNUpdate sets the ResourceARNUpdate field's value.
+func (s *InputLambdaProcessorUpdate) SetResourceARNUpdate(v string) *InputLambdaProcessorUpdate {
+	s.ResourceARNUpdate = &v
+	return s
+}
+
+// SetRoleARNUpdate sets the RoleARNUpdate field's value.
+func (s *InputLambdaProcessorUpdate) SetRoleARNUpdate(v string) *InputLambdaProcessorUpdate {
+	s.RoleARNUpdate = &v
+	return s
+}
+
 // Describes the number of in-application streams to create for a given streaming
 // source. For information about parallelism, see Configuring Application Input
 // (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-input.html).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputParallelism
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputParallelism
 type InputParallelism struct {
 	_ struct{} `type:"structure"`
 
@@ -3514,7 +4110,7 @@ func (s *InputParallelism) SetCount(v int64) *InputParallelism {
 }
 
 // Provides updates to the parallelism count.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputParallelismUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputParallelismUpdate
 type InputParallelismUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -3551,8 +4147,127 @@ func (s *InputParallelismUpdate) SetCountUpdate(v int64) *InputParallelismUpdate
 	return s
 }
 
+// Provides a description of a processor that is used to preprocess the records
+// in the stream before being processed by your application code. Currently,
+// the only input processor available is AWS Lambda (https://aws.amazon.com/documentation/lambda/).
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputProcessingConfiguration
+type InputProcessingConfiguration struct {
+	_ struct{} `type:"structure"`
+
+	// The InputLambdaProcessor that is used to preprocess the records in the stream
+	// before being processed by your application code.
+	//
+	// InputLambdaProcessor is a required field
+	InputLambdaProcessor *InputLambdaProcessor `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s InputProcessingConfiguration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputProcessingConfiguration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InputProcessingConfiguration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InputProcessingConfiguration"}
+	if s.InputLambdaProcessor == nil {
+		invalidParams.Add(request.NewErrParamRequired("InputLambdaProcessor"))
+	}
+	if s.InputLambdaProcessor != nil {
+		if err := s.InputLambdaProcessor.Validate(); err != nil {
+			invalidParams.AddNested("InputLambdaProcessor", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInputLambdaProcessor sets the InputLambdaProcessor field's value.
+func (s *InputProcessingConfiguration) SetInputLambdaProcessor(v *InputLambdaProcessor) *InputProcessingConfiguration {
+	s.InputLambdaProcessor = v
+	return s
+}
+
+// Provides configuration information about an input processor. Currently, the
+// only input processor available is AWS Lambda (https://aws.amazon.com/documentation/lambda/).
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputProcessingConfigurationDescription
+type InputProcessingConfigurationDescription struct {
+	_ struct{} `type:"structure"`
+
+	// Provides configuration information about the associated InputLambdaProcessorDescription.
+	InputLambdaProcessorDescription *InputLambdaProcessorDescription `type:"structure"`
+}
+
+// String returns the string representation
+func (s InputProcessingConfigurationDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputProcessingConfigurationDescription) GoString() string {
+	return s.String()
+}
+
+// SetInputLambdaProcessorDescription sets the InputLambdaProcessorDescription field's value.
+func (s *InputProcessingConfigurationDescription) SetInputLambdaProcessorDescription(v *InputLambdaProcessorDescription) *InputProcessingConfigurationDescription {
+	s.InputLambdaProcessorDescription = v
+	return s
+}
+
+// Describes updates to an InputProcessingConfiguration.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputProcessingConfigurationUpdate
+type InputProcessingConfigurationUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// Provides update information for an InputLambdaProcessor.
+	//
+	// InputLambdaProcessorUpdate is a required field
+	InputLambdaProcessorUpdate *InputLambdaProcessorUpdate `type:"structure" required:"true"`
+}
+
+// String returns the string representation
+func (s InputProcessingConfigurationUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s InputProcessingConfigurationUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *InputProcessingConfigurationUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "InputProcessingConfigurationUpdate"}
+	if s.InputLambdaProcessorUpdate == nil {
+		invalidParams.Add(request.NewErrParamRequired("InputLambdaProcessorUpdate"))
+	}
+	if s.InputLambdaProcessorUpdate != nil {
+		if err := s.InputLambdaProcessorUpdate.Validate(); err != nil {
+			invalidParams.AddNested("InputLambdaProcessorUpdate", err.(request.ErrInvalidParams))
+		}
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetInputLambdaProcessorUpdate sets the InputLambdaProcessorUpdate field's value.
+func (s *InputProcessingConfigurationUpdate) SetInputLambdaProcessorUpdate(v *InputLambdaProcessorUpdate) *InputProcessingConfigurationUpdate {
+	s.InputLambdaProcessorUpdate = v
+	return s
+}
+
 // Describes updates for the application's input schema.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputSchemaUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputSchemaUpdate
 type InputSchemaUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -3626,14 +4341,14 @@ func (s *InputSchemaUpdate) SetRecordFormatUpdate(v *RecordFormat) *InputSchemaU
 }
 
 // Describes the point at which the application reads from the streaming source.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputStartingPositionConfiguration
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputStartingPositionConfiguration
 type InputStartingPositionConfiguration struct {
 	_ struct{} `type:"structure"`
 
 	// The starting position on the stream.
 	//
 	//    * NOW - Start reading just after the most recent record in the stream,
-	//    start at the request timestamp that the customer issued.
+	//    start at the request time stamp that the customer issued.
 	//
 	//    * TRIM_HORIZON - Start reading at the last untrimmed record in the stream,
 	//    which is the oldest record available in the stream. This option is not
@@ -3662,7 +4377,7 @@ func (s *InputStartingPositionConfiguration) SetInputStartingPosition(v string) 
 
 // Describes updates to a specific input configuration (identified by the InputId
 // of an application).
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/InputUpdate
 type InputUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -3675,18 +4390,20 @@ type InputUpdate struct {
 	// Kinesis Analytics creates for the specific streaming source).
 	InputParallelismUpdate *InputParallelismUpdate `type:"structure"`
 
+	// Describes updates for an input processing configuration.
+	InputProcessingConfigurationUpdate *InputProcessingConfigurationUpdate `type:"structure"`
+
 	// Describes the data format on the streaming source, and how record elements
 	// on the streaming source map to columns of the in-application stream that
 	// is created.
 	InputSchemaUpdate *InputSchemaUpdate `type:"structure"`
 
 	// If an Amazon Kinesis Firehose delivery stream is the streaming source to
-	// be updated, provides an updated stream Amazon Resource Name (ARN) and IAM
-	// role ARN.
+	// be updated, provides an updated stream ARN and IAM role ARN.
 	KinesisFirehoseInputUpdate *KinesisFirehoseInputUpdate `type:"structure"`
 
-	// If a Amazon Kinesis stream is the streaming source to be updated, provides
-	// an updated stream ARN and IAM role ARN.
+	// If an Amazon Kinesis stream is the streaming source to be updated, provides
+	// an updated stream Amazon Resource Name (ARN) and IAM role ARN.
 	KinesisStreamsInputUpdate *KinesisStreamsInputUpdate `type:"structure"`
 
 	// Name prefix for in-application streams that Amazon Kinesis Analytics creates
@@ -3719,6 +4436,11 @@ func (s *InputUpdate) Validate() error {
 	if s.InputParallelismUpdate != nil {
 		if err := s.InputParallelismUpdate.Validate(); err != nil {
 			invalidParams.AddNested("InputParallelismUpdate", err.(request.ErrInvalidParams))
+		}
+	}
+	if s.InputProcessingConfigurationUpdate != nil {
+		if err := s.InputProcessingConfigurationUpdate.Validate(); err != nil {
+			invalidParams.AddNested("InputProcessingConfigurationUpdate", err.(request.ErrInvalidParams))
 		}
 	}
 	if s.InputSchemaUpdate != nil {
@@ -3755,6 +4477,12 @@ func (s *InputUpdate) SetInputParallelismUpdate(v *InputParallelismUpdate) *Inpu
 	return s
 }
 
+// SetInputProcessingConfigurationUpdate sets the InputProcessingConfigurationUpdate field's value.
+func (s *InputUpdate) SetInputProcessingConfigurationUpdate(v *InputProcessingConfigurationUpdate) *InputUpdate {
+	s.InputProcessingConfigurationUpdate = v
+	return s
+}
+
 // SetInputSchemaUpdate sets the InputSchemaUpdate field's value.
 func (s *InputUpdate) SetInputSchemaUpdate(v *InputSchemaUpdate) *InputUpdate {
 	s.InputSchemaUpdate = v
@@ -3781,14 +4509,14 @@ func (s *InputUpdate) SetNamePrefixUpdate(v string) *InputUpdate {
 
 // Provides additional mapping information when JSON is the record format on
 // the streaming source.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/JSONMappingParameters
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/JSONMappingParameters
 type JSONMappingParameters struct {
 	_ struct{} `type:"structure"`
 
 	// Path to the top-level parent that contains the records.
 	//
 	// RecordRowPath is a required field
-	RecordRowPath *string `type:"string" required:"true"`
+	RecordRowPath *string `min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -3807,6 +4535,9 @@ func (s *JSONMappingParameters) Validate() error {
 	if s.RecordRowPath == nil {
 		invalidParams.Add(request.NewErrParamRequired("RecordRowPath"))
 	}
+	if s.RecordRowPath != nil && len(*s.RecordRowPath) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RecordRowPath", 1))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -3821,14 +4552,13 @@ func (s *JSONMappingParameters) SetRecordRowPath(v string) *JSONMappingParameter
 }
 
 // Identifies an Amazon Kinesis Firehose delivery stream as the streaming source.
-// You provide the Firehose delivery stream's Amazon Resource Name (ARN) and
-// an IAM role ARN that enables Amazon Kinesis Analytics to access the stream
-// on your behalf.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseInput
+// You provide the delivery stream's Amazon Resource Name (ARN) and an IAM role
+// ARN that enables Amazon Kinesis Analytics to access the stream on your behalf.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseInput
 type KinesisFirehoseInput struct {
 	_ struct{} `type:"structure"`
 
-	// ARN of the input Firehose delivery stream.
+	// ARN of the input delivery stream.
 	//
 	// ResourceARN is a required field
 	ResourceARN *string `min:"1" type:"string" required:"true"`
@@ -3887,7 +4617,7 @@ func (s *KinesisFirehoseInput) SetRoleARN(v string) *KinesisFirehoseInput {
 
 // Describes the Amazon Kinesis Firehose delivery stream that is configured
 // as the streaming source in the application input configuration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseInputDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseInputDescription
 type KinesisFirehoseInputDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -3922,16 +4652,16 @@ func (s *KinesisFirehoseInputDescription) SetRoleARN(v string) *KinesisFirehoseI
 
 // When updating application input configuration, provides information about
 // an Amazon Kinesis Firehose delivery stream as the streaming source.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseInputUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseInputUpdate
 type KinesisFirehoseInputUpdate struct {
 	_ struct{} `type:"structure"`
 
-	// ARN of the input Amazon Kinesis Firehose delivery stream to read.
+	// Amazon Resource Name (ARN) of the input Amazon Kinesis Firehose delivery
+	// stream to read.
 	ResourceARNUpdate *string `min:"1" type:"string"`
 
-	// Amazon Resource Name (ARN) of the IAM role that Amazon Kinesis Analytics
-	// can assume to access the stream on your behalf. You need to grant necessary
-	// permissions to this role.
+	// ARN of the IAM role that Amazon Kinesis Analytics can assume to access the
+	// stream on your behalf. You need to grant necessary permissions to this role.
 	RoleARNUpdate *string `min:"1" type:"string"`
 }
 
@@ -3977,7 +4707,7 @@ func (s *KinesisFirehoseInputUpdate) SetRoleARNUpdate(v string) *KinesisFirehose
 // delivery stream as the destination. You provide the stream Amazon Resource
 // Name (ARN) and an IAM role that enables Amazon Kinesis Analytics to write
 // to the stream on your behalf.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseOutput
 type KinesisFirehoseOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4040,7 +4770,7 @@ func (s *KinesisFirehoseOutput) SetRoleARN(v string) *KinesisFirehoseOutput {
 
 // For an application output, describes the Amazon Kinesis Firehose delivery
 // stream configured as its destination.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseOutputDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseOutputDescription
 type KinesisFirehoseOutputDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4077,7 +4807,7 @@ func (s *KinesisFirehoseOutputDescription) SetRoleARN(v string) *KinesisFirehose
 // When updating an output configuration using the UpdateApplication operation,
 // provides information about an Amazon Kinesis Firehose delivery stream configured
 // as the destination.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseOutputUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisFirehoseOutputUpdate
 type KinesisFirehoseOutputUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -4129,9 +4859,9 @@ func (s *KinesisFirehoseOutputUpdate) SetRoleARNUpdate(v string) *KinesisFirehos
 }
 
 // Identifies an Amazon Kinesis stream as the streaming source. You provide
-// the stream's ARN and an IAM role ARN that enables Amazon Kinesis Analytics
-// to access the stream on your behalf.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsInput
+// the stream's Amazon Resource Name (ARN) and an IAM role ARN that enables
+// Amazon Kinesis Analytics to access the stream on your behalf.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsInput
 type KinesisStreamsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4194,7 +4924,7 @@ func (s *KinesisStreamsInput) SetRoleARN(v string) *KinesisStreamsInput {
 
 // Describes the Amazon Kinesis stream that is configured as the streaming source
 // in the application input configuration.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsInputDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsInputDescription
 type KinesisStreamsInputDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4230,7 +4960,7 @@ func (s *KinesisStreamsInputDescription) SetRoleARN(v string) *KinesisStreamsInp
 
 // When updating application input configuration, provides information about
 // an Amazon Kinesis stream as the streaming source.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsInputUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsInputUpdate
 type KinesisStreamsInputUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -4281,11 +5011,11 @@ func (s *KinesisStreamsInputUpdate) SetRoleARNUpdate(v string) *KinesisStreamsIn
 	return s
 }
 
-// When configuring application output, identifies a Amazon Kinesis stream as
-// the destination. You provide the stream Amazon Resource Name (ARN) and also
-// an IAM role ARN that Amazon Kinesis Analytics can use to write to the stream
-// on your behalf.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsOutput
+// When configuring application output, identifies an Amazon Kinesis stream
+// as the destination. You provide the stream Amazon Resource Name (ARN) and
+// also an IAM role ARN that Amazon Kinesis Analytics can use to write to the
+// stream on your behalf.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsOutput
 type KinesisStreamsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4348,7 +5078,7 @@ func (s *KinesisStreamsOutput) SetRoleARN(v string) *KinesisStreamsOutput {
 
 // For an application output, describes the Amazon Kinesis stream configured
 // as its destination.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsOutputDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsOutputDescription
 type KinesisStreamsOutputDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4384,7 +5114,7 @@ func (s *KinesisStreamsOutputDescription) SetRoleARN(v string) *KinesisStreamsOu
 
 // When updating an output configuration using the UpdateApplication operation,
 // provides information about an Amazon Kinesis stream configured as the destination.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsOutputUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/KinesisStreamsOutputUpdate
 type KinesisStreamsOutputUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -4436,7 +5166,161 @@ func (s *KinesisStreamsOutputUpdate) SetRoleARNUpdate(v string) *KinesisStreamsO
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplicationsRequest
+// When configuring application output, identifies an AWS Lambda function as
+// the destination. You provide the function Amazon Resource Name (ARN) and
+// also an IAM role ARN that Amazon Kinesis Analytics can use to write to the
+// function on your behalf.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/LambdaOutput
+type LambdaOutput struct {
+	_ struct{} `type:"structure"`
+
+	// Amazon Resource Name (ARN) of the destination Lambda function to write to.
+	//
+	// ResourceARN is a required field
+	ResourceARN *string `min:"1" type:"string" required:"true"`
+
+	// ARN of the IAM role that Amazon Kinesis Analytics can assume to write to
+	// the destination function on your behalf. You need to grant the necessary
+	// permissions to this role.
+	//
+	// RoleARN is a required field
+	RoleARN *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s LambdaOutput) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LambdaOutput) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *LambdaOutput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "LambdaOutput"}
+	if s.ResourceARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("ResourceARN"))
+	}
+	if s.ResourceARN != nil && len(*s.ResourceARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceARN", 1))
+	}
+	if s.RoleARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("RoleARN"))
+	}
+	if s.RoleARN != nil && len(*s.RoleARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleARN", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceARN sets the ResourceARN field's value.
+func (s *LambdaOutput) SetResourceARN(v string) *LambdaOutput {
+	s.ResourceARN = &v
+	return s
+}
+
+// SetRoleARN sets the RoleARN field's value.
+func (s *LambdaOutput) SetRoleARN(v string) *LambdaOutput {
+	s.RoleARN = &v
+	return s
+}
+
+// For an application output, describes the AWS Lambda function configured as
+// its destination.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/LambdaOutputDescription
+type LambdaOutputDescription struct {
+	_ struct{} `type:"structure"`
+
+	// Amazon Resource Name (ARN) of the destination Lambda function.
+	ResourceARN *string `min:"1" type:"string"`
+
+	// ARN of the IAM role that Amazon Kinesis Analytics can assume to write to
+	// the destination function.
+	RoleARN *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s LambdaOutputDescription) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LambdaOutputDescription) GoString() string {
+	return s.String()
+}
+
+// SetResourceARN sets the ResourceARN field's value.
+func (s *LambdaOutputDescription) SetResourceARN(v string) *LambdaOutputDescription {
+	s.ResourceARN = &v
+	return s
+}
+
+// SetRoleARN sets the RoleARN field's value.
+func (s *LambdaOutputDescription) SetRoleARN(v string) *LambdaOutputDescription {
+	s.RoleARN = &v
+	return s
+}
+
+// When updating an output configuration using the UpdateApplication operation,
+// provides information about an AWS Lambda function configured as the destination.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/LambdaOutputUpdate
+type LambdaOutputUpdate struct {
+	_ struct{} `type:"structure"`
+
+	// Amazon Resource Name (ARN) of the destination Lambda function.
+	ResourceARNUpdate *string `min:"1" type:"string"`
+
+	// ARN of the IAM role that Amazon Kinesis Analytics can assume to write to
+	// the destination function on your behalf. You need to grant the necessary
+	// permissions to this role.
+	RoleARNUpdate *string `min:"1" type:"string"`
+}
+
+// String returns the string representation
+func (s LambdaOutputUpdate) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s LambdaOutputUpdate) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *LambdaOutputUpdate) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "LambdaOutputUpdate"}
+	if s.ResourceARNUpdate != nil && len(*s.ResourceARNUpdate) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ResourceARNUpdate", 1))
+	}
+	if s.RoleARNUpdate != nil && len(*s.RoleARNUpdate) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleARNUpdate", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetResourceARNUpdate sets the ResourceARNUpdate field's value.
+func (s *LambdaOutputUpdate) SetResourceARNUpdate(v string) *LambdaOutputUpdate {
+	s.ResourceARNUpdate = &v
+	return s
+}
+
+// SetRoleARNUpdate sets the RoleARNUpdate field's value.
+func (s *LambdaOutputUpdate) SetRoleARNUpdate(v string) *LambdaOutputUpdate {
+	s.RoleARNUpdate = &v
+	return s
+}
+
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplicationsRequest
 type ListApplicationsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4488,7 +5372,7 @@ func (s *ListApplicationsInput) SetLimit(v int64) *ListApplicationsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplicationsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ListApplicationsResponse
 type ListApplicationsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4529,7 +5413,7 @@ func (s *ListApplicationsOutput) SetHasMoreApplications(v bool) *ListApplication
 // application, provides additional mapping information specific to the record
 // format (such as JSON, CSV, or record fields delimited by some delimiter)
 // on the streaming source.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/MappingParameters
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/MappingParameters
 type MappingParameters struct {
 	_ struct{} `type:"structure"`
 
@@ -4591,7 +5475,7 @@ func (s *MappingParameters) SetJSONMappingParameters(v *JSONMappingParameters) *
 //
 // For limits on how many destinations an application can write and other limitations,
 // see Limits (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/limits.html)
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/Output
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/Output
 type Output struct {
 	_ struct{} `type:"structure"`
 
@@ -4606,6 +5490,9 @@ type Output struct {
 
 	// Identifies an Amazon Kinesis stream as the destination.
 	KinesisStreamsOutput *KinesisStreamsOutput `type:"structure"`
+
+	// Identifies an AWS Lambda function as the destination.
+	LambdaOutput *LambdaOutput `type:"structure"`
 
 	// Name of the in-application stream.
 	//
@@ -4645,6 +5532,11 @@ func (s *Output) Validate() error {
 			invalidParams.AddNested("KinesisStreamsOutput", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.LambdaOutput != nil {
+		if err := s.LambdaOutput.Validate(); err != nil {
+			invalidParams.AddNested("LambdaOutput", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4670,6 +5562,12 @@ func (s *Output) SetKinesisStreamsOutput(v *KinesisStreamsOutput) *Output {
 	return s
 }
 
+// SetLambdaOutput sets the LambdaOutput field's value.
+func (s *Output) SetLambdaOutput(v *LambdaOutput) *Output {
+	s.LambdaOutput = v
+	return s
+}
+
 // SetName sets the Name field's value.
 func (s *Output) SetName(v string) *Output {
 	s.Name = &v
@@ -4679,7 +5577,7 @@ func (s *Output) SetName(v string) *Output {
 // Describes the application output configuration, which includes the in-application
 // stream name and the destination where the stream data is written. The destination
 // can be an Amazon Kinesis stream or an Amazon Kinesis Firehose delivery stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/OutputDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/OutputDescription
 type OutputDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -4693,6 +5591,10 @@ type OutputDescription struct {
 	// Describes Amazon Kinesis stream configured as the destination where output
 	// is written.
 	KinesisStreamsOutputDescription *KinesisStreamsOutputDescription `type:"structure"`
+
+	// Describes the AWS Lambda function configured as the destination where output
+	// is written.
+	LambdaOutputDescription *LambdaOutputDescription `type:"structure"`
 
 	// Name of the in-application stream configured as output.
 	Name *string `min:"1" type:"string"`
@@ -4729,6 +5631,12 @@ func (s *OutputDescription) SetKinesisStreamsOutputDescription(v *KinesisStreams
 	return s
 }
 
+// SetLambdaOutputDescription sets the LambdaOutputDescription field's value.
+func (s *OutputDescription) SetLambdaOutputDescription(v *LambdaOutputDescription) *OutputDescription {
+	s.LambdaOutputDescription = v
+	return s
+}
+
 // SetName sets the Name field's value.
 func (s *OutputDescription) SetName(v string) *OutputDescription {
 	s.Name = &v
@@ -4742,7 +5650,7 @@ func (s *OutputDescription) SetOutputId(v string) *OutputDescription {
 }
 
 // Describes updates to the output configuration identified by the OutputId.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/OutputUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/OutputUpdate
 type OutputUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -4750,12 +5658,15 @@ type OutputUpdate struct {
 	// more information, see Configuring Application Output (http://docs.aws.amazon.com/kinesisanalytics/latest/dev/how-it-works-output.html).
 	DestinationSchemaUpdate *DestinationSchema `type:"structure"`
 
-	// Describes a Amazon Kinesis Firehose delivery stream as the destination for
+	// Describes an Amazon Kinesis Firehose delivery stream as the destination for
 	// the output.
 	KinesisFirehoseOutputUpdate *KinesisFirehoseOutputUpdate `type:"structure"`
 
 	// Describes an Amazon Kinesis stream as the destination for the output.
 	KinesisStreamsOutputUpdate *KinesisStreamsOutputUpdate `type:"structure"`
+
+	// Describes an AWS Lambda function as the destination for the output.
+	LambdaOutputUpdate *LambdaOutputUpdate `type:"structure"`
 
 	// If you want to specify a different in-application stream for this output
 	// configuration, use this field to specify the new in-application stream name.
@@ -4799,6 +5710,11 @@ func (s *OutputUpdate) Validate() error {
 			invalidParams.AddNested("KinesisStreamsOutputUpdate", err.(request.ErrInvalidParams))
 		}
 	}
+	if s.LambdaOutputUpdate != nil {
+		if err := s.LambdaOutputUpdate.Validate(); err != nil {
+			invalidParams.AddNested("LambdaOutputUpdate", err.(request.ErrInvalidParams))
+		}
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -4824,6 +5740,12 @@ func (s *OutputUpdate) SetKinesisStreamsOutputUpdate(v *KinesisStreamsOutputUpda
 	return s
 }
 
+// SetLambdaOutputUpdate sets the LambdaOutputUpdate field's value.
+func (s *OutputUpdate) SetLambdaOutputUpdate(v *LambdaOutputUpdate) *OutputUpdate {
+	s.LambdaOutputUpdate = v
+	return s
+}
+
 // SetNameUpdate sets the NameUpdate field's value.
 func (s *OutputUpdate) SetNameUpdate(v string) *OutputUpdate {
 	s.NameUpdate = &v
@@ -4840,7 +5762,7 @@ func (s *OutputUpdate) SetOutputId(v string) *OutputUpdate {
 // corresponding column in the in-application stream.
 //
 // Also used to describe the format of the reference data source.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/RecordColumn
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/RecordColumn
 type RecordColumn struct {
 	_ struct{} `type:"structure"`
 
@@ -4857,7 +5779,7 @@ type RecordColumn struct {
 	// Type of column created in the in-application input stream or reference table.
 	//
 	// SqlType is a required field
-	SqlType *string `type:"string" required:"true"`
+	SqlType *string `min:"1" type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -4878,6 +5800,9 @@ func (s *RecordColumn) Validate() error {
 	}
 	if s.SqlType == nil {
 		invalidParams.Add(request.NewErrParamRequired("SqlType"))
+	}
+	if s.SqlType != nil && len(*s.SqlType) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("SqlType", 1))
 	}
 
 	if invalidParams.Len() > 0 {
@@ -4906,7 +5831,7 @@ func (s *RecordColumn) SetSqlType(v string) *RecordColumn {
 
 // Describes the record format and relevant mapping information that should
 // be applied to schematize the records on the stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/RecordFormat
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/RecordFormat
 type RecordFormat struct {
 	_ struct{} `type:"structure"`
 
@@ -4966,7 +5891,7 @@ func (s *RecordFormat) SetRecordFormatType(v string) *RecordFormat {
 // bucket name and object key name), the resulting in-application table name
 // that is created, and the necessary schema to map the data elements in the
 // Amazon S3 object to the in-application table.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ReferenceDataSource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ReferenceDataSource
 type ReferenceDataSource struct {
 	_ struct{} `type:"structure"`
 
@@ -4978,11 +5903,9 @@ type ReferenceDataSource struct {
 
 	// Identifies the S3 bucket and object that contains the reference data. Also
 	// identifies the IAM role Amazon Kinesis Analytics can assume to read this
-	// object on your behalf.
-	//
-	// An Amazon Kinesis Analytics application loads reference data only once. If
-	// the data changes, you call the UpdateApplication operation to trigger reloading
-	// of data into your application.
+	// object on your behalf. An Amazon Kinesis Analytics application loads reference
+	// data only once. If the data changes, you call the UpdateApplication operation
+	// to trigger reloading of data into your application.
 	S3ReferenceDataSource *S3ReferenceDataSource `type:"structure"`
 
 	// Name of the in-application table to create.
@@ -5049,7 +5972,7 @@ func (s *ReferenceDataSource) SetTableName(v string) *ReferenceDataSource {
 }
 
 // Describes the reference data source configured for an application.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ReferenceDataSourceDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ReferenceDataSourceDescription
 type ReferenceDataSourceDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -5118,7 +6041,7 @@ func (s *ReferenceDataSourceDescription) SetTableName(v string) *ReferenceDataSo
 // and object key name), the in-application table name that is created, and
 // updated mapping information that maps the data in the Amazon S3 object to
 // the in-application reference table that is created.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ReferenceDataSourceUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/ReferenceDataSourceUpdate
 type ReferenceDataSourceUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -5204,6 +6127,85 @@ func (s *ReferenceDataSourceUpdate) SetTableNameUpdate(v string) *ReferenceDataS
 	return s
 }
 
+// Provides a description of an Amazon S3 data source, including the Amazon
+// Resource Name (ARN) of the S3 bucket, the ARN of the IAM role that is used
+// to access the bucket, and the name of the S3 object that contains the data.
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/S3Configuration
+type S3Configuration struct {
+	_ struct{} `type:"structure"`
+
+	// ARN of the S3 bucket that contains the data.
+	//
+	// BucketARN is a required field
+	BucketARN *string `min:"1" type:"string" required:"true"`
+
+	// The name of the object that contains the data.
+	//
+	// FileKey is a required field
+	FileKey *string `min:"1" type:"string" required:"true"`
+
+	// IAM ARN of the role used to access the data.
+	//
+	// RoleARN is a required field
+	RoleARN *string `min:"1" type:"string" required:"true"`
+}
+
+// String returns the string representation
+func (s S3Configuration) String() string {
+	return awsutil.Prettify(s)
+}
+
+// GoString returns the string representation
+func (s S3Configuration) GoString() string {
+	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *S3Configuration) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "S3Configuration"}
+	if s.BucketARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("BucketARN"))
+	}
+	if s.BucketARN != nil && len(*s.BucketARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("BucketARN", 1))
+	}
+	if s.FileKey == nil {
+		invalidParams.Add(request.NewErrParamRequired("FileKey"))
+	}
+	if s.FileKey != nil && len(*s.FileKey) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FileKey", 1))
+	}
+	if s.RoleARN == nil {
+		invalidParams.Add(request.NewErrParamRequired("RoleARN"))
+	}
+	if s.RoleARN != nil && len(*s.RoleARN) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("RoleARN", 1))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
+// SetBucketARN sets the BucketARN field's value.
+func (s *S3Configuration) SetBucketARN(v string) *S3Configuration {
+	s.BucketARN = &v
+	return s
+}
+
+// SetFileKey sets the FileKey field's value.
+func (s *S3Configuration) SetFileKey(v string) *S3Configuration {
+	s.FileKey = &v
+	return s
+}
+
+// SetRoleARN sets the RoleARN field's value.
+func (s *S3Configuration) SetRoleARN(v string) *S3Configuration {
+	s.RoleARN = &v
+	return s
+}
+
 // Identifies the S3 bucket and object that contains the reference data. Also
 // identifies the IAM role Amazon Kinesis Analytics can assume to read this
 // object on your behalf.
@@ -5211,7 +6213,7 @@ func (s *ReferenceDataSourceUpdate) SetTableNameUpdate(v string) *ReferenceDataS
 // An Amazon Kinesis Analytics application loads reference data only once. If
 // the data changes, you call the UpdateApplication operation to trigger reloading
 // of data into your application.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/S3ReferenceDataSource
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/S3ReferenceDataSource
 type S3ReferenceDataSource struct {
 	_ struct{} `type:"structure"`
 
@@ -5223,7 +6225,7 @@ type S3ReferenceDataSource struct {
 	// Object key name containing reference data.
 	//
 	// FileKey is a required field
-	FileKey *string `type:"string" required:"true"`
+	FileKey *string `min:"1" type:"string" required:"true"`
 
 	// ARN of the IAM role that the service can assume to read data on your behalf.
 	// This role must have permission for the s3:GetObject action on the object
@@ -5255,6 +6257,9 @@ func (s *S3ReferenceDataSource) Validate() error {
 	}
 	if s.FileKey == nil {
 		invalidParams.Add(request.NewErrParamRequired("FileKey"))
+	}
+	if s.FileKey != nil && len(*s.FileKey) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FileKey", 1))
 	}
 	if s.ReferenceRoleARN == nil {
 		invalidParams.Add(request.NewErrParamRequired("ReferenceRoleARN"))
@@ -5288,7 +6293,7 @@ func (s *S3ReferenceDataSource) SetReferenceRoleARN(v string) *S3ReferenceDataSo
 }
 
 // Provides the bucket name and object key name that stores the reference data.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/S3ReferenceDataSourceDescription
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/S3ReferenceDataSourceDescription
 type S3ReferenceDataSourceDescription struct {
 	_ struct{} `type:"structure"`
 
@@ -5300,7 +6305,7 @@ type S3ReferenceDataSourceDescription struct {
 	// Amazon S3 object key name.
 	//
 	// FileKey is a required field
-	FileKey *string `type:"string" required:"true"`
+	FileKey *string `min:"1" type:"string" required:"true"`
 
 	// ARN of the IAM role that Amazon Kinesis Analytics can assume to read the
 	// Amazon S3 object on your behalf to populate the in-application reference
@@ -5341,7 +6346,7 @@ func (s *S3ReferenceDataSourceDescription) SetReferenceRoleARN(v string) *S3Refe
 // Describes the S3 bucket name, object key name, and IAM role that Amazon Kinesis
 // Analytics can assume to read the Amazon S3 object on your behalf and populate
 // the in-application reference table.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/S3ReferenceDataSourceUpdate
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/S3ReferenceDataSourceUpdate
 type S3ReferenceDataSourceUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -5349,7 +6354,7 @@ type S3ReferenceDataSourceUpdate struct {
 	BucketARNUpdate *string `min:"1" type:"string"`
 
 	// Object key name.
-	FileKeyUpdate *string `type:"string"`
+	FileKeyUpdate *string `min:"1" type:"string"`
 
 	// ARN of the IAM role that Amazon Kinesis Analytics can assume to read the
 	// Amazon S3 object and populate the in-application.
@@ -5371,6 +6376,9 @@ func (s *S3ReferenceDataSourceUpdate) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "S3ReferenceDataSourceUpdate"}
 	if s.BucketARNUpdate != nil && len(*s.BucketARNUpdate) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("BucketARNUpdate", 1))
+	}
+	if s.FileKeyUpdate != nil && len(*s.FileKeyUpdate) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("FileKeyUpdate", 1))
 	}
 	if s.ReferenceRoleARNUpdate != nil && len(*s.ReferenceRoleARNUpdate) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("ReferenceRoleARNUpdate", 1))
@@ -5402,7 +6410,7 @@ func (s *S3ReferenceDataSourceUpdate) SetReferenceRoleARNUpdate(v string) *S3Ref
 
 // Describes the format of the data in the streaming source, and how each data
 // element maps to corresponding columns created in the in-application stream.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/SourceSchema
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/SourceSchema
 type SourceSchema struct {
 	_ struct{} `type:"structure"`
 
@@ -5483,7 +6491,7 @@ func (s *SourceSchema) SetRecordFormat(v *RecordFormat) *SourceSchema {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplicationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplicationRequest
 type StartApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5552,7 +6560,7 @@ func (s *StartApplicationInput) SetInputConfigurations(v []*InputConfiguration) 
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StartApplicationResponse
 type StartApplicationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5567,7 +6575,7 @@ func (s StartApplicationOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplicationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplicationRequest
 type StopApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5609,7 +6617,7 @@ func (s *StopApplicationInput) SetApplicationName(v string) *StopApplicationInpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/StopApplicationResponse
 type StopApplicationOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -5624,7 +6632,7 @@ func (s StopApplicationOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplicationRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplicationRequest
 type UpdateApplicationInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5703,7 +6711,7 @@ func (s *UpdateApplicationInput) SetCurrentApplicationVersionId(v int64) *Update
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplicationResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesisanalytics-2015-08-14/UpdateApplicationResponse
 type UpdateApplicationOutput struct {
 	_ struct{} `type:"structure"`
 }

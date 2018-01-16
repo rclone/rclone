@@ -6,11 +6,11 @@ package catalog
 
 import (
 	"bytes"
-	"fmt"
+	"path"
 	"reflect"
+	"strings"
 	"testing"
 
-	"golang.org/x/text/internal"
 	"golang.org/x/text/internal/catmsg"
 	"golang.org/x/text/language"
 )
@@ -20,17 +20,33 @@ type entry struct {
 	msg      interface{}
 }
 
-var testCases = []struct {
-	desc   string
-	cat    []entry
-	lookup []entry
-}{{
+func langs(s string) []language.Tag {
+	t, _, _ := language.ParseAcceptLanguage(s)
+	return t
+}
+
+type testCase struct {
+	desc     string
+	cat      []entry
+	lookup   []entry
+	fallback string
+	match    []string
+	tags     []language.Tag
+}
+
+var testCases = []testCase{{
 	desc: "empty catalog",
 	lookup: []entry{
 		{"en", "key", ""},
 		{"en", "", ""},
 		{"nl", "", ""},
 	},
+	match: []string{
+		"gr -> und",
+		"en-US -> und",
+		"af -> und",
+	},
+	tags: nil, // not an empty list.
 }, {
 	desc: "one entry",
 	cat: []entry{
@@ -45,6 +61,11 @@ var testCases = []struct {
 		{"en-oxendict", "hello", "Hello!"},
 		{"en-oxendict-u-ms-metric", "hello", "Hello!"},
 	},
+	match: []string{
+		"gr -> en",
+		"en-US -> en",
+	},
+	tags: langs("en"),
 }, {
 	desc: "hierarchical languages",
 	cat: []entry{
@@ -52,6 +73,7 @@ var testCases = []struct {
 		{"en-GB", "hello", "Hellø!"},
 		{"en-US", "hello", "Howdy!"},
 		{"en", "greetings", "Greetings!"},
+		{"gsw", "hello", "Grüetzi!"},
 	},
 	lookup: []entry{
 		{"und", "hello", ""},
@@ -70,6 +92,12 @@ var testCases = []struct {
 		{"en-oxendict", "greetings", "Greetings!"},
 		{"en-US-oxendict-u-ms-metric", "greetings", "Greetings!"},
 	},
+	fallback: "gsw",
+	match: []string{
+		"gr -> gsw",
+		"en-US -> en-US",
+	},
+	tags: langs("gsw, en, en-GB, en-US"),
 }, {
 	desc: "variables",
 	cat: []entry{
@@ -103,6 +131,7 @@ var testCases = []struct {
 		{"en", "scopes", "Hello Joe and Jane."},
 		{"en", "missing var", "Hello missing."},
 	},
+	tags: langs("en"),
 }, {
 	desc: "macros",
 	cat: []entry{
@@ -122,16 +151,29 @@ var testCases = []struct {
 		{"en", "badnum", "Hello $!(BADNUM)."},
 		{"en", "undefined", "Hello undefined."},
 		{"en", "macroU", "Hello macroU!"},
-	}}}
+	},
+	tags: langs("en"),
+}}
 
-func initCat(entries []entry) (*Catalog, []language.Tag) {
-	tags := []language.Tag{}
-	cat := New()
-	for _, e := range entries {
+func setMacros(b *Builder) {
+	b.SetMacro(language.English, "macro1", String("Joe"))
+	b.SetMacro(language.Und, "macro2", String("${macro1(1)}"))
+	b.SetMacro(language.English, "macroU", noMatchMessage{})
+}
+
+type buildFunc func(t *testing.T, tc testCase) Catalog
+
+func initBuilder(t *testing.T, tc testCase) Catalog {
+	options := []Option{}
+	if tc.fallback != "" {
+		options = append(options, Fallback(language.MustParse(tc.fallback)))
+	}
+	cat := NewBuilder(options...)
+	for _, e := range tc.cat {
 		tag := language.MustParse(e.tag)
-		tags = append(tags, tag)
 		switch msg := e.msg.(type) {
 		case string:
+
 			cat.SetString(tag, e.key, msg)
 		case Message:
 			cat.Set(tag, e.key, msg)
@@ -139,23 +181,81 @@ func initCat(entries []entry) (*Catalog, []language.Tag) {
 			cat.Set(tag, e.key, msg...)
 		}
 	}
-	return cat, internal.UniqueTags(tags)
+	setMacros(cat)
+	return cat
+}
+
+type dictionary map[string]string
+
+func (d dictionary) Lookup(key string) (data string, ok bool) {
+	data, ok = d[key]
+	return data, ok
+}
+
+func initCatalog(t *testing.T, tc testCase) Catalog {
+	m := map[string]Dictionary{}
+	for _, e := range tc.cat {
+		m[e.tag] = dictionary{}
+	}
+	for _, e := range tc.cat {
+		var msg Message
+		switch x := e.msg.(type) {
+		case string:
+			msg = String(x)
+		case Message:
+			msg = x
+		case []Message:
+			msg = firstInSequence(x)
+		}
+		data, _ := catmsg.Compile(language.MustParse(e.tag), nil, msg)
+		m[e.tag].(dictionary)[e.key] = data
+	}
+	options := []Option{}
+	if tc.fallback != "" {
+		options = append(options, Fallback(language.MustParse(tc.fallback)))
+	}
+	c, err := NewFromMap(m, options...)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// TODO: implement macros for fixed catalogs.
+	b := NewBuilder()
+	setMacros(b)
+	c.(*catalog).macros.index = b.macros.index
+	return c
+}
+
+func TestMatcher(t *testing.T) {
+	test := func(t *testing.T, init buildFunc) {
+		for _, tc := range testCases {
+			for _, s := range tc.match {
+				a := strings.Split(s, "->")
+				t.Run(path.Join(tc.desc, a[0]), func(t *testing.T) {
+					cat := init(t, tc)
+					got, _ := language.MatchStrings(cat.Matcher(), a[0])
+					want := language.MustParse(strings.TrimSpace(a[1]))
+					if got != want {
+						t.Errorf("got %q; want %q", got, want)
+					}
+				})
+			}
+		}
+	}
+	t.Run("Builder", func(t *testing.T) { test(t, initBuilder) })
+	t.Run("Catalog", func(t *testing.T) { test(t, initCatalog) })
 }
 
 func TestCatalog(t *testing.T) {
-	for _, tc := range testCases {
-		t.Run(fmt.Sprintf("%s", tc.desc), func(t *testing.T) {
-			cat, wantTags := initCat(tc.cat)
-			cat.SetMacro(language.English, "macro1", String("Joe"))
-			cat.SetMacro(language.Und, "macro2", String("${macro1(1)}"))
-			cat.SetMacro(language.English, "macroU", noMatchMessage{})
-
+	test := func(t *testing.T, init buildFunc) {
+		for _, tc := range testCases {
+			cat := init(t, tc)
+			wantTags := tc.tags
 			if got := cat.Languages(); !reflect.DeepEqual(got, wantTags) {
 				t.Errorf("%s:Languages: got %v; want %v", tc.desc, got, wantTags)
 			}
 
 			for _, e := range tc.lookup {
-				t.Run(fmt.Sprintf("%s/%s", e.tag, e.key), func(t *testing.T) {
+				t.Run(path.Join(tc.desc, e.tag, e.key), func(t *testing.T) {
 					tag := language.MustParse(e.tag)
 					buf := testRenderer{}
 					ctx := cat.Context(tag, &buf)
@@ -171,8 +271,10 @@ func TestCatalog(t *testing.T) {
 					}
 				})
 			}
-		})
+		}
 	}
+	t.Run("Builder", func(t *testing.T) { test(t, initBuilder) })
+	t.Run("Catalog", func(t *testing.T) { test(t, initCatalog) })
 }
 
 type testRenderer struct {

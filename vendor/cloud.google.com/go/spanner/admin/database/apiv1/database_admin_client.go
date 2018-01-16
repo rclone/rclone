@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import (
 	databasepb "google.golang.org/genproto/googleapis/spanner/admin/database/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 )
 
 // DatabaseAdminCallOptions contains the retry settings for each method of DatabaseAdminClient.
@@ -99,8 +100,8 @@ type DatabaseAdminClient struct {
 	// The call options for this service.
 	CallOptions *DatabaseAdminCallOptions
 
-	// The metadata to be sent with each request.
-	xGoogHeader []string
+	// The x-goog-* metadata to be sent with each request.
+	xGoogMetadata metadata.MD
 }
 
 // NewDatabaseAdminClient creates a new database admin client.
@@ -153,7 +154,7 @@ func (c *DatabaseAdminClient) Close() error {
 func (c *DatabaseAdminClient) setGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
-	c.xGoogHeader = []string{gax.XGoogHeader(kv...)}
+	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
 }
 
 // DatabaseAdminInstancePath returns the path for the instance resource.
@@ -180,7 +181,7 @@ func DatabaseAdminDatabasePath(project, instance, database string) string {
 
 // ListDatabases lists Cloud Spanner databases.
 func (c *DatabaseAdminClient) ListDatabases(ctx context.Context, req *databasepb.ListDatabasesRequest, opts ...gax.CallOption) *DatabaseIterator {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.ListDatabases[0:len(c.CallOptions.ListDatabases):len(c.CallOptions.ListDatabases)], opts...)
 	it := &DatabaseIterator{}
 	it.InternalFetch = func(pageSize int, pageToken string) ([]*databasepb.Database, string, error) {
@@ -222,7 +223,7 @@ func (c *DatabaseAdminClient) ListDatabases(ctx context.Context, req *databasepb
 // [response][google.longrunning.Operation.response] field type is
 // [Database][google.spanner.admin.database.v1.Database], if successful.
 func (c *DatabaseAdminClient) CreateDatabase(ctx context.Context, req *databasepb.CreateDatabaseRequest, opts ...gax.CallOption) (*CreateDatabaseOperation, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.CreateDatabase[0:len(c.CallOptions.CreateDatabase):len(c.CallOptions.CreateDatabase)], opts...)
 	var resp *longrunningpb.Operation
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -240,7 +241,7 @@ func (c *DatabaseAdminClient) CreateDatabase(ctx context.Context, req *databasep
 
 // GetDatabase gets the state of a Cloud Spanner database.
 func (c *DatabaseAdminClient) GetDatabase(ctx context.Context, req *databasepb.GetDatabaseRequest, opts ...gax.CallOption) (*databasepb.Database, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.GetDatabase[0:len(c.CallOptions.GetDatabase):len(c.CallOptions.GetDatabase)], opts...)
 	var resp *databasepb.Database
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -262,7 +263,7 @@ func (c *DatabaseAdminClient) GetDatabase(ctx context.Context, req *databasepb.G
 // [metadata][google.longrunning.Operation.metadata] field type is
 // [UpdateDatabaseDdlMetadata][google.spanner.admin.database.v1.UpdateDatabaseDdlMetadata].  The operation has no response.
 func (c *DatabaseAdminClient) UpdateDatabaseDdl(ctx context.Context, req *databasepb.UpdateDatabaseDdlRequest, opts ...gax.CallOption) (*UpdateDatabaseDdlOperation, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.UpdateDatabaseDdl[0:len(c.CallOptions.UpdateDatabaseDdl):len(c.CallOptions.UpdateDatabaseDdl)], opts...)
 	var resp *longrunningpb.Operation
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -280,7 +281,7 @@ func (c *DatabaseAdminClient) UpdateDatabaseDdl(ctx context.Context, req *databa
 
 // DropDatabase drops (aka deletes) a Cloud Spanner database.
 func (c *DatabaseAdminClient) DropDatabase(ctx context.Context, req *databasepb.DropDatabaseRequest, opts ...gax.CallOption) error {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.DropDatabase[0:len(c.CallOptions.DropDatabase):len(c.CallOptions.DropDatabase)], opts...)
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
 		var err error
@@ -294,7 +295,7 @@ func (c *DatabaseAdminClient) DropDatabase(ctx context.Context, req *databasepb.
 // DDL statements. This method does not show pending schema updates, those may
 // be queried using the [Operations][google.longrunning.Operations] API.
 func (c *DatabaseAdminClient) GetDatabaseDdl(ctx context.Context, req *databasepb.GetDatabaseDdlRequest, opts ...gax.CallOption) (*databasepb.GetDatabaseDdlResponse, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.GetDatabaseDdl[0:len(c.CallOptions.GetDatabaseDdl):len(c.CallOptions.GetDatabaseDdl)], opts...)
 	var resp *databasepb.GetDatabaseDdlResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -314,7 +315,7 @@ func (c *DatabaseAdminClient) GetDatabaseDdl(ctx context.Context, req *databasep
 // Authorization requires spanner.databases.setIamPolicy permission on
 // [resource][google.iam.v1.SetIamPolicyRequest.resource].
 func (c *DatabaseAdminClient) SetIamPolicy(ctx context.Context, req *iampb.SetIamPolicyRequest, opts ...gax.CallOption) (*iampb.Policy, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.SetIamPolicy[0:len(c.CallOptions.SetIamPolicy):len(c.CallOptions.SetIamPolicy)], opts...)
 	var resp *iampb.Policy
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -334,7 +335,7 @@ func (c *DatabaseAdminClient) SetIamPolicy(ctx context.Context, req *iampb.SetIa
 // Authorization requires spanner.databases.getIamPolicy permission on
 // [resource][google.iam.v1.GetIamPolicyRequest.resource].
 func (c *DatabaseAdminClient) GetIamPolicy(ctx context.Context, req *iampb.GetIamPolicyRequest, opts ...gax.CallOption) (*iampb.Policy, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.GetIamPolicy[0:len(c.CallOptions.GetIamPolicy):len(c.CallOptions.GetIamPolicy)], opts...)
 	var resp *iampb.Policy
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {
@@ -355,7 +356,7 @@ func (c *DatabaseAdminClient) GetIamPolicy(ctx context.Context, req *iampb.GetIa
 // the containing Cloud Spanner instance. Otherwise returns an empty set of
 // permissions.
 func (c *DatabaseAdminClient) TestIamPermissions(ctx context.Context, req *iampb.TestIamPermissionsRequest, opts ...gax.CallOption) (*iampb.TestIamPermissionsResponse, error) {
-	ctx = insertXGoog(ctx, c.xGoogHeader)
+	ctx = insertMetadata(ctx, c.xGoogMetadata)
 	opts = append(c.CallOptions.TestIamPermissions[0:len(c.CallOptions.TestIamPermissions):len(c.CallOptions.TestIamPermissions)], opts...)
 	var resp *iampb.TestIamPermissionsResponse
 	err := gax.Invoke(ctx, func(ctx context.Context, settings gax.CallSettings) error {

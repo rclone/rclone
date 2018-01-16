@@ -20,7 +20,6 @@ import (
 	"log"
 	"math/rand"
 	"os"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -147,7 +146,7 @@ loop:
 	wg.Wait()
 	ok := true
 	for i, con := range consumers {
-		if got, want := con.counts, wantCounts; !reflect.DeepEqual(got, want) {
+		if got, want := con.counts, wantCounts; !testutil.Equal(got, want) {
 			t.Errorf("%d: message counts: %v\n", i, diff(got, want))
 			ok = false
 		}

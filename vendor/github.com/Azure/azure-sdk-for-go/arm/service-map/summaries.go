@@ -110,7 +110,9 @@ func (client SummariesClient) GetMachinesPreparer(resourceGroupName string, work
 // GetMachinesSender sends the GetMachines request. The method will close the
 // http.Response Body if it receives an error.
 func (client SummariesClient) GetMachinesSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetMachinesResponder handles the response to the GetMachines request. The method always

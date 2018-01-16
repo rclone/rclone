@@ -105,7 +105,9 @@ func (client TransformationsClient) CreateOrReplacePreparer(transformation Trans
 // CreateOrReplaceSender sends the CreateOrReplace request. The method will close the
 // http.Response Body if it receives an error.
 func (client TransformationsClient) CreateOrReplaceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrReplaceResponder handles the response to the CreateOrReplace request. The method always
@@ -173,7 +175,9 @@ func (client TransformationsClient) GetPreparer(resourceGroupName string, jobNam
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client TransformationsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -253,7 +257,9 @@ func (client TransformationsClient) UpdatePreparer(transformation Transformation
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client TransformationsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

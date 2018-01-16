@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"Kinesis Analytics",
     "serviceFullName":"Amazon Kinesis Analytics",
+    "serviceId":"Kinesis Analytics",
     "signatureVersion":"v4",
     "targetPrefix":"KinesisAnalytics_20150814",
     "timestampFormat":"unixTimestamp",
@@ -42,6 +43,21 @@
         {"shape":"InvalidArgumentException"},
         {"shape":"ConcurrentModificationException"},
         {"shape":"CodeValidationException"}
+      ]
+    },
+    "AddApplicationInputProcessingConfiguration":{
+      "name":"AddApplicationInputProcessingConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"AddApplicationInputProcessingConfigurationRequest"},
+      "output":{"shape":"AddApplicationInputProcessingConfigurationResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"ConcurrentModificationException"}
       ]
     },
     "AddApplicationOutput":{
@@ -111,6 +127,21 @@
       },
       "input":{"shape":"DeleteApplicationCloudWatchLoggingOptionRequest"},
       "output":{"shape":"DeleteApplicationCloudWatchLoggingOptionResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"InvalidArgumentException"},
+        {"shape":"ConcurrentModificationException"}
+      ]
+    },
+    "DeleteApplicationInputProcessingConfiguration":{
+      "name":"DeleteApplicationInputProcessingConfiguration",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteApplicationInputProcessingConfigurationRequest"},
+      "output":{"shape":"DeleteApplicationInputProcessingConfigurationResponse"},
       "errors":[
         {"shape":"ResourceNotFoundException"},
         {"shape":"ResourceInUseException"},
@@ -244,6 +275,26 @@
       }
     },
     "AddApplicationCloudWatchLoggingOptionResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "AddApplicationInputProcessingConfigurationRequest":{
+      "type":"structure",
+      "required":[
+        "ApplicationName",
+        "CurrentApplicationVersionId",
+        "InputId",
+        "InputProcessingConfiguration"
+      ],
+      "members":{
+        "ApplicationName":{"shape":"ApplicationName"},
+        "CurrentApplicationVersionId":{"shape":"ApplicationVersionId"},
+        "InputId":{"shape":"Id"},
+        "InputProcessingConfiguration":{"shape":"InputProcessingConfiguration"}
+      }
+    },
+    "AddApplicationInputProcessingConfigurationResponse":{
       "type":"structure",
       "members":{
       }
@@ -497,6 +548,24 @@
       "members":{
       }
     },
+    "DeleteApplicationInputProcessingConfigurationRequest":{
+      "type":"structure",
+      "required":[
+        "ApplicationName",
+        "CurrentApplicationVersionId",
+        "InputId"
+      ],
+      "members":{
+        "ApplicationName":{"shape":"ApplicationName"},
+        "CurrentApplicationVersionId":{"shape":"ApplicationVersionId"},
+        "InputId":{"shape":"Id"}
+      }
+    },
+    "DeleteApplicationInputProcessingConfigurationResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "DeleteApplicationOutputRequest":{
       "type":"structure",
       "required":[
@@ -571,15 +640,12 @@
     },
     "DiscoverInputSchemaRequest":{
       "type":"structure",
-      "required":[
-        "ResourceARN",
-        "RoleARN",
-        "InputStartingPositionConfiguration"
-      ],
       "members":{
         "ResourceARN":{"shape":"ResourceARN"},
         "RoleARN":{"shape":"RoleARN"},
-        "InputStartingPositionConfiguration":{"shape":"InputStartingPositionConfiguration"}
+        "InputStartingPositionConfiguration":{"shape":"InputStartingPositionConfiguration"},
+        "S3Configuration":{"shape":"S3Configuration"},
+        "InputProcessingConfiguration":{"shape":"InputProcessingConfiguration"}
       }
     },
     "DiscoverInputSchemaResponse":{
@@ -587,11 +653,16 @@
       "members":{
         "InputSchema":{"shape":"SourceSchema"},
         "ParsedInputRecords":{"shape":"ParsedInputRecords"},
+        "ProcessedInputRecords":{"shape":"ProcessedInputRecords"},
         "RawInputRecords":{"shape":"RawInputRecords"}
       }
     },
     "ErrorMessage":{"type":"string"},
-    "FileKey":{"type":"string"},
+    "FileKey":{
+      "type":"string",
+      "max":1024,
+      "min":1
+    },
     "Id":{
       "type":"string",
       "max":50,
@@ -622,6 +693,7 @@
       ],
       "members":{
         "NamePrefix":{"shape":"InAppStreamName"},
+        "InputProcessingConfiguration":{"shape":"InputProcessingConfiguration"},
         "KinesisStreamsInput":{"shape":"KinesisStreamsInput"},
         "KinesisFirehoseInput":{"shape":"KinesisFirehoseInput"},
         "InputParallelism":{"shape":"InputParallelism"},
@@ -649,6 +721,7 @@
         "InputId":{"shape":"Id"},
         "NamePrefix":{"shape":"InAppStreamName"},
         "InAppStreamNames":{"shape":"InAppStreamNames"},
+        "InputProcessingConfigurationDescription":{"shape":"InputProcessingConfigurationDescription"},
         "KinesisStreamsInputDescription":{"shape":"KinesisStreamsInputDescription"},
         "KinesisFirehoseInputDescription":{"shape":"KinesisFirehoseInputDescription"},
         "InputSchema":{"shape":"SourceSchema"},
@@ -659,6 +732,31 @@
     "InputDescriptions":{
       "type":"list",
       "member":{"shape":"InputDescription"}
+    },
+    "InputLambdaProcessor":{
+      "type":"structure",
+      "required":[
+        "ResourceARN",
+        "RoleARN"
+      ],
+      "members":{
+        "ResourceARN":{"shape":"ResourceARN"},
+        "RoleARN":{"shape":"RoleARN"}
+      }
+    },
+    "InputLambdaProcessorDescription":{
+      "type":"structure",
+      "members":{
+        "ResourceARN":{"shape":"ResourceARN"},
+        "RoleARN":{"shape":"RoleARN"}
+      }
+    },
+    "InputLambdaProcessorUpdate":{
+      "type":"structure",
+      "members":{
+        "ResourceARNUpdate":{"shape":"ResourceARN"},
+        "RoleARNUpdate":{"shape":"RoleARN"}
+      }
     },
     "InputParallelism":{
       "type":"structure",
@@ -675,6 +773,26 @@
       "type":"structure",
       "members":{
         "CountUpdate":{"shape":"InputParallelismCount"}
+      }
+    },
+    "InputProcessingConfiguration":{
+      "type":"structure",
+      "required":["InputLambdaProcessor"],
+      "members":{
+        "InputLambdaProcessor":{"shape":"InputLambdaProcessor"}
+      }
+    },
+    "InputProcessingConfigurationDescription":{
+      "type":"structure",
+      "members":{
+        "InputLambdaProcessorDescription":{"shape":"InputLambdaProcessorDescription"}
+      }
+    },
+    "InputProcessingConfigurationUpdate":{
+      "type":"structure",
+      "required":["InputLambdaProcessorUpdate"],
+      "members":{
+        "InputLambdaProcessorUpdate":{"shape":"InputLambdaProcessorUpdate"}
       }
     },
     "InputSchemaUpdate":{
@@ -705,6 +823,7 @@
       "members":{
         "InputId":{"shape":"Id"},
         "NamePrefixUpdate":{"shape":"InAppStreamName"},
+        "InputProcessingConfigurationUpdate":{"shape":"InputProcessingConfigurationUpdate"},
         "KinesisStreamsInputUpdate":{"shape":"KinesisStreamsInputUpdate"},
         "KinesisFirehoseInputUpdate":{"shape":"KinesisFirehoseInputUpdate"},
         "InputSchemaUpdate":{"shape":"InputSchemaUpdate"},
@@ -840,6 +959,31 @@
         "RoleARNUpdate":{"shape":"RoleARN"}
       }
     },
+    "LambdaOutput":{
+      "type":"structure",
+      "required":[
+        "ResourceARN",
+        "RoleARN"
+      ],
+      "members":{
+        "ResourceARN":{"shape":"ResourceARN"},
+        "RoleARN":{"shape":"RoleARN"}
+      }
+    },
+    "LambdaOutputDescription":{
+      "type":"structure",
+      "members":{
+        "ResourceARN":{"shape":"ResourceARN"},
+        "RoleARN":{"shape":"RoleARN"}
+      }
+    },
+    "LambdaOutputUpdate":{
+      "type":"structure",
+      "members":{
+        "ResourceARNUpdate":{"shape":"ResourceARN"},
+        "RoleARNUpdate":{"shape":"RoleARN"}
+      }
+    },
     "LimitExceededException":{
       "type":"structure",
       "members":{
@@ -893,6 +1037,7 @@
         "Name":{"shape":"InAppStreamName"},
         "KinesisStreamsOutput":{"shape":"KinesisStreamsOutput"},
         "KinesisFirehoseOutput":{"shape":"KinesisFirehoseOutput"},
+        "LambdaOutput":{"shape":"LambdaOutput"},
         "DestinationSchema":{"shape":"DestinationSchema"}
       }
     },
@@ -903,6 +1048,7 @@
         "Name":{"shape":"InAppStreamName"},
         "KinesisStreamsOutputDescription":{"shape":"KinesisStreamsOutputDescription"},
         "KinesisFirehoseOutputDescription":{"shape":"KinesisFirehoseOutputDescription"},
+        "LambdaOutputDescription":{"shape":"LambdaOutputDescription"},
         "DestinationSchema":{"shape":"DestinationSchema"}
       }
     },
@@ -918,6 +1064,7 @@
         "NameUpdate":{"shape":"InAppStreamName"},
         "KinesisStreamsOutputUpdate":{"shape":"KinesisStreamsOutputUpdate"},
         "KinesisFirehoseOutputUpdate":{"shape":"KinesisFirehoseOutputUpdate"},
+        "LambdaOutputUpdate":{"shape":"LambdaOutputUpdate"},
         "DestinationSchemaUpdate":{"shape":"DestinationSchema"}
       }
     },
@@ -937,6 +1084,11 @@
     "ParsedInputRecords":{
       "type":"list",
       "member":{"shape":"ParsedInputRecord"}
+    },
+    "ProcessedInputRecord":{"type":"string"},
+    "ProcessedInputRecords":{
+      "type":"list",
+      "member":{"shape":"ProcessedInputRecord"}
     },
     "RawInputRecord":{"type":"string"},
     "RawInputRecords":{
@@ -964,7 +1116,10 @@
       "type":"string",
       "pattern":"[a-zA-Z_][a-zA-Z0-9_]*"
     },
-    "RecordColumnSqlType":{"type":"string"},
+    "RecordColumnSqlType":{
+      "type":"string",
+      "min":1
+    },
     "RecordColumns":{
       "type":"list",
       "member":{"shape":"RecordColumn"},
@@ -994,7 +1149,10 @@
       "type":"string",
       "min":1
     },
-    "RecordRowPath":{"type":"string"},
+    "RecordRowPath":{
+      "type":"string",
+      "min":1
+    },
     "ReferenceDataSource":{
       "type":"structure",
       "required":[
@@ -1043,7 +1201,7 @@
       "type":"string",
       "max":2048,
       "min":1,
-      "pattern":"arn:[a-zA-Z0-9\\-]+:[a-zA-Z0-9\\-]+:[a-zA-Z0-9\\-]*:\\d{12}:[a-zA-Z_0-9+=,.@\\-_/:]+"
+      "pattern":"arn:.*"
     },
     "ResourceInUseException":{
       "type":"structure",
@@ -1071,6 +1229,19 @@
       "max":2048,
       "min":1,
       "pattern":"arn:aws:iam::\\d{12}:role/?[a-zA-Z_0-9+=,.@\\-_/]+"
+    },
+    "S3Configuration":{
+      "type":"structure",
+      "required":[
+        "RoleARN",
+        "BucketARN",
+        "FileKey"
+      ],
+      "members":{
+        "RoleARN":{"shape":"RoleARN"},
+        "BucketARN":{"shape":"BucketARN"},
+        "FileKey":{"shape":"FileKey"}
+      }
     },
     "S3ReferenceDataSource":{
       "type":"structure",
@@ -1111,7 +1282,8 @@
       "members":{
         "message":{"shape":"ErrorMessage"}
       },
-      "exception":true
+      "exception":true,
+      "fault":true
     },
     "SourceSchema":{
       "type":"structure",
@@ -1158,7 +1330,8 @@
       "type":"structure",
       "members":{
         "message":{"shape":"ErrorMessage"},
-        "RawInputRecords":{"shape":"RawInputRecords"}
+        "RawInputRecords":{"shape":"RawInputRecords"},
+        "ProcessedInputRecords":{"shape":"ProcessedInputRecords"}
       },
       "exception":true
     },

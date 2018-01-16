@@ -121,6 +121,7 @@ func (client ReplicationRecoveryPlansClient) CreatePreparer(recoveryPlanName str
 func (client ReplicationRecoveryPlansClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -203,6 +204,7 @@ func (client ReplicationRecoveryPlansClient) DeletePreparer(recoveryPlanName str
 func (client ReplicationRecoveryPlansClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -285,6 +287,7 @@ func (client ReplicationRecoveryPlansClient) FailoverCommitPreparer(recoveryPlan
 func (client ReplicationRecoveryPlansClient) FailoverCommitSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -351,7 +354,9 @@ func (client ReplicationRecoveryPlansClient) GetPreparer(recoveryPlanName string
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationRecoveryPlansClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -414,7 +419,9 @@ func (client ReplicationRecoveryPlansClient) ListPreparer() (*http.Request, erro
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ReplicationRecoveryPlansClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -577,6 +584,7 @@ func (client ReplicationRecoveryPlansClient) PlannedFailoverPreparer(recoveryPla
 func (client ReplicationRecoveryPlansClient) PlannedFailoverSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -660,6 +668,7 @@ func (client ReplicationRecoveryPlansClient) ReprotectPreparer(recoveryPlanName 
 func (client ReplicationRecoveryPlansClient) ReprotectSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -755,6 +764,7 @@ func (client ReplicationRecoveryPlansClient) TestFailoverPreparer(recoveryPlanNa
 func (client ReplicationRecoveryPlansClient) TestFailoverSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -849,6 +859,7 @@ func (client ReplicationRecoveryPlansClient) TestFailoverCleanupPreparer(recover
 func (client ReplicationRecoveryPlansClient) TestFailoverCleanupSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -943,6 +954,7 @@ func (client ReplicationRecoveryPlansClient) UnplannedFailoverPreparer(recoveryP
 func (client ReplicationRecoveryPlansClient) UnplannedFailoverSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -1027,6 +1039,7 @@ func (client ReplicationRecoveryPlansClient) UpdatePreparer(recoveryPlanName str
 func (client ReplicationRecoveryPlansClient) UpdateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

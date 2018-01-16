@@ -96,7 +96,9 @@ func (client DataLakeStoreAccountsClient) AddPreparer(resourceGroupName string, 
 // AddSender sends the Add request. The method will close the
 // http.Response Body if it receives an error.
 func (client DataLakeStoreAccountsClient) AddSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // AddResponder handles the response to the Add request. The method always
@@ -163,7 +165,9 @@ func (client DataLakeStoreAccountsClient) DeletePreparer(resourceGroupName strin
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client DataLakeStoreAccountsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -230,7 +234,9 @@ func (client DataLakeStoreAccountsClient) GetPreparer(resourceGroupName string, 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client DataLakeStoreAccountsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -332,7 +338,9 @@ func (client DataLakeStoreAccountsClient) ListByAccountPreparer(resourceGroupNam
 // ListByAccountSender sends the ListByAccount request. The method will close the
 // http.Response Body if it receives an error.
 func (client DataLakeStoreAccountsClient) ListByAccountSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByAccountResponder handles the response to the ListByAccount request. The method always

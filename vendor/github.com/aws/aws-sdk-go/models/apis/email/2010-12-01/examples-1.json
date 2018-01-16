@@ -293,6 +293,22 @@
         "title": "DescribeReceiptRuleSet"
       }
     ],
+    "GetAccountSendingEnabled": [
+      {
+        "output": {
+          "Enabled": true
+        },
+        "comments": {
+          "input": {
+          },
+          "output": {
+          }
+        },
+        "description": "The following example returns if sending status for an account is enabled. (true / false):",
+        "id": "getaccountsendingenabled-1469047741333",
+        "title": "GetAccountSendingEnabled"
+      }
+    ],
     "GetIdentityDkimAttributes": [
       {
         "input": {
@@ -845,6 +861,56 @@
         "description": "The following example sets the position of a receipt rule in a receipt rule set:",
         "id": "setreceiptruleposition-1469058530550",
         "title": "SetReceiptRulePosition"
+      }
+    ],
+    "UpdateAccountSendingEnabled": [
+      {
+        "input": {
+          "Enabled": true
+        },
+        "comments": {
+          "input": {
+          },
+          "output": {
+          }
+        },
+        "description": "The following example updated the sending status for this account.",
+        "id": "updateaccountsendingenabled-1469047741333",
+        "title": "UpdateAccountSendingEnabled"
+      }
+    ],
+    "UpdateConfigurationSetReputationMetricsEnabled": [
+      {
+        "input": {
+          "ConfigurationSetName": "foo",
+          "Enabled": true
+        },
+        "comments": {
+          "input": {
+          },
+          "output": {
+          }
+        },
+        "description": "Set the reputationMetricsEnabled flag for a specific configuration set.",
+        "id": "updateconfigurationsetreputationmetricsenabled-2362747741333",
+        "title": "UpdateConfigurationSetReputationMetricsEnabled"
+      }
+    ],
+    "UpdateConfigurationSetSendingEnabled": [
+      {
+        "input": {
+          "ConfigurationSetName": "foo",
+          "Enabled": true
+        },
+        "comments": {
+          "input": {
+          },
+          "output": {
+          }
+        },
+        "description": "Set the sending enabled flag for a specific configuration set.",
+        "id": "updateconfigurationsetsendingenabled-2362747741333",
+        "title": "UpdateConfigurationSetReputationMetricsEnabled"
       }
     ],
     "UpdateReceiptRule": [

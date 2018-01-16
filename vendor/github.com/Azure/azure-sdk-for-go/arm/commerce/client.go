@@ -1,6 +1,6 @@
 // Package commerce implements the Azure ARM Commerce service API version 2015-06-01-preview.
 //
-//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/commerce/mgmt/2015-06-01-preview/commerce
 package commerce
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -92,7 +92,9 @@ func (client CampaignsClient) ActivatePreparer(resourceGroupName string, appColl
 // ActivateSender sends the Activate request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) ActivateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ActivateResponder handles the response to the Activate request. The method always
@@ -171,7 +173,9 @@ func (client CampaignsClient) CreatePreparer(resourceGroupName string, appCollec
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -240,7 +244,9 @@ func (client CampaignsClient) DeletePreparer(kind CampaignKinds, ID int32, resou
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -308,7 +314,9 @@ func (client CampaignsClient) FinishPreparer(resourceGroupName string, appCollec
 // FinishSender sends the Finish request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) FinishSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // FinishResponder handles the response to the Finish request. The method always
@@ -377,7 +385,9 @@ func (client CampaignsClient) GetPreparer(kind CampaignKinds, ID int32, resource
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -446,7 +456,9 @@ func (client CampaignsClient) GetByNamePreparer(resourceGroupName string, appCol
 // GetByNameSender sends the GetByName request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) GetByNameSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetByNameResponder handles the response to the GetByName request. The method always
@@ -515,7 +527,9 @@ func (client CampaignsClient) GetStatisticsPreparer(kind CampaignKinds, ID int32
 // GetStatisticsSender sends the GetStatistics request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) GetStatisticsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetStatisticsResponder handles the response to the GetStatistics request. The method always
@@ -610,7 +624,9 @@ func (client CampaignsClient) ListPreparer(resourceGroupName string, appCollecti
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -763,7 +779,9 @@ func (client CampaignsClient) PushPreparer(resourceGroupName string, appCollecti
 // PushSender sends the Push request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) PushSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // PushResponder handles the response to the Push request. The method always
@@ -832,7 +850,9 @@ func (client CampaignsClient) SuspendPreparer(resourceGroupName string, appColle
 // SuspendSender sends the Suspend request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) SuspendSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // SuspendResponder handles the response to the Suspend request. The method always
@@ -913,7 +933,9 @@ func (client CampaignsClient) TestNewPreparer(resourceGroupName string, appColle
 // TestNewSender sends the TestNew request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) TestNewSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // TestNewResponder handles the response to the TestNew request. The method always
@@ -991,7 +1013,9 @@ func (client CampaignsClient) TestSavedPreparer(resourceGroupName string, appCol
 // TestSavedSender sends the TestSaved request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) TestSavedSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // TestSavedResponder handles the response to the TestSaved request. The method always
@@ -1072,7 +1096,9 @@ func (client CampaignsClient) UpdatePreparer(kind CampaignKinds, ID int32, param
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client CampaignsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

@@ -95,6 +95,10 @@ type ServerConfig struct {
 	// Note that RFC 4253 section 4.2 requires that this string start with
 	// "SSH-2.0-".
 	ServerVersion string
+
+	// BannerCallback, if present, is called and the return string is sent to
+	// the client after key exchange completed but before authentication.
+	BannerCallback func(conn ConnMetadata) string
 }
 
 // AddHostKey adds a private key as a host key. If an existing host
@@ -252,7 +256,7 @@ func (s *connection) serverHandshake(config *ServerConfig) (*Permissions, error)
 func isAcceptableAlgo(algo string) bool {
 	switch algo {
 	case KeyAlgoRSA, KeyAlgoDSA, KeyAlgoECDSA256, KeyAlgoECDSA384, KeyAlgoECDSA521, KeyAlgoED25519,
-		CertAlgoRSAv01, CertAlgoDSAv01, CertAlgoECDSA256v01, CertAlgoECDSA384v01, CertAlgoECDSA521v01:
+		CertAlgoRSAv01, CertAlgoDSAv01, CertAlgoECDSA256v01, CertAlgoECDSA384v01, CertAlgoECDSA521v01, CertAlgoED25519v01:
 		return true
 	}
 	return false
@@ -312,6 +316,7 @@ func (s *connection) serverAuthenticate(config *ServerConfig) (*Permissions, err
 
 	authFailures := 0
 	var authErrs []error
+	var displayedBanner bool
 
 userAuthLoop:
 	for {
@@ -343,6 +348,20 @@ userAuthLoop:
 		}
 
 		s.user = userAuthReq.User
+
+		if !displayedBanner && config.BannerCallback != nil {
+			displayedBanner = true
+			msg := config.BannerCallback(s)
+			if msg != "" {
+				bannerMsg := &userAuthBannerMsg{
+					Message: msg,
+				}
+				if err := s.transport.writePacket(Marshal(bannerMsg)); err != nil {
+					return nil, err
+				}
+			}
+		}
+
 		perms = nil
 		authErr := errors.New("no auth passed yet")
 

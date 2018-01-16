@@ -1,4 +1,11 @@
 package: github.com/yunify/qingstor-sdk-go
 import:
+
+# YAML
+- package: gopkg.in/yaml.v2
+  version: 287cf08546ab5e7e37d55a84f7ed3fd1db036de5
+  repo:    https://github.com/go-yaml/yaml.git
+
+# Shared packages
 - package: github.com/pengsrc/go-shared
-  version: v0.0.8
+  version: v0.1.1

@@ -1,12 +1,12 @@
 {
  "kind": "discovery#restDescription",
- "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/yxKXEK0f6thaLbXelK6zwxd96bE\"",
+ "etag": "\"YWOzh2SDasdU84ArJnpYek-OMdg/keBNPsgSGOvhZL7fvFZhEBtDdIs\"",
  "discoveryVersion": "v1",
  "id": "games:v1",
  "name": "games",
  "canonicalName": "Games",
  "version": "v1",
- "revision": "20170911",
+ "revision": "20180104",
  "title": "Google Play Game Services API",
  "description": "The API for Google Play Game Services.",
  "ownerDomain": "google.com",
@@ -3032,12 +3032,6 @@
      "httpMethod": "GET",
      "description": "Lists all the achievement definitions for your application.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3081,12 +3075,6 @@
        "required": true,
        "location": "path"
       },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "requestId": {
        "type": "string",
        "description": "A randomly generated numeric ID for each request specified by the caller. This number is used at the server to ensure that the request is handled correctly across retries.",
@@ -3120,12 +3108,6 @@
      "httpMethod": "GET",
      "description": "Lists the progress for all your application's achievements for the currently authenticated player.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3190,12 +3172,6 @@
        "description": "The ID of the achievement used by this method.",
        "required": true,
        "location": "path"
-      },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
       }
      },
      "parameterOrder": [
@@ -3220,12 +3196,6 @@
        "description": "The ID of the achievement used by this method.",
        "required": true,
        "location": "path"
-      },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
       },
       "steps": {
        "type": "integer",
@@ -3259,12 +3229,6 @@
        "description": "The ID of the achievement used by this method.",
        "required": true,
        "location": "path"
-      },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
       }
      },
      "parameterOrder": [
@@ -3283,14 +3247,6 @@
      "path": "achievements/updateMultiple",
      "httpMethod": "POST",
      "description": "Updates multiple achievements for the currently authenticated player.",
-     "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      }
-     },
      "request": {
       "$ref": "AchievementUpdateMultipleRequest"
      },
@@ -3317,12 +3273,6 @@
        "description": "The application ID from the Google Play developer console.",
        "required": true,
        "location": "path"
-      },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
       },
       "language": {
        "type": "string",
@@ -3361,14 +3311,6 @@
      "path": "applications/played",
      "httpMethod": "POST",
      "description": "Indicate that the the currently authenticated user is playing your application.",
-     "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      }
-     },
      "scopes": [
       "https://www.googleapis.com/auth/games",
       "https://www.googleapis.com/auth/plus.login"
@@ -3385,12 +3327,6 @@
        "description": "The application ID from the Google Play developer console.",
        "required": true,
        "location": "path"
-      },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
       }
      },
      "parameterOrder": [
@@ -3414,12 +3350,6 @@
      "httpMethod": "GET",
      "description": "Returns a list showing the current progress on events in this application for the currently authenticated user.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3453,12 +3383,6 @@
      "httpMethod": "GET",
      "description": "Returns a list of the event definitions in this application.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3492,12 +3416,6 @@
      "httpMethod": "POST",
      "description": "Records a batch of changes to the number of times events have occurred for the currently authenticated user of this application.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3525,12 +3443,6 @@
      "httpMethod": "GET",
      "description": "Retrieves the metadata of the leaderboard with the given ID.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3560,12 +3472,6 @@
      "httpMethod": "GET",
      "description": "Lists all the leaderboard metadata for your application.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3602,14 +3508,6 @@
      "path": "metagameConfig",
      "httpMethod": "GET",
      "description": "Return the metagame configuration data for the calling application.",
-     "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      }
-     },
      "response": {
       "$ref": "MetagameConfig"
      },
@@ -3635,12 +3533,6 @@
         "Retrieve data for all categories. This is the default."
        ],
        "location": "path"
-      },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
       },
       "language": {
        "type": "string",
@@ -3689,12 +3581,6 @@
      "httpMethod": "GET",
      "description": "Retrieves the Player resource with the given ID. To retrieve the player for the currently authenticated user, set playerId to me.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3742,12 +3628,6 @@
        ],
        "location": "path"
       },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3787,14 +3667,6 @@
      "path": "pushtokens/remove",
      "httpMethod": "POST",
      "description": "Removes a push token for the current user and application. Removing a non-existent push token will report success.",
-     "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      }
-     },
      "request": {
       "$ref": "PushTokenId"
      },
@@ -3808,14 +3680,6 @@
      "path": "pushtokens",
      "httpMethod": "PUT",
      "description": "Registers a push token for the current user and application.",
-     "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      }
-     },
      "request": {
       "$ref": "PushToken"
      },
@@ -3834,12 +3698,6 @@
      "httpMethod": "PUT",
      "description": "Report that a reward for the milestone corresponding to milestoneId for the quest corresponding to questId has been claimed by the currently authorized user.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "milestoneId": {
        "type": "string",
        "description": "The ID of the milestone.",
@@ -3880,12 +3738,6 @@
      "httpMethod": "POST",
      "description": "Indicates that the currently authorized user will participate in the quest.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3915,12 +3767,6 @@
      "httpMethod": "GET",
      "description": "Get a list of quests for your application and the currently authenticated player.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -3972,12 +3818,6 @@
        "description": "The revision of the client SDK used by your application. Format:\n[PLATFORM_TYPE]:[VERSION_NUMBER]. Possible values of PLATFORM_TYPE are:\n \n- \"ANDROID\" - Client is running the Android SDK. \n- \"IOS\" - Client is running the iOS SDK. \n- \"WEB_APP\" - Client is running as a Web App.",
        "required": true,
        "location": "query"
-      },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
       }
      },
      "parameterOrder": [
@@ -4001,12 +3841,6 @@
      "httpMethod": "POST",
      "description": "Create a room. For internal use by the Games SDK only. Calling this method directly is unsupported.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4030,12 +3864,6 @@
      "httpMethod": "POST",
      "description": "Decline an invitation to join a room. For internal use by the Games SDK only. Calling this method directly is unsupported.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4065,12 +3893,6 @@
      "httpMethod": "POST",
      "description": "Dismiss an invitation to join a room. For internal use by the Games SDK only. Calling this method directly is unsupported.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "roomId": {
        "type": "string",
        "description": "The ID of the room.",
@@ -4092,12 +3914,6 @@
      "httpMethod": "GET",
      "description": "Get the data for a room.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4127,12 +3943,6 @@
      "httpMethod": "POST",
      "description": "Join a room. For internal use by the Games SDK only. Calling this method directly is unsupported.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4165,12 +3975,6 @@
      "httpMethod": "POST",
      "description": "Leave a room. For internal use by the Games SDK only. Calling this method directly is unsupported.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4203,12 +4007,6 @@
      "httpMethod": "GET",
      "description": "Returns invitations to join rooms.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4242,12 +4040,6 @@
      "httpMethod": "POST",
      "description": "Updates sent by a client reporting the status of peers in a room. For internal use by the Games SDK only. Calling this method directly is unsupported.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4284,12 +4076,6 @@
      "httpMethod": "GET",
      "description": "Get high scores, and optionally ranks, in leaderboards for the currently authenticated player. For a specific time span, leaderboardId can be set to ALL to retrieve data for all leaderboards in a given time span.\nNOTE: You cannot ask for 'ALL' leaderboards and 'ALL' timeSpans in the same request; only one parameter may be set to 'ALL'.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "includeRankType": {
        "type": "string",
        "description": "The types of ranks to return. If the parameter is omitted, no ranks will be returned.",
@@ -4389,12 +4175,6 @@
        ],
        "location": "path"
       },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4471,12 +4251,6 @@
        ],
        "location": "path"
       },
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4548,12 +4322,6 @@
      "httpMethod": "POST",
      "description": "Submits a score to the specified leaderboard.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4597,12 +4365,6 @@
      "httpMethod": "POST",
      "description": "Submits multiple scores to leaderboards.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4630,12 +4392,6 @@
      "httpMethod": "GET",
      "description": "Retrieves the metadata for a given snapshot ID.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4666,12 +4422,6 @@
      "httpMethod": "GET",
      "description": "Retrieves a list of snapshots created by your application for the player corresponding to the player ID.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4719,12 +4469,6 @@
      "httpMethod": "PUT",
      "description": "Cancel a turn-based match.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "matchId": {
        "type": "string",
        "description": "The ID of the match.",
@@ -4746,12 +4490,6 @@
      "httpMethod": "POST",
      "description": "Create a turn-based match.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4775,12 +4513,6 @@
      "httpMethod": "PUT",
      "description": "Decline an invitation to play a turn-based match.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4810,12 +4542,6 @@
      "httpMethod": "PUT",
      "description": "Dismiss a turn-based match from the match list. The match will no longer show up in the list and will not generate notifications.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "matchId": {
        "type": "string",
        "description": "The ID of the match.",
@@ -4837,12 +4563,6 @@
      "httpMethod": "PUT",
      "description": "Finish a turn-based match. Each player should make this call once, after all results are in. Only the player whose turn it is may make the first call to Finish, and can pass in the final match state.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4875,12 +4595,6 @@
      "httpMethod": "GET",
      "description": "Get the data for a turn-based match.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "includeMatchData": {
        "type": "boolean",
        "description": "Get match data along with metadata.",
@@ -4915,12 +4629,6 @@
      "httpMethod": "PUT",
      "description": "Join a turn-based match.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4950,12 +4658,6 @@
      "httpMethod": "PUT",
      "description": "Leave a turn-based match when it is not the current player's turn, without canceling the match.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -4985,12 +4687,6 @@
      "httpMethod": "PUT",
      "description": "Leave a turn-based match during the current player's turn, without canceling the match.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -5033,12 +4729,6 @@
      "httpMethod": "GET",
      "description": "Returns turn-based matches the player is or was involved in.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "includeMatchData": {
        "type": "boolean",
        "description": "True if match data should be returned in the response. Note that not all data will necessarily be returned if include_match_data is true; the server may decide to only return data for some of the matches to limit download size for the client. The remainder of the data for these matches will be retrievable on request.",
@@ -5085,12 +4775,6 @@
      "httpMethod": "POST",
      "description": "Create a rematch of a match that was previously completed, with the same participants. This can be called by only one player on a match still in their list; the player must have called Finish first. Returns the newly created match; it will be the caller's turn.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",
@@ -5126,12 +4810,6 @@
      "httpMethod": "GET",
      "description": "Returns turn-based matches the player is or was involved in that changed since the last sync call, with the least recent changes coming first. Matches that should be removed from the local cache will have a status of MATCH_DELETED.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "includeMatchData": {
        "type": "boolean",
        "description": "True if match data should be returned in the response. Note that not all data will necessarily be returned if include_match_data is true; the server may decide to only return data for some of the matches to limit download size for the client. The remainder of the data for these matches will be retrievable on request.",
@@ -5178,12 +4856,6 @@
      "httpMethod": "PUT",
      "description": "Commit the results of a player turn.",
      "parameters": {
-      "consistencyToken": {
-       "type": "string",
-       "description": "The last-seen mutation timestamp.",
-       "format": "int64",
-       "location": "query"
-      },
       "language": {
        "type": "string",
        "description": "The preferred language to use for strings returned by this method.",

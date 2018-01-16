@@ -2,6 +2,8 @@
 // version 2016-07-07.
 //
 // Use these REST APIs to manage Azure API Management deployment.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services
 package apimdeployment
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

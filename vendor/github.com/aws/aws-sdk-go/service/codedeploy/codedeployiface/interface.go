@@ -120,6 +120,10 @@ type CodeDeployAPI interface {
 	DeleteDeploymentGroupWithContext(aws.Context, *codedeploy.DeleteDeploymentGroupInput, ...request.Option) (*codedeploy.DeleteDeploymentGroupOutput, error)
 	DeleteDeploymentGroupRequest(*codedeploy.DeleteDeploymentGroupInput) (*request.Request, *codedeploy.DeleteDeploymentGroupOutput)
 
+	DeleteGitHubAccountToken(*codedeploy.DeleteGitHubAccountTokenInput) (*codedeploy.DeleteGitHubAccountTokenOutput, error)
+	DeleteGitHubAccountTokenWithContext(aws.Context, *codedeploy.DeleteGitHubAccountTokenInput, ...request.Option) (*codedeploy.DeleteGitHubAccountTokenOutput, error)
+	DeleteGitHubAccountTokenRequest(*codedeploy.DeleteGitHubAccountTokenInput) (*request.Request, *codedeploy.DeleteGitHubAccountTokenOutput)
+
 	DeregisterOnPremisesInstance(*codedeploy.DeregisterOnPremisesInstanceInput) (*codedeploy.DeregisterOnPremisesInstanceOutput, error)
 	DeregisterOnPremisesInstanceWithContext(aws.Context, *codedeploy.DeregisterOnPremisesInstanceInput, ...request.Option) (*codedeploy.DeregisterOnPremisesInstanceOutput, error)
 	DeregisterOnPremisesInstanceRequest(*codedeploy.DeregisterOnPremisesInstanceInput) (*request.Request, *codedeploy.DeregisterOnPremisesInstanceOutput)
@@ -201,6 +205,10 @@ type CodeDeployAPI interface {
 	ListOnPremisesInstances(*codedeploy.ListOnPremisesInstancesInput) (*codedeploy.ListOnPremisesInstancesOutput, error)
 	ListOnPremisesInstancesWithContext(aws.Context, *codedeploy.ListOnPremisesInstancesInput, ...request.Option) (*codedeploy.ListOnPremisesInstancesOutput, error)
 	ListOnPremisesInstancesRequest(*codedeploy.ListOnPremisesInstancesInput) (*request.Request, *codedeploy.ListOnPremisesInstancesOutput)
+
+	PutLifecycleEventHookExecutionStatus(*codedeploy.PutLifecycleEventHookExecutionStatusInput) (*codedeploy.PutLifecycleEventHookExecutionStatusOutput, error)
+	PutLifecycleEventHookExecutionStatusWithContext(aws.Context, *codedeploy.PutLifecycleEventHookExecutionStatusInput, ...request.Option) (*codedeploy.PutLifecycleEventHookExecutionStatusOutput, error)
+	PutLifecycleEventHookExecutionStatusRequest(*codedeploy.PutLifecycleEventHookExecutionStatusInput) (*request.Request, *codedeploy.PutLifecycleEventHookExecutionStatusOutput)
 
 	RegisterApplicationRevision(*codedeploy.RegisterApplicationRevisionInput) (*codedeploy.RegisterApplicationRevisionOutput, error)
 	RegisterApplicationRevisionWithContext(aws.Context, *codedeploy.RegisterApplicationRevisionInput, ...request.Option) (*codedeploy.RegisterApplicationRevisionOutput, error)

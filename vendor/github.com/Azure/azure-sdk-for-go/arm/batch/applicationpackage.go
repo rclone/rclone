@@ -106,7 +106,9 @@ func (client ApplicationPackageClient) ActivatePreparer(resourceGroupName string
 // ActivateSender sends the Activate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplicationPackageClient) ActivateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ActivateResponder handles the response to the Activate request. The method always
@@ -183,7 +185,9 @@ func (client ApplicationPackageClient) CreatePreparer(resourceGroupName string, 
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplicationPackageClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -261,7 +265,9 @@ func (client ApplicationPackageClient) DeletePreparer(resourceGroupName string, 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplicationPackageClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -338,7 +344,9 @@ func (client ApplicationPackageClient) GetPreparer(resourceGroupName string, acc
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ApplicationPackageClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always

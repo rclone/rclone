@@ -91,17 +91,50 @@ func TestCompactIndex(t *testing.T) {
 		{"ca-ES-valencia-u-co-phonebk", 1, true},
 		{"ca-ES-valencia-u-co-phonebk-va-posix", 0, false},
 		{"x-klingon", 0, false},
-		{"en-US", 229, true},
+		{"en-US", 232, true},
 		{"en-US-u-va-posix", 2, true},
-		{"en", 133, true},
-		{"en-u-co-phonebk", 133, true},
-		{"en-001", 134, true},
+		{"en", 136, true},
+		{"en-u-co-phonebk", 136, true},
+		{"en-001", 137, true},
 		{"sh", 0, false}, // We don't normalize.
 	}
 	for _, tt := range tests {
 		x, ok := CompactIndex(Raw.MustParse(tt.tag))
 		if x != tt.index || ok != tt.ok {
 			t.Errorf("%s: got %d, %v; want %d %v", tt.tag, x, ok, tt.index, tt.ok)
+		}
+	}
+}
+
+func TestMarshal(t *testing.T) {
+	testCases := []string{
+		// TODO: these values will change with each CLDR update. This issue
+		// will be solved if we decide to fix the indexes.
+		"und",
+		"ca-ES-valencia",
+		"ca-ES-valencia-u-va-posix",
+		"ca-ES-valencia-u-co-phonebk",
+		"ca-ES-valencia-u-co-phonebk-va-posix",
+		"x-klingon",
+		"en-US",
+		"en-US-u-va-posix",
+		"en",
+		"en-u-co-phonebk",
+		"en-001",
+		"sh",
+	}
+	for _, tc := range testCases {
+		var tag Tag
+		err := tag.UnmarshalText([]byte(tc))
+		if err != nil {
+			t.Errorf("UnmarshalText(%q): unexpected error: %v", tc, err)
+		}
+		b, err := tag.MarshalText()
+		if err != nil {
+			t.Errorf("MarshalText(%q): unexpected error: %v", tc, err)
+		}
+		if got := string(b); got != tc {
+			t.Errorf("%s: got %q; want %q", tc, got, tc)
 		}
 	}
 }

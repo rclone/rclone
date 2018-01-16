@@ -7,9 +7,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
@@ -31,10 +28,15 @@ func TestCopyObjectNoError(t *testing.T) {
 		Key:        aws.String("destination.txt"),
 	})
 
-	require.NoError(t, err)
-
-	assert.Equal(t, fmt.Sprintf(`%q`, "1da64c7f13d1e8dbeaea40b905fd586c"), *res.CopyObjectResult.ETag)
-	assert.Equal(t, lastModifiedTime, *res.CopyObjectResult.LastModified)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if e, a := fmt.Sprintf(`%q`, "1da64c7f13d1e8dbeaea40b905fd586c"), *res.CopyObjectResult.ETag; e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := lastModifiedTime, *res.CopyObjectResult.LastModified; !e.Equal(a) {
+		t.Errorf("expected %v, but received %v", e, a)
+	}
 }
 
 func TestCopyObjectError(t *testing.T) {
@@ -44,11 +46,17 @@ func TestCopyObjectError(t *testing.T) {
 		Key:        aws.String("destination.txt"),
 	})
 
-	require.Error(t, err)
+	if err == nil {
+		t.Error("expected error, but received none")
+	}
 	e := err.(awserr.Error)
 
-	assert.Equal(t, "ErrorCode", e.Code())
-	assert.Equal(t, "message body", e.Message())
+	if e, a := "ErrorCode", e.Code(); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := "message body", e.Message(); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
 }
 
 func TestUploadPartCopySuccess(t *testing.T) {
@@ -64,10 +72,16 @@ func TestUploadPartCopySuccess(t *testing.T) {
 		UploadId:   aws.String("uploadID"),
 	})
 
-	require.NoError(t, err)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
 
-	assert.Equal(t, fmt.Sprintf(`%q`, "1da64c7f13d1e8dbeaea40b905fd586c"), *res.CopyPartResult.ETag)
-	assert.Equal(t, lastModifiedTime, *res.CopyPartResult.LastModified)
+	if e, a := fmt.Sprintf(`%q`, "1da64c7f13d1e8dbeaea40b905fd586c"), *res.CopyPartResult.ETag; e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := lastModifiedTime, *res.CopyPartResult.LastModified; !e.Equal(a) {
+		t.Errorf("expected %v, but received %v", e, a)
+	}
 }
 
 func TestUploadPartCopyError(t *testing.T) {
@@ -79,11 +93,17 @@ func TestUploadPartCopyError(t *testing.T) {
 		UploadId:   aws.String("uploadID"),
 	})
 
-	require.Error(t, err)
+	if err == nil {
+		t.Error("expected an error")
+	}
 	e := err.(awserr.Error)
 
-	assert.Equal(t, "ErrorCode", e.Code())
-	assert.Equal(t, "message body", e.Message())
+	if e, a := "ErrorCode", e.Code(); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := "message body", e.Message(); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
 }
 
 func TestCompleteMultipartUploadSuccess(t *testing.T) {
@@ -96,12 +116,22 @@ func TestCompleteMultipartUploadSuccess(t *testing.T) {
 		UploadId: aws.String("uploadID"),
 	})
 
-	require.NoError(t, err)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
 
-	assert.Equal(t, `"etagVal"`, *res.ETag)
-	assert.Equal(t, "bucketName", *res.Bucket)
-	assert.Equal(t, "keyName", *res.Key)
-	assert.Equal(t, "locationName", *res.Location)
+	if e, a := `"etagVal"`, *res.ETag; e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := "bucketName", *res.Bucket; e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := "keyName", *res.Key; e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := "locationName", *res.Location; e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
 }
 
 func TestCompleteMultipartUploadError(t *testing.T) {
@@ -111,11 +141,17 @@ func TestCompleteMultipartUploadError(t *testing.T) {
 		UploadId: aws.String("uploadID"),
 	})
 
-	require.Error(t, err)
+	if err == nil {
+		t.Error("expected an error")
+	}
 	e := err.(awserr.Error)
 
-	assert.Equal(t, "ErrorCode", e.Code())
-	assert.Equal(t, "message body", e.Message())
+	if e, a := "ErrorCode", e.Code(); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
+	if e, a := "message body", e.Message(); e != a {
+		t.Errorf("expected %s, but received %s", e, a)
+	}
 }
 
 func newCopyTestSvc(errMsg string) *s3.S3 {

@@ -9,9 +9,30 @@ package unix_test
 import (
 	"os/exec"
 	"testing"
+	"time"
 
 	"golang.org/x/sys/unix"
 )
+
+func TestSelect(t *testing.T) {
+	err := unix.Select(0, nil, nil, nil, &unix.Timeval{Sec: 0, Usec: 0})
+	if err != nil {
+		t.Fatalf("Select: %v", err)
+	}
+
+	dur := 150 * time.Millisecond
+	tv := unix.NsecToTimeval(int64(dur))
+	start := time.Now()
+	err = unix.Select(0, nil, nil, nil, &tv)
+	took := time.Since(start)
+	if err != nil {
+		t.Fatalf("Select: %v", err)
+	}
+
+	if took < dur {
+		t.Errorf("Select: timeout should have been at least %v, got %v", dur, took)
+	}
+}
 
 func TestStatvfs(t *testing.T) {
 	if err := unix.Statvfs("", nil); err == nil {

@@ -11,7 +11,7 @@
     "CreateConfigurationTemplate": "<p>Creates a configuration template. Templates are associated with a specific application and are used to deploy different versions of the application with the same configuration settings.</p> <p>Related Topics</p> <ul> <li> <p> <a>DescribeConfigurationOptions</a> </p> </li> <li> <p> <a>DescribeConfigurationSettings</a> </p> </li> <li> <p> <a>ListAvailableSolutionStacks</a> </p> </li> </ul>",
     "CreateEnvironment": "<p>Launches an environment for the specified application using the specified configuration.</p>",
     "CreatePlatformVersion": "<p>Create a new version of your custom platform.</p>",
-    "CreateStorageLocation": "<p>Creates the Amazon S3 storage location for the account.</p> <p>This location is used to store user log files.</p>",
+    "CreateStorageLocation": "<p>Creates a bucket in Amazon S3 to store application versions, logs, and other files used by Elastic Beanstalk environments. The Elastic Beanstalk console and EB CLI call this API the first time you create an environment in a region. If the storage location already exists, <code>CreateStorageLocation</code> still returns the bucket name but does not create a new bucket.</p>",
     "DeleteApplication": "<p>Deletes the specified application along with all associated versions and configurations. The application versions will not be deleted from your Amazon S3 bucket.</p> <note> <p>You cannot delete an application that has a running environment.</p> </note>",
     "DeleteApplicationVersion": "<p>Deletes the specified version from the specified application.</p> <note> <p>You cannot delete an application version that is associated with a running environment.</p> </note>",
     "DeleteConfigurationTemplate": "<p>Deletes the specified configuration template.</p> <note> <p>When you launch an environment using a configuration template, the environment gets a copy of the template. You can delete or modify the environment's copy of the template without affecting the running environment.</p> </note>",
@@ -31,6 +31,7 @@
     "DescribePlatformVersion": "<p>Describes the version of the platform.</p>",
     "ListAvailableSolutionStacks": "<p>Returns a list of the available solution stack names, with the public version first and then in reverse chronological order.</p>",
     "ListPlatformVersions": "<p>Lists the available platforms.</p>",
+    "ListTagsForResource": "<p>Returns the tags applied to an AWS Elastic Beanstalk resource. The response contains a list of tag key-value pairs.</p> <p>Currently, Elastic Beanstalk only supports tagging of Elastic Beanstalk environments. For details about environment tagging, see <a href=\"http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.tagging.html\">Tagging Resources in Your Elastic Beanstalk Environment</a>.</p>",
     "RebuildEnvironment": "<p>Deletes and recreates all of the AWS resources (for example: the Auto Scaling group, load balancer, etc.) for a specified environment and forces a restart.</p>",
     "RequestEnvironmentInfo": "<p>Initiates a request to compile the specified type of information of the deployed environment.</p> <p> Setting the <code>InfoType</code> to <code>tail</code> compiles the last lines from the application server log files of every Amazon EC2 instance in your environment. </p> <p> Setting the <code>InfoType</code> to <code>bundle</code> compresses the application server log files for every Amazon EC2 instance into a <code>.zip</code> file. Legacy and .NET containers do not support bundle logs. </p> <p> Use <a>RetrieveEnvironmentInfo</a> to obtain the set of logs. </p> <p>Related Topics</p> <ul> <li> <p> <a>RetrieveEnvironmentInfo</a> </p> </li> </ul>",
     "RestartAppServer": "<p>Causes the environment to restart the application container server running on each Amazon EC2 instance.</p>",
@@ -42,6 +43,7 @@
     "UpdateApplicationVersion": "<p>Updates the specified application version to have the specified properties.</p> <note> <p>If a property (for example, <code>description</code>) is not provided, the value remains unchanged. To clear properties, specify an empty string.</p> </note>",
     "UpdateConfigurationTemplate": "<p>Updates the specified configuration template to have the specified properties or configuration option values.</p> <note> <p>If a property (for example, <code>ApplicationName</code>) is not provided, its value remains unchanged. To clear such properties, specify an empty string.</p> </note> <p>Related Topics</p> <ul> <li> <p> <a>DescribeConfigurationOptions</a> </p> </li> </ul>",
     "UpdateEnvironment": "<p>Updates the environment description, deploys a new application version, updates the configuration settings to an entirely new configuration template, or updates select configuration option values in the running environment.</p> <p> Attempting to update both the release and configuration is not allowed and AWS Elastic Beanstalk returns an <code>InvalidParameterCombination</code> error. </p> <p> When updating the configuration settings to a new template or individual settings, a draft configuration is created and <a>DescribeConfigurationSettings</a> for this environment returns two setting descriptions with different <code>DeploymentStatus</code> values. </p>",
+    "UpdateTagsForResource": "<p>Update the list of tags applied to an AWS Elastic Beanstalk resource. Two lists can be passed: <code>TagsToAdd</code> for tags to add or update, and <code>TagsToRemove</code>.</p> <p>Currently, Elastic Beanstalk only supports tagging of Elastic Beanstalk environments. For details about environment tagging, see <a href=\"http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.tagging.html\">Tagging Resources in Your Elastic Beanstalk Environment</a>.</p> <p>If you create a custom IAM user policy to control permission to this operation, specify one of the following two virtual actions (or both) instead of the API operation name:</p> <dl> <dt>elasticbeanstalk:AddTags</dt> <dd> <p>Controls permission to call <code>UpdateTagsForResource</code> and pass a list of tags to add in the <code>TagsToAdd</code> parameter.</p> </dd> <dt>elasticbeanstalk:RemoveTags</dt> <dd> <p>Controls permission to call <code>UpdateTagsForResource</code> and pass a list of tag keys to remove in the <code>TagsToRemove</code> parameter.</p> </dd> </dl> <p>For details about creating a custom user policy, see <a href=\"http://docs.aws.amazon.com/elasticbeanstalk/latest/dg/AWSHowTo.iam.managed-policies.html#AWSHowTo.iam.policies\">Creating a Custom User Policy</a>.</p>",
     "ValidateConfigurationSettings": "<p>Takes a set of configuration settings and either a configuration template or environment, and determines whether those values are valid.</p> <p>This action returns a list of messages indicating any errors or warnings associated with the selection of option values.</p>"
   },
   "shapes": {
@@ -198,7 +200,7 @@
     "ApplicationVersionProccess": {
       "base": null,
       "refs": {
-        "CreateApplicationVersionMessage$Process": "<p>Preprocesses and validates the environment manifest and configuration files in the source bundle. Validating configuration files can identify issues prior to deploying the application version to an environment.</p>"
+        "CreateApplicationVersionMessage$Process": "<p>Preprocesses and validates the environment manifest (<code>env.yaml</code>) and configuration files (<code>*.config</code> files in the <code>.ebextensions</code> folder) in the source bundle. Validating configuration files can identify issues prior to deploying the application version to an environment.</p> <note> <p>The <code>Process</code> option validates Elastic Beanstalk configuration files. It doesn't validate your application's configuration files, like proxy server or Docker configuration.</p> </note>"
       }
     },
     "ApplicationVersionStatus": {
@@ -1059,6 +1061,11 @@
       "refs": {
       }
     },
+    "ListTagsForResourceMessage": {
+      "base": null,
+      "refs": {
+      }
+    },
     "Listener": {
       "base": "<p>Describes the properties of a Listener for the LoadBalancer.</p>",
       "refs": {
@@ -1292,7 +1299,7 @@
       "refs": {
         "ConfigurationOptionsDescription$PlatformArn": "<p>The ARN of the platform.</p>",
         "ConfigurationSettingsDescription$PlatformArn": "<p>The ARN of the platform.</p>",
-        "CreateConfigurationTemplateMessage$PlatformArn": "<p>The ARN of the custome platform.</p>",
+        "CreateConfigurationTemplateMessage$PlatformArn": "<p>The ARN of the custom platform.</p>",
         "CreateEnvironmentMessage$PlatformArn": "<p>The ARN of the platform.</p>",
         "DeletePlatformVersionRequest$PlatformArn": "<p>The ARN of the version of the custom platform.</p>",
         "DescribeConfigurationOptionsMessage$PlatformArn": "<p>The ARN of the custom platform.</p>",
@@ -1485,6 +1492,14 @@
         "EventDescription$RequestId": "<p>The web service request ID for the activity of this event.</p>"
       }
     },
+    "ResourceArn": {
+      "base": null,
+      "refs": {
+        "ListTagsForResourceMessage$ResourceArn": "<p>The Amazon Resource Name (ARN) of the resouce for which a tag list is requested.</p> <p>Must be the ARN of an Elastic Beanstalk environment.</p>",
+        "ResourceTagsDescriptionMessage$ResourceArn": "<p>The Amazon Resource Name (ARN) of the resouce for which a tag list was requested.</p>",
+        "UpdateTagsForResourceMessage$ResourceArn": "<p>The Amazon Resource Name (ARN) of the resouce to be updated.</p> <p>Must be the ARN of an Elastic Beanstalk environment.</p>"
+      }
+    },
     "ResourceId": {
       "base": null,
       "refs": {
@@ -1500,6 +1515,21 @@
       "refs": {
         "ConfigurationOptionSetting$ResourceName": "<p>A unique resource name for a time-based scaling configuration option.</p>",
         "OptionSpecification$ResourceName": "<p>A unique resource name for a time-based scaling configuration option.</p>"
+      }
+    },
+    "ResourceNotFoundException": {
+      "base": "<p>A resource doesn't exist for the specified Amazon Resource Name (ARN).</p>",
+      "refs": {
+      }
+    },
+    "ResourceTagsDescriptionMessage": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ResourceTypeNotSupportedException": {
+      "base": "<p>The type of the specified Amazon Resource Name (ARN) isn't supported for this operation.</p>",
+      "refs": {
       }
     },
     "RestartAppServerMessage": {
@@ -1714,13 +1744,28 @@
     "Tag": {
       "base": "<p>Describes a tag applied to a resource in an environment.</p>",
       "refs": {
+        "TagList$member": null,
         "Tags$member": null
       }
     },
     "TagKey": {
       "base": null,
       "refs": {
-        "Tag$Key": "<p>The key of the tag.</p>"
+        "Tag$Key": "<p>The key of the tag.</p>",
+        "TagKeyList$member": null
+      }
+    },
+    "TagKeyList": {
+      "base": null,
+      "refs": {
+        "UpdateTagsForResourceMessage$TagsToRemove": "<p>A list of tag keys to remove.</p> <p>If a tag key doesn't exist, it is silently ignored.</p>"
+      }
+    },
+    "TagList": {
+      "base": null,
+      "refs": {
+        "ResourceTagsDescriptionMessage$ResourceTags": "<p>A list of tag key-value pairs.</p>",
+        "UpdateTagsForResourceMessage$TagsToAdd": "<p>A list of tags to add or update.</p> <p>If a key of an existing tag is added, the tag's value is updated.</p>"
       }
     },
     "TagValue": {
@@ -1815,6 +1860,11 @@
       "refs": {
       }
     },
+    "TooManyTagsException": {
+      "base": "<p>The number of tags in the resource would exceed the number of tags that each resource can have.</p> <p>To calculate this, the operation considers both the number of tags the resource already has and the tags this operation would add if it succeeded.</p>",
+      "refs": {
+      }
+    },
     "Trigger": {
       "base": "<p>Describes a trigger.</p>",
       "refs": {
@@ -1859,6 +1909,11 @@
     },
     "UpdateEnvironmentMessage": {
       "base": "<p>Request to update an environment.</p>",
+      "refs": {
+      }
+    },
+    "UpdateTagsForResourceMessage": {
+      "base": null,
       "refs": {
       }
     },

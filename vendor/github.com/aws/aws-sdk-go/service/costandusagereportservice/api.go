@@ -33,7 +33,7 @@ const opDeleteReportDefinition = "DeleteReportDefinition"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinition
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinition
 func (c *CostandUsageReportService) DeleteReportDefinitionRequest(input *DeleteReportDefinitionInput) (req *request.Request, output *DeleteReportDefinitionOutput) {
 	op := &request.Operation{
 		Name:       opDeleteReportDefinition,
@@ -70,7 +70,7 @@ func (c *CostandUsageReportService) DeleteReportDefinitionRequest(input *DeleteR
 //   preference with an invalid report name, or Delete a report preference with
 //   an empty report name.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinition
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinition
 func (c *CostandUsageReportService) DeleteReportDefinition(input *DeleteReportDefinitionInput) (*DeleteReportDefinitionOutput, error) {
 	req, out := c.DeleteReportDefinitionRequest(input)
 	return out, req.Send()
@@ -117,7 +117,7 @@ const opDescribeReportDefinitions = "DescribeReportDefinitions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitions
 func (c *CostandUsageReportService) DescribeReportDefinitionsRequest(input *DescribeReportDefinitionsInput) (req *request.Request, output *DescribeReportDefinitionsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeReportDefinitions,
@@ -155,7 +155,7 @@ func (c *CostandUsageReportService) DescribeReportDefinitionsRequest(input *Desc
 //   * ErrCodeInternalErrorException "InternalErrorException"
 //   This exception is thrown on a known dependency failure.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitions
 func (c *CostandUsageReportService) DescribeReportDefinitions(input *DescribeReportDefinitionsInput) (*DescribeReportDefinitionsOutput, error) {
 	req, out := c.DescribeReportDefinitionsRequest(input)
 	return out, req.Send()
@@ -252,7 +252,7 @@ const opPutReportDefinition = "PutReportDefinition"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinition
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinition
 func (c *CostandUsageReportService) PutReportDefinitionRequest(input *PutReportDefinitionInput) (req *request.Request, output *PutReportDefinitionOutput) {
 	op := &request.Operation{
 		Name:       opPutReportDefinition,
@@ -297,7 +297,7 @@ func (c *CostandUsageReportService) PutReportDefinitionRequest(input *PutReportD
 //   preference with an invalid report name, or Delete a report preference with
 //   an empty report name.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinition
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinition
 func (c *CostandUsageReportService) PutReportDefinition(input *PutReportDefinitionInput) (*PutReportDefinitionOutput, error) {
 	req, out := c.PutReportDefinitionRequest(input)
 	return out, req.Send()
@@ -320,7 +320,7 @@ func (c *CostandUsageReportService) PutReportDefinitionWithContext(ctx aws.Conte
 }
 
 // Request of DeleteReportDefinition
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinitionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinitionRequest
 type DeleteReportDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -346,7 +346,7 @@ func (s *DeleteReportDefinitionInput) SetReportName(v string) *DeleteReportDefin
 }
 
 // Response of DeleteReportDefinition
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinitionResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinitionResponse
 type DeleteReportDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -371,7 +371,7 @@ func (s *DeleteReportDefinitionOutput) SetResponseMessage(v string) *DeleteRepor
 }
 
 // Request of DescribeReportDefinitions
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitionsRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitionsRequest
 type DescribeReportDefinitionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -418,7 +418,7 @@ func (s *DescribeReportDefinitionsInput) SetNextToken(v string) *DescribeReportD
 }
 
 // Response of DescribeReportDefinitions
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitionsResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitionsResponse
 type DescribeReportDefinitionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -452,7 +452,7 @@ func (s *DescribeReportDefinitionsOutput) SetReportDefinitions(v []*ReportDefini
 }
 
 // Request of PutReportDefinition
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinitionRequest
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinitionRequest
 type PutReportDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -499,7 +499,7 @@ func (s *PutReportDefinitionInput) SetReportDefinition(v *ReportDefinition) *Put
 }
 
 // Response of PutReportDefinition
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinitionResponse
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinitionResponse
 type PutReportDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -517,7 +517,7 @@ func (s PutReportDefinitionOutput) GoString() string {
 // The definition of AWS Cost and Usage Report. Customer can specify the report
 // name, time unit, report format, compression format, S3 bucket and additional
 // artifacts and schema elements in the definition.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/ReportDefinition
+// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/ReportDefinition
 type ReportDefinition struct {
 	_ struct{} `type:"structure"`
 

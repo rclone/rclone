@@ -22,8 +22,9 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
-	"github.com/pengsrc/go-shared/yaml"
+	"gopkg.in/yaml.v2"
 
 	"github.com/yunify/qingstor-sdk-go/logger"
 )
@@ -46,88 +47,99 @@ type Config struct {
 }
 
 // New create a Config with given AccessKeyID and SecretAccessKey.
-func New(accessKeyID, secretAccessKey string) (*Config, error) {
-	config, err := NewDefault()
+func New(accessKeyID, secretAccessKey string) (c *Config, err error) {
+	c, err = NewDefault()
 	if err != nil {
-		return nil, err
+		c = nil
+		return
 	}
 
-	config.AccessKeyID = accessKeyID
-	config.SecretAccessKey = secretAccessKey
+	c.AccessKeyID = accessKeyID
+	c.SecretAccessKey = secretAccessKey
 
-	config.Connection = &http.Client{}
+	c.Connection = &http.Client{
+		Timeout: time.Minute,
+	}
 
-	return config, nil
+	return
 }
 
 // NewDefault create a Config with default configuration.
-func NewDefault() (*Config, error) {
-	config := &Config{}
-	err := config.LoadDefaultConfig()
+func NewDefault() (c *Config, err error) {
+	c = &Config{}
+	err = c.LoadDefaultConfig()
 	if err != nil {
-		return nil, err
+		c = nil
+		return
 	}
-	config.Connection = &http.Client{}
 
-	return config, nil
+	c.Connection = &http.Client{
+		Timeout: time.Minute,
+	}
+	return
 }
 
 // Check checks the configuration.
-func (c *Config) Check() error {
+func (c *Config) Check() (err error) {
 	if c.AccessKeyID == "" {
-		return errors.New("access key ID not specified")
+		err = errors.New("access key ID not specified")
+		return
 	}
 	if c.SecretAccessKey == "" {
-		return errors.New("secret access key not specified")
+		err = errors.New("secret access key not specified")
+		return
 	}
 
 	if c.Host == "" {
-		return errors.New("server host not specified")
+		err = errors.New("server host not specified")
+		return
 	}
 	if c.Port <= 0 {
-		return errors.New("server port not specified")
+		err = errors.New("server port not specified")
+		return
 	}
 	if c.Protocol == "" {
-		return errors.New("server protocol not specified")
+		err = errors.New("server protocol not specified")
+		return
 	}
 
 	if c.AdditionalUserAgent != "" {
 		for _, x := range c.AdditionalUserAgent {
 			// Allow space(32) to ~(126) in ASCII Table, exclude "(34).
 			if int(x) < 32 || int(x) > 126 || int(x) == 32 || int(x) == 34 {
-				return errors.New("additional User-Agent contains characters that not allowed")
+				err = errors.New("additional User-Agent contains characters that not allowed")
+				return
 			}
 		}
 	}
 
-	err := logger.CheckLevel(c.LogLevel)
+	err = logger.CheckLevel(c.LogLevel)
 	if err != nil {
-		return err
+		return
 	}
 
-	return nil
+	return
 }
 
 // LoadDefaultConfig loads the default configuration for Config.
 // It returns error if yaml decode failed.
-func (c *Config) LoadDefaultConfig() error {
-	_, err := yaml.Decode([]byte(DefaultConfigFileContent), c)
+func (c *Config) LoadDefaultConfig() (err error) {
+	err = yaml.Unmarshal([]byte(DefaultConfigFileContent), c)
 	if err != nil {
-		logger.Errorf("Config parse error: " + err.Error())
-		return err
+		logger.Errorf(nil, "Config parse error, %v.", err)
+		return
 	}
 
 	logger.SetLevel(c.LogLevel)
-
-	return nil
+	return
 }
 
 // LoadUserConfig loads user configuration in ~/.qingstor/config.yaml for Config.
 // It returns error if file not found.
-func (c *Config) LoadUserConfig() error {
-	_, err := os.Stat(GetUserConfigFilePath())
+func (c *Config) LoadUserConfig() (err error) {
+	_, err = os.Stat(GetUserConfigFilePath())
 	if err != nil {
-		logger.Warnf("Installing default config file to \"" + GetUserConfigFilePath() + "\"")
+		logger.Warnf(nil, "Installing default config file to %s.", GetUserConfigFilePath())
 		InstallDefaultUserConfig()
 	}
 
@@ -136,14 +148,14 @@ func (c *Config) LoadUserConfig() error {
 
 // LoadConfigFromFilePath loads configuration from a specified local path.
 // It returns error if file not found or yaml decode failed.
-func (c *Config) LoadConfigFromFilePath(filepath string) error {
-	if strings.Index(filepath, "~/") == 0 {
-		filepath = strings.Replace(filepath, "~/", getHome()+"/", 1)
+func (c *Config) LoadConfigFromFilePath(filePath string) (err error) {
+	if strings.Index(filePath, "~/") == 0 {
+		filePath = strings.Replace(filePath, "~/", getHome()+"/", 1)
 	}
 
-	yamlString, err := ioutil.ReadFile(filepath)
+	yamlString, err := ioutil.ReadFile(filePath)
 	if err != nil {
-		logger.Errorf("File not found: " + filepath)
+		logger.Errorf(nil, "File not found: %s.", filePath)
 		return err
 	}
 
@@ -152,21 +164,20 @@ func (c *Config) LoadConfigFromFilePath(filepath string) error {
 
 // LoadConfigFromContent loads configuration from a given byte slice.
 // It returns error if yaml decode failed.
-func (c *Config) LoadConfigFromContent(content []byte) error {
+func (c *Config) LoadConfigFromContent(content []byte) (err error) {
 	c.LoadDefaultConfig()
 
-	_, err := yaml.Decode(content, c)
+	err = yaml.Unmarshal(content, c)
 	if err != nil {
-		logger.Errorf("Config parse error: " + err.Error())
-		return err
+		logger.Errorf(nil, "Config parse error, %v.", err)
+		return
 	}
 
 	err = c.Check()
 	if err != nil {
-		return err
+		return
 	}
 
 	logger.SetLevel(c.LogLevel)
-
-	return nil
+	return
 }

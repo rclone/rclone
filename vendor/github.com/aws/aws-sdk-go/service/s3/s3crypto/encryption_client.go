@@ -64,7 +64,7 @@ func NewEncryptionClient(prov client.ConfigProvider, builder ContentCipherBuilde
 //	req, out := svc.PutObjectRequest(&s3.PutObjectInput {
 //	  Key: aws.String("testKey"),
 //	  Bucket: aws.String("testBucket"),
-//	  Body: bytes.NewBuffer("test data"),
+//	  Body: strings.NewReader("test data"),
 //	})
 //	err := req.Send()
 func (c *EncryptionClient) PutObjectRequest(input *s3.PutObjectInput) (*request.Request, *s3.PutObjectOutput) {

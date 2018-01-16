@@ -101,7 +101,9 @@ func (client ListGroupClient) AddFacePreparer(faceListID string, userData string
 // AddFaceSender sends the AddFace request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) AddFaceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // AddFaceResponder handles the response to the AddFace request. The method always
@@ -183,7 +185,9 @@ func (client ListGroupClient) AddFaceFromStreamPreparer(faceListID string, userD
 // AddFaceFromStreamSender sends the AddFaceFromStream request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) AddFaceFromStreamSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // AddFaceFromStreamResponder handles the response to the AddFaceFromStream request. The method always
@@ -258,7 +262,9 @@ func (client ListGroupClient) CreatePreparer(faceListID string, body CreateFaceL
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) CreateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // CreateResponder handles the response to the Create request. The method always
@@ -327,7 +333,9 @@ func (client ListGroupClient) DeletePreparer(faceListID string) (*http.Request, 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -397,7 +405,9 @@ func (client ListGroupClient) DeleteFacePreparer(faceListID string, persistedFac
 // DeleteFaceSender sends the DeleteFace request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) DeleteFaceSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // DeleteFaceResponder handles the response to the DeleteFace request. The method always
@@ -465,7 +475,9 @@ func (client ListGroupClient) GetPreparer(faceListID string) (*http.Request, err
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -521,7 +533,9 @@ func (client ListGroupClient) ListPreparer() (*http.Request, error) {
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -592,7 +606,9 @@ func (client ListGroupClient) UpdatePreparer(faceListID string, body CreateFaceL
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client ListGroupClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

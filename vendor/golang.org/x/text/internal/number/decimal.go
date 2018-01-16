@@ -406,23 +406,35 @@ func (d *Decimal) ConvertFloat(r RoundingContext, x float64, size int) {
 	// By default we get the exact decimal representation.
 	verb := byte('g')
 	prec := -1
-	// Determine rounding, if possible. As the strconv API does not return the
-	// rounding accuracy (exact/rounded up|down), we can only round using
-	// ToNearestEven.
-	//   Something like this would work:
-	//   AppendDigits(dst []byte, x float64, base, size, prec int) (digits []byte, exp, accuracy int)
-	//
-	// TODO: At this point strconv's rounding is imprecise to the point that it
-	// is not useable for this purpose.
-	// See https://github.com/golang/go/issues/21714
-	// if r.Mode == ToNearestEven {
-	// 	if n := r.RoundSignificantDigits(); n >= 0 {
-	// 		prec = n
-	// 	} else if n = r.RoundFractionDigits(); n >= 0 {
-	// 		prec = n
-	// 		verb = 'f'
-	// 	}
-	// }
+	// As the strconv API does not return the rounding accuracy, we can only
+	// round using ToNearestEven.
+	if r.Mode == ToNearestEven {
+		if n := r.RoundSignificantDigits(); n >= 0 {
+			prec = n
+		} else if n = r.RoundFractionDigits(); n >= 0 {
+			prec = n
+			verb = 'f'
+		}
+	} else {
+		// TODO: At this point strconv's rounding is imprecise to the point that
+		// it is not useable for this purpose.
+		// See https://github.com/golang/go/issues/21714
+		// If rounding is requested, we ask for a large number of digits and
+		// round from there to simulate rounding only once.
+		// Ideally we would have strconv export an AppendDigits that would take
+		// a rounding mode and/or return an accuracy. Something like this would
+		// work:
+		// AppendDigits(dst []byte, x float64, base, size, prec int) (digits []byte, exp, accuracy int)
+		hasPrec := r.RoundSignificantDigits() >= 0
+		hasScale := r.RoundFractionDigits() >= 0
+		if hasPrec || hasScale {
+			// prec is the number of mantissa bits plus some extra for safety.
+			// We need at least the number of mantissa bits as decimals to
+			// accurately represent the floating point without rounding, as each
+			// bit requires one more decimal to represent: 0.5, 0.25, 0.125, ...
+			prec = 60
+		}
+	}
 
 	b := strconv.AppendFloat(d.Digits[:0], abs, verb, prec, size)
 	i := 0

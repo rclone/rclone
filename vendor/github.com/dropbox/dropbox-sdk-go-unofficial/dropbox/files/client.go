@@ -100,6 +100,10 @@ type Client interface {
 	DeleteV2(arg *DeleteArg) (res *DeleteResult, err error)
 	// Download : Download a file from a user's Dropbox.
 	Download(arg *DownloadArg) (res *FileMetadata, content io.ReadCloser, err error)
+	// DownloadZip : Download a folder from the user's Dropbox, as a zip file.
+	// The folder must be less than 1 GB in size and have fewer than 10,000
+	// total files. The input cannot be a single file.
+	DownloadZip(arg *DownloadZipArg) (res *DownloadZipResult, content io.ReadCloser, err error)
 	// GetMetadata : Returns the metadata for a file or folder. Note: Metadata
 	// for the root folder is unsupported.
 	GetMetadata(arg *GetMetadataArg) (res IsMetadata, err error)
@@ -1387,6 +1391,79 @@ func (dbx *apiImpl) Download(arg *DownloadArg) (res *FileMetadata, content io.Re
 			return
 		}
 		var apiError DownloadAPIError
+		err = json.Unmarshal(body, &apiError)
+		if err != nil {
+			return
+		}
+		err = apiError
+		return
+	}
+	var apiError dropbox.APIError
+	if resp.StatusCode == http.StatusBadRequest || resp.StatusCode == http.StatusInternalServerError {
+		apiError.ErrorSummary = string(body)
+		err = apiError
+		return
+	}
+	err = json.Unmarshal(body, &apiError)
+	if err != nil {
+		return
+	}
+	err = apiError
+	return
+}
+
+//DownloadZipAPIError is an error-wrapper for the download_zip route
+type DownloadZipAPIError struct {
+	dropbox.APIError
+	EndpointError *DownloadZipError `json:"error"`
+}
+
+func (dbx *apiImpl) DownloadZip(arg *DownloadZipArg) (res *DownloadZipResult, content io.ReadCloser, err error) {
+	cli := dbx.Client
+
+	dbx.Config.LogDebug("arg: %v", arg)
+	b, err := json.Marshal(arg)
+	if err != nil {
+		return
+	}
+
+	headers := map[string]string{
+		"Dropbox-API-Arg": string(b),
+	}
+	if dbx.Config.AsMemberID != "" {
+		headers["Dropbox-API-Select-User"] = dbx.Config.AsMemberID
+	}
+
+	req, err := (*dropbox.Context)(dbx).NewRequest("content", "download", true, "files", "download_zip", headers, nil)
+	if err != nil {
+		return
+	}
+	dbx.Config.LogInfo("req: %v", req)
+
+	resp, err := cli.Do(req)
+	if err != nil {
+		return
+	}
+
+	dbx.Config.LogInfo("resp: %v", resp)
+	body := []byte(resp.Header.Get("Dropbox-API-Result"))
+	content = resp.Body
+	dbx.Config.LogDebug("body: %v", body)
+	if resp.StatusCode == http.StatusOK {
+		err = json.Unmarshal(body, &res)
+		if err != nil {
+			return
+		}
+
+		return
+	}
+	if resp.StatusCode == http.StatusConflict {
+		defer resp.Body.Close()
+		body, err = ioutil.ReadAll(resp.Body)
+		if err != nil {
+			return
+		}
+		var apiError DownloadZipAPIError
 		err = json.Unmarshal(body, &apiError)
 		if err != nil {
 			return

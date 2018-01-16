@@ -72,6 +72,10 @@ type ElasticsearchServiceAPI interface {
 	DeleteElasticsearchDomainWithContext(aws.Context, *elasticsearchservice.DeleteElasticsearchDomainInput, ...request.Option) (*elasticsearchservice.DeleteElasticsearchDomainOutput, error)
 	DeleteElasticsearchDomainRequest(*elasticsearchservice.DeleteElasticsearchDomainInput) (*request.Request, *elasticsearchservice.DeleteElasticsearchDomainOutput)
 
+	DeleteElasticsearchServiceRole(*elasticsearchservice.DeleteElasticsearchServiceRoleInput) (*elasticsearchservice.DeleteElasticsearchServiceRoleOutput, error)
+	DeleteElasticsearchServiceRoleWithContext(aws.Context, *elasticsearchservice.DeleteElasticsearchServiceRoleInput, ...request.Option) (*elasticsearchservice.DeleteElasticsearchServiceRoleOutput, error)
+	DeleteElasticsearchServiceRoleRequest(*elasticsearchservice.DeleteElasticsearchServiceRoleInput) (*request.Request, *elasticsearchservice.DeleteElasticsearchServiceRoleOutput)
+
 	DescribeElasticsearchDomain(*elasticsearchservice.DescribeElasticsearchDomainInput) (*elasticsearchservice.DescribeElasticsearchDomainOutput, error)
 	DescribeElasticsearchDomainWithContext(aws.Context, *elasticsearchservice.DescribeElasticsearchDomainInput, ...request.Option) (*elasticsearchservice.DescribeElasticsearchDomainOutput, error)
 	DescribeElasticsearchDomainRequest(*elasticsearchservice.DescribeElasticsearchDomainInput) (*request.Request, *elasticsearchservice.DescribeElasticsearchDomainOutput)

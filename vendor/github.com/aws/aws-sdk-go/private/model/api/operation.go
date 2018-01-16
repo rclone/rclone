@@ -95,7 +95,7 @@ const op{{ .ExportedName }} = "{{ .Name }}"
 {{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.Metadata.UID $.ExportedName -}}
 {{ if ne $crosslinkURL "" -}} 
 //
-// Please also see {{ $crosslinkURL }}
+// See also, {{ $crosslinkURL }}
 {{ end -}}
 func (c *{{ .API.StructName }}) {{ .ExportedName }}Request(` +
 	`input {{ .InputRef.GoType }}) (req *request.Request, output {{ .OutputRef.GoType }}) {
@@ -152,7 +152,7 @@ func (c *{{ .API.StructName }}) {{ .ExportedName }}Request(` +
 {{ end -}}
 {{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.Metadata.UID $.ExportedName -}}
 {{ if ne $crosslinkURL "" -}} 
-// Please also see {{ $crosslinkURL }}
+// See also, {{ $crosslinkURL }}
 {{ end -}}
 func (c *{{ .API.StructName }}) {{ .ExportedName }}(` +
 	`input {{ .InputRef.GoType }}) ({{ .OutputRef.GoType }}, error) {

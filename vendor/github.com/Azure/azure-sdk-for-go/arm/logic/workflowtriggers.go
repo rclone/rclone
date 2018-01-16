@@ -89,7 +89,9 @@ func (client WorkflowTriggersClient) GetPreparer(resourceGroupName string, workf
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowTriggersClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -161,7 +163,9 @@ func (client WorkflowTriggersClient) ListPreparer(resourceGroupName string, work
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowTriggersClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -297,7 +301,9 @@ func (client WorkflowTriggersClient) ListCallbackURLPreparer(resourceGroupName s
 // ListCallbackURLSender sends the ListCallbackURL request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowTriggersClient) ListCallbackURLSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListCallbackURLResponder handles the response to the ListCallbackURL request. The method always
@@ -364,7 +370,9 @@ func (client WorkflowTriggersClient) RunPreparer(resourceGroupName string, workf
 // RunSender sends the Run request. The method will close the
 // http.Response Body if it receives an error.
 func (client WorkflowTriggersClient) RunSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // RunResponder handles the response to the Run request. The method always

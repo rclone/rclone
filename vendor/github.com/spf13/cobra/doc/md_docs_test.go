@@ -5,100 +5,51 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
 )
 
 func TestGenMdDoc(t *testing.T) {
-	c := initializeWithRootCmd()
-	// Need two commands to run the command alphabetical sort
-	cmdEcho.AddCommand(cmdTimes, cmdEchoSub, cmdDeprecated)
-	c.AddCommand(cmdPrint, cmdEcho)
-	cmdRootWithRun.PersistentFlags().StringVarP(&flags2a, "rootflag", "r", "two", strtwoParentHelp)
-
-	out := new(bytes.Buffer)
-
-	// We generate on s subcommand so we have both subcommands and parents
-	if err := GenMarkdown(cmdEcho, out); err != nil {
+	// We generate on subcommand so we have both subcommands and parents.
+	buf := new(bytes.Buffer)
+	if err := GenMarkdown(echoCmd, buf); err != nil {
 		t.Fatal(err)
 	}
-	found := out.String()
+	output := buf.String()
 
-	// Our description
-	expected := cmdEcho.Long
-	if !strings.Contains(found, expected) {
-		t.Errorf("Unexpected response.\nExpecting to contain: \n %q\nGot:\n %q\n", expected, found)
-	}
-
-	// Better have our example
-	expected = cmdEcho.Example
-	if !strings.Contains(found, expected) {
-		t.Errorf("Unexpected response.\nExpecting to contain: \n %q\nGot:\n %q\n", expected, found)
-	}
-
-	// A local flag
-	expected = "boolone"
-	if !strings.Contains(found, expected) {
-		t.Errorf("Unexpected response.\nExpecting to contain: \n %q\nGot:\n %q\n", expected, found)
-	}
-
-	// persistent flag on parent
-	expected = "rootflag"
-	if !strings.Contains(found, expected) {
-		t.Errorf("Unexpected response.\nExpecting to contain: \n %q\nGot:\n %q\n", expected, found)
-	}
-
-	// We better output info about our parent
-	expected = cmdRootWithRun.Short
-	if !strings.Contains(found, expected) {
-		t.Errorf("Unexpected response.\nExpecting to contain: \n %q\nGot:\n %q\n", expected, found)
-	}
-
-	// And about subcommands
-	expected = cmdEchoSub.Short
-	if !strings.Contains(found, expected) {
-		t.Errorf("Unexpected response.\nExpecting to contain: \n %q\nGot:\n %q\n", expected, found)
-	}
-
-	unexpected := cmdDeprecated.Short
-	if strings.Contains(found, unexpected) {
-		t.Errorf("Unexpected response.\nFound: %v\nBut should not have!!\n", unexpected)
-	}
+	checkStringContains(t, output, echoCmd.Long)
+	checkStringContains(t, output, echoCmd.Example)
+	checkStringContains(t, output, "boolone")
+	checkStringContains(t, output, "rootflag")
+	checkStringContains(t, output, rootCmd.Short)
+	checkStringContains(t, output, echoSubCmd.Short)
+	checkStringOmits(t, output, deprecatedCmd.Short)
 }
 
 func TestGenMdNoTag(t *testing.T) {
-	c := initializeWithRootCmd()
-	// Need two commands to run the command alphabetical sort
-	cmdEcho.AddCommand(cmdTimes, cmdEchoSub, cmdDeprecated)
-	c.AddCommand(cmdPrint, cmdEcho)
-	c.DisableAutoGenTag = true
-	cmdRootWithRun.PersistentFlags().StringVarP(&flags2a, "rootflag", "r", "two", strtwoParentHelp)
-	out := new(bytes.Buffer)
+	rootCmd.DisableAutoGenTag = true
+	defer func() { rootCmd.DisableAutoGenTag = false }()
 
-	if err := GenMarkdown(c, out); err != nil {
+	buf := new(bytes.Buffer)
+	if err := GenMarkdown(rootCmd, buf); err != nil {
 		t.Fatal(err)
 	}
-	found := out.String()
+	output := buf.String()
 
-	unexpected := "Auto generated"
-	checkStringOmits(t, found, unexpected)
-
+	checkStringOmits(t, output, "Auto generated")
 }
 
 func TestGenMdTree(t *testing.T) {
-	cmd := &cobra.Command{
-		Use: "do [OPTIONS] arg1 arg2",
-	}
+	c := &cobra.Command{Use: "do [OPTIONS] arg1 arg2"}
 	tmpdir, err := ioutil.TempDir("", "test-gen-md-tree")
 	if err != nil {
-		t.Fatalf("Failed to create tmpdir: %s", err.Error())
+		t.Fatalf("Failed to create tmpdir: %v", err)
 	}
 	defer os.RemoveAll(tmpdir)
 
-	if err := GenMarkdownTree(cmd, tmpdir); err != nil {
-		t.Fatalf("GenMarkdownTree failed: %s", err.Error())
+	if err := GenMarkdownTree(c, tmpdir); err != nil {
+		t.Fatalf("GenMarkdownTree failed: %v", err)
 	}
 
 	if _, err := os.Stat(filepath.Join(tmpdir, "do.md")); err != nil {
@@ -107,7 +58,6 @@ func TestGenMdTree(t *testing.T) {
 }
 
 func BenchmarkGenMarkdownToFile(b *testing.B) {
-	c := initializeWithRootCmd()
 	file, err := ioutil.TempFile("", "")
 	if err != nil {
 		b.Fatal(err)
@@ -117,7 +67,7 @@ func BenchmarkGenMarkdownToFile(b *testing.B) {
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
-		if err := GenMarkdown(c, file); err != nil {
+		if err := GenMarkdown(rootCmd, file); err != nil {
 			b.Fatal(err)
 		}
 	}

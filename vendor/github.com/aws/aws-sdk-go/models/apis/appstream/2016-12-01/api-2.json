@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"json",
     "serviceFullName":"Amazon AppStream",
+    "serviceId":"AppStream",
     "signatureVersion":"v4",
     "signingName":"appstream",
     "targetPrefix":"PhotonAdminProxyService",
@@ -307,6 +308,18 @@
       "input":{"shape":"ListAssociatedStacksRequest"},
       "output":{"shape":"ListAssociatedStacksResult"}
     },
+    "ListTagsForResource":{
+      "name":"ListTagsForResource",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListTagsForResourceRequest"},
+      "output":{"shape":"ListTagsForResourceResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
     "StartFleet":{
       "name":"StartFleet",
       "http":{
@@ -333,7 +346,8 @@
       "errors":[
         {"shape":"ResourceNotAvailableException"},
         {"shape":"ResourceNotFoundException"},
-        {"shape":"ConcurrentModificationException"}
+        {"shape":"ConcurrentModificationException"},
+        {"shape":"IncompatibleImageException"}
       ]
     },
     "StopFleet":{
@@ -361,6 +375,31 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"OperationNotPermittedException"},
         {"shape":"ConcurrentModificationException"}
+      ]
+    },
+    "TagResource":{
+      "name":"TagResource",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"TagResourceRequest"},
+      "output":{"shape":"TagResourceResponse"},
+      "errors":[
+        {"shape":"LimitExceededException"},
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
+    "UntagResource":{
+      "name":"UntagResource",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UntagResourceRequest"},
+      "output":{"shape":"UntagResourceResponse"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "UpdateDirectoryConfig":{
@@ -442,6 +481,11 @@
     "Applications":{
       "type":"list",
       "member":{"shape":"Application"}
+    },
+    "AppstreamAgentVersion":{
+      "type":"string",
+      "max":100,
+      "min":1
     },
     "Arn":{
       "type":"string",
@@ -560,7 +604,8 @@
         "DisplayName":{"shape":"DisplayName"},
         "VpcConfig":{"shape":"VpcConfig"},
         "EnableDefaultInternetAccess":{"shape":"BooleanObject"},
-        "DomainJoinInfo":{"shape":"DomainJoinInfo"}
+        "DomainJoinInfo":{"shape":"DomainJoinInfo"},
+        "AppstreamAgentVersion":{"shape":"AppstreamAgentVersion"}
       }
     },
     "CreateImageBuilderResult":{
@@ -959,7 +1004,8 @@
         "StateChangeReason":{"shape":"ImageStateChangeReason"},
         "Applications":{"shape":"Applications"},
         "CreatedTime":{"shape":"Timestamp"},
-        "PublicBaseImageReleasedDate":{"shape":"Timestamp"}
+        "PublicBaseImageReleasedDate":{"shape":"Timestamp"},
+        "AppstreamAgentVersion":{"shape":"AppstreamAgentVersion"}
       }
     },
     "ImageBuilder":{
@@ -979,7 +1025,8 @@
         "CreatedTime":{"shape":"Timestamp"},
         "EnableDefaultInternetAccess":{"shape":"BooleanObject"},
         "DomainJoinInfo":{"shape":"DomainJoinInfo"},
-        "ImageBuilderErrors":{"shape":"ResourceErrors"}
+        "ImageBuilderErrors":{"shape":"ResourceErrors"},
+        "AppstreamAgentVersion":{"shape":"AppstreamAgentVersion"}
       }
     },
     "ImageBuilderList":{
@@ -990,6 +1037,7 @@
       "type":"string",
       "enum":[
         "PENDING",
+        "UPDATING_AGENT",
         "RUNNING",
         "STOPPING",
         "STOPPED",
@@ -1097,6 +1145,19 @@
       "members":{
         "Names":{"shape":"StringList"},
         "NextToken":{"shape":"String"}
+      }
+    },
+    "ListTagsForResourceRequest":{
+      "type":"structure",
+      "required":["ResourceArn"],
+      "members":{
+        "ResourceArn":{"shape":"Arn"}
+      }
+    },
+    "ListTagsForResourceResponse":{
+      "type":"structure",
+      "members":{
+        "Tags":{"shape":"Tags"}
       }
     },
     "Long":{"type":"long"},
@@ -1269,7 +1330,8 @@
       "type":"structure",
       "required":["Name"],
       "members":{
-        "Name":{"shape":"String"}
+        "Name":{"shape":"String"},
+        "AppstreamAgentVersion":{"shape":"AppstreamAgentVersion"}
       }
     },
     "StartImageBuilderResult":{
@@ -1337,7 +1399,64 @@
       "type":"list",
       "member":{"shape":"String"}
     },
+    "TagKey":{
+      "type":"string",
+      "max":128,
+      "min":1,
+      "pattern":"^(^(?!aws:).[\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$"
+    },
+    "TagKeyList":{
+      "type":"list",
+      "member":{"shape":"TagKey"},
+      "max":50,
+      "min":1
+    },
+    "TagResourceRequest":{
+      "type":"structure",
+      "required":[
+        "ResourceArn",
+        "Tags"
+      ],
+      "members":{
+        "ResourceArn":{"shape":"Arn"},
+        "Tags":{"shape":"Tags"}
+      }
+    },
+    "TagResourceResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "TagValue":{
+      "type":"string",
+      "max":256,
+      "min":0,
+      "pattern":"^([\\p{L}\\p{Z}\\p{N}_.:/=+\\-@]*)$"
+    },
+    "Tags":{
+      "type":"map",
+      "key":{"shape":"TagKey"},
+      "value":{"shape":"TagValue"},
+      "max":50,
+      "min":1
+    },
     "Timestamp":{"type":"timestamp"},
+    "UntagResourceRequest":{
+      "type":"structure",
+      "required":[
+        "ResourceArn",
+        "TagKeys"
+      ],
+      "members":{
+        "ResourceArn":{"shape":"Arn"},
+        "TagKeys":{"shape":"TagKeyList"}
+      }
+    },
+    "UntagResourceResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "UpdateDirectoryConfigRequest":{
       "type":"structure",
       "required":["DirectoryName"],

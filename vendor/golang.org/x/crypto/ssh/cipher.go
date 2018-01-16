@@ -304,7 +304,7 @@ type gcmCipher struct {
 	buf    []byte
 }
 
-func newGCMCipher(iv, key, macKey []byte) (packetCipher, error) {
+func newGCMCipher(iv, key []byte) (packetCipher, error) {
 	c, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -372,7 +372,7 @@ func (c *gcmCipher) readPacket(seqNum uint32, r io.Reader) ([]byte, error) {
 	}
 	length := binary.BigEndian.Uint32(c.prefix[:])
 	if length > maxPacket {
-		return nil, errors.New("ssh: max packet length exceeded.")
+		return nil, errors.New("ssh: max packet length exceeded")
 	}
 
 	if cap(c.buf) < int(length+gcmTagSize) {
@@ -548,11 +548,11 @@ func (c *cbcCipher) readPacketLeaky(seqNum uint32, r io.Reader) ([]byte, error) 
 		c.packetData = c.packetData[:entirePacketSize]
 	}
 
-	if n, err := io.ReadFull(r, c.packetData[firstBlockLength:]); err != nil {
+	n, err := io.ReadFull(r, c.packetData[firstBlockLength:])
+	if err != nil {
 		return nil, err
-	} else {
-		c.oracleCamouflage -= uint32(n)
 	}
+	c.oracleCamouflage -= uint32(n)
 
 	remainingCrypted := c.packetData[firstBlockLength:macStart]
 	c.decrypter.CryptBlocks(remainingCrypted, remainingCrypted)

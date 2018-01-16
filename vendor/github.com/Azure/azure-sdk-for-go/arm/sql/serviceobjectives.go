@@ -92,7 +92,9 @@ func (client ServiceObjectivesClient) GetPreparer(resourceGroupName string, serv
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServiceObjectivesClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -158,7 +160,9 @@ func (client ServiceObjectivesClient) ListByServerPreparer(resourceGroupName str
 // ListByServerSender sends the ListByServer request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServiceObjectivesClient) ListByServerSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByServerResponder handles the response to the ListByServer request. The method always

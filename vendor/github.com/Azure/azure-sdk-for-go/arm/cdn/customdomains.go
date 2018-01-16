@@ -127,6 +127,7 @@ func (client CustomDomainsClient) CreatePreparer(resourceGroupName string, profi
 func (client CustomDomainsClient) CreateSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -224,6 +225,7 @@ func (client CustomDomainsClient) DeletePreparer(resourceGroupName string, profi
 func (client CustomDomainsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -301,7 +303,9 @@ func (client CustomDomainsClient) DisableCustomHTTPSPreparer(resourceGroupName s
 // DisableCustomHTTPSSender sends the DisableCustomHTTPS request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomDomainsClient) DisableCustomHTTPSSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DisableCustomHTTPSResponder handles the response to the DisableCustomHTTPS request. The method always
@@ -378,7 +382,9 @@ func (client CustomDomainsClient) EnableCustomHTTPSPreparer(resourceGroupName st
 // EnableCustomHTTPSSender sends the EnableCustomHTTPS request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomDomainsClient) EnableCustomHTTPSSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // EnableCustomHTTPSResponder handles the response to the EnableCustomHTTPS request. The method always
@@ -455,7 +461,9 @@ func (client CustomDomainsClient) GetPreparer(resourceGroupName string, profileN
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomDomainsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -531,7 +539,9 @@ func (client CustomDomainsClient) ListByEndpointPreparer(resourceGroupName strin
 // ListByEndpointSender sends the ListByEndpoint request. The method will close the
 // http.Response Body if it receives an error.
 func (client CustomDomainsClient) ListByEndpointSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByEndpointResponder handles the response to the ListByEndpoint request. The method always

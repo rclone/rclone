@@ -122,6 +122,7 @@ func (client PowerShellClient) CancelCommandPreparer(resourceGroupName string, n
 func (client PowerShellClient) CancelCommandSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -221,6 +222,7 @@ func (client PowerShellClient) CreateSessionPreparer(resourceGroupName string, n
 func (client PowerShellClient) CreateSessionSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -304,7 +306,9 @@ func (client PowerShellClient) GetCommandStatusPreparer(resourceGroupName string
 // GetCommandStatusSender sends the GetCommandStatus request. The method will close the
 // http.Response Body if it receives an error.
 func (client PowerShellClient) GetCommandStatusSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetCommandStatusResponder handles the response to the GetCommandStatus request. The method always
@@ -407,6 +411,7 @@ func (client PowerShellClient) InvokeCommandPreparer(resourceGroupName string, n
 func (client PowerShellClient) InvokeCommandSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -485,7 +490,9 @@ func (client PowerShellClient) ListSessionPreparer(resourceGroupName string, nod
 // ListSessionSender sends the ListSession request. The method will close the
 // http.Response Body if it receives an error.
 func (client PowerShellClient) ListSessionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListSessionResponder handles the response to the ListSession request. The method always
@@ -568,7 +575,9 @@ func (client PowerShellClient) TabCompletionPreparer(resourceGroupName string, n
 // TabCompletionSender sends the TabCompletion request. The method will close the
 // http.Response Body if it receives an error.
 func (client PowerShellClient) TabCompletionSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // TabCompletionResponder handles the response to the TabCompletion request. The method always
@@ -668,6 +677,7 @@ func (client PowerShellClient) UpdateCommandPreparer(resourceGroupName string, n
 func (client PowerShellClient) UpdateCommandSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 

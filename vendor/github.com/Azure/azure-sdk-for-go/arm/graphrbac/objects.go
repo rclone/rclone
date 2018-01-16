@@ -84,7 +84,9 @@ func (client ObjectsClient) GetCurrentUserPreparer() (*http.Request, error) {
 // GetCurrentUserSender sends the GetCurrentUser request. The method will close the
 // http.Response Body if it receives an error.
 func (client ObjectsClient) GetCurrentUserSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetCurrentUserResponder handles the response to the GetCurrentUser request. The method always
@@ -155,7 +157,9 @@ func (client ObjectsClient) GetObjectsByObjectIdsPreparer(parameters GetObjectsP
 // GetObjectsByObjectIdsSender sends the GetObjectsByObjectIds request. The method will close the
 // http.Response Body if it receives an error.
 func (client ObjectsClient) GetObjectsByObjectIdsSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetObjectsByObjectIdsResponder handles the response to the GetObjectsByObjectIds request. The method always
@@ -264,7 +268,9 @@ func (client ObjectsClient) GetObjectsByObjectIdsNextPreparer(nextLink string) (
 // GetObjectsByObjectIdsNextSender sends the GetObjectsByObjectIdsNext request. The method will close the
 // http.Response Body if it receives an error.
 func (client ObjectsClient) GetObjectsByObjectIdsNextSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
 // GetObjectsByObjectIdsNextResponder handles the response to the GetObjectsByObjectIdsNext request. The method always

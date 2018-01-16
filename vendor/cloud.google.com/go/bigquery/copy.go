@@ -21,12 +21,6 @@ import (
 
 // CopyConfig holds the configuration for a copy job.
 type CopyConfig struct {
-	// JobID is the ID to use for the job. If empty, a random job ID will be generated.
-	JobID string
-
-	// If AddJobIDSuffix is true, then a random string will be appended to JobID.
-	AddJobIDSuffix bool
-
 	// Srcs are the tables from which data will be copied.
 	Srcs []*Table
 
@@ -38,18 +32,51 @@ type CopyConfig struct {
 	CreateDisposition TableCreateDisposition
 
 	// WriteDisposition specifies how existing data in the destination table is treated.
-	// The default is WriteAppend.
+	// The default is WriteEmpty.
 	WriteDisposition TableWriteDisposition
+
+	// The labels associated with this job.
+	Labels map[string]string
+}
+
+func (c *CopyConfig) toBQ() *bq.JobConfiguration {
+	var ts []*bq.TableReference
+	for _, t := range c.Srcs {
+		ts = append(ts, t.toBQ())
+	}
+	return &bq.JobConfiguration{
+		Labels: c.Labels,
+		Copy: &bq.JobConfigurationTableCopy{
+			CreateDisposition: string(c.CreateDisposition),
+			WriteDisposition:  string(c.WriteDisposition),
+			DestinationTable:  c.Dst.toBQ(),
+			SourceTables:      ts,
+		},
+	}
+}
+
+func bqToCopyConfig(q *bq.JobConfiguration, c *Client) *CopyConfig {
+	cc := &CopyConfig{
+		Labels:            q.Labels,
+		CreateDisposition: TableCreateDisposition(q.Copy.CreateDisposition),
+		WriteDisposition:  TableWriteDisposition(q.Copy.WriteDisposition),
+		Dst:               bqToTable(q.Copy.DestinationTable, c),
+	}
+	for _, t := range q.Copy.SourceTables {
+		cc.Srcs = append(cc.Srcs, bqToTable(t, c))
+	}
+	return cc
 }
 
 // A Copier copies data into a BigQuery table from one or more BigQuery tables.
 type Copier struct {
+	JobIDConfig
 	CopyConfig
 	c *Client
 }
 
 // CopierFrom returns a Copier which can be used to copy data into a
-// BigQuery table from  one or more BigQuery tables.
+// BigQuery table from one or more BigQuery tables.
 // The returned Copier may optionally be further configured before its Run method is called.
 func (t *Table) CopierFrom(srcs ...*Table) *Copier {
 	return &Copier{
@@ -63,17 +90,12 @@ func (t *Table) CopierFrom(srcs ...*Table) *Copier {
 
 // Run initiates a copy job.
 func (c *Copier) Run(ctx context.Context) (*Job, error) {
-	conf := &bq.JobConfigurationTableCopy{
-		CreateDisposition: string(c.CreateDisposition),
-		WriteDisposition:  string(c.WriteDisposition),
-		DestinationTable:  c.Dst.tableRefProto(),
+	return c.c.insertJob(ctx, c.newJob(), nil)
+}
+
+func (c *Copier) newJob() *bq.Job {
+	return &bq.Job{
+		JobReference:  c.JobIDConfig.createJobRef(c.c.projectID),
+		Configuration: c.CopyConfig.toBQ(),
 	}
-	for _, t := range c.Srcs {
-		conf.SourceTables = append(conf.SourceTables, t.tableRefProto())
-	}
-	job := &bq.Job{
-		JobReference:  createJobRef(c.JobID, c.AddJobIDSuffix, c.c.projectID),
-		Configuration: &bq.JobConfiguration{Copy: conf},
-	}
-	return c.c.insertJob(ctx, &insertJobConf{job: job})
 }

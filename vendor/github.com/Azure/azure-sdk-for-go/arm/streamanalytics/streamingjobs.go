@@ -120,6 +120,7 @@ func (client StreamingJobsClient) CreateOrReplacePreparer(streamingJob Streaming
 func (client StreamingJobsClient) CreateOrReplaceSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -202,6 +203,7 @@ func (client StreamingJobsClient) DeletePreparer(resourceGroupName string, jobNa
 func (client StreamingJobsClient) DeleteSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -273,7 +275,9 @@ func (client StreamingJobsClient) GetPreparer(resourceGroupName string, jobName 
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client StreamingJobsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -341,7 +345,9 @@ func (client StreamingJobsClient) ListPreparer(expand string) (*http.Request, er
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client StreamingJobsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -481,7 +487,9 @@ func (client StreamingJobsClient) ListByResourceGroupPreparer(resourceGroupName 
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client StreamingJobsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -639,6 +647,7 @@ func (client StreamingJobsClient) StartPreparer(resourceGroupName string, jobNam
 func (client StreamingJobsClient) StartSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -721,6 +730,7 @@ func (client StreamingJobsClient) StopPreparer(resourceGroupName string, jobName
 func (client StreamingJobsClient) StopSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client,
 		req,
+		azure.DoRetryWithRegistration(client.Client),
 		azure.DoPollForAsynchronous(client.PollingDelay))
 }
 
@@ -798,7 +808,9 @@ func (client StreamingJobsClient) UpdatePreparer(streamingJob StreamingJob, reso
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client StreamingJobsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

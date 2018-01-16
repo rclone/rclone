@@ -220,9 +220,10 @@ func smix(b []byte, r, N int, v, xy []uint32) {
 //
 //      dk, err := scrypt.Key([]byte("some password"), salt, 16384, 8, 1, 32)
 //
-// The recommended parameters for interactive logins as of 2009 are N=16384,
-// r=8, p=1. They should be increased as memory latency and CPU parallelism
-// increases. Remember to get a good random salt.
+// The recommended parameters for interactive logins as of 2017 are N=32768, r=8
+// and p=1. The parameters N, r, and p should be increased as memory latency and
+// CPU parallelism increases; consider setting N to the highest power of 2 you
+// can derive within 100 milliseconds. Remember to get a good random salt.
 func Key(password, salt []byte, N, r, p, keyLen int) ([]byte, error) {
 	if N <= 1 || N&(N-1) != 0 {
 		return nil, errors.New("scrypt: N must be > 1 and a power of 2")

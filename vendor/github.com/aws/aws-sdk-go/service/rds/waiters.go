@@ -150,3 +150,145 @@ func (c *RDS) WaitUntilDBInstanceDeletedWithContext(ctx aws.Context, input *Desc
 
 	return w.WaitWithContext(ctx)
 }
+
+// WaitUntilDBSnapshotAvailable uses the Amazon RDS API operation
+// DescribeDBSnapshots to wait for a condition to be met before returning.
+// If the condition is not met within the max attempt window, an error will
+// be returned.
+func (c *RDS) WaitUntilDBSnapshotAvailable(input *DescribeDBSnapshotsInput) error {
+	return c.WaitUntilDBSnapshotAvailableWithContext(aws.BackgroundContext(), input)
+}
+
+// WaitUntilDBSnapshotAvailableWithContext is an extended version of WaitUntilDBSnapshotAvailable.
+// With the support for passing in a context and options to configure the
+// Waiter and the underlying request options.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *RDS) WaitUntilDBSnapshotAvailableWithContext(ctx aws.Context, input *DescribeDBSnapshotsInput, opts ...request.WaiterOption) error {
+	w := request.Waiter{
+		Name:        "WaitUntilDBSnapshotAvailable",
+		MaxAttempts: 60,
+		Delay:       request.ConstantWaiterDelay(30 * time.Second),
+		Acceptors: []request.WaiterAcceptor{
+			{
+				State:   request.SuccessWaiterState,
+				Matcher: request.PathAllWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "available",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "deleted",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "deleting",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "failed",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "incompatible-restore",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "incompatible-parameters",
+			},
+		},
+		Logger: c.Config.Logger,
+		NewRequest: func(opts []request.Option) (*request.Request, error) {
+			var inCpy *DescribeDBSnapshotsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeDBSnapshotsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+	w.ApplyOptions(opts...)
+
+	return w.WaitWithContext(ctx)
+}
+
+// WaitUntilDBSnapshotDeleted uses the Amazon RDS API operation
+// DescribeDBSnapshots to wait for a condition to be met before returning.
+// If the condition is not met within the max attempt window, an error will
+// be returned.
+func (c *RDS) WaitUntilDBSnapshotDeleted(input *DescribeDBSnapshotsInput) error {
+	return c.WaitUntilDBSnapshotDeletedWithContext(aws.BackgroundContext(), input)
+}
+
+// WaitUntilDBSnapshotDeletedWithContext is an extended version of WaitUntilDBSnapshotDeleted.
+// With the support for passing in a context and options to configure the
+// Waiter and the underlying request options.
+//
+// The context must be non-nil and will be used for request cancellation. If
+// the context is nil a panic will occur. In the future the SDK may create
+// sub-contexts for http.Requests. See https://golang.org/pkg/context/
+// for more information on using Contexts.
+func (c *RDS) WaitUntilDBSnapshotDeletedWithContext(ctx aws.Context, input *DescribeDBSnapshotsInput, opts ...request.WaiterOption) error {
+	w := request.Waiter{
+		Name:        "WaitUntilDBSnapshotDeleted",
+		MaxAttempts: 60,
+		Delay:       request.ConstantWaiterDelay(30 * time.Second),
+		Acceptors: []request.WaiterAcceptor{
+			{
+				State:   request.SuccessWaiterState,
+				Matcher: request.PathAllWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "deleted",
+			},
+			{
+				State:    request.SuccessWaiterState,
+				Matcher:  request.ErrorWaiterMatch,
+				Expected: "DBSnapshotNotFound",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "creating",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "modifying",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "rebooting",
+			},
+			{
+				State:   request.FailureWaiterState,
+				Matcher: request.PathAnyWaiterMatch, Argument: "DBSnapshots[].Status",
+				Expected: "resetting-master-credentials",
+			},
+		},
+		Logger: c.Config.Logger,
+		NewRequest: func(opts []request.Option) (*request.Request, error) {
+			var inCpy *DescribeDBSnapshotsInput
+			if input != nil {
+				tmp := *input
+				inCpy = &tmp
+			}
+			req, _ := c.DescribeDBSnapshotsRequest(inCpy)
+			req.SetContext(ctx)
+			req.ApplyOptions(opts...)
+			return req, nil
+		},
+	}
+	w.ApplyOptions(opts...)
+
+	return w.WaitWithContext(ctx)
+}

@@ -6,6 +6,7 @@
     "protocol":"query",
     "serviceAbbreviation":"Amazon RDS",
     "serviceFullName":"Amazon Relational Database Service",
+    "serviceId":"RDS",
     "signatureVersion":"v4",
     "uid":"rds-2013-09-09",
     "xmlNamespace":"http://rds.amazonaws.com/doc/2013-09-09/"

@@ -296,6 +296,34 @@ func (s *StorageClientSuite) TestNewEmulatorClient(c *chk.C) {
 	c.Assert(cli.accountKey, chk.DeepEquals, expectedKey)
 }
 
+func (s *StorageClientSuite) TestNewFromConnectionString(c *chk.C) {
+	cli, err := NewClientFromConnectionString(
+		"DefaultEndpointsProtocol=https;" +
+			"AccountName=myaccountname;" +
+			"AccountKey=" + StorageEmulatorAccountKey + ";" +
+			"EndpointSuffix=example.com")
+
+	c.Assert(err, chk.IsNil)
+	c.Assert(cli.accountName, chk.Equals, "myaccountname")
+	expectedKey, err := base64.StdEncoding.DecodeString(StorageEmulatorAccountKey)
+	c.Assert(err, chk.IsNil)
+	c.Assert(cli.accountKey, chk.DeepEquals, expectedKey)
+}
+
+func (s *StorageClientSuite) TestNewAccountSASClientFromEndpointToken(c *chk.C) {
+	cli, err := NewAccountSASClientFromEndpointToken(
+		"http://golangrocksonazure.blob.core.windows.net",
+		"sv=2017-04-17&ss=bq&srt=sco&sp=rwdlacup&se=2018-01-09T22:32:27Z&st=2018-01-08T14:32:27Z&spr=http&sig=z8K9AiNvsQAoRQmqEgHrk3KdRfY37MxCHckGi%2BJRFDI%3D",
+	)
+
+	c.Assert(err, chk.IsNil)
+	c.Assert(cli.accountSASToken, chk.HasLen, 8)
+	c.Assert(cli.accountName, chk.Equals, "golangrocksonazure")
+	c.Assert(cli.baseURL, chk.Equals, "core.windows.net")
+	c.Assert(cli.apiVersion, chk.Equals, "2017-04-17")
+	c.Assert(cli.useHTTPS, chk.Equals, false)
+}
+
 func (s *StorageClientSuite) TestIsValidStorageAccount(c *chk.C) {
 	type test struct {
 		account  string

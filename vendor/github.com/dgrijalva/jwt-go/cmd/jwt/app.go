@@ -25,14 +25,20 @@ var (
 	flagKey     = flag.String("key", "", "path to key file or '-' to read from stdin")
 	flagCompact = flag.Bool("compact", false, "output compact JSON")
 	flagDebug   = flag.Bool("debug", false, "print out all kinds of debug data")
+	flagClaims  = make(ArgList)
+	flagHead    = make(ArgList)
 
 	// Modes - exactly one of these is required
-	flagSign   = flag.String("sign", "", "path to claims object to sign or '-' to read from stdin")
+	flagSign   = flag.String("sign", "", "path to claims object to sign, '-' to read from stdin, or '+' to use only -claim args")
 	flagVerify = flag.String("verify", "", "path to JWT token to verify or '-' to read from stdin")
 	flagShow   = flag.String("show", "", "path to JWT file or '-' to read from stdin")
 )
 
 func main() {
+	// Plug in Var flags
+	flag.Var(flagClaims, "claim", "add additional claims. may be used more than once")
+	flag.Var(flagHead, "header", "add additional header params. may be used more than once")
+
 	// Usage message if you ask for -help or if you mess up inputs.
 	flag.Usage = func() {
 		fmt.Fprintf(os.Stderr, "Usage of %s:\n", os.Args[0])
@@ -74,6 +80,8 @@ func loadData(p string) ([]byte, error) {
 	var rdr io.Reader
 	if p == "-" {
 		rdr = os.Stdin
+	} else if p == "+" {
+		return []byte("{}"), nil
 	} else {
 		if f, err := os.Open(p); err == nil {
 			rdr = f
@@ -126,6 +134,8 @@ func verifyToken() error {
 		}
 		if isEs() {
 			return jwt.ParseECPublicKeyFromPEM(data)
+		} else if isRs() {
+			return jwt.ParseRSAPublicKeyFromPEM(data)
 		}
 		return data, nil
 	})
@@ -171,6 +181,13 @@ func signToken() error {
 		return fmt.Errorf("Couldn't parse claims JSON: %v", err)
 	}
 
+	// add command line claims
+	if len(flagClaims) > 0 {
+		for k, v := range flagClaims {
+			claims[k] = v
+		}
+	}
+
 	// get the key
 	var key interface{}
 	key, err = loadData(*flagKey)
@@ -187,11 +204,27 @@ func signToken() error {
 	// create a new token
 	token := jwt.NewWithClaims(alg, claims)
 
+	// add command line headers
+	if len(flagHead) > 0 {
+		for k, v := range flagHead {
+			token.Header[k] = v
+		}
+	}
+
 	if isEs() {
 		if k, ok := key.([]byte); !ok {
 			return fmt.Errorf("Couldn't convert key data to key")
 		} else {
 			key, err = jwt.ParseECPrivateKeyFromPEM(k)
+			if err != nil {
+				return err
+			}
+		}
+	} else if isRs() {
+		if k, ok := key.([]byte); !ok {
+			return fmt.Errorf("Couldn't convert key data to key")
+		} else {
+			key, err = jwt.ParseRSAPrivateKeyFromPEM(k)
 			if err != nil {
 				return err
 			}
@@ -242,4 +275,8 @@ func showToken() error {
 
 func isEs() bool {
 	return strings.HasPrefix(*flagAlg, "ES")
+}
+
+func isRs() bool {
+	return strings.HasPrefix(*flagAlg, "RS")
 }

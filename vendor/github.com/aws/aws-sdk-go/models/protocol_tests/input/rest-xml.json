@@ -1692,5 +1692,97 @@
         }
       }
     ]
+  },
+  {
+    "description": "Enum",
+    "metadata": {
+      "protocol": "rest-xml",
+      "apiVersion": "2014-01-01"
+    },
+    "shapes": {
+      "InputShape": {
+        "type": "structure",
+        "members": {
+          "HeaderEnum": {
+            "shape": "EnumType",
+            "location": "header",
+            "locationName": "x-amz-enum"
+          },
+          "FooEnum": {
+            "shape": "EnumType"
+          },
+          "URIFooEnum": {
+            "shape": "EnumType",
+            "location": "uri",
+            "locationName": "URIEnum"
+          },
+          "ListEnums": {
+            "shape": "EnumList"
+          },
+          "URIListEnums": {
+            "shape": "EnumList",
+            "location": "querystring",
+            "locationName": "ListEnums"
+          }
+        }
+      },
+      "EnumType":{
+        "type":"string",
+        "enum":[
+          "foo",
+          "bar",
+          "0",
+          "1"
+        ]
+      },
+      "EnumList":{
+        "type":"list",
+        "member": {"shape": "EnumType"}
+      }
+    },
+    "cases": [
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "http": {
+            "method": "POST",
+            "requestUri": "/Enum/{URIEnum}"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+          "HeaderEnum": "baz",
+          "FooEnum": "foo",
+          "URIFooEnum": "bar",
+          "ListEnums": ["foo", "", "bar"],
+          "URIListEnums": ["0", "", "1"]
+        },
+        "serialized": {
+          "uri": "/Enum/bar?ListEnums=0&ListEnums=&ListEnums=1",
+          "headers": {"x-amz-enum": "baz"},
+          "body": "<InputShape><FooEnum>foo</FooEnum><ListEnums><member>foo</member><member></member><member>bar</member></ListEnums></InputShape>"
+        }
+      },
+      {
+        "given": {
+          "input": {
+            "shape": "InputShape"
+          },
+          "http": {
+            "method": "POST",
+            "requestUri": "/path"
+          },
+          "name": "OperationName"
+        },
+        "params": {
+        },
+        "serialized": {
+          "uri": "/path",
+          "headers": {}
+        }
+      }
+    ]
   }
 ]

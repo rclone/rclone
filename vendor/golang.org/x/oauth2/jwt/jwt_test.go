@@ -8,11 +8,13 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/jws"
 )
 
@@ -186,5 +188,34 @@ func TestJWTFetch_Assertion(t *testing.T) {
 	}
 	if got != want {
 		t.Errorf("access token header = %q; want %q", got, want)
+	}
+}
+
+func TestTokenRetrieveError(t *testing.T) {
+	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-type", "application/json")
+		w.WriteHeader(http.StatusBadRequest)
+		w.Write([]byte(`{"error": "invalid_grant"}`))
+	}))
+	defer ts.Close()
+
+	conf := &Config{
+		Email:      "aaa@xxx.com",
+		PrivateKey: dummyPrivateKey,
+		TokenURL:   ts.URL,
+	}
+
+	_, err := conf.TokenSource(context.Background()).Token()
+	if err == nil {
+		t.Fatalf("got no error, expected one")
+	}
+	_, ok := err.(*oauth2.RetrieveError)
+	if !ok {
+		t.Fatalf("got %T error, expected *RetrieveError", err)
+	}
+	// Test error string for backwards compatibility
+	expected := fmt.Sprintf("oauth2: cannot fetch token: %v\nResponse: %s", "400 Bad Request", `{"error": "invalid_grant"}`)
+	if errStr := err.Error(); errStr != expected {
+		t.Fatalf("got %#v, expected %#v", errStr, expected)
 	}
 }

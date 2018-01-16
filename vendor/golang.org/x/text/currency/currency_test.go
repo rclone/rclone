@@ -105,10 +105,10 @@ func TestTable(t *testing.T) {
 	}
 	// First currency has index 1, last is numCurrencies.
 	if c := currency.Elem(1)[:3]; c != "ADP" {
-		t.Errorf("first was %c; want ADP", c)
+		t.Errorf("first was %q; want ADP", c)
 	}
 	if c := currency.Elem(numCurrencies)[:3]; c != "ZWR" {
-		t.Errorf("last was %c; want ZWR", c)
+		t.Errorf("last was %q; want ZWR", c)
 	}
 }
 

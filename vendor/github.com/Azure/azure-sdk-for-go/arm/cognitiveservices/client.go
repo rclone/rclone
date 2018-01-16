@@ -1,6 +1,8 @@
 // Package cognitiveservices implements the Azure ARM Cognitiveservices service API version 2017-04-18.
 //
 // Cognitive Services Management Client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/cognitiveservices/2017-04-18/cognitiveservices
 package cognitiveservices
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -113,8 +113,8 @@ type BlockedResource struct {
 }
 
 func (s *BlockedResource) MarshalJSON() ([]byte, error) {
-	type noMethod BlockedResource
-	raw := noMethod(*s)
+	type NoMethod BlockedResource
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -146,8 +146,8 @@ type Image struct {
 }
 
 func (s *Image) MarshalJSON() ([]byte, error) {
-	type noMethod Image
-	raw := noMethod(*s)
+	type NoMethod Image
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -207,8 +207,8 @@ type MobileFriendlyIssue struct {
 }
 
 func (s *MobileFriendlyIssue) MarshalJSON() ([]byte, error) {
-	type noMethod MobileFriendlyIssue
-	raw := noMethod(*s)
+	type NoMethod MobileFriendlyIssue
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -236,8 +236,8 @@ type ResourceIssue struct {
 }
 
 func (s *ResourceIssue) MarshalJSON() ([]byte, error) {
-	type noMethod ResourceIssue
-	raw := noMethod(*s)
+	type NoMethod ResourceIssue
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -269,8 +269,8 @@ type RunMobileFriendlyTestRequest struct {
 }
 
 func (s *RunMobileFriendlyTestRequest) MarshalJSON() ([]byte, error) {
-	type noMethod RunMobileFriendlyTestRequest
-	raw := noMethod(*s)
+	type NoMethod RunMobileFriendlyTestRequest
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -324,8 +324,8 @@ type RunMobileFriendlyTestResponse struct {
 }
 
 func (s *RunMobileFriendlyTestResponse) MarshalJSON() ([]byte, error) {
-	type noMethod RunMobileFriendlyTestResponse
-	raw := noMethod(*s)
+	type NoMethod RunMobileFriendlyTestResponse
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -369,8 +369,8 @@ type TestStatus struct {
 }
 
 func (s *TestStatus) MarshalJSON() ([]byte, error) {
-	type noMethod TestStatus
-	raw := noMethod(*s)
+	type NoMethod TestStatus
+	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
@@ -469,7 +469,7 @@ func (c *UrlTestingToolsMobileFriendlyTestRunCall) Do(opts ...googleapi.CallOpti
 		},
 	}
 	target := &ret
-	if err := json.NewDecoder(res.Body).Decode(target); err != nil {
+	if err := gensupport.DecodeResponse(target, res); err != nil {
 		return nil, err
 	}
 	return ret, nil

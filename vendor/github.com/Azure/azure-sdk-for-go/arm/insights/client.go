@@ -1,6 +1,8 @@
 // Package insights implements the Azure ARM Insights service API version .
 //
 // Composite Swagger for Insights Management Client
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/monitor/mgmt/2017-05-01-preview/insights
 package insights
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

@@ -93,7 +93,9 @@ func (client ServiceTierAdvisorsClient) GetPreparer(resourceGroupName string, se
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServiceTierAdvisorsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -161,7 +163,9 @@ func (client ServiceTierAdvisorsClient) ListByDatabasePreparer(resourceGroupName
 // ListByDatabaseSender sends the ListByDatabase request. The method will close the
 // http.Response Body if it receives an error.
 func (client ServiceTierAdvisorsClient) ListByDatabaseSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByDatabaseResponder handles the response to the ListByDatabase request. The method always

@@ -38,7 +38,7 @@ const opDeleteAlarms = "DeleteAlarms"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarms
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarms
 func (c *CloudWatch) DeleteAlarmsRequest(input *DeleteAlarmsInput) (req *request.Request, output *DeleteAlarmsOutput) {
 	op := &request.Operation{
 		Name:       opDeleteAlarms,
@@ -72,7 +72,7 @@ func (c *CloudWatch) DeleteAlarmsRequest(input *DeleteAlarmsInput) (req *request
 //   * ErrCodeResourceNotFound "ResourceNotFound"
 //   The named resource does not exist.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarms
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarms
 func (c *CloudWatch) DeleteAlarms(input *DeleteAlarmsInput) (*DeleteAlarmsOutput, error) {
 	req, out := c.DeleteAlarmsRequest(input)
 	return out, req.Send()
@@ -119,7 +119,7 @@ const opDeleteDashboards = "DeleteDashboards"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboards
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboards
 func (c *CloudWatch) DeleteDashboardsRequest(input *DeleteDashboardsInput) (req *request.Request, output *DeleteDashboardsOutput) {
 	op := &request.Operation{
 		Name:       opDeleteDashboards,
@@ -158,7 +158,7 @@ func (c *CloudWatch) DeleteDashboardsRequest(input *DeleteDashboardsInput) (req 
 //   * ErrCodeInternalServiceFault "InternalServiceError"
 //   Request processing has failed due to some unknown error, exception, or failure.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboards
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboards
 func (c *CloudWatch) DeleteDashboards(input *DeleteDashboardsInput) (*DeleteDashboardsOutput, error) {
 	req, out := c.DeleteDashboardsRequest(input)
 	return out, req.Send()
@@ -205,7 +205,7 @@ const opDescribeAlarmHistory = "DescribeAlarmHistory"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistory
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistory
 func (c *CloudWatch) DescribeAlarmHistoryRequest(input *DescribeAlarmHistoryInput) (req *request.Request, output *DescribeAlarmHistoryOutput) {
 	op := &request.Operation{
 		Name:       opDescribeAlarmHistory,
@@ -247,7 +247,7 @@ func (c *CloudWatch) DescribeAlarmHistoryRequest(input *DescribeAlarmHistoryInpu
 //   * ErrCodeInvalidNextToken "InvalidNextToken"
 //   The next token specified is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistory
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistory
 func (c *CloudWatch) DescribeAlarmHistory(input *DescribeAlarmHistoryInput) (*DescribeAlarmHistoryOutput, error) {
 	req, out := c.DescribeAlarmHistoryRequest(input)
 	return out, req.Send()
@@ -344,7 +344,7 @@ const opDescribeAlarms = "DescribeAlarms"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarms
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarms
 func (c *CloudWatch) DescribeAlarmsRequest(input *DescribeAlarmsInput) (req *request.Request, output *DescribeAlarmsOutput) {
 	op := &request.Operation{
 		Name:       opDescribeAlarms,
@@ -384,7 +384,7 @@ func (c *CloudWatch) DescribeAlarmsRequest(input *DescribeAlarmsInput) (req *req
 //   * ErrCodeInvalidNextToken "InvalidNextToken"
 //   The next token specified is invalid.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarms
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarms
 func (c *CloudWatch) DescribeAlarms(input *DescribeAlarmsInput) (*DescribeAlarmsOutput, error) {
 	req, out := c.DescribeAlarmsRequest(input)
 	return out, req.Send()
@@ -481,7 +481,7 @@ const opDescribeAlarmsForMetric = "DescribeAlarmsForMetric"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetric
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetric
 func (c *CloudWatch) DescribeAlarmsForMetricRequest(input *DescribeAlarmsForMetricInput) (req *request.Request, output *DescribeAlarmsForMetricOutput) {
 	op := &request.Operation{
 		Name:       opDescribeAlarmsForMetric,
@@ -509,7 +509,7 @@ func (c *CloudWatch) DescribeAlarmsForMetricRequest(input *DescribeAlarmsForMetr
 //
 // See the AWS API reference guide for Amazon CloudWatch's
 // API operation DescribeAlarmsForMetric for usage and error information.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetric
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetric
 func (c *CloudWatch) DescribeAlarmsForMetric(input *DescribeAlarmsForMetricInput) (*DescribeAlarmsForMetricOutput, error) {
 	req, out := c.DescribeAlarmsForMetricRequest(input)
 	return out, req.Send()
@@ -556,7 +556,7 @@ const opDisableAlarmActions = "DisableAlarmActions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActions
 func (c *CloudWatch) DisableAlarmActionsRequest(input *DisableAlarmActionsInput) (req *request.Request, output *DisableAlarmActionsOutput) {
 	op := &request.Operation{
 		Name:       opDisableAlarmActions,
@@ -586,7 +586,7 @@ func (c *CloudWatch) DisableAlarmActionsRequest(input *DisableAlarmActionsInput)
 //
 // See the AWS API reference guide for Amazon CloudWatch's
 // API operation DisableAlarmActions for usage and error information.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActions
 func (c *CloudWatch) DisableAlarmActions(input *DisableAlarmActionsInput) (*DisableAlarmActionsOutput, error) {
 	req, out := c.DisableAlarmActionsRequest(input)
 	return out, req.Send()
@@ -633,7 +633,7 @@ const opEnableAlarmActions = "EnableAlarmActions"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActions
 func (c *CloudWatch) EnableAlarmActionsRequest(input *EnableAlarmActionsInput) (req *request.Request, output *EnableAlarmActionsOutput) {
 	op := &request.Operation{
 		Name:       opEnableAlarmActions,
@@ -662,7 +662,7 @@ func (c *CloudWatch) EnableAlarmActionsRequest(input *EnableAlarmActionsInput) (
 //
 // See the AWS API reference guide for Amazon CloudWatch's
 // API operation EnableAlarmActions for usage and error information.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActions
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActions
 func (c *CloudWatch) EnableAlarmActions(input *EnableAlarmActionsInput) (*EnableAlarmActionsOutput, error) {
 	req, out := c.EnableAlarmActionsRequest(input)
 	return out, req.Send()
@@ -709,7 +709,7 @@ const opGetDashboard = "GetDashboard"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboard
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboard
 func (c *CloudWatch) GetDashboardRequest(input *GetDashboardInput) (req *request.Request, output *GetDashboardOutput) {
 	op := &request.Operation{
 		Name:       opGetDashboard,
@@ -751,7 +751,7 @@ func (c *CloudWatch) GetDashboardRequest(input *GetDashboardInput) (req *request
 //   * ErrCodeInternalServiceFault "InternalServiceError"
 //   Request processing has failed due to some unknown error, exception, or failure.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboard
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboard
 func (c *CloudWatch) GetDashboard(input *GetDashboardInput) (*GetDashboardOutput, error) {
 	req, out := c.GetDashboardRequest(input)
 	return out, req.Send()
@@ -798,7 +798,7 @@ const opGetMetricStatistics = "GetMetricStatistics"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatistics
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatistics
 func (c *CloudWatch) GetMetricStatisticsRequest(input *GetMetricStatisticsInput) (req *request.Request, output *GetMetricStatisticsOutput) {
 	op := &request.Operation{
 		Name:       opGetMetricStatistics,
@@ -889,7 +889,7 @@ func (c *CloudWatch) GetMetricStatisticsRequest(input *GetMetricStatisticsInput)
 //   * ErrCodeInternalServiceFault "InternalServiceError"
 //   Request processing has failed due to some unknown error, exception, or failure.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatistics
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatistics
 func (c *CloudWatch) GetMetricStatistics(input *GetMetricStatisticsInput) (*GetMetricStatisticsOutput, error) {
 	req, out := c.GetMetricStatisticsRequest(input)
 	return out, req.Send()
@@ -936,7 +936,7 @@ const opListDashboards = "ListDashboards"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboards
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboards
 func (c *CloudWatch) ListDashboardsRequest(input *ListDashboardsInput) (req *request.Request, output *ListDashboardsOutput) {
 	op := &request.Operation{
 		Name:       opListDashboards,
@@ -973,7 +973,7 @@ func (c *CloudWatch) ListDashboardsRequest(input *ListDashboardsInput) (req *req
 //   * ErrCodeInternalServiceFault "InternalServiceError"
 //   Request processing has failed due to some unknown error, exception, or failure.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboards
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboards
 func (c *CloudWatch) ListDashboards(input *ListDashboardsInput) (*ListDashboardsOutput, error) {
 	req, out := c.ListDashboardsRequest(input)
 	return out, req.Send()
@@ -1020,7 +1020,7 @@ const opListMetrics = "ListMetrics"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetrics
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetrics
 func (c *CloudWatch) ListMetricsRequest(input *ListMetricsInput) (req *request.Request, output *ListMetricsOutput) {
 	op := &request.Operation{
 		Name:       opListMetrics,
@@ -1069,7 +1069,7 @@ func (c *CloudWatch) ListMetricsRequest(input *ListMetricsInput) (req *request.R
 //   * ErrCodeInvalidParameterValueException "InvalidParameterValue"
 //   The value of an input parameter is bad or out-of-range.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetrics
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetrics
 func (c *CloudWatch) ListMetrics(input *ListMetricsInput) (*ListMetricsOutput, error) {
 	req, out := c.ListMetricsRequest(input)
 	return out, req.Send()
@@ -1166,7 +1166,7 @@ const opPutDashboard = "PutDashboard"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboard
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboard
 func (c *CloudWatch) PutDashboardRequest(input *PutDashboardInput) (req *request.Request, output *PutDashboardOutput) {
 	op := &request.Operation{
 		Name:       opPutDashboard,
@@ -1219,7 +1219,7 @@ func (c *CloudWatch) PutDashboardRequest(input *PutDashboardInput) (req *request
 //   * ErrCodeInternalServiceFault "InternalServiceError"
 //   Request processing has failed due to some unknown error, exception, or failure.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboard
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboard
 func (c *CloudWatch) PutDashboard(input *PutDashboardInput) (*PutDashboardOutput, error) {
 	req, out := c.PutDashboardRequest(input)
 	return out, req.Send()
@@ -1266,7 +1266,7 @@ const opPutMetricAlarm = "PutMetricAlarm"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarm
 func (c *CloudWatch) PutMetricAlarmRequest(input *PutMetricAlarmInput) (req *request.Request, output *PutMetricAlarmOutput) {
 	op := &request.Operation{
 		Name:       opPutMetricAlarm,
@@ -1299,6 +1299,8 @@ func (c *CloudWatch) PutMetricAlarmRequest(input *PutMetricAlarmInput) (req *req
 // completely overwrites the previous configuration of the alarm.
 //
 // If you are an IAM user, you must have Amazon EC2 permissions for some operations:
+//
+//    * iam:CreateServiceLinkedRole for all alarms with EC2 actions
 //
 //    * ec2:DescribeInstanceStatus and ec2:DescribeInstances for all alarms
 //    on EC2 instance status metrics
@@ -1339,7 +1341,7 @@ func (c *CloudWatch) PutMetricAlarmRequest(input *PutMetricAlarmInput) (req *req
 //   * ErrCodeLimitExceededFault "LimitExceeded"
 //   The quota for alarms for this customer has already been reached.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarm
 func (c *CloudWatch) PutMetricAlarm(input *PutMetricAlarmInput) (*PutMetricAlarmOutput, error) {
 	req, out := c.PutMetricAlarmRequest(input)
 	return out, req.Send()
@@ -1386,7 +1388,7 @@ const opPutMetricData = "PutMetricData"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricData
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricData
 func (c *CloudWatch) PutMetricDataRequest(input *PutMetricDataInput) (req *request.Request, output *PutMetricDataOutput) {
 	op := &request.Operation{
 		Name:       opPutMetricData,
@@ -1457,7 +1459,7 @@ func (c *CloudWatch) PutMetricDataRequest(input *PutMetricDataInput) (req *reque
 //   * ErrCodeInternalServiceFault "InternalServiceError"
 //   Request processing has failed due to some unknown error, exception, or failure.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricData
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricData
 func (c *CloudWatch) PutMetricData(input *PutMetricDataInput) (*PutMetricDataOutput, error) {
 	req, out := c.PutMetricDataRequest(input)
 	return out, req.Send()
@@ -1504,7 +1506,7 @@ const opSetAlarmState = "SetAlarmState"
 //        fmt.Println(resp)
 //    }
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmState
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmState
 func (c *CloudWatch) SetAlarmStateRequest(input *SetAlarmStateInput) (req *request.Request, output *SetAlarmStateOutput) {
 	op := &request.Operation{
 		Name:       opSetAlarmState,
@@ -1548,7 +1550,7 @@ func (c *CloudWatch) SetAlarmStateRequest(input *SetAlarmStateInput) (req *reque
 //   * ErrCodeInvalidFormatFault "InvalidFormat"
 //   Data was not syntactically valid JSON.
 //
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmState
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmState
 func (c *CloudWatch) SetAlarmState(input *SetAlarmStateInput) (*SetAlarmStateOutput, error) {
 	req, out := c.SetAlarmStateRequest(input)
 	return out, req.Send()
@@ -1571,7 +1573,7 @@ func (c *CloudWatch) SetAlarmStateWithContext(ctx aws.Context, input *SetAlarmSt
 }
 
 // Represents the history of a specific alarm.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/AlarmHistoryItem
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/AlarmHistoryItem
 type AlarmHistoryItem struct {
 	_ struct{} `type:"structure"`
 
@@ -1632,7 +1634,7 @@ func (s *AlarmHistoryItem) SetTimestamp(v time.Time) *AlarmHistoryItem {
 }
 
 // Represents a specific dashboard.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DashboardEntry
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DashboardEntry
 type DashboardEntry struct {
 	_ struct{} `type:"structure"`
 
@@ -1686,7 +1688,7 @@ func (s *DashboardEntry) SetSize(v int64) *DashboardEntry {
 }
 
 // An error or warning for the operation.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DashboardValidationMessage
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DashboardValidationMessage
 type DashboardValidationMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -1720,7 +1722,7 @@ func (s *DashboardValidationMessage) SetMessage(v string) *DashboardValidationMe
 }
 
 // Encapsulates the statistical data that CloudWatch computes from metric data.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/Datapoint
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/Datapoint
 type Datapoint struct {
 	_ struct{} `type:"structure"`
 
@@ -1808,7 +1810,7 @@ func (s *Datapoint) SetUnit(v string) *Datapoint {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarmsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarmsInput
 type DeleteAlarmsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1847,7 +1849,7 @@ func (s *DeleteAlarmsInput) SetAlarmNames(v []*string) *DeleteAlarmsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarmsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteAlarmsOutput
 type DeleteAlarmsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1862,12 +1864,14 @@ func (s DeleteAlarmsOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboardsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboardsInput
 type DeleteDashboardsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The dashboards to be deleted.
-	DashboardNames []*string `type:"list"`
+	// The dashboards to be deleted. This parameter is required.
+	//
+	// DashboardNames is a required field
+	DashboardNames []*string `type:"list" required:"true"`
 }
 
 // String returns the string representation
@@ -1880,13 +1884,26 @@ func (s DeleteDashboardsInput) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *DeleteDashboardsInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "DeleteDashboardsInput"}
+	if s.DashboardNames == nil {
+		invalidParams.Add(request.NewErrParamRequired("DashboardNames"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetDashboardNames sets the DashboardNames field's value.
 func (s *DeleteDashboardsInput) SetDashboardNames(v []*string) *DeleteDashboardsInput {
 	s.DashboardNames = v
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboardsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DeleteDashboardsOutput
 type DeleteDashboardsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1901,7 +1918,7 @@ func (s DeleteDashboardsOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistoryInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistoryInput
 type DescribeAlarmHistoryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1987,7 +2004,7 @@ func (s *DescribeAlarmHistoryInput) SetStartDate(v time.Time) *DescribeAlarmHist
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistoryOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmHistoryOutput
 type DescribeAlarmHistoryOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2020,7 +2037,7 @@ func (s *DescribeAlarmHistoryOutput) SetNextToken(v string) *DescribeAlarmHistor
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetricInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetricInput
 type DescribeAlarmsForMetricInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2140,7 +2157,7 @@ func (s *DescribeAlarmsForMetricInput) SetUnit(v string) *DescribeAlarmsForMetri
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetricOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsForMetricOutput
 type DescribeAlarmsForMetricOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2164,7 +2181,7 @@ func (s *DescribeAlarmsForMetricOutput) SetMetricAlarms(v []*MetricAlarm) *Descr
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsInput
 type DescribeAlarmsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2254,7 +2271,7 @@ func (s *DescribeAlarmsInput) SetStateValue(v string) *DescribeAlarmsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DescribeAlarmsOutput
 type DescribeAlarmsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2288,7 +2305,7 @@ func (s *DescribeAlarmsOutput) SetNextToken(v string) *DescribeAlarmsOutput {
 }
 
 // Expands the identity of a metric.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/Dimension
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/Dimension
 type Dimension struct {
 	_ struct{} `type:"structure"`
 
@@ -2348,7 +2365,7 @@ func (s *Dimension) SetValue(v string) *Dimension {
 }
 
 // Represents filters for a dimension.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DimensionFilter
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DimensionFilter
 type DimensionFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -2402,7 +2419,7 @@ func (s *DimensionFilter) SetValue(v string) *DimensionFilter {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActionsInput
 type DisableAlarmActionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2441,7 +2458,7 @@ func (s *DisableAlarmActionsInput) SetAlarmNames(v []*string) *DisableAlarmActio
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/DisableAlarmActionsOutput
 type DisableAlarmActionsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2456,7 +2473,7 @@ func (s DisableAlarmActionsOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActionsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActionsInput
 type EnableAlarmActionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2495,7 +2512,7 @@ func (s *EnableAlarmActionsInput) SetAlarmNames(v []*string) *EnableAlarmActions
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActionsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/EnableAlarmActionsOutput
 type EnableAlarmActionsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2510,12 +2527,14 @@ func (s EnableAlarmActionsOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboardInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboardInput
 type GetDashboardInput struct {
 	_ struct{} `type:"structure"`
 
 	// The name of the dashboard to be described.
-	DashboardName *string `type:"string"`
+	//
+	// DashboardName is a required field
+	DashboardName *string `type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -2528,13 +2547,26 @@ func (s GetDashboardInput) GoString() string {
 	return s.String()
 }
 
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *GetDashboardInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "GetDashboardInput"}
+	if s.DashboardName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DashboardName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
+}
+
 // SetDashboardName sets the DashboardName field's value.
 func (s *GetDashboardInput) SetDashboardName(v string) *GetDashboardInput {
 	s.DashboardName = &v
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboardOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetDashboardOutput
 type GetDashboardOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2578,7 +2610,7 @@ func (s *GetDashboardOutput) SetDashboardName(v string) *GetDashboardOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatisticsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatisticsInput
 type GetMetricStatisticsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2792,7 +2824,7 @@ func (s *GetMetricStatisticsInput) SetUnit(v string) *GetMetricStatisticsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatisticsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/GetMetricStatisticsOutput
 type GetMetricStatisticsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2825,7 +2857,7 @@ func (s *GetMetricStatisticsOutput) SetLabel(v string) *GetMetricStatisticsOutpu
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboardsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboardsInput
 type ListDashboardsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2861,7 +2893,7 @@ func (s *ListDashboardsInput) SetNextToken(v string) *ListDashboardsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboardsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListDashboardsOutput
 type ListDashboardsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2894,7 +2926,7 @@ func (s *ListDashboardsOutput) SetNextToken(v string) *ListDashboardsOutput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetricsInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetricsInput
 type ListMetricsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2972,7 +3004,7 @@ func (s *ListMetricsInput) SetNextToken(v string) *ListMetricsInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetricsOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/ListMetricsOutput
 type ListMetricsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3006,7 +3038,7 @@ func (s *ListMetricsOutput) SetNextToken(v string) *ListMetricsOutput {
 }
 
 // Represents a specific metric.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/Metric
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/Metric
 type Metric struct {
 	_ struct{} `type:"structure"`
 
@@ -3049,7 +3081,7 @@ func (s *Metric) SetNamespace(v string) *Metric {
 }
 
 // Represents an alarm.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/MetricAlarm
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/MetricAlarm
 type MetricAlarm struct {
 	_ struct{} `type:"structure"`
 
@@ -3076,6 +3108,9 @@ type MetricAlarm struct {
 	// The arithmetic operation to use when comparing the specified statistic and
 	// threshold. The specified statistic value is used as the first operand.
 	ComparisonOperator *string `type:"string" enum:"ComparisonOperator"`
+
+	// The number of datapoints that must be breaching to trigger the alarm.
+	DatapointsToAlarm *int64 `min:"1" type:"integer"`
 
 	// The dimensions for the metric associated with the alarm.
 	Dimensions []*Dimension `type:"list"`
@@ -3190,6 +3225,12 @@ func (s *MetricAlarm) SetComparisonOperator(v string) *MetricAlarm {
 	return s
 }
 
+// SetDatapointsToAlarm sets the DatapointsToAlarm field's value.
+func (s *MetricAlarm) SetDatapointsToAlarm(v int64) *MetricAlarm {
+	s.DatapointsToAlarm = &v
+	return s
+}
+
 // SetDimensions sets the Dimensions field's value.
 func (s *MetricAlarm) SetDimensions(v []*Dimension) *MetricAlarm {
 	s.Dimensions = v
@@ -3294,7 +3335,7 @@ func (s *MetricAlarm) SetUnit(v string) *MetricAlarm {
 
 // Encapsulates the information sent to either create a metric or add new values
 // to be aggregated into an existing metric.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/MetricDatum
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/MetricDatum
 type MetricDatum struct {
 	_ struct{} `type:"structure"`
 
@@ -3423,21 +3464,26 @@ func (s *MetricDatum) SetValue(v float64) *MetricDatum {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboardInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboardInput
 type PutDashboardInput struct {
 	_ struct{} `type:"structure"`
 
 	// The detailed information about the dashboard in JSON format, including the
-	// widgets to include and their location on the dashboard.
+	// widgets to include and their location on the dashboard. This parameter is
+	// required.
 	//
 	// For more information about the syntax, see CloudWatch-Dashboard-Body-Structure.
-	DashboardBody *string `type:"string"`
+	//
+	// DashboardBody is a required field
+	DashboardBody *string `type:"string" required:"true"`
 
 	// The name of the dashboard. If a dashboard with this name already exists,
 	// this call modifies that dashboard, replacing its current contents. Otherwise,
 	// a new dashboard is created. The maximum length is 255, and valid characters
-	// are A-Z, a-z, 0-9, "-", and "_".
-	DashboardName *string `type:"string"`
+	// are A-Z, a-z, 0-9, "-", and "_". This parameter is required.
+	//
+	// DashboardName is a required field
+	DashboardName *string `type:"string" required:"true"`
 }
 
 // String returns the string representation
@@ -3448,6 +3494,22 @@ func (s PutDashboardInput) String() string {
 // GoString returns the string representation
 func (s PutDashboardInput) GoString() string {
 	return s.String()
+}
+
+// Validate inspects the fields of the type to determine if they are valid.
+func (s *PutDashboardInput) Validate() error {
+	invalidParams := request.ErrInvalidParams{Context: "PutDashboardInput"}
+	if s.DashboardBody == nil {
+		invalidParams.Add(request.NewErrParamRequired("DashboardBody"))
+	}
+	if s.DashboardName == nil {
+		invalidParams.Add(request.NewErrParamRequired("DashboardName"))
+	}
+
+	if invalidParams.Len() > 0 {
+		return invalidParams
+	}
+	return nil
 }
 
 // SetDashboardBody sets the DashboardBody field's value.
@@ -3462,7 +3524,7 @@ func (s *PutDashboardInput) SetDashboardName(v string) *PutDashboardInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboardOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutDashboardOutput
 type PutDashboardOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3494,7 +3556,7 @@ func (s *PutDashboardOutput) SetDashboardValidationMessages(v []*DashboardValida
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarmInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarmInput
 type PutMetricAlarmInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3506,11 +3568,12 @@ type PutMetricAlarmInput struct {
 	// any other state. Each action is specified as an Amazon Resource Name (ARN).
 	//
 	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
-	// | arn:aws:automate:region:ec2:recover
+	// | arn:aws:automate:region:ec2:recover | arn:aws:sns:region:account-id:sns-topic-name
+	// | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
 	//
-	// Valid Values (for use with IAM roles): arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Stop/1.0
-	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
-	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
+	// Valid Values (for use with IAM roles): arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Stop/1.0
+	// | arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
+	// | arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
 	AlarmActions []*string `type:"list"`
 
 	// The description for the alarm.
@@ -3526,6 +3589,9 @@ type PutMetricAlarmInput struct {
 	//
 	// ComparisonOperator is a required field
 	ComparisonOperator *string `type:"string" required:"true" enum:"ComparisonOperator"`
+
+	// The number of datapoints that must be breaching to trigger the alarm.
+	DatapointsToAlarm *int64 `min:"1" type:"integer"`
 
 	// The dimensions for the metric associated with the alarm.
 	Dimensions []*Dimension `type:"list"`
@@ -3548,7 +3614,8 @@ type PutMetricAlarmInput struct {
 	EvaluationPeriods *int64 `min:"1" type:"integer" required:"true"`
 
 	// The percentile statistic for the metric associated with the alarm. Specify
-	// a value between p0.0 and p100.
+	// a value between p0.0 and p100. When you call PutMetricAlarm, you must specify
+	// either Statistic or ExtendedStatistic, but not both.
 	ExtendedStatistic *string `type:"string"`
 
 	// The actions to execute when this alarm transitions to the INSUFFICIENT_DATA
@@ -3556,11 +3623,12 @@ type PutMetricAlarmInput struct {
 	// Name (ARN).
 	//
 	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
-	// | arn:aws:automate:region:ec2:recover
+	// | arn:aws:automate:region:ec2:recover | arn:aws:sns:region:account-id:sns-topic-name
+	// | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
 	//
-	// Valid Values (for use with IAM roles): arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Stop/1.0
-	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
-	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
+	// Valid Values (for use with IAM roles): arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Stop/1.0
+	// | arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
+	// | arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
 	InsufficientDataActions []*string `type:"list"`
 
 	// The name for the metric associated with the alarm.
@@ -3577,11 +3645,12 @@ type PutMetricAlarmInput struct {
 	// other state. Each action is specified as an Amazon Resource Name (ARN).
 	//
 	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
-	// | arn:aws:automate:region:ec2:recover
+	// | arn:aws:automate:region:ec2:recover | arn:aws:sns:region:account-id:sns-topic-name
+	// | arn:aws:autoscaling:region:account-id:scalingPolicy:policy-id autoScalingGroupName/group-friendly-name:policyName/policy-friendly-name
 	//
-	// Valid Values (for use with IAM roles): arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Stop/1.0
-	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
-	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
+	// Valid Values (for use with IAM roles): arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Stop/1.0
+	// | arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
+	// | arn:aws:swf:region:{account-id}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
 	OKActions []*string `type:"list"`
 
 	// The period, in seconds, over which the specified statistic is applied. Valid
@@ -3604,7 +3673,8 @@ type PutMetricAlarmInput struct {
 	Period *int64 `min:"1" type:"integer" required:"true"`
 
 	// The statistic for the metric associated with the alarm, other than percentile.
-	// For percentile statistics, use ExtendedStatistic.
+	// For percentile statistics, use ExtendedStatistic. When you call PutMetricAlarm,
+	// you must specify either Statistic or ExtendedStatistic, but not both.
 	Statistic *string `type:"string" enum:"Statistic"`
 
 	// The value against which the specified statistic is compared.
@@ -3652,6 +3722,9 @@ func (s *PutMetricAlarmInput) Validate() error {
 	}
 	if s.ComparisonOperator == nil {
 		invalidParams.Add(request.NewErrParamRequired("ComparisonOperator"))
+	}
+	if s.DatapointsToAlarm != nil && *s.DatapointsToAlarm < 1 {
+		invalidParams.Add(request.NewErrParamMinValue("DatapointsToAlarm", 1))
 	}
 	if s.EvaluateLowSampleCountPercentile != nil && len(*s.EvaluateLowSampleCountPercentile) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("EvaluateLowSampleCountPercentile", 1))
@@ -3733,6 +3806,12 @@ func (s *PutMetricAlarmInput) SetComparisonOperator(v string) *PutMetricAlarmInp
 	return s
 }
 
+// SetDatapointsToAlarm sets the DatapointsToAlarm field's value.
+func (s *PutMetricAlarmInput) SetDatapointsToAlarm(v int64) *PutMetricAlarmInput {
+	s.DatapointsToAlarm = &v
+	return s
+}
+
 // SetDimensions sets the Dimensions field's value.
 func (s *PutMetricAlarmInput) SetDimensions(v []*Dimension) *PutMetricAlarmInput {
 	s.Dimensions = v
@@ -3811,7 +3890,7 @@ func (s *PutMetricAlarmInput) SetUnit(v string) *PutMetricAlarmInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarmOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricAlarmOutput
 type PutMetricAlarmOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3826,7 +3905,7 @@ func (s PutMetricAlarmOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricDataInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricDataInput
 type PutMetricDataInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3895,7 +3974,7 @@ func (s *PutMetricDataInput) SetNamespace(v string) *PutMetricDataInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricDataOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/PutMetricDataOutput
 type PutMetricDataOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3910,7 +3989,7 @@ func (s PutMetricDataOutput) GoString() string {
 	return s.String()
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmStateInput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmStateInput
 type SetAlarmStateInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3990,7 +4069,7 @@ func (s *SetAlarmStateInput) SetStateValue(v string) *SetAlarmStateInput {
 	return s
 }
 
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmStateOutput
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/SetAlarmStateOutput
 type SetAlarmStateOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4006,7 +4085,7 @@ func (s SetAlarmStateOutput) GoString() string {
 }
 
 // Represents a set of statistics that describes a specific metric.
-// Please also see https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/StatisticSet
+// See also, https://docs.aws.amazon.com/goto/WebAPI/monitoring-2010-08-01/StatisticSet
 type StatisticSet struct {
 	_ struct{} `type:"structure"`
 

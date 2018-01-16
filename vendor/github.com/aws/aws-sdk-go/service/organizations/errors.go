@@ -21,6 +21,14 @@ const (
 	// in the IAM User Guide.
 	ErrCodeAccessDeniedException = "AccessDeniedException"
 
+	// ErrCodeAccessDeniedForDependencyException for service response error code
+	// "AccessDeniedForDependencyException".
+	//
+	// The operation you attempted requires you to have the iam:CreateServiceLinkedRole
+	// so that Organizations can create the required service-linked role. You do
+	// not have that permission.
+	ErrCodeAccessDeniedForDependencyException = "AccessDeniedForDependencyException"
+
 	// ErrCodeAccountNotFoundException for service response error code
 	// "AccountNotFoundException".
 	//
@@ -58,6 +66,9 @@ const (
 	// or creating too many accounts to the organization, or attaching too many
 	// policies to an account, OU, or root. This exception includes a reason that
 	// contains additional information about the violated limit:
+	//
+	// Some of the reasons in the following list might not be applicable to this
+	// specific API or operation:
 	//
 	// ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on the number
 	// of accounts in an organization. If you need more accounts, contact AWS Support
@@ -203,6 +214,9 @@ const (
 	// The requested operation would violate the constraint identified in the reason
 	// code.
 	//
+	// Some of the reasons in the following list might not be applicable to this
+	// specific API or operation:
+	//
 	//    * ACCOUNT_NUMBER_LIMIT_EXCEEDED: You attempted to exceed the limit on
 	//    the number of accounts in an organization. Note: deleted and closed accounts
 	//    still count toward your limit.
@@ -259,6 +273,9 @@ const (
 	// The requested operation failed because you provided invalid values for one
 	// or more of the request parameters. This exception includes a reason that
 	// contains additional information about the violated limit:
+	//
+	// Some of the reasons in the following list might not be applicable to this
+	// specific API or operation:
 	//
 	//    * INVALID_PARTY_TYPE_TARGET: You specified the wrong type of entity (account,
 	//    organization, or email) as a party.

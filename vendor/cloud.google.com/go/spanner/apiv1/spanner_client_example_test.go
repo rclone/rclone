@@ -1,4 +1,4 @@
-// Copyright 2017, Google Inc. All rights reserved.
+// Copyright 2017, Google LLC All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import (
 
 	"cloud.google.com/go/spanner/apiv1"
 	"golang.org/x/net/context"
+	"google.golang.org/api/iterator"
 	spannerpb "google.golang.org/genproto/googleapis/spanner/v1"
 )
 
@@ -68,6 +69,30 @@ func ExampleClient_GetSession() {
 	}
 	// TODO: Use resp.
 	_ = resp
+}
+
+func ExampleClient_ListSessions() {
+	ctx := context.Background()
+	c, err := spanner.NewClient(ctx)
+	if err != nil {
+		// TODO: Handle error.
+	}
+
+	req := &spannerpb.ListSessionsRequest{
+	// TODO: Fill request struct fields.
+	}
+	it := c.ListSessions(ctx, req)
+	for {
+		resp, err := it.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			// TODO: Handle error.
+		}
+		// TODO: Use resp.
+		_ = resp
+	}
 }
 
 func ExampleClient_DeleteSession() {

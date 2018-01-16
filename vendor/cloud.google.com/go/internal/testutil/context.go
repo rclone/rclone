@@ -16,6 +16,7 @@
 package testutil
 
 import (
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -23,6 +24,7 @@ import (
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 	"golang.org/x/oauth2/google"
+	"golang.org/x/oauth2/jwt"
 )
 
 const (
@@ -33,20 +35,24 @@ const (
 // ProjID returns the project ID to use in integration tests, or the empty
 // string if none is configured.
 func ProjID() string {
-	projID := os.Getenv(envProjID)
-	if projID == "" {
-		return ""
-	}
-	return projID
+	return os.Getenv(envProjID)
 }
 
 // TokenSource returns the OAuth2 token source to use in integration tests,
-// or nil if none is configured. If the environment variable is unset,
-// TokenSource will try to find 'Application Default Credentials'. Else,
-// TokenSource will return nil.
-// TokenSource will log.Fatal if the token source is specified but missing or invalid.
+// or nil if none is configured. It uses the standard environment variable
+// for tests in this repo.
 func TokenSource(ctx context.Context, scopes ...string) oauth2.TokenSource {
-	key := os.Getenv(envPrivateKey)
+	return TokenSourceEnv(ctx, envPrivateKey, scopes...)
+}
+
+// TokenSourceEnv returns the OAuth2 token source to use in integration tests. or nil
+// if none is configured. It tries to get credentials from the filename in the
+// environment variable envVar. If the environment variable is unset, TokenSourceEnv
+// will try to find 'Application Default Credentials'. Else, TokenSourceEnv will
+// return nil. TokenSourceEnv will log.Fatal if the token source is specified but
+// missing or invalid.
+func TokenSourceEnv(ctx context.Context, envVar string, scopes ...string) oauth2.TokenSource {
+	key := os.Getenv(envVar)
 	if key == "" { // Try for application default credentials.
 		ts, err := google.DefaultTokenSource(ctx, scopes...)
 		if err != nil {
@@ -55,13 +61,35 @@ func TokenSource(ctx context.Context, scopes ...string) oauth2.TokenSource {
 		}
 		return ts
 	}
-	jsonKey, err := ioutil.ReadFile(key)
+	conf, err := jwtConfigFromFile(key, scopes)
 	if err != nil {
-		log.Fatalf("Cannot read the JSON key file, err: %v", err)
+		log.Fatal(err)
+	}
+	return conf.TokenSource(ctx)
+}
+
+// JWTConfig reads the JSON private key file whose name is in the default
+// environment variable, and returns the jwt.Config it contains. It ignores
+// scopes.
+// If the environment variable is empty, it returns (nil, nil).
+func JWTConfig() (*jwt.Config, error) {
+	return jwtConfigFromFile(os.Getenv(envPrivateKey), nil)
+}
+
+// jwtConfigFromFile reads the given JSON private key file, and returns the
+// jwt.Config it contains.
+// If the filename is empty, it returns (nil, nil).
+func jwtConfigFromFile(filename string, scopes []string) (*jwt.Config, error) {
+	if filename == "" {
+		return nil, nil
+	}
+	jsonKey, err := ioutil.ReadFile(filename)
+	if err != nil {
+		return nil, fmt.Errorf("Cannot read the JSON key file, err: %v", err)
 	}
 	conf, err := google.JWTConfigFromJSON(jsonKey, scopes...)
 	if err != nil {
-		log.Fatalf("google.JWTConfigFromJSON: %v", err)
+		return nil, fmt.Errorf("google.JWTConfigFromJSON: %v", err)
 	}
-	return conf.TokenSource(ctx)
+	return conf, nil
 }

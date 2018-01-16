@@ -116,6 +116,18 @@ type GreengrassAPI interface {
 	CreateLoggerDefinitionVersionWithContext(aws.Context, *greengrass.CreateLoggerDefinitionVersionInput, ...request.Option) (*greengrass.CreateLoggerDefinitionVersionOutput, error)
 	CreateLoggerDefinitionVersionRequest(*greengrass.CreateLoggerDefinitionVersionInput) (*request.Request, *greengrass.CreateLoggerDefinitionVersionOutput)
 
+	CreateResourceDefinition(*greengrass.CreateResourceDefinitionInput) (*greengrass.CreateResourceDefinitionOutput, error)
+	CreateResourceDefinitionWithContext(aws.Context, *greengrass.CreateResourceDefinitionInput, ...request.Option) (*greengrass.CreateResourceDefinitionOutput, error)
+	CreateResourceDefinitionRequest(*greengrass.CreateResourceDefinitionInput) (*request.Request, *greengrass.CreateResourceDefinitionOutput)
+
+	CreateResourceDefinitionVersion(*greengrass.CreateResourceDefinitionVersionInput) (*greengrass.CreateResourceDefinitionVersionOutput, error)
+	CreateResourceDefinitionVersionWithContext(aws.Context, *greengrass.CreateResourceDefinitionVersionInput, ...request.Option) (*greengrass.CreateResourceDefinitionVersionOutput, error)
+	CreateResourceDefinitionVersionRequest(*greengrass.CreateResourceDefinitionVersionInput) (*request.Request, *greengrass.CreateResourceDefinitionVersionOutput)
+
+	CreateSoftwareUpdateJob(*greengrass.CreateSoftwareUpdateJobInput) (*greengrass.CreateSoftwareUpdateJobOutput, error)
+	CreateSoftwareUpdateJobWithContext(aws.Context, *greengrass.CreateSoftwareUpdateJobInput, ...request.Option) (*greengrass.CreateSoftwareUpdateJobOutput, error)
+	CreateSoftwareUpdateJobRequest(*greengrass.CreateSoftwareUpdateJobInput) (*request.Request, *greengrass.CreateSoftwareUpdateJobOutput)
+
 	CreateSubscriptionDefinition(*greengrass.CreateSubscriptionDefinitionInput) (*greengrass.CreateSubscriptionDefinitionOutput, error)
 	CreateSubscriptionDefinitionWithContext(aws.Context, *greengrass.CreateSubscriptionDefinitionInput, ...request.Option) (*greengrass.CreateSubscriptionDefinitionOutput, error)
 	CreateSubscriptionDefinitionRequest(*greengrass.CreateSubscriptionDefinitionInput) (*request.Request, *greengrass.CreateSubscriptionDefinitionOutput)
@@ -143,6 +155,10 @@ type GreengrassAPI interface {
 	DeleteLoggerDefinition(*greengrass.DeleteLoggerDefinitionInput) (*greengrass.DeleteLoggerDefinitionOutput, error)
 	DeleteLoggerDefinitionWithContext(aws.Context, *greengrass.DeleteLoggerDefinitionInput, ...request.Option) (*greengrass.DeleteLoggerDefinitionOutput, error)
 	DeleteLoggerDefinitionRequest(*greengrass.DeleteLoggerDefinitionInput) (*request.Request, *greengrass.DeleteLoggerDefinitionOutput)
+
+	DeleteResourceDefinition(*greengrass.DeleteResourceDefinitionInput) (*greengrass.DeleteResourceDefinitionOutput, error)
+	DeleteResourceDefinitionWithContext(aws.Context, *greengrass.DeleteResourceDefinitionInput, ...request.Option) (*greengrass.DeleteResourceDefinitionOutput, error)
+	DeleteResourceDefinitionRequest(*greengrass.DeleteResourceDefinitionInput) (*request.Request, *greengrass.DeleteResourceDefinitionOutput)
 
 	DeleteSubscriptionDefinition(*greengrass.DeleteSubscriptionDefinitionInput) (*greengrass.DeleteSubscriptionDefinitionOutput, error)
 	DeleteSubscriptionDefinitionWithContext(aws.Context, *greengrass.DeleteSubscriptionDefinitionInput, ...request.Option) (*greengrass.DeleteSubscriptionDefinitionOutput, error)
@@ -216,6 +232,14 @@ type GreengrassAPI interface {
 	GetLoggerDefinitionVersionWithContext(aws.Context, *greengrass.GetLoggerDefinitionVersionInput, ...request.Option) (*greengrass.GetLoggerDefinitionVersionOutput, error)
 	GetLoggerDefinitionVersionRequest(*greengrass.GetLoggerDefinitionVersionInput) (*request.Request, *greengrass.GetLoggerDefinitionVersionOutput)
 
+	GetResourceDefinition(*greengrass.GetResourceDefinitionInput) (*greengrass.GetResourceDefinitionOutput, error)
+	GetResourceDefinitionWithContext(aws.Context, *greengrass.GetResourceDefinitionInput, ...request.Option) (*greengrass.GetResourceDefinitionOutput, error)
+	GetResourceDefinitionRequest(*greengrass.GetResourceDefinitionInput) (*request.Request, *greengrass.GetResourceDefinitionOutput)
+
+	GetResourceDefinitionVersion(*greengrass.GetResourceDefinitionVersionInput) (*greengrass.GetResourceDefinitionVersionOutput, error)
+	GetResourceDefinitionVersionWithContext(aws.Context, *greengrass.GetResourceDefinitionVersionInput, ...request.Option) (*greengrass.GetResourceDefinitionVersionOutput, error)
+	GetResourceDefinitionVersionRequest(*greengrass.GetResourceDefinitionVersionInput) (*request.Request, *greengrass.GetResourceDefinitionVersionOutput)
+
 	GetServiceRoleForAccount(*greengrass.GetServiceRoleForAccountInput) (*greengrass.GetServiceRoleForAccountOutput, error)
 	GetServiceRoleForAccountWithContext(aws.Context, *greengrass.GetServiceRoleForAccountInput, ...request.Option) (*greengrass.GetServiceRoleForAccountOutput, error)
 	GetServiceRoleForAccountRequest(*greengrass.GetServiceRoleForAccountInput) (*request.Request, *greengrass.GetServiceRoleForAccountOutput)
@@ -276,6 +300,14 @@ type GreengrassAPI interface {
 	ListLoggerDefinitionsWithContext(aws.Context, *greengrass.ListLoggerDefinitionsInput, ...request.Option) (*greengrass.ListLoggerDefinitionsOutput, error)
 	ListLoggerDefinitionsRequest(*greengrass.ListLoggerDefinitionsInput) (*request.Request, *greengrass.ListLoggerDefinitionsOutput)
 
+	ListResourceDefinitionVersions(*greengrass.ListResourceDefinitionVersionsInput) (*greengrass.ListResourceDefinitionVersionsOutput, error)
+	ListResourceDefinitionVersionsWithContext(aws.Context, *greengrass.ListResourceDefinitionVersionsInput, ...request.Option) (*greengrass.ListResourceDefinitionVersionsOutput, error)
+	ListResourceDefinitionVersionsRequest(*greengrass.ListResourceDefinitionVersionsInput) (*request.Request, *greengrass.ListResourceDefinitionVersionsOutput)
+
+	ListResourceDefinitions(*greengrass.ListResourceDefinitionsInput) (*greengrass.ListResourceDefinitionsOutput, error)
+	ListResourceDefinitionsWithContext(aws.Context, *greengrass.ListResourceDefinitionsInput, ...request.Option) (*greengrass.ListResourceDefinitionsOutput, error)
+	ListResourceDefinitionsRequest(*greengrass.ListResourceDefinitionsInput) (*request.Request, *greengrass.ListResourceDefinitionsOutput)
+
 	ListSubscriptionDefinitionVersions(*greengrass.ListSubscriptionDefinitionVersionsInput) (*greengrass.ListSubscriptionDefinitionVersionsOutput, error)
 	ListSubscriptionDefinitionVersionsWithContext(aws.Context, *greengrass.ListSubscriptionDefinitionVersionsInput, ...request.Option) (*greengrass.ListSubscriptionDefinitionVersionsOutput, error)
 	ListSubscriptionDefinitionVersionsRequest(*greengrass.ListSubscriptionDefinitionVersionsInput) (*request.Request, *greengrass.ListSubscriptionDefinitionVersionsOutput)
@@ -315,6 +347,10 @@ type GreengrassAPI interface {
 	UpdateLoggerDefinition(*greengrass.UpdateLoggerDefinitionInput) (*greengrass.UpdateLoggerDefinitionOutput, error)
 	UpdateLoggerDefinitionWithContext(aws.Context, *greengrass.UpdateLoggerDefinitionInput, ...request.Option) (*greengrass.UpdateLoggerDefinitionOutput, error)
 	UpdateLoggerDefinitionRequest(*greengrass.UpdateLoggerDefinitionInput) (*request.Request, *greengrass.UpdateLoggerDefinitionOutput)
+
+	UpdateResourceDefinition(*greengrass.UpdateResourceDefinitionInput) (*greengrass.UpdateResourceDefinitionOutput, error)
+	UpdateResourceDefinitionWithContext(aws.Context, *greengrass.UpdateResourceDefinitionInput, ...request.Option) (*greengrass.UpdateResourceDefinitionOutput, error)
+	UpdateResourceDefinitionRequest(*greengrass.UpdateResourceDefinitionInput) (*request.Request, *greengrass.UpdateResourceDefinitionOutput)
 
 	UpdateSubscriptionDefinition(*greengrass.UpdateSubscriptionDefinitionInput) (*greengrass.UpdateSubscriptionDefinitionOutput, error)
 	UpdateSubscriptionDefinitionWithContext(aws.Context, *greengrass.UpdateSubscriptionDefinitionInput, ...request.Option) (*greengrass.UpdateSubscriptionDefinitionOutput, error)

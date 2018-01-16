@@ -39,7 +39,10 @@ var (
 	useSSE4 bool
 )
 
-var errKeySize = errors.New("blake2b: invalid key size")
+var (
+	errKeySize  = errors.New("blake2b: invalid key size")
+	errHashSize = errors.New("blake2b: invalid hash size")
+)
 
 var iv = [8]uint64{
 	0x6a09e667f3bcc908, 0xbb67ae8584caa73b, 0x3c6ef372fe94f82b, 0xa54ff53a5f1d36f1,
@@ -83,7 +86,18 @@ func New384(key []byte) (hash.Hash, error) { return newDigest(Size384, key) }
 // key turns the hash into a MAC. The key must between zero and 64 bytes long.
 func New256(key []byte) (hash.Hash, error) { return newDigest(Size256, key) }
 
+// New returns a new hash.Hash computing the BLAKE2b checksum with a custom length.
+// A non-nil key turns the hash into a MAC. The key must between zero and 64 bytes long.
+// The hash size can be a value between 1 and 64 but it is highly recommended to use
+// values equal or greater than:
+// - 32 if BLAKE2b is used as a hash function (The key is zero bytes long).
+// - 16 if BLAKE2b is used as a MAC function (The key is at least 16 bytes long).
+func New(size int, key []byte) (hash.Hash, error) { return newDigest(size, key) }
+
 func newDigest(hashSize int, key []byte) (*digest, error) {
+	if hashSize < 1 || hashSize > Size {
+		return nil, errHashSize
+	}
 	if len(key) > Size {
 		return nil, errKeySize
 	}

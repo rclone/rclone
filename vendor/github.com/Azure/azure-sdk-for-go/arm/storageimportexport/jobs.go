@@ -136,7 +136,9 @@ func (client JobsClient) CreateOrUpdatePreparer(resourceGroupName string, jobNam
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -204,7 +206,9 @@ func (client JobsClient) DeletePreparer(resourceGroupName string, jobName string
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -270,7 +274,9 @@ func (client JobsClient) GetPreparer(resourceGroupName string, jobName string) (
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -354,7 +360,9 @@ func (client JobsClient) ListPreparer(top *int32, filter string) (*http.Request,
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always
@@ -490,7 +498,9 @@ func (client JobsClient) ListBitLockerKeysPreparer(resourceGroupName string, job
 // ListBitLockerKeysSender sends the ListBitLockerKeys request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) ListBitLockerKeysSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBitLockerKeysResponder handles the response to the ListBitLockerKeys request. The method always
@@ -576,7 +586,9 @@ func (client JobsClient) ListByResourceGroupPreparer(resourceGroupName string, t
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -721,7 +733,9 @@ func (client JobsClient) MovePreparer(resourceGroupName string, moveJobsParamete
 // MoveSender sends the Move request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) MoveSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // MoveResponder handles the response to the Move request. The method always
@@ -791,7 +805,9 @@ func (client JobsClient) UpdatePreparer(resourceGroupName string, jobName string
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client JobsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always

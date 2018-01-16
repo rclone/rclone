@@ -3,27 +3,40 @@ version: '{build}'
 clone_folder: C:\projects\go\src\github.com\billziss-gh\cgofuse
 
 environment:
-  CPATH: C:\Program Files (x86)\WinFsp\inc\fuse
+  CPATH: C:\projects\winfsp\inc\fuse
   GODEBUG: cgocheck=2
   GOPATH: C:\projects\go
   PATH: C:\mingw-w64\x86_64-6.3.0-posix-seh-rt_v5-rev1\mingw64\bin;%PATH%
 
 install:
-- choco install winfsp -y
+- choco install winfsp --version=1.0.17072 -y
+- git clone -q https://github.com/billziss-gh/winfsp.git C:\projects\winfsp
+- git -C C:\projects\winfsp checkout -q release/1.2
 
 build_script:
 - go install -v ./...
 
 test_script:
 - go test ./fuse
-- git clone -q https://github.com/billziss-gh/winfsp.git C:\projects\winfsp
-- git -C C:\projects\winfsp checkout -q v1.0
-- call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" x64
-- devenv C:\projects\winfsp\build\VStudio\winfsp.sln /build "Release|x64"
+
 # hard code fsreg parameters because appveyor does not like percents ("--VolumePrefix=%1 %2")
 - C:\projects\winfsp\tools\fsreg.bat gomemfs "C:\projects\go\bin\memfs.exe" "--VolumePrefix=\gomemfs\share M:" "D:P(A;;RPWPLC;;;WD)"
+
+- call "%VS140COMNTOOLS%\..\..\VC\vcvarsall.bat" x64
+- devenv C:\projects\winfsp\build\VStudio\winfsp.sln /build "Release|x64"
+
+# test against WinFsp v1.0
 - 'net use M: \\gomemfs\share'
 - 'M: & cd'
 - C:\projects\winfsp\build\VStudio\build\Release\winfsp-tests-x64.exe --external --resilient --share-prefix=\gomemfs\share -create_allocation_test -getfileinfo_name_test -setfileinfo_test -delete_access_test -setsecurity_test -reparse* -stream*
+- 'C: & cd'
+- 'net use M: /delete'
+
+# test against WinFsp v1.2 DLL with chflags, setcrtime and setchgtime
+# HACK: mixing DLL and FSD versions; do not try this at home
+- copy C:\projects\winfsp\build\VStudio\build\Release\winfsp-x64.dll C:\projects\go\bin
+- 'net use M: \\gomemfs\share'
+- 'M: & cd'
+- C:\projects\winfsp\build\VStudio\build\Release\winfsp-tests-x64.exe --external --resilient --share-prefix=\gomemfs\share -create_allocation_test -getfileinfo_name_test -delete_access_test -setsecurity_test -reparse* -stream*
 - 'C: & cd'
 - 'net use M: /delete'

@@ -9,8 +9,6 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
 	"github.com/aws/aws-sdk-go/aws/request"
@@ -32,9 +30,15 @@ func TestDefaultConfigValues(t *testing.T) {
 
 	c := s3crypto.NewEncryptionClient(sess, s3crypto.AESGCMContentCipherBuilder(handler))
 
-	assert.NotNil(t, c)
-	assert.NotNil(t, c.ContentCipherBuilder)
-	assert.NotNil(t, c.SaveStrategy)
+	if c == nil {
+		t.Error("expected non-vil client value")
+	}
+	if c.ContentCipherBuilder == nil {
+		t.Error("expected non-vil content cipher builder value")
+	}
+	if c.SaveStrategy == nil {
+		t.Error("expected non-vil save strategy value")
+	}
 }
 
 func TestPutObject(t *testing.T) {
@@ -49,7 +53,9 @@ func TestPutObject(t *testing.T) {
 		Region:           aws.String("us-west-2"),
 	})
 	c := s3crypto.NewEncryptionClient(sess, cb)
-	assert.NotNil(t, c)
+	if c == nil {
+		t.Error("expected non-vil client value")
+	}
 	input := &s3.PutObjectInput{
 		Key:    aws.String("test"),
 		Bucket: aws.String("test"),
@@ -64,10 +70,16 @@ func TestPutObject(t *testing.T) {
 		}
 	})
 	err := req.Send()
-	assert.Equal(t, "stop", err.Error())
+	if e, a := "stop", err.Error(); e != a {
+		t.Errorf("expected %s error, but received %s", e, a)
+	}
 	b, err := ioutil.ReadAll(req.HTTPRequest.Body)
-	assert.NoError(t, err)
-	assert.Equal(t, expected, b)
+	if err != nil {
+		t.Errorf("expected no error, but received %v", err)
+	}
+	if !bytes.Equal(expected, b) {
+		t.Error("expected bytes to be equivalent, but received otherwise")
+	}
 }
 
 func TestPutObjectWithContext(t *testing.T) {

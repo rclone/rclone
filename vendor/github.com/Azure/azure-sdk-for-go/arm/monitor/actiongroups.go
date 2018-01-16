@@ -101,7 +101,9 @@ func (client ActionGroupsClient) CreateOrUpdatePreparer(resourceGroupName string
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActionGroupsClient) CreateOrUpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateOrUpdateResponder handles the response to the CreateOrUpdate request. The method always
@@ -166,7 +168,9 @@ func (client ActionGroupsClient) DeletePreparer(resourceGroupName string, action
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActionGroupsClient) DeleteSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // DeleteResponder handles the response to the Delete request. The method always
@@ -239,7 +243,9 @@ func (client ActionGroupsClient) EnableReceiverPreparer(resourceGroupName string
 // EnableReceiverSender sends the EnableReceiver request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActionGroupsClient) EnableReceiverSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // EnableReceiverResponder handles the response to the EnableReceiver request. The method always
@@ -303,7 +309,9 @@ func (client ActionGroupsClient) GetPreparer(resourceGroupName string, actionGro
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActionGroupsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -367,7 +375,9 @@ func (client ActionGroupsClient) ListByResourceGroupPreparer(resourceGroupName s
 // ListByResourceGroupSender sends the ListByResourceGroup request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActionGroupsClient) ListByResourceGroupSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListByResourceGroupResponder handles the response to the ListByResourceGroup request. The method always
@@ -428,7 +438,9 @@ func (client ActionGroupsClient) ListBySubscriptionIDPreparer() (*http.Request, 
 // ListBySubscriptionIDSender sends the ListBySubscriptionID request. The method will close the
 // http.Response Body if it receives an error.
 func (client ActionGroupsClient) ListBySubscriptionIDSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListBySubscriptionIDResponder handles the response to the ListBySubscriptionID request. The method always

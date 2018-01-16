@@ -100,7 +100,9 @@ func (client ExportTasksClient) CreateActivitiesTaskPreparer(resourceGroupName s
 // CreateActivitiesTaskSender sends the CreateActivitiesTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateActivitiesTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateActivitiesTaskResponder handles the response to the CreateActivitiesTask request. The method always
@@ -177,7 +179,9 @@ func (client ExportTasksClient) CreateCrashesTaskPreparer(resourceGroupName stri
 // CreateCrashesTaskSender sends the CreateCrashesTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateCrashesTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateCrashesTaskResponder handles the response to the CreateCrashesTask request. The method always
@@ -254,7 +258,9 @@ func (client ExportTasksClient) CreateErrorsTaskPreparer(resourceGroupName strin
 // CreateErrorsTaskSender sends the CreateErrorsTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateErrorsTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateErrorsTaskResponder handles the response to the CreateErrorsTask request. The method always
@@ -331,7 +337,9 @@ func (client ExportTasksClient) CreateEventsTaskPreparer(resourceGroupName strin
 // CreateEventsTaskSender sends the CreateEventsTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateEventsTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateEventsTaskResponder handles the response to the CreateEventsTask request. The method always
@@ -408,7 +416,9 @@ func (client ExportTasksClient) CreateFeedbackTaskByCampaignPreparer(resourceGro
 // CreateFeedbackTaskByCampaignSender sends the CreateFeedbackTaskByCampaign request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateFeedbackTaskByCampaignSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateFeedbackTaskByCampaignResponder handles the response to the CreateFeedbackTaskByCampaign request. The method always
@@ -485,7 +495,9 @@ func (client ExportTasksClient) CreateFeedbackTaskByDateRangePreparer(resourceGr
 // CreateFeedbackTaskByDateRangeSender sends the CreateFeedbackTaskByDateRange request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateFeedbackTaskByDateRangeSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateFeedbackTaskByDateRangeResponder handles the response to the CreateFeedbackTaskByDateRange request. The method always
@@ -562,7 +574,9 @@ func (client ExportTasksClient) CreateJobsTaskPreparer(resourceGroupName string,
 // CreateJobsTaskSender sends the CreateJobsTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateJobsTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateJobsTaskResponder handles the response to the CreateJobsTask request. The method always
@@ -639,7 +653,9 @@ func (client ExportTasksClient) CreateSessionsTaskPreparer(resourceGroupName str
 // CreateSessionsTaskSender sends the CreateSessionsTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateSessionsTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateSessionsTaskResponder handles the response to the CreateSessionsTask request. The method always
@@ -714,7 +730,9 @@ func (client ExportTasksClient) CreateTagsTaskPreparer(resourceGroupName string,
 // CreateTagsTaskSender sends the CreateTagsTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateTagsTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateTagsTaskResponder handles the response to the CreateTagsTask request. The method always
@@ -789,7 +807,9 @@ func (client ExportTasksClient) CreateTokensTaskPreparer(resourceGroupName strin
 // CreateTokensTaskSender sends the CreateTokensTask request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) CreateTokensTaskSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // CreateTokensTaskResponder handles the response to the CreateTokensTask request. The method always
@@ -857,7 +877,9 @@ func (client ExportTasksClient) GetPreparer(resourceGroupName string, appCollect
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -955,7 +977,9 @@ func (client ExportTasksClient) ListPreparer(resourceGroupName string, appCollec
 // ListSender sends the List request. The method will close the
 // http.Response Body if it receives an error.
 func (client ExportTasksClient) ListSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // ListResponder handles the response to the List request. The method always

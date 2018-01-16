@@ -1,5 +1,11 @@
 ## `jwt-go` Version History
 
+#### 3.1.0
+
+* Improvements to `jwt` command line tool
+* Added `SkipClaimsValidation` option to `Parser`
+* Documentation updates
+
 #### 3.0.0
 
 * **Compatibility Breaking Changes**: See MIGRATION_GUIDE.md for tips on updating your code

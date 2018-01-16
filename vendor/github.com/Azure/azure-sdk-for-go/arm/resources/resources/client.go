@@ -1,6 +1,8 @@
 // Package resources implements the Azure ARM Resources service API version 2017-05-10.
 //
 // Provides operations for working with resources and resource groups.
+//
+// Deprecated: Please instead use github.com/Azure/azure-sdk-for-go/services/resources/mgmt/2017-05-10/resources
 package resources
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.

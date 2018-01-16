@@ -89,7 +89,9 @@ func (client BackupResourceStorageConfigsClient) GetPreparer(vaultName string, r
 // GetSender sends the Get request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupResourceStorageConfigsClient) GetSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // GetResponder handles the response to the Get request. The method always
@@ -155,7 +157,9 @@ func (client BackupResourceStorageConfigsClient) UpdatePreparer(vaultName string
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
 func (client BackupResourceStorageConfigsClient) UpdateSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req)
+	return autorest.SendWithSender(client,
+		req,
+		azure.DoRetryWithRegistration(client.Client))
 }
 
 // UpdateResponder handles the response to the Update request. The method always
