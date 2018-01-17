@@ -370,6 +370,27 @@ Controls whether files are sent to the trash or deleted
 permanently. Defaults to true, namely sending files to the trash.  Use
 `--drive-use-trash=false` to delete files permanently instead.
 
+#### --drive-use-created-date ####
+
+Use the file creation date in place of the modification date. Defaults
+to false.
+
+Useful when downloading data and you want the creation date used in
+place of the last modified date.
+
+**WARNING**: This flag may have some unexpected consequences.
+
+When uploading to your drive all files will be overwritten unless they
+haven't been modified since their creation. And the inverse will occur
+while downloading.  This side effect can be avoided by using the
+`--checksum` flag.
+
+This feature was implemented to retain photos capture date as recorded
+by google photos. You will first need to check the "Create a Google
+Photos folder" option in your google drive settings. You can then copy
+or move the photos locally and use the date the image was taken
+(created) set as the modification date.
+
 ### Limitations ###
 
 Drive has quite a lot of rate limiting.  This causes rclone to be
