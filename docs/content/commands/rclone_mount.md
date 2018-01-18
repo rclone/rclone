@@ -10,8 +10,6 @@ Mount the remote as a mountpoint. **EXPERIMENTAL**
 
 ### Synopsis
 
-
-
 rclone mount allows Linux, FreeBSD, macOS and Windows to
 mount any of Rclone's cloud storage systems as a file system with
 FUSE.
@@ -39,7 +37,7 @@ When that happens, it is the user's responsibility to stop the mount manually wi
     # OS X
     umount /path/to/local/mount
 
-### Installing on Windows ###
+### Installing on Windows
 
 To run rclone mount on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
@@ -52,7 +50,7 @@ uses combination with
 packages are by Bill Zissimopoulos who was very helpful during the
 implementation of rclone mount for Windows.
 
-#### Windows caveats ####
+#### Windows caveats
 
 Note that drives created as Administrator are not visible by other
 accounts (including the account that was elevated as
@@ -67,9 +65,9 @@ account (using [the WinFsp.Launcher
 infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
 which creates drives accessible for everyone on the system.
 
-### Limitations ###
+### Limitations
 
-This can only write files seqentially, it can only seek when reading.
+This can only write files sequentially, it can only seek when reading.
 This means that many applications won't work with their files on an
 rclone mount.
 
@@ -83,29 +81,29 @@ the directory cache.
 
 Only supported on Linux, FreeBSD, OS X and Windows at the moment.
 
-### rclone mount vs rclone sync/copy ##
+### rclone mount vs rclone sync/copy
 
 File systems expect things to be 100% reliable, whereas cloud storage
 systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone mount
 can't use retries in the same way without making local copies of the
-uploads.  This might happen in the future, but for the moment rclone
-mount won't do that, so will be less reliable than the rclone command.
+uploads. Look at the **EXPERIMENTAL** [file caching](#file-caching)
+for solutions to make rclone mount more reliable.
 
-### Filters ###
+### Filters
 
 Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
-### systemd ###
+### systemd
 
 When running rclone mount as a systemd service, it is possible
-to use Type=notify. In this case the service will enter the started state 
+to use Type=notify. In this case the service will enter the started state
 after the mountpoint has been successfully set up.
 Units having the rclone mount service specified as a requirement
 will see all files and folders immediately in this mode.
 
-### Directory Cache ###
+### Directory Cache
 
 Using the `--dir-cache-time` flag, you can set how long a
 directory should be considered up to date and not refreshed from the
@@ -120,12 +118,12 @@ like this:
 
     kill -SIGHUP $(pidof rclone)
 
-### File Caching ###
+### File Caching
 
 **NB** File caching is **EXPERIMENTAL** - use with care!
 
 These flags control the VFS file caching options.  The VFS layer is
-used by rclone mount to make a cloud storage systm work more like a
+used by rclone mount to make a cloud storage system work more like a
 normal file system.
 
 You'll need to enable VFS caching if you want, for example, to read
@@ -153,7 +151,7 @@ closed so if rclone is quit or dies with open files then these won't
 get written back to the remote.  However they will still be in the on
 disk cache.
 
-#### --vfs-cache-mode off ####
+#### --vfs-cache-mode off
 
 In this mode the cache will read directly from the remote and write
 directly to the remote without caching anything on disk.
@@ -168,7 +166,7 @@ This will mean some operations are not possible
   * Open modes O_APPEND, O_TRUNC are ignored
   * If an upload fails it can't be retried
 
-#### --vfs-cache-mode minimal ####
+#### --vfs-cache-mode minimal
 
 This is very similar to "off" except that files opened for read AND
 write will be buffered to disks.  This means that files opened for
@@ -181,7 +179,7 @@ These operations are not possible
   * Files opened for write only will ignore O_APPEND, O_TRUNC
   * If an upload fails it can't be retried
 
-#### --vfs-cache-mode writes ####
+#### --vfs-cache-mode writes
 
 In this mode files opened for read only are still read directly from
 the remote, write only and read/write files are buffered to disk
@@ -191,14 +189,14 @@ This mode should support all normal file system operations.
 
 If an upload fails it will be retried up to --low-level-retries times.
 
-#### --vfs-cache-mode full ####
+#### --vfs-cache-mode full
 
 In this mode all reads and writes are buffered to and from disk.  When
 a file is opened for read it will be downloaded in its entirety first.
 
 This may be appropriate for your needs, or you may prefer to look at
 the cache backend which does a much more sophisticated job of caching,
-including caching directory heirachies and chunks of files.q
+including caching directory hierarchies and chunks of files.
 
 In this mode, unlike the others, when a file is written to the disk,
 it will be kept on the disk after it is written to the remote.  It
@@ -296,7 +294,7 @@ rclone mount remote:path /path/to/mountpoint [flags]
       --drive-use-trash                     Send files to the trash instead of deleting permanently. (default true)
       --dropbox-chunk-size int              Upload chunk size. Max 150M. (default 48M)
   -n, --dry-run                             Do a trial run with no permanent changes
-      --dump string                         List of items to dump from: 
+      --dump string                         List of items to dump from:
       --dump-bodies                         Dump HTTP headers and bodies - may contain sensitive info
       --dump-headers                        Dump HTTP headers - may contain sensitive info
       --exclude stringArray                 Exclude files matching pattern
