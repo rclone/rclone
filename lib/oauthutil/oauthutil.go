@@ -290,7 +290,7 @@ func doConfig(id, name string, oauthConfig *oauth2.Config, offline bool, opts []
 
 	// Detect whether we should use internal web server
 	useWebServer := false
-	switch RedirectURL {
+	switch oauthConfig.RedirectURL {
 	case RedirectURL, RedirectPublicURL, RedirectLocalhostURL:
 		useWebServer = true
 		if automatic {
