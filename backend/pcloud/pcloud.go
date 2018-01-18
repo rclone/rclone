@@ -813,7 +813,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashMD5 | hash.HashSHA1)
+	return hash.Set(hash.MD5 | hash.SHA1)
 }
 
 // ------------------------------------------------------------
@@ -860,8 +860,8 @@ func (o *Object) getHashes() (err error) {
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashMD5 && t != hash.HashSHA1 {
-		return "", hash.ErrHashUnsupported
+	if t != hash.MD5 && t != hash.SHA1 {
+		return "", hash.ErrUnsupported
 	}
 	if o.md5 == "" && o.sha1 == "" {
 		err := o.getHashes()
@@ -869,7 +869,7 @@ func (o *Object) Hash(t hash.Type) (string, error) {
 			return "", errors.Wrap(err, "failed to get hash")
 		}
 	}
-	if t == hash.HashMD5 {
+	if t == hash.MD5 {
 		return o.md5, nil
 	}
 	return o.sha1, nil

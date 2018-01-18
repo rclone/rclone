@@ -810,7 +810,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashMD5)
+	return hash.Set(hash.MD5)
 }
 
 // ------------------------------------------------------------
@@ -837,8 +837,8 @@ var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashMD5 {
-		return "", hash.ErrHashUnsupported
+	if t != hash.MD5 {
+		return "", hash.ErrUnsupported
 	}
 	hash := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
@@ -1032,7 +1032,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	if size > uploader.PartSize {
-		hash, err := src.Hash(hash.HashMD5)
+		hash, err := src.Hash(hash.MD5)
 
 		if err == nil && matchMd5.MatchString(hash) {
 			hashBytes, err := hex.DecodeString(hash)

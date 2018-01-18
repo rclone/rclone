@@ -310,7 +310,7 @@ func (f *Fs) PutStream(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashNone)
+	return hash.Set(hash.None)
 }
 
 // Mkdir makes the directory (container, bucket)
@@ -563,7 +563,7 @@ func (o *Object) Size() int64 {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(ht hash.Type) (string, error) {
-	return "", hash.ErrHashUnsupported
+	return "", hash.ErrUnsupported
 }
 
 // UnWrap returns the wrapped Object

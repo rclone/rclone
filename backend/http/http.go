@@ -367,7 +367,7 @@ func (o *Object) Remote() string {
 
 // Hash returns "" since HTTP (in Go or OpenSSH) doesn't support remote calculation of hashes
 func (o *Object) Hash(r hash.Type) (string, error) {
-	return "", hash.ErrHashUnsupported
+	return "", hash.ErrUnsupported
 }
 
 // Size returns the size in bytes of the remote http file
@@ -439,7 +439,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 
 // Hashes returns hash.HashNone to indicate remote hashing is unavailable
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashNone)
+	return hash.Set(hash.None)
 }
 
 // Mkdir makes the root directory of the Fs object

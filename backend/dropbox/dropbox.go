@@ -685,7 +685,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashDropbox)
+	return hash.Set(hash.Dropbox)
 }
 
 // ------------------------------------------------------------
@@ -710,8 +710,8 @@ func (o *Object) Remote() string {
 
 // Hash returns the dropbox special hash
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashDropbox {
-		return "", hash.ErrHashUnsupported
+	if t != hash.Dropbox {
+		return "", hash.ErrUnsupported
 	}
 	err := o.readMetaData()
 	if err != nil {

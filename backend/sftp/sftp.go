@@ -642,18 +642,18 @@ func (f *Fs) Hashes() hash.Set {
 
 	hashcheckDisabled := config.FileGetBool(f.name, "disable_hashcheck")
 	if hashcheckDisabled {
-		return hash.Set(hash.HashNone)
+		return hash.Set(hash.None)
 	}
 
 	c, err := f.getSftpConnection()
 	if err != nil {
 		fs.Errorf(f, "Couldn't get SSH connection to figure out Hashes: %v", err)
-		return hash.Set(hash.HashNone)
+		return hash.Set(hash.None)
 	}
 	defer f.putSftpConnection(&c, err)
 	session, err := c.sshClient.NewSession()
 	if err != nil {
-		return hash.Set(hash.HashNone)
+		return hash.Set(hash.None)
 	}
 	sha1Output, _ := session.Output("echo 'abc' | sha1sum")
 	expectedSha1 := "03cfd743661f07975fa2f1220c5194cbaff48451"
@@ -661,7 +661,7 @@ func (f *Fs) Hashes() hash.Set {
 
 	session, err = c.sshClient.NewSession()
 	if err != nil {
-		return hash.Set(hash.HashNone)
+		return hash.Set(hash.None)
 	}
 	md5Output, _ := session.Output("echo 'abc' | md5sum")
 	expectedMd5 := "0bee89b07a248e27c83fc3d5951213c1"
@@ -672,13 +672,13 @@ func (f *Fs) Hashes() hash.Set {
 
 	set := hash.NewHashSet()
 	if !sha1Works && !md5Works {
-		set.Add(hash.HashNone)
+		set.Add(hash.None)
 	}
 	if sha1Works {
-		set.Add(hash.HashSHA1)
+		set.Add(hash.SHA1)
 	}
 	if md5Works {
-		set.Add(hash.HashMD5)
+		set.Add(hash.MD5)
 	}
 
 	_ = session.Close()
@@ -707,9 +707,9 @@ func (o *Object) Remote() string {
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(r hash.Type) (string, error) {
-	if r == hash.HashMD5 && o.md5sum != nil {
+	if r == hash.MD5 && o.md5sum != nil {
 		return *o.md5sum, nil
-	} else if r == hash.HashSHA1 && o.sha1sum != nil {
+	} else if r == hash.SHA1 && o.sha1sum != nil {
 		return *o.sha1sum, nil
 	}
 
@@ -721,29 +721,29 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 	o.fs.putSftpConnection(&c, err)
 	if err != nil {
 		o.fs.cachedHashes = nil // Something has changed on the remote system
-		return "", hash.ErrHashUnsupported
+		return "", hash.ErrUnsupported
 	}
 
-	err = hash.ErrHashUnsupported
+	err = hash.ErrUnsupported
 	var outputBytes []byte
 	escapedPath := shellEscape(o.path())
-	if r == hash.HashMD5 {
+	if r == hash.MD5 {
 		outputBytes, err = session.Output("md5sum " + escapedPath)
-	} else if r == hash.HashSHA1 {
+	} else if r == hash.SHA1 {
 		outputBytes, err = session.Output("sha1sum " + escapedPath)
 	}
 
 	if err != nil {
 		o.fs.cachedHashes = nil // Something has changed on the remote system
 		_ = session.Close()
-		return "", hash.ErrHashUnsupported
+		return "", hash.ErrUnsupported
 	}
 
 	_ = session.Close()
 	str := parseHash(outputBytes)
-	if r == hash.HashMD5 {
+	if r == hash.MD5 {
 		o.md5sum = &str
-	} else if r == hash.HashSHA1 {
+	} else if r == hash.SHA1 {
 		o.sha1sum = &str
 	}
 	return str, nil

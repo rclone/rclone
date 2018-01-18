@@ -60,7 +60,7 @@ func cryptCheck(fdst, fsrc fs.Fs) error {
 	// Find a hash to use
 	funderlying := fcrypt.UnWrap()
 	hashType := funderlying.Hashes().GetOne()
-	if hashType == hash.HashNone {
+	if hashType == hash.None {
 		return errors.Errorf("%s:%s does not support any hashes", funderlying.Name(), funderlying.Root())
 	}
 	fs.Infof(nil, "Using %v for hash comparisons", hashType)

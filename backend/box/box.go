@@ -831,7 +831,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashSHA1)
+	return hash.Set(hash.SHA1)
 }
 
 // ------------------------------------------------------------
@@ -861,8 +861,8 @@ func (o *Object) srvPath() string {
 
 // Hash returns the SHA-1 of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashSHA1 {
-		return "", hash.ErrHashUnsupported
+	if t != hash.SHA1 {
+		return "", hash.ErrUnsupported
 	}
 	return o.sha1, nil
 }

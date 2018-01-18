@@ -51,12 +51,12 @@ func (i *staticObjectInfo) Size() int64        { return i.size }
 func (i *staticObjectInfo) Storable() bool     { return i.storable }
 func (i *staticObjectInfo) Hash(h hash.Type) (string, error) {
 	if len(i.hashes) == 0 {
-		return "", hash.ErrHashUnsupported
+		return "", hash.ErrUnsupported
 	}
 	if hash, ok := i.hashes[h]; ok {
 		return hash, nil
 	}
-	return "", hash.ErrHashUnsupported
+	return "", hash.ErrUnsupported
 }
 
 // MemoryFs is an in memory Fs, it only supports FsInfo and Put
@@ -78,7 +78,7 @@ func (memoryFs) String() string { return "memory" }
 func (memoryFs) Precision() time.Duration { return time.Nanosecond }
 
 // Returns the supported hash types of the filesystem
-func (memoryFs) Hashes() hash.Set { return hash.SupportedHashes }
+func (memoryFs) Hashes() hash.Set { return hash.Supported }
 
 // Features returns the optional features of this Fs
 func (memoryFs) Features() *fs.Features { return &fs.Features{} }

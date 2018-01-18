@@ -751,7 +751,7 @@ func TestSyncWithTrackRenames(t *testing.T) {
 
 	}()
 
-	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.HashNone
+	haveHash := r.Fremote.Hashes().Overlap(r.Flocal.Hashes()).GetOne() != hash.None
 	canTrackRenames := haveHash && operations.CanServerSideMove(r.Fremote)
 	t.Logf("Can track renames: %v", canTrackRenames)
 

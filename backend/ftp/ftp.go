@@ -569,7 +569,7 @@ func (o *Object) Remote() string {
 
 // Hash returns the hash of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	return "", hash.ErrHashUnsupported
+	return "", hash.ErrUnsupported
 }
 
 // Size returns the size of an object in bytes
