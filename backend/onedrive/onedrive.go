@@ -18,6 +18,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
@@ -56,7 +57,7 @@ var (
 			TokenURL: "https://login.live.com/oauth20_token.srf",
 		},
 		ClientID:     rclonePersonalClientID,
-		ClientSecret: config.MustReveal(rclonePersonalEncryptedClientSecret),
+		ClientSecret: obscure.MustReveal(rclonePersonalEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 
@@ -67,7 +68,7 @@ var (
 			TokenURL: "https://login.microsoftonline.com/common/oauth2/token",
 		},
 		ClientID:     rcloneBusinessClientID,
-		ClientSecret: config.MustReveal(rcloneBusinessEncryptedClientSecret),
+		ClientSecret: obscure.MustReveal(rcloneBusinessEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	oauthBusinessResource = oauth2.SetAuthURLParam("resource", discoveryServiceURL)

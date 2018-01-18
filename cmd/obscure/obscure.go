@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/ncw/rclone/cmd"
-	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/spf13/cobra"
 )
 
@@ -18,8 +18,8 @@ var commandDefintion = &cobra.Command{
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		cmd.Run(false, false, command, func() error {
-			obscure := config.MustObscure(args[0])
-			fmt.Println(obscure)
+			obscured := obscure.MustObscure(args[0])
+			fmt.Println(obscured)
 			return nil
 		})
 	},

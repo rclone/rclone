@@ -12,6 +12,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
@@ -86,13 +87,13 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if password == "" {
 		return nil, errors.New("password not set in config file")
 	}
-	password, err = config.Reveal(password)
+	password, err = obscure.Reveal(password)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to decrypt password")
 	}
 	salt := config.FileGet(name, "password2", "")
 	if salt != "" {
-		salt, err = config.Reveal(salt)
+		salt, err = obscure.Reveal(salt)
 		if err != nil {
 			return nil, errors.Wrap(err, "failed to decrypt password2")
 		}

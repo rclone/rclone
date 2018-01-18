@@ -16,6 +16,7 @@ import (
 	"github.com/ncw/rclone/backend/swift"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/lib/oauthutil"
 	swiftLib "github.com/ncw/swift"
@@ -40,7 +41,7 @@ var (
 			TokenURL: "https://api.hubic.com/oauth/token/",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 )

@@ -31,6 +31,7 @@ import (
 	"github.com/ncw/rclone/backend/webdav/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
@@ -260,7 +261,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 	pass := config.FileGet(name, "pass")
 	if pass != "" {
 		var err error
-		pass, err = config.Reveal(pass)
+		pass, err = obscure.Reveal(pass)
 		if err != nil {
 			return nil, errors.Wrap(err, "couldn't decrypt password")
 		}
