@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -89,7 +90,7 @@ func TestReveal(t *testing.T) {
 		{"aGVsbG8", "input too short when revealing password - is it obscured?"},
 		{"", "input too short when revealing password - is it obscured?"},
 	} {
-		gotString, gotErr := Reveal(test.in)
+		gotString, gotErr := obscure.Reveal(test.in)
 		assert.Equal(t, "", gotString)
 		assert.Equal(t, test.wantErr, gotErr.Error())
 	}

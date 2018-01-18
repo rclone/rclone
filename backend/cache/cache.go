@@ -20,6 +20,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/pkg/errors"
@@ -308,7 +309,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 			plexUsername := config.FileGet(name, "plex_username")
 			plexPassword := config.FileGet(name, "plex_password")
 			if plexPassword != "" && plexUsername != "" {
-				decPass, err := config.Reveal(plexPassword)
+				decPass, err := obscure.Reveal(plexPassword)
 				if err != nil {
 					decPass = plexPassword
 				}

@@ -25,6 +25,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
@@ -55,7 +56,7 @@ var (
 			TokenURL: "https://api.pcloud.com/oauth2_token",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	uploadCutoff = fs.SizeSuffix(50 * 1024 * 1024)

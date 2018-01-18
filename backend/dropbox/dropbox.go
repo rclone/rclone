@@ -39,6 +39,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/oauthutil"
@@ -67,7 +68,7 @@ var (
 		// },
 		Endpoint:     dropbox.OAuthEndpoint(""),
 		ClientID:     rcloneClientID,
-		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
 	// A regexp matching path names for files Dropbox ignores

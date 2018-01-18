@@ -1,6 +1,5 @@
-// Obscure and Reveal config values
-
-package config
+// Package obscure contains the Obscure and Reveal commands
+package obscure
 
 import (
 	"crypto/aes"

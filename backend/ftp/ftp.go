@@ -14,6 +14,7 @@ import (
 	"github.com/jlaffaye/ftp"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
@@ -188,7 +189,7 @@ func NewFs(name, root string) (ff fs.Fs, err error) {
 	user := config.FileGet(name, "user")
 	pass := config.FileGet(name, "pass")
 	port := config.FileGet(name, "port")
-	pass, err = config.Reveal(pass)
+	pass, err = obscure.Reveal(pass)
 	if err != nil {
 		return nil, errors.Wrap(err, "NewFS decrypt password")
 	}

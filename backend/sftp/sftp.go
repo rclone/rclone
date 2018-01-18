@@ -17,6 +17,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
@@ -318,7 +319,7 @@ func NewFs(name, root string) (fs.Fs, error) {
 
 	// Auth from password if specified
 	if pass != "" {
-		clearpass, err := config.Reveal(pass)
+		clearpass, err := obscure.Reveal(pass)
 		if err != nil {
 			return nil, err
 		}

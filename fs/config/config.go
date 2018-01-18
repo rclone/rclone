@@ -25,6 +25,7 @@ import (
 	"github.com/Unknwon/goconfig"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/driveletter"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/pkg/errors"
@@ -694,7 +695,7 @@ func ChooseOption(o *fs.Option) string {
 		default:
 			fs.Errorf(nil, "Bad choice %c", i)
 		}
-		return MustObscure(password)
+		return obscure.MustObscure(password)
 	}
 	if len(o.Examples) > 0 {
 		var values []string
@@ -749,7 +750,7 @@ func PasswordRemote(name string, keyValues []string) error {
 	}
 	// Suppress Confirm
 	fs.Config.AutoConfirm = true
-	passwd := MustObscure(keyValues[1])
+	passwd := obscure.MustObscure(keyValues[1])
 	if passwd != "" {
 		configData.SetValue(name, keyValues[0], passwd)
 		RemoteConfig(name)

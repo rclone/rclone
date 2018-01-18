@@ -25,6 +25,7 @@ import (
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
+	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/dircache"
@@ -58,7 +59,7 @@ var (
 			TokenURL: "https://app.box.com/api/oauth2/token",
 		},
 		ClientID:     rcloneClientID,
-		ClientSecret: config.MustReveal(rcloneEncryptedClientSecret),
+		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectURL,
 	}
 	uploadCutoff = fs.SizeSuffix(50 * 1024 * 1024)
