@@ -86,7 +86,7 @@ When that happens, it is the user's responsibility to stop the mount manually wi
     # OS X
     umount /path/to/local/mount
 
-### Installing on Windows ###
+### Installing on Windows
 
 To run rclone ` + commandName + ` on Windows, you will need to
 download and install [WinFsp](http://www.secfs.net/winfsp/).
@@ -99,7 +99,7 @@ uses combination with
 packages are by Bill Zissimopoulos who was very helpful during the
 implementation of rclone ` + commandName + ` for Windows.
 
-#### Windows caveats ####
+#### Windows caveats
 
 Note that drives created as Administrator are not visible by other
 accounts (including the account that was elevated as
@@ -114,9 +114,9 @@ account (using [the WinFsp.Launcher
 infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
 which creates drives accessible for everyone on the system.
 
-### Limitations ###
+### Limitations
 
-This can only write files seqentially, it can only seek when reading.
+This can only write files sequentially, it can only seek when reading.
 This means that many applications won't work with their files on an
 rclone mount.
 
@@ -130,24 +130,24 @@ the directory cache.
 
 Only supported on Linux, FreeBSD, OS X and Windows at the moment.
 
-### rclone ` + commandName + ` vs rclone sync/copy ##
+### rclone ` + commandName + ` vs rclone sync/copy
 
 File systems expect things to be 100% reliable, whereas cloud storage
 systems are a long way from 100% reliable. The rclone sync/copy
 commands cope with this with lots of retries.  However rclone ` + commandName + `
 can't use retries in the same way without making local copies of the
-uploads.  This might happen in the future, but for the moment rclone
-` + commandName + ` won't do that, so will be less reliable than the rclone command.
+uploads. Look at the **EXPERIMENTAL** [file caching](#file-caching)
+for solutions to make ` + commandName + ` mount more reliable.
 
-### Filters ###
+### Filters
 
 Note that all the rclone filters can be used to select a subset of the
 files to be visible in the mount.
 
-### systemd ###
+### systemd
 
 When running rclone ` + commandName + ` as a systemd service, it is possible
-to use Type=notify. In this case the service will enter the started state 
+to use Type=notify. In this case the service will enter the started state
 after the mountpoint has been successfully set up.
 Units having the rclone ` + commandName + ` service specified as a requirement
 will see all files and folders immediately in this mode.
