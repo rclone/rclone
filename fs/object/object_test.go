@@ -27,23 +27,23 @@ func TestStaticObject(t *testing.T) {
 	assert.Equal(t, size, o.Size())
 	assert.Equal(t, true, o.Storable())
 
-	Hash, err := o.Hash(hash.HashMD5)
+	Hash, err := o.Hash(hash.MD5)
 	assert.NoError(t, err)
 	assert.Equal(t, "", Hash)
 
 	o = object.NewStaticObjectInfo(remote, now, size, true, nil, nil)
-	_, err = o.Hash(hash.HashMD5)
-	assert.Equal(t, hash.ErrHashUnsupported, err)
+	_, err = o.Hash(hash.MD5)
+	assert.Equal(t, hash.ErrUnsupported, err)
 
 	hs := map[hash.Type]string{
-		hash.HashMD5: "potato",
+		hash.MD5: "potato",
 	}
 	o = object.NewStaticObjectInfo(remote, now, size, true, hs, nil)
-	Hash, err = o.Hash(hash.HashMD5)
+	Hash, err = o.Hash(hash.MD5)
 	assert.NoError(t, err)
 	assert.Equal(t, "potato", Hash)
-	_, err = o.Hash(hash.HashSHA1)
-	assert.Equal(t, hash.ErrHashUnsupported, err)
+	_, err = o.Hash(hash.SHA1)
+	assert.Equal(t, hash.ErrUnsupported, err)
 }
 
 func TestMemoryFs(t *testing.T) {
@@ -52,7 +52,7 @@ func TestMemoryFs(t *testing.T) {
 	assert.Equal(t, "", f.Root())
 	assert.Equal(t, "memory", f.String())
 	assert.Equal(t, time.Nanosecond, f.Precision())
-	assert.Equal(t, hash.SupportedHashes, f.Hashes())
+	assert.Equal(t, hash.Supported, f.Hashes())
 	assert.Equal(t, &fs.Features{}, f.Features())
 
 	entries, err := f.List("")
@@ -68,7 +68,7 @@ func TestMemoryFs(t *testing.T) {
 	src := object.NewStaticObjectInfo("remote", now, int64(buf.Len()), true, nil, nil)
 	o, err = f.Put(buf, src)
 	assert.NoError(t, err)
-	hash, err := o.Hash(hash.HashSHA1)
+	hash, err := o.Hash(hash.SHA1)
 	assert.NoError(t, err)
 	assert.Equal(t, "3e2e95f5ad970eadfa7e17eaf73da97024aa5359", hash)
 
@@ -95,11 +95,11 @@ func TestMemoryObject(t *testing.T) {
 	assert.Equal(t, int64(len(content)), o.Size())
 	assert.Equal(t, true, o.Storable())
 
-	Hash, err := o.Hash(hash.HashMD5)
+	Hash, err := o.Hash(hash.MD5)
 	assert.NoError(t, err)
 	assert.Equal(t, "8ee2027983915ec78acc45027d874316", Hash)
 
-	Hash, err = o.Hash(hash.HashSHA1)
+	Hash, err = o.Hash(hash.SHA1)
 	assert.NoError(t, err)
 	assert.Equal(t, "3e2e95f5ad970eadfa7e17eaf73da97024aa5359", Hash)
 

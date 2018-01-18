@@ -1194,7 +1194,7 @@ func (f *Fs) DirCacheFlush() {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashMD5)
+	return hash.Set(hash.MD5)
 }
 
 // ------------------------------------------------------------
@@ -1219,8 +1219,8 @@ func (o *Object) Remote() string {
 
 // Hash returns the Md5sum of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashMD5 {
-		return "", hash.ErrHashUnsupported
+	if t != hash.MD5 {
+		return "", hash.ErrUnsupported
 	}
 	return o.md5sum, nil
 }

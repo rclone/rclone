@@ -629,7 +629,7 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashMD5)
+	return hash.Set(hash.MD5)
 }
 
 // Purge deletes all the files and directories including the old versions.
@@ -697,8 +697,8 @@ func (o *Object) Remote() string {
 
 // Hash returns the MD5 of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashMD5 {
-		return "", hash.ErrHashUnsupported
+	if t != hash.MD5 {
+		return "", hash.ErrUnsupported
 	}
 	// Convert base64 encoded md5 into lower case hex
 	if o.md5 == "" {
@@ -1065,7 +1065,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 	blob := o.getBlobWithModTime(src.ModTime())
 	blob.Properties.ContentType = fs.MimeType(o)
-	if sourceMD5, _ := src.Hash(hash.HashMD5); sourceMD5 != "" {
+	if sourceMD5, _ := src.Hash(hash.MD5); sourceMD5 != "" {
 		sourceMD5bytes, err := hex.DecodeString(sourceMD5)
 		if err == nil {
 			blob.Properties.ContentMD5 = base64.StdEncoding.EncodeToString(sourceMD5bytes)

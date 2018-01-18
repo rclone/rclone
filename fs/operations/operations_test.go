@@ -308,7 +308,7 @@ func skipIfCantDedupe(t *testing.T, f fs.Fs) {
 	if !f.Features().DuplicateFiles {
 		t.Skip("Can't test deduplicate - no duplicate files possible")
 	}
-	if !f.Hashes().Contains(hash.HashMD5) {
+	if !f.Hashes().Contains(hash.MD5) {
 		t.Skip("Can't test deduplicate - MD5 not supported")
 	}
 }
@@ -892,9 +892,9 @@ func TestListFormat(t *testing.T) {
 		ht   hash.Type
 		want string
 	}{
-		{hash.HashMD5, "0cc175b9c0f1b6a831c399e269772661"},
-		{hash.HashSHA1, "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8"},
-		{hash.HashDropbox, "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8"},
+		{hash.MD5, "0cc175b9c0f1b6a831c399e269772661"},
+		{hash.SHA1, "86f7e437faa5a7fce15d1ddcb9eaeaea377667b8"},
+		{hash.Dropbox, "bf5d3affb73efd2ec6c36ad3112dd933efed63c4e1cbffcfa88e2759c144f2d8"},
 	} {
 		list.SetOutput(nil)
 		list.AddHash(test.ht)

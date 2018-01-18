@@ -46,7 +46,7 @@ func CheckHashes(src fs.ObjectInfo, dst fs.Object) (equal bool, ht hash.Type, er
 	common := src.Fs().Hashes().Overlap(dst.Fs().Hashes())
 	// fs.Debugf(nil, "Shared hashes: %v", common)
 	if common.Count() == 0 {
-		return true, hash.HashNone, nil
+		return true, hash.None, nil
 	}
 	ht = common.GetOne()
 	srcHash, err := src.Hash(ht)
@@ -56,7 +56,7 @@ func CheckHashes(src fs.ObjectInfo, dst fs.Object) (equal bool, ht hash.Type, er
 		return false, ht, err
 	}
 	if srcHash == "" {
-		return true, hash.HashNone, nil
+		return true, hash.None, nil
 	}
 	dstHash, err := dst.Hash(ht)
 	if err != nil {
@@ -65,7 +65,7 @@ func CheckHashes(src fs.ObjectInfo, dst fs.Object) (equal bool, ht hash.Type, er
 		return false, ht, err
 	}
 	if dstHash == "" {
-		return true, hash.HashNone, nil
+		return true, hash.None, nil
 	}
 	if srcHash != dstHash {
 		fs.Debugf(src, "%v = %s (%v)", ht, srcHash, src.Fs())
@@ -118,7 +118,7 @@ func equal(src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
 			fs.Debugf(src, "%v differ", ht)
 			return false
 		}
-		if ht == hash.HashNone {
+		if ht == hash.None {
 			fs.Debugf(src, "Size of src and dst objects identical")
 		} else {
 			fs.Debugf(src, "Size and %v of src and dst objects identical", ht)
@@ -148,7 +148,7 @@ func equal(src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
 		fs.Debugf(src, "%v differ", ht)
 		return false
 	}
-	if ht == hash.HashNone {
+	if ht == hash.None {
 		// if couldn't check hash, return that they differ
 		return false
 	}
@@ -242,7 +242,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 	doUpdate := dst != nil
 	// work out which hash to use - limit to 1 hash in common
 	var common hash.Set
-	hashType := hash.HashNone
+	hashType := hash.None
 	if !fs.Config.SizeOnly {
 		common = src.Fs().Hashes().Overlap(f.Hashes())
 		if common.Count() > 0 {
@@ -321,7 +321,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 	// Verify hashes are the same after transfer - ignoring blank hashes
 	// TODO(klauspost): This could be extended, so we always create a hash type matching
 	// the destination, and calculate it while sending.
-	if hashType != hash.HashNone {
+	if hashType != hash.None {
 		var srcSum string
 		srcSum, err = src.Hash(hashType)
 		if err != nil {
@@ -533,7 +533,7 @@ func checkIdentical(dst, src fs.Object) (differ bool, noHash bool) {
 		// CheckHashes will log and count errors
 		return true, false
 	}
-	if ht == hash.HashNone {
+	if ht == hash.None {
 		return false, true
 	}
 	if !same {
@@ -817,7 +817,7 @@ func ListLong(f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func Md5sum(f fs.Fs, w io.Writer) error {
-	return hashLister(hash.HashMD5, f, w)
+	return hashLister(hash.MD5, f, w)
 }
 
 // Sha1sum list the Fs to the supplied writer
@@ -826,7 +826,7 @@ func Md5sum(f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func Sha1sum(f fs.Fs, w io.Writer) error {
-	return hashLister(hash.HashSHA1, f, w)
+	return hashLister(hash.SHA1, f, w)
 }
 
 // DropboxHashSum list the Fs to the supplied writer
@@ -835,7 +835,7 @@ func Sha1sum(f fs.Fs, w io.Writer) error {
 //
 // Lists in parallel which may get them out of order
 func DropboxHashSum(f fs.Fs, w io.Writer) error {
-	return hashLister(hash.HashDropbox, f, w)
+	return hashLister(hash.Dropbox, f, w)
 }
 
 // hashSum returns the human readable hash for ht passed in.  This may
@@ -844,7 +844,7 @@ func hashSum(ht hash.Type, o fs.Object) string {
 	accounting.Stats.Checking(o.Remote())
 	sum, err := o.Hash(ht)
 	accounting.Stats.DoneChecking(o.Remote())
-	if err == hash.ErrHashUnsupported {
+	if err == hash.ErrUnsupported {
 		sum = "UNSUPPORTED"
 	} else if err != nil {
 		fs.Debugf(o, "Failed to read %v: %v", ht, err)
@@ -856,7 +856,7 @@ func hashSum(ht hash.Type, o fs.Object) string {
 func hashLister(ht hash.Type, f fs.Fs, w io.Writer) error {
 	return ListFn(f, func(o fs.Object) {
 		sum := hashSum(ht, o)
-		syncFprintf(w, "%*s  %s\n", hash.HashWidth[ht], sum, o.Remote())
+		syncFprintf(w, "%*s  %s\n", hash.Width[ht], sum, o.Remote())
 	})
 }
 
@@ -1022,7 +1022,7 @@ func dedupeDeleteIdentical(remote string, objs []fs.Object) []fs.Object {
 	// See how many of these duplicates are identical
 	byHash := make(map[string][]fs.Object, len(objs))
 	for _, o := range objs {
-		md5sum, err := o.Hash(hash.HashMD5)
+		md5sum, err := o.Hash(hash.MD5)
 		if err == nil {
 			byHash[md5sum] = append(byHash[md5sum], o)
 		}
@@ -1047,7 +1047,7 @@ func dedupeDeleteIdentical(remote string, objs []fs.Object) []fs.Object {
 func dedupeInteractive(remote string, objs []fs.Object) {
 	fmt.Printf("%s: %d duplicates remain\n", remote, len(objs))
 	for i, o := range objs {
-		md5sum, err := o.Hash(hash.HashMD5)
+		md5sum, err := o.Hash(hash.MD5)
 		if err != nil {
 			md5sum = err.Error()
 		}

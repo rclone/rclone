@@ -17,49 +17,49 @@ import (
 // Type indicates a standard hashing algorithm
 type Type int
 
-// ErrHashUnsupported should be returned by filesystem,
+// ErrUnsupported should be returned by filesystem,
 // if it is requested to deliver an unsupported hash type.
-var ErrHashUnsupported = errors.New("hash type not supported")
+var ErrUnsupported = errors.New("hash type not supported")
 
 const (
-	// HashMD5 indicates MD5 support
-	HashMD5 Type = 1 << iota
+	// MD5 indicates MD5 support
+	MD5 Type = 1 << iota
 
-	// HashSHA1 indicates SHA-1 support
-	HashSHA1
+	// SHA1 indicates SHA-1 support
+	SHA1
 
-	// HashDropbox indicates Dropbox special hash
+	// Dropbox indicates Dropbox special hash
 	// https://www.dropbox.com/developers/reference/content-hash
-	HashDropbox
+	Dropbox
 
-	// HashNone indicates no hashes are supported
-	HashNone Type = 0
+	// None indicates no hashes are supported
+	None Type = 0
 )
 
-// SupportedHashes returns a set of all the supported hashes by
+// Supported returns a set of all the supported hashes by
 // HashStream and MultiHasher.
-var SupportedHashes = NewHashSet(HashMD5, HashSHA1, HashDropbox)
+var Supported = NewHashSet(MD5, SHA1, Dropbox)
 
-// HashWidth returns the width in characters for any HashType
-var HashWidth = map[Type]int{
-	HashMD5:     32,
-	HashSHA1:    40,
-	HashDropbox: 64,
+// Width returns the width in characters for any HashType
+var Width = map[Type]int{
+	MD5:     32,
+	SHA1:    40,
+	Dropbox: 64,
 }
 
 // Stream will calculate hashes of all supported hash types.
 func Stream(r io.Reader) (map[Type]string, error) {
-	return StreamTypes(r, SupportedHashes)
+	return StreamTypes(r, Supported)
 }
 
 // StreamTypes will calculate hashes of the requested hash types.
 func StreamTypes(r io.Reader, set Set) (map[Type]string, error) {
-	hashers, err := hashFromTypes(set)
+	hashers, err := fromTypes(set)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = io.Copy(hashToMultiWriter(hashers), r)
+	_, err = io.Copy(toMultiWriter(hashers), r)
 	if err != nil {
 		return nil, err
 	}
@@ -74,13 +74,13 @@ func StreamTypes(r io.Reader, set Set) (map[Type]string, error) {
 // The function will panic if the hash type is unknown.
 func (h Type) String() string {
 	switch h {
-	case HashNone:
+	case None:
 		return "None"
-	case HashMD5:
+	case MD5:
 		return "MD5"
-	case HashSHA1:
+	case SHA1:
 		return "SHA-1"
-	case HashDropbox:
+	case Dropbox:
 		return "DropboxHash"
 	default:
 		err := fmt.Sprintf("internal error: unknown hash type: 0x%x", int(h))
@@ -88,17 +88,17 @@ func (h Type) String() string {
 	}
 }
 
-// Set a HashType from a flag
+// Set a Type from a flag
 func (h *Type) Set(s string) error {
 	switch s {
 	case "None":
-		*h = HashNone
+		*h = None
 	case "MD5":
-		*h = HashMD5
+		*h = MD5
 	case "SHA-1":
-		*h = HashSHA1
+		*h = SHA1
 	case "DropboxHash":
-		*h = HashDropbox
+		*h = Dropbox
 	default:
 		return errors.Errorf("Unknown hash type %q", s)
 	}
@@ -113,22 +113,22 @@ func (h Type) Type() string {
 // Check it satisfies the interface
 var _ pflag.Value = (*Type)(nil)
 
-// hashFromTypes will return hashers for all the requested types.
+// fromTypes will return hashers for all the requested types.
 // The types must be a subset of SupportedHashes,
 // and this function must support all types.
-func hashFromTypes(set Set) (map[Type]hash.Hash, error) {
-	if !set.SubsetOf(SupportedHashes) {
+func fromTypes(set Set) (map[Type]hash.Hash, error) {
+	if !set.SubsetOf(Supported) {
 		return nil, errors.Errorf("requested set %08x contains unknown hash types", int(set))
 	}
 	var hashers = make(map[Type]hash.Hash)
 	types := set.Array()
 	for _, t := range types {
 		switch t {
-		case HashMD5:
+		case MD5:
 			hashers[t] = md5.New()
-		case HashSHA1:
+		case SHA1:
 			hashers[t] = sha1.New()
-		case HashDropbox:
+		case Dropbox:
 			hashers[t] = dbhash.New()
 		default:
 			err := fmt.Sprintf("internal error: Unsupported hash type %v", t)
@@ -138,10 +138,10 @@ func hashFromTypes(set Set) (map[Type]hash.Hash, error) {
 	return hashers, nil
 }
 
-// hashToMultiWriter will return a set of hashers into a
+// toMultiWriter will return a set of hashers into a
 // single multiwriter, where one write will update all
 // the hashers.
-func hashToMultiWriter(h map[Type]hash.Hash) io.Writer {
+func toMultiWriter(h map[Type]hash.Hash) io.Writer {
 	// Convert to to slice
 	var w = make([]io.Writer, 0, len(h))
 	for _, v := range h {
@@ -161,7 +161,7 @@ type MultiHasher struct {
 // NewMultiHasher will return a hash writer that will write all
 // supported hash types.
 func NewMultiHasher() *MultiHasher {
-	h, err := NewMultiHasherTypes(SupportedHashes)
+	h, err := NewMultiHasherTypes(Supported)
 	if err != nil {
 		panic("internal error: could not create multihasher")
 	}
@@ -171,11 +171,11 @@ func NewMultiHasher() *MultiHasher {
 // NewMultiHasherTypes will return a hash writer that will write
 // the requested hash types.
 func NewMultiHasherTypes(set Set) (*MultiHasher, error) {
-	hashers, err := hashFromTypes(set)
+	hashers, err := fromTypes(set)
 	if err != nil {
 		return nil, err
 	}
-	m := MultiHasher{h: hashers, w: hashToMultiWriter(hashers)}
+	m := MultiHasher{h: hashers, w: toMultiWriter(hashers)}
 	return &m, nil
 }
 
@@ -205,7 +205,7 @@ type Set int
 
 // NewHashSet will create a new hash set with the hash types supplied
 func NewHashSet(t ...Type) Set {
-	h := Set(HashNone)
+	h := Set(None)
 	return h.Add(t...)
 }
 
@@ -247,7 +247,7 @@ func (h Set) GetOne() Type {
 		i++
 		v >>= 1
 	}
-	return Type(HashNone)
+	return Type(None)
 }
 
 // Array returns an array of all hash types in the set

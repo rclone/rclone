@@ -115,7 +115,7 @@ func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *lar
 		},
 	}
 	// Set the SHA1 if known
-	if calculatedSha1, err := src.Hash(hash.HashSHA1); err == nil && calculatedSha1 != "" {
+	if calculatedSha1, err := src.Hash(hash.SHA1); err == nil && calculatedSha1 != "" {
 		request.Info[sha1Key] = calculatedSha1
 	}
 	var response api.StartLargeFileResponse

@@ -922,7 +922,7 @@ func (f *Fs) CleanUp() error {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashSHA1)
+	return hash.Set(hash.SHA1)
 }
 
 // ------------------------------------------------------------
@@ -947,8 +947,8 @@ func (o *Object) Remote() string {
 
 // Hash returns the Sha-1 of an object returning a lowercase hex string
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashSHA1 {
-		return "", hash.ErrHashUnsupported
+	if t != hash.SHA1 {
+		return "", hash.ErrUnsupported
 	}
 	if o.sha1 == "" {
 		// Error is logged in readMetaData
@@ -1286,7 +1286,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 	modTime := src.ModTime()
 
-	calculatedSha1, _ := src.Hash(hash.HashSHA1)
+	calculatedSha1, _ := src.Hash(hash.SHA1)
 	if calculatedSha1 == "" {
 		calculatedSha1 = "hex_digits_at_end"
 		har := newHashAppendingReader(in, sha1.New())

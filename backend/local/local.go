@@ -539,7 +539,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.SupportedHashes
+	return hash.Supported
 }
 
 // ------------------------------------------------------------
@@ -676,7 +676,7 @@ func (file *localOpenFile) Close() (err error) {
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset int64
-	hashes := hash.SupportedHashes
+	hashes := hash.Supported
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
@@ -721,7 +721,7 @@ func (o *Object) mkdirAll() error {
 
 // Update the object from in with modTime and size
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	hashes := hash.SupportedHashes
+	hashes := hash.Supported
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.HashesOption:

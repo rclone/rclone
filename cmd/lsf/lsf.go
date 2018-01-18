@@ -20,7 +20,7 @@ var (
 	separator string
 	dirSlash  bool
 	recurse   bool
-	hashType  = hash.HashMD5
+	hashType  = hash.MD5
 	filesOnly bool
 	dirsOnly  bool
 )

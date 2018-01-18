@@ -307,7 +307,7 @@ func (f *Fs) Precision() time.Duration {
 
 // Hashes returns the supported hash sets.
 func (f *Fs) Hashes() hash.Set {
-	return hash.Set(hash.HashMD5)
+	return hash.Set(hash.MD5)
 	//return hash.HashSet(hash.HashNone)
 }
 
@@ -930,8 +930,8 @@ var matchMd5 = regexp.MustCompile(`^[0-9a-f]{32}$`)
 // Hash returns the selected checksum of the file
 // If no checksum is available it returns ""
 func (o *Object) Hash(t hash.Type) (string, error) {
-	if t != hash.HashMD5 {
-		return "", hash.ErrHashUnsupported
+	if t != hash.MD5 {
+		return "", hash.ErrUnsupported
 	}
 	etag := strings.Trim(strings.ToLower(o.etag), `"`)
 	// Check the etag is a valid md5sum
