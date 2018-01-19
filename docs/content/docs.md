@@ -69,7 +69,7 @@ rclone uses a system of subcommands.  For example
 The main rclone commands with most used first
 
 * [rclone config](/commands/rclone_config/)	- Enter an interactive configuration session.
-* [rclone copy](/commands/rclone_copy/)		- Copy files from source to dest, skipping already copied
+* [rclone copy](/commands/rclone_copy/)		- Copy files from source to dest, skipping already copied.
 * [rclone sync](/commands/rclone_sync/)		- Make source and dest identical, modifying destination only.
 * [rclone move](/commands/rclone_move/)		- Move files from source to dest.
 * [rclone delete](/commands/rclone_delete/)	- Remove the contents of path.
@@ -77,26 +77,26 @@ The main rclone commands with most used first
 * [rclone mkdir](/commands/rclone_mkdir/)	- Make the path if it doesn't already exist.
 * [rclone rmdir](/commands/rclone_rmdir/)	- Remove the path.
 * [rclone rmdirs](/commands/rclone_rmdirs/)	- Remove any empty directories under the path.
-* [rclone check](/commands/rclone_check/)	- Checks the files in the source and destination match.
+* [rclone check](/commands/rclone_check/)	- Check if the files in the source and destination match.
 * [rclone ls](/commands/rclone_ls/)		- List all the objects in the path with size and path.
 * [rclone lsd](/commands/rclone_lsd/)		- List all directories/containers/buckets in the path.
-* [rclone lsl](/commands/rclone_lsl/)		- List all the objects path with modification time, size and path.
-* [rclone md5sum](/commands/rclone_md5sum/)	- Produces an md5sum file for all the objects in the path.
-* [rclone sha1sum](/commands/rclone_sha1sum/)	- Produces an sha1sum file for all the objects in the path.
-* [rclone size](/commands/rclone_size/)		- Returns the total size and number of objects in remote:path.
+* [rclone lsl](/commands/rclone_lsl/)		- List all the objects in the path with size, modification time and path.
+* [rclone md5sum](/commands/rclone_md5sum/)	- Produce an md5sum file for all the objects in the path.
+* [rclone sha1sum](/commands/rclone_sha1sum/)	- Produce a sha1sum file for all the objects in the path.
+* [rclone size](/commands/rclone_size/)		- Return the total size and number of objects in remote:path.
 * [rclone version](/commands/rclone_version/)	- Show the version number.
-* [rclone cleanup](/commands/rclone_cleanup/)	- Clean up the remote if possible
-* [rclone dedupe](/commands/rclone_dedupe/)	- Interactively find duplicate files delete/rename them.
+* [rclone cleanup](/commands/rclone_cleanup/)	- Clean up the remote if possible.
+* [rclone dedupe](/commands/rclone_dedupe/)	- Interactively find duplicate files and delete/rename them.
 * [rclone authorize](/commands/rclone_authorize/)	- Remote authorization.
-* [rclone cat](/commands/rclone_cat/)		- Concatenates any files and sends them to stdout.
-* [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied
+* [rclone cat](/commands/rclone_cat/)		- Concatenate any files and send them to stdout.
+* [rclone copyto](/commands/rclone_copyto/)	- Copy files from source to dest, skipping already copied.
 * [rclone genautocomplete](/commands/rclone_genautocomplete/)	- Output shell completion scripts for rclone.
 * [rclone gendocs](/commands/rclone_gendocs/)	- Output markdown docs for rclone to the directory supplied.
 * [rclone listremotes](/commands/rclone_listremotes/)	- List all the remotes in the config file.
 * [rclone mount](/commands/rclone_mount/)	- Mount the remote as a mountpoint. **EXPERIMENTAL**
 * [rclone moveto](/commands/rclone_moveto/)	- Move file or directory from source to dest.
 * [rclone obscure](/commands/rclone_obscure/)	- Obscure password for use in the rclone.conf
-* [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Checks the integrity of a crypted remote.
+* [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Check the integrity of a crypted remote.
 
 See the [commands index](/commands/) for the full list.
 
