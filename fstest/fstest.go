@@ -443,19 +443,21 @@ func Purge(f fs.Fs) {
 	doFallbackPurge := true
 	if doPurge := f.Features().Purge; doPurge != nil {
 		doFallbackPurge = false
+		fs.Debugf(f, "Purge remote")
 		err = doPurge()
 		if err == fs.ErrorCantPurge {
 			doFallbackPurge = true
 		}
 	}
 	if doFallbackPurge {
-		var dirs []string
+		dirs := []string{""}
 		err = walk.Walk(f, "", true, -1, func(dirPath string, entries fs.DirEntries, err error) error {
 			if err != nil {
 				log.Printf("purge walk returned error: %v", err)
 				return nil
 			}
 			entries.ForObject(func(obj fs.Object) {
+				fs.Debugf(f, "Purge object %q", obj.Remote())
 				err = obj.Remove()
 				if err != nil {
 					log.Printf("purge failed to remove %q: %v", obj.Remote(), err)
@@ -469,6 +471,7 @@ func Purge(f fs.Fs) {
 		sort.Strings(dirs)
 		for i := len(dirs) - 1; i >= 0; i-- {
 			dir := dirs[i]
+			fs.Debugf(f, "Purge dir %q", dir)
 			err := f.Rmdir(dir)
 			if err != nil {
 				log.Printf("purge failed to rmdir %q: %v", dir, err)
