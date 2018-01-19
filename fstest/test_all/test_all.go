@@ -411,6 +411,7 @@ func main() {
 	start := time.Now()
 	if *clean {
 		config.LoadConfig()
+		packages = []string{"clean"}
 	} else {
 		for _, pkg := range packages {
 			makeTestBinary(pkg)
