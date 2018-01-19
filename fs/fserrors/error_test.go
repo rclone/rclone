@@ -96,6 +96,7 @@ func TestShouldRetry(t *testing.T) {
 		{makeNetErr(syscall.Errno(123123123)), false},
 		{&url.Error{Op: "post", URL: "/", Err: io.EOF}, true},
 		{&url.Error{Op: "post", URL: "/", Err: errUseOfClosedNetworkConnection}, true},
+		{&url.Error{Op: "post", URL: "/", Err: fmt.Errorf("net/http: HTTP/1.x transport connection broken: %v", fmt.Errorf("http: ContentLength=%d with Body length %d", 100663336, 99590598))}, true},
 		{
 			errors.Wrap(&url.Error{
 				Op:  "post",
