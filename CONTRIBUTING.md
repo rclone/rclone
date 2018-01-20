@@ -100,21 +100,24 @@ need to make a remote called `TestDrive`.
 You can then run the unit tests in the drive directory.  These tests
 are skipped if `TestDrive:` isn't defined.
 
-    cd drive
+    cd backend/drive
     go test -v
 
 You can then run the integration tests which tests all of rclone's
 operations.  Normally these get run against the local filing system,
 but they can be run against any of the remotes.
 
-    cd ../fs
+    cd fs/sync
     go test -v -remote TestDrive:
     go test -v -remote TestDrive: -subdir
 
-If you want to run all the integration tests against all the remotes,
-then run in that directory
+    cd fs/operations
+    go test -v -remote TestDrive:
 
-    go run test_all.go
+If you want to run all the integration tests against all the remotes,
+then change into the project root and run
+
+    make test
 
 ## Code Organisation ##
 
