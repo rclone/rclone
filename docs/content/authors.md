@@ -131,3 +131,4 @@ Contributors
   * Will Gunn <WillGunn@users.noreply.github.com>
   * Lucas Bremgartner <lucas@bremis.ch>
   * Iakov Davydov <dav05.gith@myths.ru>
+  * Jody Frankowski <jody.frankowski@gmail.com>
