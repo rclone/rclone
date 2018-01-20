@@ -231,9 +231,9 @@ func (fh *WriteFileHandle) Flush() error {
 	// If Write hasn't been called then ignore the Flush - Release
 	// will pick it up
 	if !fh.writeCalled {
-		fs.Debugf(fh.remote, "WriteFileHandle.Flush ignoring flush on unwritten handle")
-		return nil
-
+		fs.Debugf(fh.remote, "WriteFileHandle.Flush unwritten handle, writing 0 bytes to avoid race conditions")
+		_, err := fh.writeAt([]byte{}, fh.offset)
+		return err
 	}
 	err := fh.close()
 	if err != nil {
