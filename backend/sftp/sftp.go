@@ -90,18 +90,20 @@ func init() {
 
 // Fs stores the interface to the remote SFTP files
 type Fs struct {
-	name         string
-	root         string
-	features     *fs.Features // optional features
-	config       *ssh.ClientConfig
-	host         string
-	port         string
-	url          string
-	mkdirLock    *stringLock
-	cachedHashes *hash.Set
-	poolMu       sync.Mutex
-	pool         []*conn
-	connLimit    *rate.Limiter // for limiting number of connections per second
+	name              string
+	root              string
+	features          *fs.Features // optional features
+	config            *ssh.ClientConfig
+	host              string
+	port              string
+	url               string
+	mkdirLock         *stringLock
+	cachedHashes      *hash.Set
+	hashcheckDisabled bool
+	setModtime        bool
+	poolMu            sync.Mutex
+	pool              []*conn
+	connLimit         *rate.Limiter // for limiting number of connections per second
 }
 
 // Object is a remote SFTP file that has been stat'd (so it exists, but is not necessarily open for reading)
@@ -273,6 +275,8 @@ func NewFs(name, root string) (fs.Fs, error) {
 	pass := config.FileGet(name, "pass")
 	keyFile := config.FileGet(name, "key_file")
 	insecureCipher := config.FileGetBool(name, "use_insecure_cipher")
+	hashcheckDisabled := config.FileGetBool(name, "disable_hashcheck")
+	setModtime := config.FileGetBool(name, "set_modtime", true)
 	if user == "" {
 		user = currentUser
 	}
@@ -327,14 +331,16 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:      name,
-		root:      root,
-		config:    sshConfig,
-		host:      host,
-		port:      port,
-		url:       "sftp://" + user + "@" + host + ":" + port + "/" + root,
-		mkdirLock: newStringLock(),
-		connLimit: rate.NewLimiter(rate.Limit(connectionsPerSecond), 1),
+		name:              name,
+		root:              root,
+		config:            sshConfig,
+		host:              host,
+		port:              port,
+		url:               "sftp://" + user + "@" + host + ":" + port + "/" + root,
+		hashcheckDisabled: hashcheckDisabled,
+		setModtime:        setModtime,
+		mkdirLock:         newStringLock(),
+		connLimit:         rate.NewLimiter(rate.Limit(connectionsPerSecond), 1),
 	}
 	f.features = (&fs.Features{
 		CanHaveEmptyDirectories: true,
@@ -640,8 +646,7 @@ func (f *Fs) Hashes() hash.Set {
 		return *f.cachedHashes
 	}
 
-	hashcheckDisabled := config.FileGetBool(f.name, "disable_hashcheck")
-	if hashcheckDisabled {
+	if f.hashcheckDisabled {
 		return hash.Set(hash.None)
 	}
 
@@ -816,7 +821,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	if err != nil {
 		return errors.Wrap(err, "SetModTime")
 	}
-	if config.FileGetBool(o.fs.name, "set_modtime", true) {
+	if o.fs.setModtime {
 		err = c.sftpClient.Chtimes(o.path(), modTime, modTime)
 		o.fs.putSftpConnection(&c, err)
 		if err != nil {
