@@ -168,12 +168,15 @@ func TestWriteFileHandleWriteAt(t *testing.T) {
 func TestWriteFileHandleFlush(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()
-	_, fh := writeHandleCreate(t, r)
+	vfs, fh := writeHandleCreate(t, r)
 
-	// Check Flush does nothing if write not called
+	// Check Flush already creates file for unwritten handles, without closing it
 	err := fh.Flush()
 	assert.NoError(t, err)
 	assert.False(t, fh.closed)
+	root, err := vfs.Root()
+	assert.NoError(t, err)
+	checkListing(t, root, []string{"file1,0,false"})
 
 	// Write some data
 	n, err := fh.Write([]byte("hello"))
@@ -189,6 +192,11 @@ func TestWriteFileHandleFlush(t *testing.T) {
 	err = fh.Flush()
 	assert.NoError(t, err)
 	assert.True(t, fh.closed)
+
+	// Check file was written properly
+	root, err = vfs.Root()
+	assert.NoError(t, err)
+	checkListing(t, root, []string{"file1,5,false"})
 }
 
 func TestWriteFileHandleRelease(t *testing.T) {
