@@ -351,9 +351,9 @@ func configTeamDrive(name string) error {
 	if !config.Confirm() {
 		return nil
 	}
-	client, err := authenticate(name)
+	client, err := createOAuthClient(name)
 	if err != nil {
-		return errors.Wrap(err, "config team drive failed to authenticate")
+		return errors.Wrap(err, "config team drive failed to create oauth client")
 	}
 	svc, err := drive.New(client)
 	if err != nil {
@@ -408,7 +408,7 @@ func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
 }
 
-func authenticate(name string) (*http.Client, error) {
+func createOAuthClient(name string) (*http.Client, error) {
 	var oAuthClient *http.Client
 	var err error
 
@@ -416,12 +416,12 @@ func authenticate(name string) (*http.Client, error) {
 	if serviceAccountPath != "" {
 		oAuthClient, err = getServiceAccountClient(serviceAccountPath)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to configure drive Service Account")
+			return nil, errors.Wrap(err, "failed to create oauth client from service account")
 		}
 	} else {
 		oAuthClient, _, err = oauthutil.NewClient(name, driveConfig)
 		if err != nil {
-			return nil, errors.Wrap(err, "Failed to configure drive")
+			return nil, errors.Wrap(err, "failed to create oauth client")
 		}
 	}
 
@@ -437,7 +437,10 @@ func NewFs(name, path string) (fs.Fs, error) {
 		return nil, errors.Errorf("drive: chunk size can't be less than 256k - was %v", chunkSize)
 	}
 
-	oAuthClient, _ := authenticate(name)
+	oAuthClient, err := createOAuthClient(name)
+	if err != nil {
+		return nil, errors.Wrap(err, "drive: failed when making oauth client")
+	}
 
 	root, err := parseDrivePath(path)
 	if err != nil {
