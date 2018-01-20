@@ -652,6 +652,12 @@ type localOpenFile struct {
 	hash *hash.MultiHasher // currently accumulating hashes
 }
 
+// limitedReadCloser adds io.Closer to io.LimitedReader
+type limitedReadCloser struct {
+	*io.LimitedReader
+	io.Closer
+}
+
 // Read bytes from the object - see io.Reader
 func (file *localOpenFile) Read(p []byte) (n int, err error) {
 	n, err = file.in.Read(p)
@@ -676,11 +682,25 @@ func (file *localOpenFile) Close() (err error) {
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	var offset int64
+	var limit int64
 	hashes := hash.Supported
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
 			offset = x.Offset
+			limit = 0
+		case *fs.RangeOption:
+			if x.Start >= 0 {
+				offset = x.Start
+				if x.End >= 0 {
+					limit = x.End - x.Start + 1
+				} else {
+					limit = 0
+				}
+			} else {
+				offset = o.size - x.End
+				limit = 0
+			}
 		case *fs.HashesOption:
 			hashes = x.Hashes
 		default:
@@ -694,11 +714,18 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if err != nil {
 		return
 	}
+	var wrappedFd io.ReadCloser = fd
+	if limit != 0 {
+		wrappedFd = &limitedReadCloser{
+			LimitedReader: &io.LimitedReader{R: fd, N: limit},
+			Closer:        fd,
+		}
+	}
 	if offset != 0 {
 		// seek the object
 		_, err = fd.Seek(offset, 0)
 		// don't attempt to make checksums
-		return fd, err
+		return wrappedFd, err
 	}
 	hash, err := hash.NewMultiHasherTypes(hashes)
 	if err != nil {
@@ -707,7 +734,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	// Update the md5sum as we go along
 	in = &localOpenFile{
 		o:    o,
-		in:   fd,
+		in:   wrappedFd,
 		hash: hash,
 	}
 	return in, nil
