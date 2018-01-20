@@ -132,3 +132,4 @@ Contributors
   * Lucas Bremgartner <lucas@bremis.ch>
   * Iakov Davydov <dav05.gith@myths.ru>
   * Jody Frankowski <jody.frankowski@gmail.com>
+  * Andreas Roussos <arouss1980@gmail.com>
