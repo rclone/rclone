@@ -854,14 +854,21 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.RangeOption:
+			start, end := x.Start, x.End
+			if end < 0 {
+				end = 0
+			}
+			if start < 0 {
+				start = o.size - end
+				end = 0
+			}
 			getBlobRangeOptions.Range = &storage.BlobRange{
-				Start: uint64(x.Start),
-				End:   uint64(x.End),
+				Start: uint64(start),
+				End:   uint64(end),
 			}
 		case *fs.SeekOption:
 			getBlobRangeOptions.Range = &storage.BlobRange{
 				Start: uint64(x.Offset),
-				End:   uint64(o.size),
 			}
 		default:
 			if option.Mandatory() {
