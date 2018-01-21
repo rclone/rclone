@@ -792,16 +792,17 @@ func TestObjectSize(t *testing.T) {
 
 // read the contents of an object as a string
 func readObject(t *testing.T, obj fs.Object, limit int64, options ...fs.OpenOption) string {
+	what := fmt.Sprintf("readObject(%q) limit=%d, options=%+v", obj, limit, options)
 	in, err := obj.Open(options...)
-	require.NoError(t, err)
+	require.NoError(t, err, what)
 	var r io.Reader = in
 	if limit >= 0 {
 		r = &io.LimitedReader{R: r, N: limit}
 	}
 	contents, err := ioutil.ReadAll(r)
-	require.NoError(t, err)
+	require.NoError(t, err, what)
 	err = in.Close()
-	require.NoError(t, err)
+	require.NoError(t, err, what)
 	return string(contents)
 }
 
@@ -812,11 +813,32 @@ func TestObjectOpen(t *testing.T) {
 	assert.Equal(t, file1Contents, readObject(t, obj, -1), "contents of file1 differ")
 }
 
-// TestObjectOpenSeek tests that Open works with Seek
+// TestObjectOpenSeek tests that Open works with SeekOption
 func TestObjectOpenSeek(t *testing.T) {
 	skipIfNotOk(t)
 	obj := findObject(t, file1.Path)
 	assert.Equal(t, file1Contents[50:], readObject(t, obj, -1, &fs.SeekOption{Offset: 50}), "contents of file1 differ after seek")
+}
+
+// TestObjectOpenRange tests that Open works with RangeOption
+func TestObjectOpenRange(t *testing.T) {
+	skipIfNotOk(t)
+	obj := findObject(t, file1.Path)
+	for _, test := range []struct {
+		ro                 fs.RangeOption
+		wantStart, wantEnd int
+	}{
+		{fs.RangeOption{Start: 5, End: 15}, 5, 16},
+		{fs.RangeOption{Start: 80, End: -1}, 80, 100},
+		{fs.RangeOption{Start: 81, End: 100000}, 81, 100},
+		{fs.RangeOption{Start: -1, End: 20}, 80, 100}, // if start is omitted this means get the final bytes
+		// {fs.RangeOption{Start: -1, End: -1}, 0, 100}, - this seems to work but the RFC doesn't define it
+	} {
+		got := readObject(t, obj, -1, &test.ro)
+		foundAt := strings.Index(file1Contents, got)
+		help := fmt.Sprintf("%#v failed want [%d:%d] got [%d:%d]", test.ro, test.wantStart, test.wantEnd, foundAt, foundAt+len(got))
+		assert.Equal(t, file1Contents[test.wantStart:test.wantEnd], got, help)
+	}
 }
 
 // TestObjectPartialRead tests that reading only part of the object does the correct thing
