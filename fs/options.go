@@ -23,6 +23,15 @@ type OpenOption interface {
 
 // RangeOption defines an HTTP Range option with start and end.  If
 // either start or end are < 0 then they will be omitted.
+//
+// End may be bigger than the Size of the object in which case it will
+// be capped to the size of the object.
+//
+// Note that the End is inclusive, so to fetch 100 bytes you would use
+// RangeOption{Start: 0, End: 99}
+//
+// A RangeOption implements a single byte-range-spec from
+// https://tools.ietf.org/html/rfc7233#section-2.1
 type RangeOption struct {
 	Start int64
 	End   int64
