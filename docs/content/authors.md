@@ -115,7 +115,7 @@ Contributors
   * Pierre Carlson <mpcarl@us.ibm.com>
   * Ernest Borowski <er.borowski@gmail.com>
   * Remus Bunduc <remus.bunduc@gmail.com>
-  * Iakov Davydov <iakov.davydov@unil.ch>
+  * Iakov Davydov <iakov.davydov@unil.ch> <dav05.gith@myths.ru>
   * Fabian Möller <f.moeller@nynex.de>
   * Jakub Tasiemski <tasiemski@gmail.com>
   * David Minor <dminor@saymedia.com>
@@ -130,6 +130,5 @@ Contributors
   * Jon Fautley <jon@adenoid.appstal.co.uk>
   * Will Gunn <WillGunn@users.noreply.github.com>
   * Lucas Bremgartner <lucas@bremis.ch>
-  * Iakov Davydov <dav05.gith@myths.ru>
   * Jody Frankowski <jody.frankowski@gmail.com>
   * Andreas Roussos <arouss1980@gmail.com>
