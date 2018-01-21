@@ -62,6 +62,7 @@ func TestObjectSetModTime(t *testing.T)    { fstests.TestObjectSetModTime(t) }
 func TestObjectSize(t *testing.T)          { fstests.TestObjectSize(t) }
 func TestObjectOpen(t *testing.T)          { fstests.TestObjectOpen(t) }
 func TestObjectOpenSeek(t *testing.T)      { fstests.TestObjectOpenSeek(t) }
+func TestObjectOpenRange(t *testing.T)     { fstests.TestObjectOpenRange(t) }
 func TestObjectPartialRead(t *testing.T)   { fstests.TestObjectPartialRead(t) }
 func TestObjectUpdate(t *testing.T)        { fstests.TestObjectUpdate(t) }
 func TestObjectStorable(t *testing.T)      { fstests.TestObjectStorable(t) }
