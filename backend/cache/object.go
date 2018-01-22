@@ -14,6 +14,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/readers"
 )
 
 // Object is a generic file like object that stores basic information about it
@@ -219,19 +220,21 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 
 	var err error
 	cacheReader := NewObjectHandle(o)
+	var offset, limit int64
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
-			_, err = cacheReader.Seek(x.Offset, os.SEEK_SET)
+			offset, limit = x.Offset, 0
 		case *fs.RangeOption:
-			_, err = cacheReader.Seek(x.Start, os.SEEK_SET)
+			offset, limit = x.Decode(o.Size())
 		}
+		_, err = cacheReader.Seek(offset, os.SEEK_SET)
 		if err != nil {
-			return cacheReader, err
+			return nil, err
 		}
 	}
 
-	return cacheReader, nil
+	return readers.NewLimitedReadCloser(cacheReader, limit), nil
 }
 
 // Update will change the object data
