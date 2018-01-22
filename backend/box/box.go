@@ -960,6 +960,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
+	fs.FixRangeOption(options, o.size)
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",
