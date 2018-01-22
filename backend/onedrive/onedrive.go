@@ -1065,18 +1065,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if o.id == "" {
 		return nil, errors.New("can't download - no id")
 	}
-	for i := range options {
-		option := options[i]
-		if x, ok := option.(*fs.RangeOption); ok {
-			// Fix RangeOption if requesting a fetch from
-			// the end as it doesn't work with Onedrive.
-			// If start is < 0 then fetch from the end
-			if x.Start < 0 {
-				x = &fs.RangeOption{Start: o.size - x.End, End: -1}
-				options[i] = x
-			}
-		}
-	}
+	fs.FixRangeOption(options, o.size)
 	var resp *http.Response
 	opts := rest.Opts{
 		Method:  "GET",

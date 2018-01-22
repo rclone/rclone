@@ -62,6 +62,24 @@ func (o *RangeOption) Mandatory() bool {
 	return false
 }
 
+// FixRangeOption looks through the slice of options and adjusts any
+// RangeOption~s found that request a fetch from the end into an
+// absolute fetch using the size passed in.  Some remotes (eg
+// Onedrive, Box) don't support range requests which index from the
+// end.
+func FixRangeOption(options []OpenOption, size int64) {
+	for i := range options {
+		option := options[i]
+		if x, ok := option.(*RangeOption); ok {
+			// If start is < 0 then fetch from the end
+			if x.Start < 0 {
+				x = &RangeOption{Start: size - x.End, End: -1}
+				options[i] = x
+			}
+		}
+	}
+}
+
 // SeekOption defines an HTTP Range option with start only.
 type SeekOption struct {
 	Offset int64
