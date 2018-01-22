@@ -30,6 +30,7 @@ type StatsInfo struct {
 	checking     stringSet
 	transfers    int64
 	transferring stringSet
+	deletes      int64
 	start        time.Time
 	inProgress   *inProgress
 }
@@ -115,6 +116,14 @@ func (s *StatsInfo) GetLastError() error {
 	return s.lastError
 }
 
+// Deletes updates the stats for deletes
+func (s *StatsInfo) Deletes(deletes int64) int64 {
+	s.lock.Lock()
+	defer s.lock.Unlock()
+	s.deletes += deletes
+	return s.deletes
+}
+
 // ResetCounters sets the counters (bytes, checks, errors, transfers) to 0
 func (s *StatsInfo) ResetCounters() {
 	s.lock.RLock()
@@ -123,6 +132,7 @@ func (s *StatsInfo) ResetCounters() {
 	s.errors = 0
 	s.checks = 0
 	s.transfers = 0
+	s.deletes = 0
 }
 
 // ResetErrors sets the errors count to 0
