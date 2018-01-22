@@ -823,7 +823,7 @@ func TestObjectOpenSeek(t *testing.T) {
 // TestObjectOpenRange tests that Open works with RangeOption
 func TestObjectOpenRange(t *testing.T) {
 	skipIfNotOk(t)
-	if os.Getenv("CI") == "true" {
+	if strings.ToLower(os.Getenv("CI")) == "true" {
 		t.Skip("FIXME skipping test in CI")
 	} else {
 		t.Log("FIXME running test since not in CI")
