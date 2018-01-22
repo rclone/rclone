@@ -409,6 +409,10 @@ func CanServerSideMove(fdst fs.Fs) bool {
 // deleting
 func DeleteFileWithBackupDir(dst fs.Object, backupDir fs.Fs) (err error) {
 	accounting.Stats.Checking(dst.Remote())
+	numDeletes := accounting.Stats.Deletes(1)
+	if fs.Config.MaxDelete != -1 && numDeletes > fs.Config.MaxDelete {
+		return fserrors.FatalError(errors.New("--max-delete threshold reached"))
+	}
 	action, actioned, actioning := "delete", "Deleted", "deleting"
 	if backupDir != nil {
 		action, actioned, actioning = "move into backup dir", "Moved into backup dir", "moving into backup dir"
@@ -453,6 +457,8 @@ func DeleteFilesWithBackupDir(toBeDeleted fs.ObjectsChan, backupDir fs.Fs) error
 	var wg sync.WaitGroup
 	wg.Add(fs.Config.Transfers)
 	var errorCount int32
+	var fatalErrorCount int32
+
 	for i := 0; i < fs.Config.Transfers; i++ {
 		go func() {
 			defer wg.Done()
@@ -460,6 +466,11 @@ func DeleteFilesWithBackupDir(toBeDeleted fs.ObjectsChan, backupDir fs.Fs) error
 				err := DeleteFileWithBackupDir(dst, backupDir)
 				if err != nil {
 					atomic.AddInt32(&errorCount, 1)
+					if fserrors.IsFatalError(err) {
+						fs.Errorf(nil, "Got fatal error on delete: %s", err)
+						atomic.AddInt32(&fatalErrorCount, 1)
+						return
+					}
 				}
 			}
 		}()
@@ -467,7 +478,11 @@ func DeleteFilesWithBackupDir(toBeDeleted fs.ObjectsChan, backupDir fs.Fs) error
 	fs.Infof(nil, "Waiting for deletions to finish")
 	wg.Wait()
 	if errorCount > 0 {
-		return errors.Errorf("failed to delete %d files", errorCount)
+		err := errors.Errorf("failed to delete %d files", errorCount)
+		if fatalErrorCount > 0 {
+			return fserrors.FatalError(err)
+		}
+		return err
 	}
 	return nil
 }
