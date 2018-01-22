@@ -14,6 +14,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/backend/crypt/pkcs7"
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/pkg/errors"
 
@@ -64,10 +65,11 @@ type ReadSeekCloser interface {
 	io.Reader
 	io.Seeker
 	io.Closer
+	fs.RangeSeeker
 }
 
-// OpenAtOffset opens the file handle at the offset given
-type OpenAtOffset func(offset int64) (io.ReadCloser, error)
+// OpenRangeSeek opens the file handle at the offset with the limit given
+type OpenRangeSeek func(offset, limit int64) (io.ReadCloser, error)
 
 // Cipher is used to swap out the encryption implementations
 type Cipher interface {
@@ -84,7 +86,7 @@ type Cipher interface {
 	// DecryptData
 	DecryptData(io.ReadCloser) (io.ReadCloser, error)
 	// DecryptDataSeek decrypt at a given position
-	DecryptDataSeek(open OpenAtOffset, offset int64) (ReadSeekCloser, error)
+	DecryptDataSeek(open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error)
 	// EncryptedSize calculates the size of the data when encrypted
 	EncryptedSize(int64) int64
 	// DecryptedSize calculates the size of the data when decrypted
@@ -712,7 +714,8 @@ type decrypter struct {
 	bufIndex     int
 	bufSize      int
 	err          error
-	open         OpenAtOffset
+	limit        int64 // limit of bytes to read, -1 for unlimited
+	open         OpenRangeSeek
 }
 
 // newDecrypter creates a new file handle decrypting on the fly
@@ -722,6 +725,7 @@ func (c *cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 		c:       c,
 		buf:     c.getBlock(),
 		readBuf: c.getBlock(),
+		limit:   -1,
 	}
 	// Read file header (magic + nonce)
 	readBuf := fh.readBuf[:fileHeaderSize]
@@ -743,9 +747,24 @@ func (c *cipher) newDecrypter(rc io.ReadCloser) (*decrypter, error) {
 }
 
 // newDecrypterSeek creates a new file handle decrypting on the fly
-func (c *cipher) newDecrypterSeek(open OpenAtOffset, offset int64) (fh *decrypter, err error) {
+func (c *cipher) newDecrypterSeek(open OpenRangeSeek, offset, limit int64) (fh *decrypter, err error) {
+	var rc io.ReadCloser
+	doRangeSeek := false
+	setLimit := false
 	// Open initially with no seek
-	rc, err := open(0)
+	if offset == 0 && limit < 0 {
+		// If no offset or limit then open whole file
+		rc, err = open(0, -1)
+	} else if offset == 0 {
+		// If no offset open the header + limit worth of the file
+		_, underlyingLimit, _, _ := calculateUnderlying(offset, limit)
+		rc, err = open(0, int64(fileHeaderSize)+underlyingLimit)
+		setLimit = true
+	} else {
+		// Otherwise just read the header to start with
+		rc, err = open(0, int64(fileHeaderSize))
+		doRangeSeek = true
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -754,13 +773,16 @@ func (c *cipher) newDecrypterSeek(open OpenAtOffset, offset int64) (fh *decrypte
 	if err != nil {
 		return nil, err
 	}
-	fh.open = open // will be called by fh.Seek
-	if offset != 0 {
-		_, err = fh.Seek(offset, 0)
+	fh.open = open // will be called by fh.RangeSeek
+	if doRangeSeek {
+		_, err = fh.RangeSeek(offset, 0, limit)
 		if err != nil {
 			_ = fh.Close()
 			return nil, err
 		}
+	}
+	if setLimit {
+		fh.limit = limit
 	}
 	return fh, nil
 }
@@ -814,13 +836,66 @@ func (fh *decrypter) Read(p []byte) (n int, err error) {
 			return 0, fh.finish(err)
 		}
 	}
-	n = copy(p, fh.buf[fh.bufIndex:fh.bufSize])
+	toCopy := fh.bufSize - fh.bufIndex
+	if fh.limit >= 0 && fh.limit < int64(toCopy) {
+		toCopy = int(fh.limit)
+	}
+	n = copy(p, fh.buf[fh.bufIndex:fh.bufIndex+toCopy])
 	fh.bufIndex += n
+	if fh.limit >= 0 {
+		fh.limit -= int64(n)
+		if fh.limit == 0 {
+			return n, fh.finish(io.EOF)
+		}
+	}
 	return n, nil
 }
 
-// Seek as per io.Seeker
-func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
+// calculateUnderlying converts an (offset, limit) in a crypted file
+// into an (underlyingOffset, underlyingLimit) for the underlying
+// file.
+//
+// It also returns number of bytes to discard after reading the first
+// block and number of blocks this is from the start so the nonce can
+// be incremented.
+func calculateUnderlying(offset, limit int64) (underlyingOffset, underlyingLimit, discard, blocks int64) {
+	// blocks we need to seek, plus bytes we need to discard
+	blocks, discard = offset/blockDataSize, offset%blockDataSize
+
+	// Offset in underlying stream we need to seek
+	underlyingOffset = int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
+
+	// work out how many blocks we need to read
+	underlyingLimit = int64(-1)
+	if limit >= 0 {
+		// bytes to read beyond the first block
+		bytesToRead := limit - (blockDataSize - discard)
+
+		// Read the first block
+		blocksToRead := int64(1)
+
+		if bytesToRead > 0 {
+			// Blocks that need to be read plus left over blocks
+			extraBlocksToRead, endBytes := bytesToRead/blockDataSize, bytesToRead%blockDataSize
+			if endBytes != 0 {
+				// If left over bytes must read another block
+				extraBlocksToRead++
+			}
+			blocksToRead += extraBlocksToRead
+		}
+
+		// Must read a whole number of blocks
+		underlyingLimit = blocksToRead * (blockHeaderSize + blockDataSize)
+	}
+	return
+}
+
+// RangeSeek behaves like a call to Seek(offset int64, whence
+// int) with the output wrapped in an io.LimitedReader
+// limiting the total length to limit.
+//
+// RangeSeek with a limit of < 0 is equivalent to a regular Seek.
+func (fh *decrypter) RangeSeek(offset int64, whence int, limit int64) (int64, error) {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 
@@ -838,20 +913,16 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 		return 0, fh.err
 	}
 
-	// blocks we need to seek, plus bytes we need to discard
-	blocks, discard := offset/blockDataSize, offset%blockDataSize
-
-	// Offset in underlying stream we need to seek
-	underlyingOffset := int64(fileHeaderSize) + blocks*(blockHeaderSize+blockDataSize)
+	underlyingOffset, underlyingLimit, discard, blocks := calculateUnderlying(offset, limit)
 
 	// Move the nonce on the correct number of blocks from the start
 	fh.nonce = fh.initialNonce
 	fh.nonce.add(uint64(blocks))
 
 	// Can we seek underlying stream directly?
-	if do, ok := fh.rc.(io.Seeker); ok {
+	if do, ok := fh.rc.(fs.RangeSeeker); ok {
 		// Seek underlying stream directly
-		_, err := do.Seek(underlyingOffset, 0)
+		_, err := do.RangeSeek(underlyingOffset, 0, underlyingLimit)
 		if err != nil {
 			return 0, fh.finish(err)
 		}
@@ -861,9 +932,9 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 		fh.rc = nil
 
 		// Re-open the underlying object with the offset given
-		rc, err := fh.open(underlyingOffset)
+		rc, err := fh.open(underlyingOffset, underlyingLimit)
 		if err != nil {
-			return 0, fh.finish(errors.Wrap(err, "couldn't reopen file with offset"))
+			return 0, fh.finish(errors.Wrap(err, "couldn't reopen file with offset and limit"))
 		}
 
 		// Set the file handle
@@ -882,7 +953,15 @@ func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
 	}
 	fh.bufIndex = int(discard)
 
+	// Set the limit
+	fh.limit = limit
+
 	return offset, nil
+}
+
+// Seek implements the io.Seeker interface
+func (fh *decrypter) Seek(offset int64, whence int) (int64, error) {
+	return fh.RangeSeek(offset, whence, -1)
 }
 
 // finish sets the final error and tidies up
@@ -956,8 +1035,8 @@ func (c *cipher) DecryptData(rc io.ReadCloser) (io.ReadCloser, error) {
 // The open function must return a ReadCloser opened to the offset supplied
 //
 // You must use this form of DecryptData if you might want to Seek the file handle
-func (c *cipher) DecryptDataSeek(open OpenAtOffset, offset int64) (ReadSeekCloser, error) {
-	out, err := c.newDecrypterSeek(open, offset)
+func (c *cipher) DecryptDataSeek(open OpenRangeSeek, offset, limit int64) (ReadSeekCloser, error) {
+	out, err := c.newDecrypterSeek(open, offset, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -994,7 +1073,9 @@ func (c *cipher) DecryptedSize(size int64) (int64, error) {
 
 // check interfaces
 var (
-	_ Cipher        = (*cipher)(nil)
-	_ io.ReadCloser = (*decrypter)(nil)
-	_ io.Reader     = (*encrypter)(nil)
+	_ Cipher         = (*cipher)(nil)
+	_ io.ReadCloser  = (*decrypter)(nil)
+	_ io.Seeker      = (*decrypter)(nil)
+	_ fs.RangeSeeker = (*decrypter)(nil)
+	_ io.Reader      = (*encrypter)(nil)
 )

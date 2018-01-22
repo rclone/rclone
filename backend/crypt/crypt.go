@@ -573,29 +573,39 @@ func (o *Object) UnWrap() fs.Object {
 
 // Open opens the file for read.  Call Close() on the returned io.ReadCloser
 func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
-	var offset int64
+	var openOptions []fs.OpenOption
+	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
 			offset = x.Offset
+		case *fs.RangeOption:
+			offset, limit = x.Decode(o.Size())
 		default:
-			if option.Mandatory() {
-				fs.Logf(o, "Unsupported mandatory option: %v", option)
-			}
+			// pass on Options to underlying open if appropriate
+			openOptions = append(openOptions, option)
 		}
 	}
-	rc, err = o.f.cipher.DecryptDataSeek(func(underlyingOffset int64) (io.ReadCloser, error) {
-		if underlyingOffset == 0 {
+	rc, err = o.f.cipher.DecryptDataSeek(func(underlyingOffset, underlyingLimit int64) (io.ReadCloser, error) {
+		if underlyingOffset == 0 && underlyingLimit < 0 {
 			// Open with no seek
-			return o.Object.Open()
+			return o.Object.Open(openOptions...)
 		}
-		// Open stream with a seek of underlyingOffset
-		return o.Object.Open(&fs.SeekOption{Offset: underlyingOffset})
-	}, offset)
+		// Open stream with a range of underlyingOffset, underlyingLimit
+		end := int64(-1)
+		if underlyingLimit >= 0 {
+			end = underlyingOffset + underlyingLimit - 1
+			if end >= o.Object.Size() {
+				end = -1
+			}
+		}
+		newOpenOptions := append(openOptions, &fs.RangeOption{Start: underlyingOffset, End: end})
+		return o.Object.Open(newOpenOptions...)
+	}, offset, limit)
 	if err != nil {
 		return nil, err
 	}
-	return rc, err
+	return rc, nil
 }
 
 // Update in to the object with the modTime given of the given size
