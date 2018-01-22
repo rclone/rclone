@@ -62,6 +62,22 @@ func (o *RangeOption) Mandatory() bool {
 	return false
 }
 
+// Decode interprets the RangeOption into an offset and a limit
+func (o *RangeOption) Decode(size int64) (offset, limit int64) {
+	if o.Start >= 0 {
+		offset = o.Start
+		if o.End >= 0 {
+			limit = o.End - o.Start + 1
+		} else {
+			limit = 0
+		}
+	} else {
+		offset = size - o.End
+		limit = 0
+	}
+	return offset, limit
+}
+
 // FixRangeOption looks through the slice of options and adjusts any
 // RangeOption~s found that request a fetch from the end into an
 // absolute fetch using the size passed in.  Some remotes (eg

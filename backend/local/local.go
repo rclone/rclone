@@ -19,6 +19,7 @@ import (
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"google.golang.org/appengine/log"
 )
@@ -652,12 +653,6 @@ type localOpenFile struct {
 	hash *hash.MultiHasher // currently accumulating hashes
 }
 
-// limitedReadCloser adds io.Closer to io.LimitedReader
-type limitedReadCloser struct {
-	*io.LimitedReader
-	io.Closer
-}
-
 // Read bytes from the object - see io.Reader
 func (file *localOpenFile) Read(p []byte) (n int, err error) {
 	n, err = file.in.Read(p)
@@ -687,20 +682,9 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
-			offset = x.Offset
-			limit = 0
+			offset, limit = x.Offset, 0
 		case *fs.RangeOption:
-			if x.Start >= 0 {
-				offset = x.Start
-				if x.End >= 0 {
-					limit = x.End - x.Start + 1
-				} else {
-					limit = 0
-				}
-			} else {
-				offset = o.size - x.End
-				limit = 0
-			}
+			offset, limit = x.Decode(o.size)
 		case *fs.HashesOption:
 			hashes = x.Hashes
 		default:
@@ -714,13 +698,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if err != nil {
 		return
 	}
-	var wrappedFd io.ReadCloser = fd
-	if limit != 0 {
-		wrappedFd = &limitedReadCloser{
-			LimitedReader: &io.LimitedReader{R: fd, N: limit},
-			Closer:        fd,
-		}
-	}
+	wrappedFd := readers.NewLimitedReadCloser(fd, limit)
 	if offset != 0 {
 		// seek the object
 		_, err = fd.Seek(offset, 0)
