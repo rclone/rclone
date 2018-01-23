@@ -1,13 +1,57 @@
 package drive
 
 import (
+	"encoding/json"
 	"testing"
 
-	"google.golang.org/api/drive/v2"
+	"google.golang.org/api/drive/v3"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 )
+
+const exportFormats = `{
+  "application/vnd.google-apps.document": [
+   "application/rtf",
+   "application/vnd.oasis.opendocument.text",
+   "text/html",
+   "application/pdf",
+   "application/epub+zip",
+   "application/zip",
+   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+   "text/plain"
+  ],
+  "application/vnd.google-apps.spreadsheet": [
+   "application/x-vnd.oasis.opendocument.spreadsheet",
+   "text/tab-separated-values",
+   "application/pdf",
+   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+   "text/csv",
+   "application/zip",
+   "application/vnd.oasis.opendocument.spreadsheet"
+  ],
+  "application/vnd.google-apps.jam": [
+   "application/pdf"
+  ],
+  "application/vnd.google-apps.script": [
+   "application/vnd.google-apps.script+json"
+  ],
+  "application/vnd.google-apps.presentation": [
+   "application/vnd.oasis.opendocument.presentation",
+   "application/pdf",
+   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+   "text/plain"
+  ],
+  "application/vnd.google-apps.form": [
+   "application/zip"
+  ],
+  "application/vnd.google-apps.drawing": [
+   "image/svg+xml",
+   "image/png",
+   "application/pdf",
+   "image/jpeg"
+  ]
+ }`
 
 func TestInternalParseExtensions(t *testing.T) {
 	for _, test := range []struct {
@@ -40,25 +84,23 @@ func TestInternalParseExtensions(t *testing.T) {
 
 func TestInternalFindExportFormat(t *testing.T) {
 	item := new(drive.File)
-	item.ExportLinks = map[string]string{
-		"application/pdf": "http://pdf",
-		"application/rtf": "http://rtf",
-	}
+	item.MimeType = "application/vnd.google-apps.document"
 	for _, test := range []struct {
 		extensions    []string
 		wantExtension string
-		wantLink      string
+		wantMimeType  string
 	}{
 		{[]string{}, "", ""},
-		{[]string{"pdf"}, "pdf", "http://pdf"},
-		{[]string{"pdf", "rtf", "xls"}, "pdf", "http://pdf"},
-		{[]string{"xls", "rtf", "pdf"}, "rtf", "http://rtf"},
+		{[]string{"pdf"}, "pdf", "application/pdf"},
+		{[]string{"pdf", "rtf", "xls"}, "pdf", "application/pdf"},
+		{[]string{"xls", "rtf", "pdf"}, "rtf", "application/rtf"},
 		{[]string{"xls", "csv", "svg"}, "", ""},
 	} {
 		f := new(Fs)
 		f.extensions = test.extensions
-		gotExtension, gotLink := f.findExportFormat("file", item)
+		assert.NoError(t, json.Unmarshal([]byte(exportFormats), &f.exportFormats))
+		gotExtension, gotMimeType := f.findExportFormat("file", f.exportFormats[item.MimeType])
 		assert.Equal(t, test.wantExtension, gotExtension)
-		assert.Equal(t, test.wantLink, gotLink)
+		assert.Equal(t, test.wantMimeType, gotMimeType)
 	}
 }
