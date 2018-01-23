@@ -773,6 +773,12 @@ func (f *Fs) Precision() time.Duration {
 	return time.Nanosecond
 }
 
+// pathEscape escapes s as for a URL path.  It uses rest.URLPathEscape
+// but also escapes '+' for S3 and Digital Ocean spaces compatibility
+func pathEscape(s string) string {
+	return strings.Replace(rest.URLPathEscape(s), "+", "%2B", -1)
+}
+
 // Copy src to this remote using server side copy operations.
 //
 // This is stored with the remote path given
@@ -794,7 +800,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 	}
 	srcFs := srcObj.fs
 	key := f.root + remote
-	source := rest.URLPathEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
+	source := pathEscape(srcFs.bucket + "/" + srcFs.root + srcObj.remote)
 	req := s3.CopyObjectInput{
 		Bucket:            &f.bucket,
 		Key:               &key,
@@ -955,7 +961,7 @@ func (o *Object) SetModTime(modTime time.Time) error {
 		ACL:               &o.fs.acl,
 		Key:               &key,
 		ContentType:       &mimeType,
-		CopySource:        aws.String(rest.URLPathEscape(sourceKey)),
+		CopySource:        aws.String(pathEscape(sourceKey)),
 		Metadata:          o.meta,
 		MetadataDirective: &directive,
 	}
