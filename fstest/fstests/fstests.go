@@ -522,22 +522,23 @@ func TestFsCopy(t *testing.T) {
 		t.Skip("FS has no Copier interface")
 	}
 
-	var file1Copy = file1
-	file1Copy.Path += "-copy"
+	// Test with file2 so have + and ' ' in file name
+	var file2Copy = file2
+	file2Copy.Path += "-copy"
 
 	// do the copy
-	src := findObject(t, file1.Path)
-	dst, err := doCopy(src, file1Copy.Path)
+	src := findObject(t, file2.Path)
+	dst, err := doCopy(src, file2Copy.Path)
 	if err == fs.ErrorCantCopy {
 		t.Skip("FS can't copy")
 	}
 	require.NoError(t, err, fmt.Sprintf("Error: %#v", err))
 
 	// check file exists in new listing
-	fstest.CheckListing(t, remote, []fstest.Item{file1, file2, file1Copy})
+	fstest.CheckListing(t, remote, []fstest.Item{file1, file2, file2Copy})
 
 	// Check dst lightly - list above has checked ModTime/Hashes
-	assert.Equal(t, file1Copy.Path, dst.Remote())
+	assert.Equal(t, file2Copy.Path, dst.Remote())
 
 	// Delete copy
 	err = dst.Remove()
