@@ -59,6 +59,12 @@ func Initialise() {
 	// If your local config is encrypted set environment variable
 	// "RCLONE_CONFIG_PASS=hunter2" (or your password)
 	fs.Config.AskPassword = false
+	// Override the config file from the environment - we don't
+	// parse the flags any more so this doesn't happen
+	// automatically
+	if envConfig := os.Getenv("RCLONE_CONFIG"); envConfig != "" {
+		config.ConfigPath = envConfig
+	}
 	config.LoadConfig()
 	if *Verbose {
 		fs.Config.LogLevel = fs.LogLevelDebug
