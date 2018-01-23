@@ -47,6 +47,8 @@ const (
 	timeFormatOut               = "2006-01-02T15:04:05.000000000Z07:00"
 	minSleep                    = 10 * time.Millisecond
 	defaultExtensions           = "docx,xlsx,pptx,svg"
+	scopePrefix                 = "https://www.googleapis.com/auth/"
+	defaultScope                = "drive"
 )
 
 // Globals
@@ -65,7 +67,7 @@ var (
 	driveUploadCutoff = chunkSize
 	// Description of how to auth for this app
 	driveConfig = &oauth2.Config{
-		Scopes:       []string{"https://www.googleapis.com/auth/drive"},
+		Scopes:       []string{scopePrefix + "drive"},
 		Endpoint:     google.Endpoint,
 		ClientID:     rcloneClientID,
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
@@ -105,6 +107,19 @@ func init() {
 		NewFs:       NewFs,
 		Config: func(name string) {
 			var err error
+			// Fill in the scopes
+			scope := config.FileGet(name, "scope")
+			if scope == "" {
+				scope = defaultScope
+			}
+			driveConfig.Scopes = nil
+			for _, scope := range strings.Split(scope, ",") {
+				driveConfig.Scopes = append(driveConfig.Scopes, scopePrefix+strings.TrimSpace(scope))
+				// Set the root_folder_id if using drive.appfolder
+				if scope == "drive.appfolder" {
+					config.FileSet(name, "root_folder_id", "appDataFolder")
+				}
+			}
 			if config.FileGet(name, "service_account_file") == "" {
 				err = oauthutil.Config("drive", name, driveConfig)
 				if err != nil {
@@ -123,8 +138,30 @@ func init() {
 			Name: config.ConfigClientSecret,
 			Help: "Google Application Client Secret - leave blank normally.",
 		}, {
+			Name: "scope",
+			Help: "Scope that rclone should use when requesting access from drive.",
+			Examples: []fs.OptionExample{{
+				Value: "drive",
+				Help:  "Full access all files, excluding Application Data Folder.",
+			}, {
+				Value: "drive.readonly",
+				Help:  "Read-only access to file metadata and file contents.",
+			}, {
+				Value: "drive.file",
+				Help:  "Access to files created by rclone only.\nThese are visible in the drive website.\nFile authorization is revoked when the user deauthorizes the app.",
+			}, {
+				Value: "drive.appfolder",
+				Help:  "Allows read and write access to the Application Data folder.\nThis is not visible in the drive website.",
+			}, {
+				Value: "drive.metadata.readonly",
+				Help:  "Allows read-only access to file metadata but\ndoes not allow any access to read or download file content.",
+			}},
+		}, {
+			Name: "root_folder_id",
+			Help: "ID of the root folder - leave blank normally.  Fill in to access Backup and Sync folders.",
+		}, {
 			Name: "service_account_file",
-			Help: "Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.",
+			Help: "Service Account Credentials JSON file path  - leave blank normally.\nNeeded only if you want use SA instead of interactive login.",
 		}},
 	})
 	flags.VarP(&driveUploadCutoff, "drive-upload-cutoff", "", "Cutoff for switching to chunked upload")
@@ -263,17 +300,21 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 	}
 	list := f.svc.Files.List()
 	if len(query) > 0 {
-		list = list.Q(strings.Join(query, " and "))
+		list.Q(strings.Join(query, " and "))
 		// fmt.Printf("list Query = %q\n", query)
 	}
 	if *driveListChunk > 0 {
-		list = list.PageSize(*driveListChunk)
+		list.PageSize(*driveListChunk)
 	}
 	if f.isTeamDrive {
 		list.TeamDriveId(f.teamDriveID)
 		list.SupportsTeamDrives(true)
 		list.IncludeTeamDriveItems(true)
 		list.Corpora("teamDrive")
+	}
+	// If using appDataFolder then need to add Spaces
+	if f.rootFolderID == "appDataFolder" {
+		list.Spaces("appDataFolder")
 	}
 
 	var fields = partialFields
@@ -480,6 +521,11 @@ func NewFs(name, path string) (fs.Fs, error) {
 		f.rootFolderID = f.teamDriveID
 	} else {
 		f.rootFolderID = "root"
+	}
+
+	// override root folder if set in the config
+	if rootID := config.FileGet(name, "root_folder_id"); rootID != "" {
+		f.rootFolderID = rootID
 	}
 
 	f.dirCache = dircache.New(root, f.rootFolderID, f)

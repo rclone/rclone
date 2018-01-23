@@ -32,39 +32,34 @@ n/r/c/s/q> n
 name> remote
 Type of storage to configure.
 Choose a number from below, or type in your own value
- 1 / Amazon Drive
-   \ "amazon cloud drive"
- 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
-   \ "s3"
- 3 / Backblaze B2
-   \ "b2"
- 4 / Dropbox
-   \ "dropbox"
- 5 / Encrypt/Decrypt a remote
-   \ "crypt"
- 6 / FTP Connection
-   \ "ftp"
- 7 / Google Cloud Storage (this is not Google Drive)
-   \ "google cloud storage"
- 8 / Google Drive
+[snip]
+10 / Google Drive
    \ "drive"
- 9 / Hubic
-   \ "hubic"
-10 / Local Disk
-   \ "local"
-11 / Microsoft OneDrive
-   \ "onedrive"
-12 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
-   \ "swift"
-13 / SSH/SFTP Connection
-   \ "sftp"
-14 / Yandex Disk
-   \ "yandex"
-Storage> 8
+[snip]
+Storage> drive
 Google Application Client Id - leave blank normally.
 client_id>
 Google Application Client Secret - leave blank normally.
 client_secret>
+Scope that rclone should use when requesting access from drive.
+Choose a number from below, or type in your own value
+ 1 / Full access all files, excluding Application Data Folder.
+   \ "drive"
+ 2 / Read-only access to file metadata and file contents.
+   \ "drive.readonly"
+   / Access to files created by rclone only.
+ 3 | These are visible in the drive website.
+   | File authorization is revoked when the user deauthorizes the app.
+   \ "drive.file"
+   / Allows read and write access to the Application Data folder.
+ 4 | This is not visible in the drive website.
+   \ "drive.appfolder"
+   / Allows read-only access to file metadata but
+ 5 | does not allow any access to read or download file content.
+   \ "drive.metadata.readonly"
+scope> 1
+ID of the root folder - leave blank normally.  Fill in to access Backup and Sync folders.
+root_folder_id> 
 Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
 service_account_file>
 Remote config
@@ -84,9 +79,12 @@ n) No
 y/n> n
 --------------------
 [remote]
-client_id =
-client_secret =
-token = {"AccessToken":"xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx","RefreshToken":"1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx","Expiry":"2014-03-16T13:57:58.955387075Z","Extra":null}
+client_id = 
+client_secret = 
+scope = drive
+root_folder_id = 
+service_account_file =
+token = {"access_token":"XXX","token_type":"Bearer","refresh_token":"XXX","expiry":"2014-03-16T13:57:58.955387075Z"}
 --------------------
 y) Yes this is OK
 e) Edit this remote
@@ -114,6 +112,74 @@ List all the files in your drive
 To copy a local directory to a drive directory called backup
 
     rclone copy /home/source remote:backup
+
+### Scopes ###
+
+Rclone allows you to select which scope you would like for rclone to
+use.  This changes what type of token is granted to rclone.  [The
+scopes are defined
+here.](https://developers.google.com/drive/v3/web/about-auth).
+
+The scope are
+
+#### drive ####
+
+This is the default scope and allows full access to all files, except
+for the Application Data Folder (see below).
+
+Choose this one if you aren't sure.
+
+#### drive.readonly ####
+
+This allows read only access to all files.  Files may be listed and
+downloaded but not uploaded, renamed or deleted.
+
+#### drive.file ####
+
+With this scope rclone can read/view/modify only those files and
+folders it creates.
+
+So if you uploaded files to drive via the web interface (or any other
+means) they will not be visible to rclone.
+
+This can be useful if you are using rclone to backup data and you want
+to be sure confidential data on your drive is not visible to rclone.
+
+Files created with this scope are visible in the web interface.
+
+#### drive.appfolder ####
+
+This gives rclone its own private area to store files.  Rclone will
+not be able to see any other files on your drive and you won't be able
+to see rclone's files from the web interface either.
+
+#### drive.metadata.readonly ####
+
+This allows read only access to file names only.  It does not allow
+rclone to download or upload data, or rename or delete files or
+directories.
+
+### Root folder ID ###
+
+You can set the `root_folder_id` for rclone.  This is the directory
+that rclone considers to be a the root of your drive.  Normally you
+will leave this blank and rclone will determine the correct root to
+use itself.
+
+However you can set this to restrict rclone to a specific folder or to
+access the Backup and Sync "Computers" Folders/Files.  In order to do
+this you will have to find the Folder ID of the folder you wish rclone
+to display.  This will be the last segment of the URL when you open
+the folder.  So if the folder/computer backup you want to show looks
+like
+`https://drive.google.com/drive/folders/1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh`
+in the browser, then you use `1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh` as
+the `root_folder_id` in the config.
+
+**NB** the "Computers" Folders seem to be read only.
+
+There doesn't appear to be an API to discover the folder IDs of the
+"Computers" tab - please contact us if you know otherwise!
 
 ### Service Account support ###
 
