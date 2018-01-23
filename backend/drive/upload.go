@@ -23,7 +23,7 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
-	"google.golang.org/api/drive/v2"
+	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/googleapi"
 )
 
