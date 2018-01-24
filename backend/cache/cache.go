@@ -23,6 +23,7 @@ import (
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/walk"
+	"github.com/ncw/rclone/vfs/vfsflags"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
@@ -193,7 +194,8 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		fsErr = fs.ErrorIsFile
 		rpath = cleanPath(path.Dir(rpath))
 	}
-
+	// FIXME override this
+	vfsflags.Opt.DirCacheTime = time.Duration(0)
 	plexURL := config.FileGet(name, "plex_url")
 	plexToken := config.FileGet(name, "plex_token")
 	var chunkSize fs.SizeSuffix

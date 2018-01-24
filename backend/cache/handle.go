@@ -14,8 +14,8 @@ import (
 	"strings"
 
 	"github.com/ncw/rclone/fs"
-	"github.com/pkg/errors"
 	"github.com/ncw/rclone/fs/operations"
+	"github.com/pkg/errors"
 )
 
 var uploaderMap = make(map[string]*backgroundWriter)

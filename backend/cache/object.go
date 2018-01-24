@@ -24,15 +24,15 @@ const (
 type Object struct {
 	fs.Object `json:"-"`
 
-	ParentFs      fs.Fs                  `json:"-"`        // parent fs
-	CacheFs       *Fs                    `json:"-"`        // cache fs
-	Name          string                 `json:"name"`     // name of the directory
-	Dir           string                 `json:"dir"`      // abs path of the object
-	CacheModTime  int64                  `json:"modTime"`  // modification or creation time - IsZero for unknown
-	CacheSize     int64                  `json:"size"`     // size of directory and contents or -1 if unknown
-	CacheStorable bool                   `json:"storable"` // says whether this object can be stored
-	CacheType     string                 `json:"cacheType"`
-	CacheTs       time.Time              `json:"cacheTs"`
+	ParentFs      fs.Fs                `json:"-"`        // parent fs
+	CacheFs       *Fs                  `json:"-"`        // cache fs
+	Name          string               `json:"name"`     // name of the directory
+	Dir           string               `json:"dir"`      // abs path of the object
+	CacheModTime  int64                `json:"modTime"`  // modification or creation time - IsZero for unknown
+	CacheSize     int64                `json:"size"`     // size of directory and contents or -1 if unknown
+	CacheStorable bool                 `json:"storable"` // says whether this object can be stored
+	CacheType     string               `json:"cacheType"`
+	CacheTs       time.Time            `json:"cacheTs"`
 	CacheHashes   map[hash.Type]string // all supported hashes cached
 
 	refreshMutex sync.Mutex

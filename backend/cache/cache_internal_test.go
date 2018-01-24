@@ -24,14 +24,14 @@ import (
 	"fmt"
 	"runtime/debug"
 
-	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/object"
 	"github.com/ncw/rclone/backend/cache"
 	"github.com/ncw/rclone/backend/crypt"
 	_ "github.com/ncw/rclone/backend/drive"
-	"github.com/ncw/rclone/fs"
-	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/backend/local"
+	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/object"
+	"github.com/ncw/rclone/fstest"
 	"github.com/ncw/rclone/vfs"
 	"github.com/ncw/rclone/vfs/vfsflags"
 	flag "github.com/spf13/pflag"
@@ -94,7 +94,7 @@ func TestMain(m *testing.M) {
 
 	runInstance = newRun()
 	//oldDirCacheTime := vfsflags.Opt.DirCacheTime
-	vfsflags.Opt.DirCacheTime = time.Duration(0)
+	//vfsflags.Opt.DirCacheTime = time.Duration(0)
 	vfsflags.Opt.CacheMode = vfs.CacheModeOff
 
 	rc = m.Run()
