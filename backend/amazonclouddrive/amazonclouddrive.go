@@ -1264,21 +1264,17 @@ func (f *Fs) dirchangeNotifyRunner(notifyFunc func(string), checkpoint string) s
 				if path, ok := f.dirCache.GetInv(*node.Id); ok {
 					pathsToClear = append(pathsToClear, path)
 				}
-
-				for _, parent := range node.Parents {
-					if path, ok := f.dirCache.GetInv(parent); ok {
-						pathsToClear = append(pathsToClear, path)
-					}
-				}
 			}
 
+			notified := false
 			lastNotifiedPath := ""
 			sort.Strings(pathsToClear)
 			for _, path := range pathsToClear {
-				if lastNotifiedPath != "" && (path == lastNotifiedPath || strings.HasPrefix(path+"/", lastNotifiedPath)) {
+				if notified && strings.HasPrefix(path+"/", lastNotifiedPath+"/") {
 					continue
 				}
 				lastNotifiedPath = path
+				notified = true
 				notifyFunc(path)
 			}
 
