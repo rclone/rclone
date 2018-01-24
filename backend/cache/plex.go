@@ -187,7 +187,7 @@ func (p *plexConnector) isPlaying(co *Object) bool {
 		}
 
 		remote := co.Remote()
-		if cr, yes := co.CacheFs.isWrappedByCrypt(); yes {
+		if cr, yes := p.f.isWrappedByCrypt(); yes {
 			remote, err = cr.DecryptFileName(co.Remote())
 			if err != nil {
 				fs.Errorf("plex", "can not decrypt wrapped file: %v", err)

@@ -93,15 +93,7 @@ func (d *Directory) String() string {
 
 // Remote returns the remote path
 func (d *Directory) Remote() string {
-	p := cleanPath(path.Join(d.Dir, d.Name))
-	if d.CacheFs.Root() != "" {
-		p = p[len(d.CacheFs.Root()):] // trim out root
-		if len(p) > 0 {               // remove first separator
-			p = p[1:]
-		}
-	}
-
-	return p
+	return d.CacheFs.cleanRootFromPath(d.abs())
 }
 
 // abs returns the absolute path to the dir

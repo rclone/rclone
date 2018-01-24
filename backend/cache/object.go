@@ -3,105 +3,94 @@
 package cache
 
 import (
-	"encoding/json"
 	"io"
 	"os"
 	"path"
 	"sync"
 	"time"
 
-	"strconv"
-
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/lib/readers"
+	"github.com/pkg/errors"
+)
+
+const (
+	objectInCache       = "Object"
+	objectPendingUpload = "TempObject"
 )
 
 // Object is a generic file like object that stores basic information about it
 type Object struct {
 	fs.Object `json:"-"`
 
-	CacheFs       *Fs                  `json:"-"`        // cache fs
-	Name          string               `json:"name"`     // name of the directory
-	Dir           string               `json:"dir"`      // abs path of the object
-	CacheModTime  int64                `json:"modTime"`  // modification or creation time - IsZero for unknown
-	CacheSize     int64                `json:"size"`     // size of directory and contents or -1 if unknown
-	CacheStorable bool                 `json:"storable"` // says whether this object can be stored
-	CacheType     string               `json:"cacheType"`
-	CacheTs       time.Time            `json:"cacheTs"`
-	cacheHashes   map[hash.Type]string // all supported hashes cached
+	ParentFs      fs.Fs                  `json:"-"`        // parent fs
+	CacheFs       *Fs                    `json:"-"`        // cache fs
+	Name          string                 `json:"name"`     // name of the directory
+	Dir           string                 `json:"dir"`      // abs path of the object
+	CacheModTime  int64                  `json:"modTime"`  // modification or creation time - IsZero for unknown
+	CacheSize     int64                  `json:"size"`     // size of directory and contents or -1 if unknown
+	CacheStorable bool                   `json:"storable"` // says whether this object can be stored
+	CacheType     string                 `json:"cacheType"`
+	CacheTs       time.Time              `json:"cacheTs"`
+	CacheHashes   map[hash.Type]string // all supported hashes cached
 
 	refreshMutex sync.Mutex
 }
 
 // NewObject builds one from a generic fs.Object
-func NewObject(f *Fs, remote string) *Object { //0745 379 768
+func NewObject(f *Fs, remote string) *Object {
 	fullRemote := path.Join(f.Root(), remote)
 	dir, name := path.Split(fullRemote)
 
+	cacheType := objectInCache
+	parentFs := f.UnWrap()
+	if f.tempWritePath != "" {
+		_, err := f.cache.SearchPendingUpload(fullRemote)
+		if err == nil { // queued for upload
+			cacheType = objectPendingUpload
+			parentFs = f.tempFs
+			fs.Debugf(fullRemote, "pending upload found")
+		}
+	}
+
 	co := &Object{
+		ParentFs:      parentFs,
 		CacheFs:       f,
 		Name:          cleanPath(name),
 		Dir:           cleanPath(dir),
 		CacheModTime:  time.Now().UnixNano(),
 		CacheSize:     0,
 		CacheStorable: false,
-		CacheType:     "Object",
+		CacheType:     cacheType,
 		CacheTs:       time.Now(),
 	}
 	return co
-}
-
-// MarshalJSON is needed to override the hashes map (needed to support older versions of Go)
-func (o *Object) MarshalJSON() ([]byte, error) {
-	hashes := make(map[string]string)
-	for k, v := range o.cacheHashes {
-		hashes[strconv.Itoa(int(k))] = v
-	}
-
-	type Alias Object
-	return json.Marshal(&struct {
-		Hashes map[string]string `json:"hashes"`
-		*Alias
-	}{
-		Alias:  (*Alias)(o),
-		Hashes: hashes,
-	})
-}
-
-// UnmarshalJSON is needed to override the CacheHashes map (needed to support older versions of Go)
-func (o *Object) UnmarshalJSON(b []byte) error {
-	type Alias Object
-	aux := &struct {
-		Hashes map[string]string `json:"hashes"`
-		*Alias
-	}{
-		Alias: (*Alias)(o),
-	}
-	if err := json.Unmarshal(b, &aux); err != nil {
-		return err
-	}
-
-	o.cacheHashes = make(map[hash.Type]string)
-	for k, v := range aux.Hashes {
-		ht, _ := strconv.Atoi(k)
-		o.cacheHashes[hash.Type(ht)] = v
-	}
-
-	return nil
 }
 
 // ObjectFromOriginal builds one from a generic fs.Object
 func ObjectFromOriginal(f *Fs, o fs.Object) *Object {
 	var co *Object
 	fullRemote := cleanPath(path.Join(f.Root(), o.Remote()))
-
 	dir, name := path.Split(fullRemote)
+
+	cacheType := objectInCache
+	parentFs := f.UnWrap()
+	if f.tempWritePath != "" {
+		_, err := f.cache.SearchPendingUpload(fullRemote)
+		if err == nil { // queued for upload
+			cacheType = objectPendingUpload
+			parentFs = f.tempFs
+			fs.Debugf(fullRemote, "pending upload found")
+		}
+	}
+
 	co = &Object{
+		ParentFs:  parentFs,
 		CacheFs:   f,
 		Name:      cleanPath(name),
 		Dir:       cleanPath(dir),
-		CacheType: "Object",
+		CacheType: cacheType,
 		CacheTs:   time.Now(),
 	}
 	co.updateData(o)
@@ -114,7 +103,7 @@ func (o *Object) updateData(source fs.Object) {
 	o.CacheSize = source.Size()
 	o.CacheStorable = source.Storable()
 	o.CacheTs = time.Now()
-	o.cacheHashes = make(map[hash.Type]string)
+	o.CacheHashes = make(map[hash.Type]string)
 }
 
 // Fs returns its FS info
@@ -133,30 +122,12 @@ func (o *Object) String() string {
 // Remote returns the remote path
 func (o *Object) Remote() string {
 	p := path.Join(o.Dir, o.Name)
-	if o.CacheFs.Root() != "" {
-		p = p[len(o.CacheFs.Root()):] // trim out root
-		if len(p) > 0 {               // remove first separator
-			p = p[1:]
-		}
-	}
-
-	return p
+	return o.CacheFs.cleanRootFromPath(p)
 }
 
 // abs returns the absolute path to the object
 func (o *Object) abs() string {
 	return path.Join(o.Dir, o.Name)
-}
-
-// parentRemote returns the absolute path parent remote
-func (o *Object) parentRemote() string {
-	absPath := o.abs()
-	return cleanPath(path.Dir(absPath))
-}
-
-// parentDir returns the absolute path parent remote
-func (o *Object) parentDir() *Directory {
-	return NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote())))
 }
 
 // ModTime returns the cached ModTime
@@ -175,17 +146,24 @@ func (o *Object) Storable() bool {
 }
 
 // refreshFromSource requests the original FS for the object in case it comes from a cached entry
-func (o *Object) refreshFromSource() error {
+func (o *Object) refreshFromSource(force bool) error {
 	o.refreshMutex.Lock()
 	defer o.refreshMutex.Unlock()
+	var err error
+	var liveObject fs.Object
 
-	if o.Object != nil {
+	if o.Object != nil && !force {
 		return nil
 	}
-
-	liveObject, err := o.CacheFs.Fs.NewObject(o.Remote())
+	if o.isTempFile() {
+		liveObject, err = o.ParentFs.NewObject(o.Remote())
+		err = errors.Wrapf(err, "in parent fs %v", o.ParentFs)
+	} else {
+		liveObject, err = o.CacheFs.Fs.NewObject(o.Remote())
+		err = errors.Wrapf(err, "in cache fs %v", o.CacheFs.Fs)
+	}
 	if err != nil {
-		fs.Errorf(o, "error refreshing object: %v", err)
+		fs.Errorf(o, "error refreshing object in : %v", err)
 		return err
 	}
 	o.updateData(liveObject)
@@ -196,7 +174,7 @@ func (o *Object) refreshFromSource() error {
 
 // SetModTime sets the ModTime of this object
 func (o *Object) SetModTime(t time.Time) error {
-	if err := o.refreshFromSource(); err != nil {
+	if err := o.refreshFromSource(false); err != nil {
 		return err
 	}
 
@@ -207,19 +185,19 @@ func (o *Object) SetModTime(t time.Time) error {
 
 	o.CacheModTime = t.UnixNano()
 	o.persist()
-	fs.Debugf(o.Fs(), "updated ModTime %v: %v", o, t)
+	fs.Debugf(o, "updated ModTime: %v", t)
 
 	return nil
 }
 
 // Open is used to request a specific part of the file using fs.RangeOption
 func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
-	if err := o.refreshFromSource(); err != nil {
+	if err := o.refreshFromSource(true); err != nil {
 		return nil, err
 	}
 
 	var err error
-	cacheReader := NewObjectHandle(o)
+	cacheReader := NewObjectHandle(o, o.CacheFs)
 	var offset, limit int64
 	for _, option := range options {
 		switch x := option.(type) {
@@ -239,23 +217,34 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 
 // Update will change the object data
 func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) error {
-	if err := o.refreshFromSource(); err != nil {
+	if err := o.refreshFromSource(false); err != nil {
 		return err
 	}
-	fs.Infof(o, "updating object contents with size %v", src.Size())
+	// pause background uploads if active
+	if o.CacheFs.tempWritePath != "" {
+		o.CacheFs.backgroundRunner.pause()
+		defer o.CacheFs.backgroundRunner.play()
+		// don't allow started uploads
+		if o.isTempFile() && o.tempFileStartedUpload() {
+			return errors.Errorf("%v is currently uploading, can't update", o)
+		}
+	}
+	fs.Debugf(o, "updating object contents with size %v", src.Size())
 
-	// deleting cached chunks and info to be replaced with new ones
-	_ = o.CacheFs.cache.RemoveObject(o.abs())
-
+	// FIXME use reliable upload
 	err := o.Object.Update(in, src, options...)
 	if err != nil {
 		fs.Errorf(o, "error updating source: %v", err)
 		return err
 	}
 
+	// deleting cached chunks and info to be replaced with new ones
+	_ = o.CacheFs.cache.RemoveObject(o.abs())
+
 	o.CacheModTime = src.ModTime().UnixNano()
 	o.CacheSize = src.Size()
-	o.cacheHashes = make(map[hash.Type]string)
+	o.CacheHashes = make(map[hash.Type]string)
+	o.CacheTs = time.Now()
 	o.persist()
 
 	return nil
@@ -263,41 +252,50 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 
 // Remove deletes the object from both the cache and the source
 func (o *Object) Remove() error {
-	if err := o.refreshFromSource(); err != nil {
+	if err := o.refreshFromSource(false); err != nil {
 		return err
+	}
+	// pause background uploads if active
+	if o.CacheFs.tempWritePath != "" {
+		o.CacheFs.backgroundRunner.pause()
+		defer o.CacheFs.backgroundRunner.play()
+		// don't allow started uploads
+		if o.isTempFile() && o.tempFileStartedUpload() {
+			return errors.Errorf("%v is currently uploading, can't delete", o)
+		}
 	}
 	err := o.Object.Remove()
 	if err != nil {
 		return err
 	}
-	fs.Infof(o, "removing object")
 
+	fs.Debugf(o, "removing object")
 	_ = o.CacheFs.cache.RemoveObject(o.abs())
-	return err
+	_ = o.CacheFs.cache.removePendingUpload(o.abs())
+	_ = o.CacheFs.cache.ExpireDir(NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote()))))
+
+	return nil
 }
 
 // Hash requests a hash of the object and stores in the cache
 // since it might or might not be called, this is lazy loaded
 func (o *Object) Hash(ht hash.Type) (string, error) {
-	if o.cacheHashes == nil {
-		o.cacheHashes = make(map[hash.Type]string)
+	if o.CacheHashes == nil {
+		o.CacheHashes = make(map[hash.Type]string)
 	}
 
-	cachedHash, found := o.cacheHashes[ht]
+	cachedHash, found := o.CacheHashes[ht]
 	if found {
 		return cachedHash, nil
 	}
-
-	if err := o.refreshFromSource(); err != nil {
+	if err := o.refreshFromSource(false); err != nil {
 		return "", err
 	}
-
 	liveHash, err := o.Object.Hash(ht)
 	if err != nil {
 		return "", err
 	}
-
-	o.cacheHashes[ht] = liveHash
+	o.CacheHashes[ht] = liveHash
 
 	o.persist()
 	fs.Debugf(o, "object hash cached: %v", liveHash)
@@ -312,6 +310,25 @@ func (o *Object) persist() *Object {
 		fs.Errorf(o, "failed to cache object: %v", err)
 	}
 	return o
+}
+
+func (o *Object) isTempFile() bool {
+	_, err := o.CacheFs.cache.SearchPendingUpload(o.abs())
+	if err != nil {
+		o.CacheType = objectInCache
+		return false
+	}
+
+	o.CacheType = objectPendingUpload
+	return true
+}
+
+func (o *Object) tempFileStartedUpload() bool {
+	started, err := o.CacheFs.cache.SearchPendingUpload(o.abs())
+	if err != nil {
+		return false
+	}
+	return started
 }
 
 var (
