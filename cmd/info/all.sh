@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 exec rclone --check-normalization=true --check-control=true --check-length=true info \
 	/tmp/testInfo \
 	TestAmazonCloudDrive:testInfo \
