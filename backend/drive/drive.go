@@ -507,13 +507,19 @@ func NewFs(name, path string) (fs.Fs, error) {
 			// No root so return old f
 			return f, nil
 		}
-		_, err := newF.newObjectWithInfo(remote, nil)
+		entries, err := newF.List("")
 		if err != nil {
-			// File doesn't exist so return old f
+			// unable to list folder so return old f
 			return f, nil
 		}
-		// return an error with an fs which points to the parent
-		return &newF, fs.ErrorIsFile
+		for _, e := range entries {
+			if _, isObject := e.(fs.Object); isObject && e.Remote() == remote {
+				// return an error with an fs which points to the parent
+				return &newF, fs.ErrorIsFile
+			}
+		}
+		// File doesn't exist so return old f
+		return f, nil
 	}
 	// fmt.Printf("Root id %s", f.dirCache.RootID())
 	return f, nil
