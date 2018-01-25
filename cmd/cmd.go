@@ -30,6 +30,7 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fspath"
 	fslog "github.com/ncw/rclone/fs/log"
+	"github.com/ncw/rclone/lib/atexit"
 )
 
 // Globals
@@ -105,7 +106,7 @@ and configuration walkthroughs.
 `,
 	PersistentPostRun: func(cmd *cobra.Command, args []string) {
 		fs.Debugf("rclone", "Version %q finishing with parameters %q", fs.Version, os.Args)
-		runAtExitFunctions()
+		atexit.Run()
 	},
 }
 
@@ -395,14 +396,14 @@ func initConfig() {
 			fs.CountError(err)
 			log.Fatal(err)
 		}
-		AtExit(func() {
+		atexit.Register(func() {
 			pprof.StopCPUProfile()
 		})
 	}
 
 	// Setup memory profiling if desired
 	if *memProfile != "" {
-		AtExit(func() {
+		atexit.Register(func() {
 			fs.Infof(nil, "Saving Memory profile %q\n", *memProfile)
 			f, err := os.Create(*memProfile)
 			if err != nil {
