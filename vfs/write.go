@@ -280,7 +280,7 @@ func (fh *WriteFileHandle) Truncate(size int64) (err error) {
 		return ECLOSED
 	}
 	if size != fh.offset {
-		fs.Errorf(fh.remote, "WriteFileHandle: Truncate: Can't change size without cache")
+		fs.Errorf(fh.remote, "WriteFileHandle: Truncate: Can't change size without --vfs-cache-mode >= writes")
 		return EPERM
 	}
 	// File is correct size
@@ -292,7 +292,7 @@ func (fh *WriteFileHandle) Truncate(size int64) (err error) {
 
 // Read reads up to len(p) bytes into p.
 func (fh *WriteFileHandle) Read(p []byte) (n int, err error) {
-	fs.Errorf(fh.remote, "WriteFileHandle: Read: Can't read and write to file without cache")
+	fs.Errorf(fh.remote, "WriteFileHandle: Read: Can't read and write to file without --vfs-cache-mode >= minimal")
 	return 0, EPERM
 }
 
@@ -300,7 +300,7 @@ func (fh *WriteFileHandle) Read(p []byte) (n int, err error) {
 // underlying input source. It returns the number of bytes read (0 <=
 // n <= len(p)) and any error encountered.
 func (fh *WriteFileHandle) ReadAt(p []byte, off int64) (n int, err error) {
-	fs.Errorf(fh.remote, "WriteFileHandle: ReadAt: Can't read and write to file without cache")
+	fs.Errorf(fh.remote, "WriteFileHandle: ReadAt: Can't read and write to file without --vfs-cache-mode >= minimal")
 	return 0, EPERM
 }
 
