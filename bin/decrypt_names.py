@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 This is a tool to decrypt file names in rclone logs.
 
