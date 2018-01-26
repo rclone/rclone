@@ -119,6 +119,9 @@ then change into the project root and run
 
     make test
 
+This command is run daily on the the integration test server. You can
+find the results at https://pub.rclone.org/integration-tests/
+
 ## Code Organisation ##
 
 Rclone code is organised into a small number of top level directories
@@ -157,6 +160,7 @@ with modules beneath.
     * test_all - Runs integration tests for everything
   * graphics - the images used in the website etc
   * lib - libraries used by the backend
+    * atexit - register functions to run when rclone exits
     * dircache - directory ID to name caching
     * oauthutil - helpers for using oauth
     * pacer - retries with backoff and paces operations
@@ -309,10 +313,14 @@ Integration tests
   * Make sure integration tests pass with
       * `cd fs/operations`
       * `go test -v -remote TestRemote:`
+      * `cd fs/sync`
+      * `go test -v -remote TestRemote:`
   * If you are making a bucket based remote, then check with this also
       * `go test -v -remote TestRemote: -subdir`
   * And if your remote defines `ListR` this also
       * `go test -v -remote TestRemote: -fast-list`
+
+See the [testing](#testing) section for more information on integration tests.
 
 Add your fs to the docs - you'll need to pick an icon for it from [fontawesome](http://fontawesome.io/icons/).  Keep lists of remotes in alphabetical order but with the local file system last.
 
