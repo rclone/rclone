@@ -129,6 +129,8 @@ upload_beta:
 compile_all:
 ifdef FULL_TESTS
 	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)β
+	go get -u github.com/gopherjs/gopherjs
+	gopherjs build -v
 else
 	@echo Skipping compile all as version of go too old
 endif
