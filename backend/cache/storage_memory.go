@@ -1,4 +1,4 @@
-// +build !plan9,go1.7
+// +build !plan9,!js,go1.7
 
 package cache
 

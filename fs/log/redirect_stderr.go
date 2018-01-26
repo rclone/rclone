@@ -1,6 +1,6 @@
 // Log the panic to the log file - for oses which can't do this
 
-// +build !windows,!darwin,!dragonfly,!freebsd,!linux,!nacl,!netbsd,!openbsd
+// +build !windows,!darwin,!dragonfly,!freebsd,!linux,!nacl,!netbsd,!openbsd linux,js
 
 package log
 

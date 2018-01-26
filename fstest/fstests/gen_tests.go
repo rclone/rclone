@@ -166,6 +166,6 @@ func main() {
 	generateTestProgram(t, fns, "AzureBlob", buildConstraint("go1.7"))
 	generateTestProgram(t, fns, "Pcloud")
 	generateTestProgram(t, fns, "Webdav")
-	generateTestProgram(t, fns, "Cache", buildConstraint("!plan9,go1.7"))
+	generateTestProgram(t, fns, "Cache", buildConstraint("!plan9,!js,go1.7"))
 	log.Printf("Done")
 }

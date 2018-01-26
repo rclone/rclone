@@ -1,6 +1,6 @@
 // Log the panic under unix to the log file
 
-// +build !windows,!solaris,!plan9
+// +build darwin dragonfly freebsd linux,!js nacl netbsd openbsd
 
 package log
 

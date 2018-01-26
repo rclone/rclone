@@ -3,7 +3,7 @@
 // Automatically generated - DO NOT EDIT
 // Regenerate with: make gen_tests
 
-// +build !plan9,go1.7
+// +build !plan9,!js,go1.7
 
 package cache_test
 
