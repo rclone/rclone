@@ -6,9 +6,13 @@ import (
 	"testing"
 
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/spf13/pflag"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
+
+// Check it satisfies the interface
+var _ pflag.Value = (*hash.Type)(nil)
 
 func TestHashSet(t *testing.T) {
 	var h hash.Set

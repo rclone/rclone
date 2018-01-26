@@ -11,7 +11,6 @@ import (
 
 	"github.com/ncw/rclone/backend/dropbox/dbhash"
 	"github.com/pkg/errors"
-	"github.com/spf13/pflag"
 )
 
 // Type indicates a standard hashing algorithm
@@ -109,9 +108,6 @@ func (h *Type) Set(s string) error {
 func (h Type) Type() string {
 	return "string"
 }
-
-// Check it satisfies the interface
-var _ pflag.Value = (*Type)(nil)
 
 // fromTypes will return hashers for all the requested types.
 // The types must be a subset of SupportedHashes,
