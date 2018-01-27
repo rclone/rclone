@@ -634,11 +634,11 @@ func (f *ftpReadCloser) Close() error {
 func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	// defer fs.Trace(o, "")("rc=%v, err=%v", &rc, &err)
 	path := path.Join(o.fs.root, o.remote)
-	var offset, limit int64
+	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
-			offset, limit = x.Offset, 0
+			offset = x.Offset
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.Size())
 		default:

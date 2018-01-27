@@ -37,3 +37,24 @@ func TestParseRangeOption(t *testing.T) {
 		}
 	}
 }
+
+func TestRangeOptionDecode(t *testing.T) {
+	for _, test := range []struct {
+		in         RangeOption
+		size       int64
+		wantOffset int64
+		wantLimit  int64
+	}{
+		{in: RangeOption{Start: 1, End: 10}, size: 100, wantOffset: 1, wantLimit: 10},
+		{in: RangeOption{Start: 10, End: 10}, size: 100, wantOffset: 10, wantLimit: 1},
+		{in: RangeOption{Start: 10, End: 9}, size: 100, wantOffset: 10, wantLimit: 0},
+		{in: RangeOption{Start: 1, End: -1}, size: 100, wantOffset: 1, wantLimit: -1},
+		{in: RangeOption{Start: -1, End: 90}, size: 100, wantOffset: 10, wantLimit: -1},
+		{in: RangeOption{Start: -1, End: -1}, size: 100, wantOffset: 0, wantLimit: -1},
+	} {
+		gotOffset, gotLimit := test.in.Decode(test.size)
+		what := fmt.Sprintf("%+v size=%d", test.in, test.size)
+		assert.Equal(t, test.wantOffset, gotOffset, "offset "+what)
+		assert.Equal(t, test.wantLimit, gotLimit, "limit "+what)
+	}
+}

@@ -9,10 +9,10 @@ type LimitedReadCloser struct {
 }
 
 // NewLimitedReadCloser returns a LimitedReadCloser wrapping rc to
-// limit it to reading limit bytes. If limit == 0 then it does not
+// limit it to reading limit bytes. If limit < 0 then it does not
 // wrap rc, it just returns it.
 func NewLimitedReadCloser(rc io.ReadCloser, limit int64) (lrc io.ReadCloser) {
-	if limit == 0 {
+	if limit < 0 {
 		return rc
 	}
 	return &LimitedReadCloser{
