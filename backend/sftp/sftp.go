@@ -855,11 +855,11 @@ func (file *ObjectReader) Close() (err error) {
 
 // Open a remote sftp file object for reading. Seek is supported
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	var offset, limit int64
+	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
-			offset, limit = x.Offset, 0
+			offset = x.Offset
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.Size())
 		default:

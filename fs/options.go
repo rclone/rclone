@@ -97,17 +97,25 @@ func (o *RangeOption) Mandatory() bool {
 }
 
 // Decode interprets the RangeOption into an offset and a limit
+//
+// The offset is the start of the stream and the limit is how many
+// bytes should be read from it.  If the limit is -1 then the stream
+// should be read to the end.
 func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 	if o.Start >= 0 {
 		offset = o.Start
 		if o.End >= 0 {
 			limit = o.End - o.Start + 1
 		} else {
-			limit = 0
+			limit = -1
 		}
 	} else {
-		offset = size - o.End
-		limit = 0
+		if o.End >= 0 {
+			offset = size - o.End
+		} else {
+			offset = 0
+		}
+		limit = -1
 	}
 	return offset, limit
 }
