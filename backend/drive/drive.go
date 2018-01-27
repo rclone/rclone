@@ -51,13 +51,14 @@ const (
 // Globals
 var (
 	// Flags
-	driveAuthOwnerOnly = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
-	driveUseTrash      = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
-	driveSkipGdocs     = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
-	driveSharedWithMe  = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
-	driveTrashedOnly   = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
-	driveExtensions    = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
-	driveListChunk     = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
+	driveAuthOwnerOnly  = flags.BoolP("drive-auth-owner-only", "", false, "Only consider files owned by the authenticated user.")
+	driveUseTrash       = flags.BoolP("drive-use-trash", "", true, "Send files to the trash instead of deleting permanently.")
+	driveSkipGdocs      = flags.BoolP("drive-skip-gdocs", "", false, "Skip google documents in all listings.")
+	driveSharedWithMe   = flags.BoolP("drive-shared-with-me", "", false, "Only show files that are shared with me")
+	driveTrashedOnly    = flags.BoolP("drive-trashed-only", "", false, "Only show files that are in the trash")
+	driveExtensions     = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
+	driveUseCreatedDate = flags.BoolP("drive-use-created-date", "", false, "Use created date instead of modified date.")
+	driveListChunk      = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
@@ -93,7 +94,7 @@ var (
 		"text/tab-separated-values":                                                 "tsv",
 	}
 	extensionToMimeType map[string]string
-	partialFields       = "id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,mimeType,title"
+	partialFields       = "id,downloadUrl,exportLinks,fileExtension,fullFileExtension,fileSize,labels,md5Checksum,modifiedDate,createdDate,mimeType,title"
 )
 
 // Register with Fs
@@ -1257,7 +1258,11 @@ func (o *Object) setMetaData(info *drive.File) {
 	o.url = info.DownloadUrl
 	o.md5sum = strings.ToLower(info.Md5Checksum)
 	o.bytes = info.FileSize
-	o.modifiedDate = info.ModifiedDate
+	if *driveUseCreatedDate {
+		o.modifiedDate = info.CreatedDate
+	} else {
+		o.modifiedDate = info.ModifiedDate
+	}
 	o.mimeType = info.MimeType
 }
 
