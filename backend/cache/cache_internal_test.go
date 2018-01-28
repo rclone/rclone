@@ -93,10 +93,6 @@ func TestMain(m *testing.M) {
 	var rc int
 
 	runInstance = newRun()
-	//oldDirCacheTime := vfsflags.Opt.DirCacheTime
-	//vfsflags.Opt.DirCacheTime = time.Duration(0)
-	vfsflags.Opt.CacheMode = vfs.CacheModeOff
-
 	rc = m.Run()
 	os.Exit(rc)
 }
@@ -241,6 +237,7 @@ func TestInternalCachedUpdatedContentMatches(t *testing.T) {
 
 func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tiwwcm%v", time.Now().Unix())
+	vfsflags.Opt.DirCacheTime = time.Second
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	if runInstance.rootIsCrypt {
@@ -258,8 +255,9 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 	// write the object
 	o := runInstance.writeObjectBytes(t, cfs.UnWrap(), "data.bin", testData)
 	require.Equal(t, o.Size(), int64(testSize))
+	time.Sleep(time.Second * 3)
 
-	data2 := runInstance.readDataFromRemote(t, rootFs, "data.bin", 0, int64(len(testData)), false)
+	data2 := runInstance.readDataFromRemote(t, rootFs, "data.bin", 0, int64(testSize), false)
 	require.Equal(t, int64(len(data2)), o.Size())
 
 	// check sample of data from in-file
@@ -276,6 +274,7 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 
 func TestInternalLargeWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tilwcm%v", time.Now().Unix())
+	vfsflags.Opt.DirCacheTime = time.Second
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	if runInstance.rootIsCrypt {
@@ -292,9 +291,9 @@ func TestInternalLargeWrittenContentMatches(t *testing.T) {
 
 	// write the object
 	runInstance.writeObjectBytes(t, cfs.UnWrap(), "data.bin", testData)
-	time.Sleep(time.Second * 5)
-	readData := runInstance.readDataFromRemote(t, rootFs, "data.bin", 0, testSize, false)
+	time.Sleep(time.Second * 3)
 
+	readData := runInstance.readDataFromRemote(t, rootFs, "data.bin", 0, testSize, false)
 	for i := 0; i < len(readData); i++ {
 		require.Equalf(t, testData[i], readData[i], "at byte %v", i)
 	}
@@ -415,6 +414,7 @@ func TestInternalMaxChunkSizeRespected(t *testing.T) {
 
 func TestInternalExpiredEntriesRemoved(t *testing.T) {
 	id := fmt.Sprintf("tieer%v", time.Now().Unix())
+	vfsflags.Opt.DirCacheTime = time.Second*4 // needs to be lower than the defined
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, map[string]string{"info_age": "5s"}, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	cfs, err := runInstance.getCacheFs(rootFs)
@@ -591,13 +591,14 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 		started, err = boltDb.SearchPendingUpload(runInstance.encryptRemoteIfNeeded(t, path.Join(id, "second/one")))
 		require.NoError(t, err)
 		require.False(t, started)
+		runInstance.mkdir(t, rootFs, "test")
 		runInstance.writeRemoteString(t, rootFs, "test/one", "one content")
 	}
 
 	// test Rmdir - allowed
 	err = runInstance.rm(t, rootFs, "test")
 	require.Error(t, err)
-	require.EqualError(t, err, fs.ErrorDirectoryNotEmpty.Error())
+	require.Contains(t, err.Error(), "directory not empty")
 	_, err = rootFs.NewObject("test/one")
 	require.NoError(t, err)
 	// validate that it exists in temp fs
@@ -1180,7 +1181,11 @@ func (r *run) writeRemoteReader(t *testing.T, f fs.Fs, remote string, in io.Read
 
 func (r *run) writeObjectBytes(t *testing.T, f fs.Fs, remote string, data []byte) fs.Object {
 	in := bytes.NewReader(data)
-	return r.writeObjectReader(t, f, remote, in)
+	_ = r.writeObjectReader(t, f, remote, in)
+	o, err := f.NewObject(remote)
+	require.NoError(t, err)
+	require.Equal(t, int64(len(data)), o.Size())
+	return o
 }
 
 func (r *run) writeObjectReader(t *testing.T, f fs.Fs, remote string, in io.Reader) fs.Object {
@@ -1236,11 +1241,11 @@ func (r *run) readDataFromRemote(t *testing.T, f fs.Fs, remote string, offset, e
 		require.NoError(t, err)
 		_, _ = f.Seek(offset, 0)
 		totalRead, err := io.ReadFull(f, checkSample)
-		require.NoError(t, err)
 		checkSample = checkSample[:totalRead]
 		if err == io.EOF || err == io.ErrUnexpectedEOF {
 			err = nil
 		}
+		require.NoError(t, err)
 		if !noLengthCheck {
 			require.Equal(t, size, int64(totalRead))
 		}
@@ -1313,6 +1318,26 @@ func (r *run) list(t *testing.T, f fs.Fs, remote string) []interface{} {
 		list, err = f.List(remote)
 		for _, ll := range list {
 			l = append(l, ll)
+		}
+	}
+	require.NoError(t, err)
+	return l
+}
+
+func (r *run) listPath(t *testing.T, f fs.Fs, remote string) []string {
+	var err error
+	var l []string
+	if r.useMount {
+		var list []os.FileInfo
+		list, err = ioutil.ReadDir(path.Join(r.mntDir, remote))
+		for _, ll := range list {
+			l = append(l, ll.Name())
+		}
+	} else {
+		var list fs.DirEntries
+		list, err = f.List(remote)
+		for _, ll := range list {
+			l = append(l, ll.Remote())
 		}
 	}
 	require.NoError(t, err)
