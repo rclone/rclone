@@ -185,12 +185,13 @@ Affected settings:
 
 #### Mount and --dir-cache-time ####
 
-Testing shows that some scenarios don't work well with --dir-cache-time enabled.
-By default, this flag is enabled and attempts to cache dir contents.
+--dir-cache-time controls the first layer of directory caching which works at the mount layer.
+Being an independent caching mechanism from the `cache` backend, it will manage its own entries
+based on the configured time.
 
-Since cache handles the caching for directories as well, it's recommended
-for now to disable it when using `cache` by specifying a 0 duration like:
-`--dir-cache-time=0s`
+To avoid getting in a scenario where dir cache has obsolete data and cache would have the correct
+one, try to set `--dir-cache-time` to a lower time than `--cache-info-age`. Default values are
+already configured in this way. 
 
 #### Windows support - Experimental ####
 
