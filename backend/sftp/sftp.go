@@ -20,6 +20,7 @@ import (
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 	"github.com/pkg/sftp"
 	"github.com/xanzy/ssh-agent"
@@ -854,12 +855,13 @@ func (file *ObjectReader) Close() (err error) {
 
 // Open a remote sftp file object for reading. Seek is supported
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	var offset int64
-	offset = 0
+	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
 			offset = x.Offset
+		case *fs.RangeOption:
+			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
@@ -881,10 +883,10 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 			return nil, errors.Wrap(err, "Open Seek failed")
 		}
 	}
-	in = &ObjectReader{
+	in = readers.NewLimitedReadCloser(&ObjectReader{
 		object:   o,
 		sftpFile: sftpFile,
-	}
+	}, limit)
 	return in, nil
 }
 

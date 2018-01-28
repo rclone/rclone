@@ -16,6 +16,7 @@ import (
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/lib/readers"
 	"github.com/pkg/errors"
 )
 
@@ -633,11 +634,13 @@ func (f *ftpReadCloser) Close() error {
 func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 	// defer fs.Trace(o, "")("rc=%v, err=%v", &rc, &err)
 	path := path.Join(o.fs.root, o.remote)
-	var offset int64
+	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
 			offset = x.Offset
+		case *fs.RangeOption:
+			offset, limit = x.Decode(o.Size())
 		default:
 			if option.Mandatory() {
 				fs.Logf(o, "Unsupported mandatory option: %v", option)
@@ -653,7 +656,7 @@ func (o *Object) Open(options ...fs.OpenOption) (rc io.ReadCloser, err error) {
 		o.fs.putFtpConnection(&c, err)
 		return nil, errors.Wrap(err, "open")
 	}
-	rc = &ftpReadCloser{rc: fd, c: c, f: o.fs}
+	rc = &ftpReadCloser{rc: readers.NewLimitedReadCloser(fd, limit), c: c, f: o.fs}
 	return rc, nil
 }
 

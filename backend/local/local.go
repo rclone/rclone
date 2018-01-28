@@ -676,13 +676,12 @@ func (file *localOpenFile) Close() (err error) {
 
 // Open an object for read
 func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
-	var offset int64
-	var limit int64
+	var offset, limit int64 = 0, -1
 	hashes := hash.Supported
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
-			offset, limit = x.Offset, 0
+			offset = x.Offset
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.size)
 		case *fs.HashesOption:

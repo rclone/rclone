@@ -27,6 +27,7 @@ package fstest
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
@@ -40,6 +41,7 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/object"
 	"github.com/ncw/rclone/fs/walk"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -267,15 +269,27 @@ func (r *Run) WriteBoth(remote, content string, modTime time.Time) Item {
 
 // CheckWithDuplicates does a test but allows duplicates
 func (r *Run) CheckWithDuplicates(t *testing.T, items ...Item) {
-	panic("FIXME")
-	// objects, size, err := operations.Count(r.Fremote)
-	// require.NoError(t, err)
-	// assert.Equal(t, int64(len(items)), objects)
-	// wantSize := int64(0)
-	// for _, item := range items {
-	// 	wantSize += item.Size
-	// }
-	// assert.Equal(t, wantSize, size)
+	var want, got []string
+
+	// construct a []string of desired items
+	for _, item := range items {
+		want = append(want, fmt.Sprintf("%q %d", item.Path, item.Size))
+	}
+	sort.Strings(want)
+
+	// do the listing
+	objs, _, err := walk.GetAll(r.Fremote, "", true, -1)
+	if err != nil && err != fs.ErrorDirNotFound {
+		t.Fatalf("Error listing: %v", err)
+	}
+
+	// construct a []string of actual items
+	for _, o := range objs {
+		got = append(got, fmt.Sprintf("%q %d", o.Remote(), o.Size()))
+	}
+	sort.Strings(got)
+
+	assert.Equal(t, want, got)
 }
 
 // Clean the temporary directory

@@ -8,6 +8,7 @@ go:
 - 1.7.x
 - 1.8.x
 - 1.9.x
+- go1.10rc1
 - tip
 install:
 - git fetch --unshallow --tags

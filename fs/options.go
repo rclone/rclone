@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/pkg/errors"
 )
 
 // OpenOption is an interface describing options for Open
@@ -52,6 +54,38 @@ func (o *RangeOption) Header() (key string, value string) {
 	return key, value
 }
 
+// ParseRangeOption parses a RangeOption from a Range: header.
+// It only appects single ranges.
+func ParseRangeOption(s string) (po *RangeOption, err error) {
+	const preamble = "bytes="
+	if !strings.HasPrefix(s, preamble) {
+		return nil, errors.New("Range: header invalid: doesn't start with " + preamble)
+	}
+	s = s[len(preamble):]
+	if strings.IndexRune(s, ',') >= 0 {
+		return nil, errors.New("Range: header invalid: contains multiple ranges which isn't supported")
+	}
+	dash := strings.IndexRune(s, '-')
+	if dash < 0 {
+		return nil, errors.New("Range: header invalid: contains no '-'")
+	}
+	start, end := strings.TrimSpace(s[:dash]), strings.TrimSpace(s[dash+1:])
+	o := RangeOption{Start: -1, End: -1}
+	if start != "" {
+		o.Start, err = strconv.ParseInt(start, 10, 64)
+		if err != nil || o.Start < 0 {
+			return nil, errors.New("Range: header invalid: bad start")
+		}
+	}
+	if end != "" {
+		o.End, err = strconv.ParseInt(end, 10, 64)
+		if err != nil || o.End < 0 {
+			return nil, errors.New("Range: header invalid: bad end")
+		}
+	}
+	return &o, nil
+}
+
 // String formats the option into human readable form
 func (o *RangeOption) String() string {
 	return fmt.Sprintf("RangeOption(%d,%d)", o.Start, o.End)
@@ -63,17 +97,25 @@ func (o *RangeOption) Mandatory() bool {
 }
 
 // Decode interprets the RangeOption into an offset and a limit
+//
+// The offset is the start of the stream and the limit is how many
+// bytes should be read from it.  If the limit is -1 then the stream
+// should be read to the end.
 func (o *RangeOption) Decode(size int64) (offset, limit int64) {
 	if o.Start >= 0 {
 		offset = o.Start
 		if o.End >= 0 {
 			limit = o.End - o.Start + 1
 		} else {
-			limit = 0
+			limit = -1
 		}
 	} else {
-		offset = size - o.End
-		limit = 0
+		if o.End >= 0 {
+			offset = size - o.End
+		} else {
+			offset = 0
+		}
+		limit = -1
 	}
 	return offset, limit
 }

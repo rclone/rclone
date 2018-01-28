@@ -198,11 +198,11 @@ func (o *Object) Open(options ...fs.OpenOption) (io.ReadCloser, error) {
 
 	var err error
 	cacheReader := NewObjectHandle(o, o.CacheFs)
-	var offset, limit int64
+	var offset, limit int64 = 0, -1
 	for _, option := range options {
 		switch x := option.(type) {
 		case *fs.SeekOption:
-			offset, limit = x.Offset, 0
+			offset = x.Offset
 		case *fs.RangeOption:
 			offset, limit = x.Decode(o.Size())
 		}
