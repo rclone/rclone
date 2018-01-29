@@ -248,11 +248,12 @@ func (f *Fs) list(dirID string, title string, directoriesOnly bool, filesOnly bo
 	}
 	if title != "" {
 		// Escaping the backslash isn't documented but seems to work
-		title = strings.Replace(title, `\`, `\\`, -1)
-		title = strings.Replace(title, `'`, `\'`, -1)
+		searchTitle := strings.Replace(title, `\`, `\\`, -1)
+		searchTitle = strings.Replace(searchTitle, `'`, `\'`, -1)
 		// Convert ／ to / for search
-		title = strings.Replace(title, "／", "/", -1)
-		query = append(query, fmt.Sprintf("name='%s'", title))
+		searchTitle = strings.Replace(searchTitle, "／", "/", -1)
+		// use contains to work around #1675
+		query = append(query, fmt.Sprintf("name contains '%s'", searchTitle))
 	}
 	if directoriesOnly {
 		query = append(query, fmt.Sprintf("mimeType='%s'", driveFolderType))
@@ -296,6 +297,10 @@ OUTER:
 		for _, item := range files.Files {
 			// Convert / to ／ for listing purposes
 			item.Name = strings.Replace(item.Name, "/", "／", -1)
+			// skip items introduced by workaround (#1675)
+			if title != "" && title != item.Name {
+				continue
+			}
 			if fn(item) {
 				found = true
 				break OUTER
