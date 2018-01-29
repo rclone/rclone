@@ -114,11 +114,11 @@ func init() {
 			}
 		},
 		Options: []fs.Option{{
-			Name: "app_key",
-			Help: "Dropbox App Key - leave blank normally.",
+			Name: config.ConfigClientID,
+			Help: "Dropbox App Client Id - leave blank normally.",
 		}, {
-			Name: "app_secret",
-			Help: "Dropbox App Secret - leave blank normally.",
+			Name: config.ConfigClientSecret,
+			Help: "Dropbox App Client Secret - leave blank normally.",
 		}},
 	})
 	flags.VarP(&uploadChunkSize, "dropbox-chunk-size", "", fmt.Sprintf("Upload chunk size. Max %v.", maxUploadChunkSize))
