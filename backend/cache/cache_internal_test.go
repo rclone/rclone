@@ -414,7 +414,7 @@ func TestInternalMaxChunkSizeRespected(t *testing.T) {
 
 func TestInternalExpiredEntriesRemoved(t *testing.T) {
 	id := fmt.Sprintf("tieer%v", time.Now().Unix())
-	vfsflags.Opt.DirCacheTime = time.Second*4 // needs to be lower than the defined
+	vfsflags.Opt.DirCacheTime = time.Second * 4 // needs to be lower than the defined
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, map[string]string{"info_age": "5s"}, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	cfs, err := runInstance.getCacheFs(rootFs)

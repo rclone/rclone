@@ -12,10 +12,11 @@ import (
 
 	"sync"
 
+	"bytes"
+	"io/ioutil"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
-	"io/ioutil"
-	"bytes"
 )
 
 const (
