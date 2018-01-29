@@ -99,13 +99,13 @@ func TestMain(m *testing.M) {
 
 func TestInternalListRootAndInnerRemotes(t *testing.T) {
 	id := fmt.Sprintf("tilrair%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	// Instantiate inner fs
 	innerFolder := "inner"
 	runInstance.mkdir(t, rootFs, innerFolder)
-	rootFs2, boltDb2 := runInstance.newCacheFs(t, remoteName, id+"/"+innerFolder, false, true, nil, nil)
+	rootFs2, boltDb2 := runInstance.newCacheFs(t, remoteName, id+"/"+innerFolder, true, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs2, boltDb2)
 
 	runInstance.writeObjectString(t, rootFs2, "one", "content")
@@ -121,7 +121,7 @@ func TestInternalListRootAndInnerRemotes(t *testing.T) {
 
 func TestInternalObjWrapFsFound(t *testing.T) {
 	id := fmt.Sprintf("tiowff%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	cfs, err := runInstance.getCacheFs(rootFs)
@@ -164,7 +164,7 @@ func TestInternalRemoteWrittenFileFoundInMount(t *testing.T) {
 		t.Skip("test needs mount mode")
 	}
 	id := fmt.Sprintf("tirwffim%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	cfs, err := runInstance.getCacheFs(rootFs)
@@ -238,7 +238,7 @@ func TestInternalCachedUpdatedContentMatches(t *testing.T) {
 func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tiwwcm%v", time.Now().Unix())
 	vfsflags.Opt.DirCacheTime = time.Second
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	if runInstance.rootIsCrypt {
 		t.Skip("test skipped with crypt remote")
@@ -275,7 +275,7 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 func TestInternalLargeWrittenContentMatches(t *testing.T) {
 	id := fmt.Sprintf("tilwcm%v", time.Now().Unix())
 	vfsflags.Opt.DirCacheTime = time.Second
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	if runInstance.rootIsCrypt {
 		t.Skip("test skipped with crypt remote")
@@ -415,7 +415,7 @@ func TestInternalMaxChunkSizeRespected(t *testing.T) {
 func TestInternalExpiredEntriesRemoved(t *testing.T) {
 	id := fmt.Sprintf("tieer%v", time.Now().Unix())
 	vfsflags.Opt.DirCacheTime = time.Second * 4 // needs to be lower than the defined
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, map[string]string{"info_age": "5s"}, nil)
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true, map[string]string{"info_age": "5s"}, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	cfs, err := runInstance.getCacheFs(rootFs)
 	require.NoError(t, err)
@@ -485,7 +485,7 @@ func testInternalUploadQueueOneFile(t *testing.T, id string, rootFs fs.Fs, boltD
 
 func TestInternalUploadQueueOneFileNoRest(t *testing.T) {
 	id := fmt.Sprintf("tiuqofnr%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true,
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true,
 		nil,
 		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "0s"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
@@ -495,7 +495,7 @@ func TestInternalUploadQueueOneFileNoRest(t *testing.T) {
 
 func TestInternalUploadQueueOneFileWithRest(t *testing.T) {
 	id := fmt.Sprintf("tiuqofwr%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true,
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true,
 		nil,
 		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "1m"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
@@ -505,7 +505,7 @@ func TestInternalUploadQueueOneFileWithRest(t *testing.T) {
 
 func TestInternalUploadQueueMoreFiles(t *testing.T) {
 	id := fmt.Sprintf("tiuqmf%v", time.Now().Unix())
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true,
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true,
 		nil,
 		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "1s"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
@@ -532,7 +532,6 @@ func TestInternalUploadQueueMoreFiles(t *testing.T) {
 		if runInstance.wrappedIsExternal && i < totalFiles-1 {
 			time.Sleep(time.Second * 3)
 		}
-
 		lastFile = remote
 	}
 
@@ -555,7 +554,7 @@ func TestInternalUploadQueueMoreFiles(t *testing.T) {
 
 func TestInternalUploadTempFileOperations(t *testing.T) {
 	id := "tiutfo"
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true,
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true,
 		nil,
 		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "1h"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
@@ -681,7 +680,7 @@ func TestInternalUploadTempFileOperations(t *testing.T) {
 
 func TestInternalUploadUploadingFileOperations(t *testing.T) {
 	id := "tiuufo"
-	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true,
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true,
 		nil,
 		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "1h"})
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
