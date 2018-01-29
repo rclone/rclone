@@ -18,7 +18,7 @@ func init() {
 		NewFs:       NewFs,
 		Options: []fs.Option{{
 			Name: "remote",
-			Help: "Remote to alias.\nNormally should contain a ':' and a path, eg \"myremote:path/to/dir\",\n\"myremote:bucket\" or maybe \"myremote:\".",
+			Help: "Remote or path to alias.\nCan be \"myremote:path/to/dir\", \"myremote:bucket\", \"myremote:\" or \"/local/path\".",
 		}},
 	}
 	fs.Register(fsi)
