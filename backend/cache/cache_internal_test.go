@@ -161,7 +161,7 @@ func TestInternalObjNotFound(t *testing.T) {
 
 func TestInternalRemoteWrittenFileFoundInMount(t *testing.T) {
 	if !runInstance.useMount {
-		t.Skipf("%v execution needs mount mode", t.Name())
+		t.Skip("test needs mount mode")
 	}
 	id := fmt.Sprintf("tirwffim%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
@@ -241,7 +241,7 @@ func TestInternalWrappedWrittenContentMatches(t *testing.T) {
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	if runInstance.rootIsCrypt {
-		t.Skipf("%v execution doesn't make sense with a crypt remote", t.Name())
+		t.Skip("test skipped with crypt remote")
 	}
 
 	cfs, err := runInstance.getCacheFs(rootFs)
@@ -278,7 +278,7 @@ func TestInternalLargeWrittenContentMatches(t *testing.T) {
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 	if runInstance.rootIsCrypt {
-		t.Skipf("%v execution doesn't make sense with a crypt remote", t.Name())
+		t.Skip("test skipped with crypt remote")
 	}
 
 	cfs, err := runInstance.getCacheFs(rootFs)
