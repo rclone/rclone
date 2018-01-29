@@ -46,11 +46,10 @@ var _ fusefs.NodeSetattrer = (*File)(nil)
 func (f *File) Setattr(ctx context.Context, req *fuse.SetattrRequest, resp *fuse.SetattrResponse) (err error) {
 	defer log.Trace(f, "a=%+v", req)("err=%v", &err)
 	if !f.VFS().Opt.NoModTime {
-		if req.Valid.MtimeNow() {
-			err = f.File.SetModTime(time.Now())
-		}
 		if req.Valid.Mtime() {
 			err = f.File.SetModTime(req.Mtime)
+		} else if req.Valid.MtimeNow() {
+			err = f.File.SetModTime(time.Now())
 		}
 	}
 	if req.Valid.Size() {
