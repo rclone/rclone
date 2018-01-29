@@ -14,8 +14,6 @@ import (
 
 // Memory is a wrapper of transient storage for a go-cache store
 type Memory struct {
-	ChunkStorage
-
 	db *cache.Cache
 }
 

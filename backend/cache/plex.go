@@ -12,6 +12,9 @@ import (
 
 	"sync"
 
+	"bytes"
+	"io/ioutil"
+
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 )
@@ -127,6 +130,17 @@ func (p *plexConnector) isConfigured() bool {
 }
 
 func (p *plexConnector) isPlaying(co *Object) bool {
+	var err error
+
+	remote := co.Remote()
+	if cr, yes := p.f.isWrappedByCrypt(); yes {
+		remote, err = cr.DecryptFileName(co.Remote())
+		if err != nil {
+			fs.Errorf("plex", "can not decrypt wrapped file: %v", err)
+			return false
+		}
+	}
+
 	isPlaying := false
 	req, err := http.NewRequest("GET", fmt.Sprintf("%s/status/sessions", p.url.String()), nil)
 	if err != nil {
@@ -180,31 +194,12 @@ func (p *plexConnector) isPlaying(co *Object) bool {
 		if err != nil {
 			return false
 		}
-		var data map[string]interface{}
-		err = json.NewDecoder(resp.Body).Decode(&data)
+		var data []byte
+		data, err = ioutil.ReadAll(resp.Body)
 		if err != nil {
 			return false
 		}
-
-		remote := co.Remote()
-		if cr, yes := co.CacheFs.isWrappedByCrypt(); yes {
-			remote, err = cr.DecryptFileName(co.Remote())
-			if err != nil {
-				fs.Errorf("plex", "can not decrypt wrapped file: %v", err)
-				continue
-			}
-		}
-		fpGen, ok := get(data, "MediaContainer", "Metadata", 0, "Media", 0, "Part", 0, "file")
-		if !ok {
-			fs.Errorf("plex", "failed to understand: %v", data)
-			continue
-		}
-		fp, ok := fpGen.(string)
-		if !ok {
-			fs.Errorf("plex", "failed to understand: %v", fp)
-			continue
-		}
-		if strings.Contains(fp, remote) {
+		if bytes.Contains(data, []byte(remote)) {
 			isPlaying = true
 			break
 		}
