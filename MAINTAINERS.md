@@ -6,6 +6,7 @@ Current active maintainers of rclone are
   * Stefan Breunig @breunigs
   * Ishuah Kariuki @ishuah
   * Remus Bunduc @remusb - cache subsystem maintainer
+  * Fabian Möller @B4dM4n
 
 **This is a work in progress Draft**
 
