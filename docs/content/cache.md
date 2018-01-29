@@ -109,12 +109,38 @@ To start a cached mount
 
     rclone mount --allow-other test-cache: /var/tmp/test-cache
 
+### Write Features ###
+
+### Offline uploading ###
+
+In an effort to make writing through cache more reliable, the backend 
+now supports this feature which can be activated by specifying a
+`cache-tmp-upload-path`.
+
+A files goes through these states when using this feature:
+
+1. An upload is started (usually by copying a file on the cache remote)
+2. When the copy to the temporary location is complete the file is part 
+of the cached remote and looks and behaves like any other file (reading included)
+3. After `cache-tmp-wait-time` passes and the file is next in line, `rclone move` 
+is used to move the file to the cloud provider
+4. Reading the file still works during the upload but most modifications on it will be prohibited
+5. Once the move is complete the file is unlocked for modifications as it
+becomes as any other regular file
+6. If the file is being read through `cache` when it's actually
+deleted from the temporary path then `cache` will simply swap the source
+to the cloud provider without interrupting the reading (small blip can happen though)
+
+Files are uploaded in sequence and only one file is uploaded at a time.
+Uploads will be stored in a queue and be processed based on the order they were added.
+The queue and the temporary storage is persistent across restarts and even purges of the cache.
+
 ### Write Support ###
 
 Writes are supported through `cache`.
 One caveat is that a mounted cache remote does not add any retry or fallback
 mechanism to the upload operation. This will depend on the implementation
-of the wrapped remote.
+of the wrapped remote. Consider using `Offline uploading` for reliable writes.
 
 One special case is covered with `cache-writes` which will cache the file
 data at the same time as the upload when it is enabled making it available
@@ -156,6 +182,16 @@ Affected settings:
 - `cache-workers`: _Configured value_ during confirmed playback or _1_ all the other times
 
 ### Known issues ###
+
+#### Mount and --dir-cache-time ####
+
+--dir-cache-time controls the first layer of directory caching which works at the mount layer.
+Being an independent caching mechanism from the `cache` backend, it will manage its own entries
+based on the configured time.
+
+To avoid getting in a scenario where dir cache has obsolete data and cache would have the correct
+one, try to set `--dir-cache-time` to a lower time than `--cache-info-age`. Default values are
+already configured in this way. 
 
 #### Windows support - Experimental ####
 
@@ -341,3 +377,23 @@ you can enable this flag to have their data stored in the cache store at the
 same time during upload.
 
 **Default**: not set
+
+#### --cache-tmp-upload-path=PATH ####
+
+This is the path where `cache` will use as a temporary storage for new files
+that need to be uploaded to the cloud provider.
+
+Specifying a value will enable this feature. Without it, it is completely disabled
+and files will be uploaded directly to the cloud provider
+
+**Default**: empty
+
+#### --cache-tmp-wait-time=DURATION ####
+
+This is the duration that a file must wait in the temporary location
+_cache-tmp-upload-path_ before it is selected for upload.
+
+Note that only one file is uploaded at a time and it can take longer to
+start the upload if a queue formed for this purpose.
+
+**Default**: 15m
