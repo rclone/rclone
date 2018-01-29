@@ -1076,8 +1076,10 @@ func (r *run) cleanupFs(t *testing.T, f fs.Fs, b *cache.Persistent) {
 	require.NoError(t, err)
 	cfs.StopBackgroundRunners()
 
-	err = os.RemoveAll(r.mntDir)
-	require.NoError(t, err)
+	if r.useMount && runtime.GOOS != "windows" {
+		err = os.RemoveAll(r.mntDir)
+		require.NoError(t, err)
+	}
 	err = os.RemoveAll(r.tmpUploadDir)
 	require.NoError(t, err)
 
