@@ -58,10 +58,11 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.Fi
 	params := make(url.Values)
 	params.Set("alt", "json")
 	params.Set("uploadType", "resumable")
+	params.Set("fields", partialFields)
 	if f.isTeamDrive {
 		params.Set("supportsTeamDrives", "true")
 	}
-	urls := "https://www.googleapis.com/upload/drive/v2/files"
+	urls := "https://www.googleapis.com/upload/drive/v3/files"
 	method := "POST"
 	if fileID != "" {
 		params.Set("setModifiedDate", "true")
