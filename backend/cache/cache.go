@@ -23,6 +23,7 @@ import (
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/ncw/rclone/fs/walk"
+	"github.com/ncw/rclone/lib/atexit"
 	"github.com/pkg/errors"
 	"golang.org/x/net/context"
 	"golang.org/x/time/rate"
@@ -325,14 +326,14 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 	}
 	// Trap SIGINT and SIGTERM to close the DB handle gracefully
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, syscall.SIGINT, syscall.SIGTERM, syscall.SIGHUP)
+	signal.Notify(c, syscall.SIGHUP)
+	atexit.Register(func() {
+		f.StopBackgroundRunners()
+	})
 	go func() {
 		for {
 			s := <-c
-			if s == syscall.SIGINT || s == syscall.SIGTERM {
-				fs.Debugf(f, "Got signal: %v", s)
-				f.StopBackgroundRunners()
-			} else if s == syscall.SIGHUP {
+			if s == syscall.SIGHUP {
 				fs.Infof(f, "Clearing cache from signal")
 				f.DirCacheFlush()
 			}
@@ -1245,7 +1246,7 @@ func (f *Fs) CleanUpCache(ignoreLastTs bool) {
 // can be triggered from a terminate signal or from testing between runs
 func (f *Fs) StopBackgroundRunners() {
 	f.cleanupChan <- false
-	if f.tempWritePath != "" {
+	if f.tempWritePath != "" && f.backgroundRunner != nil && f.backgroundRunner.isRunning() {
 		f.backgroundRunner.close()
 	}
 	f.cache.Close()
