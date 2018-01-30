@@ -58,7 +58,7 @@ Choose a number from below, or type in your own value
  5 | does not allow any access to read or download file content.
    \ "drive.metadata.readonly"
 scope> 1
-ID of the root folder - leave blank normally.  Fill in to access Backup and Sync folders.
+ID of the root folder - leave blank normally.  Fill in to access "Computers" folders. (see docs).
 root_folder_id> 
 Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
 service_account_file>
@@ -162,24 +162,35 @@ directories.
 ### Root folder ID ###
 
 You can set the `root_folder_id` for rclone.  This is the directory
-that rclone considers to be a the root of your drive.  Normally you
-will leave this blank and rclone will determine the correct root to
-use itself.
+(identified by its `Folder ID`) that rclone considers to be a the root
+of your drive.
 
-However you can set this to restrict rclone to a specific folder or to
-access the Backup and Sync "Computers" Folders/Files.  In order to do
-this you will have to find the Folder ID of the folder you wish rclone
-to display.  This will be the last segment of the URL when you open
-the folder.  So if the folder/computer backup you want to show looks
-like
+Normally you will leave this blank and rclone will determine the
+correct root to use itself.
+
+However you can set this to restrict rclone to a specific folder
+hierarchy or to access data within the "Computers" tab on the drive
+web interface (where files from Google's Backup and Sync desktop
+program go).
+
+In order to do this you will have to find the `Folder ID` of the
+directory you wish rclone to display.  This will be the last segment
+of the URL when you open the relevant folder in the drive web
+interface.
+
+So if the folder you want rclone to use has a URL which looks like
 `https://drive.google.com/drive/folders/1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh`
 in the browser, then you use `1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh` as
 the `root_folder_id` in the config.
 
-**NB** the "Computers" Folders seem to be read only.
+**NB** folders under the "Computers" tab seem to be read only (drive
+gives a 500 error) when using rclone.
 
 There doesn't appear to be an API to discover the folder IDs of the
 "Computers" tab - please contact us if you know otherwise!
+
+Note also that rclone can't access any data under the "Backups" tab on
+the google drive web interface yet.
 
 ### Service Account support ###
 
