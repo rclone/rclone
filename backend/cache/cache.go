@@ -175,13 +175,23 @@ type Fs struct {
 	cleanupChan      chan bool
 }
 
+// parseRootPath returns a cleaned root path and a nil error or "" and an error when the path is invalid
+func parseRootPath(path string) (string, error) {
+	return strings.Trim(path, "/"), nil
+}
+
 // NewFs constructs a Fs from the path, container:path
-func NewFs(name, rpath string) (fs.Fs, error) {
+func NewFs(name, rootPath string) (fs.Fs, error) {
 	remote := config.FileGet(name, "remote")
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point cache remote at itself - check the value of the remote setting")
 	}
-	rpath = strings.Trim(rpath, "/")
+
+	rpath, err := parseRootPath(rootPath)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to clean root path %q", rootPath)
+	}
+
 	remotePath := path.Join(remote, rpath)
 	wrappedFs, wrapErr := fs.NewFs(remotePath)
 	if wrapErr != nil && wrapErr != fs.ErrorIsFile {
@@ -200,7 +210,7 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if *cacheChunkSize != DefCacheChunkSize {
 		chunkSizeString = *cacheChunkSize
 	}
-	err := chunkSize.Set(chunkSizeString)
+	err = chunkSize.Set(chunkSizeString)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to understand chunk size %v", chunkSizeString)
 	}
