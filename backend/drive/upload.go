@@ -53,8 +53,7 @@ type resumableUpload struct {
 }
 
 // Upload the io.Reader in of size bytes with contentType and info
-func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.File, remote string) (*drive.File, error) {
-	fileID := info.Id
+func (f *Fs) Upload(in io.Reader, size int64, contentType string, fileID string, info *drive.File, remote string) (*drive.File, error) {
 	params := make(url.Values)
 	params.Set("alt", "json")
 	params.Set("uploadType", "resumable")
@@ -67,7 +66,7 @@ func (f *Fs) Upload(in io.Reader, size int64, contentType string, info *drive.Fi
 	if fileID != "" {
 		params.Set("setModifiedDate", "true")
 		urls += "/{fileId}"
-		method = "PUT"
+		method = "PATCH"
 	}
 	urls += "?" + params.Encode()
 	var res *http.Response
