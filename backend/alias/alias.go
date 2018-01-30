@@ -37,7 +37,6 @@ func NewFs(name, root string) (fs.Fs, error) {
 		return nil, err
 	}
 
-	// FIXME: how should relative paths starting with "../" be handled?
 	root = filepath.ToSlash(root)
 	return fsInfo.NewFs(configName, path.Join(fsPath, root))
 }
