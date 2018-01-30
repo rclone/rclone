@@ -158,7 +158,7 @@ func init() {
 			}},
 		}, {
 			Name: "root_folder_id",
-			Help: "ID of the root folder - leave blank normally.  Fill in to access Backup and Sync folders.",
+			Help: "ID of the root folder - leave blank normally.  Fill in to access \"Computers\" folders. (see docs).",
 		}, {
 			Name: "service_account_file",
 			Help: "Service Account Credentials JSON file path  - leave blank normally.\nNeeded only if you want use SA instead of interactive login.",
