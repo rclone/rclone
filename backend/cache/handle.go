@@ -561,6 +561,7 @@ type backgroundWriter struct {
 	stateCh  chan int
 	running  bool
 	notifyCh chan BackgroundUploadState
+	mu       sync.Mutex
 }
 
 func newBackgroundWriter(f *Fs) *backgroundWriter {
@@ -575,6 +576,10 @@ func newBackgroundWriter(f *Fs) *backgroundWriter {
 
 func (b *backgroundWriter) close() {
 	b.stateCh <- 2
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	b.running = false
+
 }
 
 func (b *backgroundWriter) pause() {
@@ -583,6 +588,12 @@ func (b *backgroundWriter) pause() {
 
 func (b *backgroundWriter) play() {
 	b.stateCh <- 0
+}
+
+func (b *backgroundWriter) isRunning() bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	return b.running
 }
 
 func (b *backgroundWriter) notify(remote string, status int, err error) {
@@ -601,7 +612,9 @@ func (b *backgroundWriter) notify(remote string, status int, err error) {
 func (b *backgroundWriter) run() {
 	state := 0
 	for {
+		b.mu.Lock()
 		b.running = true
+		b.mu.Unlock()
 		select {
 		case s := <-b.stateCh:
 			state = s
@@ -614,7 +627,6 @@ func (b *backgroundWriter) run() {
 			time.Sleep(time.Millisecond * 500)
 			continue
 		case 2:
-			b.running = false
 			return
 		}
 
