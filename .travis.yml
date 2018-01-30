@@ -4,10 +4,10 @@ osx_image: xcode7.3
 os:
 - linux
 go:
-- 1.6.x
-- 1.7.x
-- 1.8.x
-- 1.9.x
+- 1.6.4
+- 1.7.6
+- 1.8.6
+- 1.9.3
 - go1.10rc1
 - tip
 install:
@@ -33,12 +33,12 @@ matrix:
   - go: tip
   include:
   - os: osx
-    go: 1.9.x
+    go: 1.9.3
     env: GOTAGS=""
 deploy:
   provider: script
   script: make travis_beta
   on:
     branch: master
-    go: 1.9.x
+    go: 1.9.3
     condition: "`uname` == 'Linux'"
