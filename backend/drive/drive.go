@@ -824,7 +824,7 @@ func (f *Fs) PutUnchecked(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOpt
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = f.Upload(in, size, createInfo.MimeType, createInfo, remote)
+		info, err = f.Upload(in, size, createInfo.MimeType, "", createInfo, remote)
 		if err != nil {
 			return o, err
 		}
@@ -1503,7 +1503,7 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 		}
 	} else {
 		// Upload the file in chunks
-		info, err = o.fs.Upload(in, size, updateInfo.MimeType, updateInfo, o.remote)
+		info, err = o.fs.Upload(in, size, updateInfo.MimeType, o.id, updateInfo, o.remote)
 		if err != nil {
 			return err
 		}
