@@ -51,7 +51,7 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 		noSeek: f.d.vfs.Opt.NoSeek,
 		file:   f,
 		hash:   mhash,
-		size:   o.Size(),
+		size:   nonNegative(o.Size()),
 	}
 	return fh, nil
 }
