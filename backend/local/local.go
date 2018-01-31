@@ -651,10 +651,17 @@ type localOpenFile struct {
 	o    *Object           // object that is open
 	in   io.ReadCloser     // handle we are wrapping
 	hash *hash.MultiHasher // currently accumulating hashes
+	fd   *os.File          // file object reference
 }
 
 // Read bytes from the object - see io.Reader
 func (file *localOpenFile) Read(p []byte) (n int, err error) {
+	// Check if file has the same size and modTime
+	fi, err := file.fd.Stat()
+	if file.o.size != fi.Size() || file.o.modTime != fi.ModTime() {
+		return 0, errors.New("can't copy - source file is being updated")
+	}
+
 	n, err = file.in.Read(p)
 	if n > 0 {
 		// Hash routines never return an error
@@ -713,6 +720,7 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 		o:    o,
 		in:   wrappedFd,
 		hash: hash,
+		fd:   fd,
 	}
 	return in, nil
 }
