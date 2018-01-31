@@ -144,6 +144,14 @@ func (f *File) ModTime() (modTime time.Time) {
 	return f.d.modTime
 }
 
+// nonNegative returns 0 if i is -ve, i otherwise
+func nonNegative(i int64) int64 {
+	if i >= 0 {
+		return i
+	}
+	return 0
+}
+
 // Size of the file
 func (f *File) Size() int64 {
 	f.mu.Lock()
@@ -153,7 +161,7 @@ func (f *File) Size() int64 {
 	if f.o == nil || len(f.writers) != 0 {
 		return atomic.LoadInt64(&f.size)
 	}
-	return f.o.Size()
+	return nonNegative(f.o.Size())
 }
 
 // SetModTime sets the modtime for the file

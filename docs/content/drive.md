@@ -382,6 +382,14 @@ see User rate limit exceeded errors, wait at least 24 hours and retry.
 You can disable server side copies with `--disable copy` to download
 and upload the files if you prefer.
 
+Google docs will appear as size -1 in `rclone ls` and as size 0 in
+anything which uses the VFS layer, eg `rclone mount`, `rclone serve
+XXX`.  This is because rclone can't find out the size of the Google
+Documents until they are downloaded.  An unfortunate consequence of
+this is that you can't download Google docs using `rclone mount` - you
+will get a 0 sized file.  If you try again the doc may gain its
+correct size and be downloadable.
+
 ### Duplicated files ###
 
 Sometimes, for no reason I've been able to track down, drive will
