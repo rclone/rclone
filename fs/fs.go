@@ -237,6 +237,13 @@ type MimeTyper interface {
 	MimeType() string
 }
 
+// ObjectUnWrapper is an optional interface for Object
+type ObjectUnWrapper interface {
+	// UnWrap returns the Object that this Object is wrapping or
+	// nil if it isn't wrapping anything
+	UnWrap() Object
+}
+
 // ListRCallback defines a callback function for ListR to use
 //
 // It is called for each tranche of entries read from the listing and
