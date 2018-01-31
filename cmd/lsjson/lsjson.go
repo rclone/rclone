@@ -75,6 +75,11 @@ If --hash is not specified the the Hashes property won't be emitted.
 
 If --no-modtime is specified then ModTime will be blank.
 
+The Path field will only show folders below the remote path being listed.
+If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
+will be "subfolder/file.txt", not "remote:path/subfolder/file.txt".
+When used without --recursive the Path will always be the same as Name.
+
 The time is in RFC3339 format with nanosecond precision.
 
 The whole output can be processed as a JSON blob, or alternatively it
