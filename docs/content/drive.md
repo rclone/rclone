@@ -382,13 +382,20 @@ see User rate limit exceeded errors, wait at least 24 hours and retry.
 You can disable server side copies with `--disable copy` to download
 and upload the files if you prefer.
 
+#### Limitations of Google Docs ####
+
 Google docs will appear as size -1 in `rclone ls` and as size 0 in
-anything which uses the VFS layer, eg `rclone mount`, `rclone serve
-XXX`.  This is because rclone can't find out the size of the Google
-Documents until they are downloaded.  An unfortunate consequence of
-this is that you can't download Google docs using `rclone mount` - you
-will get a 0 sized file.  If you try again the doc may gain its
-correct size and be downloadable.
+anything which uses the VFS layer, eg `rclone mount`, `rclone serve`.
+
+This is because rclone can't find out the size of the Google docs
+without downloading them.
+
+Google docs will transfer correctly with `rclone sync`, `rclone copy`
+etc as rclone knows to ignore the size when doing the transfer.
+
+However an unfortunate consequence of this is that you can't download
+Google docs using `rclone mount` - you will get a 0 sized file.  If
+you try again the doc may gain its correct size and be downloadable.
 
 ### Duplicated files ###
 
@@ -406,23 +413,9 @@ Android duplicates files on drive sometimes.
 
 ### Rclone appears to be re-copying files it shouldn't ###
 
-There are two possible reasons for rclone to recopy files which
-haven't changed to Google Drive.
-
-The first is the duplicated file issue above - run `rclone dedupe` and
-check your logs for duplicate object or directory messages.
-
-The second is that sometimes Google reports different sizes for the
-Google Docs exports which will cause rclone to re-download Google Docs
-for no apparent reason.  `--ignore-size` is a not very satisfactory
-work-around for this if it is causing you a lot of problems.
-
-### Google docs downloads sometimes fail with "Failed to copy: read X bytes expecting Y" ###
-
-This is the same problem as above.  Google reports the google doc is
-one size, but rclone downloads a different size.  Work-around with the
-`--ignore-size` flag or wait for rclone to retry the download which it
-will.
+The most likely cause of this is the duplicated file issue above - run
+`rclone dedupe` and check your logs for duplicate object or directory
+messages.
 
 ### Making your own client_id ###
 

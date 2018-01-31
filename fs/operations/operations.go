@@ -96,12 +96,19 @@ func Equal(src fs.ObjectInfo, dst fs.Object) bool {
 	return equal(src, dst, fs.Config.SizeOnly, fs.Config.CheckSum)
 }
 
+// sizeDiffers compare the size of src and dst taking into account the
+// various ways of ignoring sizes
+func sizeDiffers(src, dst fs.ObjectInfo) bool {
+	if fs.Config.IgnoreSize || src.Size() < 0 || dst.Size() < 0 {
+		return false
+	}
+	return src.Size() != dst.Size()
+}
+
 func equal(src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
-	if !fs.Config.IgnoreSize {
-		if src.Size() != dst.Size() {
-			fs.Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
-			return false
-		}
+	if sizeDiffers(src, dst) {
+		fs.Debugf(src, "Sizes differ (src %d vs dst %d)", src.Size(), dst.Size())
+		return false
 	}
 	if sizeOnly {
 		fs.Debugf(src, "Sizes identical")
@@ -310,7 +317,7 @@ func Copy(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Objec
 	}
 
 	// Verify sizes are the same after transfer
-	if !fs.Config.IgnoreSize && src.Size() != dst.Size() {
+	if sizeDiffers(src, dst) {
 		err = errors.Errorf("corrupted on transfer: sizes differ %d vs %d", src.Size(), dst.Size())
 		fs.Errorf(dst, "%v", err)
 		fs.CountError(err)
@@ -599,7 +606,7 @@ func (c *checkMarch) SrcOnly(src fs.DirEntry) (recurse bool) {
 func (c *checkMarch) checkIdentical(dst, src fs.Object) (differ bool, noHash bool) {
 	accounting.Stats.Checking(src.Remote())
 	defer accounting.Stats.DoneChecking(src.Remote())
-	if !fs.Config.IgnoreSize && src.Size() != dst.Size() {
+	if sizeDiffers(src, dst) {
 		err := errors.Errorf("Sizes differ")
 		fs.Errorf(src, "%v", err)
 		fs.CountError(err)
