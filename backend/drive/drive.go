@@ -19,6 +19,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/ncw/rclone/fs"
@@ -97,6 +98,8 @@ var (
 	}
 	extensionToMimeType map[string]string
 	partialFields       = "id,name,size,md5Checksum,trashed,modifiedTime,mimeType"
+	exportFormatsOnce   sync.Once           // make sure we fetch the export formats only once
+	_exportFormats      map[string][]string // allowed export mime-type conversions
 )
 
 // Register with Fs
@@ -176,18 +179,17 @@ func init() {
 
 // Fs represents a remote drive server
 type Fs struct {
-	name          string              // name of this remote
-	root          string              // the path we are working on
-	features      *fs.Features        // optional features
-	svc           *drive.Service      // the connection to the drive server
-	client        *http.Client        // authorized client
-	rootFolderID  string              // the id of the root folder
-	dirCache      *dircache.DirCache  // Map of directory path to directory id
-	pacer         *pacer.Pacer        // To pace the API calls
-	extensions    []string            // preferred extensions to download docs
-	exportFormats map[string][]string // allowed export mime-type conversions
-	teamDriveID   string              // team drive ID, may be ""
-	isTeamDrive   bool                // true if this is a team drive
+	name         string             // name of this remote
+	root         string             // the path we are working on
+	features     *fs.Features       // optional features
+	svc          *drive.Service     // the connection to the drive server
+	client       *http.Client       // authorized client
+	rootFolderID string             // the id of the root folder
+	dirCache     *dircache.DirCache // Map of directory path to directory id
+	pacer        *pacer.Pacer       // To pace the API calls
+	extensions   []string           // preferred extensions to download docs
+	teamDriveID  string             // team drive ID, may be ""
+	isTeamDrive  bool               // true if this is a team drive
 }
 
 // Object describes a drive object
@@ -530,16 +532,6 @@ func NewFs(name, path string) (fs.Fs, error) {
 
 	f.dirCache = dircache.New(root, f.rootFolderID, f)
 
-	var about *drive.About
-	err = f.pacer.Call(func() (bool, error) {
-		about, err = f.svc.About.Get().Fields("exportFormats").Do()
-		return shouldRetry(err)
-	})
-	if err != nil {
-		return nil, errors.Wrap(err, "couldn't get Drive exportFormats")
-	}
-	f.exportFormats = about.ExportFormats
-
 	// Parse extensions
 	err = f.parseExtensions(*driveExtensions)
 	if err != nil {
@@ -651,6 +643,28 @@ func isAuthOwned(item *drive.File) bool {
 	return false
 }
 
+// exportFormats returns the export formats from drive, fetching them
+// if necessary.
+//
+// if the fetch fails then it will not export any drive formats
+func (f *Fs) exportFormats() map[string][]string {
+	exportFormatsOnce.Do(func() {
+		var about *drive.About
+		var err error
+		err = f.pacer.Call(func() (bool, error) {
+			about, err = f.svc.About.Get().Fields("exportFormats").Do()
+			return shouldRetry(err)
+		})
+		if err != nil {
+			fs.Errorf(f, "Failed to get Drive exportFormats: %v", err)
+			_exportFormats = map[string][]string{}
+			return
+		}
+		_exportFormats = about.ExportFormats
+	})
+	return _exportFormats
+}
+
 // findExportFormat works out the optimum extension and mime-type
 // for this item.
 //
@@ -692,7 +706,6 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	var iErr error
 	_, err = f.list(directoryID, "", false, false, false, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
-		exportMimeTypes, isDocument := f.exportFormats[item.MimeType]
 		switch {
 		case *driveAuthOwnerOnly && !isAuthOwned(item):
 			// ignore object or directory
@@ -710,30 +723,31 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 				return true
 			}
 			entries = append(entries, o)
-		case isDocument:
+		case *driveSkipGdocs:
+			fs.Debugf(remote, "Skipping google document type %q", item.MimeType)
+		default:
+			exportMimeTypes, isDocument := f.exportFormats()[item.MimeType]
+			if !isDocument {
+				fs.Debugf(remote, "Ignoring unknown document type %q", item.MimeType)
+				break
+			}
 			// If item has export links then it is a google doc
 			extension, exportMimeType := f.findExportFormat(remote, exportMimeTypes)
 			if extension == "" {
-				fs.Debugf(remote, "No export formats found")
-			} else {
-				o, err := f.newObjectWithInfo(remote+"."+extension, item)
-				if err != nil {
-					iErr = err
-					return true
-				}
-				if !*driveSkipGdocs {
-					obj := o.(*Object)
-					obj.url = fmt.Sprintf("%sfiles/%s/export?mimeType=%s", f.svc.BasePath, item.Id, url.QueryEscape(exportMimeType))
-					obj.isDocument = true
-					obj.mimeType = exportMimeType
-					obj.bytes = -1
-					entries = append(entries, o)
-				} else {
-					fs.Debugf(f, "Skip google document: %q", remote)
-				}
+				fs.Debugf(remote, "No export formats found for %q", item.MimeType)
+				break
 			}
-		default:
-			fs.Debugf(remote, "Ignoring unknown object")
+			o, err := f.newObjectWithInfo(remote+"."+extension, item)
+			if err != nil {
+				iErr = err
+				return true
+			}
+			obj := o.(*Object)
+			obj.url = fmt.Sprintf("%sfiles/%s/export?mimeType=%s", f.svc.BasePath, item.Id, url.QueryEscape(exportMimeType))
+			obj.isDocument = true
+			obj.mimeType = exportMimeType
+			obj.bytes = -1
+			entries = append(entries, o)
 		}
 		return false
 	})

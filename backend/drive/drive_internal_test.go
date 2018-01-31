@@ -10,48 +10,55 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const exportFormats = `{
-  "application/vnd.google-apps.document": [
-   "application/rtf",
-   "application/vnd.oasis.opendocument.text",
-   "text/html",
-   "application/pdf",
-   "application/epub+zip",
-   "application/zip",
-   "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-   "text/plain"
-  ],
-  "application/vnd.google-apps.spreadsheet": [
-   "application/x-vnd.oasis.opendocument.spreadsheet",
-   "text/tab-separated-values",
-   "application/pdf",
-   "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-   "text/csv",
-   "application/zip",
-   "application/vnd.oasis.opendocument.spreadsheet"
-  ],
-  "application/vnd.google-apps.jam": [
-   "application/pdf"
-  ],
-  "application/vnd.google-apps.script": [
-   "application/vnd.google-apps.script+json"
-  ],
-  "application/vnd.google-apps.presentation": [
-   "application/vnd.oasis.opendocument.presentation",
-   "application/pdf",
-   "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-   "text/plain"
-  ],
-  "application/vnd.google-apps.form": [
-   "application/zip"
-  ],
-  "application/vnd.google-apps.drawing": [
-   "image/svg+xml",
-   "image/png",
-   "application/pdf",
-   "image/jpeg"
-  ]
- }`
+const exampleExportFormats = `{
+	"application/vnd.google-apps.document": [
+		"application/rtf",
+		"application/vnd.oasis.opendocument.text",
+		"text/html",
+		"application/pdf",
+		"application/epub+zip",
+		"application/zip",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+		"text/plain"
+	],
+	"application/vnd.google-apps.spreadsheet": [
+		"application/x-vnd.oasis.opendocument.spreadsheet",
+		"text/tab-separated-values",
+		"application/pdf",
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+		"text/csv",
+		"application/zip",
+		"application/vnd.oasis.opendocument.spreadsheet"
+	],
+	"application/vnd.google-apps.jam": [
+		"application/pdf"
+	],
+	"application/vnd.google-apps.script": [
+		"application/vnd.google-apps.script+json"
+	],
+	"application/vnd.google-apps.presentation": [
+		"application/vnd.oasis.opendocument.presentation",
+		"application/pdf",
+		"application/vnd.openxmlformats-officedocument.presentationml.presentation",
+		"text/plain"
+	],
+	"application/vnd.google-apps.form": [
+		"application/zip"
+	],
+	"application/vnd.google-apps.drawing": [
+		"image/svg+xml",
+		"image/png",
+		"application/pdf",
+		"image/jpeg"
+	]
+}`
+
+var exportFormats map[string][]string
+
+// Load the example export formats into exportFormats for testing
+func TestInternalLoadExampleExportFormats(t *testing.T) {
+	assert.NoError(t, json.Unmarshal([]byte(exampleExportFormats), &exportFormats))
+}
 
 func TestInternalParseExtensions(t *testing.T) {
 	for _, test := range []struct {
@@ -98,8 +105,7 @@ func TestInternalFindExportFormat(t *testing.T) {
 	} {
 		f := new(Fs)
 		f.extensions = test.extensions
-		assert.NoError(t, json.Unmarshal([]byte(exportFormats), &f.exportFormats))
-		gotExtension, gotMimeType := f.findExportFormat("file", f.exportFormats[item.MimeType])
+		gotExtension, gotMimeType := f.findExportFormat("file", exportFormats[item.MimeType])
 		assert.Equal(t, test.wantExtension, gotExtension)
 		assert.Equal(t, test.wantMimeType, gotMimeType)
 	}
