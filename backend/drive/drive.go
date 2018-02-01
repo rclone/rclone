@@ -63,6 +63,7 @@ var (
 	driveExtensions     = flags.StringP("drive-formats", "", defaultExtensions, "Comma separated list of preferred formats for downloading Google docs.")
 	driveUseCreatedDate = flags.BoolP("drive-use-created-date", "", false, "Use created date instead of modified date.")
 	driveListChunk      = flags.Int64P("drive-list-chunk", "", 1000, "Size of listing chunk 100-1000. 0 to disable.")
+	driveImpersonate    = flags.StringP("drive-impersonate", "", "", "Impersonate this user when using a service account.")
 	// chunkSize is the size of the chunks created during a resumable upload and should be a power of two.
 	// 1<<18 is the minimum size supported by the Google uploader, and there is no maximum.
 	chunkSize         = fs.SizeSuffix(8 * 1024 * 1024)
@@ -454,6 +455,9 @@ func getServiceAccountClient(keyJsonfilePath string) (*http.Client, error) {
 	conf, err := google.JWTConfigFromJSON(data, driveConfig.Scopes...)
 	if err != nil {
 		return nil, errors.Wrap(err, "error processing credentials")
+	}
+	if *driveImpersonate != "" {
+		conf.Subject = *driveImpersonate
 	}
 	ctxWithSpecialClient := oauthutil.Context(fshttp.NewClient(fs.Config))
 	return oauth2.NewClient(ctxWithSpecialClient, conf.TokenSource(ctxWithSpecialClient)), nil
