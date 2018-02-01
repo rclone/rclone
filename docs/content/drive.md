@@ -343,6 +343,10 @@ Here are the possible extensions with their corresponding mime types.
 | xlsx | application/vnd.openxmlformats-officedocument.spreadsheetml.sheet | Microsoft Office Spreadsheet |
 | zip  | application/zip | A ZIP file of HTML, Images CSS |
 
+#### --drive-impersonate user ####
+
+When using a service account, this instructs rclone to impersonate the user passed in.
+
 #### --drive-list-chunk int ####
 
 Size of listing chunk 100-1000. 0 to disable. (default 1000)
