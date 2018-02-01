@@ -23,6 +23,7 @@ import (
 
 	"github.com/Azure/azure-sdk-for-go/storage"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/fserrors"
@@ -976,6 +977,10 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, blob *storage.Blob, p
 		})
 	}
 
+	// unwrap the accounting from the input, we use wrap to put it
+	// back on after the buffering
+	in, wrap := accounting.UnWrap(in)
+
 	// Upload the chunks
 	remaining := size
 	position := int64(0)
@@ -1020,7 +1025,7 @@ outer:
 				ContentMD5: base64.StdEncoding.EncodeToString(md5sum[:]),
 			}
 			err = o.fs.pacer.Call(func() (bool, error) {
-				err = blob.PutBlockWithLength(blockID, uint64(len(buf)), bytes.NewBuffer(buf), &putBlockOptions)
+				err = blob.PutBlockWithLength(blockID, uint64(len(buf)), wrap(bytes.NewBuffer(buf)), &putBlockOptions)
 				return o.fs.shouldRetry(err)
 			})
 
