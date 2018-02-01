@@ -20,8 +20,9 @@ type Account struct {
 	// CancelRequest so this race can happen when it apparently
 	// shouldn't.
 	mu      sync.Mutex
-	in      io.ReadCloser
+	in      io.Reader
 	origIn  io.ReadCloser
+	close   io.Closer
 	size    int64
 	name    string
 	statmu  sync.Mutex         // Separate mutex for stat values.
@@ -33,8 +34,6 @@ type Account struct {
 	closed  bool               // set if the file is closed
 	exit    chan struct{}      // channel that will be closed when transfer is finished
 	withBuf bool               // is using a buffered in
-
-	wholeFileDisabled bool // disables the whole file when doing parts
 }
 
 // NewAccountSizeName makes a Account reader for an io.ReadCloser of
@@ -42,6 +41,7 @@ type Account struct {
 func NewAccountSizeName(in io.ReadCloser, size int64, name string) *Account {
 	acc := &Account{
 		in:     in,
+		close:  in,
 		origIn: in,
 		size:   size,
 		name:   name,
@@ -70,17 +70,18 @@ func (acc *Account) WithBuffer() *Account {
 	}
 	// On big files add a buffer
 	if buffers > 0 {
-		in, err := asyncreader.New(acc.in, buffers)
+		rc, err := asyncreader.New(acc.origIn, buffers)
 		if err != nil {
 			fs.Errorf(acc.name, "Failed to make buffer: %v", err)
 		} else {
-			acc.in = in
+			acc.in = rc
+			acc.close = rc
 		}
 	}
 	return acc
 }
 
-// GetReader returns the underlying io.ReadCloser
+// GetReader returns the underlying io.ReadCloser under any Buffer
 func (acc *Account) GetReader() io.ReadCloser {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
@@ -94,29 +95,19 @@ func (acc *Account) StopBuffering() {
 	}
 }
 
-// UpdateReader updates the underlying io.ReadCloser
+// UpdateReader updates the underlying io.ReadCloser stopping the
+// asynb buffer (if any) and re-adding it
 func (acc *Account) UpdateReader(in io.ReadCloser) {
 	acc.mu.Lock()
 	acc.StopBuffering()
 	acc.in = in
+	acc.close = in
 	acc.origIn = in
 	acc.WithBuffer()
 	acc.mu.Unlock()
 }
 
-// disableWholeFileAccounting turns off the whole file accounting
-func (acc *Account) disableWholeFileAccounting() {
-	acc.mu.Lock()
-	acc.wholeFileDisabled = true
-	acc.mu.Unlock()
-}
-
-// accountPart disables the whole file counter and returns an
-// io.Reader to wrap a segment of the transfer.
-func (acc *Account) accountPart(in io.Reader) io.Reader {
-	return newAccountStream(acc, in)
-}
-
+// averageLoop calculates averages for the stats in the background
 func (acc *Account) averageLoop() {
 	tick := time.NewTicker(time.Second)
 	defer tick.Stop()
@@ -165,16 +156,25 @@ func (acc *Account) read(in io.Reader, p []byte) (n int, err error) {
 func (acc *Account) Read(p []byte) (n int, err error) {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
-	if acc.wholeFileDisabled {
-		// Don't account
-		return acc.in.Read(p)
-	}
 	return acc.read(acc.in, p)
 }
 
-// Progress returns bytes read as well as the size.
+// Close the object
+func (acc *Account) Close() error {
+	acc.mu.Lock()
+	defer acc.mu.Unlock()
+	if acc.closed {
+		return nil
+	}
+	acc.closed = true
+	close(acc.exit)
+	Stats.inProgress.clear(acc.name)
+	return acc.close.Close()
+}
+
+// progress returns bytes read as well as the size.
 // Size can be <= 0 if the size is unknown.
-func (acc *Account) Progress() (bytes, size int64) {
+func (acc *Account) progress() (bytes, size int64) {
 	if acc == nil {
 		return 0, 0
 	}
@@ -184,10 +184,10 @@ func (acc *Account) Progress() (bytes, size int64) {
 	return bytes, size
 }
 
-// Speed returns the speed of the current file transfer
+// speed returns the speed of the current file transfer
 // in bytes per second, as well a an exponentially weighted moving average
 // If no read has completed yet, 0 is returned for both values.
-func (acc *Account) Speed() (bps, current float64) {
+func (acc *Account) speed() (bps, current float64) {
 	if acc == nil {
 		return 0, 0
 	}
@@ -203,10 +203,10 @@ func (acc *Account) Speed() (bps, current float64) {
 	return
 }
 
-// ETA returns the ETA of the current operation,
+// eta returns the ETA of the current operation,
 // rounded to full seconds.
 // If the ETA cannot be determined 'ok' returns false.
-func (acc *Account) ETA() (eta time.Duration, ok bool) {
+func (acc *Account) eta() (eta time.Duration, ok bool) {
 	if acc == nil || acc.size <= 0 {
 		return 0, false
 	}
@@ -230,9 +230,9 @@ func (acc *Account) ETA() (eta time.Duration, ok bool) {
 
 // String produces stats for this file
 func (acc *Account) String() string {
-	a, b := acc.Progress()
-	_, cur := acc.Speed()
-	eta, etaok := acc.ETA()
+	a, b := acc.progress()
+	_, cur := acc.speed()
+	eta, etaok := acc.eta()
 	etas := "-"
 	if etaok {
 		if eta > 0 {
@@ -268,17 +268,27 @@ func (acc *Account) String() string {
 	)
 }
 
-// Close the object
-func (acc *Account) Close() error {
+// OldStream returns the top io.Reader
+func (acc *Account) OldStream() io.Reader {
 	acc.mu.Lock()
 	defer acc.mu.Unlock()
-	if acc.closed {
-		return nil
+	return acc.in
+}
+
+// SetStream updates the top io.Reader
+func (acc *Account) SetStream(in io.Reader) {
+	acc.mu.Lock()
+	acc.in = in
+	acc.mu.Unlock()
+}
+
+// WrapStream wraps an io Reader so it will be accounted in the same
+// way as account
+func (acc *Account) WrapStream(in io.Reader) io.Reader {
+	return &accountStream{
+		acc: acc,
+		in:  in,
 	}
-	acc.closed = true
-	close(acc.exit)
-	Stats.inProgress.clear(acc.name)
-	return acc.in.Close()
 }
 
 // accountStream accounts a single io.Reader into a parent *Account
@@ -287,12 +297,19 @@ type accountStream struct {
 	in  io.Reader
 }
 
-// newAccountStream makes a new accountStream for an in
-func newAccountStream(acc *Account, in io.Reader) *accountStream {
-	return &accountStream{
-		acc: acc,
-		in:  in,
-	}
+// OldStream return the underlying stream
+func (a *accountStream) OldStream() io.Reader {
+	return a.in
+}
+
+// SetStream set the underlying stream
+func (a *accountStream) SetStream(in io.Reader) {
+	a.in = in
+}
+
+// WrapStream wrap in in an accounter
+func (a *accountStream) WrapStream(in io.Reader) io.Reader {
+	return a.acc.WrapStream(in)
 }
 
 // Read bytes from the object - see io.Reader
@@ -300,33 +317,30 @@ func (a *accountStream) Read(p []byte) (n int, err error) {
 	return a.acc.read(a.in, p)
 }
 
-// AccountByPart turns off whole file accounting
-//
-// Returns the current account or nil if not found
-func AccountByPart(obj fs.Object) *Account {
-	acc := Stats.inProgress.get(obj.Remote())
-	if acc == nil {
-		fs.Debugf(obj, "Didn't find object to account part transfer")
-		return nil
-	}
-	acc.disableWholeFileAccounting()
-	return acc
+// Accounter accounts a stream allowing the accounting to be removed and re-added
+type Accounter interface {
+	io.Reader
+	OldStream() io.Reader
+	SetStream(io.Reader)
+	WrapStream(io.Reader) io.Reader
 }
 
-// AccountPart accounts for part of a transfer
-//
-// It disables the whole file counter and returns an io.Reader to wrap
-// a segment of the transfer.
-func AccountPart(obj fs.Object, in io.Reader) io.Reader {
-	acc := AccountByPart(obj)
-	if acc == nil {
-		return in
-	}
-	return acc.accountPart(in)
-}
+// WrapFn wraps an io.Reader (for accounting purposes usually)
+type WrapFn func(io.Reader) io.Reader
 
-// Check it satisfies the interface
-var (
-	_ io.ReadCloser = &Account{}
-	_ io.Reader     = &accountStream{}
-)
+// UnWrap unwraps a reader returning unwrapped and wrap, a function to
+// wrap it back up again.  If `in` is an Accounter then this function
+// will take the accounting unwrapped and wrap will put it back on
+// again the new Reader passed in.
+//
+// This allows functions which wrap io.Readers to move the accounting
+// to the end of the wrapped chain of readers.  This is very important
+// if buffering is being introduced and if the Reader might be wrapped
+// again.
+func UnWrap(in io.Reader) (unwrapped io.Reader, wrap WrapFn) {
+	acc, ok := in.(Accounter)
+	if !ok {
+		return in, func(r io.Reader) io.Reader { return r }
+	}
+	return acc.OldStream(), acc.WrapStream
+}

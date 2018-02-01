@@ -70,6 +70,7 @@ type largeUpload struct {
 	f        *Fs                             // parent Fs
 	o        *Object                         // object being uploaded
 	in       io.Reader                       // read the data from here
+	wrap     accounting.WrapFn               // account parts being transferred
 	id       string                          // ID of the file being uploaded
 	size     int64                           // total size
 	parts    int64                           // calculated number of parts, if known
@@ -126,10 +127,14 @@ func (f *Fs) newLargeUpload(o *Object, in io.Reader, src fs.ObjectInfo) (up *lar
 	if err != nil {
 		return nil, err
 	}
+	// unwrap the accounting from the input, we use wrap to put it
+	// back on after the buffering
+	in, wrap := accounting.UnWrap(in)
 	up = &largeUpload{
 		f:     f,
 		o:     o,
 		in:    in,
+		wrap:  wrap,
 		id:    response.ID,
 		size:  size,
 		parts: parts,
@@ -221,7 +226,7 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 		opts := rest.Opts{
 			Method:  "POST",
 			RootURL: upload.UploadURL,
-			Body:    accounting.AccountPart(up.o, in),
+			Body:    up.wrap(in),
 			ExtraHeaders: map[string]string{
 				"Authorization":    upload.AuthorizationToken,
 				"X-Bz-Part-Number": fmt.Sprintf("%d", part),
@@ -331,7 +336,6 @@ func (up *largeUpload) Stream(initialUploadBlock []byte) (err error) {
 	errs := make(chan error, 1)
 	hasMoreParts := true
 	var wg sync.WaitGroup
-	accounting.AccountByPart(up.o) // Cancel whole file accounting before reading
 
 	// Transfer initial chunk
 	up.size = int64(len(initialUploadBlock))
@@ -392,7 +396,6 @@ func (up *largeUpload) Upload() error {
 	errs := make(chan error, 1)
 	var wg sync.WaitGroup
 	var err error
-	accounting.AccountByPart(up.o) // Cancel whole file accounting before reading
 outer:
 	for part := int64(1); part <= up.parts; part++ {
 		// Check any errors

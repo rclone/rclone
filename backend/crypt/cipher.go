@@ -14,6 +14,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/ncw/rclone/backend/crypt/pkcs7"
+	"github.com/ncw/rclone/fs/accounting"
 	"github.com/pkg/errors"
 
 	"golang.org/x/crypto/nacl/secretbox"
@@ -691,11 +692,12 @@ func (fh *encrypter) finish(err error) (int, error) {
 
 // Encrypt data encrypts the data stream
 func (c *cipher) EncryptData(in io.Reader) (io.Reader, error) {
+	in, wrap := accounting.UnWrap(in) // unwrap the accounting off the Reader
 	out, err := c.newEncrypter(in, nil)
 	if err != nil {
 		return nil, err
 	}
-	return out, nil
+	return wrap(out), nil // and wrap the accounting back on
 }
 
 // decrypter decrypts an io.ReaderCloser on the fly
