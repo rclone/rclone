@@ -24,7 +24,6 @@ import (
 	"github.com/ncw/rclone/backend/pcloud/api"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
-	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/hash"
@@ -59,7 +58,6 @@ var (
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.RedirectLocalhostURL,
 	}
-	uploadCutoff = fs.SizeSuffix(50 * 1024 * 1024)
 )
 
 // Register with Fs
@@ -82,19 +80,17 @@ func init() {
 			Help: "Pcloud App Client Secret - leave blank normally.",
 		}},
 	})
-	flags.VarP(&uploadCutoff, "pcloud-upload-cutoff", "", "Cutoff for switching to multipart upload")
 }
 
 // Fs represents a remote pcloud
 type Fs struct {
-	name         string                // name of this remote
-	root         string                // the path we are working on
-	features     *fs.Features          // optional features
-	srv          *rest.Client          // the connection to the server
-	dirCache     *dircache.DirCache    // Map of directory path to directory id
-	pacer        *pacer.Pacer          // pacer for API calls
-	tokenRenewer *oauthutil.Renew      // renew the token on expiry
-	uploadToken  *pacer.TokenDispenser // control concurrency
+	name         string             // name of this remote
+	root         string             // the path we are working on
+	features     *fs.Features       // optional features
+	srv          *rest.Client       // the connection to the server
+	dirCache     *dircache.DirCache // Map of directory path to directory id
+	pacer        *pacer.Pacer       // pacer for API calls
+	tokenRenewer *oauthutil.Renew   // renew the token on expiry
 }
 
 // Object describes a pcloud object
@@ -245,11 +241,10 @@ func NewFs(name, root string) (fs.Fs, error) {
 	}
 
 	f := &Fs{
-		name:        name,
-		root:        root,
-		srv:         rest.NewClient(oAuthClient).SetRoot(rootURL),
-		pacer:       pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
-		uploadToken: pacer.NewTokenDispenser(fs.Config.Transfers),
+		name:  name,
+		root:  root,
+		srv:   rest.NewClient(oAuthClient).SetRoot(rootURL),
+		pacer: pacer.New().SetMinSleep(minSleep).SetMaxSleep(maxSleep).SetDecayConstant(decayConstant),
 	}
 	f.features = (&fs.Features{
 		CaseInsensitive:         false,
