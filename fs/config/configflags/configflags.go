@@ -84,7 +84,6 @@ func AddFlags(flagSet *pflag.FlagSet) {
 
 // SetFlags converts any flags into config which weren't straight foward
 func SetFlags() {
-	fs.Config.LogLevel = fs.LogLevelNotice
 	if verbose >= 2 {
 		fs.Config.LogLevel = fs.LogLevelDebug
 	} else if verbose >= 1 {
