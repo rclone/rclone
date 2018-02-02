@@ -113,7 +113,7 @@ func TestInit(t *testing.T) {
 
 func skipIfNotOk(t *testing.T) {
 	if remote == nil {
-		t.Skip("FS not configured")
+		t.Skip("WARN: FS not configured")
 	}
 }
 
