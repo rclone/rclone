@@ -41,6 +41,7 @@ type ConfigInfo struct {
 	Dump                  DumpFlags
 	InsecureSkipVerify    bool // Skip server certificate verification
 	DeleteMode            DeleteMode
+	MaxDelete             int64
 	TrackRenames          bool // Track file renames.
 	LowLevelRetries       int
 	UpdateOlder           bool // Skip files that are newer on the destination
@@ -82,6 +83,7 @@ func NewConfig() *ConfigInfo {
 	c.ConnectTimeout = 60 * time.Second
 	c.Timeout = 5 * 60 * time.Second
 	c.DeleteMode = DeleteModeDefault
+	c.MaxDelete = -1
 	c.LowLevelRetries = 10
 	c.MaxDepth = -1
 	c.DataRateUnit = "bytes"
