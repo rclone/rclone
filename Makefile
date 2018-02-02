@@ -34,7 +34,7 @@ version:
 # Full suite of integration tests
 test:	rclone
 	go install github.com/ncw/rclone/fstest/test_all
-	-go test -count 1 $(BUILDTAGS) $(GO_FILES) 2>&1 | tee test.log
+	-go test -v -count 1 $(BUILDTAGS) $(GO_FILES) 2>&1 | tee test.log
 	-test_all github.com/ncw/rclone/fs/operations github.com/ncw/rclone/fs/sync 2>&1 | tee fs/test_all.log
 	@echo "Written logs in test.log and fs/test_all.log"
 
