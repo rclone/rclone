@@ -387,6 +387,9 @@ func (c *cache) clean() {
 //
 // doesn't return until context is cancelled
 func (c *cache) cleaner(ctx context.Context) {
+	// Start cleaning the cache immediately
+	c.clean()
+	// Then every interval specified
 	timer := time.NewTicker(c.opt.CachePollInterval)
 	defer timer.Stop()
 	for {
