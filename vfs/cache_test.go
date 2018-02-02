@@ -3,7 +3,6 @@ package vfs
 import (
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"sort"
@@ -123,7 +122,6 @@ name="potato" isFile=true opens=1`, itemAsString(c))
 	atime := times.Get(fi).AccessTime()
 
 	// updateAtimes
-	log.Printf("updateAtimes")
 	item = c.get("potato")
 	item.atime = time.Now().Add(-24 * time.Hour)
 	err = c.updateAtimes()
@@ -132,6 +130,17 @@ name="potato" isFile=true opens=1`, itemAsString(c))
 name="potato" isFile=true opens=1`, itemAsString(c))
 	item = c.get("potato")
 	assert.Equal(t, atime, item.atime)
+
+	// updateAtimes - not in the cache
+	oldItem := item
+	delete(c.item, "potato") // remove from cache
+	err = c.updateAtimes()
+	require.NoError(t, err)
+	assert.Equal(t, `name="" isFile=false opens=1
+name="potato" isFile=true opens=0`, itemAsString(c))
+	item = c.get("potato")
+	assert.Equal(t, atime, item.atime)
+	c.item["potato"] = oldItem // restore to cache
 
 	// try purging with file open
 	c.purgeOld(10 * time.Second)

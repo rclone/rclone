@@ -145,16 +145,20 @@ func (c *cache) mkdir(name string) (string, error) {
 
 // _get gets name from the cache or creates a new one
 //
+// It returns the item and found as to whether this item was found in
+// the cache (or just created).
+//
 // name should be a remote path not an osPath
 //
 // must be called with itemMu held
-func (c *cache) _get(isFile bool, name string) *cacheItem {
-	item := c.item[name]
-	if item == nil {
+func (c *cache) _get(isFile bool, name string) (item *cacheItem, found bool) {
+	item = c.item[name]
+	found = item != nil
+	if !found {
 		item = newCacheItem(isFile)
 		c.item[name] = item
 	}
-	return item
+	return item, found
 }
 
 // get gets name from the cache or creates a new one
@@ -162,7 +166,7 @@ func (c *cache) _get(isFile bool, name string) *cacheItem {
 // name should be a remote path not an osPath
 func (c *cache) get(name string) *cacheItem {
 	c.itemMu.Lock()
-	item := c._get(true, name)
+	item, _ := c._get(true, name)
 	c.itemMu.Unlock()
 	return item
 }
@@ -173,8 +177,8 @@ func (c *cache) get(name string) *cacheItem {
 // name should be a remote path not an osPath
 func (c *cache) updateTime(name string, when time.Time) {
 	c.itemMu.Lock()
-	item := c._get(true, name)
-	if when.Sub(item.atime) > 0 {
+	item, found := c._get(true, name)
+	if !found || when.Sub(item.atime) > 0 {
 		fs.Debugf(name, "updateTime: setting atime to %v", when)
 		item.atime = when
 	}
@@ -186,7 +190,7 @@ func (c *cache) updateTime(name string, when time.Time) {
 // name should be a remote path not an osPath
 func (c *cache) _open(isFile bool, name string) {
 	for {
-		item := c._get(isFile, name)
+		item, _ := c._get(isFile, name)
 		item.opens++
 		item.atime = time.Now()
 		if name == "" {
@@ -228,7 +232,7 @@ func (c *cache) cacheDir(name string) {
 // _close marks name as closed - must be called with the lock held
 func (c *cache) _close(isFile bool, name string) {
 	for {
-		item := c._get(isFile, name)
+		item, _ := c._get(isFile, name)
 		item.opens--
 		item.atime = time.Now()
 		if item.opens < 0 {
