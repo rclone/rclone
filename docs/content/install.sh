@@ -137,9 +137,10 @@ cd $unzip_dir/*
 case $OS in
   'linux')
     #binary
-    cp rclone /usr/bin/
-    chmod 755 /usr/bin/rclone
-    chown root:root /usr/bin/rclone
+    cp rclone /usr/bin/rclone.new
+    chmod 755 /usr/bin/rclone.new
+    chown root:root /usr/bin/rclone.new
+    mv /usr/bin/rclone.new /usr/bin/rclone
     #manuals
     mkdir -p /usr/local/share/man/man1
     cp rclone.1 /usr/local/share/man/man1/
@@ -147,9 +148,9 @@ case $OS in
     ;;
   'freebsd'|'openbsd'|'netbsd')
     #bin
-    cp rclone /usr/bin/
-    chmod 755 /usr/bin/rclone
-    chown root:wheel /usr/bin/rclone
+    cp rclone /usr/bin/rclone.new
+    chown root:wheel /usr/bin/rclone.new
+    mv /usr/bin/rclone.new /usr/bin/rclone
     #man
     mkdir -p /usr/local/man/man1
     cp rclone.1 /usr/local/man/man1/
@@ -158,7 +159,8 @@ case $OS in
   'osx')
     #binary
     mkdir -p /usr/local/bin
-    cp rclone /usr/local/bin/
+    cp rclone /usr/local/bin/rclone.new
+    mv /usr/local/bin/rclone.new /usr/local/bin/rclone
     #manual
     mkdir -p /usr/local/share/man/man1
     cp rclone.1 /usr/local/share/man/man1/    
