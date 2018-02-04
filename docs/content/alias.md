@@ -22,6 +22,8 @@ is exactly the same as invoking `rclone mkdir mydrive:private/backup/desktop`.
 There will be no special handling of paths containing `..` segments.
 Invoking `rclone mkdir backup:../desktop` is exactly the same as invoking
 `rclone mkdir mydrive:private/backup/../desktop`.
+The empty path is not allowed as a remote. To alias the current directory
+use `.` instead.
 
 Here is an example of how to make a alias called `remote` for local folder.
 First run:
