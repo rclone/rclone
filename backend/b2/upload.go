@@ -239,6 +239,9 @@ func (up *largeUpload) transferChunk(part int64, body []byte) error {
 
 		resp, err := up.f.srv.CallJSON(&opts, nil, &response)
 		retry, err := up.f.shouldRetry(resp, err)
+		if err != nil {
+			fs.Debugf(up.o, "Error sending chunk %d (retry=%v): %v: %#v", part, retry, err, err)
+		}
 		// On retryable error clear PartUploadURL
 		if retry {
 			fs.Debugf(up.o, "Clearing part upload URL because of error: %v", err)
