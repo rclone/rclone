@@ -33,7 +33,7 @@ func TestNewFS(t *testing.T) {
 		size   int64
 		isDir  bool
 	}
-	for _, test := range []struct {
+	for testi, test := range []struct {
 		remoteRoot string
 		fsRoot     string
 		fsList     string
@@ -64,27 +64,28 @@ func TestNewFS(t *testing.T) {
 			{"underthree.txt", 9, false},
 		}},
 	} {
-		t.Run(fmt.Sprintf("%s fs %s list %s", test.remoteRoot, test.fsRoot, test.fsList), func(t *testing.T) {
-			remoteRoot, err := filepath.Abs(filepath.FromSlash(path.Join("test/files", test.remoteRoot)))
-			require.NoError(t, err)
-			prepare(t, remoteRoot)
-			f, err := fs.NewFs(fmt.Sprintf("%s:%s", remoteName, test.fsRoot))
-			require.NoError(t, err)
-			gotEntries, err := f.List(test.fsList)
-			require.NoError(t, err)
+		what := fmt.Sprintf("test %d remoteRoot=%q, fsRoot=%q, fsList=%q", testi, test.remoteRoot, test.fsRoot, test.fsList)
 
-			sort.Sort(gotEntries)
+		remoteRoot, err := filepath.Abs(filepath.FromSlash(path.Join("test/files", test.remoteRoot)))
+		require.NoError(t, err, what)
+		prepare(t, remoteRoot)
+		f, err := fs.NewFs(fmt.Sprintf("%s:%s", remoteName, test.fsRoot))
+		require.NoError(t, err, what)
+		gotEntries, err := f.List(test.fsList)
+		require.NoError(t, err, what)
 
-			require.Equal(t, len(test.entries), len(gotEntries))
-			for i, gotEntry := range gotEntries {
-				wantEntry := test.entries[i]
+		sort.Sort(gotEntries)
 
-				require.Equal(t, wantEntry.remote, gotEntry.Remote())
-				require.Equal(t, wantEntry.size, int64(gotEntry.Size()))
-				_, isDir := gotEntry.(fs.Directory)
-				require.Equal(t, wantEntry.isDir, isDir)
-			}
-		})
+		require.Equal(t, len(test.entries), len(gotEntries), what)
+		for i, gotEntry := range gotEntries {
+			what := fmt.Sprintf("%s, entry=%d", what, i)
+			wantEntry := test.entries[i]
+
+			require.Equal(t, wantEntry.remote, gotEntry.Remote(), what)
+			require.Equal(t, wantEntry.size, int64(gotEntry.Size()), what)
+			_, isDir := gotEntry.(fs.Directory)
+			require.Equal(t, wantEntry.isDir, isDir, what)
+		}
 	}
 }
 
