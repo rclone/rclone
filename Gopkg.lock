@@ -93,10 +93,10 @@
   version = "v1.0.4"
 
 [[projects]]
+  branch = "master"
   name = "github.com/coreos/bbolt"
   packages = ["."]
-  revision = "48ea1b39c25fc1bab3506fbc712ecbaa842c4d2d"
-  version = "v1.3.1-coreos.6"
+  revision = "ee30b748bcfbd74ec1d8439ae8fd4f9123a5c94e"
 
 [[projects]]
   name = "github.com/cpuguy83/go-md2man"
@@ -392,7 +392,7 @@
   branch = "master"
   name = "google.golang.org/api"
   packages = [
-    "drive/v2",
+    "drive/v3",
     "gensupport",
     "googleapi",
     "googleapi/internal/uritemplates",
@@ -427,6 +427,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "4dfe75b3ebfff3e7b40e2983d8c014f9e4d98fed08c3fe454f1dc890589e6960"
+  inputs-digest = "ad6c96ca62ee6a305b6083c53f2f4939d8ae22ee6163ad84b1f09d8fcbcd1ff7"
   solver-name = "gps-cdcl"
   solver-version = 1
