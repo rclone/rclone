@@ -216,7 +216,7 @@ func (c *ServerConn) epsv() (port int, err error) {
 }
 
 // pasv issues a "PASV" command to get a port number for a data connection.
-func (c *ServerConn) pasv() (port int, err error) {
+func (c *ServerConn) pasv() (host string, port int, err error) {
 	_, line, err := c.cmd(StatusPassiveMode, "PASV")
 	if err != nil {
 		return
@@ -226,14 +226,16 @@ func (c *ServerConn) pasv() (port int, err error) {
 	start := strings.Index(line, "(")
 	end := strings.LastIndex(line, ")")
 	if start == -1 || end == -1 {
-		return 0, errors.New("Invalid PASV response format")
+		err = errors.New("Invalid PASV response format")
+		return
 	}
 
 	// We have to split the response string
 	pasvData := strings.Split(line[start+1:end], ",")
 
 	if len(pasvData) < 6 {
-		return 0, errors.New("Invalid PASV response format")
+		err = errors.New("Invalid PASV response format")
+		return
 	}
 
 	// Let's compute the port number
@@ -251,15 +253,18 @@ func (c *ServerConn) pasv() (port int, err error) {
 
 	// Recompose port
 	port = portPart1*256 + portPart2
+
+	// Make the IP address to connect to
+	host = strings.Join(pasvData[0:4], ".")
 	return
 }
 
-// getDataConnPort returns a port for a new data connection
+// getDataConnPort returns a host, port for a new data connection
 // it uses the best available method to do so
-func (c *ServerConn) getDataConnPort() (int, error) {
+func (c *ServerConn) getDataConnPort() (string, int, error) {
 	if !c.DisableEPSV {
 		if port, err := c.epsv(); err == nil {
-			return port, nil
+			return c.host, port, nil
 		}
 
 		// if there is an error, disable EPSV for the next attempts
@@ -271,12 +276,12 @@ func (c *ServerConn) getDataConnPort() (int, error) {
 
 // openDataConn creates a new FTP data connection.
 func (c *ServerConn) openDataConn() (net.Conn, error) {
-	port, err := c.getDataConnPort()
+	host, port, err := c.getDataConnPort()
 	if err != nil {
 		return nil, err
 	}
 
-	return net.DialTimeout("tcp", net.JoinHostPort(c.host, strconv.Itoa(port)), c.timeout)
+	return net.DialTimeout("tcp", net.JoinHostPort(host, strconv.Itoa(port)), c.timeout)
 }
 
 // cmd is a helper function to execute a command and check for the expected FTP

@@ -161,7 +161,7 @@
   branch = "master"
   name = "github.com/jlaffaye/ftp"
   packages = ["."]
-  revision = "83891dbe0099af272b7f8d094427215a09b5fd0f"
+  revision = "427467931c6fbc25acba4537c9d3cbc40cfa569b"
 
 [[projects]]
   name = "github.com/jmespath/go-jmespath"
