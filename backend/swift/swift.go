@@ -145,10 +145,10 @@ type Fs struct {
 //
 // Will definitely have info but maybe not meta
 type Object struct {
-	fs      *Fs            // what this object is part of
-	remote  string         // The remote path
-	info    swift.Object   // Info from the swift object if known
-	headers *swift.Headers // The object headers if known
+	fs      *Fs           // what this object is part of
+	remote  string        // The remote path
+	info    swift.Object  // Info from the swift object if known
+	headers swift.Headers // The object headers if known
 }
 
 // ------------------------------------------------------------
@@ -491,8 +491,9 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 func (f *Fs) Put(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOption) (fs.Object, error) {
 	// Temporary Object under construction
 	fs := &Object{
-		fs:     f,
-		remote: src.Remote(),
+		fs:      f,
+		remote:  src.Remote(),
+		headers: swift.Headers{}, // Empty object headers to stop readMetaData being called
 	}
 	return fs, fs.Update(in, src, options...)
 }
@@ -657,7 +658,7 @@ func (o *Object) hasHeader(header string) (bool, error) {
 		}
 		return false, err
 	}
-	_, isDynamicLargeObject := (*o.headers)[header]
+	_, isDynamicLargeObject := o.headers[header]
 	return isDynamicLargeObject, nil
 }
 
@@ -693,7 +694,7 @@ func (o *Object) readMetaData() (err error) {
 		return err
 	}
 	o.info = info
-	o.headers = &h
+	o.headers = h
 	return nil
 }
 
@@ -726,10 +727,10 @@ func (o *Object) SetModTime(modTime time.Time) error {
 	meta.SetModTime(modTime)
 	newHeaders := meta.ObjectHeaders()
 	for k, v := range newHeaders {
-		(*o.headers)[k] = v
+		o.headers[k] = v
 	}
 	// Include any other metadata from request
-	for k, v := range *o.headers {
+	for k, v := range o.headers {
 		if strings.HasPrefix(k, "X-Object-") {
 			newHeaders[k] = v
 		}
