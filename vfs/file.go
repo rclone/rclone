@@ -203,8 +203,8 @@ func (f *File) SetModTime(modTime time.Time) error {
 
 	f.pendingModTime = modTime
 
-	// FIXME: check for writers?
-	if f.o != nil {
+	// Only update the ModTime when there are no writers, setObject will do it
+	if f.o != nil && len(f.writers) == 0 && !f.readWriterClosing {
 		return f.applyPendingModTime()
 	}
 
