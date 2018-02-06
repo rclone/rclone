@@ -228,7 +228,7 @@ Off
 Standard
 
   * file names encrypted
-  * file names can't be as long (~156 characters)
+  * file names can't be as long (~143 characters)
   * can use sub paths and copy single files
   * directory structure visible
   * identical files names will have identical uploaded names
