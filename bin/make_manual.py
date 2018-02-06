@@ -21,6 +21,7 @@ docs = [
     "overview.md",
 
     # Keep these alphabetical by full name
+    "alias.md",
     "amazonclouddrive.md",
     "s3.md",
     "b2.md",

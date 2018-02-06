@@ -1,0 +1,130 @@
+---
+title: "Alias"
+description: "Remote Aliases"
+date: "2018-01-30"
+---
+
+<i class="fa fa-link"></i> Alias
+-----------------------------------------
+
+The `alias` remote provides a new name for another remote.
+
+Paths may be as deep as required or a local path, 
+eg `remote:directory/subdirectory` or `/directory/subdirectory`.
+
+During the initial setup with `rclone config` you will specify the target
+remote. The target remote can either be a local path or another remote.
+
+Subfolders can be used in target remote. Asume a alias remote named `backup`
+with the target `mydrive:private/backup`. Invoking `rclone mkdir backup:desktop`
+is exactly the same as invoking `rclone mkdir mydrive:private/backup/desktop`.
+
+There will be no special handling of paths containing `..` segments.
+Invoking `rclone mkdir backup:../desktop` is exactly the same as invoking
+`rclone mkdir mydrive:private/backup/../desktop`.
+The empty path is not allowed as a remote. To alias the current directory
+use `.` instead.
+
+Here is an example of how to make a alias called `remote` for local folder.
+First run:
+
+     rclone config
+
+This will guide you through an interactive setup process:
+
+```
+No remotes found - make a new one
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q> n
+name> remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Alias for a existing remote
+   \ "alias"
+ 2 / Amazon Drive
+   \ "amazon cloud drive"
+ 3 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ "s3"
+ 4 / Backblaze B2
+   \ "b2"
+ 5 / Box
+   \ "box"
+ 6 / Cache a remote
+   \ "cache"
+ 7 / Dropbox
+   \ "dropbox"
+ 8 / Encrypt/Decrypt a remote
+   \ "crypt"
+ 9 / FTP Connection
+   \ "ftp"
+10 / Google Cloud Storage (this is not Google Drive)
+   \ "google cloud storage"
+11 / Google Drive
+   \ "drive"
+12 / Hubic
+   \ "hubic"
+13 / Local Disk
+   \ "local"
+14 / Microsoft Azure Blob Storage
+   \ "azureblob"
+15 / Microsoft OneDrive
+   \ "onedrive"
+16 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ "swift"
+17 / Pcloud
+   \ "pcloud"
+18 / QingCloud Object Storage
+   \ "qingstor"
+19 / SSH/SFTP Connection
+   \ "sftp"
+20 / Webdav
+   \ "webdav"
+21 / Yandex Disk
+   \ "yandex"
+22 / http Connection
+   \ "http"
+Storage> 1
+Remote or path to alias.
+Can be "myremote:path/to/dir", "myremote:bucket", "myremote:" or "/local/path".
+remote> /mnt/storage/backup
+Remote config
+--------------------
+[remote]
+remote = /mnt/storage/backup
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+Current remotes:
+
+Name                 Type
+====                 ====
+remote               alias
+
+e) Edit existing remote
+n) New remote
+d) Delete remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+e/n/d/r/c/s/q> q
+```
+
+Once configured you can then use `rclone` like this,
+
+List directories in top level in `/mnt/storage/backup`
+
+    rclone lsd remote:
+
+List all the files in `/mnt/storage/backup`
+
+    rclone ls remote:
+
+Copy another local directory to the alias directory called source
+
+    rclone copy /home/source remote:source
+
