@@ -19,6 +19,7 @@ option:
 
 See the following for detailed instructions for
 
+  * [Alias](/alias/)
   * [Amazon Drive](/amazonclouddrive/)
   * [Amazon S3](/s3/)
   * [Backblaze B2](/b2/)
