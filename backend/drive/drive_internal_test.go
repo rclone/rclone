@@ -2,6 +2,7 @@ package drive
 
 import (
 	"encoding/json"
+	"mime"
 	"testing"
 
 	"google.golang.org/api/drive/v3"
@@ -57,6 +58,7 @@ const exampleExportFormats = `{
 func TestInternalLoadExampleExportFormats(t *testing.T) {
 	exportFormatsOnce.Do(func() {})
 	assert.NoError(t, json.Unmarshal([]byte(exampleExportFormats), &_exportFormats))
+	_exportFormats = fixMimeTypeMap(_exportFormats)
 }
 
 func TestInternalParseExtensions(t *testing.T) {
@@ -65,27 +67,24 @@ func TestInternalParseExtensions(t *testing.T) {
 		want    []string
 		wantErr error
 	}{
-		{"doc", []string{"doc"}, nil},
-		{" docx ,XLSX, 	pptx,svg", []string{"docx", "xlsx", "pptx", "svg"}, nil},
-		{"docx,svg,Docx", []string{"docx", "svg"}, nil},
-		{"docx,potato,docx", []string{"docx"}, errors.New(`couldn't find mime type for extension "potato"`)},
+		{"doc", []string{".doc"}, nil},
+		{" docx ,XLSX, 	pptx,svg", []string{".docx", ".xlsx", ".pptx", ".svg"}, nil},
+		{"docx,svg,Docx", []string{".docx", ".svg"}, nil},
+		{"docx,potato,docx", []string{".docx"}, errors.New(`couldn't find MIME type for extension ".potato"`)},
 	} {
-		f := new(Fs)
-		gotErr := f.parseExtensions(test.in)
+		extensions, gotErr := parseExtensions(test.in)
 		if test.wantErr == nil {
 			assert.NoError(t, gotErr)
 		} else {
 			assert.EqualError(t, gotErr, test.wantErr.Error())
 		}
-		assert.Equal(t, test.want, f.extensions)
+		assert.Equal(t, test.want, extensions)
 	}
 
 	// Test it is appending
-	f := new(Fs)
-	assert.Nil(t, f.parseExtensions("docx,svg"))
-	assert.Nil(t, f.parseExtensions("docx,svg,xlsx"))
-	assert.Equal(t, []string{"docx", "svg", "xlsx"}, f.extensions)
-
+	extensions, gotErr := parseExtensions("docx,svg", "docx,svg,xlsx")
+	assert.NoError(t, gotErr)
+	assert.Equal(t, []string{".docx", ".svg", ".xlsx"}, extensions)
 }
 
 func TestInternalFindExportFormat(t *testing.T) {
@@ -99,10 +98,10 @@ func TestInternalFindExportFormat(t *testing.T) {
 		wantMimeType  string
 	}{
 		{[]string{}, "", ""},
-		{[]string{"pdf"}, "pdf", "application/pdf"},
-		{[]string{"pdf", "rtf", "xls"}, "pdf", "application/pdf"},
-		{[]string{"xls", "rtf", "pdf"}, "rtf", "application/rtf"},
-		{[]string{"xls", "csv", "svg"}, "", ""},
+		{[]string{".pdf"}, ".pdf", "application/pdf"},
+		{[]string{".pdf", ".rtf", ".xls"}, ".pdf", "application/pdf"},
+		{[]string{".xls", ".rtf", ".pdf"}, ".rtf", "application/rtf"},
+		{[]string{".xls", ".csv", ".svg"}, "", ""},
 	} {
 		f := new(Fs)
 		f.extensions = test.extensions
@@ -115,5 +114,37 @@ func TestInternalFindExportFormat(t *testing.T) {
 		}
 		assert.Equal(t, test.wantMimeType, gotMimeType)
 		assert.Equal(t, true, gotIsDocument)
+	}
+}
+
+func TestMimeTypesToExtension(t *testing.T) {
+	for mimeType, extension := range _mimeTypeToExtension {
+		extensions, err := mime.ExtensionsByType(mimeType)
+		assert.NoError(t, err)
+		assert.Contains(t, extensions, extension)
+	}
+}
+
+func TestExtensionToMimeType(t *testing.T) {
+	for mimeType, extension := range _mimeTypeToExtension {
+		gotMimeType := mime.TypeByExtension(extension)
+		mediatype, _, err := mime.ParseMediaType(gotMimeType)
+		assert.NoError(t, err)
+		assert.Equal(t, mimeType, mediatype)
+	}
+}
+
+func TestExtensionsForExportFormats(t *testing.T) {
+	if _exportFormats == nil {
+		t.Error("exportFormats == nil")
+	}
+	for fromMT, toMTs := range _exportFormats {
+		for _, toMT := range toMTs {
+			if !isInternalMimeType(toMT) {
+				extensions, err := mime.ExtensionsByType(toMT)
+				assert.NoError(t, err, "invalid MIME type %q", toMT)
+				assert.NotEmpty(t, extensions, "No extension found for %q (from: %q)", fromMT, toMT)
+			}
+		}
 	}
 }
