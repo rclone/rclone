@@ -13,6 +13,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
 	"os"
@@ -68,32 +69,44 @@ var (
 		ClientSecret: obscure.MustReveal(rcloneEncryptedClientSecret),
 		RedirectURL:  oauthutil.TitleBarRedirectURL,
 	}
-	mimeTypeToExtension = map[string]string{
-		"application/epub+zip":                            "epub",
-		"application/msword":                              "doc",
-		"application/pdf":                                 "pdf",
-		"application/rtf":                                 "rtf",
-		"application/vnd.ms-excel":                        "xls",
-		"application/vnd.oasis.opendocument.presentation": "odp",
-		"application/vnd.oasis.opendocument.spreadsheet":  "ods",
-		"application/vnd.oasis.opendocument.text":         "odt",
-		"application/vnd.openxmlformats-officedocument.presentationml.presentation": "pptx",
-		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         "xlsx",
-		"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   "docx",
-		"application/x-vnd.oasis.opendocument.spreadsheet":                          "ods",
-		"application/zip":           "zip",
-		"image/jpeg":                "jpg",
-		"image/png":                 "png",
-		"image/svg+xml":             "svg",
-		"text/csv":                  "csv",
-		"text/html":                 "html",
-		"text/plain":                "txt",
-		"text/tab-separated-values": "tsv",
+	_mimeTypeToExtensionDuplicates = map[string]string{
+		"application/x-vnd.oasis.opendocument.presentation": ".odp",
+		"application/x-vnd.oasis.opendocument.spreadsheet":  ".ods",
+		"application/x-vnd.oasis.opendocument.text":         ".odt",
+		"image/jpg":   ".jpg",
+		"image/x-bmp": ".bmp",
+		"image/x-png": ".png",
+		"text/rtf":    ".rtf",
+	}
+	_mimeTypeToExtension = map[string]string{
+		"application/epub+zip":                            ".epub",
+		"application/json":                                ".json",
+		"application/msword":                              ".doc",
+		"application/pdf":                                 ".pdf",
+		"application/rtf":                                 ".rtf",
+		"application/vnd.ms-excel":                        ".xls",
+		"application/vnd.oasis.opendocument.presentation": ".odp",
+		"application/vnd.oasis.opendocument.spreadsheet":  ".ods",
+		"application/vnd.oasis.opendocument.text":         ".odt",
+		"application/vnd.openxmlformats-officedocument.presentationml.presentation": ".pptx",
+		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":         ".xlsx",
+		"application/vnd.openxmlformats-officedocument.wordprocessingml.document":   ".docx",
+		"application/x-msmetafile":  ".wmf",
+		"application/zip":           ".zip",
+		"image/bmp":                 ".bmp",
+		"image/jpeg":                ".jpg",
+		"image/pjpeg":               ".pjpeg",
+		"image/png":                 ".png",
+		"image/svg+xml":             ".svg",
+		"text/csv":                  ".csv",
+		"text/html":                 ".html",
+		"text/plain":                ".txt",
+		"text/tab-separated-values": ".tsv",
 	}
 	extensionToMimeType map[string]string
 	partialFields       = "id,name,size,md5Checksum,trashed,modifiedTime,createdTime,mimeType,parents"
 	exportFormatsOnce   sync.Once           // make sure we fetch the export formats only once
-	_exportFormats      map[string][]string // allowed export mime-type conversions
+	_exportFormats      map[string][]string // allowed export MIME type conversions
 )
 
 // Register with Fs
@@ -252,10 +265,15 @@ func init() {
 		}},
 	})
 
-	// Invert mimeTypeToExtension
-	extensionToMimeType = make(map[string]string, len(mimeTypeToExtension))
-	for mimeType, extension := range mimeTypeToExtension {
-		extensionToMimeType[extension] = mimeType
+	// register duplicate MIME types first
+	// this allows them to be used with mime.ExtensionsByType() but
+	// mime.TypeByExtension() will return the later registered MIME type
+	for _, m := range []map[string]string{_mimeTypeToExtensionDuplicates, _mimeTypeToExtension} {
+		for mimeType, extension := range m {
+			if err := mime.AddExtensionType(extension, mimeType); err != nil {
+				log.Fatalf("Failed to register MIME type %q: %v", mimeType, err)
+			}
+		}
 	}
 }
 
@@ -426,7 +444,7 @@ func (f *Fs) list(dirIDs []string, title string, directoriesOnly bool, filesOnly
 		// if the search title contains an extension and the extension is in the export extensions add a search
 		// for the filename without the extension.
 		// assume that export extensions don't contain escape sequences and only have one part (not .tar.gz)
-		if ext := path.Ext(searchTitle); handleGdocs && len(ext) > 0 && containsString(f.extensions, ext[1:]) {
+		if ext := path.Ext(searchTitle); handleGdocs && len(ext) > 0 && containsString(f.extensions, ext) {
 			stem = title[:len(title)-len(ext)]
 			query = append(query, fmt.Sprintf("(name='%s' or name='%s')", searchTitle, searchTitle[:len(searchTitle)-len(ext)]))
 		} else {
@@ -516,25 +534,78 @@ func isPowerOfTwo(x int64) bool {
 	}
 }
 
-// parseExtensions parses drive export extensions from a string
-func (f *Fs) parseExtensions(extensions string) error {
-	for _, extension := range strings.Split(extensions, ",") {
-		extension = strings.ToLower(strings.TrimSpace(extension))
-		if _, found := extensionToMimeType[extension]; !found {
-			return errors.Errorf("couldn't find mime type for extension %q", extension)
-		}
-		found := false
-		for _, existingExtension := range f.extensions {
-			if extension == existingExtension {
-				found = true
-				break
+// add a charset parameter to all text/* MIME types
+func fixMimeType(mimeType string) string {
+	mediaType, param, err := mime.ParseMediaType(mimeType)
+	if err != nil {
+		return mimeType
+	}
+	if strings.HasPrefix(mimeType, "text/") && param["charset"] == "" {
+		param["charset"] = "utf-8"
+		mimeType = mime.FormatMediaType(mediaType, param)
+	}
+	return mimeType
+}
+func fixMimeTypeMap(m map[string][]string) map[string][]string {
+	for _, v := range m {
+		for i, mt := range v {
+			fixed := fixMimeType(mt)
+			if fixed == "" {
+				panic(errors.Errorf("unable to fix MIME type %q", mt))
 			}
-		}
-		if !found {
-			f.extensions = append(f.extensions, extension)
+			v[i] = fixed
 		}
 	}
-	return nil
+	return m
+}
+func isInternalMimeType(mimeType string) bool {
+	return strings.HasPrefix(mimeType, "application/vnd.google-apps.")
+}
+
+// parseExtensions parses a list of comma separated extensions
+// into a list of unique extensions with leading "."
+func parseExtensions(extensions ...string) ([]string, error) {
+	var result []string
+	for _, extensionText := range extensions {
+		for _, extension := range strings.Split(extensionText, ",") {
+			extension = strings.ToLower(strings.TrimSpace(extension))
+			if len(extension) > 0 && extension[0] != '.' {
+				extension = "." + extension
+			}
+			if mime.TypeByExtension(extension) == "" {
+				return result, errors.Errorf("couldn't find MIME type for extension %q", extension)
+			}
+			found := false
+			for _, existingExtension := range result {
+				if extension == existingExtension {
+					found = true
+					break
+				}
+			}
+			if !found {
+				result = append(result, extension)
+			}
+		}
+	}
+	return result, nil
+}
+
+// parseExtensionMimeTypes parses the given extensions using parseExtensions
+// and maps each resulting extension to its MIME type.
+func parseExtensionMimeTypes(extensions ...string) ([]string, error) {
+	parsedExtensions, err := parseExtensions(extensions...)
+	if err != nil {
+		return nil, err
+	}
+	mimeTypes := make([]string, 0, len(parsedExtensions))
+	for i, extension := range parsedExtensions {
+		mt := mime.TypeByExtension(extension)
+		if mt == "" {
+			return nil, errors.Errorf("couldn't find MIME type for extension %q", extension)
+		}
+		mimeTypes[i] = mt
+	}
+	return mimeTypes, nil
 }
 
 // Figure out if the user wants to use a team drive
@@ -699,11 +770,7 @@ func NewFs(name, path string, m configmap.Mapper) (fs.Fs, error) {
 	f.dirCache = dircache.New(root, f.rootFolderID, f)
 
 	// Parse extensions
-	err = f.parseExtensions(opt.Extensions)
-	if err != nil {
-		return nil, err
-	}
-	err = f.parseExtensions(defaultExtensions) // make sure there are some sensible ones on there
+	f.extensions, err = parseExtensions(opt.Extensions, defaultExtensions)
 	if err != nil {
 		return nil, err
 	}
@@ -836,12 +903,12 @@ func (f *Fs) exportFormats() map[string][]string {
 			_exportFormats = map[string][]string{}
 			return
 		}
-		_exportFormats = about.ExportFormats
+		_exportFormats = fixMimeTypeMap(about.ExportFormats)
 	})
 	return _exportFormats
 }
 
-// findExportFormat works out the optimum extension and mime-type
+// findExportFormat works out the optimum extension and MIME type
 // for this item.
 //
 // Look through the extensions and find the first format that can be
@@ -849,11 +916,11 @@ func (f *Fs) exportFormats() map[string][]string {
 func (f *Fs) findExportFormat(item *drive.File) (extension, filename, mimeType string, isDocument bool) {
 	exportMimeTypes, isDocument := f.exportFormats()[item.MimeType]
 	if isDocument {
-		for _, extension := range f.extensions {
-			mimeType := extensionToMimeType[extension]
+		for _, _extension := range f.extensions {
+			_mimeType := mime.TypeByExtension(_extension)
 			for _, emt := range exportMimeTypes {
-				if emt == mimeType {
-					return extension, fmt.Sprintf("%s.%s", item.Name, extension), mimeType, true
+				if emt == _mimeType {
+					return _extension, item.Name + _extension, _mimeType, true
 				}
 			}
 		}
@@ -1103,27 +1170,11 @@ func (f *Fs) itemToDirEntry(remote string, item *drive.File) (fs.DirEntry, error
 			fs.Debugf(remote, "No export formats found for %q", item.MimeType)
 			break
 		}
-		o, err := f.newObjectWithInfo(remote+"."+extension, item)
+		o, err := f.newObjectWithInfo(remote+extension, item)
 		if err != nil {
 			return nil, err
 		}
-		obj := o.(*Object)
-		obj.url = fmt.Sprintf("%sfiles/%s/export?mimeType=%s", f.svc.BasePath, item.Id, url.QueryEscape(exportMimeType))
-		if f.opt.AlternateExport {
-			switch item.MimeType {
-			case "application/vnd.google-apps.drawing":
-				obj.url = fmt.Sprintf("https://docs.google.com/drawings/d/%s/export/%s", item.Id, extension)
-			case "application/vnd.google-apps.document":
-				obj.url = fmt.Sprintf("https://docs.google.com/document/d/%s/export?format=%s", item.Id, extension)
-			case "application/vnd.google-apps.spreadsheet":
-				obj.url = fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=%s", item.Id, extension)
-			case "application/vnd.google-apps.presentation":
-				obj.url = fmt.Sprintf("https://docs.google.com/presentation/d/%s/export/%s", item.Id, extension)
-			}
-		}
-		obj.isDocument = true
-		obj.mimeType = exportMimeType
-		obj.bytes = -1
+		o.(*Object).setGdocsMetaData(item, extension, exportMimeType)
 		return o, nil
 	}
 	return nil, nil
@@ -1866,13 +1917,13 @@ func (o *Object) setGdocsMetaData(info *drive.File, extension, exportMimeType st
 	if o.fs.opt.AlternateExport {
 		switch info.MimeType {
 		case "application/vnd.google-apps.drawing":
-			o.url = fmt.Sprintf("https://docs.google.com/drawings/d/%s/export/%s", info.Id, extension)
+			o.url = fmt.Sprintf("https://docs.google.com/drawings/d/%s/export/%s", info.Id, extension[1:])
 		case "application/vnd.google-apps.document":
-			o.url = fmt.Sprintf("https://docs.google.com/document/d/%s/export?format=%s", info.Id, extension)
+			o.url = fmt.Sprintf("https://docs.google.com/document/d/%s/export?format=%s", info.Id, extension[1:])
 		case "application/vnd.google-apps.spreadsheet":
-			o.url = fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=%s", info.Id, extension)
+			o.url = fmt.Sprintf("https://docs.google.com/spreadsheets/d/%s/export?format=%s", info.Id, extension[1:])
 		case "application/vnd.google-apps.presentation":
-			o.url = fmt.Sprintf("https://docs.google.com/presentation/d/%s/export/%s", info.Id, extension)
+			o.url = fmt.Sprintf("https://docs.google.com/presentation/d/%s/export/%s", info.Id, extension[1:])
 		}
 	}
 	o.isDocument = true
