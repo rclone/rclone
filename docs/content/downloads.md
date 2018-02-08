@@ -8,37 +8,29 @@ date: "2017-07-22"
 Rclone Download {{< version >}}
 =====================
 
-  * Windows
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-windows-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-windows-amd64.zip)
-  * OSX
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-osx-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-osx-amd64.zip)
-  * Linux
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-arm.zip)
-    * [ARM - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-linux-arm64.zip)
-    * [MIPS - Big Endian](https://downloads.rclone.org/rclone-{{< version >}}-linux-mips.zip)
-    * [MIPS - Little Endian](https://downloads.rclone.org/rclone-{{< version >}}-linux-mipsle.zip)
-  * FreeBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-freebsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-freebsd-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-freebsd-arm.zip)
-  * NetBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-netbsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-netbsd-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-netbsd-arm.zip)
-  * OpenBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-openbsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-openbsd-amd64.zip)
-  * Plan 9
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-{{< version >}}-plan9-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-plan9-amd64.zip)
-  * Solaris
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-{{< version >}}-solaris-amd64.zip)
+| Arch-OS | Windows | macOS | Linux | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
+|:---:|:-------:|:-----:|:-----:|:-------:|:------:|:-------:|:-----:|:-------:|
+| AMD64 - 64 Bit | {{< download windows amd64 >}} | {{< download osx amd64 >}} | {{< download linux amd64 >}} | {{< download freebsd amd64 >}} | {{< download netbsd amd64 >}} | {{< download openbsd amd64 >}} | {{< download plan9 amd64 >}} | {{< download solaris amd64 >}} |
+| 386 - 32 Bit | {{< download windows 386 >}} | {{< download osx 386 >}} | {{< download linux 386 >}} | {{< download freebsd 386 >}} | {{< download netbsd 386 >}} | {{< download openbsd 386 >}} | {{< download plan9 386 >}} | - |
+| ARM - 32 Bit | - | - | {{< download linux arm >}} | {{< download freebsd arm >}} | {{< download netbsd arm >}} | - | - | - |
+| ARM - 64 Bit | - | - | {{< download linux arm64 >}} | - | - | - | - | - |
+| MIPS - Big Endian | - | - | {{< download linux mips >}} | - | - | - | - | - |
+| MIPS - Little Endian | - | - | {{< download linux mipsle >}} | - | - | - | - | - |
 
 You can also find a [mirror of the downloads on github](https://github.com/ncw/rclone/releases/tag/{{< version >}}).
+
+## Script download and install ##
+
+To install rclone on Linux/macOS/BSD systems, run:
+
+    curl https://rclone.org/install.sh | sudo bash
+
+For beta installation, run:
+
+    curl https://rclone.org/install.sh | sudo bash -s beta
+
+Note that this script checks the version of rclone installed first and
+won't re-download if not needed.
 
 Beta releases
 =============
@@ -63,32 +55,14 @@ Downloads for scripting
 If you would like to download the current version (maybe from a
 script) from a URL which doesn't change then you can use these links.
 
-  * Windows
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-current-windows-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-windows-amd64.zip)
-  * OSX
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-current-osx-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-osx-amd64.zip)
-  * Linux
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-current-linux-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-linux-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-current-linux-arm.zip)
-  * FreeBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-current-freebsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-freebsd-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-current-freebsd-arm.zip)
-  * NetBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-current-netbsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-netbsd-amd64.zip)
-    * [ARM - 32 Bit](https://downloads.rclone.org/rclone-current-netbsd-arm.zip)
-  * OpenBSD
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-current-openbsd-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-openbsd-amd64.zip)
-  * Plan 9
-    * [386 - 32 Bit](https://downloads.rclone.org/rclone-current-plan9-386.zip)
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-plan9-amd64.zip)
-  * Solaris
-    * [AMD64 - 64 Bit](https://downloads.rclone.org/rclone-current-solaris-amd64.zip)
+| Arch-OS | Windows | macOS | Linux | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
+|:---:|:-------:|:-----:|:-----:|:-------:|:------:|:-------:|:-----:|:-------:|
+| AMD64 - 64 Bit | {{< cdownload windows amd64 >}} | {{< cdownload osx amd64 >}} | {{< cdownload linux amd64 >}} | {{< cdownload freebsd amd64 >}} | {{< cdownload netbsd amd64 >}} | {{< cdownload openbsd amd64 >}} | {{< cdownload plan9 amd64 >}} | {{< cdownload solaris amd64 >}} |
+| 386 - 32 Bit | {{< cdownload windows 386 >}} | {{< cdownload osx 386 >}} | {{< cdownload linux 386 >}} | {{< cdownload freebsd 386 >}} | {{< cdownload netbsd 386 >}} | {{< cdownload openbsd 386 >}} | {{< cdownload plan9 386 >}} | - |
+| ARM - 32 Bit | - | - | {{< cdownload linux arm >}} | {{< cdownload freebsd arm >}} | {{< cdownload netbsd arm >}} | - | - | - |
+| ARM - 64 Bit | - | - | {{< cdownload linux arm64 >}} | - | - | - | - | - |
+| MIPS - Big Endian | - | - | {{< cdownload linux mips >}} | - | - | - | - | - |
+| MIPS - Little Endian | - | - | {{< cdownload linux mipsle >}} | - | - | - | - | - |
 
 Older Downloads
 ==============

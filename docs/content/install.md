@@ -21,7 +21,7 @@ run `rclone -h`.
 
 ## Script installation ##
 
-To install rclone on Linux/MacOs/BSD systems, run:
+To install rclone on Linux/macOS/BSD systems, run:
 
     curl https://rclone.org/install.sh | sudo bash
 
