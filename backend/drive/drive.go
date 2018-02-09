@@ -1050,6 +1050,29 @@ func (f *Fs) CleanUp() error {
 	return nil
 }
 
+// About gets quota information
+func (f *Fs) About() error {
+	var about *drive.About
+	var err error
+	err = f.pacer.Call(func() (bool, error) {
+		about, err = f.svc.About.Get().Fields("storageQuota").Do()
+		return shouldRetry(err)
+	})
+	if err != nil {
+		fs.Errorf(f, "Failed to get Drive storageQuota: %v", err)
+		return nil
+	}
+	quota := float64(about.StorageQuota.Limit) / (1 << 30)
+	usagetotal := float64(about.StorageQuota.Usage) / (1 << 30)
+	usagedrive := float64(about.StorageQuota.UsageInDrive) / (1 << 30)
+	usagetrash := float64(about.StorageQuota.UsageInDriveTrash) / (1 << 30)
+	fmt.Printf("Quota: %.0f GiB | Used: %.1f GiB (Trash: %.1f GiB) | Available: %.1f GiB | Usage: %d%%\n",
+		quota, usagedrive, usagetrash, quota-usagedrive, int((usagedrive/quota)*100))
+	fmt.Printf("Space used in other Google services (such as Gmail): %.2f GiB\n",
+		usagetotal-usagedrive)
+	return nil
+}
+
 // Move src to this remote using server side move operations.
 //
 // This is stored with the remote path given

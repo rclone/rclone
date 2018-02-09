@@ -338,6 +338,14 @@ If you wish to empty your trash you can use the `rclone cleanup remote:`
 command which will permanently delete all your trashed files. This command
 does not take any path arguments.
 
+### Quota information ###
+
+To view your current quota you can use the `rclone about remote:`
+command which will display your usage limit (quota), the usage in Google
+Drive, the size of all files in the Trash and the space used by other
+Google services such as Gmail. This command does not take any path
+arguments.
+
 ### Specific options ###
 
 Here are the command line options specific to this cloud storage
