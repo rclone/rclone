@@ -1049,6 +1049,19 @@ func CleanUp(f fs.Fs) error {
 	return doCleanUp()
 }
 
+// About gets quota information from the remote
+func About(f fs.Fs) error {
+	doAbout := f.Features().About
+	if doAbout == nil {
+		return errors.Errorf("%v doesn't support about", f)
+	}
+	if fs.Config.DryRun {
+		fs.Logf(f, "Not running about as --dry-run set")
+		return nil
+	}
+	return doAbout()
+}
+
 // wrap a Reader and a Closer together into a ReadCloser
 type readCloser struct {
 	io.Reader

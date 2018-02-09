@@ -119,27 +119,27 @@ All the remotes support a basic set of features, but there are some
 optional features supported by some remotes used to make some
 operations more efficient.
 
-| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing |
-| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|
-| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | No  | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | Yes |
-| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes         |
-| HTTP                         | No    | No   | No   | No      | No      | No    | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#575](https://github.com/ncw/rclone/issues/575) | No | No | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No          |
+| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | LinkSharing | About |
+| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:------------:|:-----:|
+| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | No  | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | Yes | No  |
+| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes         | Yes |
+| HTTP                         | No    | No   | No   | No      | No      | No    | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#575](https://github.com/ncw/rclone/issues/575) | No | No | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes   | Yes          | No [#2178](https://github.com/ncw/rclone/issues/2178) | No  |
+| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No          | No  |
 
 ### Purge ###
 
@@ -202,3 +202,11 @@ file to local disk first, e.g. `rclone rcat`.
 Sets the necessary permissions on a file or folder and prints a link
 that allows others to access them, even if they don't have an account
 on the particular cloud provider.
+
+### About ###
+
+This is used to fetch quota information from the remote, like bytes
+used/free/quota and bytes used in the trash.
+
+If the server can't do `About` then `rclone about` will return an
+error.

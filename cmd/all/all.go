@@ -4,6 +4,7 @@ package all
 import (
 	// Active commands
 	_ "github.com/ncw/rclone/cmd"
+	_ "github.com/ncw/rclone/cmd/about"
 	_ "github.com/ncw/rclone/cmd/authorize"
 	_ "github.com/ncw/rclone/cmd/cachestats"
 	_ "github.com/ncw/rclone/cmd/cat"
