@@ -124,7 +124,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		} else if err != nil {
 			return errors.Wrap(err, "cache open file failed")
 		} else {
-			fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "Opened existing cached copy with flags=%s", decodeOpenFlags(fh.flags))
+			fs.Debugf(fh.logPrefix(), "Opened existing cached copy with flags=%s", decodeOpenFlags(fh.flags))
 		}
 	} else {
 		// Set the size to 0 since we are truncating and flag we need to write it back
@@ -150,7 +150,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	}
 
 	if fd == nil {
-		fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "Opening cached copy with flags=%s", decodeOpenFlags(fh.flags))
+		fs.Debugf(fh.logPrefix(), "Opening cached copy with flags=%s", decodeOpenFlags(fh.flags))
 		fd, err = os.OpenFile(fh.osPath, cacheFileOpenFlags, 0600)
 		if err != nil {
 			return errors.Wrap(err, "cache open file failed")
@@ -190,7 +190,7 @@ func (fh *RWFileHandle) Node() Node {
 // Note that we leave the file around in the cache on error conditions
 // to give the user a chance to recover it.
 func (fh *RWFileHandle) close() (err error) {
-	defer log.Trace(fmt.Sprintf("%s(%p)", fh.remote, fh), "")("err=%v", &err)
+	defer log.Trace(fh.logPrefix(), "")("err=%v", &err)
 	fh.file.muClose.Lock()
 	defer fh.file.muClose.Unlock()
 
@@ -230,7 +230,7 @@ func (fh *RWFileHandle) close() (err error) {
 	if writer && fh.opened {
 		fi, err := fh.File.Stat()
 		if err != nil {
-			fs.Errorf(fmt.Sprintf("%s(%p)", fh.remote, fh), "Failed to stat cache file: %v", err)
+			fs.Errorf(fh.logPrefix(), "Failed to stat cache file: %v", err)
 		} else {
 			fh.file.setSize(fi.Size())
 		}
@@ -251,7 +251,7 @@ func (fh *RWFileHandle) close() (err error) {
 		err = operations.CopyFile(fh.d.vfs.f, fh.d.vfs.cache.f, fh.remote, fh.remote)
 		if err != nil {
 			err = errors.Wrap(err, "failed to transfer file from cache to remote")
-			fs.Errorf(fmt.Sprintf("%s(%p)", fh.remote, fh), "%v", err)
+			fs.Errorf(fh.logPrefix(), "%v", err)
 			return err
 		}
 
@@ -259,7 +259,7 @@ func (fh *RWFileHandle) close() (err error) {
 		o, err := fh.d.vfs.f.NewObject(fh.remote)
 		if err != nil {
 			err = errors.Wrap(err, "failed to find object after transfer to remote")
-			fs.Errorf(fmt.Sprintf("%s(%p)", fh.remote, fh), "%v", err)
+			fs.Errorf(fh.logPrefix(), "%v", err)
 			return err
 		}
 		fh.file.setObject(o)
@@ -281,7 +281,7 @@ func (fh *RWFileHandle) modified() bool {
 	// FIXME measure whether we actually did any writes or not -
 	// no writes means no transfer?
 	if rdwrMode == os.O_RDONLY && fh.flags&os.O_TRUNC == 0 {
-		fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "read only and not truncating so not transferring")
+		fs.Debugf(fh.logPrefix(), "read only and not truncating so not transferring")
 		return false
 	}
 
@@ -289,7 +289,7 @@ func (fh *RWFileHandle) modified() bool {
 	// truncating the file then we haven't modified it so don't
 	// need to transfer it
 	if !fh.writeCalled && fh.flags&(os.O_CREATE|os.O_TRUNC) == 0 {
-		fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "not modified so not transferring")
+		fs.Debugf(fh.logPrefix(), "not modified so not transferring")
 		return false
 	}
 	return true
@@ -305,26 +305,26 @@ func (fh *RWFileHandle) Flush() error {
 		return nil
 	}
 	if fh.closed {
-		fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Flush nothing to do")
+		fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush nothing to do")
 		return nil
 	}
-	// fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Flush")
+	// fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush")
 	if !fh.opened {
-		fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Flush ignoring flush on unopened handle")
+		fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush ignoring flush on unopened handle")
 		return nil
 	}
 
 	// If Write hasn't been called then ignore the Flush - Release
 	// will pick it up
 	if !fh.writeCalled {
-		fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Flush ignoring flush on unwritten handle")
+		fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush ignoring flush on unwritten handle")
 		return nil
 	}
 	err := fh.close()
 	if err != nil {
-		fs.Errorf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Flush error: %v", err)
+		fs.Errorf(fh.logPrefix(), "RWFileHandle.Flush error: %v", err)
 	} else {
-		// fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Flush OK")
+		// fs.Debugf(fh.logPrefix(), "RWFileHandle.Flush OK")
 	}
 	return err
 }
@@ -337,15 +337,15 @@ func (fh *RWFileHandle) Release() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	if fh.closed {
-		fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Release nothing to do")
+		fs.Debugf(fh.logPrefix(), "RWFileHandle.Release nothing to do")
 		return nil
 	}
-	fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Release closing")
+	fs.Debugf(fh.logPrefix(), "RWFileHandle.Release closing")
 	err := fh.close()
 	if err != nil {
-		fs.Errorf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Release error: %v", err)
+		fs.Errorf(fh.logPrefix(), "RWFileHandle.Release error: %v", err)
 	} else {
-		// fs.Debugf(fmt.Sprintf("%s(%p)", fh.remote, fh), "RWFileHandle.Release OK")
+		// fs.Debugf(fh.logPrefix(), "RWFileHandle.Release OK")
 	}
 	return err
 }
@@ -501,4 +501,8 @@ func (fh *RWFileHandle) Sync() error {
 		return nil
 	}
 	return fh.File.Sync()
+}
+
+func (fh *RWFileHandle) logPrefix() string {
+	return fmt.Sprintf("%s(%p)", fh.remote, fh)
 }
