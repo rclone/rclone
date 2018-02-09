@@ -220,7 +220,7 @@ func New(f fs.Fs, opt *Options) *VFS {
 		if do := vfs.f.Features().DirChangeNotify; do != nil {
 			do(vfs.root.ForgetPath, vfs.Opt.PollInterval)
 		} else {
-			fs.Logf(f, "poll-interval is not supported by this remote")
+			fs.Infof(f, "poll-interval is not supported by this remote")
 		}
 	}
 
