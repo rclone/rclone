@@ -365,6 +365,9 @@ type Features struct {
 	// Don't implement this unless you have a more efficient way
 	// of listing recursively that doing a directory traversal.
 	ListR ListRFn
+
+	// Get quota information from the Fs
+	About func() error
 }
 
 // Disable nil's out the named feature.  If it isn't found then it
@@ -451,6 +454,9 @@ func (ft *Features) Fill(f Fs) *Features {
 	if do, ok := f.(ListRer); ok {
 		ft.ListR = do.ListR
 	}
+	if do, ok := f.(Abouter); ok {
+		ft.About = do.About
+	}
 	return ft.DisableList(Config.DisableFeatures)
 }
 
@@ -503,6 +509,9 @@ func (ft *Features) Mask(f Fs) *Features {
 	}
 	if mask.ListR == nil {
 		ft.ListR = nil
+	}
+	if mask.About == nil {
+		ft.About = nil
 	}
 	return ft.DisableList(Config.DisableFeatures)
 }
@@ -670,6 +679,12 @@ type ListRer interface {
 	// Don't implement this unless you have a more efficient way
 	// of listing recursively that doing a directory traversal.
 	ListR(dir string, callback ListRCallback) error
+}
+
+// Abouter is an optional interface for Fs
+type Abouter interface {
+	// Get quota information from the Fs
+	About() error
 }
 
 // ObjectsChan is a channel of Objects

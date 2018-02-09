@@ -1312,6 +1312,18 @@ func (f *Fs) CleanUp() error {
 	return do()
 }
 
+// About gets quota information from the Fs
+func (f *Fs) About() error {
+	f.CleanUpCache(false)
+
+	do := f.Fs.Features().About
+	if do == nil {
+		return nil
+	}
+
+	return do()
+}
+
 // Stats returns stats about the cache storage
 func (f *Fs) Stats() (map[string]map[string]interface{}, error) {
 	return f.cache.Stats()
@@ -1437,4 +1449,5 @@ var (
 	_ fs.Wrapper           = (*Fs)(nil)
 	_ fs.ListRer           = (*Fs)(nil)
 	_ fs.DirChangeNotifier = (*Fs)(nil)
+	_ fs.Abouter           = (*Fs)(nil)
 )

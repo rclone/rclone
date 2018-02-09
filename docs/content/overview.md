@@ -119,27 +119,27 @@ All the remotes support a basic set of features, but there are some
 optional features supported by some remotes used to make some
 operations more efficient.
 
-| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload |
-| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|
-| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | No  |
-| Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          |
-| Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   | Yes          |
-| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes |
-| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes |
-| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          |
-| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          |
-| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          |
-| HTTP                         | No    | No   | No   | No      | No      | No    | No           |
-| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          |
-| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           |
-| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#575](https://github.com/ncw/rclone/issues/575) | No | No |
-| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          |
-| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           |
-| QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           |
-| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          |
-| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        |
-| Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes   | Yes          |
-| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          |
+| Name                         | Purge | Copy | Move | DirMove | CleanUp | ListR | StreamUpload | About |
+| ---------------------------- |:-----:|:----:|:----:|:-------:|:-------:|:-----:|:------------:|:-----:|
+| Amazon Drive                 | Yes   | No   | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | No  | No |
+| Amazon S3                    | No    | Yes  | No   | No      | No      | Yes   | Yes          | No    |
+| Backblaze B2                 | No    | No   | No   | No      | Yes     | Yes   | Yes          | No    |
+| Box                          | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | No |
+| Dropbox                      | Yes   | Yes  | Yes  | Yes     | No [#575](https://github.com/ncw/rclone/issues/575) | No  | Yes | No |
+| FTP                          | No    | No   | Yes  | Yes     | No      | No    | Yes          | No    |
+| Google Cloud Storage         | Yes   | Yes  | No   | No      | No      | Yes   | Yes          | No    |
+| Google Drive                 | Yes   | Yes  | Yes  | Yes     | Yes     | No    | Yes          | Yes   |
+| HTTP                         | No    | No   | No   | No      | No      | No    | No           | No    |
+| Hubic                        | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No    |
+| Microsoft Azure Blob Storage | Yes   | Yes  | No   | No      | No      | Yes   | No           | No    |
+| Microsoft OneDrive           | Yes   | Yes  | Yes  | No [#197](https://github.com/ncw/rclone/issues/197) | No [#575](https://github.com/ncw/rclone/issues/575) | No | No | No |
+| Openstack Swift              | Yes † | Yes  | No   | No      | No      | Yes   | Yes          | No    |
+| pCloud                       | Yes   | Yes  | Yes  | Yes     | Yes     | No    | No           | No    |
+| QingStor                     | No    | Yes  | No   | No      | No      | Yes   | No           | No    |
+| SFTP                         | No    | No   | Yes  | Yes     | No      | No    | Yes          | No    |
+| WebDAV                       | Yes   | Yes  | Yes  | Yes     | No      | No    | Yes ‡        | No    |
+| Yandex Disk                  | Yes   | No   | No   | No      | Yes     | Yes   | Yes          | No    |
+| The local filesystem         | Yes   | No   | Yes  | Yes     | No      | No    | Yes          | No    |
 
 ### Purge ###
 
@@ -196,3 +196,11 @@ See the [rclone docs](/docs/#fast-list) for more details.
 Some remotes allow files to be uploaded without knowing the file size
 in advance. This allows certain operations to work without spooling the
 file to local disk first, e.g. `rclone rcat`.
+
+### About ###
+
+This is used to fetch quota information from the remote, like bytes
+used/free/quota and bytes used in the trash.
+
+If the server can't do `About` then `rclone about` will return an
+error.
