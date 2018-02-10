@@ -116,9 +116,11 @@ which creates drives accessible for everyone on the system.
 
 ### Limitations
 
-This can only write files sequentially, it can only seek when reading.
-This means that many applications won't work with their files on an
-rclone mount.
+Without the use of "--vfs-cache-mode" this can only write files
+sequentially, it can only seek when reading.  This means that many
+applications won't work with their files on an rclone mount without
+"--vfs-cache-mode writes" or "--vfs-cache-mode full".  See the [File
+Caching](#file-caching) section for more info.
 
 The bucket based remotes (eg Swift, S3, Google Compute Storage, B2,
 Hubic) won't work from the root - you will need to specify a bucket,
