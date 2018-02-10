@@ -1079,6 +1079,11 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 	if err != nil {
 		return nil, err
 	}
+
+	if resp.StatusCode == http.StatusOK && resp.ContentLength > 0 && resp.Header.Get("Content-Range") == "" {
+		//Overwrite size with actual size since size readings from Onedrive is unreliable.
+		o.size = resp.ContentLength
+	}
 	return resp.Body, err
 }
 
