@@ -272,7 +272,12 @@ func (o *Object) Remove() error {
 	fs.Debugf(o, "removing object")
 	_ = o.CacheFs.cache.RemoveObject(o.abs())
 	_ = o.CacheFs.cache.removePendingUpload(o.abs())
-	_ = o.CacheFs.cache.ExpireDir(NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote()))))
+	parentCd := NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote())))
+	_ = o.CacheFs.cache.ExpireDir(parentCd)
+	// advertise to DirChangeNotify if wrapped doesn't do that
+	if o.CacheFs.Fs.Features().DirChangeNotify == nil {
+		o.CacheFs.notifyDirChangeUpstream(parentCd.Remote())
+	}
 
 	return nil
 }
