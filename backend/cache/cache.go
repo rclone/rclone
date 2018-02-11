@@ -470,6 +470,14 @@ func (f *Fs) notifyDirChange(remote string) {
 	f.notifyDirChangeUpstream(cd.Remote())
 }
 
+// notifyDirChangeUpstreamIfNeeded will check if the wrapped remote doesn't notify on dir changes
+// or if we use a temp fs
+func (f *Fs) notifyDirChangeUpstreamIfNeeded(remote string) {
+	if f.Fs.Features().DirChangeNotify == nil || f.tempWritePath != "" {
+		f.notifyDirChangeUpstream(remote)
+	}
+}
+
 // notifyDirChangeUpstream will loop through all the upstreams and notify
 // of the provided remote (should be only a dir)
 func (f *Fs) notifyDirChangeUpstream(remote string) {
@@ -752,9 +760,7 @@ func (f *Fs) Mkdir(dir string) error {
 		fs.Infof(parentCd, "mkdir: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(parentCd.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
 
 	return nil
 }
@@ -824,9 +830,7 @@ func (f *Fs) Rmdir(dir string) error {
 		fs.Infof(parentCd, "rmdir: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(parentCd.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
 
 	return nil
 }
@@ -924,9 +928,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		fs.Debugf(srcParent, "dirmove: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(srcParent.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(srcParent.Remote())
 
 	// expire parent dir at the destination path
 	dstParent := NewDirectory(f, cleanPath(path.Dir(dstRemote)))
@@ -937,9 +939,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		fs.Debugf(dstParent, "dirmove: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(dstParent.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(dstParent.Remote())
 	// TODO: precache dst dir and save the chunks
 
 	return nil
@@ -1062,10 +1062,8 @@ func (f *Fs) put(in io.Reader, src fs.ObjectInfo, options []fs.OpenOption, put p
 	} else {
 		fs.Infof(parentCd, "put: cache expired")
 	}
-	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(parentCd.Remote())
-	}
+	// advertise to DirChangeNotify
+	f.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
 
 	return cachedObj, nil
 }
@@ -1155,9 +1153,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Infof(parentCd, "copy: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(parentCd.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
 	// expire src parent
 	srcParent := NewDirectory(f, cleanPath(path.Dir(src.Remote())))
 	err = f.cache.ExpireDir(srcParent)
@@ -1167,9 +1163,7 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		fs.Infof(srcParent, "copy: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(srcParent.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(srcParent.Remote())
 
 	return co, nil
 }
@@ -1255,9 +1249,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs.Infof(parentCd, "move: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(parentCd.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
 	// persist new
 	cachedObj := ObjectFromOriginal(f, obj).persist()
 	fs.Debugf(cachedObj, "move: added to cache")
@@ -1270,9 +1262,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 		fs.Infof(parentCd, "move: cache expired")
 	}
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if f.Fs.Features().DirChangeNotify == nil {
-		f.notifyDirChangeUpstream(parentCd.Remote())
-	}
+	f.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
 
 	return cachedObj, nil
 }

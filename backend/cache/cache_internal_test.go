@@ -313,6 +313,24 @@ func TestInternalCachedWrittenContentMatches(t *testing.T) {
 	require.Equal(t, checkSample, testSample)
 }
 
+func TestInternalDoubleWrittenContentMatches(t *testing.T) {
+	id := fmt.Sprintf("tidwcm%v", time.Now().Unix())
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	defer runInstance.cleanupFs(t, rootFs, boltDb)
+
+	// write the object
+	runInstance.writeRemoteString(t, rootFs, "one", "one content")
+	err := runInstance.updateData(t, rootFs, "one", "one content", " updated")
+	require.NoError(t, err)
+	err = runInstance.updateData(t, rootFs, "one", "one content updated", " double")
+	require.NoError(t, err)
+
+	// check sample of data from in-file
+	data, err := runInstance.readDataFromRemote(t, rootFs, "one", int64(0), int64(len("one content updated double")), true)
+	require.NoError(t, err)
+	require.Equal(t, "one content updated double", string(data))
+}
+
 func TestInternalCachedUpdatedContentMatches(t *testing.T) {
 	id := fmt.Sprintf("ticucm%v", time.Now().Unix())
 	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
