@@ -275,9 +275,7 @@ func (o *Object) Remove() error {
 	parentCd := NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote())))
 	_ = o.CacheFs.cache.ExpireDir(parentCd)
 	// advertise to DirChangeNotify if wrapped doesn't do that
-	if o.CacheFs.Fs.Features().DirChangeNotify == nil {
-		o.CacheFs.notifyDirChangeUpstream(parentCd.Remote())
-	}
+	o.CacheFs.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
 
 	return nil
 }
