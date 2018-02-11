@@ -32,7 +32,7 @@ and write simultaneously to a file.  See below for more details.
 Note that the VFS cache works in addition to the cache backend and you
 may find that you need one or the other or both.
 
-    --vfs-cache-dir string               Directory rclone will use for caching.
+    --cache-dir string                   Directory rclone will use for caching.
     --vfs-cache-max-age duration         Max age of objects in the cache. (default 1h0m0s)
     --vfs-cache-mode string              Cache mode off|minimal|writes|full (default "off")
     --vfs-cache-poll-interval duration   Interval to poll the cache for stale objects. (default 1m0s)
