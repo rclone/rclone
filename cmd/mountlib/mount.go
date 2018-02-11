@@ -112,7 +112,8 @@ The easiest way around this is to start the drive from a normal
 command prompt. It is also possible to start a drive from the SYSTEM
 account (using [the WinFsp.Launcher
 infrastructure](https://github.com/billziss-gh/winfsp/wiki/WinFsp-Service-Architecture))
-which creates drives accessible for everyone on the system.
+which creates drives accessible for everyone on the system or
+alternatively using [the nssm service manager](https://nssm.cc/usage).
 
 ### Limitations
 
