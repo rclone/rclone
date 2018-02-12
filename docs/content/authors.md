@@ -132,3 +132,4 @@ Contributors
   * Jody Frankowski <jody.frankowski@gmail.com>
   * Andreas Roussos <arouss1980@gmail.com>
   * nbuchanan <nbuchanan@utah.gov>
+  * Durval Menezes <rclone@durval.com>
