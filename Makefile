@@ -154,7 +154,7 @@ tag:	doc
 	@echo "Old tag is $(LAST_TAG)"
 	@echo "New tag is $(NEW_TAG)"
 	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
-	echo -n "$(NEW_TAG)" > docs/layouts/shortcodes/version.html
+	echo -n "$(NEW_TAG)" > docs/layouts/partials/version.html
 	git tag $(NEW_TAG)
 	@echo "Edit the new changelog in docs/content/changelog.md"
 	@echo "  * $(NEW_TAG) -" `date -I` >> docs/content/changelog.md
