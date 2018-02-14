@@ -6,17 +6,21 @@ import (
 	"log"
 	"net/http"
 
+	auth "github.com/abbot/go-http-auth"
+	"github.com/ncw/rclone/fs"
 	"github.com/spf13/pflag"
 )
 
 // Globals
 var (
-	bindAddress = "localhost:8080"
+	bindAddress  = "localhost:8080"
+	htPasswdFile string
 )
 
 // AddFlags adds the http server specific flags
 func AddFlags(flagSet *pflag.FlagSet) {
 	flagSet.StringVarP(&bindAddress, "addr", "", bindAddress, "IPaddress:Port to bind server to.")
+	flagSet.StringVarP(&htPasswdFile, "htpasswd", "", htPasswdFile, "File to use for htpasswd authentication.")
 }
 
 // Help contains text describing the http server to add to the command
@@ -27,6 +31,16 @@ var Help = `
 Use --addr to specify which IP address and port the server should
 listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
 IPs.  By default it only listens on localhost.
+
+Use --htpasswd /path/to/htpasswd to provide an htpasswd file.  This is
+in standard apache format and supports MD5, SHA1 and BCrypt for basic
+authentication.  Bcrypt is recommended.
+
+To create an htpasswd file:
+
+    touch htpasswd
+    htpasswd -B htpasswd user
+    htpasswd -B htpasswd anotherUser
 `
 
 // Server contains info about the running http server
@@ -37,6 +51,14 @@ type Server struct {
 
 // NewServer creates an http server
 func NewServer(handler http.Handler) *Server {
+	// Use htpasswd if required on everything
+	if htPasswdFile != "" {
+		fs.Infof(nil, "Using %q as htpasswd storage", htPasswdFile)
+		secretProvider := auth.HtpasswdFileProvider(htPasswdFile)
+		authenticator := auth.NewBasicAuthenticator("rclone", secretProvider)
+		handler = auth.JustCheck(authenticator, handler.ServeHTTP)
+	}
+
 	s := &Server{
 		bindAddress: bindAddress,
 	}
