@@ -28,7 +28,8 @@ const (
 )
 
 func startServer(t *testing.T, f fs.Fs) {
-	s := newServer(f, testBindAddress)
+	s := newServer(f)
+	s.srv.SetBindAddress(testBindAddress)
 	go s.serve()
 
 	// try to connect to the test server
