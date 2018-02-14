@@ -859,19 +859,30 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		f.backgroundRunner.pause()
 		defer f.backgroundRunner.play()
 
+		_, errInWrap := srcFs.UnWrap().List(srcRemote)
+		_, errInTemp := f.tempFs.List(srcRemote)
+		// not found in either fs
+		if errInWrap != nil && errInTemp != nil {
+			return fs.ErrorDirNotFound
+		}
+
 		// we check if the source exists on the remote and make the same move on it too if it does
 		// otherwise, we skip this step
-		_, err := srcFs.UnWrap().List(srcRemote)
-		if err == nil {
+		if errInWrap == nil {
 			err := do(srcFs.UnWrap(), srcRemote, dstRemote)
 			if err != nil {
 				return err
 			}
 			fs.Debugf(srcRemote, "movedir: dir moved in the source fs")
 		}
+		// we need to check if the directory exists in the temp fs
+		// and skip the move if it doesn't
+		if errInTemp != nil {
+			goto cleanup
+		}
 
 		var queuedEntries []*Object
-		err = walk.Walk(f.tempFs, srcRemote, true, -1, func(path string, entries fs.DirEntries, err error) error {
+		err := walk.Walk(f.tempFs, srcRemote, true, -1, func(path string, entries fs.DirEntries, err error) error {
 			for _, o := range entries {
 				if oo, ok := o.(fs.Object); ok {
 					co := ObjectFromOriginal(f, oo)
@@ -910,6 +921,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 		}
 		fs.Debugf(srcRemote, "movedir: dir moved in the source fs")
 	}
+cleanup:
 
 	// delete src dir from cache along with all chunks
 	srcDir := NewDirectory(srcFs, srcRemote)
