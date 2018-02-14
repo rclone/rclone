@@ -3,7 +3,6 @@ package http
 import (
 	"fmt"
 	"html/template"
-	"log"
 	"net/http"
 	"os"
 	"path"
@@ -11,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/ncw/rclone/cmd"
+	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/lib/rest"
@@ -19,13 +19,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// Globals
-var (
-	bindAddress = "localhost:8080"
-)
-
 func init() {
-	Command.Flags().StringVarP(&bindAddress, "addr", "", bindAddress, "IPaddress:Port to bind server to.")
+	httplib.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
 }
 
@@ -37,10 +32,6 @@ var Command = &cobra.Command{
 over HTTP.  This can be viewed in a web browser or you can make a
 remote of type http read from it.
 
-Use --addr to specify which IP address and port the server should
-listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
-IPs.  By default it only listens on localhost.
-
 You can use the filter flags (eg --include, --exclude) to control what
 is served.
 
@@ -48,12 +39,12 @@ The server will log errors.  Use -v to see access logs.
 
 --bwlimit will be respected for file transfers.  Use --stats to
 control the stats printing.
-` + vfs.Help,
+` + httplib.Help + vfs.Help,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f, bindAddress)
+			s := newServer(f)
 			s.serve()
 			return nil
 		})
@@ -62,33 +53,26 @@ control the stats printing.
 
 // server contains everything to run the server
 type server struct {
-	f           fs.Fs
-	bindAddress string
-	vfs         *vfs.VFS
+	f   fs.Fs
+	vfs *vfs.VFS
+	srv *httplib.Server
 }
 
-func newServer(f fs.Fs, bindAddress string) *server {
+func newServer(f fs.Fs) *server {
+	mux := http.NewServeMux()
 	s := &server{
-		f:           f,
-		bindAddress: bindAddress,
-		vfs:         vfs.New(f, &vfsflags.Opt),
+		f:   f,
+		vfs: vfs.New(f, &vfsflags.Opt),
+		srv: httplib.NewServer(mux),
 	}
+	mux.HandleFunc("/", s.handler)
 	return s
 }
 
-// serve creates the http server
+// serve runs the http server - doesn't return
 func (s *server) serve() {
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", s.handler)
-	// FIXME make a transport?
-	httpServer := &http.Server{
-		Addr:           s.bindAddress,
-		Handler:        mux,
-		MaxHeaderBytes: 1 << 20,
-	}
-	initServer(httpServer)
-	fs.Logf(s.f, "Serving on http://%s/", bindAddress)
-	log.Fatal(httpServer.ListenAndServe())
+	fs.Logf(s.f, "Serving on %s", s.srv.URL())
+	s.srv.Serve()
 }
 
 // handler reads incoming requests and dispatches them

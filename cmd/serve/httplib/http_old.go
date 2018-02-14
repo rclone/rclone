@@ -2,7 +2,7 @@
 
 //+build !go1.8
 
-package http
+package httplib
 
 import (
 	"net/http"
