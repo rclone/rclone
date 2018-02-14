@@ -200,37 +200,52 @@ func parseInt64(s string) int64 {
 	return n
 }
 
-// parseName turns a name as found in the page into a remote path or returns false
-func parseName(base *url.URL, name string) (string, bool) {
+// Errors returned by parseName
+var (
+	errURLJoinFailed     = errors.New("URLJoin failed")
+	errFoundQuestionMark = errors.New("found ? in URL")
+	errHostMismatch      = errors.New("host mismatch")
+	errSchemeMismatch    = errors.New("scheme mismatch")
+	errNotUnderRoot      = errors.New("not under root")
+	errNameIsEmpty       = errors.New("name is empty")
+	errNameContainsSlash = errors.New("name contains /")
+)
+
+// parseName turns a name as found in the page into a remote path or returns an error
+func parseName(base *url.URL, name string) (string, error) {
+	// make URL absolute
 	u, err := rest.URLJoin(base, name)
 	if err != nil {
-		return "", false
+		return "", errURLJoinFailed
 	}
+	// check it doesn't have URL parameters
 	uStr := u.String()
 	if strings.Index(uStr, "?") >= 0 {
-		return "", false
+		return "", errFoundQuestionMark
 	}
-	baseStr := base.String()
-	// check has URL prefix
-	if !strings.HasPrefix(uStr, baseStr) {
-		return "", false
+	// check that this is going back to the same host and scheme
+	if base.Host != u.Host {
+		return "", errHostMismatch
+	}
+	if base.Scheme != u.Scheme {
+		return "", errSchemeMismatch
 	}
 	// check has path prefix
 	if !strings.HasPrefix(u.Path, base.Path) {
-		return "", false
+		return "", errNotUnderRoot
 	}
 	// calculate the name relative to the base
 	name = u.Path[len(base.Path):]
 	// musn't be empty
 	if name == "" {
-		return "", false
+		return "", errNameIsEmpty
 	}
-	// mustn't contain a /
+	// mustn't contain a / - we are looking for a single level directory
 	slash := strings.Index(name, "/")
 	if slash >= 0 && slash != len(name)-1 {
-		return "", false
+		return "", errNameContainsSlash
 	}
-	return name, true
+	return name, nil
 }
 
 // Parse turns HTML for a directory into names
@@ -245,8 +260,8 @@ func parse(base *url.URL, in io.Reader) (names []string, err error) {
 		if n.Type == html.ElementNode && n.Data == "a" {
 			for _, a := range n.Attr {
 				if a.Key == "href" {
-					name, ok := parseName(base, a.Val)
-					if ok {
+					name, err := parseName(base, a.Val)
+					if err == nil {
 						names = append(names, name)
 					}
 					break

@@ -207,30 +207,34 @@ func TestIsAFileSubDir(t *testing.T) {
 
 func TestParseName(t *testing.T) {
 	for i, test := range []struct {
-		base   string
-		val    string
-		wantOK bool
-		want   string
+		base    string
+		val     string
+		wantErr error
+		want    string
 	}{
-		{"http://example.com/", "potato", true, "potato"},
-		{"http://example.com/dir/", "potato", true, "potato"},
-		{"http://example.com/dir/", "../dir/potato", true, "potato"},
-		{"http://example.com/dir/", "..", false, ""},
-		{"http://example.com/dir/", "http://example.com/", false, ""},
-		{"http://example.com/dir/", "http://example.com/dir/", false, ""},
-		{"http://example.com/dir/", "http://example.com/dir/potato", true, "potato"},
-		{"http://example.com/dir/", "/dir/", false, ""},
-		{"http://example.com/dir/", "/dir/potato", true, "potato"},
-		{"http://example.com/dir/", "subdir/potato", false, ""},
-		{"http://example.com/dir/", "With percent %25.txt", true, "With percent %.txt"},
-		{"http://example.com/dir/", "With colon :", false, ""},
-		{"http://example.com/dir/", rest.URLPathEscape("With colon :"), true, "With colon :"},
+		{"http://example.com/", "potato", nil, "potato"},
+		{"http://example.com/dir/", "potato", nil, "potato"},
+		{"http://example.com/dir/", "potato?download=true", errFoundQuestionMark, ""},
+		{"http://example.com/dir/", "../dir/potato", nil, "potato"},
+		{"http://example.com/dir/", "..", errNotUnderRoot, ""},
+		{"http://example.com/dir/", "http://example.com/", errNotUnderRoot, ""},
+		{"http://example.com/dir/", "http://example.com/dir/", errNameIsEmpty, ""},
+		{"http://example.com/dir/", "http://example.com/dir/potato", nil, "potato"},
+		{"http://example.com/dir/", "https://example.com/dir/potato", errSchemeMismatch, ""},
+		{"http://example.com/dir/", "http://notexample.com/dir/potato", errHostMismatch, ""},
+		{"http://example.com/dir/", "/dir/", errNameIsEmpty, ""},
+		{"http://example.com/dir/", "/dir/potato", nil, "potato"},
+		{"http://example.com/dir/", "subdir/potato", errNameContainsSlash, ""},
+		{"http://example.com/dir/", "With percent %25.txt", nil, "With percent %.txt"},
+		{"http://example.com/dir/", "With colon :", errURLJoinFailed, ""},
+		{"http://example.com/dir/", rest.URLPathEscape("With colon :"), nil, "With colon :"},
+		{"http://example.com/Dungeons%20%26%20Dragons/", "/Dungeons%20&%20Dragons/D%26D%20Basic%20%28Holmes%2C%20B%2C%20X%2C%20BECMI%29/", nil, "D&D Basic (Holmes, B, X, BECMI)/"},
 	} {
 		u, err := url.Parse(test.base)
 		require.NoError(t, err)
-		got, gotOK := parseName(u, test.val)
+		got, gotErr := parseName(u, test.val)
 		what := fmt.Sprintf("test %d base=%q, val=%q", i, test.base, test.val)
-		assert.Equal(t, test.wantOK, gotOK, what)
+		assert.Equal(t, test.wantErr, gotErr, what)
 		assert.Equal(t, test.want, got, what)
 	}
 }
