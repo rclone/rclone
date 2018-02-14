@@ -49,11 +49,13 @@ type timeoutConn struct {
 }
 
 // create a timeoutConn using the timeout
-func newTimeoutConn(conn net.Conn, timeout time.Duration) *timeoutConn {
-	return &timeoutConn{
+func newTimeoutConn(conn net.Conn, timeout time.Duration) (c *timeoutConn, err error) {
+	c = &timeoutConn{
 		Conn:    conn,
 		timeout: timeout,
 	}
+	err = c.nudgeDeadline()
+	return
 }
 
 // Nudge the deadline for an idle timeout on by c.timeout if non-zero
@@ -67,16 +69,14 @@ func (c *timeoutConn) nudgeDeadline() (err error) {
 
 // readOrWrite bytes doing idle timeouts
 func (c *timeoutConn) readOrWrite(f func([]byte) (int, error), b []byte) (n int, err error) {
-	err = c.nudgeDeadline()
-	if err != nil {
-		return n, err
-	}
 	n, err = f(b)
-	cerr := c.nudgeDeadline()
-	if err == nil && cerr != nil {
-		err = cerr
+	// Don't nudge if no bytes or an error
+	if n == 0 || err != nil {
+		return
 	}
-	return n, err
+	// Nudge the deadline on successful Read or Write
+	err = c.nudgeDeadline()
+	return
 }
 
 // Read bytes doing idle timeouts

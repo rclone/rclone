@@ -20,7 +20,7 @@ func dialContextTimeout(ctx context.Context, network, address string, ci *fs.Con
 	if err != nil {
 		return c, err
 	}
-	return newTimeoutConn(c, ci.Timeout), nil
+	return newTimeoutConn(c, ci.Timeout)
 }
 
 // Initialise the http.Transport for go1.7+
