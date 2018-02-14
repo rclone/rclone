@@ -54,30 +54,33 @@ var (
 	runInstance                 *run
 	errNotSupported             = errors.New("not supported")
 	decryptedToEncryptedRemotes = map[string]string{
-		"one":                "lm4u7jjt3c85bf56vjqgeenuno",
-		"second":             "qvt1ochrkcfbptp5mu9ugb2l14",
-		"test":               "jn4tegjtpqro30t3o11thb4b5s",
-		"test2":              "qakvqnh8ttei89e0gc76crpql4",
-		"data.bin":           "0q2847tfko6mhj3dag3r809qbc",
-		"ticw/data.bin":      "5mv97b0ule6pht33srae5pice8/0q2847tfko6mhj3dag3r809qbc",
-		"tiuufo/test/one":    "vi6u1olqhirqv14cd8qlej1mgo/jn4tegjtpqro30t3o11thb4b5s/lm4u7jjt3c85bf56vjqgeenuno",
-		"tiuufo/test/second": "vi6u1olqhirqv14cd8qlej1mgo/jn4tegjtpqro30t3o11thb4b5s/qvt1ochrkcfbptp5mu9ugb2l14",
-		"tiutfo/test/one":    "legd371aa8ol36tjfklt347qnc/jn4tegjtpqro30t3o11thb4b5s/lm4u7jjt3c85bf56vjqgeenuno",
-		"tiutfo/second/one":  "legd371aa8ol36tjfklt347qnc/qvt1ochrkcfbptp5mu9ugb2l14/lm4u7jjt3c85bf56vjqgeenuno",
-		"second/one":         "qvt1ochrkcfbptp5mu9ugb2l14/lm4u7jjt3c85bf56vjqgeenuno",
-		"test/one":           "jn4tegjtpqro30t3o11thb4b5s/lm4u7jjt3c85bf56vjqgeenuno",
-		"test/second":        "jn4tegjtpqro30t3o11thb4b5s/qvt1ochrkcfbptp5mu9ugb2l14",
-		"test/third":         "jn4tegjtpqro30t3o11thb4b5s/2nd7fjiop5h3ihfj1vl953aa5g",
-		"test/0.bin":         "jn4tegjtpqro30t3o11thb4b5s/e6frddt058b6kvbpmlstlndmtk",
-		"test/1.bin":         "jn4tegjtpqro30t3o11thb4b5s/kck472nt1k7qbmob0mt1p1crgc",
-		"test/2.bin":         "jn4tegjtpqro30t3o11thb4b5s/744oe9ven2rmak4u27if51qk24",
-		"test/3.bin":         "jn4tegjtpqro30t3o11thb4b5s/2bjd8kef0u5lmsu6qhqll34bcs",
-		"test/4.bin":         "jn4tegjtpqro30t3o11thb4b5s/cvjs73iv0a82v0c7r67avllh7s",
-		"test/5.bin":         "jn4tegjtpqro30t3o11thb4b5s/0plkdo790b6bnmt33qsdqmhv9c",
-		"test/6.bin":         "jn4tegjtpqro30t3o11thb4b5s/s5r633srnjtbh83893jovjt5d0",
-		"test/7.bin":         "jn4tegjtpqro30t3o11thb4b5s/6rq45tr9bjsammku622flmqsu4",
-		"test/8.bin":         "jn4tegjtpqro30t3o11thb4b5s/37bc6tcl3e31qb8cadvjb749vk",
-		"test/9.bin":         "jn4tegjtpqro30t3o11thb4b5s/t4pr35hnls32789o8fk0chk1ec",
+		"one":                  "lm4u7jjt3c85bf56vjqgeenuno",
+		"second":               "qvt1ochrkcfbptp5mu9ugb2l14",
+		"test":                 "jn4tegjtpqro30t3o11thb4b5s",
+		"test2":                "qakvqnh8ttei89e0gc76crpql4",
+		"data.bin":             "0q2847tfko6mhj3dag3r809qbc",
+		"ticw/data.bin":        "5mv97b0ule6pht33srae5pice8/0q2847tfko6mhj3dag3r809qbc",
+		"tiuufo/test/one":      "vi6u1olqhirqv14cd8qlej1mgo/jn4tegjtpqro30t3o11thb4b5s/lm4u7jjt3c85bf56vjqgeenuno",
+		"tiuufo/test/second":   "vi6u1olqhirqv14cd8qlej1mgo/jn4tegjtpqro30t3o11thb4b5s/qvt1ochrkcfbptp5mu9ugb2l14",
+		"tiutfo/test/one":      "legd371aa8ol36tjfklt347qnc/jn4tegjtpqro30t3o11thb4b5s/lm4u7jjt3c85bf56vjqgeenuno",
+		"tiutfo/second/one":    "legd371aa8ol36tjfklt347qnc/qvt1ochrkcfbptp5mu9ugb2l14/lm4u7jjt3c85bf56vjqgeenuno",
+		"second/one":           "qvt1ochrkcfbptp5mu9ugb2l14/lm4u7jjt3c85bf56vjqgeenuno",
+		"test/one":             "jn4tegjtpqro30t3o11thb4b5s/lm4u7jjt3c85bf56vjqgeenuno",
+		"test/second":          "jn4tegjtpqro30t3o11thb4b5s/qvt1ochrkcfbptp5mu9ugb2l14",
+		"one/test":             "lm4u7jjt3c85bf56vjqgeenuno/jn4tegjtpqro30t3o11thb4b5s",
+		"one/test/data.bin":    "lm4u7jjt3c85bf56vjqgeenuno/jn4tegjtpqro30t3o11thb4b5s/0q2847tfko6mhj3dag3r809qbc",
+		"second/test/data.bin": "qvt1ochrkcfbptp5mu9ugb2l14/jn4tegjtpqro30t3o11thb4b5s/0q2847tfko6mhj3dag3r809qbc",
+		"test/third":           "jn4tegjtpqro30t3o11thb4b5s/2nd7fjiop5h3ihfj1vl953aa5g",
+		"test/0.bin":           "jn4tegjtpqro30t3o11thb4b5s/e6frddt058b6kvbpmlstlndmtk",
+		"test/1.bin":           "jn4tegjtpqro30t3o11thb4b5s/kck472nt1k7qbmob0mt1p1crgc",
+		"test/2.bin":           "jn4tegjtpqro30t3o11thb4b5s/744oe9ven2rmak4u27if51qk24",
+		"test/3.bin":           "jn4tegjtpqro30t3o11thb4b5s/2bjd8kef0u5lmsu6qhqll34bcs",
+		"test/4.bin":           "jn4tegjtpqro30t3o11thb4b5s/cvjs73iv0a82v0c7r67avllh7s",
+		"test/5.bin":           "jn4tegjtpqro30t3o11thb4b5s/0plkdo790b6bnmt33qsdqmhv9c",
+		"test/6.bin":           "jn4tegjtpqro30t3o11thb4b5s/s5r633srnjtbh83893jovjt5d0",
+		"test/7.bin":           "jn4tegjtpqro30t3o11thb4b5s/6rq45tr9bjsammku622flmqsu4",
+		"test/8.bin":           "jn4tegjtpqro30t3o11thb4b5s/37bc6tcl3e31qb8cadvjb749vk",
+		"test/9.bin":           "jn4tegjtpqro30t3o11thb4b5s/t4pr35hnls32789o8fk0chk1ec",
 	}
 )
 
@@ -650,6 +653,43 @@ func TestInternalUploadQueueOneFileWithRest(t *testing.T) {
 	defer runInstance.cleanupFs(t, rootFs, boltDb)
 
 	testInternalUploadQueueOneFile(t, id, rootFs, boltDb)
+}
+
+func TestInternalUploadMoveExistingFile(t *testing.T) {
+	id := fmt.Sprintf("tiumef%v", time.Now().Unix())
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, true, true,
+		nil,
+		map[string]string{"cache-tmp-upload-path": path.Join(runInstance.tmpUploadDir, id), "cache-tmp-wait-time": "3s"})
+	defer runInstance.cleanupFs(t, rootFs, boltDb)
+
+	err := rootFs.Mkdir("one")
+	require.NoError(t, err)
+	err = rootFs.Mkdir("one/test")
+	require.NoError(t, err)
+	err = rootFs.Mkdir("second")
+	require.NoError(t, err)
+
+	// create some rand test data
+	testSize := int64(10485760)
+	testReader := runInstance.randomReader(t, testSize)
+	runInstance.writeObjectReader(t, rootFs, "one/test/data.bin", testReader)
+	runInstance.completeAllBackgroundUploads(t, rootFs, "one/test/data.bin")
+
+	de1, err := runInstance.list(t, rootFs, "one/test")
+	require.NoError(t, err)
+	require.Len(t, de1, 1)
+
+	time.Sleep(time.Second * 5)
+	_ = os.Remove(path.Join(runInstance.tmpUploadDir, id, runInstance.encryptRemoteIfNeeded(t, "one/test")))
+	require.NoError(t, err)
+
+	err = runInstance.dirMove(t, rootFs, "one/test", "second/test")
+	require.NoError(t, err)
+
+	// check if it can be read
+	de1, err = runInstance.list(t, rootFs, "second/test")
+	require.NoError(t, err)
+	require.Len(t, de1, 1)
 }
 
 func TestInternalUploadQueueMoreFiles(t *testing.T) {
