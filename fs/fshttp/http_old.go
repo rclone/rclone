@@ -18,7 +18,7 @@ func dialTimeout(network, address string, ci *fs.ConfigInfo) (net.Conn, error) {
 	if err != nil {
 		return c, err
 	}
-	return newTimeoutConn(c, ci.Timeout), nil
+	return newTimeoutConn(c, ci.Timeout)
 }
 
 // Initialise the http.Transport for pre go1.7
