@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	mathrand "math/rand"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -20,9 +21,8 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"unicode/utf8"
 	"time"
-	mathrand "math/rand"
+	"unicode/utf8"
 
 	"github.com/Unknwon/goconfig"
 	"github.com/ncw/rclone/fs"
@@ -435,23 +435,18 @@ func saveConfig() error {
 	return nil
 }
 
+// SaveConfig calling function which saves configuration file.
+// if saveConfig returns error trying again after sleep.
 func SaveConfig() {
-	err := saveConfig()
-	if err == nil {
-		return
-	}
-
-	startTime := time.Now()
-	for i := 0; i < fs.Config.LowLevelRetries; i++ {
-		waitingTime := mathrand.Intn( int(time.Since(startTime).Seconds()))
-		startTime = time.Now()
-		time.Sleep(time.Duration(waitingTime) * time.Millisecond)
-
+	var err error
+	for i := 0; i < fs.Config.LowLevelRetries+1; i++ {
 		if err = saveConfig(); err == nil {
 			return
 		}
+		waitingTimeMs := mathrand.Intn(1000)
+		time.Sleep(time.Duration(waitingTimeMs) * time.Millisecond)
 	}
-	log.Fatalf(err.Error())
+	log.Fatalf("Failed to save config after %d tries: %v", fs.Config.LowLevelRetries, err)
 
 	return
 }
