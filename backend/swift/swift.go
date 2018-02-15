@@ -221,6 +221,7 @@ func swiftConnection(name string) (*swift.Connection, error) {
 			return nil, errors.Wrap(err, "failed to read environment variables")
 		}
 	}
+	StorageUrl, AuthToken := c.StorageUrl, c.AuthToken
 	if !c.Authenticated() {
 		if c.UserName == "" && c.UserId == "" {
 			return nil, errors.New("user name or user id not found for authentication (and no storage_url+auth_token is provided)")
@@ -231,15 +232,16 @@ func swiftConnection(name string) (*swift.Connection, error) {
 		if c.AuthUrl == "" {
 			return nil, errors.New("auth not found")
 		}
-		err := c.Authenticate()
+		err := c.Authenticate() // fills in c.StorageUrl and c.AuthToken
 		if err != nil {
 			return nil, err
 		}
 	}
 	// Make sure we re-auth with the AuthToken and StorageUrl
-	// provided by wrapping the existing auth
-	if c.StorageUrl != "" || c.AuthToken != "" {
-		c.Auth = newAuth(c.Auth, c.StorageUrl, c.AuthToken)
+	// provided by wrapping the existing auth, so we can just
+	// override one or the other or both.
+	if StorageUrl != "" || AuthToken != "" {
+		c.Auth = newAuth(c.Auth, StorageUrl, AuthToken)
 	}
 	return c, nil
 }
