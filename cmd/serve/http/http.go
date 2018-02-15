@@ -11,6 +11,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/httplib"
+	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/lib/rest"
@@ -20,7 +21,7 @@ import (
 )
 
 func init() {
-	httplib.AddFlags(Command.Flags())
+	httpflags.AddFlags(Command.Flags())
 	vfsflags.AddFlags(Command.Flags())
 }
 
@@ -44,7 +45,7 @@ control the stats printing.
 		cmd.CheckArgs(1, 1, command, args)
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
-			s := newServer(f)
+			s := newServer(f, &httpflags.Opt)
 			s.serve()
 			return nil
 		})
@@ -58,12 +59,12 @@ type server struct {
 	srv *httplib.Server
 }
 
-func newServer(f fs.Fs) *server {
+func newServer(f fs.Fs, opt *httplib.Options) *server {
 	mux := http.NewServeMux()
 	s := &server{
 		f:   f,
 		vfs: vfs.New(f, &vfsflags.Opt),
-		srv: httplib.NewServer(mux),
+		srv: httplib.NewServer(mux, opt),
 	}
 	mux.HandleFunc("/", s.handler)
 	return s

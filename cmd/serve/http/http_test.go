@@ -13,6 +13,7 @@ import (
 	"time"
 
 	_ "github.com/ncw/rclone/backend/local"
+	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/filter"
@@ -28,8 +29,9 @@ const (
 )
 
 func startServer(t *testing.T, f fs.Fs) {
-	s := newServer(f)
-	s.srv.SetBindAddress(testBindAddress)
+	opt := httplib.DefaultOpt
+	opt.ListenAddr = testBindAddress
+	s := newServer(f, &opt)
 	go s.serve()
 
 	// try to connect to the test server
