@@ -133,14 +133,18 @@ name="potato" isFile=true opens=1`, itemAsString(c))
 
 	// updateAtimes - not in the cache
 	oldItem := item
+	c.itemMu.Lock()
 	delete(c.item, "potato") // remove from cache
+	c.itemMu.Unlock()
 	err = c.updateAtimes()
 	require.NoError(t, err)
 	assert.Equal(t, `name="" isFile=false opens=1
 name="potato" isFile=true opens=0`, itemAsString(c))
 	item = c.get("potato")
 	assert.Equal(t, atime, item.atime)
+	c.itemMu.Lock()
 	c.item["potato"] = oldItem // restore to cache
+	c.itemMu.Unlock()
 
 	// try purging with file open
 	c.purgeOld(10 * time.Second)
