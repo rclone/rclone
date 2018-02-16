@@ -237,7 +237,7 @@ The `vendor` directory is entirely managed by the `dep` tool.
 
 To add a new dependency
 
-    dep ensure github.com/pkg/errors
+    dep ensure -add github.com/pkg/errors
 
 You can add constraints on that package (see the `dep` documentation),
 but don't unless you really need to.
