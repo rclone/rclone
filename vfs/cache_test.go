@@ -63,9 +63,9 @@ func TestCacheNew(t *testing.T) {
 	defer r.Finalise()
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	c, err := newCache(ctx, r.Fremote, &DefaultOpt)
+	cancel() // kill the background cache cleaning as it interferes with the tests
 	require.NoError(t, err)
 
 	assert.Contains(t, c.root, "vfs")
