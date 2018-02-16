@@ -53,6 +53,12 @@
   revision = "cf42b1e486f0b025942a768a9ad59c9939d6ca40"
 
 [[projects]]
+  name = "github.com/abbot/go-http-auth"
+  packages = ["."]
+  revision = "0ddd408d5d60ea76e320503cc7dd091992dee608"
+  version = "v0.4.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/aws/aws-sdk-go"
   packages = [
@@ -321,6 +327,8 @@
   branch = "master"
   name = "golang.org/x/crypto"
   packages = [
+    "bcrypt",
+    "blowfish",
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
@@ -427,6 +435,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ad6c96ca62ee6a305b6083c53f2f4939d8ae22ee6163ad84b1f09d8fcbcd1ff7"
+  inputs-digest = "bbb981a57fa3540cbfdf3f4255a8eb6b7b9980af2259cffab2f0eddcc3818bcc"
   solver-name = "gps-cdcl"
   solver-version = 1
