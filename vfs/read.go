@@ -7,6 +7,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
+	"github.com/ncw/rclone/fs/chunkedreader"
 	"github.com/ncw/rclone/fs/hash"
 	"github.com/pkg/errors"
 )
@@ -64,7 +65,7 @@ func (fh *ReadFileHandle) openPending() (err error) {
 		return nil
 	}
 	o := fh.file.getObject()
-	r, err := o.Open()
+	r, err := chunkedreader.New(o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit)).Open()
 	if err != nil {
 		return err
 	}
@@ -106,13 +107,16 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	fh.r.StopBuffering() // stop the background reading first
 	fh.hash = nil
 	oldReader := fh.r.GetReader()
-	r := oldReader
-	// Can we seek it directly?
-	if do, ok := oldReader.(io.Seeker); !reopen && ok {
-		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
-		_, err = do.Seek(offset, io.SeekStart)
+	r, ok := oldReader.(*chunkedreader.ChunkedReader)
+	if !ok {
+		fs.Logf(fh.remote, "ReadFileHandle.Read expected reader to be a ChunkedReader, got %T", oldReader)
+		reopen = true
+	}
+	if !reopen {
+		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d (fs.RangeSeeker)", fh.offset, offset)
+		_, err = r.RangeSeek(offset, io.SeekStart, -1)
 		if err != nil {
-			fs.Debugf(fh.remote, "ReadFileHandle.Read io.Seeker failed: %v", err)
+			fs.Debugf(fh.remote, "ReadFileHandle.Read fs.RangeSeeker failed: %v", err)
 			return err
 		}
 	} else {
@@ -124,7 +128,13 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 		}
 		// re-open with a seek
 		o := fh.file.getObject()
-		r, err = o.Open(&fs.SeekOption{Offset: offset})
+		r = chunkedreader.New(o, int64(fh.file.d.vfs.Opt.ChunkSize), int64(fh.file.d.vfs.Opt.ChunkSizeLimit))
+		_, err := r.Seek(offset, 0)
+		if err != nil {
+			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
+			return err
+		}
+		r, err = r.Open()
 		if err != nil {
 			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
 			return err
