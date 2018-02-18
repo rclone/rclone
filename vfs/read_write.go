@@ -220,13 +220,7 @@ func (fh *RWFileHandle) close() (err error) {
 			return err
 		}
 	}
-	/*
-		// Otherwise open the file
-		// FIXME this could be more efficient
-		if err := fh.openPending(false); err != nil {
-			return err
-		}
-	*/
+
 	if writer && fh.opened {
 		fi, err := fh.File.Stat()
 		if err != nil {
@@ -255,7 +249,6 @@ func (fh *RWFileHandle) close() (err error) {
 			return err
 		}
 
-		// FIXME get MoveFile to return this object
 		o, err := fh.d.vfs.f.NewObject(fh.remote)
 		if err != nil {
 			err = errors.Wrap(err, "failed to find object after transfer to remote")
@@ -278,7 +271,6 @@ func (fh *RWFileHandle) Close() error {
 
 func (fh *RWFileHandle) modified() bool {
 	rdwrMode := fh.flags & accessModeMask
-	// FIXME measure whether we actually did any writes or not -
 	// no writes means no transfer?
 	if rdwrMode == os.O_RDONLY && fh.flags&os.O_TRUNC == 0 {
 		fs.Debugf(fh.logPrefix(), "read only and not truncating so not transferring")
