@@ -189,6 +189,8 @@ type Options struct {
 	GID               uint32
 	DirPerms          os.FileMode
 	FilePerms         os.FileMode
+	ChunkSize         fs.SizeSuffix // if > 0 read files in chunks
+	ChunkSizeLimit    fs.SizeSuffix // if > ChunkSize double the chunk size after each chunk until reached
 	CacheMode         CacheMode
 	CacheMaxAge       time.Duration
 	CachePollInterval time.Duration
