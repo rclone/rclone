@@ -14,14 +14,21 @@ import (
 
 // File represents a file
 type File struct {
-	inode          uint64       // inode number
-	size           int64        // size of file - read and written with atomic int64 - must be 64 bit aligned
-	d              *Dir         // parent directory - read only
-	mu             sync.RWMutex // protects the following
-	o              fs.Object    // NB o may be nil if file is being written
-	leaf           string       // leaf name of the object
-	writers        []Handle     // writers for this file
-	pendingModTime time.Time    // will be applied once o becomes available, i.e. after file was written
+	inode uint64 // inode number
+	size  int64  // size of file - read and written with atomic int64 - must be 64 bit aligned
+	d     *Dir   // parent directory - read only
+
+	mu                sync.Mutex // protects the following
+	o                 fs.Object  // NB o may be nil if file is being written
+	leaf              string     // leaf name of the object
+	writers           []Handle   // writers for this file
+	readWriters       int        // how many RWFileHandle are open for writing
+	readWriterClosing bool       // is a RWFileHandle currently cosing?
+	modified          bool       // has the cache file be modified by a RWFileHandle?
+	pendingModTime    time.Time  // will be applied once o becomes available, i.e. after file was written
+
+	muClose sync.Mutex // synchonize RWFileHandle.close()
+	muOpen  sync.Mutex // synchonize RWFileHandle.openPending()
 }
 
 // newFile creates a new File
@@ -95,12 +102,16 @@ func (f *File) rename(d *Dir, o fs.Object) {
 func (f *File) addWriter(h Handle) {
 	f.mu.Lock()
 	f.writers = append(f.writers, h)
+	if _, ok := h.(*RWFileHandle); ok {
+		f.readWriters++
+	}
 	f.mu.Unlock()
 }
 
 // delWriter removes a write handle from the file
-func (f *File) delWriter(h Handle) {
+func (f *File) delWriter(h Handle, modifiedCacheFile bool) (lastWriterAndModified bool) {
 	f.mu.Lock()
+	defer f.mu.Unlock()
 	var found = -1
 	for i := range f.writers {
 		if f.writers[i] == h {
@@ -113,6 +124,24 @@ func (f *File) delWriter(h Handle) {
 	} else {
 		fs.Debugf(f.o, "File.delWriter couldn't find handle")
 	}
+	if _, ok := h.(*RWFileHandle); ok {
+		f.readWriters--
+	}
+	f.readWriterClosing = true
+	if modifiedCacheFile {
+		f.modified = true
+	}
+	lastWriterAndModified = len(f.writers) == 0 && f.modified
+	if lastWriterAndModified {
+		f.modified = false
+	}
+	return
+}
+
+// finishWriterClose resets the readWriterClosing flag
+func (f *File) finishWriterClose() {
+	f.mu.Lock()
+	f.readWriterClosing = false
 	f.mu.Unlock()
 }
 
@@ -132,7 +161,7 @@ func (f *File) ModTime() (modTime time.Time) {
 
 	if !f.d.vfs.Opt.NoModTime {
 		// if o is nil it isn't valid yet or there are writers, so return the size so far
-		if f.o == nil || len(f.writers) != 0 {
+		if f.o == nil || len(f.writers) != 0 || f.readWriterClosing {
 			if !f.pendingModTime.IsZero() {
 				return f.pendingModTime
 			}
@@ -158,7 +187,7 @@ func (f *File) Size() int64 {
 	defer f.mu.Unlock()
 
 	// if o is nil it isn't valid yet or there are writers, so return the size so far
-	if f.o == nil || len(f.writers) != 0 {
+	if f.o == nil || len(f.writers) != 0 || f.readWriterClosing {
 		return atomic.LoadInt64(&f.size)
 	}
 	return nonNegative(f.o.Size())
@@ -174,7 +203,8 @@ func (f *File) SetModTime(modTime time.Time) error {
 
 	f.pendingModTime = modTime
 
-	if f.o != nil {
+	// Only update the ModTime when there are no writers, setObject will do it
+	if f.o != nil && len(f.writers) == 0 && !f.readWriterClosing {
 		return f.applyPendingModTime()
 	}
 
@@ -238,11 +268,12 @@ func (f *File) waitForValidObject() (o fs.Object, err error) {
 		f.mu.Lock()
 		o = f.o
 		nwriters := len(f.writers)
+		wclosing := f.readWriterClosing
 		f.mu.Unlock()
 		if o != nil {
 			return o, nil
 		}
-		if nwriters == 0 {
+		if nwriters == 0 && !wclosing {
 			return nil, errors.New("can't open file - writer failed")
 		}
 		time.Sleep(100 * time.Millisecond)
@@ -400,7 +431,10 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 
 	// Open the correct sort of handle
 	CacheMode := f.d.vfs.Opt.CacheMode
-	if read && write {
+	CacheItem := f.d.vfs.cache.get(f.Path())
+	if CacheMode >= CacheModeMinimal && CacheItem.opens > 0 {
+		fd, err = f.openRW(flags)
+	} else if read && write {
 		if CacheMode >= CacheModeMinimal {
 			fd, err = f.openRW(flags)
 		} else {
@@ -436,6 +470,8 @@ func (f *File) Truncate(size int64) (err error) {
 	writers := make([]Handle, len(f.writers))
 	copy(writers, f.writers)
 	f.mu.Unlock()
+
+	// FIXME: handle closing writer
 
 	// If have writers then call truncate for each writer
 	if len(writers) != 0 {
