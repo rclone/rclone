@@ -12,6 +12,7 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	mathrand "math/rand"
 	"os"
 	"os/user"
 	"path/filepath"
@@ -20,6 +21,7 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/Unknwon/goconfig"
@@ -348,14 +350,13 @@ func changeConfigPassword() {
 	}
 }
 
-// SaveConfig saves configuration file.
+// saveConfig saves configuration file.
 // if configKey has been set, the file will be encrypted.
-func SaveConfig() {
+func saveConfig() error {
 	dir, name := filepath.Split(ConfigPath)
 	f, err := ioutil.TempFile(dir, name)
 	if err != nil {
-		log.Fatalf("Failed to create temp file for new config: %v", err)
-		return
+		return errors.Errorf("Failed to create temp file for new config: %v", err)
 	}
 	defer func() {
 		if err := os.Remove(f.Name()); err != nil && !os.IsNotExist(err) {
@@ -366,12 +367,12 @@ func SaveConfig() {
 	var buf bytes.Buffer
 	err = goconfig.SaveConfigData(configData, &buf)
 	if err != nil {
-		log.Fatalf("Failed to save config file: %v", err)
+		return errors.Errorf("Failed to save config file: %v", err)
 	}
 
 	if len(configKey) == 0 {
 		if _, err := buf.WriteTo(f); err != nil {
-			log.Fatalf("Failed to write temp config file: %v", err)
+			return errors.Errorf("Failed to write temp config file: %v", err)
 		}
 	} else {
 		fmt.Fprintln(f, "# Encrypted rclone configuration File")
@@ -382,12 +383,12 @@ func SaveConfig() {
 		var nonce [24]byte
 		n, _ := rand.Read(nonce[:])
 		if n != 24 {
-			log.Fatalf("nonce short read: %d", n)
+			return errors.Errorf("nonce short read: %d", n)
 		}
 		enc := base64.NewEncoder(base64.StdEncoding, f)
 		_, err = enc.Write(nonce[:])
 		if err != nil {
-			log.Fatalf("Failed to write temp config file: %v", err)
+			return errors.Errorf("Failed to write temp config file: %v", err)
 		}
 
 		var key [32]byte
@@ -396,14 +397,14 @@ func SaveConfig() {
 		b := secretbox.Seal(nil, buf.Bytes(), &nonce, &key)
 		_, err = enc.Write(b)
 		if err != nil {
-			log.Fatalf("Failed to write temp config file: %v", err)
+			return errors.Errorf("Failed to write temp config file: %v", err)
 		}
 		_ = enc.Close()
 	}
 
 	err = f.Close()
 	if err != nil {
-		log.Fatalf("Failed to close config file: %v", err)
+		return errors.Errorf("Failed to close config file: %v", err)
 	}
 
 	var fileMode os.FileMode = 0600
@@ -423,14 +424,31 @@ func SaveConfig() {
 	}
 
 	if err = os.Rename(ConfigPath, ConfigPath+".old"); err != nil && !os.IsNotExist(err) {
-		log.Fatalf("Failed to move previous config to backup location: %v", err)
+		return errors.Errorf("Failed to move previous config to backup location: %v", err)
 	}
 	if err = os.Rename(f.Name(), ConfigPath); err != nil {
-		log.Fatalf("Failed to move newly written config from %s to final location: %v", f.Name(), err)
+		return errors.Errorf("Failed to move newly written config from %s to final location: %v", f.Name(), err)
 	}
 	if err := os.Remove(ConfigPath + ".old"); err != nil && !os.IsNotExist(err) {
 		fs.Errorf(nil, "Failed to remove backup config file: %v", err)
 	}
+	return nil
+}
+
+// SaveConfig calling function which saves configuration file.
+// if saveConfig returns error trying again after sleep.
+func SaveConfig() {
+	var err error
+	for i := 0; i < fs.Config.LowLevelRetries+1; i++ {
+		if err = saveConfig(); err == nil {
+			return
+		}
+		waitingTimeMs := mathrand.Intn(1000)
+		time.Sleep(time.Duration(waitingTimeMs) * time.Millisecond)
+	}
+	log.Fatalf("Failed to save config after %d tries: %v", fs.Config.LowLevelRetries, err)
+
+	return
 }
 
 // SetValueAndSave sets the key to the value and saves just that
