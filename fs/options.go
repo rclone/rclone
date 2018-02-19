@@ -32,6 +32,19 @@ type OpenOption interface {
 // Note that the End is inclusive, so to fetch 100 bytes you would use
 // RangeOption{Start: 0, End: 99}
 //
+// If Start is specified but End is not then it will fetch from Start
+// to the end of the file.
+//
+// If End is specified, but Start is not then it will fetch the last
+// End bytes.
+//
+// Examples:
+//
+//     RangeOption{Start: 0, End: 99} - fetch the first 100 bytes
+//     RangeOption{Start: 100, End: 199} - fetch the second 100 bytes
+//     RangeOption{Start: 100} - fetch bytes from offset 100 to the end
+//     RangeOption{End: 100} - fetch the last 100 bytes
+//
 // A RangeOption implements a single byte-range-spec from
 // https://tools.ietf.org/html/rfc7233#section-2.1
 type RangeOption struct {
@@ -93,7 +106,7 @@ func (o *RangeOption) String() string {
 
 // Mandatory returns whether the option must be parsed or can be ignored
 func (o *RangeOption) Mandatory() bool {
-	return false
+	return true
 }
 
 // Decode interprets the RangeOption into an offset and a limit
