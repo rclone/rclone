@@ -1340,16 +1340,17 @@ func Cat(f fs.Fs, w io.Writer, offset, count int64) error {
 		defer func() {
 			accounting.Stats.DoneTransferring(o.Remote(), err == nil)
 		}()
+		opt := fs.RangeOption{Start: offset, End: -1}
 		size := o.Size()
-		thisOffset := offset
-		if thisOffset < 0 {
-			thisOffset += size
+		if opt.Start < 0 {
+			opt.Start += size
 		}
-		// size remaining is now reduced by thisOffset
-		size -= thisOffset
+		if count >= 0 {
+			opt.End = opt.Start + count - 1
+		}
 		var options []fs.OpenOption
-		if thisOffset > 0 {
-			options = append(options, &fs.SeekOption{Offset: thisOffset})
+		if opt.Start > 0 || opt.End >= 0 {
+			options = append(options, &opt)
 		}
 		in, err := o.Open(options...)
 		if err != nil {
