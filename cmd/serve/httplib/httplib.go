@@ -183,7 +183,15 @@ func (s *Server) Serve() {
 	} else {
 		err = s.httpServer.ListenAndServe()
 	}
-	log.Fatalf("Fatal error while serving HTTP: %v", err)
+	log.Printf("Error while serving HTTP: %v", err)
+}
+
+// Close shuts the running server down
+func (s *Server) Close() {
+	err := closeServer(s.httpServer)
+	if err != nil {
+		log.Printf("Error on closing HTTP server: %v", err)
+	}
 }
 
 // URL returns the serving address of this server

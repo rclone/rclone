@@ -11,3 +11,8 @@ import (
 // Initialise the http.Server for pre go1.8
 func initServer(s *http.Server) {
 }
+
+// closeServer closes the server in a non graceful way
+func closeServer(s *http.Server) error {
+	return nil
+}
