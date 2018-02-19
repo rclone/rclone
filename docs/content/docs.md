@@ -98,6 +98,7 @@ The main rclone commands with most used first
 * [rclone moveto](/commands/rclone_moveto/)	- Move file or directory from source to dest.
 * [rclone obscure](/commands/rclone_obscure/)	- Obscure password for use in the rclone.conf
 * [rclone cryptcheck](/commands/rclone_cryptcheck/)	- Check the integrity of a crypted remote.
+* [rclone about](/commands/rclone_about/)	- Get quota information from the remote.
 
 See the [commands index](/commands/) for the full list.
 
