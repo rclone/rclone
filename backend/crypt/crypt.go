@@ -465,11 +465,17 @@ func (f *Fs) DecryptFileName(encryptedFileName string) (string, error) {
 // Note that we break lots of encapsulation in this function.
 func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr string, err error) {
 	// Read the nonce - opening the file is sufficient to read the nonce in
-	in, err := o.Open()
+	// use a limited read so we only read the header
+	in, err := o.Object.Open(&fs.RangeOption{Start: 0, End: int64(fileHeaderSize) - 1})
 	if err != nil {
-		return "", errors.Wrap(err, "failed to read nonce")
+		return "", errors.Wrap(err, "failed to open object to read nonce")
 	}
-	nonce := in.(*decrypter).nonce
+	d, err := f.cipher.(*cipher).newDecrypter(in)
+	if err != nil {
+		_ = in.Close()
+		return "", errors.Wrap(err, "failed to open object to read nonce")
+	}
+	nonce := d.nonce
 	// fs.Debugf(o, "Read nonce % 2x", nonce)
 
 	// Check nonce isn't all zeros
@@ -483,8 +489,8 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr 
 		fs.Errorf(o, "empty nonce read")
 	}
 
-	// Close in once we have read the nonce
-	err = in.Close()
+	// Close d (and hence in) once we have read the nonce
+	err = d.Close()
 	if err != nil {
 		return "", errors.Wrap(err, "failed to close nonce read")
 	}
@@ -503,7 +509,10 @@ func (f *Fs) ComputeHash(o *Object, src fs.Object, hashType hash.Type) (hashStr 
 	}
 
 	// pipe into hash
-	m := hash.NewMultiHasher()
+	m, err := hash.NewMultiHasherTypes(hash.NewHashSet(hashType))
+	if err != nil {
+		return "", errors.Wrap(err, "failed to make hasher")
+	}
 	_, err = io.Copy(m, out)
 	if err != nil {
 		return "", errors.Wrap(err, "failed to hash data")
