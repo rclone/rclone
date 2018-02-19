@@ -389,7 +389,7 @@ func (w *worker) reader(offset, end int64, closeOpen bool) (io.ReadCloser, error
 	r := w.rc
 	if w.rc == nil {
 		r, err = w.r.cacheFs().openRateLimited(func() (io.ReadCloser, error) {
-			return w.r.cachedObject.Object.Open(&fs.SeekOption{Offset: offset}, &fs.RangeOption{Start: offset, End: end})
+			return w.r.cachedObject.Object.Open(&fs.RangeOption{Start: offset, End: end - 1})
 		})
 		if err != nil {
 			return nil, err
@@ -398,16 +398,18 @@ func (w *worker) reader(offset, end int64, closeOpen bool) (io.ReadCloser, error
 	}
 
 	if !closeOpen {
-		seekerObj, ok := r.(io.Seeker)
-		if ok {
-			_, err = seekerObj.Seek(offset, os.SEEK_SET)
+		if do, ok := r.(fs.RangeSeeker); ok {
+			_, err = do.RangeSeek(offset, os.SEEK_SET, end-offset)
+			return r, err
+		} else if do, ok := r.(io.Seeker); ok {
+			_, err = do.Seek(offset, os.SEEK_SET)
 			return r, err
 		}
 	}
 
 	_ = w.rc.Close()
 	return w.r.cacheFs().openRateLimited(func() (io.ReadCloser, error) {
-		r, err = w.r.cachedObject.Object.Open(&fs.SeekOption{Offset: offset}, &fs.RangeOption{Start: offset, End: end})
+		r, err = w.r.cachedObject.Object.Open(&fs.RangeOption{Start: offset, End: end - 1})
 		if err != nil {
 			return nil, err
 		}
