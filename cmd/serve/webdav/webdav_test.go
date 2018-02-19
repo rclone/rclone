@@ -39,11 +39,9 @@ func TestWebDav(t *testing.T) {
 	assert.NoError(t, err)
 
 	// Start the server
-	go func() {
-		w := newWebDAV(fremote, &opt)
-		w.serve()
-	}()
-	// FIXME shut it down somehow?
+	w := newWebDAV(fremote, &opt)
+	go w.serve()
+	defer w.srv.Close()
 
 	// Change directory to run the tests
 	err = os.Chdir("../../../backend/webdav")
