@@ -712,14 +712,14 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	_, err = f.list(directoryID, "", false, false, false, func(item *drive.File) bool {
 		remote := path.Join(dir, item.Name)
 		switch {
-		case *driveAuthOwnerOnly && !isAuthOwned(item):
-			// ignore object or directory
 		case item.MimeType == driveFolderType:
 			// cache the directory ID for later lookups
 			f.dirCache.Put(remote, item.Id)
 			when, _ := time.Parse(timeFormatIn, item.ModifiedTime)
 			d := fs.NewDir(remote, when).SetID(item.Id)
 			entries = append(entries, d)
+		case *driveAuthOwnerOnly && !isAuthOwned(item):
+			// ignore object
 		case item.Md5Checksum != "" || item.Size > 0:
 			// If item has MD5 sum or a length it is a file stored on drive
 			o, err := f.newObjectWithInfo(remote, item)
