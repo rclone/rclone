@@ -170,6 +170,6 @@ case $OS in
     exit 2
 esac
 
-
+printf '\nrclone ${version} has successfully installed.'
 printf '\nNow run "rclone config" for setup. Check https://rclone.org/docs/ for more details.\n\n'
 exit 0
