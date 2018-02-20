@@ -1,5 +1,5 @@
 SHELL = bash
-TAG := $(shell echo `git describe --abbrev=8 --tags`-`git rev-parse --abbrev-ref HEAD` | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/; s/-\(HEAD\|master\)$$//')
+TAG := $(shell echo $$(git describe --abbrev=8 --tags)-$${APPVEYOR_REPO_BRANCH:-$${TRAVIS_BRANCH:-$$(git rev-parse --abbrev-ref HEAD)}} | sed 's/-\([0-9]\)-/-00\1-/; s/-\([0-9][0-9]\)-/-0\1-/; s/-\(HEAD\|master\)$$//')
 LAST_TAG := $(shell git describe --tags --abbrev=0)
 NEW_TAG := $(shell echo $(LAST_TAG) | perl -lpe 's/v//; $$_ += 0.01; $$_ = sprintf("v%.2f", $$_)')
 GO_VERSION := $(shell go version)
@@ -121,11 +121,6 @@ beta:
 log_since_last_release:
 	git log $(LAST_TAG)..
 
-upload_beta:
-	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
-	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ memstore:beta-rclone-org
-	@echo Beta release ready at $(BETA_URL)
-
 compile_all:
 ifdef FULL_TESTS
 	go run bin/cross-compile.go -parallel 8 -compile-only $(BUILDTAGS) $(TAG)β
@@ -133,11 +128,20 @@ else
 	@echo Skipping compile all as version of go too old
 endif
 
+appveyor_upload:
+	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
+ifeq ($(APPVEYOR_REPO_BRANCH),master)
+	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ memstore:beta-rclone-org
+endif
+	@echo Beta release ready at $(BETA_URL)
+
 travis_beta:
 	git log $(LAST_TAG).. > /tmp/git-log.txt
 	go run bin/cross-compile.go -release beta-latest -git-log /tmp/git-log.txt -exclude "^windows/" -parallel 8 $(BUILDTAGS) $(TAG)β
 	rclone --config bin/travis.rclone.conf -v copy --exclude '*beta-latest*' build/ memstore:beta-rclone-org/$(TAG)
+ifeq ($(TRAVIS_BRANCH),master)
 	rclone --config bin/travis.rclone.conf -v copy --include '*beta-latest*' --include version.txt build/ memstore:beta-rclone-org
+endif
 	@echo Beta release ready at $(BETA_URL)
 
 # Fetch the windows builds from appveyor

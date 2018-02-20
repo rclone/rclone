@@ -39,6 +39,6 @@ deploy:
   provider: script
   script: make travis_beta
   on:
-    branch: master
+    all_branches: true
     go: "1.10"
-    condition: "`uname` == 'Linux'"
+    condition: "`uname` == 'Linux' && $TRAVIS_PULL_REQUEST == 'false'"
