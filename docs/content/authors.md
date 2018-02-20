@@ -134,3 +134,4 @@ Contributors
   * nbuchanan <nbuchanan@utah.gov>
   * Durval Menezes <rclone@durval.com>
   * Victor <vb-github@viblo.se>
+  * Mateusz <pabian.mateusz@gmail.com>
