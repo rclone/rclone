@@ -91,6 +91,8 @@ type Cipher interface {
 	EncryptedSize(int64) int64
 	// DecryptedSize calculates the size of the data when decrypted
 	DecryptedSize(int64) (int64, error)
+	// NameEncryptionMode returns the used mode for name handling
+	NameEncryptionMode() NameEncryptionMode
 }
 
 // NameEncryptionMode is the type of file name encryption in use
@@ -545,6 +547,10 @@ func (c *cipher) DecryptDirName(in string) (string, error) {
 		return in, nil
 	}
 	return c.decryptFileName(in)
+}
+
+func (c *cipher) NameEncryptionMode() NameEncryptionMode {
+	return c.mode
 }
 
 // nonce is an NACL secretbox nonce
