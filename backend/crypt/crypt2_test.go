@@ -72,4 +72,5 @@ func TestFsIsFileNotFound2(t *testing.T)    { fstests.TestFsIsFileNotFound(t) }
 func TestObjectRemove2(t *testing.T)        { fstests.TestObjectRemove(t) }
 func TestFsPutStream2(t *testing.T)         { fstests.TestFsPutStream(t) }
 func TestObjectPurge2(t *testing.T)         { fstests.TestObjectPurge(t) }
+func TestInternal2(t *testing.T)            { fstests.TestInternal(t) }
 func TestFinalise2(t *testing.T)            { fstests.TestFinalise(t) }
