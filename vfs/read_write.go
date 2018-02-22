@@ -401,6 +401,9 @@ func (fh *RWFileHandle) Seek(offset int64, whence int) (ret int64, err error) {
 	if fh.closed {
 		return 0, ECLOSED
 	}
+	if !fh.opened && offset == 0 && whence != 2 {
+		return 0, nil
+	}
 	if err = fh.openPending(false); err != nil {
 		return ret, err
 	}

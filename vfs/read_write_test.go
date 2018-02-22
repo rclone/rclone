@@ -110,10 +110,22 @@ func TestRWFileHandleSeek(t *testing.T) {
 	vfs, fh := rwHandleCreateReadOnly(t, r)
 	defer cleanup(t, r, vfs)
 
+	assert.Equal(t, fh.opened, false)
+
+	// Check null seeks don't open the file
+	n, err := fh.Seek(0, 0)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), n)
+	assert.Equal(t, fh.opened, false)
+	n, err = fh.Seek(0, 1)
+	assert.NoError(t, err)
+	assert.Equal(t, int64(0), n)
+	assert.Equal(t, fh.opened, false)
+
 	assert.Equal(t, "0", rwReadString(t, fh, 1))
 
 	// 0 means relative to the origin of the file,
-	n, err := fh.Seek(5, 0)
+	n, err = fh.Seek(5, 0)
 	assert.NoError(t, err)
 	assert.Equal(t, int64(5), n)
 	assert.Equal(t, "5", rwReadString(t, fh, 1))
