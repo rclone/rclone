@@ -393,6 +393,14 @@ func decodeOpenFlags(flags int) string {
 // OpenFile a file according to the flags and perm provided
 func (vfs *VFS) OpenFile(name string, flags int, perm os.FileMode) (fd Handle, err error) {
 	defer log.Trace(name, "flags=%s, perm=%v", decodeOpenFlags(flags), perm)("fd=%v, err=%v", &fd, &err)
+
+	// http://pubs.opengroup.org/onlinepubs/7908799/xsh/open.html
+	// The result of using O_TRUNC with O_RDONLY is undefined.
+	// Linux seems to truncate the file, but we prefer to return EINVAL
+	if flags&accessModeMask == os.O_RDONLY && flags&os.O_TRUNC != 0 {
+		return nil, EINVAL
+	}
+
 	node, err := vfs.Stat(name)
 	if err != nil {
 		if err != ENOENT || flags&os.O_CREATE == 0 {
