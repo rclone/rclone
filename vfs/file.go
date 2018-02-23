@@ -292,7 +292,6 @@ func (f *File) openRead() (fh *ReadFileHandle, err error) {
 
 	fh, err = newReadFileHandle(f, o)
 	if err != nil {
-		err = errors.Wrap(err, "open for read")
 		fs.Errorf(f, "File.openRead failed: %v", err)
 		return nil, err
 	}
@@ -308,7 +307,6 @@ func (f *File) openWrite(flags int) (fh *WriteFileHandle, err error) {
 
 	fh, err = newWriteFileHandle(f.d, f, f.Path(), flags)
 	if err != nil {
-		err = errors.Wrap(err, "open for write")
 		fs.Errorf(f, "File.openWrite failed: %v", err)
 		return nil, err
 	}
@@ -327,7 +325,6 @@ func (f *File) openRW(flags int) (fh *RWFileHandle, err error) {
 
 	fh, err = newRWFileHandle(f.d, f, f.Path(), flags)
 	if err != nil {
-		err = errors.Wrap(err, "open for read write")
 		fs.Errorf(f, "File.openRW failed: %v", err)
 		return nil, err
 	}
@@ -400,8 +397,15 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 	var (
 		write    bool // if set need write support
 		read     bool // if set need read support
-		rdwrMode = flags & (os.O_RDONLY | os.O_WRONLY | os.O_RDWR)
+		rdwrMode = flags & accessModeMask
 	)
+
+	// http://pubs.opengroup.org/onlinepubs/7908799/xsh/open.html
+	// The result of using O_TRUNC with O_RDONLY is undefined.
+	// Linux seems to truncate the file, but we prefer to return EINVAL
+	if rdwrMode == os.O_RDONLY && flags&os.O_TRUNC != 0 {
+		return nil, EINVAL
+	}
 
 	// Figure out the read/write intents
 	switch {
