@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/log"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/pkg/errors"
@@ -81,6 +82,18 @@ func newRWFileHandle(d *Dir, f *File, remote string, flags int) (fh *RWFileHandl
 	return fh, nil
 }
 
+// copy an object to or from the remote while accounting for it
+func copyObj(f fs.Fs, dst fs.Object, remote string, src fs.Object) (newDst fs.Object, err error) {
+	if operations.NeedTransfer(dst, src) {
+		accounting.Stats.Transferring(src.Remote())
+		newDst, err = operations.Copy(f, dst, remote, src)
+		accounting.Stats.DoneTransferring(src.Remote(), err == nil)
+	} else {
+		newDst = dst
+	}
+	return newDst, err
+}
+
 // openPending opens the file if there is a pending open
 //
 // call with the lock held
@@ -99,22 +112,26 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		// try to open a exising cache file
 		fd, err = os.OpenFile(fh.osPath, cacheFileOpenFlags&^os.O_CREATE, 0600)
 		if os.IsNotExist(err) {
-			// Fetch the file if it hasn't changed
-			// FIXME retries
-			err = operations.CopyFile(fh.d.vfs.cache.f, fh.d.vfs.f, fh.remote, fh.remote)
-			if err != nil {
-				// if the object wasn't found AND O_CREATE is set then...
-				cause := errors.Cause(err)
-				notFound := cause == fs.ErrorObjectNotFound || cause == fs.ErrorDirNotFound
-				if notFound {
-					// Remove cached item if there is one
-					rmErr := os.Remove(fh.osPath)
-					if rmErr != nil && !os.IsNotExist(rmErr) {
-						return errors.Wrap(rmErr, "open RW handle failed to delete stale cache file")
+			// cache file does not exist, so need to fetch it if we have an object to fetch
+			// it from
+			if fh.o != nil {
+				_, err = copyObj(fh.d.vfs.cache.f, nil, fh.remote, fh.o)
+				if err != nil {
+					cause := errors.Cause(err)
+					if cause != fs.ErrorObjectNotFound && cause != fs.ErrorDirNotFound {
+						// return any non NotFound errors
+						return errors.Wrap(err, "open RW handle failed to cache file")
 					}
+					// continue here with err=fs.Error{Object,Dir}NotFound
 				}
-				if notFound && fh.flags&os.O_CREATE != 0 {
-					// ...ignore error as we are about to create the file
+			}
+			// if err == nil, then we have cached the file successfully, otherwise err is
+			// indicating some kind of non existent file/directory either
+			// os.IsNotExist(err) or fs.Error{Object,Dir}NotFound
+			if err != nil {
+				if fh.flags&os.O_CREATE != 0 {
+					// if the object wasn't found AND O_CREATE is set then
+					// ignore error as we are about to create the file
 					fh.file.setSize(0)
 					fh.writeCalled = true
 				} else {
@@ -241,17 +258,16 @@ func (fh *RWFileHandle) close() (err error) {
 
 	if copy {
 		// Transfer the temp file to the remote
-		// FIXME retries
-		err = operations.CopyFile(fh.d.vfs.f, fh.d.vfs.cache.f, fh.remote, fh.remote)
+		cacheObj, err := fh.d.vfs.cache.f.NewObject(fh.remote)
 		if err != nil {
-			err = errors.Wrap(err, "failed to transfer file from cache to remote")
+			err = errors.Wrap(err, "failed to find cache file")
 			fs.Errorf(fh.logPrefix(), "%v", err)
 			return err
 		}
 
-		o, err := fh.d.vfs.f.NewObject(fh.remote)
+		o, err := copyObj(fh.d.vfs.f, fh.o, fh.remote, cacheObj)
 		if err != nil {
-			err = errors.Wrap(err, "failed to find object after transfer to remote")
+			err = errors.Wrap(err, "failed to transfer file from cache to remote")
 			fs.Errorf(fh.logPrefix(), "%v", err)
 			return err
 		}
