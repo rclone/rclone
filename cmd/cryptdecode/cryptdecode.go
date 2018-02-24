@@ -1,6 +1,7 @@
 package cryptdecode
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ncw/rclone/backend/crypt"
@@ -39,9 +40,12 @@ use it like this
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 11, command, args)
 		cmd.Run(false, false, command, func() error {
-			_, configName, _, err := fs.ParseRemote(args[0])
+			fsInfo, configName, _, err := fs.ParseRemote(args[0])
 			if err != nil {
 				return err
+			}
+			if fsInfo.Name != "crypt" {
+				return errors.New("The remote needs to be of type \"crypt\"")
 			}
 			cipher, err := crypt.NewCipher(configName)
 			if err != nil {
