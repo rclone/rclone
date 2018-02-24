@@ -109,6 +109,18 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	cacheFileOpenFlags := fh.flags
 	// if not truncating the file, need to read it first
 	if fh.flags&os.O_TRUNC == 0 && !truncate {
+		// If the remote object exists AND its cached file exists locally AND there are no
+		// other handles with it open writers, then attempt to update it.
+		if fh.o != nil && fh.d.vfs.cache.opens(fh.remote) <= 1 {
+			cacheObj, err := fh.d.vfs.cache.f.NewObject(fh.remote)
+			if err == nil && cacheObj != nil {
+				cacheObj, err = copyObj(fh.d.vfs.cache.f, cacheObj, fh.remote, fh.o)
+				if err != nil {
+					return errors.Wrap(err, "open RW handle failed to update cached file")
+				}
+			}
+		}
+
 		// try to open a exising cache file
 		fd, err = os.OpenFile(fh.osPath, cacheFileOpenFlags&^os.O_CREATE, 0600)
 		if os.IsNotExist(err) {
