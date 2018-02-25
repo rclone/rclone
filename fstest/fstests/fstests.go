@@ -57,6 +57,13 @@ var (
 	isLocalRemote bool
 )
 
+// InternalTester is an optional interface for Fs which allows to execute internal tests
+//
+// This interface should be implemented in 'backend'_internal_test.go and not in 'backend'.go
+type InternalTester interface {
+	InternalTest(*testing.T)
+}
+
 // ExtraConfigItem describes a config item added on the fly while testing
 type ExtraConfigItem struct{ Name, Key, Value string }
 
@@ -968,6 +975,16 @@ func TestObjectPurge(t *testing.T) {
 
 	err = operations.Purge(remote, "")
 	assert.Error(t, err, "Expecting error after on second purge")
+}
+
+// TestInternal calls InternalTest() on the Fs
+func TestInternal(t *testing.T) {
+	skipIfNotOk(t)
+	if it, ok := remote.(InternalTester); ok {
+		it.InternalTest(t)
+	} else {
+		t.Skipf("%T does not implement InternalTester", remote)
+	}
 }
 
 // TestFinalise tidies up after the previous tests
