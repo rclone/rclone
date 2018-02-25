@@ -274,8 +274,8 @@ func (o *Object) Remove() error {
 	_ = o.CacheFs.cache.removePendingUpload(o.abs())
 	parentCd := NewDirectory(o.CacheFs, cleanPath(path.Dir(o.Remote())))
 	_ = o.CacheFs.cache.ExpireDir(parentCd)
-	// advertise to DirChangeNotify if wrapped doesn't do that
-	o.CacheFs.notifyDirChangeUpstreamIfNeeded(parentCd.Remote())
+	// advertise to ChangeNotify if wrapped doesn't do that
+	o.CacheFs.notifyChangeUpstreamIfNeeded(parentCd.Remote(), fs.EntryDirectory)
 
 	return nil
 }

@@ -658,7 +658,7 @@ func (b *backgroundWriter) run() {
 		if err != nil {
 			fs.Errorf(parentCd, "background upload: cache expire error: %v", err)
 		}
-		b.fs.notifyDirChange(remote)
+		b.fs.notifyChange(remote, fs.EntryObject)
 		fs.Infof(remote, "finished background upload")
 		b.notify(remote, BackgroundUploadCompleted, nil)
 	}

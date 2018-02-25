@@ -685,34 +685,46 @@ func TestFsPrecision(t *testing.T) {
 	// FIXME check expected precision
 }
 
-// TestFsDirChangeNotify tests that changes to directories are properly
+// TestFsChangeNotify tests that changes are properly
 // propagated
 //
-// go test -v -remote TestDrive: -run '^Test(Setup|Init|FsDirChangeNotify)$' -verbose
-func TestFsDirChangeNotify(t *testing.T) {
+// go test -v -remote TestDrive: -run '^Test(Setup|Init|FsChangeNotify)$' -verbose
+func TestFsChangeNotify(t *testing.T) {
 	skipIfNotOk(t)
 
-	// Check have DirChangeNotify
-	doDirChangeNotify := remote.Features().DirChangeNotify
-	if doDirChangeNotify == nil {
-		t.Skip("FS has no DirChangeNotify interface")
+	// Check have ChangeNotify
+	doChangeNotify := remote.Features().ChangeNotify
+	if doChangeNotify == nil {
+		t.Skip("FS has no ChangeNotify interface")
 	}
 
 	err := operations.Mkdir(remote, "dir")
 	require.NoError(t, err)
 
-	changes := []string{}
-	quitChannel := doDirChangeNotify(func(x string) {
-		changes = append(changes, x)
+	dirChanges := []string{}
+	objChanges := []string{}
+	quitChannel := doChangeNotify(func(x string, e fs.EntryType) {
+		if e == fs.EntryDirectory {
+			dirChanges = append(dirChanges, x)
+		} else if e == fs.EntryObject {
+			objChanges = append(objChanges, x)
+		}
 	}, time.Second)
 	defer func() { close(quitChannel) }()
 
 	err = operations.Mkdir(remote, "dir/subdir")
 	require.NoError(t, err)
 
-	time.Sleep(2 * time.Second)
+	contents := fstest.RandomString(100)
+	buf := bytes.NewBufferString(contents)
+	obji := object.NewStaticObjectInfo("dir/file", time.Now(), int64(buf.Len()), true, nil, nil)
+	_, err = remote.Put(buf, obji)
+	require.NoError(t, err)
 
-	assert.Equal(t, []string{"dir"}, changes)
+	time.Sleep(3 * time.Second)
+
+	assert.Equal(t, []string{"dir/subdir"}, dirChanges)
+	assert.Equal(t, []string{"dir/file"}, objChanges)
 }
 
 // TestObjectString tests the Object String method
