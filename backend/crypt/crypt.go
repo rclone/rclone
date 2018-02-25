@@ -73,8 +73,8 @@ func init() {
 	})
 }
 
-// NewFs contstructs an Fs from the path, container:path
-func NewFs(name, rpath string) (fs.Fs, error) {
+// NewCipher constructs a Cipher for the given config name
+func NewCipher(name string) (Cipher, error) {
 	mode, err := NewNameEncryptionMode(config.FileGet(name, "filename_encryption", "standard"))
 	if err != nil {
 		return nil, err
@@ -102,6 +102,15 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to make cipher")
 	}
+	return cipher, nil
+}
+
+// NewFs contstructs an Fs from the path, container:path
+func NewFs(name, rpath string) (fs.Fs, error) {
+	cipher, err := NewCipher(name)
+	if err != nil {
+		return nil, err
+	}
 	remote := config.FileGet(name, "remote")
 	if strings.HasPrefix(remote, name+":") {
 		return nil, errors.New("can't point crypt remote at itself - check the value of the remote setting")
@@ -122,12 +131,11 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		name:   name,
 		root:   rpath,
 		cipher: cipher,
-		mode:   mode,
 	}
 	// the features here are ones we could support, and they are
 	// ANDed with the ones from wrappedFs
 	f.features = (&fs.Features{
-		CaseInsensitive:         mode == NameEncryptionOff,
+		CaseInsensitive:         cipher.NameEncryptionMode() == NameEncryptionOff,
 		DuplicateFiles:          true,
 		ReadMimeType:            false, // MimeTypes not supported with crypt
 		WriteMimeType:           false,

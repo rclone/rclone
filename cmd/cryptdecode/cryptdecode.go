@@ -1,13 +1,13 @@
 package cryptdecode
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config/flags"
-	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -39,40 +39,32 @@ use it like this
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(2, 11, command, args)
-		fsrc := cmd.NewFsSrc(args)
-		if Reverse {
-			cmd.Run(false, false, command, func() error {
-				return cryptEncode(fsrc, args[1:])
-			})
-		} else {
-			cmd.Run(false, false, command, func() error {
-				return cryptDecode(fsrc, args[1:])
-			})
-		}
+		cmd.Run(false, false, command, func() error {
+			fsInfo, configName, _, err := fs.ParseRemote(args[0])
+			if err != nil {
+				return err
+			}
+			if fsInfo.Name != "crypt" {
+				return errors.New("The remote needs to be of type \"crypt\"")
+			}
+			cipher, err := crypt.NewCipher(configName)
+			if err != nil {
+				return err
+			}
+			if Reverse {
+				return cryptEncode(cipher, args[1:])
+			}
+			return cryptDecode(cipher, args[1:])
+		})
 	},
 }
 
-// Check if fsrc is a crypt
-func assertCryptFs(fsrc fs.Fs) (*crypt.Fs, error) {
-	fcrypt, ok := fsrc.(*crypt.Fs)
-	if !ok {
-		return nil, errors.Errorf("%s:%s is not a crypt remote", fsrc.Name(), fsrc.Root())
-	}
-	return fcrypt, nil
-}
-
 // cryptDecode returns the unencrypted file name
-func cryptDecode(fsrc fs.Fs, args []string) error {
-	fcrypt, err := assertCryptFs(fsrc)
-
-	if err != nil {
-		return err
-	}
-
+func cryptDecode(cipher crypt.Cipher, args []string) error {
 	output := ""
 
 	for _, encryptedFileName := range args {
-		fileName, err := fcrypt.DecryptFileName(encryptedFileName)
+		fileName, err := cipher.DecryptFileName(encryptedFileName)
 		if err != nil {
 			output += fmt.Sprintln(encryptedFileName, "\t", "Failed to decrypt")
 		} else {
@@ -86,17 +78,11 @@ func cryptDecode(fsrc fs.Fs, args []string) error {
 }
 
 // cryptEncode returns the encrypted file name
-func cryptEncode(fsrc fs.Fs, args []string) error {
-	fcrypt, err := assertCryptFs(fsrc)
-
-	if err != nil {
-		return err
-	}
-
+func cryptEncode(cipher crypt.Cipher, args []string) error {
 	output := ""
 
 	for _, fileName := range args {
-		encryptedFileName := fcrypt.EncryptFileName(fileName)
+		encryptedFileName := cipher.EncryptFileName(fileName)
 		output += fmt.Sprintln(fileName, "\t", encryptedFileName)
 	}
 
