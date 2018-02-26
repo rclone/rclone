@@ -431,8 +431,8 @@ func (f *File) Open(flags int) (fd Handle, err error) {
 
 	// Open the correct sort of handle
 	CacheMode := f.d.vfs.Opt.CacheMode
-	CacheItem := f.d.vfs.cache.get(f.Path())
-	if CacheMode >= CacheModeMinimal && CacheItem.opens > 0 {
+	opens := f.d.vfs.cache.opens(f.Path())
+	if CacheMode >= CacheModeMinimal && opens > 0 {
 		fd, err = f.openRW(flags)
 	} else if read && write {
 		if CacheMode >= CacheModeMinimal {
