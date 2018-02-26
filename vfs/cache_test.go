@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
-	"strings"
 	"testing"
 	"time"
 
@@ -47,7 +46,7 @@ func TestCacheModeType(t *testing.T) {
 }
 
 // convert c.item to a string
-func itemAsString(c *cache) string {
+func itemAsString(c *cache) []string {
 	c.itemMu.Lock()
 	defer c.itemMu.Unlock()
 	var out []string
@@ -55,7 +54,7 @@ func itemAsString(c *cache) string {
 		out = append(out, fmt.Sprintf("name=%q isFile=%v opens=%d", name, item.isFile, item.opens))
 	}
 	sort.Strings(out)
-	return strings.Join(out, "\n")
+	return out
 }
 
 func TestCacheNew(t *testing.T) {
@@ -73,13 +72,15 @@ func TestCacheNew(t *testing.T) {
 
 	assert.Contains(t, c.root, "vfs")
 	assert.Contains(t, c.f.Root(), filepath.Base(r.Fremote.Root()))
-	assert.Equal(t, "", itemAsString(c))
+	assert.Equal(t, []string(nil), itemAsString(c))
 
 	// mkdir
 	p, err := c.mkdir("potato")
 	require.NoError(t, err)
 	assert.Equal(t, "potato", filepath.Base(p))
-	assert.Equal(t, `name="" isFile=false opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+	}, itemAsString(c))
 
 	fi, err := os.Stat(filepath.Dir(p))
 	require.NoError(t, err)
@@ -106,11 +107,15 @@ func TestCacheNew(t *testing.T) {
 	assert.Equal(t, 0, item.opens)
 
 	// open
-	assert.Equal(t, `name="" isFile=false opens=0
-name="potato" isFile=true opens=0`, itemAsString(c))
-	c.open("potato")
-	assert.Equal(t, `name="" isFile=false opens=1
-name="potato" isFile=true opens=1`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="potato" isFile=true opens=0`,
+	}, itemAsString(c))
+	c.open("/potato")
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="potato" isFile=true opens=1`,
+	}, itemAsString(c))
 	item = c.get("potato")
 	assert.WithinDuration(t, time.Now(), item.atime, time.Second)
 	assert.Equal(t, 1, item.opens)
@@ -129,8 +134,10 @@ name="potato" isFile=true opens=1`, itemAsString(c))
 	item.atime = time.Now().Add(-24 * time.Hour)
 	err = c.updateAtimes()
 	require.NoError(t, err)
-	assert.Equal(t, `name="" isFile=false opens=1
-name="potato" isFile=true opens=1`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="potato" isFile=true opens=1`,
+	}, itemAsString(c))
 	item = c.get("potato")
 	assert.Equal(t, atime, item.atime)
 
@@ -141,8 +148,10 @@ name="potato" isFile=true opens=1`, itemAsString(c))
 	c.itemMu.Unlock()
 	err = c.updateAtimes()
 	require.NoError(t, err)
-	assert.Equal(t, `name="" isFile=false opens=1
-name="potato" isFile=true opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="potato" isFile=true opens=0`,
+	}, itemAsString(c))
 	item = c.get("potato")
 	assert.Equal(t, atime, item.atime)
 	c.itemMu.Lock()
@@ -155,14 +164,20 @@ name="potato" isFile=true opens=0`, itemAsString(c))
 	assert.NoError(t, err)
 
 	// close
-	assert.Equal(t, `name="" isFile=false opens=1
-name="potato" isFile=true opens=1`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="potato" isFile=true opens=1`,
+	}, itemAsString(c))
 	c.updateTime("potato", t2)
-	assert.Equal(t, `name="" isFile=false opens=1
-name="potato" isFile=true opens=1`, itemAsString(c))
-	c.close("potato")
-	assert.Equal(t, `name="" isFile=false opens=0
-name="potato" isFile=true opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="potato" isFile=true opens=1`,
+	}, itemAsString(c))
+	c.close("potato/")
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="potato" isFile=true opens=0`,
+	}, itemAsString(c))
 	item = c.get("potato")
 	assert.WithinDuration(t, time.Now(), item.atime, time.Second)
 	assert.Equal(t, 0, item.opens)
@@ -198,52 +213,127 @@ func TestCacheOpens(t *testing.T) {
 	c, err := newCache(ctx, r.Fremote, &DefaultOpt)
 	require.NoError(t, err)
 
-	assert.Equal(t, "", itemAsString(c))
+	assert.Equal(t, []string(nil), itemAsString(c))
 	c.open("potato")
-	assert.Equal(t, `name="" isFile=false opens=1
-name="potato" isFile=true opens=1`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="potato" isFile=true opens=1`,
+	}, itemAsString(c))
 	c.open("potato")
-	assert.Equal(t, `name="" isFile=false opens=2
-name="potato" isFile=true opens=2`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=2`,
+		`name="potato" isFile=true opens=2`,
+	}, itemAsString(c))
 	c.close("potato")
-	assert.Equal(t, `name="" isFile=false opens=1
-name="potato" isFile=true opens=1`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="potato" isFile=true opens=1`,
+	}, itemAsString(c))
 	c.close("potato")
-	assert.Equal(t, `name="" isFile=false opens=0
-name="potato" isFile=true opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="potato" isFile=true opens=0`,
+	}, itemAsString(c))
 
 	c.open("potato")
-	c.open("a/b/c/d/one")
+	c.open("a//b/c/d/one")
 	c.open("a/b/c/d/e/two")
 	c.open("a/b/c/d/e/f/three")
-	assert.Equal(t, `name="" isFile=false opens=4
-name="a" isFile=false opens=3
-name="a/b" isFile=false opens=3
-name="a/b/c" isFile=false opens=3
-name="a/b/c/d" isFile=false opens=3
-name="a/b/c/d/e" isFile=false opens=2
-name="a/b/c/d/e/f" isFile=false opens=1
-name="a/b/c/d/e/f/three" isFile=true opens=1
-name="a/b/c/d/e/two" isFile=true opens=1
-name="a/b/c/d/one" isFile=true opens=1
-name="potato" isFile=true opens=1`, itemAsString(c))
-
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=4`,
+		`name="a" isFile=false opens=3`,
+		`name="a/b" isFile=false opens=3`,
+		`name="a/b/c" isFile=false opens=3`,
+		`name="a/b/c/d" isFile=false opens=3`,
+		`name="a/b/c/d/e" isFile=false opens=2`,
+		`name="a/b/c/d/e/f" isFile=false opens=1`,
+		`name="a/b/c/d/e/f/three" isFile=true opens=1`,
+		`name="a/b/c/d/e/two" isFile=true opens=1`,
+		`name="a/b/c/d/one" isFile=true opens=1`,
+		`name="potato" isFile=true opens=1`,
+	}, itemAsString(c))
 	c.close("potato")
 	c.close("a/b/c/d/one")
 	c.close("a/b/c/d/e/two")
-	c.close("a/b/c/d/e/f/three")
-	assert.Equal(t, `name="" isFile=false opens=0
-name="a" isFile=false opens=0
-name="a/b" isFile=false opens=0
-name="a/b/c" isFile=false opens=0
-name="a/b/c/d" isFile=false opens=0
-name="a/b/c/d/e" isFile=false opens=0
-name="a/b/c/d/e/f" isFile=false opens=0
-name="a/b/c/d/e/f/three" isFile=true opens=0
-name="a/b/c/d/e/two" isFile=true opens=0
-name="a/b/c/d/one" isFile=true opens=0
-name="potato" isFile=true opens=0`, itemAsString(c))
+	c.close("a/b/c//d/e/f/three")
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="a" isFile=false opens=0`,
+		`name="a/b" isFile=false opens=0`,
+		`name="a/b/c" isFile=false opens=0`,
+		`name="a/b/c/d" isFile=false opens=0`,
+		`name="a/b/c/d/e" isFile=false opens=0`,
+		`name="a/b/c/d/e/f" isFile=false opens=0`,
+		`name="a/b/c/d/e/f/three" isFile=true opens=0`,
+		`name="a/b/c/d/e/two" isFile=true opens=0`,
+		`name="a/b/c/d/one" isFile=true opens=0`,
+		`name="potato" isFile=true opens=0`,
+	}, itemAsString(c))
+}
 
+// test the open, mkdir, purge, close, purge sequence
+func TestCacheOpenMkdir(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+
+	// Disable the cache cleaner as it interferes with these tests
+	opt := DefaultOpt
+	opt.CachePollInterval = 0
+	c, err := newCache(ctx, r.Fremote, &opt)
+	require.NoError(t, err)
+
+	// open
+	c.open("sub/potato")
+
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="sub" isFile=false opens=1`,
+		`name="sub/potato" isFile=true opens=1`,
+	}, itemAsString(c))
+
+	// mkdir
+	p, err := c.mkdir("sub/potato")
+	require.NoError(t, err)
+	assert.Equal(t, "potato", filepath.Base(p))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=1`,
+		`name="sub" isFile=false opens=1`,
+		`name="sub/potato" isFile=true opens=1`,
+	}, itemAsString(c))
+
+	// test directory exists
+	fi, err := os.Stat(filepath.Dir(p))
+	require.NoError(t, err)
+	assert.True(t, fi.IsDir())
+
+	// clean the cache
+	c.purgeOld(-10 * time.Second)
+
+	// test directory still exists
+	fi, err = os.Stat(filepath.Dir(p))
+	require.NoError(t, err)
+	assert.True(t, fi.IsDir())
+
+	// close
+	c.close("sub/potato")
+
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="sub" isFile=false opens=0`,
+		`name="sub/potato" isFile=true opens=0`,
+	}, itemAsString(c))
+
+	// clean the cache
+	c.purgeOld(-10 * time.Second)
+
+	assert.Equal(t, []string(nil), itemAsString(c))
+
+	// test directory does not exist
+	fi, err = os.Stat(filepath.Dir(p))
+	require.True(t, os.IsNotExist(err))
 }
 
 func TestCacheCacheDir(t *testing.T) {
@@ -256,23 +346,29 @@ func TestCacheCacheDir(t *testing.T) {
 	c, err := newCache(ctx, r.Fremote, &DefaultOpt)
 	require.NoError(t, err)
 
-	assert.Equal(t, "", itemAsString(c))
+	assert.Equal(t, []string(nil), itemAsString(c))
 
 	c.cacheDir("dir")
-	assert.Equal(t, `name="" isFile=false opens=0
-name="dir" isFile=false opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="dir" isFile=false opens=0`,
+	}, itemAsString(c))
 
 	c.cacheDir("dir/sub")
-	assert.Equal(t, `name="" isFile=false opens=0
-name="dir" isFile=false opens=0
-name="dir/sub" isFile=false opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="dir" isFile=false opens=0`,
+		`name="dir/sub" isFile=false opens=0`,
+	}, itemAsString(c))
 
 	c.cacheDir("dir/sub2/subsub2")
-	assert.Equal(t, `name="" isFile=false opens=0
-name="dir" isFile=false opens=0
-name="dir/sub" isFile=false opens=0
-name="dir/sub2" isFile=false opens=0
-name="dir/sub2/subsub2" isFile=false opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="dir" isFile=false opens=0`,
+		`name="dir/sub" isFile=false opens=0`,
+		`name="dir/sub2" isFile=false opens=0`,
+		`name="dir/sub2/subsub2" isFile=false opens=0`,
+	}, itemAsString(c))
 }
 
 func TestCachePurgeOld(t *testing.T) {
@@ -302,23 +398,55 @@ func TestCachePurgeOld(t *testing.T) {
 	c._purgeOld(-10*time.Second, removeFile, removeDir)
 	assert.Equal(t, []string(nil), removed)
 
+	c.open("sub/dir2/potato2")
 	c.open("sub/dir/potato")
+	c.close("sub/dir2/potato2")
+	c.open("sub/dir/potato")
+
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=2`,
+		`name="sub" isFile=false opens=2`,
+		`name="sub/dir" isFile=false opens=2`,
+		`name="sub/dir/potato" isFile=true opens=2`,
+		`name="sub/dir2" isFile=false opens=0`,
+		`name="sub/dir2/potato2" isFile=true opens=0`,
+	}, itemAsString(c))
+
+	removed = nil
+	removedDir = true
+	c._purgeOld(-10*time.Second, removeFile, removeDir)
+	assert.Equal(t, []string{
+		"sub/dir2/potato2",
+		"sub/dir2/",
+	}, removed)
+
 	c.close("sub/dir/potato")
 
-	assert.Equal(t, `name="" isFile=false opens=0
-name="sub" isFile=false opens=0
-name="sub/dir" isFile=false opens=0
-name="sub/dir/potato" isFile=true opens=0`, itemAsString(c))
+	removed = nil
+	removedDir = true
+	c._purgeOld(-10*time.Second, removeFile, removeDir)
+	assert.Equal(t, []string(nil), removed)
+
+	c.close("sub/dir/potato")
+
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="sub" isFile=false opens=0`,
+		`name="sub/dir" isFile=false opens=0`,
+		`name="sub/dir/potato" isFile=true opens=0`,
+	}, itemAsString(c))
 
 	removed = nil
 	removedDir = false
 	c._purgeOld(10*time.Second, removeFile, removeDir)
 	assert.Equal(t, []string(nil), removed)
 
-	assert.Equal(t, `name="" isFile=false opens=0
-name="sub" isFile=false opens=0
-name="sub/dir" isFile=false opens=0
-name="sub/dir/potato" isFile=true opens=0`, itemAsString(c))
+	assert.Equal(t, []string{
+		`name="" isFile=false opens=0`,
+		`name="sub" isFile=false opens=0`,
+		`name="sub/dir" isFile=false opens=0`,
+		`name="sub/dir/potato" isFile=true opens=0`,
+	}, itemAsString(c))
 
 	removed = nil
 	removedDir = true
@@ -330,5 +458,5 @@ name="sub/dir/potato" isFile=true opens=0`, itemAsString(c))
 		"/",
 	}, removed)
 
-	assert.Equal(t, ``, itemAsString(c))
+	assert.Equal(t, []string(nil), itemAsString(c))
 }
