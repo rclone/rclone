@@ -1,1 +1,1 @@
-<a href="https://downloads.rclone.org/rclone-current-{{ .Get 0 }}-{{ .Get 1 }}.zip" title="{{ .Get 0 }} {{ .Get 1 }}"><span class="fas fa-download fa-lg"></span></a>
+<a href="https://downloads.rclone.org/rclone-rclone-current-{{ .Get 0 }}-{{ .Get 1 }}.{{ if len .Params | eq 3 }}{{ .Get 2 }}{{ else }}zip{{ end }}" title="{{ .Get 0 }} {{ .Get 1 }} .{{ if len .Params | eq 3 }}{{ .Get 2 }}{{ else }}zip{{ end }}"><span class="fas fa-download fa-lg"></span></a>

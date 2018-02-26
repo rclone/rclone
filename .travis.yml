@@ -28,6 +28,7 @@ addons:
     packages:
     - fuse
     - libfuse-dev
+    - rpm
 matrix:
   allow_failures:
   - go: tip
@@ -38,6 +39,7 @@ matrix:
 deploy:
   provider: script
   script: make travis_beta
+  skip_cleanup: true
   on:
     all_branches: true
     go: "1.10"
