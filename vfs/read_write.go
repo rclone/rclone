@@ -31,6 +31,7 @@ type RWFileHandle struct {
 	flags       int    // open flags
 	osPath      string // path to the file in the cache
 	writeCalled bool   // if any Write() methods have been called
+	changed     bool   // file contents was changed in any other way
 }
 
 // Check interfaces
@@ -146,7 +147,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 					// if the object wasn't found AND O_CREATE is set then
 					// ignore error as we are about to create the file
 					fh.file.setSize(0)
-					fh.writeCalled = true
+					fh.changed = true
 				} else {
 					return errors.Wrap(err, "open RW handle failed to cache file")
 				}
@@ -159,7 +160,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	} else {
 		// Set the size to 0 since we are truncating and flag we need to write it back
 		fh.file.setSize(0)
-		fh.writeCalled = true
+		fh.changed = true
 		if fh.flags&os.O_CREATE == 0 && fh.file.exists() {
 			// create an empty file if it exists on the source
 			err = ioutil.WriteFile(fh.osPath, []byte{}, 0600)
@@ -213,6 +214,20 @@ func (fh *RWFileHandle) Node() Node {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	return fh.file
+}
+
+// Returns whether the file needs to be written back.
+//
+// If write hasn't been called and the file hasn't been changed in any other
+// way we haven't modified it so we don't need to transfer it
+//
+// Must be called with fh.mu held
+func (fh *RWFileHandle) modified() bool {
+	if !fh.writeCalled && !fh.changed {
+		fs.Debugf(fh.logPrefix(), "not modified so not transferring")
+		return false
+	}
+	return true
 }
 
 // close the file handle returning EBADF if it has been
@@ -299,24 +314,6 @@ func (fh *RWFileHandle) Close() error {
 	fh.mu.Lock()
 	defer fh.mu.Unlock()
 	return fh.close()
-}
-
-func (fh *RWFileHandle) modified() bool {
-	rdwrMode := fh.flags & accessModeMask
-	// no writes means no transfer?
-	if rdwrMode == os.O_RDONLY && fh.flags&os.O_TRUNC == 0 {
-		fs.Debugf(fh.logPrefix(), "read only and not truncating so not transferring")
-		return false
-	}
-
-	// If write hasn't been called and we aren't creating or
-	// truncating the file then we haven't modified it so don't
-	// need to transfer it
-	if !fh.writeCalled && fh.flags&(os.O_CREATE|os.O_TRUNC) == 0 {
-		fs.Debugf(fh.logPrefix(), "not modified so not transferring")
-		return false
-	}
-	return true
 }
 
 // Flush is called each time the file or directory is closed.
@@ -507,7 +504,7 @@ func (fh *RWFileHandle) Truncate(size int64) (err error) {
 	if err = fh.openPending(size == 0); err != nil {
 		return err
 	}
-	fh.writeCalled = true
+	fh.changed = true
 	fh.file.setSize(size)
 	return fh.File.Truncate(size)
 }
