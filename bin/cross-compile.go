@@ -11,11 +11,13 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strings"
 	"sync"
+	"text/template"
 	"time"
 )
 
@@ -88,6 +90,76 @@ func run(args ...string) {
 	runEnv(args, nil)
 }
 
+// chdir or die
+func chdir(dir string) {
+	err := os.Chdir(dir)
+	if err != nil {
+		log.Fatalf("Couldn't cd into %q: %v", dir, err)
+	}
+}
+
+// substitute data from go template file in to file out
+func substitute(inFile, outFile string, data interface{}) {
+	t, err := template.ParseFiles(inFile)
+	if err != nil {
+		log.Fatalf("Failed to read template file %q: %v %v", inFile, err)
+	}
+	out, err := os.Create(outFile)
+	if err != nil {
+		log.Fatalf("Failed to create output file %q: %v %v", outFile, err)
+	}
+	defer func() {
+		err := out.Close()
+		if err != nil {
+			log.Fatalf("Failed to close output file %q: %v %v", outFile, err)
+		}
+	}()
+	err = t.Execute(out, data)
+	if err != nil {
+		log.Fatalf("Failed to substitute template file %q: %v %v", inFile, err)
+	}
+}
+
+// build the zip package return its name
+func buildZip(dir string) string {
+	// Now build the zip
+	run("cp", "-a", "../MANUAL.txt", filepath.Join(dir, "README.txt"))
+	run("cp", "-a", "../MANUAL.html", filepath.Join(dir, "README.html"))
+	run("cp", "-a", "../rclone.1", dir)
+	if *gitLog != "" {
+		run("cp", "-a", *gitLog, dir)
+	}
+	zip := dir + ".zip"
+	run("zip", "-r9", zip, dir)
+	return zip
+}
+
+// Build .deb and .rpm packages
+//
+// It returns a list of artifacts it has made
+func buildDebAndRpm(dir, version, goarch string) []string {
+	// Make internal version number acceptable to .deb and .rpm
+	pkgVersion := version[1:]
+	pkgVersion = strings.Replace(pkgVersion, "β", "-beta", -1)
+	pkgVersion = strings.Replace(pkgVersion, "-", ".", -1)
+
+	// Make nfpm.yaml from the template
+	substitute("../bin/nfpm.yaml", path.Join(dir, "nfpm.yaml"), map[string]string{
+		"Version": pkgVersion,
+		"Arch":    goarch,
+	})
+
+	// build them
+	var artifacts []string
+	for _, pkg := range []string{".deb", ".rpm"} {
+		artifact := dir + pkg
+		run("bash", "-c", "cd "+dir+" && nfpm -f nfpm.yaml pkg -t ../"+artifact)
+		artifacts = append(artifacts, artifact)
+	}
+
+	return artifacts
+}
+
 // build the binary in dir
 func compileArch(version, goos, goarch, dir string) {
 	log.Printf("Compiling %s/%s", goos, goarch)
@@ -121,19 +193,17 @@ func compileArch(version, goos, goarch, dir string) {
 	}
 	runEnv(args, env)
 	if !*compileOnly {
-		// Now build the zip
-		run("cp", "-a", "../MANUAL.txt", filepath.Join(dir, "README.txt"))
-		run("cp", "-a", "../MANUAL.html", filepath.Join(dir, "README.html"))
-		run("cp", "-a", "../rclone.1", dir)
-		if *gitLog != "" {
-			run("cp", "-a", *gitLog, dir)
+		artifacts := []string{buildZip(dir)}
+		// build a .deb and .rpm if appropriate
+		if goos == "linux" {
+			artifacts = append(artifacts, buildDebAndRpm(dir, version, goarch)...)
 		}
-		zip := dir + ".zip"
-		run("zip", "-r9", zip, dir)
 		if *copyAs != "" {
-			copyAsZip := strings.Replace(zip, "-"+version, "-"+*copyAs, 1)
-			run("ln", zip, copyAsZip)
+			for _, artifact := range artifacts {
+				run("ln", artifact, strings.Replace(artifact, "-"+version, "-"+*copyAs, 1))
+			}
 		}
+		// tidy up
 		run("rm", "-rf", dir)
 	}
 	log.Printf("Done compiling %s/%s", goos, goarch)
@@ -196,11 +266,8 @@ func main() {
 		run("rm", "-rf", "build")
 		run("mkdir", "build")
 	}
-	err := os.Chdir("build")
-	if err != nil {
-		log.Fatalf("Couldn't cd into build dir: %v", err)
-	}
-	err = ioutil.WriteFile("version.txt", []byte(fmt.Sprintf("rclone %s\n", version)), 0666)
+	chdir("build")
+	err := ioutil.WriteFile("version.txt", []byte(fmt.Sprintf("rclone %s\n", version)), 0666)
 	if err != nil {
 		log.Fatalf("Couldn't write version.txt: %v", err)
 	}

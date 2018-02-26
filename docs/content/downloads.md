@@ -8,14 +8,14 @@ date: "2017-07-22"
 Rclone Download {{< version >}}
 =====================
 
-| Arch-OS | Windows | macOS | Linux | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
-|:---:|:-------:|:-----:|:-----:|:-------:|:------:|:-------:|:-----:|:-------:|
-| AMD64 - 64 Bit | {{< download windows amd64 >}} | {{< download osx amd64 >}} | {{< download linux amd64 >}} | {{< download freebsd amd64 >}} | {{< download netbsd amd64 >}} | {{< download openbsd amd64 >}} | {{< download plan9 amd64 >}} | {{< download solaris amd64 >}} |
-| 386 - 32 Bit | {{< download windows 386 >}} | {{< download osx 386 >}} | {{< download linux 386 >}} | {{< download freebsd 386 >}} | {{< download netbsd 386 >}} | {{< download openbsd 386 >}} | {{< download plan9 386 >}} | - |
-| ARM - 32 Bit | - | - | {{< download linux arm >}} | {{< download freebsd arm >}} | {{< download netbsd arm >}} | - | - | - |
-| ARM - 64 Bit | - | - | {{< download linux arm64 >}} | - | - | - | - | - |
-| MIPS - Big Endian | - | - | {{< download linux mips >}} | - | - | - | - | - |
-| MIPS - Little Endian | - | - | {{< download linux mipsle >}} | - | - | - | - | - |
+| Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
+|:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
+| AMD64 - 64 Bit | {{< download windows amd64 >}} | {{< download osx amd64 >}} | {{< download linux amd64 >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | {{< download freebsd amd64 >}} | {{< download netbsd amd64 >}} | {{< download openbsd amd64 >}} | {{< download plan9 amd64 >}} | {{< download solaris amd64 >}} |
+| 386 - 32 Bit | {{< download windows 386 >}} | {{< download osx 386 >}} | {{< download linux 386 >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | {{< download freebsd 386 >}} | {{< download netbsd 386 >}} | {{< download openbsd 386 >}} | {{< download plan9 386 >}} | - |
+| ARM - 32 Bit | - | - | {{< download linux arm >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | {{< download freebsd arm >}} | {{< download netbsd arm >}} | - | - | - |
+| ARM - 64 Bit | - | - | {{< download linux arm64 >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | - | - | - | - | - |
+| MIPS - Big Endian | - | - | {{< download linux mips >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | - | - | - | - | - |
+| MIPS - Little Endian | - | - | {{< download linux mipsle >}} | {{< download linux amd64 deb >}} | {{< download linux amd64 rpm >}} | - | - | - | - | - |
 
 You can also find a [mirror of the downloads on github](https://github.com/ncw/rclone/releases/tag/{{< version >}}).
 
@@ -67,14 +67,14 @@ Downloads for scripting
 If you would like to download the current version (maybe from a
 script) from a URL which doesn't change then you can use these links.
 
-| Arch-OS | Windows | macOS | Linux | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
-|:---:|:-------:|:-----:|:-----:|:-------:|:------:|:-------:|:-----:|:-------:|
-| AMD64 - 64 Bit | {{< cdownload windows amd64 >}} | {{< cdownload osx amd64 >}} | {{< cdownload linux amd64 >}} | {{< cdownload freebsd amd64 >}} | {{< cdownload netbsd amd64 >}} | {{< cdownload openbsd amd64 >}} | {{< cdownload plan9 amd64 >}} | {{< cdownload solaris amd64 >}} |
-| 386 - 32 Bit | {{< cdownload windows 386 >}} | {{< cdownload osx 386 >}} | {{< cdownload linux 386 >}} | {{< cdownload freebsd 386 >}} | {{< cdownload netbsd 386 >}} | {{< cdownload openbsd 386 >}} | {{< cdownload plan9 386 >}} | - |
-| ARM - 32 Bit | - | - | {{< cdownload linux arm >}} | {{< cdownload freebsd arm >}} | {{< cdownload netbsd arm >}} | - | - | - |
-| ARM - 64 Bit | - | - | {{< cdownload linux arm64 >}} | - | - | - | - | - |
-| MIPS - Big Endian | - | - | {{< cdownload linux mips >}} | - | - | - | - | - |
-| MIPS - Little Endian | - | - | {{< cdownload linux mipsle >}} | - | - | - | - | - |
+| Arch-OS | Windows | macOS | Linux | .deb | .rpm | FreeBSD | NetBSD | OpenBSD | Plan9 | Solaris |
+|:-------:|:-------:|:-----:|:-----:|:----:|:----:|:-------:|:------:|:-------:|:-----:|:-------:|
+| AMD64 - 64 Bit | {{< cdownload windows amd64 >}} | {{< cdownload osx amd64 >}} | {{< cdownload linux amd64 >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | {{< cdownload freebsd amd64 >}} | {{< cdownload netbsd amd64 >}} | {{< cdownload openbsd amd64 >}} | {{< cdownload plan9 amd64 >}} | {{< cdownload solaris amd64 >}} |
+| 386 - 32 Bit | {{< cdownload windows 386 >}} | {{< cdownload osx 386 >}} | {{< cdownload linux 386 >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | {{< cdownload freebsd 386 >}} | {{< cdownload netbsd 386 >}} | {{< cdownload openbsd 386 >}} | {{< cdownload plan9 386 >}} | - |
+| ARM - 32 Bit | - | - | {{< cdownload linux arm >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | {{< cdownload freebsd arm >}} | {{< cdownload netbsd arm >}} | - | - | - |
+| ARM - 64 Bit | - | - | {{< cdownload linux arm64 >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | - | - | - | - | - |
+| MIPS - Big Endian | - | - | {{< cdownload linux mips >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | - | - | - | - | - |
+| MIPS - Little Endian | - | - | {{< cdownload linux mipsle >}} | {{< cdownload linux amd64 deb >}} | {{< cdownload linux amd64 rpm >}} | - | - | - | - | - |
 
 Older Downloads
 ==============
