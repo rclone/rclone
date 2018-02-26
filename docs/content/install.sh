@@ -1,4 +1,5 @@
-#!/bin/sh
+#!/bin/bash
+# !/bin/sh throws an error  ./install.sh: Syntax error: "(" unexpected
 
 # error codes
 # 0 - exited without problems
