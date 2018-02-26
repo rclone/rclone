@@ -170,7 +170,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		// Windows doesn't seem to deal well with O_TRUNC and
 		// certain access modes so so truncate the file if it
 		// exists in these cases.
-		if runtime.GOOS == "windows" && (fh.flags&accessModeMask == os.O_RDONLY || fh.flags|os.O_APPEND != 0) {
+		if runtime.GOOS == "windows" && fh.flags&os.O_APPEND != 0 {
 			cacheFileOpenFlags &^= os.O_TRUNC
 			_, err = os.Stat(fh.osPath)
 			if err == nil {
