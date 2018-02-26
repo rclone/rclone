@@ -161,6 +161,20 @@ func (c *cache) _get(isFile bool, name string) (item *cacheItem, found bool) {
 	return item, found
 }
 
+// opens returns the number of opens that are on the file
+//
+// name should be a remote path not an osPath
+func (c *cache) opens(name string) int {
+	name = clean(name)
+	c.itemMu.Lock()
+	defer c.itemMu.Unlock()
+	item := c.item[name]
+	if item == nil {
+		return 0
+	}
+	return item.opens
+}
+
 // get gets name from the cache or creates a new one
 //
 // name should be a remote path not an osPath
