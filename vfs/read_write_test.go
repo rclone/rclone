@@ -350,7 +350,8 @@ func TestRWFileHandleWriteAt(t *testing.T) {
 	// Preconditions
 	assert.Equal(t, int64(0), offset())
 	assert.True(t, fh.opened)
-	assert.True(t, fh.writeCalled)
+	assert.False(t, fh.writeCalled)
+	assert.True(t, fh.changed)
 
 	// Write the data
 	n, err := fh.WriteAt([]byte("hello**"), 0)
