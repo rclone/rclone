@@ -535,7 +535,20 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	}
 
 	// Do the move
-	return os.Rename(srcPath, dstPath)
+	err = os.Rename(srcPath, dstPath)
+	if os.IsNotExist(err) {
+		// race condition, source was deleted in the meantime
+		return err
+	} else if os.IsPermission(err) {
+		// not enough rights to write to dst
+		return err
+	} else if err != nil {
+		// not quite clear, but probably trying to move directory across file system
+		// boundaries. Copying might still work.
+		fs.Errorf(src, "Can't move dir: %v: trying copy", err)
+		return fs.ErrorCantDirMove
+	}
+	return nil
 }
 
 // Hashes returns the supported hash sets.
