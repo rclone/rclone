@@ -4,11 +4,7 @@
 [[projects]]
   branch = "master"
   name = "bazil.org/fuse"
-  packages = [
-    ".",
-    "fs",
-    "fuseutil"
-  ]
+  packages = [".","fs","fuseutil"]
   revision = "371fbbdaa8987b715bdd21d6adc4c9b20155f748"
 
 [[projects]]
@@ -25,12 +21,7 @@
 
 [[projects]]
   name = "github.com/Azure/go-autorest"
-  packages = [
-    "autorest",
-    "autorest/adal",
-    "autorest/azure",
-    "autorest/date"
-  ]
+  packages = ["autorest","autorest/adal","autorest/azure","autorest/date"]
   revision = "6311d7a76f54cf2b6dea03d737d9bd9a6022ac5f"
   version = "v9.7.1"
 
@@ -61,35 +52,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/aws/aws-sdk-go"
-  packages = [
-    "aws",
-    "aws/awserr",
-    "aws/awsutil",
-    "aws/client",
-    "aws/client/metadata",
-    "aws/corehandlers",
-    "aws/credentials",
-    "aws/credentials/ec2rolecreds",
-    "aws/credentials/endpointcreds",
-    "aws/credentials/stscreds",
-    "aws/defaults",
-    "aws/ec2metadata",
-    "aws/endpoints",
-    "aws/request",
-    "aws/session",
-    "aws/signer/v4",
-    "internal/shareddefaults",
-    "private/protocol",
-    "private/protocol/query",
-    "private/protocol/query/queryutil",
-    "private/protocol/rest",
-    "private/protocol/restxml",
-    "private/protocol/xml/xmlutil",
-    "service/s3",
-    "service/s3/s3iface",
-    "service/s3/s3manager",
-    "service/sts"
-  ]
+  packages = ["aws","aws/awserr","aws/awsutil","aws/client","aws/client/metadata","aws/corehandlers","aws/credentials","aws/credentials/ec2rolecreds","aws/credentials/endpointcreds","aws/credentials/stscreds","aws/defaults","aws/ec2metadata","aws/endpoints","aws/request","aws/session","aws/signer/v4","internal/shareddefaults","private/protocol","private/protocol/query","private/protocol/query/queryutil","private/protocol/rest","private/protocol/restxml","private/protocol/xml/xmlutil","service/s3","service/s3/s3iface","service/s3/s3manager","service/sts"]
   revision = "2fe57096de348e6cff4031af99254613f8ef73ea"
 
 [[projects]]
@@ -131,12 +94,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/dropbox/dropbox-sdk-go-unofficial"
-  packages = [
-    "dropbox",
-    "dropbox/async",
-    "dropbox/file_properties",
-    "dropbox/files"
-  ]
+  packages = ["dropbox","dropbox/async","dropbox/file_properties","dropbox/files"]
   revision = "9c27e83ceccc8f8bbc9afdc17c50798529d608b1"
 
 [[projects]]
@@ -173,6 +131,12 @@
   name = "github.com/jmespath/go-jmespath"
   packages = ["."]
   revision = "0b12d6b5"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/kardianos/osext"
+  packages = ["."]
+  revision = "ae77be60afb1dcacde03767a8c37337fad28ac14"
 
 [[projects]]
   branch = "master"
@@ -223,13 +187,7 @@
 
 [[projects]]
   name = "github.com/pengsrc/go-shared"
-  packages = [
-    "buffer",
-    "check",
-    "convert",
-    "log",
-    "reopen"
-  ]
+  packages = ["buffer","check","convert","log","reopen"]
   revision = "b98065a377794d577e2a0e32869378b9ce4b8952"
   version = "v0.1.1"
 
@@ -270,6 +228,12 @@
   version = "v1.2.0"
 
 [[projects]]
+  name = "github.com/sevlyar/go-daemon"
+  packages = ["."]
+  revision = "e49ef56654f54139c4dc0285f973f74e9649e729"
+  version = "v0.1.2"
+
+[[projects]]
   branch = "master"
   name = "github.com/skratchdot/open-golang"
   packages = ["open"]
@@ -278,10 +242,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/spf13/cobra"
-  packages = [
-    ".",
-    "doc"
-  ]
+  packages = [".","doc"]
   revision = "0c34d16c3123764e413b9ed982ada58b1c3d53ea"
 
 [[projects]]
@@ -293,10 +254,7 @@
 [[projects]]
   branch = "master"
   name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require"
-  ]
+  packages = ["assert","require"]
   revision = "87b1dfb5b2fa649f52695dd9eae19abe404a4308"
 
 [[projects]]
@@ -307,87 +265,38 @@
 
 [[projects]]
   name = "github.com/yunify/qingstor-sdk-go"
-  packages = [
-    ".",
-    "config",
-    "logger",
-    "request",
-    "request/builder",
-    "request/data",
-    "request/errors",
-    "request/signer",
-    "request/unpacker",
-    "service",
-    "utils"
-  ]
+  packages = [".","config","logger","request","request/builder","request/data","request/errors","request/signer","request/unpacker","service","utils"]
   revision = "51fa3b6bb3c24f4d646eefff251cd2e6ba716600"
   version = "v2.2.9"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/crypto"
-  packages = [
-    "bcrypt",
-    "blowfish",
-    "curve25519",
-    "ed25519",
-    "ed25519/internal/edwards25519",
-    "nacl/secretbox",
-    "pbkdf2",
-    "poly1305",
-    "salsa20/salsa",
-    "scrypt",
-    "ssh",
-    "ssh/agent",
-    "ssh/terminal"
-  ]
+  packages = ["bcrypt","blowfish","curve25519","ed25519","ed25519/internal/edwards25519","nacl/secretbox","pbkdf2","poly1305","salsa20/salsa","scrypt","ssh","ssh/agent","ssh/terminal"]
   revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
-  packages = [
-    "context",
-    "context/ctxhttp",
-    "html",
-    "html/atom",
-    "webdav",
-    "webdav/internal/xml"
-  ]
+  packages = ["context","context/ctxhttp","html","html/atom","webdav","webdav/internal/xml"]
   revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/oauth2"
-  packages = [
-    ".",
-    "google",
-    "internal",
-    "jws",
-    "jwt"
-  ]
+  packages = [".","google","internal","jws","jwt"]
   revision = "30785a2c434e431ef7c507b54617d6a951d5f2b4"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/sys"
-  packages = [
-    "unix",
-    "windows"
-  ]
+  packages = ["unix","windows"]
   revision = "fff93fa7cd278d84afc205751523809c464168ab"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
-  packages = [
-    "internal/gen",
-    "internal/triegen",
-    "internal/ucd",
-    "transform",
-    "unicode/cldr",
-    "unicode/norm"
-  ]
+  packages = ["internal/gen","internal/triegen","internal/ucd","transform","unicode/cldr","unicode/norm"]
   revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
 
 [[projects]]
@@ -399,30 +308,12 @@
 [[projects]]
   branch = "master"
   name = "google.golang.org/api"
-  packages = [
-    "drive/v3",
-    "gensupport",
-    "googleapi",
-    "googleapi/internal/uritemplates",
-    "storage/v1"
-  ]
+  packages = ["drive/v3","gensupport","googleapi","googleapi/internal/uritemplates","storage/v1"]
   revision = "de3aa2cfa7f1c18dcb7f91738099bad280117b8e"
 
 [[projects]]
   name = "google.golang.org/appengine"
-  packages = [
-    ".",
-    "internal",
-    "internal/app_identity",
-    "internal/base",
-    "internal/datastore",
-    "internal/log",
-    "internal/modules",
-    "internal/remote_api",
-    "internal/urlfetch",
-    "log",
-    "urlfetch"
-  ]
+  packages = [".","internal","internal/app_identity","internal/base","internal/datastore","internal/log","internal/modules","internal/remote_api","internal/urlfetch","log","urlfetch"]
   revision = "150dc57a1b433e64154302bdc40b6bb8aefa313a"
   version = "v1.0.0"
 
@@ -435,6 +326,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bbb981a57fa3540cbfdf3f4255a8eb6b7b9980af2259cffab2f0eddcc3818bcc"
+  inputs-digest = "b055fbeaf874ae057930914057a0c6b9f76272af6d736500fe1ea03b0a386860"
   solver-name = "gps-cdcl"
   solver-version = 1
