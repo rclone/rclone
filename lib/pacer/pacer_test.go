@@ -212,7 +212,7 @@ func TestBeginCall(t *testing.T) {
 	connTime := time.Now()
 	p.connTokens <- struct{}{}
 	time.Sleep(1 * time.Millisecond)
-	paceTime := waitForPace(p, 10*time.Millisecond)
+	paceTime := waitForPace(p, 1000*time.Millisecond)
 	if paceTime.IsZero() {
 		t.Errorf("beginSleep didn't fire")
 	} else if paceTime.Sub(startTime) < 0 {
@@ -232,7 +232,7 @@ func TestBeginCallZeroConnections(t *testing.T) {
 	startTime := time.Now()
 	p.pacer <- struct{}{}
 	time.Sleep(1 * time.Millisecond)
-	paceTime := waitForPace(p, 10*time.Millisecond)
+	paceTime := waitForPace(p, 1000*time.Millisecond)
 	if paceTime.IsZero() {
 		t.Errorf("beginSleep didn't fire")
 	} else if paceTime.Sub(startTime) < 0 {
