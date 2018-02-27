@@ -45,9 +45,21 @@ log](https://github.com/ncw/rclone/commits/master).  The most recent
 release will have the largest `Version Tag` and `Commit Number` and
 will normally be at the end of the list.
 
-The beta releases haven't been through the full integration test suite
-like the releases.  However it is useful to try the latest beta before
-reporting an issue.
+Some beta releases may have a branch name also:
+
+    {Version Tag}-{Commit Number}-g{Git Commit Hash}-{Branch Name}
+
+The presence of `Branch Name` indicates that this is a feature under
+development which will at some point be merged into the normal betas
+and then into a normal release.
+
+The beta releases haven't been through the [full integration test
+suite](https://pub.rclone.org/integration-tests/) like the releases.
+However it is useful to try the latest beta before reporting an issue.
+
+Note that [rclone.org](https://rclone.org/) is only updated on
+releases - to see the documentation for the latest beta go to
+[tip.rclone.org](https://tip.rclone.org/).
 
 Downloads for scripting
 =======================
