@@ -491,7 +491,7 @@ func (f *Fs) Move(src fs.Object, remote string) (fs.Object, error) {
 	} else if err != nil {
 		// not quite clear, but probably trying to move a file across file system
 		// boundaries. Copying might still work.
-		fs.Errorf(src, "Can't move: %v: trying copy", err)
+		fs.Debugf(src, "Can't move: %v: trying copy", err)
 		return nil, fs.ErrorCantMove
 	}
 
@@ -545,7 +545,7 @@ func (f *Fs) DirMove(src fs.Fs, srcRemote, dstRemote string) error {
 	} else if err != nil {
 		// not quite clear, but probably trying to move directory across file system
 		// boundaries. Copying might still work.
-		fs.Errorf(src, "Can't move dir: %v: trying copy", err)
+		fs.Debugf(src, "Can't move dir: %v: trying copy", err)
 		return fs.ErrorCantDirMove
 	}
 	return nil
