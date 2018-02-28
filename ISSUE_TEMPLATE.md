@@ -24,17 +24,20 @@ The Rclone Developers
 
 -->
 
-## What is your rclone version (eg output from `rclone -V`)
+#### What is the problem you are having with rclone?
 
 
-## Which OS you are using and how many bits (eg Windows 7, 64 bit)
+#### What is your rclone version (eg output from `rclone -V`)
 
 
-##  Which cloud storage system are you using? (eg Google Drive)
+#### Which OS you are using and how many bits (eg Windows 7, 64 bit)
 
 
-## The command you were trying to run (eg `rclone copy /tmp remote:tmp`)
+####  Which cloud storage system are you using? (eg Google Drive)
 
 
-## A log from the command with the `-vv` flag (eg output from `rclone -vv copy /tmp remote:tmp`)
+#### The command you were trying to run (eg `rclone copy /tmp remote:tmp`)
+
+
+#### A log from the command with the `-vv` flag (eg output from `rclone -vv copy /tmp remote:tmp`)
 
