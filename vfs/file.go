@@ -252,6 +252,14 @@ func (f *File) setObject(o fs.Object) {
 	f.d.addObject(f)
 }
 
+// Update the object but don't update the directory cache - for use by
+// the directory cache
+func (f *File) setObjectNoUpdate(o fs.Object) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.o = o
+}
+
 // Get the current fs.Object - may be nil
 func (f *File) getObject() fs.Object {
 	f.mu.Lock()
