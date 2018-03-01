@@ -252,6 +252,13 @@ func (f *File) setObject(o fs.Object) {
 	f.d.addObject(f)
 }
 
+// Get the current fs.Object - may be nil
+func (f *File) getObject() fs.Object {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.o
+}
+
 // exists returns whether the file exists already
 func (f *File) exists() bool {
 	f.mu.Lock()
@@ -284,13 +291,13 @@ func (f *File) waitForValidObject() (o fs.Object, err error) {
 // openRead open the file for read
 func (f *File) openRead() (fh *ReadFileHandle, err error) {
 	// if o is nil it isn't valid yet
-	o, err := f.waitForValidObject()
+	_, err = f.waitForValidObject()
 	if err != nil {
 		return nil, err
 	}
 	// fs.Debugf(o, "File.openRead")
 
-	fh, err = newReadFileHandle(f, o)
+	fh, err = newReadFileHandle(f)
 	if err != nil {
 		fs.Errorf(f, "File.openRead failed: %v", err)
 		return nil, err

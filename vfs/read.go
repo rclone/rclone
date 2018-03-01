@@ -17,7 +17,6 @@ type ReadFileHandle struct {
 	mu         sync.Mutex
 	closed     bool // set if handle has been closed
 	r          *accounting.Account
-	o          fs.Object
 	readCalled bool  // set if read has been called
 	size       int64 // size of the object
 	offset     int64 // offset of read of o
@@ -26,6 +25,7 @@ type ReadFileHandle struct {
 	file       *File
 	hash       *hash.MultiHasher
 	opened     bool
+	remote     string
 }
 
 // Check interfaces
@@ -36,9 +36,10 @@ var (
 	_ io.Closer   = (*ReadFileHandle)(nil)
 )
 
-func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
+func newReadFileHandle(f *File) (*ReadFileHandle, error) {
 	var mhash *hash.MultiHasher
 	var err error
+	o := f.getObject()
 	if !f.d.vfs.Opt.NoChecksum {
 		mhash, err = hash.NewMultiHasherTypes(o.Fs().Hashes())
 		if err != nil {
@@ -47,7 +48,7 @@ func newReadFileHandle(f *File, o fs.Object) (*ReadFileHandle, error) {
 	}
 
 	fh := &ReadFileHandle{
-		o:      o,
+		remote: o.Remote(),
 		noSeek: f.d.vfs.Opt.NoSeek,
 		file:   f,
 		hash:   mhash,
@@ -62,13 +63,14 @@ func (fh *ReadFileHandle) openPending() (err error) {
 	if fh.opened {
 		return nil
 	}
-	r, err := fh.o.Open()
+	o := fh.file.getObject()
+	r, err := o.Open()
 	if err != nil {
 		return err
 	}
-	fh.r = accounting.NewAccount(r, fh.o).WithBuffer() // account the transfer
+	fh.r = accounting.NewAccount(r, o).WithBuffer() // account the transfer
 	fh.opened = true
-	accounting.Stats.Transferring(fh.o.Remote())
+	accounting.Stats.Transferring(o.Remote())
 	return nil
 }
 
@@ -107,23 +109,24 @@ func (fh *ReadFileHandle) seek(offset int64, reopen bool) (err error) {
 	r := oldReader
 	// Can we seek it directly?
 	if do, ok := oldReader.(io.Seeker); !reopen && ok {
-		fs.Debugf(fh.o, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
+		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d (io.Seeker)", fh.offset, offset)
 		_, err = do.Seek(offset, 0)
 		if err != nil {
-			fs.Debugf(fh.o, "ReadFileHandle.Read io.Seeker failed: %v", err)
+			fs.Debugf(fh.remote, "ReadFileHandle.Read io.Seeker failed: %v", err)
 			return err
 		}
 	} else {
-		fs.Debugf(fh.o, "ReadFileHandle.seek from %d to %d", fh.offset, offset)
+		fs.Debugf(fh.remote, "ReadFileHandle.seek from %d to %d", fh.offset, offset)
 		// close old one
 		err = oldReader.Close()
 		if err != nil {
-			fs.Debugf(fh.o, "ReadFileHandle.Read seek close old failed: %v", err)
+			fs.Debugf(fh.remote, "ReadFileHandle.Read seek close old failed: %v", err)
 		}
 		// re-open with a seek
-		r, err = fh.o.Open(&fs.SeekOption{Offset: offset})
+		o := fh.file.getObject()
+		r, err = o.Open(&fs.SeekOption{Offset: offset})
 		if err != nil {
-			fs.Debugf(fh.o, "ReadFileHandle.Read seek failed: %v", err)
+			fs.Debugf(fh.remote, "ReadFileHandle.Read seek failed: %v", err)
 			return err
 		}
 	}
@@ -187,9 +190,9 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 	if err != nil {
 		return 0, err
 	}
-	// fs.Debugf(fh.o, "ReadFileHandle.Read size %d offset %d", reqSize, off)
+	// fs.Debugf(fh.remote, "ReadFileHandle.Read size %d offset %d", reqSize, off)
 	if fh.closed {
-		fs.Errorf(fh.o, "ReadFileHandle.Read error: %v", EBADF)
+		fs.Errorf(fh.remote, "ReadFileHandle.Read error: %v", EBADF)
 		return 0, ECLOSED
 	}
 	doSeek := off != fh.offset
@@ -206,7 +209,7 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 			// file - if so just return EOF leaving the underlying
 			// file in an unchanged state.
 			if off >= fh.size {
-				fs.Debugf(fh.o, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", off, fh.size)
+				fs.Debugf(fh.remote, "ReadFileHandle.Read attempt to read beyond end of file: %d > %d", off, fh.size)
 				return 0, io.EOF
 			}
 			// Otherwise do the seek
@@ -235,20 +238,20 @@ func (fh *ReadFileHandle) readAt(p []byte, off int64) (n int, err error) {
 			break
 		}
 		retries++
-		fs.Errorf(fh.o, "ReadFileHandle.Read error: low level retry %d/%d: %v", retries, fs.Config.LowLevelRetries, err)
+		fs.Errorf(fh.remote, "ReadFileHandle.Read error: low level retry %d/%d: %v", retries, fs.Config.LowLevelRetries, err)
 		doSeek = true
 		doReopen = true
 	}
 	if err != nil {
-		fs.Errorf(fh.o, "ReadFileHandle.Read error: %v", err)
+		fs.Errorf(fh.remote, "ReadFileHandle.Read error: %v", err)
 	} else {
 		fh.offset = newOffset
-		// fs.Debugf(fh.o, "ReadFileHandle.Read OK")
+		// fs.Debugf(fh.remote, "ReadFileHandle.Read OK")
 
 		if fh.hash != nil {
 			_, err = fh.hash.Write(p[:n])
 			if err != nil {
-				fs.Errorf(fh.o, "ReadFileHandle.Read HashError: %v", err)
+				fs.Errorf(fh.remote, "ReadFileHandle.Read HashError: %v", err)
 				return 0, err
 			}
 		}
@@ -266,8 +269,9 @@ func (fh *ReadFileHandle) checkHash() error {
 		return nil
 	}
 
+	o := fh.file.getObject()
 	for hashType, dstSum := range fh.hash.Sums() {
-		srcSum, err := fh.o.Hash(hashType)
+		srcSum, err := o.Hash(hashType)
 		if err != nil {
 			return err
 		}
@@ -324,7 +328,7 @@ func (fh *ReadFileHandle) close() error {
 	fh.closed = true
 
 	if fh.opened {
-		accounting.Stats.DoneTransferring(fh.o.Remote(), true)
+		accounting.Stats.DoneTransferring(fh.remote, true)
 		// Close first so that we have hashes
 		err := fh.r.Close()
 		if err != nil {
@@ -355,14 +359,14 @@ func (fh *ReadFileHandle) Flush() error {
 	if !fh.opened {
 		return nil
 	}
-	// fs.Debugf(fh.o, "ReadFileHandle.Flush")
+	// fs.Debugf(fh.remote, "ReadFileHandle.Flush")
 
 	if err := fh.checkHash(); err != nil {
-		fs.Errorf(fh.o, "ReadFileHandle.Flush error: %v", err)
+		fs.Errorf(fh.remote, "ReadFileHandle.Flush error: %v", err)
 		return err
 	}
 
-	// fs.Debugf(fh.o, "ReadFileHandle.Flush OK")
+	// fs.Debugf(fh.remote, "ReadFileHandle.Flush OK")
 	return nil
 }
 
@@ -377,15 +381,15 @@ func (fh *ReadFileHandle) Release() error {
 		return nil
 	}
 	if fh.closed {
-		fs.Debugf(fh.o, "ReadFileHandle.Release nothing to do")
+		fs.Debugf(fh.remote, "ReadFileHandle.Release nothing to do")
 		return nil
 	}
-	fs.Debugf(fh.o, "ReadFileHandle.Release closing")
+	fs.Debugf(fh.remote, "ReadFileHandle.Release closing")
 	err := fh.close()
 	if err != nil {
-		fs.Errorf(fh.o, "ReadFileHandle.Release error: %v", err)
+		fs.Errorf(fh.remote, "ReadFileHandle.Release error: %v", err)
 	} else {
-		// fs.Debugf(fh.o, "ReadFileHandle.Release OK")
+		// fs.Debugf(fh.remote, "ReadFileHandle.Release OK")
 	}
 	return err
 }
