@@ -290,23 +290,33 @@ from the sync.
 ### `--files-from` - Read list of source-file names ###
 
 This reads a list of file names from the file passed in and **only**
-these files are transferred.  The filtering rules are ignored
+these files are transferred.  The **filtering rules are ignored**
 completely if you use this option.
 
 This option can be repeated to read from more than one file.  These
 are read in the order that they are placed on the command line.
 
-Prepare a file like this `files-from.txt`
+Paths within the `--files-from` file will be interpreted as starting
+with the root specified in the command.  Leading `/` characters are
+ignored.
+
+For example, suppose you had `files-from.txt` with this content:
 
     # comment
     file1.jpg
-    file2.jpg
+    subdir/file2.jpg
 
-Then use as `--files-from files-from.txt`.  This will only transfer
-`file1.jpg` and `file2.jpg` providing they exist.
+You could then use it like this:
 
-For example, let's say you had a few files you want to back up
-regularly with these absolute paths:
+    rclone copy --files-from files-from.txt /home/me/pics remote:pics
+
+This will transfer these files only (if they exist)
+
+    /home/me/pics/file1.jpg        → remote:pics/file1.jpg
+    /home/me/pics/subdir/file2.jpg → remote:pics/subdirfile1.jpg
+
+To take a more complicated example, let's say you had a few files you
+want to back up regularly with these absolute paths:
 
     /home/user1/important
     /home/user1/dir/file
@@ -325,7 +335,11 @@ You could then copy these to a remote like this
     rclone copy --files-from files-from.txt /home remote:backup
 
 The 3 files will arrive in `remote:backup` with the paths as in the
-`files-from.txt`.
+`files-from.txt` like this:
+
+    /home/user1/important → remote:backup/user1/important
+    /home/user1/dir/file  → remote:backup/user1/dir/file
+    /home/user2/stuff     → remote:backup/stuff
 
 You could of course choose `/` as the root too in which case your
 `files-from.txt` might look like this.
@@ -338,7 +352,11 @@ And you would transfer it like this
 
     rclone copy --files-from files-from.txt / remote:backup
 
-In this case there will be an extra `home` directory on the remote.
+In this case there will be an extra `home` directory on the remote:
+
+    /home/user1/important → remote:home/backup/user1/important
+    /home/user1/dir/file  → remote:home/backup/user1/dir/file
+    /home/user2/stuff     → remote:home/backup/stuff
 
 ### `--min-size` - Don't transfer any file smaller than this ###
 
