@@ -671,6 +671,9 @@ type localOpenFile struct {
 func (file *localOpenFile) Read(p []byte) (n int, err error) {
 	// Check if file has the same size and modTime
 	fi, err := file.fd.Stat()
+	if err != nil {
+		return 0, errors.Wrap(err, "can't read status of source file while transferring")
+	}
 	if file.o.size != fi.Size() || file.o.modTime != fi.ModTime() {
 		return 0, errors.New("can't copy - source file is being updated")
 	}
