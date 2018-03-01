@@ -405,6 +405,16 @@ func (f *Fs) itemToDirEntry(remote string, object *storage.Blob, isDirectory boo
 	return o, nil
 }
 
+// mark the container as being OK
+func (f *Fs) markContainerOK() {
+	if f.container != "" {
+		f.containerOKMu.Lock()
+		f.containerOK = true
+		f.containerDeleted = false
+		f.containerOKMu.Unlock()
+	}
+}
+
 // listDir lists a single directory
 func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 	err = f.list(dir, false, listChunkSize, func(remote string, object *storage.Blob, isDirectory bool) error {
@@ -420,6 +430,8 @@ func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 	if err != nil {
 		return nil, err
 	}
+	// container must be present if listing succeeded
+	f.markContainerOK()
 	return entries, nil
 }
 
@@ -491,6 +503,8 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if err != nil {
 		return err
 	}
+	// container must be present if listing succeeded
+	f.markContainerOK()
 	return list.Flush()
 }
 

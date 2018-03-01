@@ -551,6 +551,15 @@ func (f *Fs) itemToDirEntry(remote string, object *api.File, isDirectory bool, l
 	return o, nil
 }
 
+// mark the bucket as being OK
+func (f *Fs) markBucketOK() {
+	if f.bucket != "" {
+		f.bucketOKMu.Lock()
+		f.bucketOK = true
+		f.bucketOKMu.Unlock()
+	}
+}
+
 // listDir lists a single directory
 func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 	last := ""
@@ -567,6 +576,8 @@ func (f *Fs) listDir(dir string) (entries fs.DirEntries, err error) {
 	if err != nil {
 		return nil, err
 	}
+	// bucket must be present if listing succeeded
+	f.markBucketOK()
 	return entries, nil
 }
 
@@ -634,6 +645,8 @@ func (f *Fs) ListR(dir string, callback fs.ListRCallback) (err error) {
 	if err != nil {
 		return err
 	}
+	// bucket must be present if listing succeeded
+	f.markBucketOK()
 	return list.Flush()
 }
 
