@@ -44,6 +44,7 @@ const (
 	cryptPassword2     = "NlgTBEIe-qibA7v-FoMfuX6Cw8KlLai_aMvV"                                                     // mv4mZW572HM
 	cryptedTextBase64  = "UkNMT05FAAC320i2xIee0BiNyknSPBn+Qcw3q9FhIFp3tvq6qlqvbsno3PnxmEFeJG3jDBnR/wku2gHWeQ=="     // one content
 	cryptedText2Base64 = "UkNMT05FAAATcQkVsgjBh8KafCKcr0wdTa1fMmV0U8hsCLGFoqcvxKVmvv7wx3Hf5EXxFcki2FFV4sdpmSrb9Q==" // updated content
+	cryptedText3Base64 = "UkNMT05FAAB/f7YtYKbPfmk9+OX/ffN3qG3OEdWT+z74kxCX9V/YZwJ4X2DN3HOnUC3gKQ4Gcoud5UtNvQ=="     // test content
 )
 
 var (
@@ -444,30 +445,132 @@ func TestInternalWrappedFsChangeNotSeen(t *testing.T) {
 	runInstance.writeRemoteBytes(t, rootFs, "data.bin", testData)
 
 	// update in the wrapped fs
+	originalSize, err := runInstance.size(t, rootFs, "data.bin")
+	require.NoError(t, err)
+	log.Printf("original size: %v", originalSize)
+
 	o, err := cfs.UnWrap().NewObject(runInstance.encryptRemoteIfNeeded(t, "data.bin"))
 	require.NoError(t, err)
-	wrappedTime := time.Now().Add(time.Hour * -1)
-	err = o.SetModTime(wrappedTime)
+	expectedSize := int64(len([]byte("test content")))
+	var data2 []byte
+	if runInstance.rootIsCrypt {
+		data2, err = base64.StdEncoding.DecodeString(cryptedText3Base64)
+		require.NoError(t, err)
+		expectedSize = expectedSize + 1 // FIXME newline gets in, likely test data issue
+	} else {
+		data2 = []byte("test content")
+	}
+	objInfo := object.NewStaticObjectInfo(runInstance.encryptRemoteIfNeeded(t, "data.bin"), time.Now(), int64(len(data2)), true, nil, cfs.UnWrap())
+	err = o.Update(bytes.NewReader(data2), objInfo)
 	require.NoError(t, err)
+	require.Equal(t, int64(len(data2)), o.Size())
+	log.Printf("updated size: %v", len(data2))
 
 	// get a new instance from the cache
 	if runInstance.wrappedIsExternal {
 		err = runInstance.retryBlock(func() error {
-			coModTime, err := runInstance.modTime(t, rootFs, "data.bin")
+			coSize, err := runInstance.size(t, rootFs, "data.bin")
 			if err != nil {
 				return err
 			}
-			if coModTime.Unix() != o.ModTime().Unix() {
-				return errors.Errorf("%v <> %v", coModTime, o.ModTime())
+			if coSize != expectedSize {
+				return errors.Errorf("%v <> %v", coSize, expectedSize)
 			}
 			return nil
 		}, 12, time.Second*10)
 		require.NoError(t, err)
 	} else {
-		coModTime, err := runInstance.modTime(t, rootFs, "data.bin")
+		coSize, err := runInstance.size(t, rootFs, "data.bin")
 		require.NoError(t, err)
-		require.NotEqual(t, coModTime.Unix(), o.ModTime().Unix())
+		require.NotEqual(t, coSize, expectedSize)
 	}
+}
+
+func TestInternalMoveWithNotify(t *testing.T) {
+	id := fmt.Sprintf("timwn%v", time.Now().Unix())
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil, nil)
+	defer runInstance.cleanupFs(t, rootFs, boltDb)
+	if !runInstance.wrappedIsExternal {
+		t.Skipf("Not external")
+	}
+
+	cfs, err := runInstance.getCacheFs(rootFs)
+	require.NoError(t, err)
+
+	srcName := runInstance.encryptRemoteIfNeeded(t, "test") + "/" + runInstance.encryptRemoteIfNeeded(t, "one") + "/" + runInstance.encryptRemoteIfNeeded(t, "data.bin")
+	dstName := runInstance.encryptRemoteIfNeeded(t, "test") + "/" + runInstance.encryptRemoteIfNeeded(t, "second") + "/" + runInstance.encryptRemoteIfNeeded(t, "data.bin")
+	// create some rand test data
+	var testData []byte
+	if runInstance.rootIsCrypt {
+		testData, err = base64.StdEncoding.DecodeString(cryptedTextBase64)
+		require.NoError(t, err)
+	} else {
+		testData = []byte("test content")
+	}
+	_ = cfs.UnWrap().Mkdir(runInstance.encryptRemoteIfNeeded(t, "test"))
+	_ = cfs.UnWrap().Mkdir(runInstance.encryptRemoteIfNeeded(t, "test/one"))
+	_ = cfs.UnWrap().Mkdir(runInstance.encryptRemoteIfNeeded(t, "test/second"))
+	srcObj := runInstance.writeObjectBytes(t, cfs.UnWrap(), srcName, testData)
+
+	// list in mount
+	_, err = runInstance.list(t, rootFs, "test")
+	require.NoError(t, err)
+	_, err = runInstance.list(t, rootFs, "test/one")
+	require.NoError(t, err)
+
+	// move file
+	_, err = cfs.UnWrap().Features().Move(srcObj, dstName)
+	require.NoError(t, err)
+
+	err = runInstance.retryBlock(func() error {
+		li, err := runInstance.list(t, rootFs, "test")
+		if err != nil {
+			log.Printf("err: %v", err)
+			return err
+		}
+		if len(li) != 2 {
+			log.Printf("not expected listing /test: %v", li)
+			return errors.Errorf("not expected listing /test: %v", li)
+		}
+
+		li, err = runInstance.list(t, rootFs, "test/one")
+		if err != nil {
+			log.Printf("err: %v", err)
+			return err
+		}
+		if len(li) != 0 {
+			log.Printf("not expected listing /test/one: %v", li)
+			return errors.Errorf("not expected listing /test/one: %v", li)
+		}
+
+		li, err = runInstance.list(t, rootFs, "test/second")
+		if err != nil {
+			log.Printf("err: %v", err)
+			return err
+		}
+		if len(li) != 1 {
+			log.Printf("not expected listing /test/second: %v", li)
+			return errors.Errorf("not expected listing /test/second: %v", li)
+		}
+		if fi, ok := li[0].(os.FileInfo); ok {
+			if fi.Name() != "data.bin" {
+				log.Printf("not expected name: %v", fi.Name())
+				return errors.Errorf("not expected name: %v", fi.Name())
+			}
+		} else if di, ok := li[0].(fs.DirEntry); ok {
+			if di.Remote() != "test/second/data.bin" {
+				log.Printf("not expected remote: %v", di.Remote())
+				return errors.Errorf("not expected remote: %v", di.Remote())
+			}
+		} else {
+			log.Printf("unexpected listing: %v", li)
+			return errors.Errorf("unexpected listing: %v", li)
+		}
+
+		log.Printf("complete listing: %v", li)
+		return nil
+	}, 12, time.Second*10)
+	require.NoError(t, err)
 }
 
 func TestInternalChangeSeenAfterDirCacheFlush(t *testing.T) {
@@ -1659,6 +1762,23 @@ func (r *run) modTime(t *testing.T, rootFs fs.Fs, src string) (time.Time, error)
 		return time.Time{}, err
 	}
 	return obj1.ModTime(), nil
+}
+
+func (r *run) size(t *testing.T, rootFs fs.Fs, src string) (int64, error) {
+	var err error
+
+	if r.useMount {
+		fi, err := os.Stat(path.Join(runInstance.mntDir, src))
+		if err != nil {
+			return int64(0), err
+		}
+		return fi.Size(), nil
+	}
+	obj1, err := rootFs.NewObject(src)
+	if err != nil {
+		return int64(0), err
+	}
+	return obj1.Size(), nil
 }
 
 func (r *run) updateData(t *testing.T, rootFs fs.Fs, src, data, append string) error {

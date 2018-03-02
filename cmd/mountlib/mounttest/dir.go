@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ncw/rclone/fs"
 )
 
 // TestDirLs checks out listing

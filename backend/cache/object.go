@@ -132,17 +132,34 @@ func (o *Object) abs() string {
 
 // ModTime returns the cached ModTime
 func (o *Object) ModTime() time.Time {
+	_ = o.refresh()
 	return time.Unix(0, o.CacheModTime)
 }
 
 // Size returns the cached Size
 func (o *Object) Size() int64 {
+	_ = o.refresh()
 	return o.CacheSize
 }
 
 // Storable returns the cached Storable
 func (o *Object) Storable() bool {
+	_ = o.refresh()
 	return o.CacheStorable
+}
+
+// refresh will check if the object info is expired and request the info from source if it is
+// all these conditions must be true to ignore a refresh
+// 1. cache ts didn't expire yet
+// 2. is not pending a notification from the wrapped fs
+func (o *Object) refresh() error {
+	isNotified := o.CacheFs.isNotifiedRemote(o.Remote())
+	isExpired := time.Now().After(o.CacheTs.Add(o.CacheFs.fileAge))
+	if !isExpired && !isNotified {
+		return nil
+	}
+
+	return o.refreshFromSource(true)
 }
 
 // refreshFromSource requests the original FS for the object in case it comes from a cached entry
@@ -283,6 +300,7 @@ func (o *Object) Remove() error {
 // Hash requests a hash of the object and stores in the cache
 // since it might or might not be called, this is lazy loaded
 func (o *Object) Hash(ht hash.Type) (string, error) {
+	_ = o.refresh()
 	if o.CacheHashes == nil {
 		o.CacheHashes = make(map[hash.Type]string)
 	}

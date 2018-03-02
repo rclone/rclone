@@ -7,10 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"github.com/ncw/rclone/fs"
 )
 
 func dirCreate(t *testing.T, r *fstest.Run) (*VFS, *Dir, fstest.Item) {
