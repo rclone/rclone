@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"time"
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs"
@@ -27,6 +28,7 @@ var (
 	MaxReadAhead       fs.SizeSuffix = 128 * 1024
 	ExtraOptions       []string
 	ExtraFlags         []string
+	AttrTimeout        = 0 * time.Second // how long the kernel caches attribute for
 )
 
 // Check is folder is empty
@@ -143,6 +145,20 @@ can't use retries in the same way without making local copies of the
 uploads. Look at the **EXPERIMENTAL** [file caching](#file-caching)
 for solutions to make ` + commandName + ` mount more reliable.
 
+### Attribute caching
+
+You can use the flag --attr-timeout to set the time the kernel caches
+the attributes (size, modification time etc) for directory entries.
+
+The default is 0s - no caching - which is recommended for filesystems
+which can change outside the control of the kernel.
+
+If you set it higher ('1s' or '1m' say) then the kernel will call back
+to rclone less often making it more efficient, however there may be
+strange effects when files change on the remote.
+
+This is the same as setting the attr_timeout option in mount.fuse.
+
 ### Filters
 
 Note that all the rclone filters can be used to select a subset of the
@@ -203,6 +219,7 @@ will see all files and folders immediately in this mode.
 	flags.BoolVarP(flagSet, &DefaultPermissions, "default-permissions", "", DefaultPermissions, "Makes kernel enforce access control based on the file mode.")
 	flags.BoolVarP(flagSet, &WritebackCache, "write-back-cache", "", WritebackCache, "Makes kernel buffer writes before sending them to rclone. Without this, writethrough caching is used.")
 	flags.FVarP(flagSet, &MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
+	flags.DurationVarP(flagSet, &AttrTimeout, "attr-timeout", "", AttrTimeout, "Time for which file/directory attributes are cached.")
 	flags.StringArrayVarP(flagSet, &ExtraOptions, "option", "o", []string{}, "Option for libfuse/WinFsp. Repeat if required.")
 	flags.StringArrayVarP(flagSet, &ExtraFlags, "fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
 	flags.BoolVarP(flagSet, &Daemon, "daemon", "", Daemon, "Run mount as a daemon (background mode).")
