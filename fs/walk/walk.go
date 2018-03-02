@@ -103,7 +103,7 @@ func walk(f fs.Fs, path string, includeAll bool, maxLevel int, fn Func, listDir 
 		doClose.Do(func() {
 			close(quit)
 			go func() {
-				for _ = range in {
+				for range in {
 					traversing.Done()
 				}
 			}()
