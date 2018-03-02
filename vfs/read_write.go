@@ -192,6 +192,7 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 	}
 	fh.File = fd
 	fh.opened = true
+	fh.file.addRWOpen()
 	fh.d.addObject(fh.file) // make sure the directory has this object in it now
 	return nil
 }
@@ -246,7 +247,12 @@ func (fh *RWFileHandle) close() (err error) {
 		return ECLOSED
 	}
 	fh.closed = true
-	defer fh.d.vfs.cache.close(fh.remote)
+	defer func() {
+		if fh.opened {
+			fh.file.delRWOpen()
+		}
+		fh.d.vfs.cache.close(fh.remote)
+	}()
 	rdwrMode := fh.flags & accessModeMask
 	writer := rdwrMode != os.O_RDONLY
 

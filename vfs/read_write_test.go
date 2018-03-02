@@ -74,8 +74,14 @@ func TestRWFileHandleMethodsRead(t *testing.T) {
 	// Size
 	assert.Equal(t, int64(16), fh.Size())
 
+	// No opens yet
+	assert.Equal(t, 0, fh.file.rwOpens())
+
 	// Read 1
 	assert.Equal(t, "0", rwReadString(t, fh, 1))
+
+	// Open after the read
+	assert.Equal(t, 1, fh.file.rwOpens())
 
 	// Read remainder
 	assert.Equal(t, "123456789abcdef", rwReadString(t, fh, 256))
@@ -100,6 +106,9 @@ func TestRWFileHandleMethodsRead(t *testing.T) {
 	assert.False(t, fh.closed)
 	assert.Equal(t, nil, fh.Close())
 	assert.True(t, fh.closed)
+
+	// No opens again
+	assert.Equal(t, 0, fh.file.rwOpens())
 
 	// Close again
 	assert.Equal(t, ECLOSED, fh.Close())
@@ -266,6 +275,10 @@ func TestRWFileHandleMethodsWrite(t *testing.T) {
 	vfs, fh := rwHandleCreateWriteOnly(t, r)
 	defer cleanup(t, r, vfs)
 
+	// 1 opens since we opened with O_CREATE and the file didn't
+	// exist in the cache
+	assert.Equal(t, 1, fh.file.rwOpens())
+
 	// String
 	assert.Equal(t, "file1 (rw)", fh.String())
 	assert.Equal(t, "<nil *RWFileHandle>", (*RWFileHandle)(nil).String())
@@ -292,6 +305,9 @@ func TestRWFileHandleMethodsWrite(t *testing.T) {
 	n, err := fh.Write([]byte("hello"))
 	assert.NoError(t, err)
 	assert.Equal(t, 5, n)
+
+	// Open after the write
+	assert.Equal(t, 1, fh.file.rwOpens())
 
 	// Offset #2
 	assert.Equal(t, int64(5), offset())
@@ -322,6 +338,9 @@ func TestRWFileHandleMethodsWrite(t *testing.T) {
 
 	// Close
 	assert.NoError(t, fh.Close())
+
+	// No opens again
+	assert.Equal(t, 0, fh.file.rwOpens())
 
 	// Check double close
 	err = fh.Close()
