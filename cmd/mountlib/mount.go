@@ -23,6 +23,7 @@ var (
 	AllowOther                       = false
 	DefaultPermissions               = false
 	WritebackCache                   = false
+	Daemon                           = false
 	MaxReadAhead       fs.SizeSuffix = 128 * 1024
 	ExtraOptions       []string
 	ExtraFlags         []string
@@ -174,6 +175,14 @@ will see all files and folders immediately in this mode.
 				}
 			}
 
+			// Start background task if --background is specified
+			if Daemon {
+				daemonized := startBackgroundMode()
+				if daemonized {
+					return
+				}
+			}
+
 			err := Mount(fdst, args[1])
 			if err != nil {
 				log.Fatalf("Fatal error: %v", err)
@@ -196,7 +205,7 @@ will see all files and folders immediately in this mode.
 	flags.FVarP(flagSet, &MaxReadAhead, "max-read-ahead", "", "The number of bytes that can be prefetched for sequential reads.")
 	flags.StringArrayVarP(flagSet, &ExtraOptions, "option", "o", []string{}, "Option for libfuse/WinFsp. Repeat if required.")
 	flags.StringArrayVarP(flagSet, &ExtraFlags, "fuse-flag", "", []string{}, "Flags or arguments to be passed direct to libfuse/WinFsp. Repeat if required.")
-	//flags.BoolVarP(flagSet, &foreground, "foreground", "", foreground, "Do not detach.")
+	flags.BoolVarP(flagSet, &Daemon, "daemon", "", Daemon, "Run mount as a daemon (background mode).")
 
 	// Add in the generic flags
 	vfsflags.AddFlags(flagSet)
