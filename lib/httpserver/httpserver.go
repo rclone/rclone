@@ -1,9 +1,10 @@
+// +build go1.7
+
 package httpserver
 
 import (
 	"sync"
 
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -18,8 +19,8 @@ import (
 )
 
 var (
-	startOnce sync.Once
-	router    *mux.Router
+	registerMu sync.Mutex
+	router     *mux.Router
 	// DefaultHTTPPort is the the default port of the HTTP server
 	DefaultHTTPPort = 8083
 	// DefaultHTTPAddr is the the default IP address of the HTTP server
@@ -43,9 +44,6 @@ type Callback func(params map[string]string, writer io.Writer, reader io.Reader)
 
 // bootstrap will be run once only and starts the http server
 func bootstrap(startErr chan error) {
-	router = mux.NewRouter()
-	router.HandleFunc("/", supportsHandler).Name("/")
-
 	fs.Infof("httpserver", "Listening on %s:%d", *httpAddr, *httpPort)
 	server := &http.Server{
 		Addr:         fmt.Sprintf("%s:%d", *httpAddr, *httpPort),
@@ -55,11 +53,7 @@ func bootstrap(startErr chan error) {
 	}
 
 	atexit.Register(func() {
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		defer cancel()
-		if err := server.Shutdown(ctx); err != nil {
-			fs.Errorf("httpserver", "error during stop: %v", err)
-		}
+		stopServer(server)
 	})
 
 	err := server.ListenAndServe()
@@ -73,9 +67,15 @@ func bootstrap(startErr chan error) {
 // fn is the actual callback
 func Register(handler string, fn Callback) error {
 	var err error
+	registerMu.Lock()
+	defer registerMu.Unlock()
 
-	// start the http server
-	startOnce.Do(func() {
+	// start the http server and register a new router
+	// thread safe as Register is locked
+	if router == nil {
+		router = mux.NewRouter()
+		router.HandleFunc("/", supportsHandler).Name("/")
+
 		startErr := make(chan error)
 		go bootstrap(startErr)
 
@@ -83,7 +83,7 @@ func Register(handler string, fn Callback) error {
 		case err = <-startErr:
 		case <-time.After(1 * time.Second):
 		}
-	})
+	}
 	// if an error was registered at startup, we fail the registration
 	if err != nil {
 		return err
@@ -133,6 +133,12 @@ func supportsHandler(w http.ResponseWriter, r *http.Request) {
 		Routes: make([]string, 0),
 		Error:  "",
 	}
+	// this should never be true but let's check it to be sure
+	if router == nil {
+		http.Error(w, "server not started", http.StatusInternalServerError)
+		return
+	}
+
 	err := router.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
 		resp.Routes = append(resp.Routes, route.GetName())
 		return nil
