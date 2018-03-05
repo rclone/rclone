@@ -26,6 +26,9 @@ Use --addr to specify which IP address and port the server should
 listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all
 IPs.  By default it only listens on localhost.
 
+If you set --addr to listen on a public or LAN accessible IP address
+then using Authentication if advised - see the next section for info.
+
 --server-read-timeout and --server-write-timeout can be used to
 control the timeouts on the server.  Note that this is the total time
 for a transfer.
