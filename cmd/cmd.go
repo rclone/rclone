@@ -30,6 +30,8 @@ import (
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/fspath"
 	fslog "github.com/ncw/rclone/fs/log"
+	"github.com/ncw/rclone/fs/rc"
+	"github.com/ncw/rclone/fs/rc/rcflags"
 	"github.com/ncw/rclone/lib/atexit"
 )
 
@@ -126,6 +128,7 @@ func init() {
 	// Add global flags
 	configflags.AddFlags(pflag.CommandLine)
 	filterflags.AddFlags(pflag.CommandLine)
+	rcflags.AddFlags(pflag.CommandLine)
 
 	Root.Run = runRoot
 	Root.Flags().BoolVarP(&version, "version", "V", false, "Print the version number")
@@ -382,6 +385,9 @@ func initConfig() {
 
 	// Write the args for debug purposes
 	fs.Debugf("rclone", "Version %q starting with parameters %q", fs.Version, os.Args)
+
+	// Start the remote control if configured
+	rc.Start(&rcflags.Opt)
 
 	// Setup CPU profiling if desired
 	if *cpuProfile != "" {
