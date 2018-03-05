@@ -18,6 +18,7 @@ docs = [
     "docs.md",
     "remote_setup.md",
     "filtering.md",
+    "rc.md",
     "overview.md",
 
     # Keep these alphabetical by full name
