@@ -36,6 +36,7 @@ import (
 	_ "github.com/ncw/rclone/cmd/ncdu"
 	_ "github.com/ncw/rclone/cmd/obscure"
 	_ "github.com/ncw/rclone/cmd/purge"
+	_ "github.com/ncw/rclone/cmd/rc"
 	_ "github.com/ncw/rclone/cmd/rcat"
 	_ "github.com/ncw/rclone/cmd/rmdir"
 	_ "github.com/ncw/rclone/cmd/rmdirs"

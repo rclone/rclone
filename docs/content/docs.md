@@ -985,6 +985,16 @@ For the filtering options
 
 See the [filtering section](/filtering/).
 
+Remote control
+--------------
+
+For the remote control options and for instructions on how to remote control rclone
+
+  * `--rc`
+  * and anything starting with `--rc-`
+
+See [the remote control section](/rc/).
+
 Logging
 -------
 
