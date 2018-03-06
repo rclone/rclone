@@ -1234,13 +1234,19 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 			return
 		}
 
-		pathsToClear := make(map[string]fs.EntryType)
+		type entryType struct {
+			path      string
+			entryType fs.EntryType
+		}
+		var pathsToClear []entryType
 		for _, change := range changeList.Changes {
 			if path, ok := f.dirCache.GetInv(change.FileId); ok {
-				pathsToClear[path] = fs.EntryDirectory
 				if change.File != nil && change.File.MimeType != driveFolderType {
-					pathsToClear[path] = fs.EntryObject
+					pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
+				} else {
+					pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryDirectory})
 				}
+				continue
 			}
 
 			if change.File != nil && change.File.MimeType != driveFolderType {
@@ -1254,15 +1260,21 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), pollInter
 							path = change.File.Name
 						}
 						// this will now clear the actual file too
-						pathsToClear[path] = fs.EntryObject
+						pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
 					}
 				} else { // a true root object that is changed
-					pathsToClear[change.File.Name] = fs.EntryObject
+					pathsToClear = append(pathsToClear, entryType{path: change.File.Name, entryType: fs.EntryObject})
 				}
 			}
 		}
-		for path, entryType := range pathsToClear {
-			notifyFunc(path, entryType)
+
+		visitedPaths := make(map[string]bool)
+		for _, entry := range pathsToClear {
+			if _, ok := visitedPaths[entry.path]; ok {
+				continue
+			}
+			visitedPaths[entry.path] = true
+			notifyFunc(entry.path, entry.entryType)
 		}
 
 		if changeList.NewStartPageToken != "" {

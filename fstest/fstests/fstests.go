@@ -712,19 +712,24 @@ func TestFsChangeNotify(t *testing.T) {
 	}, time.Second)
 	defer func() { close(quitChannel) }()
 
-	err = operations.Mkdir(remote, "dir/subdir")
-	require.NoError(t, err)
+	for _, idx := range []int{1, 3, 2} {
+		err = operations.Mkdir(remote, fmt.Sprintf("dir/subdir%d", idx))
+		require.NoError(t, err)
+	}
 
 	contents := fstest.RandomString(100)
 	buf := bytes.NewBufferString(contents)
-	obji := object.NewStaticObjectInfo("dir/file", time.Now(), int64(buf.Len()), true, nil, nil)
-	_, err = remote.Put(buf, obji)
-	require.NoError(t, err)
+
+	for _, idx := range []int{2, 4, 3} {
+		obji := object.NewStaticObjectInfo(fmt.Sprintf("dir/file%d", idx), time.Now(), int64(buf.Len()), true, nil, nil)
+		_, err = remote.Put(buf, obji)
+		require.NoError(t, err)
+	}
 
 	time.Sleep(3 * time.Second)
 
-	assert.Equal(t, []string{"dir/subdir"}, dirChanges)
-	assert.Equal(t, []string{"dir/file"}, objChanges)
+	assert.Equal(t, []string{"dir/subdir1", "dir/subdir3", "dir/subdir2"}, dirChanges)
+	assert.Equal(t, []string{"dir/file2", "dir/file4", "dir/file3"}, objChanges)
 }
 
 // TestObjectString tests the Object String method

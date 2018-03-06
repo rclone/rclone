@@ -1249,7 +1249,11 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), checkpoin
 				return err
 			}
 
-			pathsToClear := make(map[string]fs.EntryType)
+			type entryType struct {
+				path      string
+				entryType fs.EntryType
+			}
+			var pathsToClear []entryType
 			csCount++
 			nodeCount += len(changeSet.Nodes)
 			if changeSet.End {
@@ -1260,32 +1264,40 @@ func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), checkpoin
 			}
 			for _, node := range changeSet.Nodes {
 				if path, ok := f.dirCache.GetInv(*node.Id); ok {
-					pathsToClear[path] = fs.EntryDirectory
 					if node.IsFile() {
-						pathsToClear[path] = fs.EntryObject
+						pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
+					} else {
+						pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryDirectory})
 					}
+					continue
+				}
 
-					if node.IsFile() {
-						// translate the parent dir of this object
-						if len(node.Parents) > 0 {
-							if path, ok := f.dirCache.GetInv(node.Parents[0]); ok {
-								// and append the drive file name to compute the full file name
-								if len(path) > 0 {
-									path = path + "/" + *node.Name
-								} else {
-									path = *node.Name
-								}
-								// this will now clear the actual file too
-								pathsToClear[path] = fs.EntryObject
+				if node.IsFile() {
+					// translate the parent dir of this object
+					if len(node.Parents) > 0 {
+						if path, ok := f.dirCache.GetInv(node.Parents[0]); ok {
+							// and append the drive file name to compute the full file name
+							if len(path) > 0 {
+								path = path + "/" + *node.Name
+							} else {
+								path = *node.Name
 							}
-						} else { // a true root object that is changed
-							pathsToClear[*node.Name] = fs.EntryObject
+							// this will now clear the actual file too
+							pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
 						}
+					} else { // a true root object that is changed
+						pathsToClear = append(pathsToClear, entryType{path: *node.Name, entryType: fs.EntryObject})
 					}
 				}
 			}
-			for path, entryType := range pathsToClear {
-				notifyFunc(path, entryType)
+
+			visitedPaths := make(map[string]bool)
+			for _, entry := range pathsToClear {
+				if _, ok := visitedPaths[entry.path]; ok {
+					continue
+				}
+				visitedPaths[entry.path] = true
+				notifyFunc(entry.path, entry.entryType)
 			}
 
 			return nil
