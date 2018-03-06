@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fstest"
@@ -561,4 +562,28 @@ func TestRWFileHandleOpenTests(t *testing.T) {
 	for _, test := range openTests {
 		testRWFileHandleOpenTest(t, vfs, &test)
 	}
+}
+
+// tests mod time on open files
+func TestRWFileModTimeWithOpenWriters(t *testing.T) {
+	r := fstest.NewRun(t)
+	defer r.Finalise()
+	vfs, fh := rwHandleCreateWriteOnly(t, r)
+
+	mtime := time.Date(2012, 11, 18, 17, 32, 31, 0, time.UTC)
+
+	_, err := fh.Write([]byte{104, 105})
+	require.NoError(t, err)
+
+	err = fh.Node().SetModTime(mtime)
+	require.NoError(t, err)
+
+	err = fh.Close()
+	require.NoError(t, err)
+
+	info, err := vfs.Stat("file1")
+	require.NoError(t, err)
+
+	// avoid errors because of timezone differences
+	assert.Equal(t, info.ModTime().Unix(), mtime.Unix())
 }
