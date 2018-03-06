@@ -3,9 +3,11 @@ package restic
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"path"
 	"regexp"
 	"strconv"
@@ -21,10 +23,17 @@ import (
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/spf13/cobra"
+	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/net/http2"
+)
+
+var (
+	stdio bool
 )
 
 func init() {
 	httpflags.AddFlags(Command.Flags())
+	Command.Flags().BoolVar(&stdio, "stdio", false, "run an HTTP2 server on stdin/stdout")
 }
 
 // Command definition for cobra
@@ -110,6 +119,24 @@ these **must** end with /.  Eg
 		f := cmd.NewFsSrc(args)
 		cmd.Run(false, true, command, func() error {
 			s := newServer(f, &httpflags.Opt)
+			if stdio {
+				if terminal.IsTerminal(int(os.Stdout.Fd())) {
+					return errors.New("Refusing to run HTTP2 server directly on a terminal, please let restic start rclone")
+				}
+
+				conn := &StdioConn{
+					stdin:  os.Stdin,
+					stdout: os.Stdout,
+				}
+
+				httpSrv := &http2.Server{}
+				opts := &http2.ServeConnOpts{
+					Handler: http.HandlerFunc(s.handler),
+				}
+				httpSrv.ServeConn(conn, opts)
+				return nil
+			}
+
 			s.serve()
 			return nil
 		})
