@@ -7,6 +7,7 @@ import (
 	"path"
 	"time"
 
+	"github.com/ncw/rclone/backend/crypt"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/ls/lshelp"
 	"github.com/ncw/rclone/fs"
@@ -17,9 +18,10 @@ import (
 )
 
 var (
-	recurse   bool
-	showHash  bool
-	noModTime bool
+	recurse       bool
+	showHash      bool
+	showEncrypted bool
+	noModTime     bool
 )
 
 func init() {
@@ -27,16 +29,18 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
 	commandDefintion.Flags().BoolVarP(&showHash, "hash", "", false, "Include hashes in the output (may take longer).")
 	commandDefintion.Flags().BoolVarP(&noModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
+	commandDefintion.Flags().BoolVarP(&showEncrypted, "encrypted", "M", false, "Shows the names encrypt.")
 }
 
 // lsJSON in the struct which gets marshalled for each line
 type lsJSON struct {
-	Path    string
-	Name    string
-	Size    int64
-	ModTime Timestamp //`json:",omitempty"`
-	IsDir   bool
-	Hashes  map[string]string `json:",omitempty"`
+	Path      string
+	Name      string
+	Encrypted string
+	Size      int64
+	ModTime   Timestamp //`json:",omitempty"`
+	IsDir     bool
+	Hashes    map[string]string `json:",omitempty"`
 }
 
 // Timestamp a time in RFC3339 format with Nanosecond precision secongs
@@ -67,6 +71,7 @@ The output is an array of Items, where each Item looks like this
       "IsDir" : false,
       "ModTime" : "2017-05-31T16:15:57.034468261+01:00",
       "Name" : "file.txt",
+      "Encrypted" : "v0qpsdq8anpci8n929v3uu9338",
       "Path" : "full/path/goes/here/file.txt",
       "Size" : 6
    }
@@ -74,6 +79,8 @@ The output is an array of Items, where each Item looks like this
 If --hash is not specified the the Hashes property won't be emitted.
 
 If --no-modtime is specified then ModTime will be blank.
+
+If --encypted is not specified the Encrypted will be blank.
 
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
@@ -105,6 +112,27 @@ can be processed line by line as each item is written one to a line.
 					}
 					if !noModTime {
 						item.ModTime = Timestamp(entry.ModTime())
+					}
+					if showEncrypted {
+						fsInfo, configName, _, err := fs.ParseRemote(args[0])
+						if err != nil {
+							return err
+						}
+						if fsInfo.Name != "crypt" {
+							return errors.New("The remote needs to be of type \"crypt\"")
+						}
+						cipher, err := crypt.NewCipher(configName)
+						if err != nil {
+							return err
+						}
+						switch entry.(type) {
+						case fs.Directory:
+							item.Encrypted = cipher.EncryptDirName(path.Base(entry.Remote()))
+						case fs.Object:
+							item.Encrypted = cipher.EncryptFileName(path.Base(entry.Remote()))
+						default:
+							fs.Errorf(nil, "Unknown type %T in listing", entry)
+						}
 					}
 					switch x := entry.(type) {
 					case fs.Directory:
