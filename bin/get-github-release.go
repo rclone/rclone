@@ -1,6 +1,9 @@
 // +build ignore
 
 // Get the latest release from a github project
+//
+// If GITHUB_USER and GITHUB_TOKEN are set then these will be used to
+// authenticate the request which is useful to avoid rate limits.
 
 package main
 
@@ -144,7 +147,13 @@ func readBody(in io.Reader) string {
 func getAsset(project string, matchName *regexp.Regexp) (string, string) {
 	url := "https://api.github.com/repos/" + project + "/releases/latest"
 	log.Printf("Fetching asset info for %q from %q", project, url)
-	resp, err := http.Get(url)
+	user, pass := os.Getenv("GITHUB_USER"), os.Getenv("GITHUB_TOKEN")
+	req, err := http.NewRequest("GET", url, nil)
+	if user != "" && pass != "" {
+		log.Printf("Fetching using GITHUB_USER and GITHUB_TOKEN")
+		req.SetBasicAuth(user, pass)
+	}
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		log.Fatalf("Failed to fetch release info %q: %v", url, err)
 	}
