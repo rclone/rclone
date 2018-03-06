@@ -16,6 +16,7 @@ import (
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/object"
 	"github.com/ncw/rclone/fs/operations"
 	"github.com/ncw/rclone/fs/walk"
@@ -343,10 +344,14 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 		}
 		return err
 	})
+
 	if err != nil {
-		fs.Errorf(remote, "list failed: %v", err)
-		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
-		return
+		_, err = fserrors.Cause(err)
+		if err != fs.ErrorDirNotFound {
+			fs.Errorf(remote, "list failed: %#v %T", err, err)
+			http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+			return
+		}
 	}
 
 	data, err := json.Marshal(ls)
