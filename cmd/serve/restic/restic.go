@@ -362,7 +362,9 @@ func (ls *listItems) add(entry fs.DirEntry) {
 func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote string) {
 	fs.Debugf(remote, "list request")
 
-	var ls listItems
+	// make sure an empty list is returned, and not a 'nil' value
+	ls := listItems{}
+
 	err := walk.Walk(s.f, remote, true, -1, func(path string, entries fs.DirEntries, err error) error {
 		if err == nil {
 			for _, entry := range entries {
