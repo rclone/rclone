@@ -160,7 +160,7 @@ tag:	doc
 	@echo "New tag is $(NEW_TAG)"
 	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(NEW_TAG)\"\n" | gofmt > fs/version.go
 	echo -n "$(NEW_TAG)" > docs/layouts/partials/version.html
-	git tag $(NEW_TAG)
+	git tag -s -m "Version $(NEW_TAG)" $(NEW_TAG)
 	@echo "Edit the new changelog in docs/content/changelog.md"
 	@echo "  * $(NEW_TAG) -" `date -I` >> docs/content/changelog.md
 	@git log $(LAST_TAG)..$(NEW_TAG) --oneline >> docs/content/changelog.md
@@ -169,7 +169,7 @@ tag:	doc
 	@echo "And finally run make retag before make cross etc"
 
 retag:
-	git tag -f $(LAST_TAG)
+	git tag -f -s -m "Version $(LAST_TAG)" $(LAST_TAG)
 
 startdev:
 	echo -e "package fs\n\n// Version of rclone\nvar Version = \"$(LAST_TAG)-DEV\"\n" | gofmt > fs/version.go
