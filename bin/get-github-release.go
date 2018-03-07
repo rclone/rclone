@@ -7,7 +7,9 @@ package main
 import (
 	"encoding/json"
 	"flag"
+	"fmt"
 	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -129,6 +131,15 @@ func defaultBinDir() string {
 	return binDir
 }
 
+// read the body or an error message
+func readBody(in io.Reader) string {
+	data, err := ioutil.ReadAll(in)
+	if err != nil {
+		return fmt.Sprintf("Error reading body: %v", err.Error())
+	}
+	return string(data)
+}
+
 // Get an asset URL and name
 func getAsset(project string, matchName *regexp.Regexp) (string, string) {
 	url := "https://api.github.com/repos/" + project + "/releases/latest"
@@ -138,6 +149,7 @@ func getAsset(project string, matchName *regexp.Regexp) (string, string) {
 		log.Fatalf("Failed to fetch release info %q: %v", url, err)
 	}
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("Error: %s", readBody(resp.Body))
 		log.Fatalf("Bad status %d when fetching %q release info: %s", resp.StatusCode, url, resp.Status)
 	}
 	var release Release
@@ -173,6 +185,7 @@ func getFile(url, fileName string) {
 		log.Fatalf("Failed to fetch asset %q: %v", url, err)
 	}
 	if resp.StatusCode != http.StatusOK {
+		log.Printf("Error: %s", readBody(resp.Body))
 		log.Fatalf("Bad status %d when fetching %q asset: %s", resp.StatusCode, url, resp.Status)
 	}
 
