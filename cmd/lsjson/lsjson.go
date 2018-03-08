@@ -3,6 +3,7 @@ package lsjson
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"os"
 	"path"
 	"time"
@@ -29,14 +30,14 @@ func init() {
 	commandDefintion.Flags().BoolVarP(&recurse, "recursive", "R", false, "Recurse into the listing.")
 	commandDefintion.Flags().BoolVarP(&showHash, "hash", "", false, "Include hashes in the output (may take longer).")
 	commandDefintion.Flags().BoolVarP(&noModTime, "no-modtime", "", false, "Don't read the modification time (can speed things up).")
-	commandDefintion.Flags().BoolVarP(&showEncrypted, "encrypted", "M", false, "Shows the names encrypt.")
+	commandDefintion.Flags().BoolVarP(&showEncrypted, "encrypted", "M", false, "Show the encrypted names.")
 }
 
 // lsJSON in the struct which gets marshalled for each line
 type lsJSON struct {
 	Path      string
 	Name      string
-	Encrypted string
+	Encrypted string `json:",omitempty"`
 	Size      int64
 	ModTime   Timestamp //`json:",omitempty"`
 	IsDir     bool
@@ -76,11 +77,11 @@ The output is an array of Items, where each Item looks like this
       "Size" : 6
    }
 
-If --hash is not specified the the Hashes property won't be emitted.
+If --hash is not specified the Hashes property won't be emitted.
 
 If --no-modtime is specified then ModTime will be blank.
 
-If --encypted is not specified the Encrypted will be blank.
+If --encrypted is not specified the Encrypted won't be emitted.
 
 The Path field will only show folders below the remote path being listed.
 If "remote:path" contains the file "subfolder/file.txt", the Path for "file.txt"
@@ -95,6 +96,20 @@ can be processed line by line as each item is written one to a line.
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(1, 1, command, args)
 		fsrc := cmd.NewFsSrc(args)
+		var cipher crypt.Cipher
+		if showEncrypted {
+			fsInfo, configName, _, err := fs.ParseRemote(args[0])
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
+			if fsInfo.Name != "crypt" {
+				log.Fatalf("The remote needs to be of type \"crypt\"")
+			}
+			cipher, err = crypt.NewCipher(configName)
+			if err != nil {
+				log.Fatalf(err.Error())
+			}
+		}
 		cmd.Run(false, false, command, func() error {
 			fmt.Println("[")
 			first := true
@@ -113,18 +128,7 @@ can be processed line by line as each item is written one to a line.
 					if !noModTime {
 						item.ModTime = Timestamp(entry.ModTime())
 					}
-					if showEncrypted {
-						fsInfo, configName, _, err := fs.ParseRemote(args[0])
-						if err != nil {
-							return err
-						}
-						if fsInfo.Name != "crypt" {
-							return errors.New("The remote needs to be of type \"crypt\"")
-						}
-						cipher, err := crypt.NewCipher(configName)
-						if err != nil {
-							return err
-						}
+					if cipher != nil {
 						switch entry.(type) {
 						case fs.Directory:
 							item.Encrypted = cipher.EncryptDirName(path.Base(entry.Remote()))
