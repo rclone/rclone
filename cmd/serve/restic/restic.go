@@ -143,6 +143,10 @@ these **must** end with /.  Eg
 	},
 }
 
+const (
+	resticAPIV2 = "application/vnd.x.restic.rest.v2"
+)
+
 // server contains everything to run the server
 type server struct {
 	f   fs.Fs
@@ -361,6 +365,12 @@ func (ls *listItems) add(entry fs.DirEntry) {
 // listObjects lists all Objects of a given type in an arbitrary order.
 func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote string) {
 	fs.Debugf(remote, "list request")
+
+	if r.Header.Get("Accept") != resticAPIV2 {
+		fs.Errorf(remote, "Restic v2 API required")
+		http.Error(w, "Restic v2 API required", http.StatusBadRequest)
+		return
+	}
 
 	// make sure an empty list is returned, and not a 'nil' value
 	ls := listItems{}
