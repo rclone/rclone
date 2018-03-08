@@ -19,7 +19,6 @@ import (
 	"net/http"
 	"path"
 	"regexp"
-	"sort"
 	"strings"
 	"time"
 
@@ -1207,20 +1206,19 @@ func (o *Object) MimeType() string {
 	return ""
 }
 
-// DirChangeNotify polls for changes from the remote and hands the path to the
-// given function. Only changes that can be resolved to a path through the
-// DirCache will handled.
+// ChangeNotify calls the passed function with a path that has had changes.
+// If the implementation uses polling, it should adhere to the given interval.
 //
 // Automatically restarts itself in case of unexpected behaviour of the remote.
 //
 // Close the returned channel to stop being notified.
-func (f *Fs) DirChangeNotify(notifyFunc func(string), pollInterval time.Duration) chan bool {
+func (f *Fs) ChangeNotify(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) chan bool {
 	checkpoint := config.FileGet(f.name, "checkpoint")
 
 	quit := make(chan bool)
 	go func() {
 		for {
-			checkpoint = f.dirchangeNotifyRunner(notifyFunc, checkpoint)
+			checkpoint = f.changeNotifyRunner(notifyFunc, checkpoint)
 			if err := config.SetValueAndSave(f.name, "checkpoint", checkpoint); err != nil {
 				fs.Debugf(f, "Unable to save checkpoint: %v", err)
 			}
@@ -1234,7 +1232,7 @@ func (f *Fs) DirChangeNotify(notifyFunc func(string), pollInterval time.Duration
 	return quit
 }
 
-func (f *Fs) dirchangeNotifyRunner(notifyFunc func(string), checkpoint string) string {
+func (f *Fs) changeNotifyRunner(notifyFunc func(string, fs.EntryType), checkpoint string) string {
 	var err error
 	var resp *http.Response
 	var reachedEnd bool
@@ -1251,7 +1249,11 @@ func (f *Fs) dirchangeNotifyRunner(notifyFunc func(string), checkpoint string) s
 				return err
 			}
 
-			pathsToClear := make([]string, 0)
+			type entryType struct {
+				path      string
+				entryType fs.EntryType
+			}
+			var pathsToClear []entryType
 			csCount++
 			nodeCount += len(changeSet.Nodes)
 			if changeSet.End {
@@ -1262,20 +1264,40 @@ func (f *Fs) dirchangeNotifyRunner(notifyFunc func(string), checkpoint string) s
 			}
 			for _, node := range changeSet.Nodes {
 				if path, ok := f.dirCache.GetInv(*node.Id); ok {
-					pathsToClear = append(pathsToClear, path)
+					if node.IsFile() {
+						pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
+					} else {
+						pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryDirectory})
+					}
+					continue
+				}
+
+				if node.IsFile() {
+					// translate the parent dir of this object
+					if len(node.Parents) > 0 {
+						if path, ok := f.dirCache.GetInv(node.Parents[0]); ok {
+							// and append the drive file name to compute the full file name
+							if len(path) > 0 {
+								path = path + "/" + *node.Name
+							} else {
+								path = *node.Name
+							}
+							// this will now clear the actual file too
+							pathsToClear = append(pathsToClear, entryType{path: path, entryType: fs.EntryObject})
+						}
+					} else { // a true root object that is changed
+						pathsToClear = append(pathsToClear, entryType{path: *node.Name, entryType: fs.EntryObject})
+					}
 				}
 			}
 
-			notified := false
-			lastNotifiedPath := ""
-			sort.Strings(pathsToClear)
-			for _, path := range pathsToClear {
-				if notified && strings.HasPrefix(path+"/", lastNotifiedPath+"/") {
+			visitedPaths := make(map[string]bool)
+			for _, entry := range pathsToClear {
+				if _, ok := visitedPaths[entry.path]; ok {
 					continue
 				}
-				lastNotifiedPath = path
-				notified = true
-				notifyFunc(path)
+				visitedPaths[entry.path] = true
+				notifyFunc(entry.path, entry.entryType)
 			}
 
 			return nil
@@ -1303,10 +1325,10 @@ var (
 	_ fs.Fs     = (*Fs)(nil)
 	_ fs.Purger = (*Fs)(nil)
 	//	_ fs.Copier   = (*Fs)(nil)
-	_ fs.Mover             = (*Fs)(nil)
-	_ fs.DirMover          = (*Fs)(nil)
-	_ fs.DirCacheFlusher   = (*Fs)(nil)
-	_ fs.DirChangeNotifier = (*Fs)(nil)
-	_ fs.Object            = (*Object)(nil)
-	_ fs.MimeTyper         = &Object{}
+	_ fs.Mover           = (*Fs)(nil)
+	_ fs.DirMover        = (*Fs)(nil)
+	_ fs.DirCacheFlusher = (*Fs)(nil)
+	_ fs.ChangeNotifier  = (*Fs)(nil)
+	_ fs.Object          = (*Object)(nil)
+	_ fs.MimeTyper       = &Object{}
 )

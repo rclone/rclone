@@ -685,34 +685,51 @@ func TestFsPrecision(t *testing.T) {
 	// FIXME check expected precision
 }
 
-// TestFsDirChangeNotify tests that changes to directories are properly
+// TestFsChangeNotify tests that changes are properly
 // propagated
 //
-// go test -v -remote TestDrive: -run '^Test(Setup|Init|FsDirChangeNotify)$' -verbose
-func TestFsDirChangeNotify(t *testing.T) {
+// go test -v -remote TestDrive: -run '^Test(Setup|Init|FsChangeNotify)$' -verbose
+func TestFsChangeNotify(t *testing.T) {
 	skipIfNotOk(t)
 
-	// Check have DirChangeNotify
-	doDirChangeNotify := remote.Features().DirChangeNotify
-	if doDirChangeNotify == nil {
-		t.Skip("FS has no DirChangeNotify interface")
+	// Check have ChangeNotify
+	doChangeNotify := remote.Features().ChangeNotify
+	if doChangeNotify == nil {
+		t.Skip("FS has no ChangeNotify interface")
 	}
 
 	err := operations.Mkdir(remote, "dir")
 	require.NoError(t, err)
 
-	changes := []string{}
-	quitChannel := doDirChangeNotify(func(x string) {
-		changes = append(changes, x)
+	dirChanges := []string{}
+	objChanges := []string{}
+	quitChannel := doChangeNotify(func(x string, e fs.EntryType) {
+		if e == fs.EntryDirectory {
+			dirChanges = append(dirChanges, x)
+		} else if e == fs.EntryObject {
+			objChanges = append(objChanges, x)
+		}
 	}, time.Second)
 	defer func() { close(quitChannel) }()
 
-	err = operations.Mkdir(remote, "dir/subdir")
-	require.NoError(t, err)
+	for _, idx := range []int{1, 3, 2} {
+		err = operations.Mkdir(remote, fmt.Sprintf("dir/subdir%d", idx))
+		require.NoError(t, err)
+	}
 
-	time.Sleep(2 * time.Second)
+	contents := fstest.RandomString(100)
+	buf := bytes.NewBufferString(contents)
 
-	assert.Equal(t, []string{"dir"}, changes)
+	for _, idx := range []int{2, 4, 3} {
+		obji := object.NewStaticObjectInfo(fmt.Sprintf("dir/file%d", idx), time.Now(), int64(buf.Len()), true, nil, nil)
+		_, err = remote.Put(buf, obji)
+		require.NoError(t, err)
+	}
+
+	time.Sleep(3 * time.Second)
+
+	assert.Equal(t, []string{"dir/subdir1", "dir/subdir3", "dir/subdir2"}, dirChanges)
+	assert.Equal(t, []string{"dir/file2", "dir/file4", "dir/file3"}, objChanges)
 }
 
 // TestObjectString tests the Object String method
