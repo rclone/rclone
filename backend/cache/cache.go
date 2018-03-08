@@ -50,6 +50,8 @@ const (
 	DefCacheWrites = false
 	// DefCacheTmpWaitTime says how long should files be stored in local cache before being uploaded
 	DefCacheTmpWaitTime = "15m"
+	// DefCacheDbWaitTime defines how long the cache backend should wait for the DB to be available
+	DefCacheDbWaitTime = 1 * time.Second
 )
 
 // Globals
@@ -69,6 +71,7 @@ var (
 	cacheStoreWrites        = flags.BoolP("cache-writes", "", DefCacheWrites, "Will cache file data on writes through the FS")
 	cacheTempWritePath      = flags.StringP("cache-tmp-upload-path", "", "", "Directory to keep temporary files until they are uploaded to the cloud storage")
 	cacheTempWaitTime       = flags.StringP("cache-tmp-wait-time", "", DefCacheTmpWaitTime, "How long should files be stored in local cache before being uploaded")
+	cacheDbWaitTime         = flags.DurationP("cache-db-wait-time", "", DefCacheDbWaitTime, "How long to wait for the DB to be available - 0 is unlimited")
 )
 
 // Register with Fs
