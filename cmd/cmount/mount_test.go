@@ -25,7 +25,7 @@ func TestDirModTime(t *testing.T)                 { mounttest.TestDirModTime(t) 
 func TestDirCacheFlush(t *testing.T)              { mounttest.TestDirCacheFlush(t) }
 func TestDirCacheFlushOnDirRename(t *testing.T)   { mounttest.TestDirCacheFlushOnDirRename(t) }
 func TestFileModTime(t *testing.T)                { mounttest.TestFileModTime(t) }
-func TestFileModTimeWithOpenWriters(t *testing.T) {} // FIXME mounttest.TestFileModTimeWithOpenWriters(t)
+func TestFileModTimeWithOpenWriters(t *testing.T) { mounttest.TestFileModTimeWithOpenWriters(t) }
 func TestMount(t *testing.T)                      { mounttest.TestMount(t) }
 func TestRoot(t *testing.T)                       { mounttest.TestRoot(t) }
 func TestReadByByte(t *testing.T)                 { mounttest.TestReadByByte(t) }
