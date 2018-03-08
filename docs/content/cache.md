@@ -397,3 +397,13 @@ Note that only one file is uploaded at a time and it can take longer to
 start the upload if a queue formed for this purpose.
 
 **Default**: 15m
+
+#### --cache-db-wait-time=DURATION ####
+
+Only one process can have the DB open at any one time, so rclone waits
+for this duration for the DB to become available before it gives an
+error.
+
+If you set it to 0 then it will wait forever.
+
+**Default**: 1s
