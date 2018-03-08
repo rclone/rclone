@@ -1,0 +1,297 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Yandex Disk">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Yandex</title>
+    <link rel="canonical" href="https://rclone.org/yandex/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="i-class-fa-fa-space-shuttle-i-yandex-disk"><i class="fa fa-space-shuttle"></i>Yandex Disk</h2>
+
+<p><a href="https://disk.yandex.com">Yandex Disk</a> is a cloud storage solution created by <a href="https://yandex.com">Yandex</a>.</p>
+
+<p>Yandex paths may be as deep as required, eg <code>remote:directory/subdirectory</code>.</p>
+
+<p>Here is an example of making a yandex configuration.  First run</p>
+
+<pre><code>rclone config
+</code></pre>
+
+<p>This will guide you through an interactive setup process:</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+s) Set configuration password
+n/s&gt; n
+name&gt; remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ &quot;amazon cloud drive&quot;
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ &quot;s3&quot;
+ 3 / Backblaze B2
+   \ &quot;b2&quot;
+ 4 / Dropbox
+   \ &quot;dropbox&quot;
+ 5 / Encrypt/Decrypt a remote
+   \ &quot;crypt&quot;
+ 6 / Google Cloud Storage (this is not Google Drive)
+   \ &quot;google cloud storage&quot;
+ 7 / Google Drive
+   \ &quot;drive&quot;
+ 8 / Hubic
+   \ &quot;hubic&quot;
+ 9 / Local Disk
+   \ &quot;local&quot;
+10 / Microsoft OneDrive
+   \ &quot;onedrive&quot;
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ &quot;swift&quot;
+12 / SSH/SFTP Connection
+   \ &quot;sftp&quot;
+13 / Yandex Disk
+   \ &quot;yandex&quot;
+Storage&gt; 13
+Yandex Client Id - leave blank normally.
+client_id&gt;
+Yandex Client Secret - leave blank normally.
+client_secret&gt;
+Remote config
+Use auto config?
+ * Say Y if not sure
+ * Say N if you are working on a remote or headless machine
+y) Yes
+n) No
+y/n&gt; y
+If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+Log in and authorize rclone for access
+Waiting for code...
+Got code
+--------------------
+[remote]
+client_id =
+client_secret =
+token = {&quot;access_token&quot;:&quot;xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;token_type&quot;:&quot;bearer&quot;,&quot;expiry&quot;:&quot;2016-12-29T12:27:11.362788025Z&quot;}
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y
+</code></pre>
+
+<p>See the <a href="/remote_setup/">remote setup docs</a> for how to set it up on a
+machine with no Internet browser available.</p>
+
+<p>Note that rclone runs a webserver on your local machine to collect the
+token as returned from Yandex Disk. This only runs from the moment it
+opens your browser to the moment you get back the verification code.
+This is on <code>http://127.0.0.1:53682/</code> and this it may require you to
+unblock it temporarily if you are running a host firewall.</p>
+
+<p>Once configured you can then use <code>rclone</code> like this,</p>
+
+<p>See top level directories</p>
+
+<pre><code>rclone lsd remote:
+</code></pre>
+
+<p>Make a new directory</p>
+
+<pre><code>rclone mkdir remote:directory
+</code></pre>
+
+<p>List the contents of a directory</p>
+
+<pre><code>rclone ls remote:directory
+</code></pre>
+
+<p>Sync <code>/home/local/directory</code> to the remote path, deleting any
+excess files in the path.</p>
+
+<pre><code>rclone sync /home/local/directory remote:directory
+</code></pre>
+
+<h3 id="fast-list">--fast-list</h3>
+
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer
+transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone
+docs</a> for more details.</p>
+
+<h3 id="modified-time">Modified time</h3>
+
+<p>Modified times are supported and are stored accurate to 1 ns in custom
+metadata called <code>rclone_modified</code> in RFC3339 with nanoseconds format.</p>
+
+<h3 id="md5-checksums">MD5 checksums</h3>
+
+<p>MD5 checksums are natively supported by Yandex Disk.</p>
+
+<h3 id="emptying-trash">Emptying Trash</h3>
+
+<p>If you wish to empty your trash you can use the <code>rclone cleanup remote:</code>
+command which will permanently delete all your trashed files. This command
+does not take any path arguments.</p>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

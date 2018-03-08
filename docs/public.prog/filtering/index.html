@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Filtering, includes and excludes">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Filtering</title>
+    <link rel="canonical" href="https://rclone.org/filtering/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h1 id="filtering-includes-and-excludes">Filtering, includes and excludes</h1>
+
+<p>Rclone has a sophisticated set of include and exclude rules. Some of
+these are based on patterns and some on other things like file size.</p>
+
+<p>The filters are applied for the <code>copy</code>, <code>sync</code>, <code>move</code>, <code>ls</code>, <code>lsl</code>,
+<code>md5sum</code>, <code>sha1sum</code>, <code>size</code>, <code>delete</code> and <code>check</code> operations.
+Note that <code>purge</code> does not obey the filters.</p>
+
+<p>Each path as it passes through rclone is matched against the include
+and exclude rules like <code>--include</code>, <code>--exclude</code>, <code>--include-from</code>,
+<code>--exclude-from</code>, <code>--filter</code>, or <code>--filter-from</code>. The simplest way to
+try them out is using the <code>ls</code> command, or <code>--dry-run</code> together with
+<code>-v</code>.</p>
+
+<h2 id="patterns">Patterns</h2>
+
+<p>The patterns used to match files for inclusion or exclusion are based
+on &ldquo;file globs&rdquo; as used by the unix shell.</p>
+
+<p>If the pattern starts with a <code>/</code> then it only matches at the top level
+of the directory tree, <strong>relative to the root of the remote</strong> (not
+necessarily the root of the local drive). If it doesn&rsquo;t start with <code>/</code>
+then it is matched starting at the <strong>end of the path</strong>, but it will
+only match a complete path element:</p>
+
+<pre><code>file.jpg  - matches &quot;file.jpg&quot;
+          - matches &quot;directory/file.jpg&quot;
+          - doesn't match &quot;afile.jpg&quot;
+          - doesn't match &quot;directory/afile.jpg&quot;
+/file.jpg - matches &quot;file.jpg&quot; in the root directory of the remote
+          - doesn't match &quot;afile.jpg&quot;
+          - doesn't match &quot;directory/file.jpg&quot;
+</code></pre>
+
+<p><strong>Important</strong> Note that you must use <code>/</code> in patterns and not <code>\</code> even
+if running on Windows.</p>
+
+<p>A <code>*</code> matches anything but not a <code>/</code>.</p>
+
+<pre><code>*.jpg  - matches &quot;file.jpg&quot;
+       - matches &quot;directory/file.jpg&quot;
+       - doesn't match &quot;file.jpg/something&quot;
+</code></pre>
+
+<p>Use <code>**</code> to match anything, including slashes (<code>/</code>).</p>
+
+<pre><code>dir/** - matches &quot;dir/file.jpg&quot;
+       - matches &quot;dir/dir1/dir2/file.jpg&quot;
+       - doesn't match &quot;directory/file.jpg&quot;
+       - doesn't match &quot;adir/file.jpg&quot;
+</code></pre>
+
+<p>A <code>?</code> matches any character except a slash <code>/</code>.</p>
+
+<pre><code>l?ss  - matches &quot;less&quot;
+      - matches &quot;lass&quot;
+      - doesn't match &quot;floss&quot;
+</code></pre>
+
+<p>A <code>[</code> and <code>]</code> together make a a character class, such as <code>[a-z]</code> or
+<code>[aeiou]</code> or <code>[[:alpha:]]</code>.  See the <a href="https://golang.org/pkg/regexp/syntax/">go regexp
+docs</a> for more info on these.</p>
+
+<pre><code>h[ae]llo - matches &quot;hello&quot;
+         - matches &quot;hallo&quot;
+         - doesn't match &quot;hullo&quot;
+</code></pre>
+
+<p>A <code>{</code> and <code>}</code> define a choice between elements.  It should contain a
+comma separated list of patterns, any of which might match.  These
+patterns can contain wildcards.</p>
+
+<pre><code>{one,two}_potato - matches &quot;one_potato&quot;
+                 - matches &quot;two_potato&quot;
+                 - doesn't match &quot;three_potato&quot;
+                 - doesn't match &quot;_potato&quot;
+</code></pre>
+
+<p>Special characters can be escaped with a <code>\</code> before them.</p>
+
+<pre><code>\*.jpg       - matches &quot;*.jpg&quot;
+\\.jpg       - matches &quot;\.jpg&quot;
+\[one\].jpg  - matches &quot;[one].jpg&quot;
+</code></pre>
+
+<p>Note also that rclone filter globs can only be used in one of the
+filter command line flags, not in the specification of the remote, so
+<code>rclone copy &quot;remote:dir*.jpg&quot; /path/to/dir</code> won&rsquo;t work - what is
+required is <code>rclone --include &quot;*.jpg&quot; copy remote:dir /path/to/dir</code></p>
+
+<h3 id="directories">Directories</h3>
+
+<p>Rclone keeps track of directories that could match any file patterns.</p>
+
+<p>Eg if you add the include rule</p>
+
+<pre><code>/a/*.jpg
+</code></pre>
+
+<p>Rclone will synthesize the directory include rule</p>
+
+<pre><code>/a/
+</code></pre>
+
+<p>If you put any rules which end in <code>/</code> then it will only match
+directories.</p>
+
+<p>Directory matches are <strong>only</strong> used to optimise directory access
+patterns - you must still match the files that you want to match.
+Directory matches won&rsquo;t optimise anything on bucket based remotes (eg
+s3, swift, google compute storage, b2) which don&rsquo;t have a concept of
+directory.</p>
+
+<h3 id="differences-between-rsync-and-rclone-patterns">Differences between rsync and rclone patterns</h3>
+
+<p>Rclone implements bash style <code>{a,b,c}</code> glob matching which rsync doesn&rsquo;t.</p>
+
+<p>Rclone always does a wildcard match so <code>\</code> must always escape a <code>\</code>.</p>
+
+<h2 id="how-the-rules-are-used">How the rules are used</h2>
+
+<p>Rclone maintains a combined list of include rules and exclude rules.</p>
+
+<p>Each file is matched in order, starting from the top, against the rule
+in the list until it finds a match.  The file is then included or
+excluded according to the rule type.</p>
+
+<p>If the matcher fails to find a match after testing against all the
+entries in the list then the path is included.</p>
+
+<p>For example given the following rules, <code>+</code> being include, <code>-</code> being
+exclude,</p>
+
+<pre><code>- secret*.jpg
++ *.jpg
++ *.png
++ file2.avi
+- *
+</code></pre>
+
+<p>This would include</p>
+
+<ul>
+<li><code>file1.jpg</code></li>
+<li><code>file3.png</code></li>
+<li><code>file2.avi</code></li>
+</ul>
+
+<p>This would exclude</p>
+
+<ul>
+<li><code>secret17.jpg</code></li>
+<li>non <code>*.jpg</code> and <code>*.png</code></li>
+</ul>
+
+<p>A similar process is done on directory entries before recursing into
+them.  This only works on remotes which have a concept of directory
+(Eg local, google drive, onedrive, amazon drive) and not on bucket
+based remotes (eg s3, swift, google compute storage, b2).</p>
+
+<h2 id="adding-filtering-rules">Adding filtering rules</h2>
+
+<p>Filtering rules are added with the following command line flags.</p>
+
+<h3 id="repeating-options">Repeating options</h3>
+
+<p>You can repeat the following options to add more than one rule of that
+type.</p>
+
+<ul>
+<li><code>--include</code></li>
+<li><code>--include-from</code></li>
+<li><code>--exclude</code></li>
+<li><code>--exclude-from</code></li>
+<li><code>--filter</code></li>
+<li><code>--filter-from</code></li>
+</ul>
+
+<p><strong>Important</strong> You should not use <code>--include*</code> together with <code>--exclude*</code>.
+It may produce different results than you expected. In that case try to use: <code>--filter*</code>.</p>
+
+<p>Note that all the options of the same type are processed together in
+the order above, regardless of what order they were placed on the
+command line.</p>
+
+<p>So all <code>--include</code> options are processed first in the order they
+appeared on the command line, then all <code>--include-from</code> options etc.</p>
+
+<p>To mix up the order includes and excludes, the <code>--filter</code> flag can be
+used.</p>
+
+<h3 id="exclude-exclude-files-matching-pattern"><code>--exclude</code> - Exclude files matching pattern</h3>
+
+<p>Add a single exclude rule with <code>--exclude</code>.</p>
+
+<p>This flag can be repeated.  See above for the order the flags are
+processed in.</p>
+
+<p>Eg <code>--exclude *.bak</code> to exclude all bak files from the sync.</p>
+
+<h3 id="exclude-from-read-exclude-patterns-from-file"><code>--exclude-from</code> - Read exclude patterns from file</h3>
+
+<p>Add exclude rules from a file.</p>
+
+<p>This flag can be repeated.  See above for the order the flags are
+processed in.</p>
+
+<p>Prepare a file like this <code>exclude-file.txt</code></p>
+
+<pre><code># a sample exclude rule file
+*.bak
+file2.jpg
+</code></pre>
+
+<p>Then use as <code>--exclude-from exclude-file.txt</code>.  This will sync all
+files except those ending in <code>bak</code> and <code>file2.jpg</code>.</p>
+
+<p>This is useful if you have a lot of rules.</p>
+
+<h3 id="include-include-files-matching-pattern"><code>--include</code> - Include files matching pattern</h3>
+
+<p>Add a single include rule with <code>--include</code>.</p>
+
+<p>This flag can be repeated.  See above for the order the flags are
+processed in.</p>
+
+<p>Eg <code>--include *.{png,jpg}</code> to include all <code>png</code> and <code>jpg</code> files in the
+backup and no others.</p>
+
+<p>This adds an implicit <code>--exclude *</code> at the very end of the filter
+list. This means you can mix <code>--include</code> and <code>--include-from</code> with the
+other filters (eg <code>--exclude</code>) but you must include all the files you
+want in the include statement.  If this doesn&rsquo;t provide enough
+flexibility then you must use <code>--filter-from</code>.</p>
+
+<h3 id="include-from-read-include-patterns-from-file"><code>--include-from</code> - Read include patterns from file</h3>
+
+<p>Add include rules from a file.</p>
+
+<p>This flag can be repeated.  See above for the order the flags are
+processed in.</p>
+
+<p>Prepare a file like this <code>include-file.txt</code></p>
+
+<pre><code># a sample include rule file
+*.jpg
+*.png
+file2.avi
+</code></pre>
+
+<p>Then use as <code>--include-from include-file.txt</code>.  This will sync all
+<code>jpg</code>, <code>png</code> files and <code>file2.avi</code>.</p>
+
+<p>This is useful if you have a lot of rules.</p>
+
+<p>This adds an implicit <code>--exclude *</code> at the very end of the filter
+list. This means you can mix <code>--include</code> and <code>--include-from</code> with the
+other filters (eg <code>--exclude</code>) but you must include all the files you
+want in the include statement.  If this doesn&rsquo;t provide enough
+flexibility then you must use <code>--filter-from</code>.</p>
+
+<h3 id="filter-add-a-file-filtering-rule"><code>--filter</code> - Add a file-filtering rule</h3>
+
+<p>This can be used to add a single include or exclude rule.  Include
+rules start with <code>+</code> and exclude rules start with <code>-</code>.  A special
+rule called <code>!</code> can be used to clear the existing rules.</p>
+
+<p>This flag can be repeated.  See above for the order the flags are
+processed in.</p>
+
+<p>Eg <code>--filter &quot;- *.bak&quot;</code> to exclude all bak files from the sync.</p>
+
+<h3 id="filter-from-read-filtering-patterns-from-a-file"><code>--filter-from</code> - Read filtering patterns from a file</h3>
+
+<p>Add include/exclude rules from a file.</p>
+
+<p>This flag can be repeated.  See above for the order the flags are
+processed in.</p>
+
+<p>Prepare a file like this <code>filter-file.txt</code></p>
+
+<pre><code># a sample filter rule file
+- secret*.jpg
++ *.jpg
++ *.png
++ file2.avi
+- /dir/Trash/**
++ /dir/**
+# exclude everything else
+- *
+</code></pre>
+
+<p>Then use as <code>--filter-from filter-file.txt</code>.  The rules are processed
+in the order that they are defined.</p>
+
+<p>This example will include all <code>jpg</code> and <code>png</code> files, exclude any files
+matching <code>secret*.jpg</code> and include <code>file2.avi</code>.  It will also include
+everything in the directory <code>dir</code> at the root of the sync, except
+<code>dir/Trash</code> which it will exclude.  Everything else will be excluded
+from the sync.</p>
+
+<h3 id="files-from-read-list-of-source-file-names"><code>--files-from</code> - Read list of source-file names</h3>
+
+<p>This reads a list of file names from the file passed in and <strong>only</strong>
+these files are transferred.  The <strong>filtering rules are ignored</strong>
+completely if you use this option.</p>
+
+<p>This option can be repeated to read from more than one file.  These
+are read in the order that they are placed on the command line.</p>
+
+<p>Paths within the <code>--files-from</code> file will be interpreted as starting
+with the root specified in the command.  Leading <code>/</code> characters are
+ignored.</p>
+
+<p>For example, suppose you had <code>files-from.txt</code> with this content:</p>
+
+<pre><code># comment
+file1.jpg
+subdir/file2.jpg
+</code></pre>
+
+<p>You could then use it like this:</p>
+
+<pre><code>rclone copy --files-from files-from.txt /home/me/pics remote:pics
+</code></pre>
+
+<p>This will transfer these files only (if they exist)</p>
+
+<pre><code>/home/me/pics/file1.jpg        → remote:pics/file1.jpg
+/home/me/pics/subdir/file2.jpg → remote:pics/subdirfile1.jpg
+</code></pre>
+
+<p>To take a more complicated example, let&rsquo;s say you had a few files you
+want to back up regularly with these absolute paths:</p>
+
+<pre><code>/home/user1/important
+/home/user1/dir/file
+/home/user2/stuff
+</code></pre>
+
+<p>To copy these you&rsquo;d find a common subdirectory - in this case <code>/home</code>
+and put the remaining files in <code>files-from.txt</code> with or without
+leading <code>/</code>, eg</p>
+
+<pre><code>user1/important
+user1/dir/file
+user2/stuff
+</code></pre>
+
+<p>You could then copy these to a remote like this</p>
+
+<pre><code>rclone copy --files-from files-from.txt /home remote:backup
+</code></pre>
+
+<p>The 3 files will arrive in <code>remote:backup</code> with the paths as in the
+<code>files-from.txt</code> like this:</p>
+
+<pre><code>/home/user1/important → remote:backup/user1/important
+/home/user1/dir/file  → remote:backup/user1/dir/file
+/home/user2/stuff     → remote:backup/stuff
+</code></pre>
+
+<p>You could of course choose <code>/</code> as the root too in which case your
+<code>files-from.txt</code> might look like this.</p>
+
+<pre><code>/home/user1/important
+/home/user1/dir/file
+/home/user2/stuff
+</code></pre>
+
+<p>And you would transfer it like this</p>
+
+<pre><code>rclone copy --files-from files-from.txt / remote:backup
+</code></pre>
+
+<p>In this case there will be an extra <code>home</code> directory on the remote:</p>
+
+<pre><code>/home/user1/important → remote:home/backup/user1/important
+/home/user1/dir/file  → remote:home/backup/user1/dir/file
+/home/user2/stuff     → remote:home/backup/stuff
+</code></pre>
+
+<h3 id="min-size-don-t-transfer-any-file-smaller-than-this"><code>--min-size</code> - Don&rsquo;t transfer any file smaller than this</h3>
+
+<p>This option controls the minimum size file which will be transferred.
+This defaults to <code>kBytes</code> but a suffix of <code>k</code>, <code>M</code>, or <code>G</code> can be
+used.</p>
+
+<p>For example <code>--min-size 50k</code> means no files smaller than 50kByte will be
+transferred.</p>
+
+<h3 id="max-size-don-t-transfer-any-file-larger-than-this"><code>--max-size</code> - Don&rsquo;t transfer any file larger than this</h3>
+
+<p>This option controls the maximum size file which will be transferred.
+This defaults to <code>kBytes</code> but a suffix of <code>k</code>, <code>M</code>, or <code>G</code> can be
+used.</p>
+
+<p>For example <code>--max-size 1G</code> means no files larger than 1GByte will be
+transferred.</p>
+
+<h3 id="max-age-don-t-transfer-any-file-older-than-this"><code>--max-age</code> - Don&rsquo;t transfer any file older than this</h3>
+
+<p>This option controls the maximum age of files to transfer.  Give in
+seconds or with a suffix of:</p>
+
+<ul>
+<li><code>ms</code> - Milliseconds</li>
+<li><code>s</code> - Seconds</li>
+<li><code>m</code> - Minutes</li>
+<li><code>h</code> - Hours</li>
+<li><code>d</code> - Days</li>
+<li><code>w</code> - Weeks</li>
+<li><code>M</code> - Months</li>
+<li><code>y</code> - Years</li>
+</ul>
+
+<p>For example <code>--max-age 2d</code> means no files older than 2 days will be
+transferred.</p>
+
+<h3 id="min-age-don-t-transfer-any-file-younger-than-this"><code>--min-age</code> - Don&rsquo;t transfer any file younger than this</h3>
+
+<p>This option controls the minimum age of files to transfer.  Give in
+seconds or with a suffix (see <code>--max-age</code> for list of suffixes)</p>
+
+<p>For example <code>--min-age 2d</code> means no files younger than 2 days will be
+transferred.</p>
+
+<h3 id="delete-excluded-delete-files-on-dest-excluded-from-sync"><code>--delete-excluded</code> - Delete files on dest excluded from sync</h3>
+
+<p><strong>Important</strong> this flag is dangerous - use with <code>--dry-run</code> and <code>-v</code> first.</p>
+
+<p>When doing <code>rclone sync</code> this will delete any files which are excluded
+from the sync on the destination.</p>
+
+<p>If for example you did a sync from <code>A</code> to <code>B</code> without the <code>--min-size 50k</code> flag</p>
+
+<pre><code>rclone sync A: B:
+</code></pre>
+
+<p>Then you repeated it like this with the <code>--delete-excluded</code></p>
+
+<pre><code>rclone --min-size 50k --delete-excluded sync A: B:
+</code></pre>
+
+<p>This would delete all files on <code>B</code> which are less than 50 kBytes as
+these are now excluded from the sync.</p>
+
+<p>Always test first with <code>--dry-run</code> and <code>-v</code> before using this flag.</p>
+
+<h3 id="dump-filters-dump-the-filters-to-the-output"><code>--dump filters</code> - dump the filters to the output</h3>
+
+<p>This dumps the defined filters to the output as regular expressions.</p>
+
+<p>Useful for debugging.</p>
+
+<h2 id="quoting-shell-metacharacters">Quoting shell metacharacters</h2>
+
+<p>The examples above may not work verbatim in your shell as they have
+shell metacharacters in them (eg <code>*</code>), and may require quoting.</p>
+
+<p>Eg linux, OSX</p>
+
+<ul>
+<li><code>--include \*.jpg</code></li>
+<li><code>--include '*.jpg'</code></li>
+<li><code>--include='*.jpg'</code></li>
+</ul>
+
+<p>In Windows the expansion is done by the command not the shell so this
+should work fine</p>
+
+<ul>
+<li><code>--include *.jpg</code></li>
+</ul>
+
+<h2 id="exclude-directory-based-on-a-file">Exclude directory based on a file</h2>
+
+<p>It is possible to exclude a directory based on a file, which is
+present in this directory. Filename should be specified using the
+<code>--exclude-if-present</code> flag. This flag has a priority over the other
+filtering flags.</p>
+
+<p>Imagine, you have the following directory structure:</p>
+
+<pre><code>dir1/file1
+dir1/dir2/file2
+dir1/dir2/dir3/file3
+dir1/dir2/dir3/.ignore
+</code></pre>
+
+<p>You can exclude <code>dir3</code> from sync by running the following command:</p>
+
+<pre><code>rclone sync --exclude-if-present .ignore dir1 remote:backup
+</code></pre>
+
+<p>Currently only one filename is supported, i.e. <code>--exclude-if-present</code>
+should not be used multiple times.</p>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

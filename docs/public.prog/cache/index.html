@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rclone docs for cache remote">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Cache</title>
+    <link rel="canonical" href="https://rclone.org/cache/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="i-class-fa-fa-archive-i-cache-beta"><i class="fa fa-archive"></i> Cache (BETA)</h2>
+
+<p>The <code>cache</code> remote wraps another existing remote and stores file structure
+and its data for long running tasks like <code>rclone mount</code>.</p>
+
+<p>To get started you just need to have an existing remote which can be configured
+with <code>cache</code>.</p>
+
+<p>Here is an example of how to make a remote called <code>test-cache</code>.  First run:</p>
+
+<pre><code> rclone config
+</code></pre>
+
+<p>This will guide you through an interactive setup process:</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+n/r/c/s/q&gt; n
+name&gt; test-cache
+Type of storage to configure.
+Choose a number from below, or type in your own value
+...
+ 5 / Cache a remote
+   \ &quot;cache&quot;
+...
+Storage&gt; 5
+Remote to cache.
+Normally should contain a ':' and a path, eg &quot;myremote:path/to/dir&quot;,
+&quot;myremote:bucket&quot; or maybe &quot;myremote:&quot; (not recommended).
+remote&gt; local:/test
+Optional: The URL of the Plex server
+plex_url&gt; http://127.0.0.1:32400
+Optional: The username of the Plex user
+plex_username&gt; dummyusername
+Optional: The password of the Plex user
+y) Yes type in my own password
+g) Generate random password
+n) No leave this optional password blank
+y/g/n&gt; y
+Enter the password:
+password:
+Confirm the password:
+password:
+The size of a chunk. Lower value good for slow connections but can affect seamless reading.
+Default: 5M
+Choose a number from below, or type in your own value
+ 1 / 1MB
+   \ &quot;1m&quot;
+ 2 / 5 MB
+   \ &quot;5M&quot;
+ 3 / 10 MB
+   \ &quot;10M&quot;
+chunk_size&gt; 2
+How much time should object info (file size, file hashes etc) be stored in cache. Use a very high value if you don't plan on changing the source FS from outside the cache.
+Accepted units are: &quot;s&quot;, &quot;m&quot;, &quot;h&quot;.
+Default: 5m
+Choose a number from below, or type in your own value
+ 1 / 1 hour
+   \ &quot;1h&quot;
+ 2 / 24 hours
+   \ &quot;24h&quot;
+ 3 / 24 hours
+   \ &quot;48h&quot;
+info_age&gt; 2
+The maximum size of stored chunks. When the storage grows beyond this size, the oldest chunks will be deleted.
+Default: 10G
+Choose a number from below, or type in your own value
+ 1 / 500 MB
+   \ &quot;500M&quot;
+ 2 / 1 GB
+   \ &quot;1G&quot;
+ 3 / 10 GB
+   \ &quot;10G&quot;
+chunk_total_size&gt; 3
+Remote config
+--------------------
+[test-cache]
+remote = local:/test
+plex_url = http://127.0.0.1:32400
+plex_username = dummyusername
+plex_password = *** ENCRYPTED ***
+chunk_size = 5M
+info_age = 48h
+chunk_total_size = 10G
+</code></pre>
+
+<p>You can then use it like this,</p>
+
+<p>List directories in top level of your drive</p>
+
+<pre><code>rclone lsd test-cache:
+</code></pre>
+
+<p>List all the files in your drive</p>
+
+<pre><code>rclone ls test-cache:
+</code></pre>
+
+<p>To start a cached mount</p>
+
+<pre><code>rclone mount --allow-other test-cache: /var/tmp/test-cache
+</code></pre>
+
+<h3 id="write-features">Write Features</h3>
+
+<h3 id="offline-uploading">Offline uploading</h3>
+
+<p>In an effort to make writing through cache more reliable, the backend
+now supports this feature which can be activated by specifying a
+<code>cache-tmp-upload-path</code>.</p>
+
+<p>A files goes through these states when using this feature:</p>
+
+<ol>
+<li>An upload is started (usually by copying a file on the cache remote)</li>
+<li>When the copy to the temporary location is complete the file is part
+of the cached remote and looks and behaves like any other file (reading included)</li>
+<li>After <code>cache-tmp-wait-time</code> passes and the file is next in line, <code>rclone move</code>
+is used to move the file to the cloud provider</li>
+<li>Reading the file still works during the upload but most modifications on it will be prohibited</li>
+<li>Once the move is complete the file is unlocked for modifications as it
+becomes as any other regular file</li>
+<li>If the file is being read through <code>cache</code> when it&rsquo;s actually
+deleted from the temporary path then <code>cache</code> will simply swap the source
+to the cloud provider without interrupting the reading (small blip can happen though)</li>
+</ol>
+
+<p>Files are uploaded in sequence and only one file is uploaded at a time.
+Uploads will be stored in a queue and be processed based on the order they were added.
+The queue and the temporary storage is persistent across restarts and even purges of the cache.</p>
+
+<h3 id="write-support">Write Support</h3>
+
+<p>Writes are supported through <code>cache</code>.
+One caveat is that a mounted cache remote does not add any retry or fallback
+mechanism to the upload operation. This will depend on the implementation
+of the wrapped remote. Consider using <code>Offline uploading</code> for reliable writes.</p>
+
+<p>One special case is covered with <code>cache-writes</code> which will cache the file
+data at the same time as the upload when it is enabled making it available
+from the cache store immediately once the upload is finished.</p>
+
+<h3 id="read-features">Read Features</h3>
+
+<h4 id="multiple-connections">Multiple connections</h4>
+
+<p>To counter the high latency between a local PC where rclone is running
+and cloud providers, the cache remote can split multiple requests to the
+cloud provider for smaller file chunks and combines them together locally
+where they can be available almost immediately before the reader usually
+needs them.</p>
+
+<p>This is similar to buffering when media files are played online. Rclone
+will stay around the current marker but always try its best to stay ahead
+and prepare the data before.</p>
+
+<h4 id="plex-integration">Plex Integration</h4>
+
+<p>There is a direct integration with Plex which allows cache to detect during reading
+if the file is in playback or not. This helps cache to adapt how it queries
+the cloud provider depending on what is needed for.</p>
+
+<p>Scans will have a minimum amount of workers (1) while in a confirmed playback cache
+will deploy the configured number of workers.</p>
+
+<p>This integration opens the doorway to additional performance improvements
+which will be explored in the near future.</p>
+
+<p><strong>Note:</strong> If Plex options are not configured, <code>cache</code> will function with its
+configured options without adapting any of its settings.</p>
+
+<p>How to enable? Run <code>rclone config</code> and add all the Plex options (endpoint, username
+and password) in your remote and it will be automatically enabled.</p>
+
+<p>Affected settings:
+- <code>cache-workers</code>: <em>Configured value</em> during confirmed playback or <em>1</em> all the other times</p>
+
+<h3 id="known-issues">Known issues</h3>
+
+<h4 id="mount-and-dir-cache-time">Mount and --dir-cache-time</h4>
+
+<p>--dir-cache-time controls the first layer of directory caching which works at the mount layer.
+Being an independent caching mechanism from the <code>cache</code> backend, it will manage its own entries
+based on the configured time.</p>
+
+<p>To avoid getting in a scenario where dir cache has obsolete data and cache would have the correct
+one, try to set <code>--dir-cache-time</code> to a lower time than <code>--cache-info-age</code>. Default values are
+already configured in this way.</p>
+
+<h4 id="windows-support-experimental">Windows support - Experimental</h4>
+
+<p>There are a couple of issues with Windows <code>mount</code> functionality that still require some investigations.
+It should be considered as experimental thus far as fixes come in for this OS.</p>
+
+<p>Most of the issues seem to be related to the difference between filesystems
+on Linux flavors and Windows as cache is heavily dependant on them.</p>
+
+<p>Any reports or feedback on how cache behaves on this OS is greatly appreciated.</p>
+
+<ul>
+<li><a href="https://github.com/ncw/rclone/issues/1935">https://github.com/ncw/rclone/issues/1935</a></li>
+<li><a href="https://github.com/ncw/rclone/issues/1907">https://github.com/ncw/rclone/issues/1907</a></li>
+<li><a href="https://github.com/ncw/rclone/issues/1834">https://github.com/ncw/rclone/issues/1834</a></li>
+</ul>
+
+<h4 id="risk-of-throttling">Risk of throttling</h4>
+
+<p>Future iterations of the cache backend will make use of the pooling functionality
+of the cloud provider to synchronize and at the same time make writing through it
+more tolerant to failures.</p>
+
+<p>There are a couple of enhancements in track to add these but in the meantime
+there is a valid concern that the expiring cache listings can lead to cloud provider
+throttles or bans due to repeated queries on it for very large mounts.</p>
+
+<p>Some recommendations:
+- don&rsquo;t use a very small interval for entry informations (<code>--cache-info-age</code>)
+- while writes aren&rsquo;t yet optimised, you can still write through <code>cache</code> which gives you the advantage
+of adding the file in the cache at the same time if configured to do so.</p>
+
+<p>Future enhancements:</p>
+
+<ul>
+<li><a href="https://github.com/ncw/rclone/issues/1937">https://github.com/ncw/rclone/issues/1937</a></li>
+<li><a href="https://github.com/ncw/rclone/issues/1936">https://github.com/ncw/rclone/issues/1936</a></li>
+</ul>
+
+<h4 id="cache-and-crypt">cache and crypt</h4>
+
+<p>One common scenario is to keep your data encrypted in the cloud provider
+using the <code>crypt</code> remote. <code>crypt</code> uses a similar technique to wrap around
+an existing remote and handles this translation in a seamless way.</p>
+
+<p>There is an issue with wrapping the remotes in this order:
+<span style="color:red"><strong>cloud remote</strong> -&gt; <strong>crypt</strong> -&gt; <strong>cache</strong></span></p>
+
+<p>During testing, I experienced a lot of bans with the remotes in this order.
+I suspect it might be related to how crypt opens files on the cloud provider
+which makes it think we&rsquo;re downloading the full file instead of small chunks.
+Organizing the remotes in this order yelds better results:
+<span style="color:green"><strong>cloud remote</strong> -&gt; <strong>cache</strong> -&gt; <strong>crypt</strong></span></p>
+
+<h3 id="specific-options">Specific options</h3>
+
+<p>Here are the command line options specific to this cloud storage
+system.</p>
+
+<h4 id="cache-chunk-path-path">--cache-chunk-path=PATH</h4>
+
+<p>Path to where partial file data (chunks) is stored locally. The remote
+name is appended to the final path.</p>
+
+<p>This config follows the <code>--cache-db-path</code>. If you specify a custom
+location for <code>--cache-db-path</code> and don&rsquo;t specify one for <code>--cache-chunk-path</code>
+then <code>--cache-chunk-path</code> will use the same path as <code>--cache-db-path</code>.</p>
+
+<p><strong>Default</strong>: <rclone default cache path>/cache-backend/<remote name>
+<strong>Example</strong>: /.cache/cache-backend/test-cache</p>
+
+<h4 id="cache-db-path-path">--cache-db-path=PATH</h4>
+
+<p>Path to where the file structure metadata (DB) is stored locally. The remote
+name is used as the DB file name.</p>
+
+<p><strong>Default</strong>: <rclone default cache path>/cache-backend/<remote name>
+<strong>Example</strong>: /.cache/cache-backend/test-cache</p>
+
+<h4 id="cache-db-purge">--cache-db-purge</h4>
+
+<p>Flag to clear all the cached data for this remote before.</p>
+
+<p><strong>Default</strong>: not set</p>
+
+<h4 id="cache-chunk-size-size">--cache-chunk-size=SIZE</h4>
+
+<p>The size of a chunk (partial file data). Use lower numbers for slower
+connections.</p>
+
+<p><strong>Default</strong>: 5M</p>
+
+<h4 id="cache-total-chunk-size-size">--cache-total-chunk-size=SIZE</h4>
+
+<p>The total size that the chunks can take up on the local disk. If <code>cache</code>
+exceeds this value then it will start to the delete the oldest chunks until
+it goes under this value.</p>
+
+<p><strong>Default</strong>: 10G</p>
+
+<h4 id="cache-chunk-clean-interval-duration">--cache-chunk-clean-interval=DURATION</h4>
+
+<p>How often should <code>cache</code> perform cleanups of the chunk storage. The default value
+should be ok for most people. If you find that <code>cache</code> goes over <code>cache-total-chunk-size</code>
+too often then try to lower this value to force it to perform cleanups more often.</p>
+
+<p><strong>Default</strong>: 1m</p>
+
+<h4 id="cache-info-age-duration">--cache-info-age=DURATION</h4>
+
+<p>How long to keep file structure information (directory listings, file size,
+mod times etc) locally.</p>
+
+<p>If all write operations are done through <code>cache</code> then you can safely make
+this value very large as the cache store will also be updated in real time.</p>
+
+<p><strong>Default</strong>: 6h</p>
+
+<h4 id="cache-read-retries-retries">--cache-read-retries=RETRIES</h4>
+
+<p>How many times to retry a read from a cache storage.</p>
+
+<p>Since reading from a <code>cache</code> stream is independent from downloading file data,
+readers can get to a point where there&rsquo;s no more data in the cache.
+Most of the times this can indicate a connectivity issue if <code>cache</code> isn&rsquo;t
+able to provide file data anymore.</p>
+
+<p>For really slow connections, increase this to a point where the stream is
+able to provide data but your experience will be very stuttering.</p>
+
+<p><strong>Default</strong>: 10</p>
+
+<h4 id="cache-workers-workers">--cache-workers=WORKERS</h4>
+
+<p>How many workers should run in parallel to download chunks.</p>
+
+<p>Higher values will mean more parallel processing (better CPU needed) and
+more concurrent requests on the cloud provider.
+This impacts several aspects like the cloud provider API limits, more stress
+on the hardware that rclone runs on but it also means that streams will
+be more fluid and data will be available much more faster to readers.</p>
+
+<p><strong>Note</strong>: If the optional Plex integration is enabled then this setting
+will adapt to the type of reading performed and the value specified here will be used
+as a maximum number of workers to use.
+<strong>Default</strong>: 4</p>
+
+<h4 id="cache-chunk-no-memory">--cache-chunk-no-memory</h4>
+
+<p>By default, <code>cache</code> will keep file data during streaming in RAM as well
+to provide it to readers as fast as possible.</p>
+
+<p>This transient data is evicted as soon as it is read and the number of
+chunks stored doesn&rsquo;t exceed the number of workers. However, depending
+on other settings like <code>cache-chunk-size</code> and <code>cache-workers</code> this footprint
+can increase if there are parallel streams too (multiple files being read
+at the same time).</p>
+
+<p>If the hardware permits it, use this feature to provide an overall better
+performance during streaming but it can also be disabled if RAM is not
+available on the local machine.</p>
+
+<p><strong>Default</strong>: not set</p>
+
+<h4 id="cache-rps-number">--cache-rps=NUMBER</h4>
+
+<p>This setting places a hard limit on the number of requests per second that <code>cache</code>
+will be doing to the cloud provider remote and try to respect that value
+by setting waits between reads.</p>
+
+<p>If you find that you&rsquo;re getting banned or limited on the cloud provider
+through cache and know that a smaller number of requests per second will
+allow you to work with it then you can use this setting for that.</p>
+
+<p>A good balance of all the other settings should make this
+setting useless but it is available to set for more special cases.</p>
+
+<p><strong>NOTE</strong>: This will limit the number of requests during streams but other
+API calls to the cloud provider like directory listings will still pass.</p>
+
+<p><strong>Default</strong>: disabled</p>
+
+<h4 id="cache-writes">--cache-writes</h4>
+
+<p>If you need to read files immediately after you upload them through <code>cache</code>
+you can enable this flag to have their data stored in the cache store at the
+same time during upload.</p>
+
+<p><strong>Default</strong>: not set</p>
+
+<h4 id="cache-tmp-upload-path-path">--cache-tmp-upload-path=PATH</h4>
+
+<p>This is the path where <code>cache</code> will use as a temporary storage for new files
+that need to be uploaded to the cloud provider.</p>
+
+<p>Specifying a value will enable this feature. Without it, it is completely disabled
+and files will be uploaded directly to the cloud provider</p>
+
+<p><strong>Default</strong>: empty</p>
+
+<h4 id="cache-tmp-wait-time-duration">--cache-tmp-wait-time=DURATION</h4>
+
+<p>This is the duration that a file must wait in the temporary location
+<em>cache-tmp-upload-path</em> before it is selected for upload.</p>
+
+<p>Note that only one file is uploaded at a time and it can take longer to
+start the upload if a queue formed for this purpose.</p>
+
+<p><strong>Default</strong>: 15m</p>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

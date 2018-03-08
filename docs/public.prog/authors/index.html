@@ -1,0 +1,306 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rclone Authors and Contributors">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Authors</title>
+    <link rel="canonical" href="https://rclone.org/authors/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="authors">Authors</h2>
+
+<ul>
+<li>Nick Craig-Wood <a href="mailto:nick@craig-wood.com">nick@craig-wood.com</a></li>
+</ul>
+
+<h2 id="contributors">Contributors</h2>
+
+<ul>
+<li>Alex Couper <a href="mailto:amcouper@gmail.com">amcouper@gmail.com</a></li>
+<li>Leonid Shalupov <a href="mailto:leonid@shalupov.com">leonid@shalupov.com</a> <a href="mailto:shalupov@diverse.org.ru">shalupov@diverse.org.ru</a></li>
+<li>Shimon Doodkin <a href="mailto:helpmepro1@gmail.com">helpmepro1@gmail.com</a></li>
+<li>Colin Nicholson <a href="mailto:colin@colinn.com">colin@colinn.com</a></li>
+<li>Klaus Post <a href="mailto:klauspost@gmail.com">klauspost@gmail.com</a></li>
+<li>Sergey Tolmachev <a href="mailto:tolsi.ru@gmail.com">tolsi.ru@gmail.com</a></li>
+<li>Adriano Aurélio Meirelles <a href="mailto:adriano@atinge.com">adriano@atinge.com</a></li>
+<li>C. Bess <a href="mailto:cbess@users.noreply.github.com">cbess@users.noreply.github.com</a></li>
+<li>Dmitry Burdeev <a href="mailto:dibu28@gmail.com">dibu28@gmail.com</a></li>
+<li>Joseph Spurrier <a href="mailto:github@josephspurrier.com">github@josephspurrier.com</a></li>
+<li>Björn Harrtell <a href="mailto:bjorn@wololo.org">bjorn@wololo.org</a></li>
+<li>Xavier Lucas <a href="mailto:xavier.lucas@corp.ovh.com">xavier.lucas@corp.ovh.com</a></li>
+<li>Werner Beroux <a href="mailto:werner@beroux.com">werner@beroux.com</a></li>
+<li>Brian Stengaard <a href="mailto:brian@stengaard.eu">brian@stengaard.eu</a></li>
+<li>Jakub Gedeon <a href="mailto:jgedeon@sofi.com">jgedeon@sofi.com</a></li>
+<li>Jim Tittsler <a href="mailto:jwt@onjapan.net">jwt@onjapan.net</a></li>
+<li>Michal Witkowski <a href="mailto:michal@improbable.io">michal@improbable.io</a></li>
+<li>Fabian Ruff <a href="mailto:fabian.ruff@sap.com">fabian.ruff@sap.com</a></li>
+<li>Leigh Klotz <a href="mailto:klotz@quixey.com">klotz@quixey.com</a></li>
+<li>Romain Lapray <a href="mailto:lapray.romain@gmail.com">lapray.romain@gmail.com</a></li>
+<li>Justin R. Wilson <a href="mailto:jrw972@gmail.com">jrw972@gmail.com</a></li>
+<li>Antonio Messina <a href="mailto:antonio.s.messina@gmail.com">antonio.s.messina@gmail.com</a></li>
+<li>Stefan G. Weichinger <a href="mailto:office@oops.co.at">office@oops.co.at</a></li>
+<li>Per Cederberg <a href="mailto:cederberg@gmail.com">cederberg@gmail.com</a></li>
+<li>Radek Šenfeld <a href="mailto:rush@logic.cz">rush@logic.cz</a></li>
+<li>Fredrik Fornwall <a href="mailto:fredrik@fornwall.net">fredrik@fornwall.net</a></li>
+<li>Asko Tamm <a href="mailto:asko@deekit.net">asko@deekit.net</a></li>
+<li>xor-zz <a href="mailto:xor@gstocco.com">xor@gstocco.com</a></li>
+<li>Tomasz Mazur <a href="mailto:tmazur90@gmail.com">tmazur90@gmail.com</a></li>
+<li>Marco Paganini <a href="mailto:paganini@paganini.net">paganini@paganini.net</a></li>
+<li>Felix Bünemann <a href="mailto:buenemann@louis.info">buenemann@louis.info</a></li>
+<li>Durval Menezes <a href="mailto:jmrclone@durval.com">jmrclone@durval.com</a></li>
+<li>Luiz Carlos Rumbelsperger Viana <maxd13_luiz_carlos@hotmail.com></li>
+<li>Stefan Breunig <a href="mailto:stefan-github@yrden.de">stefan-github@yrden.de</a></li>
+<li>Alishan Ladhani <a href="mailto:ali-l@users.noreply.github.com">ali-l@users.noreply.github.com</a></li>
+<li>0xJAKE <a href="mailto:0xJAKE@users.noreply.github.com">0xJAKE@users.noreply.github.com</a></li>
+<li>Thibault Molleman <a href="mailto:thibaultmol@users.noreply.github.com">thibaultmol@users.noreply.github.com</a></li>
+<li>Scott McGillivray <a href="mailto:scott.mcgillivray@gmail.com">scott.mcgillivray@gmail.com</a></li>
+<li>Bjørn Erik Pedersen <a href="mailto:bjorn.erik.pedersen@gmail.com">bjorn.erik.pedersen@gmail.com</a></li>
+<li>Lukas Loesche <a href="mailto:lukas@mesosphere.io">lukas@mesosphere.io</a></li>
+<li>emyarod <a href="mailto:allllaboutyou@gmail.com">allllaboutyou@gmail.com</a></li>
+<li>T.C. Ferguson <a href="mailto:tcf909@gmail.com">tcf909@gmail.com</a></li>
+<li>Brandur <a href="mailto:brandur@mutelight.org">brandur@mutelight.org</a></li>
+<li>Dario Giovannetti <a href="mailto:dev@dariogiovannetti.net">dev@dariogiovannetti.net</a></li>
+<li>Károly Oláh <a href="mailto:okaresz@aol.com">okaresz@aol.com</a></li>
+<li>Jon Yergatian <a href="mailto:jon@macfanatic.ca">jon@macfanatic.ca</a></li>
+<li>Jack Schmidt <a href="mailto:github@mowsey.org">github@mowsey.org</a></li>
+<li>Dedsec1 <a href="mailto:Dedsec1@users.noreply.github.com">Dedsec1@users.noreply.github.com</a></li>
+<li>Hisham Zarka <a href="mailto:hzarka@gmail.com">hzarka@gmail.com</a></li>
+<li>Jérôme Vizcaino <a href="mailto:jerome.vizcaino@gmail.com">jerome.vizcaino@gmail.com</a></li>
+<li>Mike Tesch <a href="mailto:mjt6129@rit.edu">mjt6129@rit.edu</a></li>
+<li>Marvin Watson <a href="mailto:marvwatson@users.noreply.github.com">marvwatson@users.noreply.github.com</a></li>
+<li>Danny Tsai <a href="mailto:danny8376@gmail.com">danny8376@gmail.com</a></li>
+<li>Yoni Jah <a href="mailto:yonjah+git@gmail.com">yonjah+git@gmail.com</a> <a href="mailto:yonjah+github@gmail.com">yonjah+github@gmail.com</a></li>
+<li>Stephen Harris <a href="mailto:github@spuddy.org">github@spuddy.org</a></li>
+<li>Ihor Dvoretskyi <a href="mailto:ihor.dvoretskyi@gmail.com">ihor.dvoretskyi@gmail.com</a></li>
+<li>Jon Craton <a href="mailto:jncraton@gmail.com">jncraton@gmail.com</a></li>
+<li>Hraban Luyat <a href="mailto:hraban@0brg.net">hraban@0brg.net</a></li>
+<li>Michael Ledin <a href="mailto:mledin89@gmail.com">mledin89@gmail.com</a></li>
+<li>Martin Kristensen <a href="mailto:me@azgul.com">me@azgul.com</a></li>
+<li>Too Much IO <a href="mailto:toomuchio@users.noreply.github.com">toomuchio@users.noreply.github.com</a></li>
+<li>Anisse Astier <a href="mailto:anisse@astier.eu">anisse@astier.eu</a></li>
+<li>Zahiar Ahmed <a href="mailto:zahiar@live.com">zahiar@live.com</a></li>
+<li>Igor Kharin <a href="mailto:igorkharin@gmail.com">igorkharin@gmail.com</a></li>
+<li>Bill Zissimopoulos <a href="mailto:billziss@navimatics.com">billziss@navimatics.com</a></li>
+<li>Bob Potter <a href="mailto:bobby.potter@gmail.com">bobby.potter@gmail.com</a></li>
+<li>Steven Lu <a href="mailto:tacticalazn@gmail.com">tacticalazn@gmail.com</a></li>
+<li>Sjur Fredriksen <a href="mailto:sjurtf@ifi.uio.no">sjurtf@ifi.uio.no</a></li>
+<li>Ruwbin <a href="mailto:hubus12345@gmail.com">hubus12345@gmail.com</a></li>
+<li>Fabian Möller <a href="mailto:fabianm88@gmail.com">fabianm88@gmail.com</a> <a href="mailto:f.moeller@nynex.de">f.moeller@nynex.de</a></li>
+<li>Edward Q. Bridges <a href="mailto:github@eqbridges.com">github@eqbridges.com</a></li>
+<li>Vasiliy Tolstov <a href="mailto:v.tolstov@selfip.ru">v.tolstov@selfip.ru</a></li>
+<li>Harshavardhana <a href="mailto:harsha@minio.io">harsha@minio.io</a></li>
+<li>sainaen <a href="mailto:sainaen@gmail.com">sainaen@gmail.com</a></li>
+<li>gdm85 <a href="mailto:gdm85@users.noreply.github.com">gdm85@users.noreply.github.com</a></li>
+<li>Yaroslav Halchenko <a href="mailto:debian@onerussian.com">debian@onerussian.com</a></li>
+<li>John Papandriopoulos <a href="mailto:jpap@users.noreply.github.com">jpap@users.noreply.github.com</a></li>
+<li>Zhiming Wang <a href="mailto:zmwangx@gmail.com">zmwangx@gmail.com</a></li>
+<li>Andy Pilate <a href="mailto:cubox@cubox.me">cubox@cubox.me</a></li>
+<li>Oliver Heyme <a href="mailto:olihey@googlemail.com">olihey@googlemail.com</a> <a href="mailto:olihey@users.noreply.github.com">olihey@users.noreply.github.com</a></li>
+<li>wuyu <a href="mailto:wuyu@yunify.com">wuyu@yunify.com</a></li>
+<li>Andrei Dragomir <a href="mailto:adragomi@adobe.com">adragomi@adobe.com</a></li>
+<li>Christian Brüggemann <a href="mailto:mail@cbruegg.com">mail@cbruegg.com</a></li>
+<li>Alex McGrath Kraak <a href="mailto:amkdude@gmail.com">amkdude@gmail.com</a></li>
+<li>bpicode <a href="mailto:bjoern.pirnay@googlemail.com">bjoern.pirnay@googlemail.com</a></li>
+<li>Daniel Jagszent <a href="mailto:daniel@jagszent.de">daniel@jagszent.de</a></li>
+<li>Josiah White <a href="mailto:thegenius2009@gmail.com">thegenius2009@gmail.com</a></li>
+<li>Ishuah Kariuki <a href="mailto:kariuki@ishuah.com">kariuki@ishuah.com</a> <a href="mailto:ishuah91@gmail.com">ishuah91@gmail.com</a></li>
+<li>Jan Varho <a href="mailto:jan@varho.org">jan@varho.org</a></li>
+<li>Girish Ramakrishnan <a href="mailto:girish@cloudron.io">girish@cloudron.io</a></li>
+<li>LingMan <a href="mailto:LingMan@users.noreply.github.com">LingMan@users.noreply.github.com</a></li>
+<li>Jacob McNamee <a href="mailto:jacobmcnamee@gmail.com">jacobmcnamee@gmail.com</a></li>
+<li>jersou <a href="mailto:jertux@gmail.com">jertux@gmail.com</a></li>
+<li>thierry <a href="mailto:thierry@substantiel.fr">thierry@substantiel.fr</a></li>
+<li>Simon Leinen <a href="mailto:simon.leinen@gmail.com">simon.leinen@gmail.com</a> <a href="mailto:ubuntu@s3-test.novalocal">ubuntu@s3-test.novalocal</a></li>
+<li>Dan Dascalescu <a href="mailto:ddascalescu+github@gmail.com">ddascalescu+github@gmail.com</a></li>
+<li>Jason Rose <a href="mailto:jason@jro.io">jason@jro.io</a></li>
+<li>Andrew Starr-Bochicchio <a href="mailto:a.starr.b@gmail.com">a.starr.b@gmail.com</a></li>
+<li>John Leach <a href="mailto:john@johnleach.co.uk">john@johnleach.co.uk</a></li>
+<li>Corban Raun <a href="mailto:craun@instructure.com">craun@instructure.com</a></li>
+<li>Pierre Carlson <a href="mailto:mpcarl@us.ibm.com">mpcarl@us.ibm.com</a></li>
+<li>Ernest Borowski <a href="mailto:er.borowski@gmail.com">er.borowski@gmail.com</a></li>
+<li>Remus Bunduc <a href="mailto:remus.bunduc@gmail.com">remus.bunduc@gmail.com</a></li>
+<li>Iakov Davydov <a href="mailto:iakov.davydov@unil.ch">iakov.davydov@unil.ch</a> <a href="mailto:dav05.gith@myths.ru">dav05.gith@myths.ru</a></li>
+<li>Jakub Tasiemski <a href="mailto:tasiemski@gmail.com">tasiemski@gmail.com</a></li>
+<li>David Minor <a href="mailto:dminor@saymedia.com">dminor@saymedia.com</a></li>
+<li>Tim Cooijmans <a href="mailto:cooijmans.tim@gmail.com">cooijmans.tim@gmail.com</a></li>
+<li>Laurence <a href="mailto:liuxy6@gmail.com">liuxy6@gmail.com</a></li>
+<li>Giovanni Pizzi <a href="mailto:gio.piz@gmail.com">gio.piz@gmail.com</a></li>
+<li>Filip Bartodziej <a href="mailto:filipbartodziej@gmail.com">filipbartodziej@gmail.com</a></li>
+<li>Jon Fautley <a href="mailto:jon@dead.li">jon@dead.li</a></li>
+<li>lewapm <a href="mailto:32110057+lewapm@users.noreply.github.com">32110057+lewapm@users.noreply.github.com</a></li>
+<li>Yassine Imounachen <a href="mailto:yassine256@gmail.com">yassine256@gmail.com</a></li>
+<li>Chris Redekop <a href="mailto:chris-redekop@users.noreply.github.com">chris-redekop@users.noreply.github.com</a></li>
+<li>Jon Fautley <a href="mailto:jon@adenoid.appstal.co.uk">jon@adenoid.appstal.co.uk</a></li>
+<li>Will Gunn <a href="mailto:WillGunn@users.noreply.github.com">WillGunn@users.noreply.github.com</a></li>
+<li>Lucas Bremgartner <a href="mailto:lucas@bremis.ch">lucas@bremis.ch</a></li>
+<li>Jody Frankowski <a href="mailto:jody.frankowski@gmail.com">jody.frankowski@gmail.com</a></li>
+<li>Andreas Roussos <a href="mailto:arouss1980@gmail.com">arouss1980@gmail.com</a></li>
+<li>nbuchanan <a href="mailto:nbuchanan@utah.gov">nbuchanan@utah.gov</a></li>
+<li>Durval Menezes <a href="mailto:rclone@durval.com">rclone@durval.com</a></li>
+<li>Victor <a href="mailto:vb-github@viblo.se">vb-github@viblo.se</a></li>
+<li>Mateusz <a href="mailto:pabian.mateusz@gmail.com">pabian.mateusz@gmail.com</a></li>
+<li>Daniel Loader <a href="mailto:spicypixel@gmail.com">spicypixel@gmail.com</a></li>
+<li>David0rk <a href="mailto:davidork@gmail.com">davidork@gmail.com</a></li>
+</ul>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

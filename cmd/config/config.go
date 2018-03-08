@@ -1,6 +1,7 @@
 package config
 
 import (
+        "fmt"
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/fs/config"
 	"github.com/spf13/cobra"
@@ -28,6 +29,7 @@ password to protect your configuration.
 `,
 	Run: func(command *cobra.Command, args []string) {
 		cmd.CheckArgs(0, 0, command, args)
+	        fmt.Printf("In configCommand\n")
 		config.EditConfig()
 	},
 }

@@ -79,6 +79,7 @@ from various cloud storage systems and using file transfer services, such as:
   * Google Drive
   * HTTP
   * Hubic
+  * IBM Cloud Object Storage
   * Microsoft Azure Blob Storage
   * Microsoft OneDrive
   * Openstack Swift / Rackspace cloud files / Memset Memstore

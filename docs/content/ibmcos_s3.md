@@ -1,0 +1,544 @@
+---
+title: "IBM Cloud Object Storage (S3)"
+description: "Rclone docs for IBM Cloud Object Storage (S3)"
+date: "2016-07-11"
+---
+
+<i class="fa fa-amazon"></i> IBM Cloud Object Storage S3
+---------------------------------------
+
+Paths are specified as `remote:bucket` (or `remote:` for the `lsd`
+command.)  You may put subdirectories in too, eg `remote:bucket/path/to/dir`.
+
+Here is an example of making an s3 configuration.  First run
+
+    rclone config
+
+This will guide you through an interactive setup process.
+
+```
+No remotes found - make a new one
+n) New remote
+s) Set configuration password
+n/s> n
+name> remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ "amazon cloud drive"
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ "s3"
+ 3 / Backblaze B2
+   \ "b2"
+ 4 / Dropbox
+   \ "dropbox"
+ 5 / Encrypt/Decrypt a remote
+   \ "crypt"
+ 6 / Google Cloud Storage (this is not Google Drive)
+   \ "google cloud storage"
+ 7 / Google Drive
+   \ "drive"
+ 8 / Hubic
+   \ "hubic"
+ 9 / Local Disk
+   \ "local"
+10 / Microsoft OneDrive
+   \ "onedrive"
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ "swift"
+12 / SSH/SFTP Connection
+   \ "sftp"
+13 / IBM Cloud Object Storage (S3)
+   \ "IBM Cloud Object Storage (S3)"
+Storage> 13 
+AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+access_key_id> access_key
+AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+secret_access_key> secret_key
+Endpoint for IBM COS S3 API. For public endpoints visit: https://ibm-public-cos.github.io/crs-docs/endpoints. For On-Prem, enter the accesser IP or a Load Balancer IP
+endpoint>
+Location constraint - Must match the end point URL. For location constraint information, visit: https://ibm-public-cos.github.io/crs-docs/api-reference
+location_constraint> us-standard
+Canned ACL used when creating buckets and/or storing objects in S3.
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl. For IBM Cloud Public (not IBM Cloud Infrastructure) select public-read
+Choose a number from below, or type in your own value
+ 1 / Owner gets FULL_CONTROL. No one else has access rights (default).
+   \ "private"
+ 2 / Owner gets FULL_CONTROL. The AllUsers group gets READ access.
+   \ "public-read"
+   / Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.
+ 3 | Granting this on a bucket is generally not recommended.
+   \ "public-read-write"
+ 4 / Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.
+   \ "authenticated-read"
+   / Object owner gets FULL_CONTROL. Bucket owner gets READ access.
+ 5 | If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+   \ "bucket-owner-read"
+   / Both the object owner and the bucket owner get FULL_CONTROL over the object.
+ 6 | If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+   \ "bucket-owner-full-control"
+acl> private
+Remote config
+--------------------
+[remote]
+env_auth = false
+access_key_id = access_key
+secret_access_key = secret_key
+endpoint =
+location_constraint =
+acl = private
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
+
+This remote is called `remote` and can now be used like this
+
+See all buckets
+
+    rclone lsd remote:
+
+Make a new bucket
+
+    rclone mkdir remote:bucket
+
+List the contents of a bucket
+
+    rclone ls remote:bucket
+
+Sync `/home/local/directory` to the remote bucket, deleting any excess
+files in the bucket.
+
+    rclone sync /home/local/directory remote:bucket
+
+### --fast-list ###
+
+This remote supports `--fast-list` which allows you to use fewer
+transactions in exchange for more memory. See the [rclone
+docs](/docs/#fast-list) for more details.
+
+### Modified time ###
+
+The modified time is stored as metadata on the object as
+`X-Amz-Meta-Mtime` as floating point since the epoch accurate to 1 ns.
+
+### Multipart uploads ###
+
+rclone supports multipart uploads with S3 which means that it can
+upload files bigger than 5GB.  Note that files uploaded *both* with
+multipart upload *and* through crypt remotes do not have MD5 sums.
+
+### Buckets and Regions ###
+
+With Amazon S3 you can list buckets (`rclone lsd`) using any region,
+but you can only access the content of a bucket from the region it was
+created in.  If you attempt to access a bucket from the wrong region,
+you will get an error, `incorrect region, the bucket is not in 'XXX'
+region`.
+
+### Authentication ###
+There are two ways to supply `rclone` with a set of AWS
+credentials. In order of precedence:
+
+ - Directly in the rclone configuration file (as configured by `rclone config`)
+   - set `access_key_id` and `secret_access_key`. `session_token` can be
+     optionally set when using AWS STS.
+ - Runtime configuration:
+   - set `env_auth` to `true` in the config file
+   - Exporting the following environment variables before running `rclone`
+     - Access Key ID: `AWS_ACCESS_KEY_ID` or `AWS_ACCESS_KEY`
+     - Secret Access Key: `AWS_SECRET_ACCESS_KEY` or `AWS_SECRET_KEY`
+     - Session Token: `AWS_SESSION_TOKEN`
+   - Running `rclone` in an ECS task with an IAM role
+   - Running `rclone` on an EC2 instance with an IAM role
+
+If none of these option actually end up providing `rclone` with AWS
+credentials then S3 interaction will be non-authenticated (see below).
+
+### S3 Permissions ###
+
+When using the `sync` subcommand of `rclone` the following minimum 
+permissions are required to be available on the bucket being written to:
+
+* `ListBucket`
+* `DeleteObject`
+* `GetObject`
+* `PutObject`
+* `PutObjectACL`
+
+Example policy:
+
+```
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::USER_SID:user/USER_NAME"
+            },
+            "Action": [
+                "s3:ListBucket",
+                "s3:DeleteObject",
+                "s3:GetObject",
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": [
+              "arn:aws:s3:::BUCKET_NAME/*",
+              "arn:aws:s3:::BUCKET_NAME"
+            ]
+        }
+    ]
+}
+```
+
+Notes on above:
+
+1. This is a policy that can be used when creating bucket. It assumes
+   that `USER_NAME` has been created.
+2. The Resource entry must include both resource ARNs, as one implies 
+   the bucket and the other implies the bucket's objects.
+
+For reference, [here's an Ansible script](https://gist.github.com/ebridges/ebfc9042dd7c756cd101cfa807b7ae2b) 
+that will generate one or more buckets that will work with `rclone sync`.
+
+### Glacier ###
+
+You can transition objects to glacier storage using a [lifecycle policy](http://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html).
+The bucket can still be synced or copied into normally, but if rclone
+tries to access the data you will see an error like below.
+
+    2017/09/11 19:07:43 Failed to sync: failed to open source object: Object in GLACIER, restore first: path/to/file
+
+In this case you need to [restore](http://docs.aws.amazon.com/AmazonS3/latest/user-guide/restore-archived-objects.html)
+the object(s) in question before using rclone.
+
+### Specific options ###
+
+Here are the command line options specific to this cloud storage
+system.
+
+#### --s3-acl=STRING ####
+
+Canned ACL used when creating buckets and/or storing objects in S3.
+
+For more info visit the [canned ACL docs](https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl).
+
+#### --s3-storage-class=STRING ####
+
+Storage class to upload new objects with.
+
+Available options include:
+
+ - STANDARD - default storage class
+ - STANDARD_IA - for less frequently accessed data (e.g backups)
+ - REDUCED_REDUNDANCY (only for noncritical, reproducible data, has lower redundancy)
+
+### Anonymous access to public buckets ###
+
+If you want to use rclone to access a public bucket, configure with a
+blank `access_key_id` and `secret_access_key`.  Eg
+
+```
+No remotes found - make a new one
+n) New remote
+q) Quit config
+n/q> n
+name> anons3
+What type of source is it?
+Choose a number from below
+ 1) amazon cloud drive
+ 2) b2
+ 3) drive
+ 4) dropbox
+ 5) google cloud storage
+ 6) swift
+ 7) hubic
+ 8) local
+ 9) onedrive
+10) s3
+11) yandex
+type> 10
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+Choose a number from below, or type in your own value
+ * Enter AWS credentials in the next step
+ 1) false
+ * Get AWS credentials from the environment (env vars or IAM)
+ 2) true
+env_auth> 1
+AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+access_key_id>
+AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+secret_access_key>
+...
+```
+
+Then use it as normal with the name of the public bucket, eg
+
+    rclone lsd anons3:1000genomes
+
+You will be able to list and copy data but not upload it.
+
+### Ceph ###
+
+Ceph is an object storage system which presents an Amazon S3 interface.
+
+To use rclone with ceph, you need to set the following parameters in
+the config.
+
+```
+access_key_id = Whatever
+secret_access_key = Whatever
+endpoint = https://ceph.endpoint.goes.here/
+region = other-v2-signature
+```
+
+Note also that Ceph sometimes puts `/` in the passwords it gives
+users.  If you read the secret access key using the command line tools
+you will get a JSON blob with the `/` escaped as `\/`.  Make sure you
+only write `/` in the secret access key.
+
+Eg the dump from Ceph looks something like this (irrelevant keys
+removed).
+
+```
+{
+    "user_id": "xxx",
+    "display_name": "xxxx",
+    "keys": [
+        {
+            "user": "xxx",
+            "access_key": "xxxxxx",
+            "secret_key": "xxxxxx\/xxxx"
+        }
+    ],
+}
+```
+
+Because this is a json dump, it is encoding the `/` as `\/`, so if you
+use the secret key as `xxxxxx/xxxx`  it will work fine.
+
+### DigitalOcean Spaces ###
+
+[Spaces](https://www.digitalocean.com/products/object-storage/) is an [S3-interoperable](https://developers.digitalocean.com/documentation/spaces/) object storage service from cloud provider DigitalOcean.
+
+To connect to DigitalOcean Spaces you will need an access key and secret key. These can be retrieved on the "[Applications & API](https://cloud.digitalocean.com/settings/api/tokens)" page of the DigitalOcean control panel. They will be needed when promted by `rclone config` for your `access_key_id` and `secret_access_key`.
+
+When prompted for a `region` or `location_constraint`, press enter to use the default value. The region must be included in the `endpoint` setting (e.g. `nyc3.digitaloceanspaces.com`). The defualt values can be used for other settings.
+
+Going through the whole process of creating a new remote by running `rclone config`, each prompt should be answered as shown below:
+
+```
+Storage> 2
+env_auth> 1
+access_key_id> YOUR_ACCESS_KEY
+secret_access_key> YOUR_SECRET_KEY
+region> 
+endpoint> nyc3.digitaloceanspaces.com
+location_constraint> 
+acl> 
+storage_class> 
+```
+
+The resulting configuration file should look like:
+
+```
+[spaces]
+type = s3
+env_auth = false
+access_key_id = YOUR_ACCESS_KEY
+secret_access_key = YOUR_SECRET_KEY
+region = 
+endpoint = nyc3.digitaloceanspaces.com
+location_constraint = 
+acl = 
+server_side_encryption = 
+storage_class = 
+```
+
+Once configured, you can create a new Space and begin copying files. For example:
+
+```
+rclone mkdir spaces:my-new-space
+rclone copy /path/to/files spaces:my-new-space
+```
+
+### Minio ###
+
+[Minio](https://minio.io/) is an object storage server built for cloud application developers and devops.
+
+It is very easy to install and provides an S3 compatible server which can be used by rclone.
+
+To use it, install Minio following the instructions [here](https://docs.minio.io/docs/minio-quickstart-guide).
+
+When it configures itself Minio will print something like this
+
+```
+Endpoint:  http://192.168.1.106:9000  http://172.23.0.1:9000
+AccessKey: USWUXHGYZQYFYFFIT3RE
+SecretKey: MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+Region:    us-east-1
+SQS ARNs:  arn:minio:sqs:us-east-1:1:redis arn:minio:sqs:us-east-1:2:redis
+
+Browser Access:
+   http://192.168.1.106:9000  http://172.23.0.1:9000
+
+Command-line Access: https://docs.minio.io/docs/minio-client-quickstart-guide
+   $ mc config host add myminio http://192.168.1.106:9000 USWUXHGYZQYFYFFIT3RE MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+
+Object API (Amazon S3 compatible):
+   Go:         https://docs.minio.io/docs/golang-client-quickstart-guide
+   Java:       https://docs.minio.io/docs/java-client-quickstart-guide
+   Python:     https://docs.minio.io/docs/python-client-quickstart-guide
+   JavaScript: https://docs.minio.io/docs/javascript-client-quickstart-guide
+   .NET:       https://docs.minio.io/docs/dotnet-client-quickstart-guide
+
+Drive Capacity: 26 GiB Free, 165 GiB Total
+```
+
+These details need to go into `rclone config` like this.  Note that it
+is important to put the region in as stated above.
+
+```
+env_auth> 1
+access_key_id> USWUXHGYZQYFYFFIT3RE
+secret_access_key> MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+region> us-east-1
+endpoint> http://192.168.1.106:9000
+location_constraint>
+server_side_encryption>
+```
+
+Which makes the config file look like this
+
+```
+[minio]
+env_auth = false
+access_key_id = USWUXHGYZQYFYFFIT3RE
+secret_access_key = MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+region = us-east-1
+endpoint = http://192.168.1.106:9000
+location_constraint =
+server_side_encryption =
+```
+
+So once set up, for example to copy files into a bucket
+
+```
+rclone copy /path/to/files minio:bucket
+```
+
+### Wasabi ###
+
+[Wasabi](https://wasabi.com) is a cloud-based object storage service for a
+broad range of applications and use cases. Wasabi is designed for
+individuals and organizations that require a high-performance,
+reliable, and secure data storage infrastructure at minimal cost.
+
+Wasabi provides an S3 interface which can be configured for use with
+rclone like this.
+
+```
+No remotes found - make a new one
+n) New remote
+s) Set configuration password
+n/s> n
+name> wasabi
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ "amazon cloud drive"
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ "s3"
+[snip]
+Storage> s3
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+Choose a number from below, or type in your own value
+ 1 / Enter AWS credentials in the next step
+   \ "false"
+ 2 / Get AWS credentials from the environment (env vars or IAM)
+   \ "true"
+env_auth> 1
+AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+access_key_id> YOURACCESSKEY
+AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+secret_access_key> YOURSECRETACCESSKEY
+Region to connect to.
+Choose a number from below, or type in your own value
+   / The default endpoint - a good choice if you are unsure.
+ 1 | US Region, Northern Virginia or Pacific Northwest.
+   | Leave location constraint empty.
+   \ "us-east-1"
+[snip]
+region> us-east-1
+Endpoint for S3 API.
+Leave blank if using AWS to use the default endpoint for the region.
+Specify if using an S3 clone such as Ceph.
+endpoint> s3.wasabisys.com
+Location constraint - must be set to match the Region. Used when creating buckets only.
+Choose a number from below, or type in your own value
+ 1 / Empty for US Region, Northern Virginia or Pacific Northwest.
+   \ ""
+[snip]
+location_constraint> 
+Canned ACL used when creating buckets and/or storing objects in S3.
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+Choose a number from below, or type in your own value
+ 1 / Owner gets FULL_CONTROL. No one else has access rights (default).
+   \ "private"
+[snip]
+acl> 
+The server-side encryption algorithm used when storing this object in S3.
+Choose a number from below, or type in your own value
+ 1 / None
+   \ ""
+ 2 / AES256
+   \ "AES256"
+server_side_encryption> 
+The storage class to use when storing objects in S3.
+Choose a number from below, or type in your own value
+ 1 / Default
+   \ ""
+ 2 / Standard storage class
+   \ "STANDARD"
+ 3 / Reduced redundancy storage class
+   \ "REDUCED_REDUNDANCY"
+ 4 / Standard Infrequent Access storage class
+   \ "STANDARD_IA"
+storage_class> 
+Remote config
+--------------------
+[wasabi]
+env_auth = false
+access_key_id = YOURACCESSKEY
+secret_access_key = YOURSECRETACCESSKEY
+region = us-east-1
+endpoint = s3.wasabisys.com
+location_constraint = 
+acl = 
+server_side_encryption = 
+storage_class = 
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d> y
+```
+
+This will leave the config file looking like this.
+
+```
+[wasabi]
+env_auth = false
+access_key_id = YOURACCESSKEY
+secret_access_key = YOURSECRETACCESSKEY
+region = us-east-1
+endpoint = s3.wasabisys.com
+location_constraint = 
+acl = 
+server_side_encryption = 
+storage_class = 
+```

@@ -148,6 +148,7 @@ func main() {
 	generateTestProgram(t, fns, "Local")
 	generateTestProgram(t, fns, "Swift")
 	generateTestProgram(t, fns, "S3")
+        generateTestProgram(t, fns, "IBMCOS_S3")
 	generateTestProgram(t, fns, "Drive")
 	generateTestProgram(t, fns, "GoogleCloudStorage")
 	generateTestProgram(t, fns, "Dropbox", buildConstraint("go1.7"))

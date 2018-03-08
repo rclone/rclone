@@ -1,0 +1,474 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Backblaze B2">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>B2</title>
+    <link rel="canonical" href="https://rclone.org/b2/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="i-class-fa-fa-fire-i-backblaze-b2"><i class="fa fa-fire"></i>Backblaze B2</h2>
+
+<p>B2 is <a href="https://www.backblaze.com/b2/">Backblaze&rsquo;s cloud storage system</a>.</p>
+
+<p>Paths are specified as <code>remote:bucket</code> (or <code>remote:</code> for the <code>lsd</code>
+command.)  You may put subdirectories in too, eg <code>remote:bucket/path/to/dir</code>.</p>
+
+<p>Here is an example of making a b2 configuration.  First run</p>
+
+<pre><code>rclone config
+</code></pre>
+
+<p>This will guide you through an interactive setup process.  You will
+need your account number (a short hex number) and key (a long hex
+number) which you can get from the b2 control panel.</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+q) Quit config
+n/q&gt; n
+name&gt; remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ &quot;amazon cloud drive&quot;
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ &quot;s3&quot;
+ 3 / Backblaze B2
+   \ &quot;b2&quot;
+ 4 / Dropbox
+   \ &quot;dropbox&quot;
+ 5 / Encrypt/Decrypt a remote
+   \ &quot;crypt&quot;
+ 6 / Google Cloud Storage (this is not Google Drive)
+   \ &quot;google cloud storage&quot;
+ 7 / Google Drive
+   \ &quot;drive&quot;
+ 8 / Hubic
+   \ &quot;hubic&quot;
+ 9 / Local Disk
+   \ &quot;local&quot;
+10 / Microsoft OneDrive
+   \ &quot;onedrive&quot;
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ &quot;swift&quot;
+12 / SSH/SFTP Connection
+   \ &quot;sftp&quot;
+13 / Yandex Disk
+   \ &quot;yandex&quot;
+Storage&gt; 3
+Account ID
+account&gt; 123456789abc
+Application Key
+key&gt; 0123456789abcdef0123456789abcdef0123456789
+Endpoint for the service - leave blank normally.
+endpoint&gt;
+Remote config
+--------------------
+[remote]
+account = 123456789abc
+key = 0123456789abcdef0123456789abcdef0123456789
+endpoint =
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y
+</code></pre>
+
+<p>This remote is called <code>remote</code> and can now be used like this</p>
+
+<p>See all buckets</p>
+
+<pre><code>rclone lsd remote:
+</code></pre>
+
+<p>Make a new bucket</p>
+
+<pre><code>rclone mkdir remote:bucket
+</code></pre>
+
+<p>List the contents of a bucket</p>
+
+<pre><code>rclone ls remote:bucket
+</code></pre>
+
+<p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any
+excess files in the bucket.</p>
+
+<pre><code>rclone sync /home/local/directory remote:bucket
+</code></pre>
+
+<h3 id="fast-list">--fast-list</h3>
+
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer
+transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone
+docs</a> for more details.</p>
+
+<h3 id="modified-time">Modified time</h3>
+
+<p>The modified time is stored as metadata on the object as
+<code>X-Bz-Info-src_last_modified_millis</code> as milliseconds since 1970-01-01
+in the Backblaze standard.  Other tools should be able to use this as
+a modified time.</p>
+
+<p>Modified times are used in syncing and are fully supported except in
+the case of updating a modification time on an existing object.  In
+this case the object will be uploaded again as B2 doesn&rsquo;t have an API
+method to set the modification time independent of doing an upload.</p>
+
+<h3 id="sha1-checksums">SHA1 checksums</h3>
+
+<p>The SHA1 checksums of the files are checked on upload and download and
+will be used in the syncing process.</p>
+
+<p>Large files (bigger than the limit in <code>--b2-upload-cutoff</code>) which are
+uploaded in chunks will store their SHA1 on the object as
+<code>X-Bz-Info-large_file_sha1</code> as recommended by Backblaze.</p>
+
+<p>For a large file to be uploaded with an SHA1 checksum, the source
+needs to support SHA1 checksums. The local disk supports SHA1
+checksums so large file transfers from local disk will have an SHA1.
+See <a href="/overview/#features">the overview</a> for exactly which remotes
+support SHA1.</p>
+
+<p>Sources which don&rsquo;t support SHA1, in particular <code>crypt</code> will upload
+large files without SHA1 checksums.  This may be fixed in the future
+(see <a href="https://github.com/ncw/rclone/issues/1767">#1767</a>).</p>
+
+<p>Files sizes below <code>--b2-upload-cutoff</code> will always have an SHA1
+regardless of the source.</p>
+
+<h3 id="transfers">Transfers</h3>
+
+<p>Backblaze recommends that you do lots of transfers simultaneously for
+maximum speed.  In tests from my SSD equipped laptop the optimum
+setting is about <code>--transfers 32</code> though higher numbers may be used
+for a slight speed improvement. The optimum number for you may vary
+depending on your hardware, how big the files are, how much you want
+to load your computer, etc.  The default of <code>--transfers 4</code> is
+definitely too low for Backblaze B2 though.</p>
+
+<p>Note that uploading big files (bigger than 200 MB by default) will use
+a 96 MB RAM buffer by default.  There can be at most <code>--transfers</code> of
+these in use at any moment, so this sets the upper limit on the memory
+used.</p>
+
+<h3 id="versions">Versions</h3>
+
+<p>When rclone uploads a new version of a file it creates a <a href="https://www.backblaze.com/b2/docs/file_versions.html">new version
+of it</a>.
+Likewise when you delete a file, the old version will be marked hidden
+and still be available.  Conversely, you may opt in to a &ldquo;hard delete&rdquo;
+of files with the <code>--b2-hard-delete</code> flag which would permanently remove
+the file instead of hiding it.</p>
+
+<p>Old versions of files, where available, are visible using the
+<code>--b2-versions</code> flag.</p>
+
+<p>If you wish to remove all the old versions then you can use the
+<code>rclone cleanup remote:bucket</code> command which will delete all the old
+versions of files, leaving the current ones intact.  You can also
+supply a path and only old versions under that path will be deleted,
+eg <code>rclone cleanup remote:bucket/path/to/stuff</code>.</p>
+
+<p>When you <code>purge</code> a bucket, the current and the old versions will be
+deleted then the bucket will be deleted.</p>
+
+<p>However <code>delete</code> will cause the current versions of the files to
+become hidden old versions.</p>
+
+<p>Here is a session showing the listing and retrieval of an old
+version followed by a <code>cleanup</code> of the old versions.</p>
+
+<p>Show current version and all the versions with <code>--b2-versions</code> flag.</p>
+
+<pre><code>$ rclone -q ls b2:cleanup-test
+        9 one.txt
+
+$ rclone -q --b2-versions ls b2:cleanup-test
+        9 one.txt
+        8 one-v2016-07-04-141032-000.txt
+       16 one-v2016-07-04-141003-000.txt
+       15 one-v2016-07-02-155621-000.txt
+</code></pre>
+
+<p>Retrieve an old version</p>
+
+<pre><code>$ rclone -q --b2-versions copy b2:cleanup-test/one-v2016-07-04-141003-000.txt /tmp
+
+$ ls -l /tmp/one-v2016-07-04-141003-000.txt
+-rw-rw-r-- 1 ncw ncw 16 Jul  2 17:46 /tmp/one-v2016-07-04-141003-000.txt
+</code></pre>
+
+<p>Clean up all the old versions and show that they&rsquo;ve gone.</p>
+
+<pre><code>$ rclone -q cleanup b2:cleanup-test
+
+$ rclone -q ls b2:cleanup-test
+        9 one.txt
+
+$ rclone -q --b2-versions ls b2:cleanup-test
+        9 one.txt
+</code></pre>
+
+<h3 id="data-usage">Data usage</h3>
+
+<p>It is useful to know how many requests are sent to the server in different scenarios.</p>
+
+<p>All copy commands send the following 4 requests:</p>
+
+<pre><code>/b2api/v1/b2_authorize_account
+/b2api/v1/b2_create_bucket
+/b2api/v1/b2_list_buckets
+/b2api/v1/b2_list_file_names
+</code></pre>
+
+<p>The <code>b2_list_file_names</code> request will be sent once for every 1k files
+in the remote path, providing the checksum and modification time of
+the listed files. As of version 1.33 issue
+<a href="https://github.com/ncw/rclone/issues/818">#818</a> causes extra requests
+to be sent when using B2 with Crypt. When a copy operation does not
+require any files to be uploaded, no more requests will be sent.</p>
+
+<p>Uploading files that do not require chunking, will send 2 requests per
+file upload:</p>
+
+<pre><code>/b2api/v1/b2_get_upload_url
+/b2api/v1/b2_upload_file/
+</code></pre>
+
+<p>Uploading files requiring chunking, will send 2 requests (one each to
+start and finish the upload) and another 2 requests for each chunk:</p>
+
+<pre><code>/b2api/v1/b2_start_large_file
+/b2api/v1/b2_get_upload_part_url
+/b2api/v1/b2_upload_part/
+/b2api/v1/b2_finish_large_file
+</code></pre>
+
+<h3 id="specific-options">Specific options</h3>
+
+<p>Here are the command line options specific to this cloud storage
+system.</p>
+
+<h4 id="b2-chunk-size-valuee-size">--b2-chunk-size valuee=SIZE</h4>
+
+<p>When uploading large files chunk the file into this size.  Note that
+these chunks are buffered in memory and there might a maximum of
+<code>--transfers</code> chunks in progress at once.  5,000,000 Bytes is the
+minimim size (default 96M).</p>
+
+<h4 id="b2-upload-cutoff-size">--b2-upload-cutoff=SIZE</h4>
+
+<p>Cutoff for switching to chunked upload (default 190.735 MiB == 200
+MB). Files above this size will be uploaded in chunks of
+<code>--b2-chunk-size</code>.</p>
+
+<p>This value should be set no larger than 4.657GiB (== 5GB) as this is
+the largest file size that can be uploaded.</p>
+
+<h4 id="b2-test-mode-flag">--b2-test-mode=FLAG</h4>
+
+<p>This is for debugging purposes only.</p>
+
+<p>Setting FLAG to one of the strings below will cause b2 to return
+specific errors for debugging purposes.</p>
+
+<ul>
+<li><code>fail_some_uploads</code></li>
+<li><code>expire_some_account_authorization_tokens</code></li>
+<li><code>force_cap_exceeded</code></li>
+</ul>
+
+<p>These will be set in the <code>X-Bz-Test-Mode</code> header which is documented
+in the <a href="https://www.backblaze.com/b2/docs/integration_checklist.html">b2 integrations
+checklist</a>.</p>
+
+<h4 id="b2-versions">--b2-versions</h4>
+
+<p>When set rclone will show and act on older versions of files.  For example</p>
+
+<p>Listing without <code>--b2-versions</code></p>
+
+<pre><code>$ rclone -q ls b2:cleanup-test
+        9 one.txt
+</code></pre>
+
+<p>And with</p>
+
+<pre><code>$ rclone -q --b2-versions ls b2:cleanup-test
+        9 one.txt
+        8 one-v2016-07-04-141032-000.txt
+       16 one-v2016-07-04-141003-000.txt
+       15 one-v2016-07-02-155621-000.txt
+</code></pre>
+
+<p>Showing that the current version is unchanged but older versions can
+be seen.  These have the UTC date that they were uploaded to the
+server to the nearest millisecond appended to them.</p>
+
+<p>Note that when using <code>--b2-versions</code> no file write operations are
+permitted, so you can&rsquo;t upload files or delete them.</p>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+
