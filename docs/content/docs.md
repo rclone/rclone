@@ -998,7 +998,7 @@ See [the remote control section](/rc/).
 Logging
 -------
 
-rclone has 4 levels of logging, `Error`, `Notice`, `Info` and `Debug`.
+rclone has 4 levels of logging, `ERROR`, `NOTICE`, `INFO` and `DEBUG`.
 
 By default, rclone logs to standard error.  This means you can redirect
 standard error and still see the normal output of rclone commands (eg
