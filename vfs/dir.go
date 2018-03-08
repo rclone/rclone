@@ -95,7 +95,7 @@ func (d *Dir) Node() Node {
 // ForgetAll ensures the directory and all its children are purged
 // from the cache.
 func (d *Dir) ForgetAll() {
-	d.ForgetPath("")
+	d.ForgetPath("", fs.EntryDirectory)
 }
 
 // ForgetPath clears the cache for itself and all subdirectories if
@@ -103,9 +103,13 @@ func (d *Dir) ForgetAll() {
 // directory it is called from.
 // It is not possible to traverse the directory tree upwards, i.e.
 // you cannot clear the cache for the Dir's ancestors or siblings.
-func (d *Dir) ForgetPath(relativePath string) {
+func (d *Dir) ForgetPath(relativePath string, entryType fs.EntryType) {
+	// if we are requested to forget a file, we use its parent
 	absPath := path.Join(d.path, relativePath)
-	if absPath == "." {
+	if entryType != fs.EntryDirectory {
+		absPath = path.Dir(absPath)
+	}
+	if absPath == "." || absPath == "/" {
 		absPath = ""
 	}
 

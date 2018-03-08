@@ -54,7 +54,7 @@ func TestFsMove(t *testing.T)              { fstests.TestFsMove(t) }
 func TestFsDirMove(t *testing.T)           { fstests.TestFsDirMove(t) }
 func TestFsRmdirFull(t *testing.T)         { fstests.TestFsRmdirFull(t) }
 func TestFsPrecision(t *testing.T)         { fstests.TestFsPrecision(t) }
-func TestFsDirChangeNotify(t *testing.T)   { fstests.TestFsDirChangeNotify(t) }
+func TestFsChangeNotify(t *testing.T)      { fstests.TestFsChangeNotify(t) }
 func TestObjectString(t *testing.T)        { fstests.TestObjectString(t) }
 func TestObjectFs(t *testing.T)            { fstests.TestObjectFs(t) }
 func TestObjectRemote(t *testing.T)        { fstests.TestObjectRemote(t) }

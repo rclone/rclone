@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/ncw/rclone/fs"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -178,11 +179,11 @@ func TestDirCacheFlush(t *testing.T) {
 	require.NoError(t, err)
 
 	// expect newly created "subdir" on remote to not show up
-	root.ForgetPath("otherdir")
+	root.ForgetPath("otherdir", fs.EntryDirectory)
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")
 
-	root.ForgetPath("dir")
+	root.ForgetPath("dir", fs.EntryDirectory)
 	dm = newDirMap("otherdir/|otherdir/file 1|dir/|dir/file 1|dir/subdir/")
 	run.readLocal(t, localDm, "")
 	assert.Equal(t, dm, localDm, "expected vs fuse mount")

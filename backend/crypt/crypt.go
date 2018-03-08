@@ -143,18 +143,18 @@ func NewFs(name, rpath string) (fs.Fs, error) {
 		CanHaveEmptyDirectories: true,
 	}).Fill(f).Mask(wrappedFs).WrapsFs(f, wrappedFs)
 
-	doDirChangeNotify := wrappedFs.Features().DirChangeNotify
-	if doDirChangeNotify != nil {
-		f.features.DirChangeNotify = func(notifyFunc func(string), pollInterval time.Duration) chan bool {
-			wrappedNotifyFunc := func(path string) {
+	doChangeNotify := wrappedFs.Features().ChangeNotify
+	if doChangeNotify != nil {
+		f.features.ChangeNotify = func(notifyFunc func(string, fs.EntryType), pollInterval time.Duration) chan bool {
+			wrappedNotifyFunc := func(path string, entryType fs.EntryType) {
 				decrypted, err := f.DecryptFileName(path)
 				if err != nil {
-					fs.Logf(f, "DirChangeNotify was unable to decrypt %q: %s", path, err)
+					fs.Logf(f, "ChangeNotify was unable to decrypt %q: %s", path, err)
 					return
 				}
-				notifyFunc(decrypted)
+				notifyFunc(decrypted, entryType)
 			}
-			return doDirChangeNotify(wrappedNotifyFunc, pollInterval)
+			return doChangeNotify(wrappedNotifyFunc, pollInterval)
 		}
 	}
 
