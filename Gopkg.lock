@@ -38,7 +38,7 @@
   branch = "master"
   name = "github.com/Unknwon/goconfig"
   packages = ["."]
-  revision = "87a46d97951ee1ea20ed3b24c25646a79e87ba5d"
+  revision = "ef1e4c783f8f0478bd8bff0edb3dd0bade552599"
 
 [[projects]]
   branch = "master"
