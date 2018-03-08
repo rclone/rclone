@@ -64,8 +64,9 @@ type Fs struct {
 	warned      map[string]struct{} // whether we have warned about this string
 	nounc       bool                // Skip UNC conversion on Windows
 	// do os.Lstat or os.Stat
-	lstat    func(name string) (os.FileInfo, error)
-	dirNames *mapper // directory name mapping
+	lstat          func(name string) (os.FileInfo, error)
+	dirNames       *mapper    // directory name mapping
+	objectHashesMu sync.Mutex // global lock for Object.hashes
 }
 
 // Object represents a local filesystem object
@@ -586,17 +587,17 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 		return "", errors.Wrap(err, "hash: failed to stat")
 	}
 
-	if !o.modTime.Equal(oldtime) || oldsize != o.size {
-		o.hashes = nil
-	}
+	o.fs.objectHashesMu.Lock()
+	hashes := o.hashes
+	o.fs.objectHashesMu.Unlock()
 
-	if o.hashes == nil {
-		o.hashes = make(map[hash.Type]string)
+	if !o.modTime.Equal(oldtime) || oldsize != o.size || hashes == nil {
+		hashes = make(map[hash.Type]string)
 		in, err := os.Open(o.path)
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to open")
 		}
-		o.hashes, err = hash.Stream(in)
+		hashes, err = hash.Stream(in)
 		closeErr := in.Close()
 		if err != nil {
 			return "", errors.Wrap(err, "hash: failed to read")
@@ -604,8 +605,11 @@ func (o *Object) Hash(r hash.Type) (string, error) {
 		if closeErr != nil {
 			return "", errors.Wrap(closeErr, "hash: failed to close")
 		}
+		o.fs.objectHashesMu.Lock()
+		o.hashes = hashes
+		o.fs.objectHashesMu.Unlock()
 	}
-	return o.hashes[r], nil
+	return hashes[r], nil
 }
 
 // Size returns the size of an object in bytes
@@ -691,7 +695,9 @@ func (file *localOpenFile) Close() (err error) {
 	err = file.in.Close()
 	if err == nil {
 		if file.hash.Size() == file.o.Size() {
+			file.o.fs.objectHashesMu.Lock()
 			file.o.hashes = file.hash.Sums()
+			file.o.fs.objectHashesMu.Unlock()
 		}
 	}
 	return err
@@ -788,7 +794,9 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	}
 
 	// All successful so update the hashes
+	o.fs.objectHashesMu.Lock()
 	o.hashes = hash.Sums()
+	o.fs.objectHashesMu.Unlock()
 
 	// Set the mtime
 	err = o.SetModTime(src.ModTime())
