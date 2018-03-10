@@ -46,6 +46,9 @@ if [ -z "${unzip_tool}" ]; then
     exit 4
 fi
 
+# Make sure we don't create a root owned .config/rclone directory #2127
+export XDG_CONFIG_HOME=config
+
 #check installed version of rclone to determine if update is necessary
 version=`rclone --version 2>>errors | head -n 1`
 if [ -z "${install_beta}" ]; then
