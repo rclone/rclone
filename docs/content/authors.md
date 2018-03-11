@@ -137,3 +137,4 @@ Contributors
   * Mateusz <pabian.mateusz@gmail.com>
   * Daniel Loader <spicypixel@gmail.com>
   * David0rk <davidork@gmail.com>
+  * Alexander Neumann <alexander@bumpern.de>
