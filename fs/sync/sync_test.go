@@ -283,6 +283,78 @@ func TestSyncIgnoreExisting(t *testing.T) {
 	fstest.CheckItems(t, r.Fremote, file1)
 }
 
+func TestSyncIgnoreErrors(t *testing.T) {
+	r := fstest.NewRun(t)
+	fs.Config.IgnoreErrors = true
+	defer func() {
+		fs.Config.IgnoreErrors = false
+		r.Finalise()
+	}()
+	file1 := r.WriteFile("a/potato2", "------------------------------------------------------------", t1)
+	file2 := r.WriteObject("b/potato", "SMALLER BUT SAME DATE", t2)
+	file3 := r.WriteBoth("c/non empty space", "AhHa!", t2)
+	require.NoError(t, operations.Mkdir(r.Fremote, "d"))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file2,
+			file3,
+		},
+		[]string{
+			"b",
+			"c",
+			"d",
+		},
+		fs.Config.ModifyWindow,
+	)
+
+	accounting.Stats.ResetCounters()
+	fs.CountError(nil)
+	assert.NoError(t, Sync(r.Fremote, r.Flocal))
+
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Flocal,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+	fstest.CheckListingWithPrecision(
+		t,
+		r.Fremote,
+		[]fstest.Item{
+			file1,
+			file3,
+		},
+		[]string{
+			"a",
+			"c",
+		},
+		fs.Config.ModifyWindow,
+	)
+}
+
 func TestSyncAfterChangingModtimeOnly(t *testing.T) {
 	r := fstest.NewRun(t)
 	defer r.Finalise()

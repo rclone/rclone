@@ -33,6 +33,7 @@ type ConfigInfo struct {
 	SizeOnly              bool
 	IgnoreTimes           bool
 	IgnoreExisting        bool
+	IgnoreErrors          bool
 	ModifyWindow          time.Duration
 	Checkers              int
 	Transfers             int
