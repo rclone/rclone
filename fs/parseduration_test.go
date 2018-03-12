@@ -15,23 +15,24 @@ var _ pflag.Value = (*Duration)(nil)
 func TestParseDuration(t *testing.T) {
 	for _, test := range []struct {
 		in   string
-		want float64
+		want time.Duration
 		err  bool
 	}{
 		{"0", 0, false},
 		{"", 0, true},
-		{"1ms", float64(time.Millisecond), false},
-		{"1s", float64(time.Second), false},
-		{"1m", float64(time.Minute), false},
-		{"1h", float64(time.Hour), false},
-		{"1d", float64(time.Hour) * 24, false},
-		{"1w", float64(time.Hour) * 24 * 7, false},
-		{"1M", float64(time.Hour) * 24 * 30, false},
-		{"1y", float64(time.Hour) * 24 * 365, false},
-		{"1.5y", float64(time.Hour) * 24 * 365 * 1.5, false},
-		{"-1s", -float64(time.Second), false},
-		{"1.s", float64(time.Second), false},
+		{"1ms", time.Millisecond, false},
+		{"1s", time.Second, false},
+		{"1m", time.Minute, false},
+		{"1h", time.Hour, false},
+		{"1d", time.Hour * 24, false},
+		{"1w", time.Hour * 24 * 7, false},
+		{"1M", time.Hour * 24 * 30, false},
+		{"1y", time.Hour * 24 * 365, false},
+		{"1.5y", time.Hour * 24 * 365 * 3 / 2, false},
+		{"-1s", -time.Second, false},
+		{"1.s", time.Second, false},
 		{"1x", 0, true},
+		{"off", time.Duration(DurationOff), false},
 	} {
 		duration, err := ParseDuration(test.in)
 		if test.err {
@@ -39,6 +40,21 @@ func TestParseDuration(t *testing.T) {
 		} else {
 			require.NoError(t, err)
 		}
-		assert.Equal(t, test.want, float64(duration))
+		assert.Equal(t, test.want, duration)
+	}
+}
+
+func TestDurationString(t *testing.T) {
+	for _, test := range []struct {
+		in   time.Duration
+		want string
+	}{
+		// {time.Duration(0), "0s"}, doesn't work on go1.6
+		{time.Second, "1s"},
+		{time.Minute, "1m0s"},
+		{time.Duration(DurationOff), "off"},
+	} {
+		got := Duration(test.in).String()
+		assert.Equal(t, test.want, got)
 	}
 }
