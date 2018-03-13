@@ -644,13 +644,15 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 			fs.Debugf(dir, "list: cached object: %v", co)
 		case fs.Directory:
 			cdd := DirectoryFromOriginal(f, o)
-			// FIXME this overrides a possible expired dir
-			//err := f.cache.AddDir(cdd)
-			//if err != nil {
-			//	fs.Errorf(dir, "list: error caching dir from listing %v", o)
-			//} else {
-			//	fs.Debugf(dir, "list: cached dir: %v", cdd)
-			//}
+			// check if the dir isn't expired and add it in cache if it isn't
+			if cdd2, err := f.cache.GetDir(cdd.abs()); err != nil || time.Now().Before(cdd2.CacheTs.Add(f.fileAge)) {
+				err := f.cache.AddDir(cdd)
+				if err != nil {
+					fs.Errorf(dir, "list: error caching dir from listing %v", o)
+				} else {
+					fs.Debugf(dir, "list: cached dir: %v", cdd)
+				}
+			}
 			cachedEntries = append(cachedEntries, cdd)
 		default:
 			fs.Debugf(entry, "list: Unknown object type %T", entry)
