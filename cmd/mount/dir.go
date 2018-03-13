@@ -183,3 +183,13 @@ func (d *Dir) Fsync(ctx context.Context, req *fuse.FsyncRequest) (err error) {
 	}
 	return nil
 }
+
+// Check interface satisfied
+var _ fusefs.NodeLinker = (*Dir)(nil)
+
+// Link creates a new directory entry in the receiver based on an
+// existing Node. Receiver must be a directory.
+func (d *Dir) Link(ctx context.Context, req *fuse.LinkRequest, old fusefs.Node) (new fusefs.Node, err error) {
+	defer log.Trace(d, "req=%v, old=%v", req, old)("new=%v, err=%v", &new, &err)
+	return nil, fuse.ENOSYS
+}
