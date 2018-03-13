@@ -319,7 +319,7 @@ func Run(Retry bool, showStats bool, cmd *cobra.Command, f func() error) {
 	if showStats && (accounting.Stats.Errored() || *statsInterval > 0) {
 		accounting.Stats.Log()
 	}
-	fs.Debugf(nil, "Go routines at exit %d\n", runtime.NumGoroutine())
+	fs.Debugf(nil, "%d go routines active\n", runtime.NumGoroutine())
 	if accounting.Stats.Errored() {
 		resolveExitCode(accounting.Stats.GetLastError())
 	}

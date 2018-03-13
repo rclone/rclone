@@ -23,6 +23,7 @@ type File struct {
 	leaf              string     // leaf name of the object
 	rwOpenCount       int        // number of open files on this handle
 	writers           []Handle   // writers for this file
+	nwriters          int32      // len(writers) which is read/updated with atomic
 	readWriters       int        // how many RWFileHandle are open for writing
 	readWriterClosing bool       // is a RWFileHandle currently cosing?
 	modified          bool       // has the cache file be modified by a RWFileHandle?
@@ -103,6 +104,7 @@ func (f *File) rename(d *Dir, o fs.Object) {
 func (f *File) addWriter(h Handle) {
 	f.mu.Lock()
 	f.writers = append(f.writers, h)
+	atomic.AddInt32(&f.nwriters, 1)
 	if _, ok := h.(*RWFileHandle); ok {
 		f.readWriters++
 	}
@@ -122,6 +124,7 @@ func (f *File) delWriter(h Handle, modifiedCacheFile bool) (lastWriterAndModifie
 	}
 	if found >= 0 {
 		f.writers = append(f.writers[:found], f.writers[found+1:]...)
+		atomic.AddInt32(&f.nwriters, -1)
 	} else {
 		fs.Debugf(f.o, "File.delWriter couldn't find handle")
 	}
@@ -172,10 +175,11 @@ func (f *File) finishWriterClose() {
 }
 
 // activeWriters returns the number of writers on the file
+//
+// Note that we don't take the mutex here.  If we do then we can get a
+// deadlock.
 func (f *File) activeWriters() int {
-	f.mu.Lock()
-	defer f.mu.Unlock()
-	return len(f.writers)
+	return int(atomic.LoadInt32(&f.nwriters))
 }
 
 // ModTime returns the modified time of the file

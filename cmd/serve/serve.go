@@ -5,6 +5,7 @@ import (
 
 	"github.com/ncw/rclone/cmd"
 	"github.com/ncw/rclone/cmd/serve/http"
+	"github.com/ncw/rclone/cmd/serve/restic"
 	"github.com/ncw/rclone/cmd/serve/webdav"
 	"github.com/spf13/cobra"
 )
@@ -12,6 +13,7 @@ import (
 func init() {
 	Command.AddCommand(http.Command)
 	Command.AddCommand(webdav.Command)
+	Command.AddCommand(restic.Command)
 	cmd.Root.AddCommand(Command)
 }
 

@@ -178,9 +178,13 @@ func equal(src fs.ObjectInfo, dst fs.Object, sizeOnly, checkSum bool) bool {
 				return false
 			} else if err == fs.ErrorCantSetModTimeWithoutDelete {
 				fs.Debugf(dst, "src and dst identical but can't set mod time without deleting and re-uploading")
-				err = dst.Remove()
-				if err != nil {
-					fs.Errorf(dst, "failed to delete before re-upload: %v", err)
+				// Remove the file if BackupDir isn't set.  If BackupDir is set we would rather have the old file
+				// put in the BackupDir than deleted which is what will happen if we don't delete it.
+				if fs.Config.BackupDir == "" {
+					err = dst.Remove()
+					if err != nil {
+						fs.Errorf(dst, "failed to delete before re-upload: %v", err)
+					}
 				}
 				return false
 			} else if err != nil {
