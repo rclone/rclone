@@ -169,6 +169,27 @@ func (b *Persistent) getBucket(dir string, createIfMissing bool, tx *bolt.Tx) *b
 	return bucket
 }
 
+// GetDir will retrieve data of a cached directory
+func (b *Persistent) GetDir(remote string) (*Directory, error) {
+	cd := &Directory{}
+
+	err := b.db.View(func(tx *bolt.Tx) error {
+		bucket := b.getBucket(remote, false, tx)
+		if bucket == nil {
+			return errors.Errorf("couldn't open bucket (%v)", remote)
+		}
+
+		data := bucket.Get([]byte("."))
+		if data != nil {
+			return json.Unmarshal(data, cd)
+		}
+
+		return errors.Errorf("%v not found", remote)
+	})
+
+	return cd, err
+}
+
 // AddDir will update a CachedDirectory metadata and all its entries
 func (b *Persistent) AddDir(cachedDir *Directory) error {
 	return b.db.Update(func(tx *bolt.Tx) error {

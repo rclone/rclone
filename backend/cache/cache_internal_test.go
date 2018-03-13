@@ -97,6 +97,7 @@ func TestMain(m *testing.M) {
 	goflag.Parse()
 	var rc int
 
+	log.Printf("Running with the following params: \n remote: %v, \n mount: %v", remoteName, useMount)
 	runInstance = newRun()
 	rc = m.Run()
 	os.Exit(rc)
@@ -695,6 +696,58 @@ func TestInternalExpiredEntriesRemoved(t *testing.T) {
 		return nil
 	}, 10, time.Second)
 	require.NoError(t, err)
+}
+
+func TestInternalBug2117(t *testing.T) {
+	vfsflags.Opt.DirCacheTime = time.Second * 10
+
+	id := fmt.Sprintf("tib2117%v", time.Now().Unix())
+	rootFs, boltDb := runInstance.newCacheFs(t, remoteName, id, false, true, nil,
+		map[string]string{"cache-info-age": "72h", "cache-chunk-clean-interval": "15m"})
+	defer runInstance.cleanupFs(t, rootFs, boltDb)
+
+	if runInstance.rootIsCrypt {
+		t.Skipf("skipping crypt")
+	}
+
+	cfs, err := runInstance.getCacheFs(rootFs)
+	require.NoError(t, err)
+
+	err = cfs.UnWrap().Mkdir("test")
+	require.NoError(t, err)
+	for i := 1; i <= 4; i++ {
+		err = cfs.UnWrap().Mkdir(fmt.Sprintf("test/dir%d", i))
+		require.NoError(t, err)
+
+		for j := 1; j <= 4; j++ {
+			err = cfs.UnWrap().Mkdir(fmt.Sprintf("test/dir%d/dir%d", i, j))
+			require.NoError(t, err)
+
+			runInstance.writeObjectString(t, cfs.UnWrap(), fmt.Sprintf("test/dir%d/dir%d/test.txt", i, j), "test")
+		}
+	}
+
+	di, err := runInstance.list(t, rootFs, "test/dir1/dir2")
+	require.NoError(t, err)
+	log.Printf("len: %v", len(di))
+	require.Len(t, di, 1)
+
+	time.Sleep(time.Second * 30)
+
+	di, err = runInstance.list(t, rootFs, "test/dir1/dir2")
+	require.NoError(t, err)
+	log.Printf("len: %v", len(di))
+	require.Len(t, di, 1)
+
+	di, err = runInstance.list(t, rootFs, "test/dir1")
+	require.NoError(t, err)
+	log.Printf("len: %v", len(di))
+	require.Len(t, di, 4)
+
+	di, err = runInstance.list(t, rootFs, "test")
+	require.NoError(t, err)
+	log.Printf("len: %v", len(di))
+	require.Len(t, di, 4)
 }
 
 func TestInternalUploadTempDirCreated(t *testing.T) {
