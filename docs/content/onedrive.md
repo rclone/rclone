@@ -153,11 +153,6 @@ system.
 Above this size files will be chunked - must be multiple of 320k. The
 default is 10MB.  Note that the chunks will be buffered into memory.
 
-#### --onedrive-upload-cutoff=SIZE ####
-
-Cutoff for switching to chunked upload - must be <= 100MB. The default
-is 10MB.
-
 ### Limitations ###
 
 Note that OneDrive is case insensitive so you can't have a
