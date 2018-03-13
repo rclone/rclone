@@ -246,7 +246,12 @@ func (api *Client) Call(opts *Opts) (resp *http.Response, err error) {
 	}
 	if !opts.IgnoreStatus {
 		if resp.StatusCode < 200 || resp.StatusCode > 299 {
-			return resp, api.errorHandler(resp)
+			err = api.errorHandler(resp)
+			if err.Error() == "" {
+				// replace empty errors with something
+				err = errors.Errorf("http error %d: %v", resp.StatusCode, resp.Status)
+			}
+			return resp, err
 		}
 	}
 	if opts.NoResponse {
