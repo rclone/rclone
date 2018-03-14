@@ -62,17 +62,6 @@ func (s *server) serve() {
 	s.srv.Serve()
 }
 
-// writes JSON in out to w
-func writeJSON(w http.ResponseWriter, out Params) {
-	enc := json.NewEncoder(w)
-	enc.SetIndent("", "\t")
-	err := enc.Encode(out)
-	if err != nil {
-		// can't return the error at this point
-		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
-	}
-}
-
 // handler reads incoming requests and dispatches them
 func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	path := strings.Trim(r.URL.Path, "/")
@@ -81,10 +70,14 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	writeError := func(err error, status int) {
 		fs.Errorf(nil, "rc: %q: error: %v", path, err)
 		w.WriteHeader(status)
-		writeJSON(w, Params{
+		err = WriteJSON(w, Params{
 			"error": err.Error(),
 			"input": in,
 		})
+		if err != nil {
+			// can't return the error at this point
+			fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
+		}
 	}
 
 	if r.Method != "POST" {
@@ -131,5 +124,9 @@ func (s *server) handler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	fs.Debugf(nil, "rc: %q: reply %+v: %v", path, out, err)
-	writeJSON(w, out)
+	err = WriteJSON(w, out)
+	if err != nil {
+		// can't return the error at this point
+		fs.Errorf(nil, "rc: failed to write JSON output: %v", err)
+	}
 }

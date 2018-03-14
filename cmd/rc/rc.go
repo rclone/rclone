@@ -106,9 +106,7 @@ func run(args []string) (err error) {
 
 	// Write the JSON blob to stdout if required
 	if out != nil && !noOutput {
-		enc := json.NewEncoder(os.Stdout)
-		enc.SetIndent("", "\t")
-		err = enc.Encode(out)
+		err := rc.WriteJSON(os.Stdout, out)
 		if err != nil {
 			return errors.Wrap(err, "failed to output JSON")
 		}
