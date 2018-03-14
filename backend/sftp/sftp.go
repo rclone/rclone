@@ -5,6 +5,7 @@
 package sftp
 
 import (
+	"fmt"
 	"io"
 	"io/ioutil"
 	"os"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/config"
+	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/fshttp"
 	"github.com/ncw/rclone/fs/hash"
@@ -35,6 +37,9 @@ const (
 
 var (
 	currentUser = readCurrentUser()
+
+	// Flags
+	sftpAskPassword = flags.BoolP("sftp-ask-password", "", false, "Allow asking for SFTP password when needed.")
 )
 
 func init() {
@@ -328,6 +333,13 @@ func NewFs(name, root string) (fs.Fs, error) {
 		if err != nil {
 			return nil, err
 		}
+		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
+	}
+
+	// Ask for password if none was defined and we're allowed to
+	if pass == "" && *sftpAskPassword {
+		fmt.Fprint(os.Stderr, "Enter SFTP password: ")
+		clearpass := config.ReadPassword()
 		sshConfig.Auth = append(sshConfig.Auth, ssh.Password(clearpass))
 	}
 
