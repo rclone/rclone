@@ -22,6 +22,7 @@ import (
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/config/obscure"
 	"github.com/ncw/rclone/fs/hash"
+	"github.com/ncw/rclone/fs/rc"
 	"github.com/ncw/rclone/fs/walk"
 	"github.com/ncw/rclone/lib/atexit"
 	"github.com/pkg/errors"
@@ -418,7 +419,64 @@ func NewFs(name, rootPath string) (fs.Fs, error) {
 	// even if the wrapped fs doesn't support it, we still want it
 	f.features.DirCacheFlush = f.DirCacheFlush
 
+	rc.Add(rc.Call{
+		Path:  "cache/expire",
+		Fn:    f.httpExpireRemote,
+		Title: "Purge a remote from cache",
+		Help: `
+Purge a remote from the cache backend. Supports either a directory or a file.
+Params:
+  - remote = path to remote (required)
+  - withData = true/false to delete cached data (chunks) as well (optional)
+`,
+	})
+
 	return f, fsErr
+}
+
+func (f *Fs) httpExpireRemote(in rc.Params) (out rc.Params, err error) {
+	out = make(rc.Params)
+	remoteInt, ok := in["remote"]
+	if !ok {
+		return out, errors.Errorf("remote is needed")
+	}
+	remote := remoteInt.(string)
+	withData := false
+	_, ok = in["withData"]
+	if ok {
+		withData = true
+	}
+
+	if !f.cache.HasEntry(path.Join(f.Root(), remote)) {
+		return out, errors.Errorf("%s doesn't exist in cache", remote)
+	}
+
+	co := NewObject(f, remote)
+	err = f.cache.GetObject(co)
+	if err != nil { // it could be a dir
+		cd := NewDirectory(f, remote)
+		err := f.cache.ExpireDir(cd)
+		if err != nil {
+			return out, errors.WithMessage(err, "error expiring directory")
+		}
+		out["status"] = "ok"
+		out["message"] = fmt.Sprintf("cached directory cleared: %v", remote)
+		return out, nil
+	}
+	// expire the entry
+	co.CacheTs = time.Now().Add(f.fileAge * -1)
+	err = f.cache.AddObject(co)
+	if err != nil {
+		return out, errors.WithMessage(err, "error expiring file")
+	}
+	if withData {
+		// safe to ignore as the file might not have been open
+		_ = os.RemoveAll(path.Join(f.cache.dataPath, co.abs()))
+	}
+
+	out["status"] = "ok"
+	out["message"] = fmt.Sprintf("cached file cleared: %v", remote)
+	return out, nil
 }
 
 // receiveChangeNotify is a wrapper to notifications sent from the wrapped FS about changed files
