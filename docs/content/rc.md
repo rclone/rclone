@@ -9,7 +9,43 @@ date: "2018-03-05"
 If rclone is run with the `--rc` flag then it starts an http server
 which can be used to remote control rclone.
 
-FIXME describe other flags
+## Supported parameters
+
+#### --rc ####
+Flag to start the http server listen on remote requests
+      
+#### --rc-addr=IP ####
+IPaddress:Port or :Port to bind server to. (default "localhost:5572")
+
+#### --rc-cert=KEY ####
+SSL PEM key (concatenation of certificate and CA certificate)
+
+#### --rc-client-ca=PATH ####
+Client certificate authority to verify clients with
+
+#### --rc-htpasswd=PATH ####
+htpasswd file - if not provided no authentication is done
+
+#### --rc-key=PATH ####
+SSL PEM Private key
+
+#### --rc-max-header-bytes=VALUE ####
+Maximum size of request header (default 4096)
+
+#### --rc-user=VALUE ####
+User name for authentication.
+
+#### --rc-pass=VALUE ####
+Password for authentication.
+
+#### --rc-realm=VALUE ####
+Realm for authentication (default "rclone")
+
+#### --rc-server-read-timeout=DURATION ####
+Timeout for server reading data (default 1h0m0s)
+
+#### --rc-server-write-timeout=DURATION ####
+Timeout for server writing data (default 1h0m0s)
 
 ## Accessing the remote control via the rclone rc command
 
@@ -17,8 +53,6 @@ Rclone itself implements the remote control protocol in its `rclone
 rc` command.
 
 You can use it like this
-
-
 
 ## Accessing the remote control via HTTP
 
