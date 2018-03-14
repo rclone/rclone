@@ -293,9 +293,9 @@ func (s *server) getObject(w http.ResponseWriter, r *http.Request, remote string
 
 	w.WriteHeader(code)
 
-	_, err = io.Copy(w, file)
+	n, err := io.Copy(w, file)
 	if err != nil {
-		fs.Errorf(remote, "Didn't finish writing GET request: %v", err)
+		fs.Errorf(remote, "Didn't finish writing GET request (wrote %d/%d bytes): %v", n, size, err)
 		return
 	}
 }
