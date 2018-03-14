@@ -32,11 +32,11 @@ type remoteConfig struct {
 
 var (
 	remotes = []remoteConfig{
-		{
-			Name:     "TestAmazonCloudDrive:",
-			SubDir:   false,
-			FastList: false,
-		},
+		// {
+		// 	Name:     "TestAmazonCloudDrive:",
+		// 	SubDir:   false,
+		// 	FastList: false,
+		// },
 		{
 			Name:     "TestB2:",
 			SubDir:   true,

@@ -2,6 +2,9 @@
 //
 // Automatically generated - DO NOT EDIT
 // Regenerate with: make gen_tests
+
+// +build acd
+
 package amazonclouddrive_test
 
 import (
