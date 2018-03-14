@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Encryption overlay remote">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Crypt</title>
+    <link rel="canonical" href="https://rclone.org/crypt/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="i-class-fa-fa-lock-i-crypt"><i class="fa fa-lock"></i>Crypt</h2>
+
+<p>The <code>crypt</code> remote encrypts and decrypts another remote.</p>
+
+<p>To use it first set up the underlying remote following the config
+instructions for that remote.  You can also use a local pathname
+instead of a remote which will encrypt and decrypt from that directory
+which might be useful for encrypting onto a USB stick for example.</p>
+
+<p>First check your chosen remote is working - we&rsquo;ll call it
+<code>remote:path</code> in these docs.  Note that anything inside <code>remote:path</code>
+will be encrypted and anything outside won&rsquo;t.  This means that if you
+are using a bucket based remote (eg S3, B2, swift) then you should
+probably put the bucket in the remote <code>s3:bucket</code>. If you just use
+<code>s3:</code> then rclone will make encrypted bucket names too (if using file
+name encryption) which may or may not be what you want.</p>
+
+<p>Now configure <code>crypt</code> using <code>rclone config</code>. We will call this one
+<code>secret</code> to differentiate it from the <code>remote</code>.</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+s) Set configuration password
+q) Quit config
+n/s/q&gt; n   
+name&gt; secret
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ &quot;amazon cloud drive&quot;
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ &quot;s3&quot;
+ 3 / Backblaze B2
+   \ &quot;b2&quot;
+ 4 / Dropbox
+   \ &quot;dropbox&quot;
+ 5 / Encrypt/Decrypt a remote
+   \ &quot;crypt&quot;
+ 6 / Google Cloud Storage (this is not Google Drive)
+   \ &quot;google cloud storage&quot;
+ 7 / Google Drive
+   \ &quot;drive&quot;
+ 8 / Hubic
+   \ &quot;hubic&quot;
+ 9 / Local Disk
+   \ &quot;local&quot;
+10 / Microsoft OneDrive
+   \ &quot;onedrive&quot;
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ &quot;swift&quot;
+12 / SSH/SFTP Connection
+   \ &quot;sftp&quot;
+13 / Yandex Disk
+   \ &quot;yandex&quot;
+Storage&gt; 5
+Remote to encrypt/decrypt.
+Normally should contain a ':' and a path, eg &quot;myremote:path/to/dir&quot;,
+&quot;myremote:bucket&quot; or maybe &quot;myremote:&quot; (not recommended).
+remote&gt; remote:path
+How to encrypt the filenames.
+Choose a number from below, or type in your own value
+ 1 / Don't encrypt the file names.  Adds a &quot;.bin&quot; extension only.
+   \ &quot;off&quot;
+ 2 / Encrypt the filenames see the docs for the details.
+   \ &quot;standard&quot;
+ 3 / Very simple filename obfuscation.
+   \ &quot;obfuscate&quot;
+filename_encryption&gt; 2
+Option to either encrypt directory names or leave them intact.
+Choose a number from below, or type in your own value
+ 1 / Encrypt directory names.
+   \ &quot;true&quot;
+ 2 / Don't encrypt directory names, leave them intact.
+   \ &quot;false&quot;
+filename_encryption&gt; 1
+Password or pass phrase for encryption.
+y) Yes type in my own password
+g) Generate random password
+y/g&gt; y
+Enter the password:
+password:
+Confirm the password:
+password:
+Password or pass phrase for salt. Optional but recommended.
+Should be different to the previous password.
+y) Yes type in my own password
+g) Generate random password
+n) No leave this optional password blank
+y/g/n&gt; g
+Password strength in bits.
+64 is just about memorable
+128 is secure
+1024 is the maximum
+Bits&gt; 128
+Your password is: JAsJvRcgR-_veXNfy_sGmQ
+Use this password?
+y) Yes
+n) No
+y/n&gt; y
+Remote config
+--------------------
+[secret]
+remote = remote:path
+filename_encryption = standard
+password = *** ENCRYPTED ***
+password2 = *** ENCRYPTED ***
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y
+</code></pre>
+
+<p><strong>Important</strong> The password is stored in the config file is lightly
+obscured so it isn&rsquo;t immediately obvious what it is.  It is in no way
+secure unless you use config file encryption.</p>
+
+<p>A long passphrase is recommended, or you can use a random one.  Note
+that if you reconfigure rclone with the same passwords/passphrases
+elsewhere it will be compatible - all the secrets used are derived
+from those two passwords/passphrases.</p>
+
+<p>Note that rclone does not encrypt</p>
+
+<ul>
+<li>file length - this can be calcuated within 16 bytes</li>
+<li>modification time - used for syncing</li>
+</ul>
+
+<h2 id="specifying-the-remote">Specifying the remote</h2>
+
+<p>In normal use, make sure the remote has a <code>:</code> in. If you specify the
+remote without a <code>:</code> then rclone will use a local directory of that
+name.  So if you use a remote of <code>/path/to/secret/files</code> then rclone
+will encrypt stuff to that directory.  If you use a remote of <code>name</code>
+then rclone will put files in a directory called <code>name</code> in the current
+directory.</p>
+
+<p>If you specify the remote as <code>remote:path/to/dir</code> then rclone will
+store encrypted files in <code>path/to/dir</code> on the remote. If you are using
+file name encryption, then when you save files to
+<code>secret:subdir/subfile</code> this will store them in the unencrypted path
+<code>path/to/dir</code> but the <code>subdir/subpath</code> bit will be encrypted.</p>
+
+<p>Note that unless you want encrypted bucket names (which are difficult
+to manage because you won&rsquo;t know what directory they represent in web
+interfaces etc), you should probably specify a bucket, eg
+<code>remote:secretbucket</code> when using bucket based remotes such as S3,
+Swift, Hubic, B2, GCS.</p>
+
+<h2 id="example">Example</h2>
+
+<p>To test I made a little directory of files using &ldquo;standard&rdquo; file name
+encryption.</p>
+
+<pre><code>plaintext/
+├── file0.txt
+├── file1.txt
+└── subdir
+    ├── file2.txt
+    ├── file3.txt
+    └── subsubdir
+        └── file4.txt
+</code></pre>
+
+<p>Copy these to the remote and list them back</p>
+
+<pre><code>$ rclone -q copy plaintext secret:
+$ rclone -q ls secret:
+        7 file1.txt
+        6 file0.txt
+        8 subdir/file2.txt
+       10 subdir/subsubdir/file4.txt
+        9 subdir/file3.txt
+</code></pre>
+
+<p>Now see what that looked like when encrypted</p>
+
+<pre><code>$ rclone -q ls remote:path
+       55 hagjclgavj2mbiqm6u6cnjjqcg
+       54 v05749mltvv1tf4onltun46gls
+       57 86vhrsv86mpbtd3a0akjuqslj8/dlj7fkq4kdq72emafg7a7s41uo
+       58 86vhrsv86mpbtd3a0akjuqslj8/7uu829995du6o42n32otfhjqp4/b9pausrfansjth5ob3jkdqd4lc
+       56 86vhrsv86mpbtd3a0akjuqslj8/8njh1sk437gttmep3p70g81aps
+</code></pre>
+
+<p>Note that this retains the directory structure which means you can do this</p>
+
+<pre><code>$ rclone -q ls secret:subdir
+        8 file2.txt
+        9 file3.txt
+       10 subsubdir/file4.txt
+</code></pre>
+
+<p>If don&rsquo;t use file name encryption then the remote will look like this
+- note the <code>.bin</code> extensions added to prevent the cloud provider
+attempting to interpret the data.</p>
+
+<pre><code>$ rclone -q ls remote:path
+       54 file0.txt.bin
+       57 subdir/file3.txt.bin
+       56 subdir/file2.txt.bin
+       58 subdir/subsubdir/file4.txt.bin
+       55 file1.txt.bin
+</code></pre>
+
+<h3 id="file-name-encryption-modes">File name encryption modes</h3>
+
+<p>Here are some of the features of the file name encryption modes</p>
+
+<p>Off</p>
+
+<ul>
+<li>doesn&rsquo;t hide file names or directory structure</li>
+<li>allows for longer file names (~246 characters)</li>
+<li>can use sub paths and copy single files</li>
+</ul>
+
+<p>Standard</p>
+
+<ul>
+<li>file names encrypted</li>
+<li>file names can&rsquo;t be as long (~143 characters)</li>
+<li>can use sub paths and copy single files</li>
+<li>directory structure visible</li>
+<li>identical files names will have identical uploaded names</li>
+<li>can use shortcuts to shorten the directory recursion</li>
+</ul>
+
+<p>Obfuscation</p>
+
+<p>This is a simple &ldquo;rotate&rdquo; of the filename, with each file having a rot
+distance based on the filename. We store the distance at the beginning
+of the filename. So a file called &ldquo;hello&rdquo; may become &ldquo;53.jgnnq&rdquo;</p>
+
+<p>This is not a strong encryption of filenames, but it may stop automated
+scanning tools from picking up on filename patterns. As such it&rsquo;s an
+intermediate between &ldquo;off&rdquo; and &ldquo;standard&rdquo;. The advantage is that it
+allows for longer path segment names.</p>
+
+<p>There is a possibility with some unicode based filenames that the
+obfuscation is weak and may map lower case characters to upper case
+equivalents.  You can not rely on this for strong protection.</p>
+
+<ul>
+<li>file names very lightly obfuscated</li>
+<li>file names can be longer than standard encryption</li>
+<li>can use sub paths and copy single files</li>
+<li>directory structure visible</li>
+<li>identical files names will have identical uploaded names</li>
+</ul>
+
+<p>Cloud storage systems have various limits on file name length and
+total path length which you are more likely to hit using &ldquo;Standard&rdquo;
+file name encryption.  If you keep your file names to below 156
+characters in length then you should be OK on all providers.</p>
+
+<p>There may be an even more secure file name encryption mode in the
+future which will address the long file name problem.</p>
+
+<h3 id="directory-name-encryption">Directory name encryption</h3>
+
+<p>Crypt offers the option of encrypting dir names or leaving them intact.
+There are two options:</p>
+
+<p>True</p>
+
+<p>Encrypts the whole file path including directory names
+Example:
+<code>1/12/123.txt</code> is encrypted to
+<code>p0e52nreeaj0a5ea7s64m4j72s/l42g6771hnv3an9cgc8cr2n1ng/qgm4avr35m5loi1th53ato71v0</code></p>
+
+<p>False</p>
+
+<p>Only encrypts file names, skips directory names
+Example:
+<code>1/12/123/txt</code> is encrypted to
+<code>1/12/qgm4avr35m5loi1th53ato71v0</code></p>
+
+<h3 id="modified-time-and-hashes">Modified time and hashes</h3>
+
+<p>Crypt stores modification times using the underlying remote so support
+depends on that.</p>
+
+<p>Hashes are not stored for crypt.  However the data integrity is
+protected by an extremely strong crypto authenticator.</p>
+
+<p>Note that you should use the <code>rclone cryptcheck</code> command to check the
+integrity of a crypted remote instead of <code>rclone check</code> which can&rsquo;t
+check the checksums properly.</p>
+
+<h3 id="specific-options">Specific options</h3>
+
+<p>Here are the command line options specific to this cloud storage
+system.</p>
+
+<h4 id="crypt-show-mapping">--crypt-show-mapping</h4>
+
+<p>If this flag is set then for each file that the remote is asked to
+list, it will log (at level INFO) a line stating the decrypted file
+name and the encrypted file name.</p>
+
+<p>This is so you can work out which encrypted names are which decrypted
+names just in case you need to do something with the encrypted file
+names, or for debugging purposes.</p>
+
+<h2 id="backing-up-a-crypted-remote">Backing up a crypted remote</h2>
+
+<p>If you wish to backup a crypted remote, it it recommended that you use
+<code>rclone sync</code> on the encrypted files, and make sure the passwords are
+the same in the new encrypted remote.</p>
+
+<p>This will have the following advantages</p>
+
+<ul>
+<li><code>rclone sync</code> will check the checksums while copying</li>
+<li>you can use <code>rclone check</code> between the encrypted remotes</li>
+<li>you don&rsquo;t decrypt and encrypt unnecessarily</li>
+</ul>
+
+<p>For example, let&rsquo;s say you have your original remote at <code>remote:</code> with
+the encrypted version at <code>eremote:</code> with path <code>remote:crypt</code>.  You
+would then set up the new remote <code>remote2:</code> and then the encrypted
+version <code>eremote2:</code> with path <code>remote2:crypt</code> using the same passwords
+as <code>eremote:</code>.</p>
+
+<p>To sync the two remotes you would do</p>
+
+<pre><code>rclone sync remote:crypt remote2:crypt
+</code></pre>
+
+<p>And to check the integrity you would do</p>
+
+<pre><code>rclone check remote:crypt remote2:crypt
+</code></pre>
+
+<h2 id="file-formats">File formats</h2>
+
+<h3 id="file-encryption">File encryption</h3>
+
+<p>Files are encrypted 1:1 source file to destination object.  The file
+has a header and is divided into chunks.</p>
+
+<h4 id="header">Header</h4>
+
+<ul>
+<li>8 bytes magic string <code>RCLONE\x00\x00</code></li>
+<li>24 bytes Nonce (IV)</li>
+</ul>
+
+<p>The initial nonce is generated from the operating systems crypto
+strong random number generator.  The nonce is incremented for each
+chunk read making sure each nonce is unique for each block written.
+The chance of a nonce being re-used is minuscule.  If you wrote an
+exabyte of data (10¹⁸ bytes) you would have a probability of
+approximately 2×10⁻³² of re-using a nonce.</p>
+
+<h4 id="chunk">Chunk</h4>
+
+<p>Each chunk will contain 64kB of data, except for the last one which
+may have less data.  The data chunk is in standard NACL secretbox
+format. Secretbox uses XSalsa20 and Poly1305 to encrypt and
+authenticate messages.</p>
+
+<p>Each chunk contains:</p>
+
+<ul>
+<li>16 Bytes of Poly1305 authenticator</li>
+<li>1 - 65536 bytes XSalsa20 encrypted data</li>
+</ul>
+
+<p>64k chunk size was chosen as the best performing chunk size (the
+authenticator takes too much time below this and the performance drops
+off due to cache effects above this).  Note that these chunks are
+buffered in memory so they can&rsquo;t be too big.</p>
+
+<p>This uses a 32 byte (256 bit key) key derived from the user password.</p>
+
+<h4 id="examples">Examples</h4>
+
+<p>1 byte file will encrypt to</p>
+
+<ul>
+<li>32 bytes header</li>
+<li>17 bytes data chunk</li>
+</ul>
+
+<p>49 bytes total</p>
+
+<p>1MB (1048576 bytes) file will encrypt to</p>
+
+<ul>
+<li>32 bytes header</li>
+<li>16 chunks of 65568 bytes</li>
+</ul>
+
+<p>1049120 bytes total (a 0.05% overhead).  This is the overhead for big
+files.</p>
+
+<h3 id="name-encryption">Name encryption</h3>
+
+<p>File names are encrypted segment by segment - the path is broken up
+into <code>/</code> separated strings and these are encrypted individually.</p>
+
+<p>File segments are padded using using PKCS#7 to a multiple of 16 bytes
+before encryption.</p>
+
+<p>They are then encrypted with EME using AES with 256 bit key. EME
+(ECB-Mix-ECB) is a wide-block encryption mode presented in the 2003
+paper &ldquo;A Parallelizable Enciphering Mode&rdquo; by Halevi and Rogaway.</p>
+
+<p>This makes for deterministic encryption which is what we want - the
+same filename must encrypt to the same thing otherwise we can&rsquo;t find
+it on the cloud storage system.</p>
+
+<p>This means that</p>
+
+<ul>
+<li>filenames with the same name will encrypt the same</li>
+<li>filenames which start the same won&rsquo;t have a common prefix</li>
+</ul>
+
+<p>This uses a 32 byte key (256 bits) and a 16 byte (128 bits) IV both of
+which are derived from the user password.</p>
+
+<p>After encryption they are written out using a modified version of
+standard <code>base32</code> encoding as described in RFC4648.  The standard
+encoding is modified in two ways:</p>
+
+<ul>
+<li>it becomes lower case (no-one likes upper case filenames!)</li>
+<li>we strip the padding character <code>=</code></li>
+</ul>
+
+<p><code>base32</code> is used rather than the more efficient <code>base64</code> so rclone can be
+used on case insensitive remotes (eg Windows, Amazon Drive).</p>
+
+<h3 id="key-derivation">Key derivation</h3>
+
+<p>Rclone uses <code>scrypt</code> with parameters <code>N=16384, r=8, p=1</code> with an
+optional user supplied salt (password2) to derive the 32+32+16 = 80
+bytes of key material required.  If the user doesn&rsquo;t supply a salt
+then rclone uses an internal one.</p>
+
+<p><code>scrypt</code> makes it impractical to mount a dictionary attack on rclone
+encrypted data.  For full protection against this you should always use
+a salt.</p>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

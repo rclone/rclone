@@ -1,0 +1,1668 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rclone Changelog">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Documentation</title>
+    <link rel="canonical" href="https://rclone.org/changelog/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="changelog">Changelog</h2>
+
+<ul>
+<li>v1.39 - 2017-12-23
+
+<ul>
+<li>New backends
+
+<ul>
+<li>WebDAV</li>
+<li>tested with nextcloud, owncloud, put.io and others!</li>
+<li>Pcloud</li>
+<li>cache - wraps a cache around other backends (Remus Bunduc)</li>
+<li>useful in combination with mount</li>
+<li>NB this feature is in beta so use with care</li>
+</ul></li>
+<li>New commands
+
+<ul>
+<li>serve command with subcommands:</li>
+<li>serve webdav: this implements a webdav server for any rclone remote.</li>
+<li>serve http: command to serve a remote over HTTP</li>
+<li>config: add sub commands for full config file management</li>
+<li>create/delete/dump/edit/file/password/providers/show/update</li>
+<li>touch: to create or update the timestamp of a file (Jakub Tasiemski)</li>
+</ul></li>
+<li>New Features
+
+<ul>
+<li>curl install for rclone (Filip Bartodziej)</li>
+<li>--stats now shows percentage, size, rate and ETA in condensed form (Ishuah Kariuki)</li>
+<li>--exclude-if-present to exclude a directory if a file is present (Iakov Davydov)</li>
+<li>rmdirs: add --leave-root flag (lewpam)</li>
+<li>move: add --delete-empty-src-dirs flag to remove dirs after move (Ishuah Kariuki)</li>
+<li>Add --dump flag, introduce --dump requests, responses and remove --dump-auth, --dump-filters</li>
+<li>Obscure X-Auth-Token: from headers when dumping too</li>
+<li>Document and implement exit codes for different failure modes (Ishuah Kariuki)</li>
+</ul></li>
+<li>Compile</li>
+<li>Bug Fixes
+
+<ul>
+<li>Retry lots more different types of errors to make multipart transfers more reliable</li>
+<li>Save the config before asking for a token, fixes disappearing oauth config</li>
+<li>Warn the user if --include and --exclude are used together (Ernest Borowski)</li>
+<li>Fix duplicate files (eg on Google drive) causing spurious copies</li>
+<li>Allow trailing and leading whitespace for passwords (Jason Rose)</li>
+<li>ncdu: fix crashes on empty directories</li>
+<li>rcat: fix goroutine leak</li>
+<li>moveto/copyto: Fix to allow copying to the same name</li>
+</ul></li>
+<li>Mount
+
+<ul>
+<li>--vfs-cache mode to make writes into mounts more reliable.</li>
+<li>this requires caching files on the disk (see --cache-dir)</li>
+<li>As this is a new feature, use with care</li>
+<li>Use sdnotify to signal systemd the mount is ready (Fabian Möller)</li>
+<li>Check if directory is not empty before mounting (Ernest Borowski)</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Add error message for cross file system moves</li>
+<li>Fix equality check for times</li>
+</ul></li>
+<li>Dropbox
+
+<ul>
+<li>Rework multipart upload</li>
+<li>buffer the chunks when uploading large files so they can be retried</li>
+<li>change default chunk size to 48MB now we are buffering them in memory</li>
+<li>retry every error after the first chunk is done successfully</li>
+<li>Fix error when renaming directories</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Fix crash on bad authentication</li>
+</ul></li>
+<li>Google Drive
+
+<ul>
+<li>Add service account support (Tim Cooijmans)</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Make it work properly with Digital Ocean Spaces (Andrew Starr-Bochicchio)</li>
+<li>Fix crash if a bad listing is received</li>
+<li>Add support for ECS task IAM roles (David Minor)</li>
+</ul></li>
+<li>Backblaze B2
+
+<ul>
+<li>Fix multipart upload retries</li>
+<li>Fix --hard-delete to make it work 100% of the time</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Allow authentication with storage URL and auth key (Giovanni Pizzi)</li>
+<li>Add new fields for swift configuration to support IBM Bluemix Swift (Pierre Carlson)</li>
+<li>Add OS_TENANT_ID and OS_USER_ID to config</li>
+<li>Allow configs with user id instead of user name</li>
+<li>Check if swift segments container exists before creating (John Leach)</li>
+<li>Fix memory leak in swift transfers (upstream fix)</li>
+</ul></li>
+<li>SFTP
+
+<ul>
+<li>Add option to enable the use of aes128-cbc cipher (Jon Fautley)</li>
+</ul></li>
+<li>Amazon cloud drive
+
+<ul>
+<li>Fix download of large files failing with &ldquo;Only one auth mechanism allowed&rdquo;</li>
+</ul></li>
+<li>crypt
+
+<ul>
+<li>Option to encrypt directory names or leave them intact</li>
+<li>Implement DirChangeNotify (Fabian Möller)</li>
+</ul></li>
+<li>onedrive
+
+<ul>
+<li>Add option to choose resourceURL during setup of OneDrive Business account if more than one is available for user</li>
+</ul></li>
+</ul></li>
+<li>v1.38 - 2017-09-30
+
+<ul>
+<li>New backends
+
+<ul>
+<li>Azure Blob Storage (thanks Andrei Dragomir)</li>
+<li>Box</li>
+<li>Onedrive for Business (thanks Oliver Heyme)</li>
+<li>QingStor from QingCloud (thanks wuyu)</li>
+</ul></li>
+<li>New commands
+
+<ul>
+<li><code>rcat</code> - read from standard input and stream upload</li>
+<li><code>tree</code> - shows a nicely formatted recursive listing</li>
+<li><code>cryptdecode</code> - decode crypted file names (thanks ishuah)</li>
+<li><code>config show</code> - print the config file</li>
+<li><code>config file</code> - print the config file location</li>
+</ul></li>
+<li>New Features
+
+<ul>
+<li>Empty directories are deleted on <code>sync</code></li>
+<li><code>dedupe</code> - implement merging of duplicate directories</li>
+<li><code>check</code> and <code>cryptcheck</code> made more consistent and use less memory</li>
+<li><code>cleanup</code> for remaining remotes (thanks ishuah)</li>
+<li><code>--immutable</code> for ensuring that files don&rsquo;t change (thanks Jacob McNamee)</li>
+<li><code>--user-agent</code> option (thanks Alex McGrath Kraak)</li>
+<li><code>--disable</code> flag to disable optional features</li>
+<li><code>--bind</code> flag for choosing the local addr on outgoing connections</li>
+<li>Support for zsh auto-completion (thanks bpicode)</li>
+<li>Stop normalizing file names but do a normalized compare in <code>sync</code></li>
+</ul></li>
+<li>Compile
+
+<ul>
+<li>Update to using go1.9 as the default go version</li>
+<li>Remove snapd build due to maintenance problems</li>
+</ul></li>
+<li>Bug Fixes
+
+<ul>
+<li>Improve retriable error detection which makes multipart uploads better</li>
+<li>Make <code>check</code> obey <code>--ignore-size</code></li>
+<li>Fix bwlimit toggle in conjunction with schedules (thanks cbruegg)</li>
+<li><code>config</code> ensures newly written config is on the same mount</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Revert to copy when moving file across file system boundaries</li>
+<li><code>--skip-links</code> to suppress symlink warnings (thanks Zhiming Wang)</li>
+</ul></li>
+<li>Mount
+
+<ul>
+<li>Re-use <code>rcat</code> internals to support uploads from all remotes</li>
+</ul></li>
+<li>Dropbox
+
+<ul>
+<li>Fix &ldquo;entry doesn&rsquo;t belong in directory&rdquo; error</li>
+<li>Stop using deprecated API methods</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Fix server side copy to empty container with <code>--fast-list</code></li>
+</ul></li>
+<li>Google Drive
+
+<ul>
+<li>Change the default for <code>--drive-use-trash</code> to <code>true</code></li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Set session token when using STS (thanks Girish Ramakrishnan)</li>
+<li>Glacier docs and error messages (thanks Jan Varho)</li>
+<li>Read 1000 (not 1024) items in dir listings to fix Wasabi</li>
+</ul></li>
+<li>Backblaze B2
+
+<ul>
+<li>Fix SHA1 mismatch when downloading files with no SHA1</li>
+<li>Calculate missing hashes on the fly instead of spooling</li>
+<li><code>--b2-hard-delete</code> to permanently delete (not hide) files (thanks John Papandriopoulos)</li>
+</ul></li>
+<li>Hubic
+
+<ul>
+<li>Fix creating containers - no longer have to use the <code>default</code> container</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Optionally configure from a standard set of OpenStack environment vars</li>
+<li>Add <code>endpoint_type</code> config</li>
+</ul></li>
+<li>Google Cloud Storage
+
+<ul>
+<li>Fix bucket creation to work with limited permission users</li>
+</ul></li>
+<li>SFTP
+
+<ul>
+<li>Implement connection pooling for multiple ssh connections</li>
+<li>Limit new connections per second</li>
+<li>Add support for MD5 and SHA1 hashes where available (thanks Christian Brüggemann)</li>
+</ul></li>
+<li>HTTP
+
+<ul>
+<li>Fix URL encoding issues</li>
+<li>Fix directories with <code>:</code> in</li>
+<li>Fix panic with URL encoded content</li>
+</ul></li>
+</ul></li>
+<li>v1.37 - 2017-07-22
+
+<ul>
+<li>New backends
+
+<ul>
+<li>FTP - thanks to Antonio Messina</li>
+<li>HTTP - thanks to Vasiliy Tolstov</li>
+</ul></li>
+<li>New commands
+
+<ul>
+<li>rclone ncdu - for exploring a remote with a text based user interface.</li>
+<li>rclone lsjson - for listing with a machine readable output</li>
+<li>rclone dbhashsum - to show Dropbox style hashes of files (local or Dropbox)</li>
+</ul></li>
+<li>New Features
+
+<ul>
+<li>Implement --fast-list flag</li>
+<li>This allows remotes to list recursively if they can</li>
+<li>This uses less transactions (important if you pay for them)</li>
+<li>This may or may not be quicker</li>
+<li>This will use more memory as it has to hold the listing in memory</li>
+<li>--old-sync-method deprecated - the remaining uses are covered by --fast-list</li>
+<li>This involved a major re-write of all the listing code</li>
+<li>Add --tpslimit and --tpslimit-burst to limit transactions per second</li>
+<li>this is useful in conjuction with <code>rclone mount</code> to limit external apps</li>
+<li>Add --stats-log-level so can see --stats without -v</li>
+<li>Print password prompts to stderr - Hraban Luyat</li>
+<li>Warn about duplicate files when syncing</li>
+<li>Oauth improvements</li>
+<li>allow auth_url and token_url to be set in the config file</li>
+<li>Print redirection URI if using own credentials.</li>
+<li>Don&rsquo;t Mkdir at the start of sync to save transactions</li>
+</ul></li>
+<li>Compile
+
+<ul>
+<li>Update build to go1.8.3</li>
+<li>Require go1.6 for building rclone</li>
+<li>Compile 386 builds with &ldquo;GO386=387&rdquo; for maximum compatibility</li>
+</ul></li>
+<li>Bug Fixes
+
+<ul>
+<li>Fix menu selection when no remotes</li>
+<li>Config saving reworked to not kill the file if disk gets full</li>
+<li>Don&rsquo;t delete remote if name does not change while renaming</li>
+<li>moveto, copyto: report transfers and checks as per move and copy</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Add --local-no-unicode-normalization flag - Bob Potter</li>
+</ul></li>
+<li>Mount
+
+<ul>
+<li>Now supported on Windows using cgofuse and WinFsp - thanks to Bill Zissimopoulos for much help</li>
+<li>Compare checksums on upload/download via FUSE</li>
+<li>Unmount when program ends with SIGINT (Ctrl+C) or SIGTERM - Jérôme Vizcaino</li>
+<li>On read only open of file, make open pending until first read</li>
+<li>Make --read-only reject modify operations</li>
+<li>Implement ModTime via FUSE for remotes that support it</li>
+<li>Allow modTime to be changed even before all writers are closed</li>
+<li>Fix panic on renames</li>
+<li>Fix hang on errored upload</li>
+</ul></li>
+<li>Crypt
+
+<ul>
+<li>Report the name:root as specified by the user</li>
+<li>Add an &ldquo;obfuscate&rdquo; option for filename encryption - Stephen Harris</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Fix initialization order for token renewer</li>
+<li>Remove revoked credentials, allow oauth proxy config and update docs</li>
+</ul></li>
+<li>B2
+
+<ul>
+<li>Reduce minimum chunk size to 5MB</li>
+</ul></li>
+<li>Drive
+
+<ul>
+<li>Add team drive support</li>
+<li>Reduce bandwidth by adding fields for partial responses - Martin Kristensen</li>
+<li>Implement --drive-shared-with-me flag to view shared with me files - Danny Tsai</li>
+<li>Add --drive-trashed-only to read only the files in the trash</li>
+<li>Remove obsolete --drive-full-list</li>
+<li>Add missing seek to start on retries of chunked uploads</li>
+<li>Fix stats accounting for upload</li>
+<li>Convert / in names to a unicode equivalent (／)</li>
+<li>Poll for Google Drive changes when mounted</li>
+</ul></li>
+<li>OneDrive
+
+<ul>
+<li>Fix the uploading of files with spaces</li>
+<li>Fix initialization order for token renewer</li>
+<li>Display speeds accurately when uploading - Yoni Jah</li>
+<li>Swap to using <a href="http://localhost:53682/">http://localhost:53682/</a> as redirect URL - Michael Ledin</li>
+<li>Retry on token expired error, reset upload body on retry - Yoni Jah</li>
+</ul></li>
+<li>Google Cloud Storage
+
+<ul>
+<li>Add ability to specify location and storage class via config and command line - thanks gdm85</li>
+<li>Create container if necessary on server side copy</li>
+<li>Increase directory listing chunk to 1000 to increase performance</li>
+<li>Obtain a refresh token for GCS - Steven Lu</li>
+</ul></li>
+<li>Yandex
+
+<ul>
+<li>Fix the name reported in log messages (was empty)</li>
+<li>Correct error return for listing empty directory</li>
+</ul></li>
+<li>Dropbox
+
+<ul>
+<li>Rewritten to use the v2 API</li>
+<li>Now supports ModTime
+
+<ul>
+<li>Can only set by uploading the file again</li>
+<li>If you uploaded with an old rclone, rclone may upload everything again</li>
+<li>Use <code>--size-only</code> or <code>--checksum</code> to avoid this</li>
+</ul></li>
+<li>Now supports the Dropbox content hashing scheme</li>
+<li>Now supports low level retries</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Work around eventual consistency in bucket creation</li>
+<li>Create container if necessary on server side copy</li>
+<li>Add us-east-2 (Ohio) and eu-west-2 (London) S3 regions - Zahiar Ahmed</li>
+</ul></li>
+<li>Swift, Hubic
+
+<ul>
+<li>Fix zero length directory markers showing in the subdirectory listing</li>
+<li>this caused lots of duplicate transfers</li>
+<li>Fix paged directory listings</li>
+<li>this caused duplicate directory errors</li>
+<li>Create container if necessary on server side copy</li>
+<li>Increase directory listing chunk to 1000 to increase performance</li>
+<li>Make sensible error if the user forgets the container</li>
+</ul></li>
+<li>SFTP
+
+<ul>
+<li>Add support for using ssh key files</li>
+<li>Fix under Windows</li>
+<li>Fix ssh agent on Windows</li>
+<li>Adapt to latest version of library - Igor Kharin</li>
+</ul></li>
+</ul></li>
+<li>v1.36 - 2017-03-18
+
+<ul>
+<li>New Features
+
+<ul>
+<li>SFTP remote (Jack Schmidt)</li>
+<li>Re-implement sync routine to work a directory at a time reducing memory usage</li>
+<li>Logging revamped to be more inline with rsync - now much quieter
+
+<ul>
+<li>-v only shows transfers</li>
+<li>-vv is for full debug</li>
+<li>--syslog to log to syslog on capable platforms</li>
+</ul></li>
+<li>Implement --backup-dir and --suffix</li>
+<li>Implement --track-renames (initial implementation by Bjørn Erik Pedersen)</li>
+<li>Add time-based bandwidth limits (Lukas Loesche)</li>
+<li>rclone cryptcheck: checks integrity of crypt remotes</li>
+<li>Allow all config file variables and options to be set from environment variables</li>
+<li>Add --buffer-size parameter to control buffer size for copy</li>
+<li>Make --delete-after the default</li>
+<li>Add --ignore-checksum flag (fixed by Hisham Zarka)</li>
+<li>rclone check: Add --download flag to check all the data, not just hashes</li>
+<li>rclone cat: add --head, --tail, --offset, --count and --discard</li>
+<li>rclone config: when choosing from a list, allow the value to be entered too</li>
+<li>rclone config: allow rename and copy of remotes</li>
+<li>rclone obscure: for generating encrypted passwords for rclone&rsquo;s config (T.C. Ferguson)</li>
+<li>Comply with XDG Base Directory specification (Dario Giovannetti)</li>
+<li>this moves the default location of the config file in a backwards compatible way</li>
+<li>Release changes</li>
+<li>Ubuntu snap support (Dedsec1)</li>
+<li>Compile with go 1.8</li>
+<li>MIPS/Linux big and little endian support</li>
+</ul></li>
+<li>Bug Fixes
+
+<ul>
+<li>Fix copyto copying things to the wrong place if the destination dir didn&rsquo;t exist</li>
+<li>Fix parsing of remotes in moveto and copyto</li>
+<li>Fix --delete-before deleting files on copy</li>
+<li>Fix --files-from with an empty file copying everything</li>
+<li>Fix sync: don&rsquo;t update mod times if --dry-run set</li>
+<li>Fix MimeType propagation</li>
+<li>Fix filters to add ** rules to directory rules</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Implement -L, --copy-links flag to allow rclone to follow symlinks</li>
+<li>Open files in write only mode so rclone can write to an rclone mount</li>
+<li>Fix unnormalised unicode causing problems reading directories</li>
+<li>Fix interaction between -x flag and --max-depth</li>
+</ul></li>
+<li>Mount
+
+<ul>
+<li>Implement proper directory handling (mkdir, rmdir, renaming)</li>
+<li>Make include and exclude filters apply to mount</li>
+<li>Implement read and write async buffers - control with --buffer-size</li>
+<li>Fix fsync on for directories</li>
+<li>Fix retry on network failure when reading off crypt</li>
+</ul></li>
+<li>Crypt
+
+<ul>
+<li>Add --crypt-show-mapping to show encrypted file mapping</li>
+<li>Fix crypt writer getting stuck in a loop</li>
+<li><strong>IMPORTANT</strong> this bug had the potential to cause data corruption when
+
+<ul>
+<li>reading data from a network based remote and</li>
+<li>writing to a crypt on Google Drive</li>
+</ul></li>
+<li>Use the cryptcheck command to validate your data if you are concerned</li>
+<li>If syncing two crypt remotes, sync the unencrypted remote</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Fix panics on Move (rename)</li>
+<li>Fix panic on token expiry</li>
+</ul></li>
+<li>B2
+
+<ul>
+<li>Fix inconsistent listings and rclone check</li>
+<li>Fix uploading empty files with go1.8</li>
+<li>Constrain memory usage when doing multipart uploads</li>
+<li>Fix upload url not being refreshed properly</li>
+</ul></li>
+<li>Drive
+
+<ul>
+<li>Fix Rmdir on directories with trashed files</li>
+<li>Fix &ldquo;Ignoring unknown object&rdquo; when downloading</li>
+<li>Add --drive-list-chunk</li>
+<li>Add --drive-skip-gdocs (Károly Oláh)</li>
+</ul></li>
+<li>OneDrive
+
+<ul>
+<li>Implement Move</li>
+<li>Fix Copy</li>
+<li>Fix overwrite detection in Copy</li>
+<li>Fix waitForJob to parse errors correctly</li>
+<li>Use token renewer to stop auth errors on long uploads</li>
+<li>Fix uploading empty files with go1.8</li>
+</ul></li>
+<li>Google Cloud Storage
+
+<ul>
+<li>Fix depth 1 directory listings</li>
+</ul></li>
+<li>Yandex
+
+<ul>
+<li>Fix single level directory listing</li>
+</ul></li>
+<li>Dropbox
+
+<ul>
+<li>Normalise the case for single level directory listings</li>
+<li>Fix depth 1 listing</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Added ca-central-1 region (Jon Yergatian)</li>
+</ul></li>
+</ul></li>
+<li>v1.35 - 2017-01-02
+
+<ul>
+<li>New Features
+
+<ul>
+<li>moveto and copyto commands for choosing a destination name on copy/move</li>
+<li>rmdirs command to recursively delete empty directories</li>
+<li>Allow repeated --include/--exclude/--filter options</li>
+<li>Only show transfer stats on commands which transfer stuff</li>
+<li>show stats on any command using the <code>--stats</code> flag</li>
+<li>Allow overlapping directories in move when server side dir move is supported</li>
+<li>Add --stats-unit option - thanks Scott McGillivray</li>
+</ul></li>
+<li>Bug Fixes
+
+<ul>
+<li>Fix the config file being overwritten when two rclones are running</li>
+<li>Make rclone lsd obey the filters properly</li>
+<li>Fix compilation on mips</li>
+<li>Fix not transferring files that don&rsquo;t differ in size</li>
+<li>Fix panic on nil retry/fatal error</li>
+</ul></li>
+<li>Mount
+
+<ul>
+<li>Retry reads on error - should help with reliability a lot</li>
+<li>Report the modification times for directories from the remote</li>
+<li>Add bandwidth accounting and limiting (fixes --bwlimit)</li>
+<li>If --stats provided will show stats and which files are transferring</li>
+<li>Support R/W files if truncate is set.</li>
+<li>Implement statfs interface so df works</li>
+<li>Note that write is now supported on Amazon Drive</li>
+<li>Report number of blocks in a file - thanks Stefan Breunig</li>
+</ul></li>
+<li>Crypt
+
+<ul>
+<li>Prevent the user pointing crypt at itself</li>
+<li>Fix failed to authenticate decrypted block errors</li>
+<li>these will now return the underlying unexpected EOF instead</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Add support for server side move and directory move - thanks Stefan Breunig</li>
+<li>Fix nil pointer deref on size attribute</li>
+</ul></li>
+<li>B2
+
+<ul>
+<li>Use new prefix and delimiter parameters in directory listings</li>
+<li>This makes --max-depth 1 dir listings as used in mount much faster</li>
+<li>Reauth the account while doing uploads too - should help with token expiry</li>
+</ul></li>
+<li>Drive
+
+<ul>
+<li>Make DirMove more efficient and complain about moving the root</li>
+<li>Create destination directory on Move()</li>
+</ul></li>
+</ul></li>
+<li>v1.34 - 2016-11-06
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Stop single file and <code>--files-from</code> operations iterating through the source bucket.</li>
+<li>Stop removing failed upload to cloud storage remotes</li>
+<li>Make ContentType be preserved for cloud to cloud copies</li>
+<li>Add support to toggle bandwidth limits via SIGUSR2 - thanks Marco Paganini</li>
+<li><code>rclone check</code> shows count of hashes that couldn&rsquo;t be checked</li>
+<li><code>rclone listremotes</code> command</li>
+<li>Support linux/arm64 build - thanks Fredrik Fornwall</li>
+<li>Remove <code>Authorization:</code> lines from <code>--dump-headers</code> output</li>
+</ul></li>
+<li>Bug Fixes
+
+<ul>
+<li>Ignore files with control characters in the names</li>
+<li>Fix <code>rclone move</code> command</li>
+<li>Delete src files which already existed in dst</li>
+<li>Fix deletion of src file when dst file older</li>
+<li>Fix <code>rclone check</code> on crypted file systems</li>
+<li>Make failed uploads not count as &ldquo;Transferred&rdquo;</li>
+<li>Make sure high level retries show with <code>-q</code></li>
+<li>Use a vendor directory with godep for repeatable builds</li>
+</ul></li>
+<li><code>rclone mount</code> - FUSE
+
+<ul>
+<li>Implement FUSE mount options</li>
+<li><code>--no-modtime</code>, <code>--debug-fuse</code>, <code>--read-only</code>, <code>--allow-non-empty</code>, <code>--allow-root</code>, <code>--allow-other</code></li>
+<li><code>--default-permissions</code>, <code>--write-back-cache</code>, <code>--max-read-ahead</code>, <code>--umask</code>, <code>--uid</code>, <code>--gid</code></li>
+<li>Add <code>--dir-cache-time</code> to control caching of directory entries</li>
+<li>Implement seek for files opened for read (useful for video players)</li>
+<li>with <code>-no-seek</code> flag to disable</li>
+<li>Fix crash on 32 bit ARM (alignment of 64 bit counter)</li>
+<li>&hellip;and many more internal fixes and improvements!</li>
+</ul></li>
+<li>Crypt
+
+<ul>
+<li>Don&rsquo;t show encrypted password in configurator to stop confusion</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>New wait for upload option <code>--acd-upload-wait-per-gb</code></li>
+<li>upload timeouts scale by file size and can be disabled</li>
+<li>Add 502 Bad Gateway to list of errors we retry</li>
+<li>Fix overwriting a file with a zero length file</li>
+<li>Fix ACD file size warning limit - thanks Felix Bünemann</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Unix: implement <code>-x</code>/<code>--one-file-system</code> to stay on a single file system</li>
+<li>thanks Durval Menezes and Luiz Carlos Rumbelsperger Viana</li>
+<li>Windows: ignore the symlink bit on files</li>
+<li>Windows: Ignore directory based junction points</li>
+</ul></li>
+<li>B2
+
+<ul>
+<li>Make sure each upload has at least one upload slot - fixes strange upload stats</li>
+<li>Fix uploads when using crypt</li>
+<li>Fix download of large files (sha1 mismatch)</li>
+<li>Return error when we try to create a bucket which someone else owns</li>
+<li>Update B2 docs with Data usage, and Crypt section - thanks Tomasz Mazur</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Command line and config file support for</li>
+<li>Setting/overriding ACL  - thanks Radek Senfeld</li>
+<li>Setting storage class - thanks Asko Tamm</li>
+</ul></li>
+<li>Drive
+
+<ul>
+<li>Make exponential backoff work exactly as per Google specification</li>
+<li>add <code>.epub</code>, <code>.odp</code> and <code>.tsv</code> as export formats.</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Don&rsquo;t read metadata for directory marker objects</li>
+</ul></li>
+</ul></li>
+<li>v1.33 - 2016-08-24
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Implement encryption</li>
+<li>data encrypted in NACL secretbox format</li>
+<li>with optional file name encryption</li>
+<li>New commands</li>
+<li>rclone mount - implements FUSE mounting of remotes (EXPERIMENTAL)
+
+<ul>
+<li>works on Linux, FreeBSD and OS X (need testers for the last 2!)</li>
+</ul></li>
+<li>rclone cat - outputs remote file or files to the terminal</li>
+<li>rclone genautocomplete - command to make a bash completion script for rclone</li>
+<li>Editing a remote using <code>rclone config</code> now goes through the wizard</li>
+<li>Compile with go 1.7 - this fixes rclone on macOS Sierra and on 386 processors</li>
+<li>Use cobra for sub commands and docs generation</li>
+</ul></li>
+<li>drive
+
+<ul>
+<li>Document how to make your own client_id</li>
+</ul></li>
+<li>s3
+
+<ul>
+<li>User-configurable Amazon S3 ACL (thanks Radek Šenfeld)</li>
+</ul></li>
+<li>b2
+
+<ul>
+<li>Fix stats accounting for upload - no more jumping to 100% done</li>
+<li>On cleanup delete hide marker if it is the current file</li>
+<li>New B2 API endpoint (thanks Per Cederberg)</li>
+<li>Set maximum backoff to 5 Minutes</li>
+</ul></li>
+<li>onedrive
+
+<ul>
+<li>Fix URL escaping in file names - eg uploading files with <code>+</code> in them.</li>
+</ul></li>
+<li>amazon cloud drive
+
+<ul>
+<li>Fix token expiry during large uploads</li>
+<li>Work around 408 REQUEST_TIMEOUT and 504 GATEWAY_TIMEOUT errors</li>
+</ul></li>
+<li>local
+
+<ul>
+<li>Fix filenames with invalid UTF-8 not being uploaded</li>
+<li>Fix problem with some UTF-8 characters on OS X</li>
+</ul></li>
+</ul></li>
+<li>v1.32 - 2016-07-13
+
+<ul>
+<li>Backblaze B2
+
+<ul>
+<li>Fix upload of files large files not in root</li>
+</ul></li>
+</ul></li>
+<li>v1.31 - 2016-07-13
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Reduce memory on sync by about 50%</li>
+<li>Implement --no-traverse flag to stop copy traversing the destination remote.</li>
+<li>This can be used to reduce memory usage down to the smallest possible.</li>
+<li>Useful to copy a small number of files into a large destination folder.</li>
+<li>Implement cleanup command for emptying trash / removing old versions of files</li>
+<li>Currently B2 only</li>
+<li>Single file handling improved</li>
+<li>Now copied with --files-from</li>
+<li>Automatically sets --no-traverse when copying a single file</li>
+<li>Info on using installing with ansible - thanks Stefan Weichinger</li>
+<li>Implement --no-update-modtime flag to stop rclone fixing the remote modified times.</li>
+</ul></li>
+<li>Bug Fixes
+
+<ul>
+<li>Fix move command - stop it running for overlapping Fses - this was causing data loss.</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Fix incomplete hashes - this was causing problems for B2.</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Rename Amazon Cloud Drive to Amazon Drive - no changes to config file needed.</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Add support for non-default project domain - thanks Antonio Messina.</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Add instructions on how to use rclone with minio.</li>
+<li>Add ap-northeast-2 (Seoul) and ap-south-1 (Mumbai) regions.</li>
+<li>Skip setting the modified time for objects &gt; 5GB as it isn&rsquo;t possible.</li>
+</ul></li>
+<li>Backblaze B2
+
+<ul>
+<li>Add --b2-versions flag so old versions can be listed and retreived.</li>
+<li>Treat 403 errors (eg cap exceeded) as fatal.</li>
+<li>Implement cleanup command for deleting old file versions.</li>
+<li>Make error handling compliant with B2 integrations notes.</li>
+<li>Fix handling of token expiry.</li>
+<li>Implement --b2-test-mode to set <code>X-Bz-Test-Mode</code> header.</li>
+<li>Set cutoff for chunked upload to 200MB as per B2 guidelines.</li>
+<li>Make upload multi-threaded.</li>
+</ul></li>
+<li>Dropbox
+
+<ul>
+<li>Don&rsquo;t retry 461 errors.</li>
+</ul></li>
+</ul></li>
+<li>v1.30 - 2016-06-18
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Directory listing code reworked for more features and better error reporting (thanks to Klaus Post for help).  This enables</li>
+<li>Directory include filtering for efficiency</li>
+<li>--max-depth parameter</li>
+<li>Better error reporting</li>
+<li>More to come</li>
+<li>Retry more errors</li>
+<li>Add --ignore-size flag - for uploading images to onedrive</li>
+<li>Log -v output to stdout by default</li>
+<li>Display the transfer stats in more human readable form</li>
+<li>Make 0 size files specifiable with <code>--max-size 0b</code></li>
+<li>Add <code>b</code> suffix so we can specify bytes in --bwlimit, --min-size etc</li>
+<li>Use &ldquo;password:&rdquo; instead of &ldquo;password&gt;&rdquo; prompt - thanks Klaus Post and Leigh Klotz</li>
+</ul></li>
+<li>Bug Fixes
+
+<ul>
+<li>Fix retry doing one too many retries</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Fix problems with OS X and UTF-8 characters</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Check a file exists before uploading to help with 408 Conflict errors</li>
+<li>Reauth on 401 errors - this has been causing a lot of problems</li>
+<li>Work around spurious 403 errors</li>
+<li>Restart directory listings on error</li>
+</ul></li>
+<li>Google Drive
+
+<ul>
+<li>Check a file exists before uploading to help with duplicates</li>
+<li>Fix retry of multipart uploads</li>
+</ul></li>
+<li>Backblaze B2
+
+<ul>
+<li>Implement large file uploading</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Add AES256 server-side encryption for - thanks Justin R. Wilson</li>
+</ul></li>
+<li>Google Cloud Storage
+
+<ul>
+<li>Make sure we don&rsquo;t use conflicting content types on upload</li>
+<li>Add service account support - thanks Michal Witkowski</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Add auth version parameter</li>
+<li>Add domain option for openstack (v3 auth) - thanks Fabian Ruff</li>
+</ul></li>
+</ul></li>
+<li>v1.29 - 2016-04-18
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Implement <code>-I, --ignore-times</code> for unconditional upload</li>
+<li>Improve <code>dedupe</code>command</li>
+<li>Now removes identical copies without asking</li>
+<li>Now obeys <code>--dry-run</code></li>
+<li>Implement <code>--dedupe-mode</code> for non interactive running
+
+<ul>
+<li><code>--dedupe-mode interactive</code> - interactive the default.</li>
+<li><code>--dedupe-mode skip</code> - removes identical files then skips anything left.</li>
+<li><code>--dedupe-mode first</code> - removes identical files then keeps the first one.</li>
+<li><code>--dedupe-mode newest</code> - removes identical files then keeps the newest one.</li>
+<li><code>--dedupe-mode oldest</code> - removes identical files then keeps the oldest one.</li>
+<li><code>--dedupe-mode rename</code> - removes identical files then renames the rest to be different.</li>
+</ul></li>
+</ul></li>
+<li>Bug fixes
+
+<ul>
+<li>Make rclone check obey the <code>--size-only</code> flag.</li>
+<li>Use &ldquo;application/octet-stream&rdquo; if discovered mime type is invalid.</li>
+<li>Fix missing &ldquo;quit&rdquo; option when there are no remotes.</li>
+</ul></li>
+<li>Google Drive
+
+<ul>
+<li>Increase default chunk size to 8 MB - increases upload speed of big files</li>
+<li>Speed up directory listings and make more reliable</li>
+<li>Add missing retries for Move and DirMove - increases reliability</li>
+<li>Preserve mime type on file update</li>
+</ul></li>
+<li>Backblaze B2
+
+<ul>
+<li>Enable mod time syncing</li>
+<li>This means that B2 will now check modification times</li>
+<li>It will upload new files to update the modification times</li>
+<li>(there isn&rsquo;t an API to just set the mod time.)</li>
+<li>If you want the old behaviour use <code>--size-only</code>.</li>
+<li>Update API to new version</li>
+<li>Fix parsing of mod time when not in metadata</li>
+</ul></li>
+<li>Swift/Hubic
+
+<ul>
+<li>Don&rsquo;t return an MD5SUM for static large objects</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Fix uploading files bigger than 50GB</li>
+</ul></li>
+</ul></li>
+<li>v1.28 - 2016-03-01
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Configuration file encryption - thanks Klaus Post</li>
+<li>Improve <code>rclone config</code> adding more help and making it easier to understand</li>
+<li>Implement <code>-u</code>/<code>--update</code> so creation times can be used on all remotes</li>
+<li>Implement <code>--low-level-retries</code> flag</li>
+<li>Optionally disable gzip compression on downloads with <code>--no-gzip-encoding</code></li>
+</ul></li>
+<li>Bug fixes
+
+<ul>
+<li>Don&rsquo;t make directories if <code>--dry-run</code> set</li>
+<li>Fix and document the <code>move</code> command</li>
+<li>Fix redirecting stderr on unix-like OSes when using <code>--log-file</code></li>
+<li>Fix <code>delete</code> command to wait until all finished - fixes missing deletes.</li>
+</ul></li>
+<li>Backblaze B2
+
+<ul>
+<li>Use one upload URL per go routine fixes <code>more than one upload using auth token</code></li>
+<li>Add pacing, retries and reauthentication - fixes token expiry problems</li>
+<li>Upload without using a temporary file from local (and remotes which support SHA1)</li>
+<li>Fix reading metadata for all files when it shouldn&rsquo;t have been</li>
+</ul></li>
+<li>Drive
+
+<ul>
+<li>Fix listing drive documents at root</li>
+<li>Disable copy and move for Google docs</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Fix uploading of chunked files with non ASCII characters</li>
+<li>Allow setting of <code>storage_url</code> in the config - thanks Xavier Lucas</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Allow IAM role and credentials from environment variables - thanks Brian Stengaard</li>
+<li>Allow low privilege users to use S3 (check if directory exists during Mkdir) - thanks Jakub Gedeon</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Retry on more things to make directory listings more reliable</li>
+</ul></li>
+</ul></li>
+<li>v1.27 - 2016-01-31
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Easier headless configuration with <code>rclone authorize</code></li>
+<li>Add support for multiple hash types - we now check SHA1 as well as MD5 hashes.</li>
+<li><code>delete</code> command which does obey the filters (unlike <code>purge</code>)</li>
+<li><code>dedupe</code> command to deduplicate a remote.  Useful with Google Drive.</li>
+<li>Add <code>--ignore-existing</code> flag to skip all files that exist on destination.</li>
+<li>Add <code>--delete-before</code>, <code>--delete-during</code>, <code>--delete-after</code> flags.</li>
+<li>Add <code>--memprofile</code> flag to debug memory use.</li>
+<li>Warn the user about files with same name but different case</li>
+<li>Make <code>--include</code> rules add their implict exclude * at the end of the filter list</li>
+<li>Deprecate compiling with go1.3</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Fix download of files &gt; 10 GB</li>
+<li>Fix directory traversal (&ldquo;Next token is expired&rdquo;) for large directory listings</li>
+<li>Remove 409 conflict from error codes we will retry - stops very long pauses</li>
+</ul></li>
+<li>Backblaze B2
+
+<ul>
+<li>SHA1 hashes now checked by rclone core</li>
+</ul></li>
+<li>Drive
+
+<ul>
+<li>Add <code>--drive-auth-owner-only</code> to only consider files owned by the user - thanks Björn Harrtell</li>
+<li>Export Google documents</li>
+</ul></li>
+<li>Dropbox
+
+<ul>
+<li>Make file exclusion error controllable with -q</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Fix upload from unprivileged user.</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Fix updating of mod times of files with <code>+</code> in.</li>
+</ul></li>
+<li>Local
+
+<ul>
+<li>Add local file system option to disable UNC on Windows.</li>
+</ul></li>
+</ul></li>
+<li>v1.26 - 2016-01-02
+
+<ul>
+<li>New Features
+
+<ul>
+<li>Yandex storage backend - thank you Dmitry Burdeev (&ldquo;dibu&rdquo;)</li>
+<li>Implement Backblaze B2 storage backend</li>
+<li>Add --min-age and --max-age flags - thank you Adriano Aurélio Meirelles</li>
+<li>Make ls/lsl/md5sum/size/check obey includes and excludes</li>
+</ul></li>
+<li>Fixes
+
+<ul>
+<li>Fix crash in http logging</li>
+<li>Upload releases to github too</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Fix sync for chunked files</li>
+</ul></li>
+<li>OneDrive
+
+<ul>
+<li>Re-enable server side copy</li>
+<li>Don&rsquo;t mask HTTP error codes with JSON decode error</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Fix corrupting Content-Type on mod time update (thanks Joseph Spurrier)</li>
+</ul></li>
+</ul></li>
+<li>v1.25 - 2015-11-14
+
+<ul>
+<li>New features
+
+<ul>
+<li>Implement Hubic storage system</li>
+</ul></li>
+<li>Fixes
+
+<ul>
+<li>Fix deletion of some excluded files without --delete-excluded</li>
+<li>This could have deleted files unexpectedly on sync</li>
+<li>Always check first with <code>--dry-run</code>!</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Stop SetModTime losing metadata (eg X-Object-Manifest)</li>
+<li>This could have caused data loss for files &gt; 5GB in size</li>
+<li>Use ContentType from Object to avoid lookups in listings</li>
+</ul></li>
+<li>OneDrive
+
+<ul>
+<li>disable server side copy as it seems to be broken at Microsoft</li>
+</ul></li>
+</ul></li>
+<li>v1.24 - 2015-11-07
+
+<ul>
+<li>New features
+
+<ul>
+<li>Add support for Microsoft OneDrive</li>
+<li>Add <code>--no-check-certificate</code> option to disable server certificate verification</li>
+<li>Add async readahead buffer for faster transfer of big files</li>
+</ul></li>
+<li>Fixes
+
+<ul>
+<li>Allow spaces in remotes and check remote names for validity at creation time</li>
+<li>Allow &lsquo;&amp;&rsquo; and disallow &lsquo;:&rsquo; in Windows filenames.</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Ignore directory marker objects where appropriate - allows working with Hubic</li>
+<li>Don&rsquo;t delete the container if fs wasn&rsquo;t at root</li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Don&rsquo;t delete the bucket if fs wasn&rsquo;t at root</li>
+</ul></li>
+<li>Google Cloud Storage
+
+<ul>
+<li>Don&rsquo;t delete the bucket if fs wasn&rsquo;t at root</li>
+</ul></li>
+</ul></li>
+<li>v1.23 - 2015-10-03
+
+<ul>
+<li>New features
+
+<ul>
+<li>Implement <code>rclone size</code> for measuring remotes</li>
+</ul></li>
+<li>Fixes
+
+<ul>
+<li>Fix headless config for drive and gcs</li>
+<li>Tell the user they should try again if the webserver method failed</li>
+<li>Improve output of <code>--dump-headers</code></li>
+</ul></li>
+<li>S3
+
+<ul>
+<li>Allow anonymous access to public buckets</li>
+</ul></li>
+<li>Swift
+
+<ul>
+<li>Stop chunked operations logging &ldquo;Failed to read info: Object Not Found&rdquo;</li>
+<li>Use Content-Length on uploads for extra reliability</li>
+</ul></li>
+</ul></li>
+<li>v1.22 - 2015-09-28
+
+<ul>
+<li>Implement rsync like include and exclude flags</li>
+<li>swift
+
+<ul>
+<li>Support files &gt; 5GB - thanks Sergey Tolmachev</li>
+</ul></li>
+</ul></li>
+<li>v1.21 - 2015-09-22
+
+<ul>
+<li>New features
+
+<ul>
+<li>Display individual transfer progress</li>
+<li>Make lsl output times in localtime</li>
+</ul></li>
+<li>Fixes
+
+<ul>
+<li>Fix allowing user to override credentials again in Drive, GCS and ACD</li>
+</ul></li>
+<li>Amazon Drive
+
+<ul>
+<li>Implement compliant pacing scheme</li>
+</ul></li>
+<li>Google Drive
+
+<ul>
+<li>Make directory reads concurrent for increased speed.</li>
+</ul></li>
+</ul></li>
+<li>v1.20 - 2015-09-15
+
+<ul>
+<li>New features
+
+<ul>
+<li>Amazon Drive support</li>
+<li>Oauth support redone - fix many bugs and improve usability</li>
+<li>Use &ldquo;golang.org/x/oauth2&rdquo; as oauth libary of choice</li>
+<li>Improve oauth usability for smoother initial signup</li>
+<li>drive, googlecloudstorage: optionally use auto config for the oauth token</li>
+<li>Implement --dump-headers and --dump-bodies debug flags</li>
+<li>Show multiple matched commands if abbreviation too short</li>
+<li>Implement server side move where possible</li>
+</ul></li>
+<li>local
+
+<ul>
+<li>Always use UNC paths internally on Windows - fixes a lot of bugs</li>
+</ul></li>
+<li>dropbox
+
+<ul>
+<li>force use of our custom transport which makes timeouts work</li>
+</ul></li>
+<li>Thanks to Klaus Post for lots of help with this release</li>
+</ul></li>
+<li>v1.19 - 2015-08-28
+
+<ul>
+<li>New features
+
+<ul>
+<li>Server side copies for s3/swift/drive/dropbox/gcs</li>
+<li>Move command - uses server side copies if it can</li>
+<li>Implement --retries flag - tries 3 times by default</li>
+<li>Build for plan9/amd64 and solaris/amd64 too</li>
+</ul></li>
+<li>Fixes
+
+<ul>
+<li>Make a current version download with a fixed URL for scripting</li>
+<li>Ignore rmdir in limited fs rather than throwing error</li>
+</ul></li>
+<li>dropbox
+
+<ul>
+<li>Increase chunk size to improve upload speeds massively</li>
+<li>Issue an error message when trying to upload bad file name</li>
+</ul></li>
+</ul></li>
+<li>v1.18 - 2015-08-17
+
+<ul>
+<li>drive
+
+<ul>
+<li>Add <code>--drive-use-trash</code> flag so rclone trashes instead of deletes</li>
+<li>Add &ldquo;Forbidden to download&rdquo; message for files with no downloadURL</li>
+</ul></li>
+<li>dropbox
+
+<ul>
+<li>Remove datastore</li>
+<li>This was deprecated and it caused a lot of problems</li>
+<li>Modification times and MD5SUMs no longer stored</li>
+<li>Fix uploading files &gt; 2GB</li>
+</ul></li>
+<li>s3
+
+<ul>
+<li>use official AWS SDK from github.com/aws/aws-sdk-go</li>
+<li><strong>NB</strong> will most likely require you to delete and recreate remote</li>
+<li>enable multipart upload which enables files &gt; 5GB</li>
+<li>tested with Ceph / RadosGW / S3 emulation</li>
+<li>many thanks to Sam Liston and Brian Haymore at the <a href="https://www.chpc.utah.edu/">Utah
+Center for High Performance Computing</a> for a Ceph test account</li>
+</ul></li>
+<li>misc
+
+<ul>
+<li>Show errors when reading the config file</li>
+<li>Do not print stats in quiet mode - thanks Leonid Shalupov</li>
+<li>Add FAQ</li>
+<li>Fix created directories not obeying umask</li>
+<li>Linux installation instructions - thanks Shimon Doodkin</li>
+</ul></li>
+</ul></li>
+<li>v1.17 - 2015-06-14
+
+<ul>
+<li>dropbox: fix case insensitivity issues - thanks Leonid Shalupov</li>
+</ul></li>
+<li>v1.16 - 2015-06-09
+
+<ul>
+<li>Fix uploading big files which was causing timeouts or panics</li>
+<li>Don&rsquo;t check md5sum after download with --size-only</li>
+</ul></li>
+<li>v1.15 - 2015-06-06
+
+<ul>
+<li>Add --checksum flag to only discard transfers by MD5SUM - thanks Alex Couper</li>
+<li>Implement --size-only flag to sync on size not checksum &amp; modtime</li>
+<li>Expand docs and remove duplicated information</li>
+<li>Document rclone&rsquo;s limitations with directories</li>
+<li>dropbox: update docs about case insensitivity</li>
+</ul></li>
+<li>v1.14 - 2015-05-21
+
+<ul>
+<li>local: fix encoding of non utf-8 file names - fixes a duplicate file problem</li>
+<li>drive: docs about rate limiting</li>
+<li>google cloud storage: Fix compile after API change in &ldquo;google.golang.org/api/storage/v1&rdquo;</li>
+</ul></li>
+<li>v1.13 - 2015-05-10
+
+<ul>
+<li>Revise documentation (especially sync)</li>
+<li>Implement --timeout and --conntimeout</li>
+<li>s3: ignore etags from multipart uploads which aren&rsquo;t md5sums</li>
+</ul></li>
+<li>v1.12 - 2015-03-15
+
+<ul>
+<li>drive: Use chunked upload for files above a certain size</li>
+<li>drive: add --drive-chunk-size and --drive-upload-cutoff parameters</li>
+<li>drive: switch to insert from update when a failed copy deletes the upload</li>
+<li>core: Log duplicate files if they are detected</li>
+</ul></li>
+<li>v1.11 - 2015-03-04
+
+<ul>
+<li>swift: add region parameter</li>
+<li>drive: fix crash on failed to update remote mtime</li>
+<li>In remote paths, change native directory separators to /</li>
+<li>Add synchronization to ls/lsl/lsd output to stop corruptions</li>
+<li>Ensure all stats/log messages to go stderr</li>
+<li>Add --log-file flag to log everything (including panics) to file</li>
+<li>Make it possible to disable stats printing with --stats=0</li>
+<li>Implement --bwlimit to limit data transfer bandwidth</li>
+</ul></li>
+<li>v1.10 - 2015-02-12
+
+<ul>
+<li>s3: list an unlimited number of items</li>
+<li>Fix getting stuck in the configurator</li>
+</ul></li>
+<li>v1.09 - 2015-02-07
+
+<ul>
+<li>windows: Stop drive letters (eg C:) getting mixed up with remotes (eg drive:)</li>
+<li>local: Fix directory separators on Windows</li>
+<li>drive: fix rate limit exceeded errors</li>
+</ul></li>
+<li>v1.08 - 2015-02-04
+
+<ul>
+<li>drive: fix subdirectory listing to not list entire drive</li>
+<li>drive: Fix SetModTime</li>
+<li>dropbox: adapt code to recent library changes</li>
+</ul></li>
+<li>v1.07 - 2014-12-23
+
+<ul>
+<li>google cloud storage: fix memory leak</li>
+</ul></li>
+<li>v1.06 - 2014-12-12
+
+<ul>
+<li>Fix &ldquo;Couldn&rsquo;t find home directory&rdquo; on OSX</li>
+<li>swift: Add tenant parameter</li>
+<li>Use new location of Google API packages</li>
+</ul></li>
+<li>v1.05 - 2014-08-09
+
+<ul>
+<li>Improved tests and consequently lots of minor fixes</li>
+<li>core: Fix race detected by go race detector</li>
+<li>core: Fixes after running errcheck</li>
+<li>drive: reset root directory on Rmdir and Purge</li>
+<li>fs: Document that Purger returns error on empty directory, test and fix</li>
+<li>google cloud storage: fix ListDir on subdirectory</li>
+<li>google cloud storage: re-read metadata in SetModTime</li>
+<li>s3: make reading metadata more reliable to work around eventual consistency problems</li>
+<li>s3: strip trailing / from ListDir()</li>
+<li>swift: return directories without / in ListDir</li>
+</ul></li>
+<li>v1.04 - 2014-07-21
+
+<ul>
+<li>google cloud storage: Fix crash on Update</li>
+</ul></li>
+<li>v1.03 - 2014-07-20
+
+<ul>
+<li>swift, s3, dropbox: fix updated files being marked as corrupted</li>
+<li>Make compile with go 1.1 again</li>
+</ul></li>
+<li>v1.02 - 2014-07-19
+
+<ul>
+<li>Implement Dropbox remote</li>
+<li>Implement Google Cloud Storage remote</li>
+<li>Verify Md5sums and Sizes after copies</li>
+<li>Remove times from &ldquo;ls&rdquo; command - lists sizes only</li>
+<li>Add add &ldquo;lsl&rdquo; - lists times and sizes</li>
+<li>Add &ldquo;md5sum&rdquo; command</li>
+</ul></li>
+<li>v1.01 - 2014-07-04
+
+<ul>
+<li>drive: fix transfer of big files using up lots of memory</li>
+</ul></li>
+<li>v1.00 - 2014-07-03
+
+<ul>
+<li>drive: fix whole second dates</li>
+</ul></li>
+<li>v0.99 - 2014-06-26
+
+<ul>
+<li>Fix --dry-run not working</li>
+<li>Make compatible with go 1.1</li>
+</ul></li>
+<li>v0.98 - 2014-05-30
+
+<ul>
+<li>s3: Treat missing Content-Length as 0 for some ceph installations</li>
+<li>rclonetest: add file with a space in</li>
+</ul></li>
+<li>v0.97 - 2014-05-05
+
+<ul>
+<li>Implement copying of single files</li>
+<li>s3 &amp; swift: support paths inside containers/buckets</li>
+</ul></li>
+<li>v0.96 - 2014-04-24
+
+<ul>
+<li>drive: Fix multiple files of same name being created</li>
+<li>drive: Use o.Update and fs.Put to optimise transfers</li>
+<li>Add version number, -V and --version</li>
+</ul></li>
+<li>v0.95 - 2014-03-28
+
+<ul>
+<li>rclone.org: website, docs and graphics</li>
+<li>drive: fix path parsing</li>
+</ul></li>
+<li>v0.94 - 2014-03-27
+
+<ul>
+<li>Change remote format one last time</li>
+<li>GNU style flags</li>
+</ul></li>
+<li>v0.93 - 2014-03-16
+
+<ul>
+<li>drive: store token in config file</li>
+<li>cross compile other versions</li>
+<li>set strict permissions on config file</li>
+</ul></li>
+<li>v0.92 - 2014-03-15
+
+<ul>
+<li>Config fixes and --config option</li>
+</ul></li>
+<li>v0.91 - 2014-03-15
+
+<ul>
+<li>Make config file</li>
+</ul></li>
+<li>v0.90 - 2013-06-27
+
+<ul>
+<li>Project named rclone</li>
+</ul></li>
+<li>v0.00 - 2012-11-18
+
+<ul>
+<li>Project started</li>
+</ul></li>
+</ul>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

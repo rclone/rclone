@@ -1,0 +1,621 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Commands on rclone - rsync for cloud storage</title>
+    <link>https://rclone.org/commands/</link>
+    <description>Recent content in Commands on rclone - rsync for cloud storage</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <lastBuildDate>Sat, 23 Dec 2017 13:05:26 +0000</lastBuildDate>
+    
+	<atom:link href="https://rclone.org/commands/index.xml" rel="self" type="application/rss+xml" />
+    
+    
+    <item>
+      <title>rclone</title>
+      <link>https://rclone.org/commands/rclone/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone/</guid>
+      <description>rclone Sync files and directories to and from local and remote object stores - v1.39
+Synopsis Rclone is a command line program to sync files and directories to and from various cloud storage systems and using file transfer services, such as:
+ Amazon Drive Amazon S3 Backblaze B2 Box Dropbox FTP Google Cloud Storage Google Drive HTTP Hubic Microsoft Azure Blob Storage Microsoft OneDrive Openstack Swift / Rackspace cloud files / Memset Memstore pCloud QingStor SFTP Webdav / Owncloud / Nextcloud Yandex Disk The local filesystem  Features</description>
+    </item>
+    
+    <item>
+      <title>rclone authorize</title>
+      <link>https://rclone.org/commands/rclone_authorize/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_authorize/</guid>
+      <description>rclone authorize Remote authorization.
+Synopsis Remote authorization. Used to authorize a remote or headless rclone from a machine with a browser - use as instructed by rclone config.
+rclone authorize [flags]  Options  -h, --help help for authorize  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone cachestats</title>
+      <link>https://rclone.org/commands/rclone_cachestats/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_cachestats/</guid>
+      <description>rclone cachestats Print cache stats for a remote
+Synopsis Print cache stats for a remote in JSON format
+rclone cachestats source: [flags]  Options  -h, --help help for cachestats  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s) --ask-password Allow prompt for password for encrypted configuration.</description>
+    </item>
+    
+    <item>
+      <title>rclone cat</title>
+      <link>https://rclone.org/commands/rclone_cat/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_cat/</guid>
+      <description>rclone cat Concatenates any files and sends them to stdout.
+Synopsis rclone cat sends any files to standard output.
+You can use it like this to output a single file
+rclone cat remote:path/to/file  Or like this to output any file in dir or subdirectories.
+rclone cat remote:path/to/dir  Or like this to output any .txt files in dir or subdirectories.
+rclone --include &amp;quot;*.txt&amp;quot; cat remote:path/to/dir  Use the --head flag to print characters only at the start, --tail for the end and --offset and --count to print a section in the middle.</description>
+    </item>
+    
+    <item>
+      <title>rclone check</title>
+      <link>https://rclone.org/commands/rclone_check/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_check/</guid>
+      <description>rclone check Checks the files in the source and destination match.
+Synopsis Checks the files in the source and destination match. It compares sizes and hashes (MD5 or SHA1) and logs a report of files which don&amp;rsquo;t match. It doesn&amp;rsquo;t alter the source or destination.
+If you supply the --size-only flag, it will only compare the sizes not the hashes as well. Use this for a quick check.
+If you supply the --download flag, it will download the data from both remotes and check them against each other on the fly.</description>
+    </item>
+    
+    <item>
+      <title>rclone cleanup</title>
+      <link>https://rclone.org/commands/rclone_cleanup/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_cleanup/</guid>
+      <description>rclone cleanup Clean up the remote if possible
+Synopsis Clean up the remote if possible. Empty the trash or delete old file versions. Not supported by all remotes.
+rclone cleanup remote:path [flags]  Options  -h, --help help for cleanup  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone config</title>
+      <link>https://rclone.org/commands/rclone_config/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config/</guid>
+      <description>rclone config Enter an interactive configuration session.
+Synopsis Enter an interactive configuration session where you can setup new remotes and manage existing ones. You may also set or remove a password to protect your configuration.
+rclone config [flags]  Options  -h, --help help for config  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone config create</title>
+      <link>https://rclone.org/commands/rclone_config_create/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_create/</guid>
+      <description>rclone config create Create a new remote with name, type and options.
+Synopsis Create a new remote of  with  and options. The options should be passed in in pairs of  .
+For example to make a swift remote of name myremote using auto config you would do:
+rclone config create myremote swift env_auth true  rclone config create &amp;lt;name&amp;gt; &amp;lt;type&amp;gt; [&amp;lt;key&amp;gt; &amp;lt;value&amp;gt;]* [flags]  Options  -h, --help help for create  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone config delete</title>
+      <link>https://rclone.org/commands/rclone_config_delete/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_delete/</guid>
+      <description>rclone config delete Delete an existing remote .
+Synopsis Delete an existing remote .
+rclone config delete &amp;lt;name&amp;gt; [flags]  Options  -h, --help help for delete  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s) --ask-password Allow prompt for password for encrypted configuration.</description>
+    </item>
+    
+    <item>
+      <title>rclone config dump</title>
+      <link>https://rclone.org/commands/rclone_config_dump/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_dump/</guid>
+      <description>rclone config dump Dump the config file as JSON.
+Synopsis Dump the config file as JSON.
+rclone config dump [flags]  Options  -h, --help help for dump  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s) --ask-password Allow prompt for password for encrypted configuration.</description>
+    </item>
+    
+    <item>
+      <title>rclone config edit</title>
+      <link>https://rclone.org/commands/rclone_config_edit/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_edit/</guid>
+      <description>rclone config edit Enter an interactive configuration session.
+Synopsis Enter an interactive configuration session where you can setup new remotes and manage existing ones. You may also set or remove a password to protect your configuration.
+rclone config edit [flags]  Options  -h, --help help for edit  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone config file</title>
+      <link>https://rclone.org/commands/rclone_config_file/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_file/</guid>
+      <description>rclone config file Show path of configuration file in use.
+Synopsis Show path of configuration file in use.
+rclone config file [flags]  Options  -h, --help help for file  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s) --ask-password Allow prompt for password for encrypted configuration.</description>
+    </item>
+    
+    <item>
+      <title>rclone config password</title>
+      <link>https://rclone.org/commands/rclone_config_password/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_password/</guid>
+      <description>rclone config password Update password in an existing remote.
+Synopsis Update an existing remote&amp;rsquo;s password. The password should be passed in in pairs of  .
+For example to set password of a remote of name myremote you would do:
+rclone config password myremote fieldname mypassword  rclone config password &amp;lt;name&amp;gt; [&amp;lt;key&amp;gt; &amp;lt;value&amp;gt;]+ [flags]  Options  -h, --help help for password  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone config providers</title>
+      <link>https://rclone.org/commands/rclone_config_providers/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_providers/</guid>
+      <description>rclone config providers List in JSON format all the providers and options.
+Synopsis List in JSON format all the providers and options.
+rclone config providers [flags]  Options  -h, --help help for providers  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone config show</title>
+      <link>https://rclone.org/commands/rclone_config_show/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_show/</guid>
+      <description>rclone config show Print (decrypted) config file, or the config for a single remote.
+Synopsis Print (decrypted) config file, or the config for a single remote.
+rclone config show [&amp;lt;remote&amp;gt;] [flags]  Options  -h, --help help for show  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone config update</title>
+      <link>https://rclone.org/commands/rclone_config_update/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_config_update/</guid>
+      <description>rclone config update Update options in an existing remote.
+Synopsis Update an existing remote&amp;rsquo;s options. The options should be passed in in pairs of  .
+For example to update the env_auth field of a remote of name myremote you would do:
+rclone config update myremote swift env_auth true  rclone config update &amp;lt;name&amp;gt; [&amp;lt;key&amp;gt; &amp;lt;value&amp;gt;]+ [flags]  Options  -h, --help help for update  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone copy</title>
+      <link>https://rclone.org/commands/rclone_copy/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_copy/</guid>
+      <description>rclone copy Copy files from source to dest, skipping already copied
+Synopsis Copy the source to the destination. Doesn&amp;rsquo;t transfer unchanged files, testing by size and modification time or MD5SUM. Doesn&amp;rsquo;t delete files from the destination.
+Note that it is always the contents of the directory that is synced, not the directory so when source:path is a directory, it&amp;rsquo;s the contents of source:path that are copied, not the directory name and contents.</description>
+    </item>
+    
+    <item>
+      <title>rclone copyto</title>
+      <link>https://rclone.org/commands/rclone_copyto/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_copyto/</guid>
+      <description>rclone copyto Copy files from source to dest, skipping already copied
+Synopsis If source:path is a file or directory then it copies it to a file or directory named dest:path.
+This can be used to upload single files to other than their current name. If the source is a directory then it acts exactly like the copy command.
+So
+rclone copyto src dst  where src and dst are rclone paths, either remote:path or /path/to/local or C:\windows\path\if\on\windows.</description>
+    </item>
+    
+    <item>
+      <title>rclone cryptcheck</title>
+      <link>https://rclone.org/commands/rclone_cryptcheck/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_cryptcheck/</guid>
+      <description>rclone cryptcheck Cryptcheck checks the integrity of a crypted remote.
+Synopsis rclone cryptcheck checks a remote against a crypted remote. This is the equivalent of running rclone check, but able to check the checksums of the crypted remote.
+For it to work the underlying remote of the cryptedremote must support some kind of checksum.
+It works by reading the nonce from each file on the cryptedremote: and using that to encrypt each file on the remote:.</description>
+    </item>
+    
+    <item>
+      <title>rclone cryptdecode</title>
+      <link>https://rclone.org/commands/rclone_cryptdecode/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_cryptdecode/</guid>
+      <description>rclone cryptdecode Cryptdecode returns unencrypted file names.
+Synopsis rclone cryptdecode returns unencrypted file names when provided with a list of encrypted file names. List limit is 10 items.
+use it like this
+rclone cryptdecode encryptedremote: encryptedfilename1 encryptedfilename2  rclone cryptdecode encryptedremote: encryptedfilename [flags]  Options  -h, --help help for cryptdecode  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone dbhashsum</title>
+      <link>https://rclone.org/commands/rclone_dbhashsum/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_dbhashsum/</guid>
+      <description>rclone dbhashsum Produces a Dropbox hash file for all the objects in the path.
+Synopsis Produces a Dropbox hash file for all the objects in the path. The hashes are calculated according to Dropbox content hash rules. The output is in the same format as md5sum and sha1sum.
+rclone dbhashsum remote:path [flags]  Options  -h, --help help for dbhashsum  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone dedupe</title>
+      <link>https://rclone.org/commands/rclone_dedupe/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_dedupe/</guid>
+      <description>rclone dedupe Interactively find duplicate files and delete/rename them.
+Synopsis By default dedupe interactively finds duplicate files and offers to delete all but one or rename them to be different. Only useful with Google Drive which can have duplicate file names.
+In the first pass it will merge directories with the same name. It will do this iteratively until all the identical directories have been merged.
+The dedupe command will delete all but one of any identical (same md5sum) files it finds without confirmation.</description>
+    </item>
+    
+    <item>
+      <title>rclone delete</title>
+      <link>https://rclone.org/commands/rclone_delete/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_delete/</guid>
+      <description>rclone delete Remove the contents of path.
+Synopsis Remove the contents of path. Unlike purge it obeys include/exclude filters so can be used to selectively delete files.
+Eg delete all files bigger than 100MBytes
+Check what would be deleted first (use either)
+rclone --min-size 100M lsl remote:path rclone --dry-run --min-size 100M delete remote:path  Then delete
+rclone --min-size 100M delete remote:path  That reads &amp;ldquo;delete everything with a minimum size of 100 MB&amp;rdquo;, hence delete all files bigger than 100MBytes.</description>
+    </item>
+    
+    <item>
+      <title>rclone genautocomplete</title>
+      <link>https://rclone.org/commands/rclone_genautocomplete/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_genautocomplete/</guid>
+      <description>rclone genautocomplete Output completion script for a given shell.
+Synopsis Generates a shell completion script for rclone. Run with --help to list the supported shells.
+Options  -h, --help help for genautocomplete  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone genautocomplete bash</title>
+      <link>https://rclone.org/commands/rclone_genautocomplete_bash/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_genautocomplete_bash/</guid>
+      <description>rclone genautocomplete bash Output bash completion script for rclone.
+Synopsis Generates a bash shell autocompletion script for rclone.
+This writes to /etc/bash_completion.d/rclone by default so will probably need to be run with sudo or as root, eg
+sudo rclone genautocomplete bash  Logout and login again to use the autocompletion scripts, or source them directly
+. /etc/bash_completion  If you supply a command line argument the script will be written there.</description>
+    </item>
+    
+    <item>
+      <title>rclone genautocomplete zsh</title>
+      <link>https://rclone.org/commands/rclone_genautocomplete_zsh/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_genautocomplete_zsh/</guid>
+      <description>rclone genautocomplete zsh Output zsh completion script for rclone.
+Synopsis Generates a zsh autocompletion script for rclone.
+This writes to /usr/share/zsh/vendor-completions/_rclone by default so will probably need to be run with sudo or as root, eg
+sudo rclone genautocomplete zsh  Logout and login again to use the autocompletion scripts, or source them directly
+autoload -U compinit &amp;amp;&amp;amp; compinit  If you supply a command line argument the script will be written there.</description>
+    </item>
+    
+    <item>
+      <title>rclone gendocs</title>
+      <link>https://rclone.org/commands/rclone_gendocs/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_gendocs/</guid>
+      <description>rclone gendocs Output markdown docs for rclone to the directory supplied.
+Synopsis This produces markdown docs for the rclone commands to the directory supplied. These are in a format suitable for hugo to render into the rclone.org website.
+rclone gendocs output_directory [flags]  Options  -h, --help help for gendocs  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone listremotes</title>
+      <link>https://rclone.org/commands/rclone_listremotes/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_listremotes/</guid>
+      <description>rclone listremotes List all the remotes in the config file.
+Synopsis rclone listremotes lists all the available remotes from the config file.
+When uses with the -l flag it lists the types too.
+rclone listremotes [flags]  Options  -h, --help help for listremotes -l, --long Show the type as well as names.  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone ls</title>
+      <link>https://rclone.org/commands/rclone_ls/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_ls/</guid>
+      <description>rclone ls List all the objects in the path with size and path.
+Synopsis List all the objects in the path with size and path.
+rclone ls remote:path [flags]  Options  -h, --help help for ls  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone lsd</title>
+      <link>https://rclone.org/commands/rclone_lsd/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_lsd/</guid>
+      <description>rclone lsd List all directories/containers/buckets in the path.
+Synopsis List all directories/containers/buckets in the path.
+rclone lsd remote:path [flags]  Options  -h, --help help for lsd  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s) --ask-password Allow prompt for password for encrypted configuration.</description>
+    </item>
+    
+    <item>
+      <title>rclone lsjson</title>
+      <link>https://rclone.org/commands/rclone_lsjson/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_lsjson/</guid>
+      <description>rclone lsjson List directories and objects in the path in JSON format.
+Synopsis List directories and objects in the path in JSON format.
+The output is an array of Items, where each Item looks like this
+{ &amp;ldquo;Hashes&amp;rdquo; : { &amp;ldquo;SHA-1&amp;rdquo; : &amp;ldquo;f572d396fae9206628714fb2ce00f72e94f2258f&amp;rdquo;, &amp;ldquo;MD5&amp;rdquo; : &amp;ldquo;b1946ac92492d2347c6235b4d2611184&amp;rdquo;, &amp;ldquo;DropboxHash&amp;rdquo; : &amp;ldquo;ecb65bb98f9d905b70458986c39fcbad7715e5f2fcc3b1f07767d7c83e2438cc&amp;rdquo; }, &amp;ldquo;IsDir&amp;rdquo; : false, &amp;ldquo;ModTime&amp;rdquo; : &amp;ldquo;2017-05-31T16:15:57.034468261+01:00&amp;rdquo;, &amp;ldquo;Name&amp;rdquo; : &amp;ldquo;file.txt&amp;rdquo;, &amp;ldquo;Path&amp;rdquo; : &amp;ldquo;full/path/goes/here/file.txt&amp;rdquo;, &amp;ldquo;Size&amp;rdquo; : 6 }
+If --hash is not specified the the Hashes property won&amp;rsquo;t be emitted.</description>
+    </item>
+    
+    <item>
+      <title>rclone lsl</title>
+      <link>https://rclone.org/commands/rclone_lsl/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_lsl/</guid>
+      <description>rclone lsl List all the objects path with modification time, size and path.
+Synopsis List all the objects path with modification time, size and path.
+rclone lsl remote:path [flags]  Options  -h, --help help for lsl  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone md5sum</title>
+      <link>https://rclone.org/commands/rclone_md5sum/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_md5sum/</guid>
+      <description>rclone md5sum Produces an md5sum file for all the objects in the path.
+Synopsis Produces an md5sum file for all the objects in the path. This is in the same format as the standard md5sum tool produces.
+rclone md5sum remote:path [flags]  Options  -h, --help help for md5sum  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone mkdir</title>
+      <link>https://rclone.org/commands/rclone_mkdir/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_mkdir/</guid>
+      <description>rclone mkdir Make the path if it doesn&amp;rsquo;t already exist.
+Synopsis Make the path if it doesn&amp;rsquo;t already exist.
+rclone mkdir remote:path [flags]  Options  -h, --help help for mkdir  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone mount</title>
+      <link>https://rclone.org/commands/rclone_mount/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_mount/</guid>
+      <description>rclone mount Mount the remote as a mountpoint. EXPERIMENTAL
+Synopsis rclone mount allows Linux, FreeBSD, macOS and Windows to mount any of Rclone&amp;rsquo;s cloud storage systems as a file system with FUSE.
+This is EXPERIMENTAL - use with care.
+First set up your remote using rclone config. Check it works with rclone ls etc.
+Start the mount like this
+rclone mount remote:path/to/files /path/to/local/mount  Or on Windows like this where X: is an unused drive letter</description>
+    </item>
+    
+    <item>
+      <title>rclone move</title>
+      <link>https://rclone.org/commands/rclone_move/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_move/</guid>
+      <description>rclone move Move files from source to dest.
+Synopsis Moves the contents of the source directory to the destination directory. Rclone will error if the source and destination overlap and the remote does not support a server side directory move operation.
+If no filters are in use and if possible this will server side move source:path into dest:path. After this source:path will no longer longer exist.
+Otherwise for each file in source:path selected by the filters (if any) this will move it into dest:path.</description>
+    </item>
+    
+    <item>
+      <title>rclone moveto</title>
+      <link>https://rclone.org/commands/rclone_moveto/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_moveto/</guid>
+      <description>rclone moveto Move file or directory from source to dest.
+Synopsis If source:path is a file or directory then it moves it to a file or directory named dest:path.
+This can be used to rename files or upload single files to other than their existing name. If the source is a directory then it acts exacty like the move command.
+So
+rclone moveto src dst  where src and dst are rclone paths, either remote:path or /path/to/local or C:\windows\path\if\on\windows.</description>
+    </item>
+    
+    <item>
+      <title>rclone ncdu</title>
+      <link>https://rclone.org/commands/rclone_ncdu/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_ncdu/</guid>
+      <description>rclone ncdu Explore a remote with a text based user interface.
+Synopsis This displays a text based user interface allowing the navigation of a remote. It is most useful for answering the question - &amp;ldquo;What is using all my disk space?&amp;ldquo;.
+To make the user interface it first scans the entire remote given and builds an in memory representation. rclone ncdu can be used during this scanning phase and you will see it building up the directory structure as it goes along.</description>
+    </item>
+    
+    <item>
+      <title>rclone obscure</title>
+      <link>https://rclone.org/commands/rclone_obscure/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_obscure/</guid>
+      <description>rclone obscure Obscure password for use in the rclone.conf
+Synopsis Obscure password for use in the rclone.conf
+rclone obscure password [flags]  Options  -h, --help help for obscure  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s) --ask-password Allow prompt for password for encrypted configuration.</description>
+    </item>
+    
+    <item>
+      <title>rclone purge</title>
+      <link>https://rclone.org/commands/rclone_purge/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_purge/</guid>
+      <description>rclone purge Remove the path and all of its contents.
+Synopsis Remove the path and all of its contents. Note that this does not obey include/exclude filters - everything will be removed. Use delete if you want to selectively delete files.
+rclone purge remote:path [flags]  Options  -h, --help help for purge  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone rcat</title>
+      <link>https://rclone.org/commands/rclone_rcat/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_rcat/</guid>
+      <description>rclone rcat Copies standard input to file on remote.
+Synopsis rclone rcat reads from standard input (stdin) and copies it to a single remote file.
+echo &amp;quot;hello world&amp;quot; | rclone rcat remote:path/to/file ffmpeg - | rclone rcat --checksum remote:path/to/file  If the remote file already exists, it will be overwritten.
+rcat will try to upload small files in a single request, which is usually more efficient than the streaming/chunked upload endpoints, which use multiple requests.</description>
+    </item>
+    
+    <item>
+      <title>rclone rmdir</title>
+      <link>https://rclone.org/commands/rclone_rmdir/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_rmdir/</guid>
+      <description>rclone rmdir Remove the path if empty.
+Synopsis Remove the path. Note that you can&amp;rsquo;t remove a path with objects in it, use purge for that.
+rclone rmdir remote:path [flags]  Options  -h, --help help for rmdir  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone rmdirs</title>
+      <link>https://rclone.org/commands/rclone_rmdirs/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_rmdirs/</guid>
+      <description>rclone rmdirs Remove empty directories under the path.
+Synopsis This removes any empty directories (or directories that only contain empty directories) under the path that it finds, including the path if it has nothing in.
+If you supply the --leave-root flag, it will not remove the root directory.
+This is useful for tidying up remotes that rclone has left a lot of empty directories in.
+rclone rmdirs remote:path [flags]  Options  -h, --help help for rmdirs --leave-root Do not remove root directory if empty  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone serve</title>
+      <link>https://rclone.org/commands/rclone_serve/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_serve/</guid>
+      <description>rclone serve Serve a remote over a protocol.
+Synopsis rclone serve is used to serve a remote over a given protocol. This command requires the use of a subcommand to specify the protocol, eg
+rclone serve http remote:  Each subcommand has its own options which you can see in their help.
+rclone serve &amp;lt;protocol&amp;gt; [opts] &amp;lt;remote&amp;gt; [flags]  Options  -h, --help help for serve  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink.</description>
+    </item>
+    
+    <item>
+      <title>rclone serve http</title>
+      <link>https://rclone.org/commands/rclone_serve_http/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_serve_http/</guid>
+      <description>rclone serve http Serve the remote over HTTP.
+Synopsis rclone serve http implements a basic web server to serve the remote over HTTP. This can be viewed in a web browser or you can make a remote of type http read from it.
+Use --addr to specify which IP address and port the server should listen on, eg --addr 1.2.3.4:8000 or --addr :8080 to listen to all IPs. By default it only listens on localhost.</description>
+    </item>
+    
+    <item>
+      <title>rclone serve webdav</title>
+      <link>https://rclone.org/commands/rclone_serve_webdav/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_serve_webdav/</guid>
+      <description>rclone serve webdav Serve remote:path over webdav.
+Synopsis rclone serve webdav implements a basic webdav server to serve the remote over HTTP via the webdav protocol. This can be viewed with a webdav client or you can make a remote of type webdav to read and write it.
+NB at the moment each directory listing reads the start of each file which is undesirable: see https://github.com/golang/go/issues/22577
+Directory Cache Using the --dir-cache-time flag, you can set how long a directory should be considered up to date and not refreshed from the backend.</description>
+    </item>
+    
+    <item>
+      <title>rclone sha1sum</title>
+      <link>https://rclone.org/commands/rclone_sha1sum/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_sha1sum/</guid>
+      <description>rclone sha1sum Produces an sha1sum file for all the objects in the path.
+Synopsis Produces an sha1sum file for all the objects in the path. This is in the same format as the standard sha1sum tool produces.
+rclone sha1sum remote:path [flags]  Options  -h, --help help for sha1sum  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone size</title>
+      <link>https://rclone.org/commands/rclone_size/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_size/</guid>
+      <description>rclone size Prints the total size and number of objects in remote:path.
+Synopsis Prints the total size and number of objects in remote:path.
+rclone size remote:path [flags]  Options  -h, --help help for size  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears.</description>
+    </item>
+    
+    <item>
+      <title>rclone sync</title>
+      <link>https://rclone.org/commands/rclone_sync/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_sync/</guid>
+      <description>rclone sync Make source and dest identical, modifying destination only.
+Synopsis Sync the source to the destination, changing the destination only. Doesn&amp;rsquo;t transfer unchanged files, testing by size and modification time or MD5SUM. Destination is updated to match source, including deleting files if necessary.
+Important: Since this can cause data loss, test first with the --dry-run flag to see exactly what would be copied and deleted.
+Note that files in the destination won&amp;rsquo;t be deleted if there were any errors at any point.</description>
+    </item>
+    
+    <item>
+      <title>rclone touch</title>
+      <link>https://rclone.org/commands/rclone_touch/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_touch/</guid>
+      <description>rclone touch Create new file or change file modification time.
+Synopsis Create new file or change file modification time.
+rclone touch remote:path [flags]  Options  -h, --help help for touch -C, --no-create Do not create the file if it does not exist. -t, --timestamp string Change the modification times to the specified time instead of the current time of day. The argument is of the form &#39;YYMMDD&#39; (ex. 17.</description>
+    </item>
+    
+    <item>
+      <title>rclone tree</title>
+      <link>https://rclone.org/commands/rclone_tree/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_tree/</guid>
+      <description>rclone tree List the contents of the remote in a tree like fashion.
+Synopsis rclone tree lists the contents of a remote in a similar way to the unix tree command.
+For example
+$ rclone tree remote:path / ├── file1 ├── file2 ├── file3 └── subdir ├── file4 └── file5 1 directories, 5 files  You can use any of the filtering options with the tree command (eg --include and --exclude).</description>
+    </item>
+    
+    <item>
+      <title>rclone version</title>
+      <link>https://rclone.org/commands/rclone_version/</link>
+      <pubDate>Sat, 23 Dec 2017 13:05:26 +0000</pubDate>
+      
+      <guid>https://rclone.org/commands/rclone_version/</guid>
+      <description>rclone version Show the version number.
+Synopsis Show the version number.
+rclone version [flags]  Options  -h, --help help for version  Options inherited from parent commands  --acd-templink-threshold int Files &amp;gt;= this size will be downloaded via their tempLink. (default 9G) --acd-upload-wait-per-gb duration Additional time per GB to wait after a failed complete upload to see if it appears. (default 3m0s) --ask-password Allow prompt for password for encrypted configuration.</description>
+    </item>
+    
+  </channel>
+</rss>

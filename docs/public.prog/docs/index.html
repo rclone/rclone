@@ -1,0 +1,1291 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rclone Usage">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Documentation</title>
+    <link rel="canonical" href="https://rclone.org/docs/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="configure">Configure</h2>
+
+<p>First, you&rsquo;ll need to configure rclone.  As the object storage systems
+have quite complicated authentication these are kept in a config file.
+(See the <code>--config</code> entry for how to find the config file and choose
+its location.)</p>
+
+<p>The easiest way to make the config is to run rclone with the config
+option:</p>
+
+<pre><code>rclone config
+</code></pre>
+
+<p>See the following for detailed instructions for</p>
+
+<ul>
+<li><a href="/alias/">Alias</a></li>
+<li><a href="/amazonclouddrive/">Amazon Drive</a></li>
+<li><a href="/s3/">Amazon S3</a></li>
+<li><a href="/b2/">Backblaze B2</a></li>
+<li><a href="/box/">Box</a></li>
+<li><a href="/cache/">Cache</a></li>
+<li><a href="/crypt/">Crypt</a> - to encrypt other remotes</li>
+<li><a href="/s3/#digitalocean-spaces">DigitalOcean Spaces</a></li>
+<li><a href="/dropbox/">Dropbox</a></li>
+<li><a href="/ftp/">FTP</a></li>
+<li><a href="/googlecloudstorage/">Google Cloud Storage</a></li>
+<li><a href="/drive/">Google Drive</a></li>
+<li><a href="/http/">HTTP</a></li>
+<li><a href="/hubic/">Hubic</a></li>
+<li><a href="/azureblob/">Microsoft Azure Blob Storage</a></li>
+<li><a href="/onedrive/">Microsoft OneDrive</a></li>
+<li><a href="/swift/">Openstack Swift / Rackspace Cloudfiles / Memset Memstore</a></li>
+<li><a href="/pcloud/">Pcloud</a></li>
+<li><a href="/qingstor/">QingStor</a></li>
+<li><a href="/sftp/">SFTP</a></li>
+<li><a href="/webdav/">WebDAV</a></li>
+<li><a href="/yandex/">Yandex Disk</a></li>
+<li><a href="/local/">The local filesystem</a></li>
+</ul>
+
+<h2 id="usage">Usage</h2>
+
+<p>Rclone syncs a directory tree from one storage system to another.</p>
+
+<p>Its syntax is like this</p>
+
+<pre><code>Syntax: [options] subcommand &lt;parameters&gt; &lt;parameters...&gt;
+</code></pre>
+
+<p>Source and destination paths are specified by the name you gave the
+storage system in the config file then the sub path, eg
+&ldquo;drive:myfolder&rdquo; to look at &ldquo;myfolder&rdquo; in Google drive.</p>
+
+<p>You can define as many storage paths as you like in the config file.</p>
+
+<h2 id="subcommands">Subcommands</h2>
+
+<p>rclone uses a system of subcommands.  For example</p>
+
+<pre><code>rclone ls remote:path # lists a re
+rclone copy /local/path remote:path # copies /local/path to the remote
+rclone sync /local/path remote:path # syncs /local/path to the remote
+</code></pre>
+
+<p>The main rclone commands with most used first</p>
+
+<ul>
+<li><a href="/commands/rclone_config/">rclone config</a> - Enter an interactive configuration session.</li>
+<li><a href="/commands/rclone_copy/">rclone copy</a>     - Copy files from source to dest, skipping already copied.</li>
+<li><a href="/commands/rclone_sync/">rclone sync</a>     - Make source and dest identical, modifying destination only.</li>
+<li><a href="/commands/rclone_move/">rclone move</a>     - Move files from source to dest.</li>
+<li><a href="/commands/rclone_delete/">rclone delete</a> - Remove the contents of path.</li>
+<li><a href="/commands/rclone_purge/">rclone purge</a>   - Remove the path and all of its contents.</li>
+<li><a href="/commands/rclone_mkdir/">rclone mkdir</a>   - Make the path if it doesn&rsquo;t already exist.</li>
+<li><a href="/commands/rclone_rmdir/">rclone rmdir</a>   - Remove the path.</li>
+<li><a href="/commands/rclone_rmdirs/">rclone rmdirs</a> - Remove any empty directories under the path.</li>
+<li><a href="/commands/rclone_check/">rclone check</a>   - Check if the files in the source and destination match.</li>
+<li><a href="/commands/rclone_ls/">rclone ls</a>     - List all the objects in the path with size and path.</li>
+<li><a href="/commands/rclone_lsd/">rclone lsd</a>       - List all directories/containers/buckets in the path.</li>
+<li><a href="/commands/rclone_lsl/">rclone lsl</a>       - List all the objects in the path with size, modification time and path.</li>
+<li><a href="/commands/rclone_md5sum/">rclone md5sum</a> - Produce an md5sum file for all the objects in the path.</li>
+<li><a href="/commands/rclone_sha1sum/">rclone sha1sum</a>   - Produce a sha1sum file for all the objects in the path.</li>
+<li><a href="/commands/rclone_size/">rclone size</a>     - Return the total size and number of objects in remote:path.</li>
+<li><a href="/commands/rclone_version/">rclone version</a>   - Show the version number.</li>
+<li><a href="/commands/rclone_cleanup/">rclone cleanup</a>   - Clean up the remote if possible.</li>
+<li><a href="/commands/rclone_dedupe/">rclone dedupe</a> - Interactively find duplicate files and delete/rename them.</li>
+<li><a href="/commands/rclone_authorize/">rclone authorize</a>   - Remote authorization.</li>
+<li><a href="/commands/rclone_cat/">rclone cat</a>       - Concatenate any files and send them to stdout.</li>
+<li><a href="/commands/rclone_copyto/">rclone copyto</a> - Copy files from source to dest, skipping already copied.</li>
+<li><a href="/commands/rclone_genautocomplete/">rclone genautocomplete</a>   - Output shell completion scripts for rclone.</li>
+<li><a href="/commands/rclone_gendocs/">rclone gendocs</a>   - Output markdown docs for rclone to the directory supplied.</li>
+<li><a href="/commands/rclone_listremotes/">rclone listremotes</a>   - List all the remotes in the config file.</li>
+<li><a href="/commands/rclone_mount/">rclone mount</a>   - Mount the remote as a mountpoint. <strong>EXPERIMENTAL</strong></li>
+<li><a href="/commands/rclone_moveto/">rclone moveto</a> - Move file or directory from source to dest.</li>
+<li><a href="/commands/rclone_obscure/">rclone obscure</a>   - Obscure password for use in the rclone.conf</li>
+<li><a href="/commands/rclone_cryptcheck/">rclone cryptcheck</a> - Check the integrity of a crypted remote.</li>
+</ul>
+
+<p>See the <a href="/commands/">commands index</a> for the full list.</p>
+
+<h2 id="copying-single-files">Copying single files</h2>
+
+<p>rclone normally syncs or copies directories.  However, if the source
+remote points to a file, rclone will just copy that file.  The
+destination remote must point to a directory - rclone will give the
+error <code>Failed to create file system for &quot;remote:file&quot;: is a file not a
+directory</code> if it isn&rsquo;t.</p>
+
+<p>For example, suppose you have a remote with a file in called
+<code>test.jpg</code>, then you could copy just that file like this</p>
+
+<pre><code>rclone copy remote:test.jpg /tmp/download
+</code></pre>
+
+<p>The file <code>test.jpg</code> will be placed inside <code>/tmp/download</code>.</p>
+
+<p>This is equivalent to specifying</p>
+
+<pre><code>rclone copy --files-from /tmp/files remote: /tmp/download
+</code></pre>
+
+<p>Where <code>/tmp/files</code> contains the single line</p>
+
+<pre><code>test.jpg
+</code></pre>
+
+<p>It is recommended to use <code>copy</code> when copying individual files, not <code>sync</code>.
+They have pretty much the same effect but <code>copy</code> will use a lot less
+memory.</p>
+
+<h2 id="quoting-and-the-shell">Quoting and the shell</h2>
+
+<p>When you are typing commands to your computer you are using something
+called the command line shell.  This interprets various characters in
+an OS specific way.</p>
+
+<p>Here are some gotchas which may help users unfamiliar with the shell rules</p>
+
+<h3 id="linux-osx">Linux / OSX</h3>
+
+<p>If your names have spaces or shell metacharacters (eg <code>*</code>, <code>?</code>, <code>$</code>,
+<code>'</code>, <code>&quot;</code> etc) then you must quote them.  Use single quotes <code>'</code> by default.</p>
+
+<pre><code>rclone copy 'Important files?' remote:backup
+</code></pre>
+
+<p>If you want to send a <code>'</code> you will need to use <code>&quot;</code>, eg</p>
+
+<pre><code>rclone copy &quot;O'Reilly Reviews&quot; remote:backup
+</code></pre>
+
+<p>The rules for quoting metacharacters are complicated and if you want
+the full details you&rsquo;ll have to consult the manual page for your
+shell.</p>
+
+<h3 id="windows">Windows</h3>
+
+<p>If your names have spaces in you need to put them in <code>&quot;</code>, eg</p>
+
+<pre><code>rclone copy &quot;E:\folder name\folder name\folder name&quot; remote:backup
+</code></pre>
+
+<p>If you are using the root directory on its own then don&rsquo;t quote it
+(see <a href="https://github.com/ncw/rclone/issues/464">#464</a> for why), eg</p>
+
+<pre><code>rclone copy E:\ remote:backup
+</code></pre>
+
+<h2 id="copying-files-or-directories-with-in-the-names">Copying files or directories with <code>:</code> in the names</h2>
+
+<p>rclone uses <code>:</code> to mark a remote name.  This is, however, a valid
+filename component in non-Windows OSes.  The remote name parser will
+only search for a <code>:</code> up to the first <code>/</code> so if you need to act on a
+file or directory like this then use the full path starting with a
+<code>/</code>, or use <code>./</code> as a current directory prefix.</p>
+
+<p>So to sync a directory called <code>sync:me</code> to a remote called <code>remote:</code> use</p>
+
+<pre><code>rclone sync ./sync:me remote:path
+</code></pre>
+
+<p>or</p>
+
+<pre><code>rclone sync /full/path/to/sync:me remote:path
+</code></pre>
+
+<h2 id="server-side-copy">Server Side Copy</h2>
+
+<p>Most remotes (but not all - see <a href="/overview/#optional-features">the
+overview</a>) support server side copy.</p>
+
+<p>This means if you want to copy one folder to another then rclone won&rsquo;t
+download all the files and re-upload them; it will instruct the server
+to copy them in place.</p>
+
+<p>Eg</p>
+
+<pre><code>rclone copy s3:oldbucket s3:newbucket
+</code></pre>
+
+<p>Will copy the contents of <code>oldbucket</code> to <code>newbucket</code> without
+downloading and re-uploading.</p>
+
+<p>Remotes which don&rsquo;t support server side copy <strong>will</strong> download and
+re-upload in this case.</p>
+
+<p>Server side copies are used with <code>sync</code> and <code>copy</code> and will be
+identified in the log when using the <code>-v</code> flag.  The <code>move</code> command
+may also use them if remote doesn&rsquo;t support server side move directly.
+This is done by issuing a server side copy then a delete which is much
+quicker than a download and re-upload.</p>
+
+<p>Server side copies will only be attempted if the remote names are the
+same.</p>
+
+<p>This can be used when scripting to make aged backups efficiently, eg</p>
+
+<pre><code>rclone sync remote:current-backup remote:previous-backup
+rclone sync /path/to/files remote:current-backup
+</code></pre>
+
+<h2 id="options">Options</h2>
+
+<p>Rclone has a number of options to control its behaviour.</p>
+
+<p>Options which use TIME use the go time parser.  A duration string is a
+possibly signed sequence of decimal numbers, each with optional
+fraction and a unit suffix, such as &ldquo;300ms&rdquo;, &ldquo;-1.5h&rdquo; or &ldquo;2h45m&rdquo;. Valid
+time units are &ldquo;ns&rdquo;, &ldquo;us&rdquo; (or &ldquo;µs&rdquo;), &ldquo;ms&rdquo;, &ldquo;s&rdquo;, &ldquo;m&rdquo;, &ldquo;h&rdquo;.</p>
+
+<p>Options which use SIZE use kByte by default.  However, a suffix of <code>b</code>
+for bytes, <code>k</code> for kBytes, <code>M</code> for MBytes and <code>G</code> for GBytes may be
+used.  These are the binary units, eg 1, 2**10, 2**20, 2**30
+respectively.</p>
+
+<h3 id="backup-dir-dir">--backup-dir=DIR</h3>
+
+<p>When using <code>sync</code>, <code>copy</code> or <code>move</code> any files which would have been
+overwritten or deleted are moved in their original hierarchy into this
+directory.</p>
+
+<p>If <code>--suffix</code> is set, then the moved files will have the suffix added
+to them.  If there is a file with the same path (after the suffix has
+been added) in DIR, then it will be overwritten.</p>
+
+<p>The remote in use must support server side move or copy and you must
+use the same remote as the destination of the sync.  The backup
+directory must not overlap the destination directory.</p>
+
+<p>For example</p>
+
+<pre><code>rclone sync /path/to/local remote:current --backup-dir remote:old
+</code></pre>
+
+<p>will sync <code>/path/to/local</code> to <code>remote:current</code>, but for any files
+which would have been updated or deleted will be stored in
+<code>remote:old</code>.</p>
+
+<p>If running rclone from a script you might want to use today&rsquo;s date as
+the directory name passed to <code>--backup-dir</code> to store the old files, or
+you might want to pass <code>--suffix</code> with today&rsquo;s date.</p>
+
+<h3 id="bind-string">--bind string</h3>
+
+<p>Local address to bind to for outgoing connections.  This can be an
+IPv4 address (1.2.3.4), an IPv6 address (1234::789A) or host name.  If
+the host name doesn&rsquo;t resolve or resolves to more than one IP address
+it will give an error.</p>
+
+<h3 id="bwlimit-bandwidth-spec">--bwlimit=BANDWIDTH_SPEC</h3>
+
+<p>This option controls the bandwidth limit. Limits can be specified
+in two ways: As a single limit, or as a timetable.</p>
+
+<p>Single limits last for the duration of the session. To use a single limit,
+specify the desired bandwidth in kBytes/s, or use a suffix b|k|M|G.  The
+default is <code>0</code> which means to not limit bandwidth.</p>
+
+<p>For example, to limit bandwidth usage to 10 MBytes/s use <code>--bwlimit 10M</code></p>
+
+<p>It is also possible to specify a &ldquo;timetable&rdquo; of limits, which will cause
+certain limits to be applied at certain times. To specify a timetable, format your
+entries as &ldquo;HH:MM,BANDWIDTH HH:MM,BANDWIDTH&hellip;&ldquo;.</p>
+
+<p>An example of a typical timetable to avoid link saturation during daytime
+working hours could be:</p>
+
+<p><code>--bwlimit &quot;08:00,512 12:00,10M 13:00,512 18:00,30M 23:00,off&quot;</code></p>
+
+<p>In this example, the transfer bandwidth will be set to 512kBytes/sec at 8am.
+At noon, it will raise to 10Mbytes/s, and drop back to 512kBytes/sec at 1pm.
+At 6pm, the bandwidth limit will be set to 30MBytes/s, and at 11pm it will be
+completely disabled (full speed). Anything between 11pm and 8am will remain
+unlimited.</p>
+
+<p>Bandwidth limits only apply to the data transfer. They don&rsquo;t apply to the
+bandwidth of the directory listings etc.</p>
+
+<p>Note that the units are Bytes/s, not Bits/s.  Typically connections are
+measured in Bits/s - to convert divide by 8.  For example, let&rsquo;s say
+you have a 10 Mbit/s connection and you wish rclone to use half of it
+- 5 Mbit/s.  This is <sup>5</sup>&frasl;<sub>8</sub> = 0.625MByte/s so you would use a <code>--bwlimit
+0.625M</code> parameter for rclone.</p>
+
+<p>On Unix systems (Linux, MacOS, …) the bandwidth limiter can be toggled by
+sending a <code>SIGUSR2</code> signal to rclone. This allows to remove the limitations
+of a long running rclone transfer and to restore it back to the value specified
+with <code>--bwlimit</code> quickly when needed. Assuming there is only one rclone instance
+running, you can toggle the limiter like this:</p>
+
+<pre><code>kill -SIGUSR2 $(pidof rclone)
+</code></pre>
+
+<h3 id="buffer-size-size">--buffer-size=SIZE</h3>
+
+<p>Use this sized buffer to speed up file transfers.  Each <code>--transfer</code>
+will use this much memory for buffering.</p>
+
+<p>Set to 0 to disable the buffering for the minimum memory usage.</p>
+
+<h3 id="checkers-n">--checkers=N</h3>
+
+<p>The number of checkers to run in parallel.  Checkers do the equality
+checking of files during a sync.  For some storage systems (eg S3,
+Swift, Dropbox) this can take a significant amount of time so they are
+run in parallel.</p>
+
+<p>The default is to run 8 checkers in parallel.</p>
+
+<h3 id="c-checksum">-c, --checksum</h3>
+
+<p>Normally rclone will look at modification time and size of files to
+see if they are equal.  If you set this flag then rclone will check
+the file hash and size to determine if files are equal.</p>
+
+<p>This is useful when the remote doesn&rsquo;t support setting modified time
+and a more accurate sync is desired than just checking the file size.</p>
+
+<p>This is very useful when transferring between remotes which store the
+same hash type on the object, eg Drive and Swift. For details of which
+remotes support which hash type see the table in the <a href="/overview/">overview
+section</a>.</p>
+
+<p>Eg <code>rclone --checksum sync s3:/bucket swift:/bucket</code> would run much
+quicker than without the <code>--checksum</code> flag.</p>
+
+<p>When using this flag, rclone won&rsquo;t update mtimes of remote files if
+they are incorrect as it would normally.</p>
+
+<h3 id="config-config-file">--config=CONFIG_FILE</h3>
+
+<p>Specify the location of the rclone config file.</p>
+
+<p>Normally the config file is in your home directory as a file called
+<code>.config/rclone/rclone.conf</code> (or <code>.rclone.conf</code> if created with an
+older version). If <code>$XDG_CONFIG_HOME</code> is set it will be at
+<code>$XDG_CONFIG_HOME/rclone/rclone.conf</code></p>
+
+<p>If you run <code>rclone -h</code> and look at the help for the <code>--config</code> option
+you will see where the default location is for you.</p>
+
+<p>Use this flag to override the config location, eg <code>rclone
+--config=&quot;.myconfig&quot; .config</code>.</p>
+
+<h3 id="contimeout-time">--contimeout=TIME</h3>
+
+<p>Set the connection timeout. This should be in go time format which
+looks like <code>5s</code> for 5 seconds, <code>10m</code> for 10 minutes, or <code>3h30m</code>.</p>
+
+<p>The connection timeout is the amount of time rclone will wait for a
+connection to go through to a remote object storage system.  It is
+<code>1m</code> by default.</p>
+
+<h3 id="dedupe-mode-mode">--dedupe-mode MODE</h3>
+
+<p>Mode to run dedupe command in.  One of <code>interactive</code>, <code>skip</code>, <code>first</code>, <code>newest</code>, <code>oldest</code>, <code>rename</code>.  The default is <code>interactive</code>.  See the dedupe command for more information as to what these options mean.</p>
+
+<h3 id="disable-feature-feature">--disable FEATURE,FEATURE,&hellip;</h3>
+
+<p>This disables a comma separated list of optional features. For example
+to disable server side move and server side copy use:</p>
+
+<pre><code>--disable move,copy
+</code></pre>
+
+<p>The features can be put in in any case.</p>
+
+<p>To see a list of which features can be disabled use:</p>
+
+<pre><code>--disable help
+</code></pre>
+
+<p>See the overview <a href="/overview/#features">features</a> and
+<a href="/overview/#optional-features">optional features</a> to get an idea of
+which feature does what.</p>
+
+<p>This flag can be useful for debugging and in exceptional circumstances
+(eg Google Drive limiting the total volume of Server Side Copies to
+100GB/day).</p>
+
+<h3 id="n-dry-run">-n, --dry-run</h3>
+
+<p>Do a trial run with no permanent changes.  Use this to see what rclone
+would do without actually doing it.  Useful when setting up the <code>sync</code>
+command which deletes files in the destination.</p>
+
+<h3 id="ignore-checksum">--ignore-checksum</h3>
+
+<p>Normally rclone will check that the checksums of transferred files
+match, and give an error &ldquo;corrupted on transfer&rdquo; if they don&rsquo;t.</p>
+
+<p>You can use this option to skip that check.  You should only use it if
+you have had the &ldquo;corrupted on transfer&rdquo; error message and you are
+sure you might want to transfer potentially corrupted data.</p>
+
+<h3 id="ignore-existing">--ignore-existing</h3>
+
+<p>Using this option will make rclone unconditionally skip all files
+that exist on the destination, no matter the content of these files.</p>
+
+<p>While this isn&rsquo;t a generally recommended option, it can be useful
+in cases where your files change due to encryption. However, it cannot
+correct partial transfers in case a transfer was interrupted.</p>
+
+<h3 id="ignore-size">--ignore-size</h3>
+
+<p>Normally rclone will look at modification time and size of files to
+see if they are equal.  If you set this flag then rclone will check
+only the modification time.  If <code>--checksum</code> is set then it only
+checks the checksum.</p>
+
+<p>It will also cause rclone to skip verifying the sizes are the same
+after transfer.</p>
+
+<p>This can be useful for transferring files to and from OneDrive which
+occasionally misreports the size of image files (see
+<a href="https://github.com/ncw/rclone/issues/399">#399</a> for more info).</p>
+
+<h3 id="i-ignore-times">-I, --ignore-times</h3>
+
+<p>Using this option will cause rclone to unconditionally upload all
+files regardless of the state of files on the destination.</p>
+
+<p>Normally rclone would skip any files that have the same
+modification time and are the same size (or have the same checksum if
+using <code>--checksum</code>).</p>
+
+<h3 id="immutable">--immutable</h3>
+
+<p>Treat source and destination files as immutable and disallow
+modification.</p>
+
+<p>With this option set, files will be created and deleted as requested,
+but existing files will never be updated.  If an existing file does
+not match between the source and destination, rclone will give the error
+<code>Source and destination exist but do not match: immutable file modified</code>.</p>
+
+<p>Note that only commands which transfer files (e.g. <code>sync</code>, <code>copy</code>,
+<code>move</code>) are affected by this behavior, and only modification is
+disallowed.  Files may still be deleted explicitly (e.g. <code>delete</code>,
+<code>purge</code>) or implicitly (e.g. <code>sync</code>, <code>move</code>).  Use <code>copy --immutable</code>
+if it is desired to avoid deletion as well as modification.</p>
+
+<p>This can be useful as an additional layer of protection for immutable
+or append-only data sets (notably backup archives), where modification
+implies corruption and should not be propagated.</p>
+
+<h2 id="leave-root">--leave-root</h2>
+
+<p>During rmdirs it will not remove root directory, even if it&rsquo;s empty.</p>
+
+<h3 id="log-file-file">--log-file=FILE</h3>
+
+<p>Log all of rclone&rsquo;s output to FILE.  This is not active by default.
+This can be useful for tracking down problems with syncs in
+combination with the <code>-v</code> flag.  See the <a href="#logging">Logging section</a>
+for more info.</p>
+
+<h3 id="log-level-level">--log-level LEVEL</h3>
+
+<p>This sets the log level for rclone.  The default log level is <code>NOTICE</code>.</p>
+
+<p><code>DEBUG</code> is equivalent to <code>-vv</code>. It outputs lots of debug info - useful
+for bug reports and really finding out what rclone is doing.</p>
+
+<p><code>INFO</code> is equivalent to <code>-v</code>. It outputs information about each transfer
+and prints stats once a minute by default.</p>
+
+<p><code>NOTICE</code> is the default log level if no logging flags are supplied. It
+outputs very little when things are working normally. It outputs
+warnings and significant events.</p>
+
+<p><code>ERROR</code> is equivalent to <code>-q</code>. It only outputs error messages.</p>
+
+<h3 id="low-level-retries-number">--low-level-retries NUMBER</h3>
+
+<p>This controls the number of low level retries rclone does.</p>
+
+<p>A low level retry is used to retry a failing operation - typically one
+HTTP request.  This might be uploading a chunk of a big file for
+example.  You will see low level retries in the log with the <code>-v</code>
+flag.</p>
+
+<p>This shouldn&rsquo;t need to be changed from the default in normal operations.
+However, if you get a lot of low level retries you may wish
+to reduce the value so rclone moves on to a high level retry (see the
+<code>--retries</code> flag) quicker.</p>
+
+<p>Disable low level retries with <code>--low-level-retries 1</code>.</p>
+
+<h3 id="max-delete-n">--max-delete=N</h3>
+
+<p>This tells rclone not to delete more than N files.  If that limit is
+exceeded then a fatal error will be generated and rclone will stop the
+operation in progress.</p>
+
+<h3 id="max-depth-n">--max-depth=N</h3>
+
+<p>This modifies the recursion depth for all the commands except purge.</p>
+
+<p>So if you do <code>rclone --max-depth 1 ls remote:path</code> you will see only
+the files in the top level directory.  Using <code>--max-depth 2</code> means you
+will see all the files in first two directory levels and so on.</p>
+
+<p>For historical reasons the <code>lsd</code> command defaults to using a
+<code>--max-depth</code> of 1 - you can override this with the command line flag.</p>
+
+<p>You can use this command to disable recursion (with <code>--max-depth 1</code>).</p>
+
+<p>Note that if you use this with <code>sync</code> and <code>--delete-excluded</code> the
+files not recursed through are considered excluded and will be deleted
+on the destination.  Test first with <code>--dry-run</code> if you are not sure
+what will happen.</p>
+
+<h3 id="modify-window-time">--modify-window=TIME</h3>
+
+<p>When checking whether a file has been modified, this is the maximum
+allowed time difference that a file can have and still be considered
+equivalent.</p>
+
+<p>The default is <code>1ns</code> unless this is overridden by a remote.  For
+example OS X only stores modification times to the nearest second so
+if you are reading and writing to an OS X filing system this will be
+<code>1s</code> by default.</p>
+
+<p>This command line flag allows you to override that computed default.</p>
+
+<h3 id="no-gzip-encoding">--no-gzip-encoding</h3>
+
+<p>Don&rsquo;t set <code>Accept-Encoding: gzip</code>.  This means that rclone won&rsquo;t ask
+the server for compressed files automatically. Useful if you&rsquo;ve set
+the server to return files with <code>Content-Encoding: gzip</code> but you
+uploaded compressed files.</p>
+
+<p>There is no need to set this in normal operation, and doing so will
+decrease the network transfer efficiency of rclone.</p>
+
+<h3 id="no-update-modtime">--no-update-modtime</h3>
+
+<p>When using this flag, rclone won&rsquo;t update modification times of remote
+files if they are incorrect as it would normally.</p>
+
+<p>This can be used if the remote is being synced with another tool also
+(eg the Google Drive client).</p>
+
+<h3 id="q-quiet">-q, --quiet</h3>
+
+<p>Normally rclone outputs stats and a completion message.  If you set
+this flag it will make as little output as possible.</p>
+
+<h3 id="retries-int">--retries int</h3>
+
+<p>Retry the entire sync if it fails this many times it fails (default 3).</p>
+
+<p>Some remotes can be unreliable and a few retries help pick up the
+files which didn&rsquo;t get transferred because of errors.</p>
+
+<p>Disable retries with <code>--retries 1</code>.</p>
+
+<h3 id="size-only">--size-only</h3>
+
+<p>Normally rclone will look at modification time and size of files to
+see if they are equal.  If you set this flag then rclone will check
+only the size.</p>
+
+<p>This can be useful transferring files from Dropbox which have been
+modified by the desktop sync client which doesn&rsquo;t set checksums of
+modification times in the same way as rclone.</p>
+
+<h3 id="stats-time">--stats=TIME</h3>
+
+<p>Commands which transfer data (<code>sync</code>, <code>copy</code>, <code>copyto</code>, <code>move</code>,
+<code>moveto</code>) will print data transfer stats at regular intervals to show
+their progress.</p>
+
+<p>This sets the interval.</p>
+
+<p>The default is <code>1m</code>. Use 0 to disable.</p>
+
+<p>If you set the stats interval then all commands can show stats.  This
+can be useful when running other commands, <code>check</code> or <code>mount</code> for
+example.</p>
+
+<p>Stats are logged at <code>INFO</code> level by default which means they won&rsquo;t
+show at default log level <code>NOTICE</code>.  Use <code>--stats-log-level NOTICE</code> or
+<code>-v</code> to make them show.  See the <a href="#logging">Logging section</a> for more
+info on log levels.</p>
+
+<h3 id="stats-file-name-length-integer">--stats-file-name-length integer</h3>
+
+<p>By default, the <code>--stats</code> output will truncate file names and paths longer
+than 40 characters.  This is equivalent to providing
+<code>--stats-file-name-length 40</code>. Use <code>--stats-file-name-length 0</code> to disable
+any truncation of file names printed by stats.</p>
+
+<h3 id="stats-log-level-string">--stats-log-level string</h3>
+
+<p>Log level to show <code>--stats</code> output at.  This can be <code>DEBUG</code>, <code>INFO</code>,
+<code>NOTICE</code>, or <code>ERROR</code>.  The default is <code>INFO</code>.  This means at the
+default level of logging which is <code>NOTICE</code> the stats won&rsquo;t show - if
+you want them to then use <code>--stats-log-level NOTICE</code>.  See the <a href="#logging">Logging
+section</a> for more info on log levels.</p>
+
+<h3 id="stats-unit-bits-bytes">--stats-unit=bits|bytes</h3>
+
+<p>By default, data transfer rates will be printed in bytes/second.</p>
+
+<p>This option allows the data rate to be printed in bits/second.</p>
+
+<p>Data transfer volume will still be reported in bytes.</p>
+
+<p>The rate is reported as a binary unit, not SI unit. So 1 Mbit/s
+equals 1,048,576 bits/s and not 1,000,000 bits/s.</p>
+
+<p>The default is <code>bytes</code>.</p>
+
+<h3 id="suffix-suffix">--suffix=SUFFIX</h3>
+
+<p>This is for use with <code>--backup-dir</code> only.  If this isn&rsquo;t set then
+<code>--backup-dir</code> will move files with their original name.  If it is set
+then the files will have SUFFIX added on to them.</p>
+
+<p>See <code>--backup-dir</code> for more info.</p>
+
+<h3 id="syslog">--syslog</h3>
+
+<p>On capable OSes (not Windows or Plan9) send all log output to syslog.</p>
+
+<p>This can be useful for running rclone in a script or <code>rclone mount</code>.</p>
+
+<h3 id="syslog-facility-string">--syslog-facility string</h3>
+
+<p>If using <code>--syslog</code> this sets the syslog facility (eg <code>KERN</code>, <code>USER</code>).
+See <code>man syslog</code> for a list of possible facilities.  The default
+facility is <code>DAEMON</code>.</p>
+
+<h3 id="tpslimit-float">--tpslimit float</h3>
+
+<p>Limit HTTP transactions per second to this. Default is 0 which is used
+to mean unlimited transactions per second.</p>
+
+<p>For example to limit rclone to 10 HTTP transactions per second use
+<code>--tpslimit 10</code>, or to 1 transaction every 2 seconds use <code>--tpslimit
+0.5</code>.</p>
+
+<p>Use this when the number of transactions per second from rclone is
+causing a problem with the cloud storage provider (eg getting you
+banned or rate limited).</p>
+
+<p>This can be very useful for <code>rclone mount</code> to control the behaviour of
+applications using it.</p>
+
+<p>See also <code>--tpslimit-burst</code>.</p>
+
+<h3 id="tpslimit-burst-int">--tpslimit-burst int</h3>
+
+<p>Max burst of transactions for <code>--tpslimit</code>. (default 1)</p>
+
+<p>Normally <code>--tpslimit</code> will do exactly the number of transaction per
+second specified.  However if you supply <code>--tps-burst</code> then rclone can
+save up some transactions from when it was idle giving a burst of up
+to the parameter supplied.</p>
+
+<p>For example if you provide <code>--tpslimit-burst 10</code> then if rclone has
+been idle for more than 10*<code>--tpslimit</code> then it can do 10 transactions
+very quickly before they are limited again.</p>
+
+<p>This may be used to increase performance of <code>--tpslimit</code> without
+changing the long term average number of transactions per second.</p>
+
+<h3 id="track-renames">--track-renames</h3>
+
+<p>By default, rclone doesn&rsquo;t keep track of renamed files, so if you
+rename a file locally then sync it to a remote, rclone will delete the
+old file on the remote and upload a new copy.</p>
+
+<p>If you use this flag, and the remote supports server side copy or
+server side move, and the source and destination have a compatible
+hash, then this will track renames during <code>sync</code>, <code>copy</code>, and <code>move</code>
+operations and perform renaming server-side.</p>
+
+<p>Files will be matched by size and hash - if both match then a rename
+will be considered.</p>
+
+<p>If the destination does not support server-side copy or move, rclone
+will fall back to the default behaviour and log an error level message
+to the console.</p>
+
+<p>Note that <code>--track-renames</code> uses extra memory to keep track of all
+the rename candidates.</p>
+
+<p>Note also that <code>--track-renames</code> is incompatible with
+<code>--delete-before</code> and will select <code>--delete-after</code> instead of
+<code>--delete-during</code>.</p>
+
+<h3 id="delete-before-during-after">--delete-(before,during,after)</h3>
+
+<p>This option allows you to specify when files on your destination are
+deleted when you sync folders.</p>
+
+<p>Specifying the value <code>--delete-before</code> will delete all files present
+on the destination, but not on the source <em>before</em> starting the
+transfer of any new or updated files. This uses two passes through the
+file systems, one for the deletions and one for the copies.</p>
+
+<p>Specifying <code>--delete-during</code> will delete files while checking and
+uploading files. This is the fastest option and uses the least memory.</p>
+
+<p>Specifying <code>--delete-after</code> (the default value) will delay deletion of
+files until all new/updated files have been successfully transferred.
+The files to be deleted are collected in the copy pass then deleted
+after the copy pass has completed successfully.  The files to be
+deleted are held in memory so this mode may use more memory.  This is
+the safest mode as it will only delete files if there have been no
+errors subsequent to that.  If there have been errors before the
+deletions start then you will get the message <code>not deleting files as
+there were IO errors</code>.</p>
+
+<h3 id="fast-list">--fast-list</h3>
+
+<p>When doing anything which involves a directory listing (eg <code>sync</code>,
+<code>copy</code>, <code>ls</code> - in fact nearly every command), rclone normally lists a
+directory and processes it before using more directory lists to
+process any subdirectories.  This can be parallelised and works very
+quickly using the least amount of memory.</p>
+
+<p>However, some remotes have a way of listing all files beneath a
+directory in one (or a small number) of transactions.  These tend to
+be the bucket based remotes (eg S3, B2, GCS, Swift, Hubic).</p>
+
+<p>If you use the <code>--fast-list</code> flag then rclone will use this method for
+listing directories.  This will have the following consequences for
+the listing:</p>
+
+<ul>
+<li>It <strong>will</strong> use fewer transactions (important if you pay for them)</li>
+<li>It <strong>will</strong> use more memory.  Rclone has to load the whole listing into memory.</li>
+<li>It <em>may</em> be faster because it uses fewer transactions</li>
+<li>It <em>may</em> be slower because it can&rsquo;t be parallelized</li>
+</ul>
+
+<p>rclone should always give identical results with and without
+<code>--fast-list</code>.</p>
+
+<p>If you pay for transactions and can fit your entire sync listing into
+memory then <code>--fast-list</code> is recommended.  If you have a very big sync
+to do then don&rsquo;t use <code>--fast-list</code> otherwise you will run out of
+memory.</p>
+
+<p>If you use <code>--fast-list</code> on a remote which doesn&rsquo;t support it, then
+rclone will just ignore it.</p>
+
+<h3 id="timeout-time">--timeout=TIME</h3>
+
+<p>This sets the IO idle timeout.  If a transfer has started but then
+becomes idle for this long it is considered broken and disconnected.</p>
+
+<p>The default is <code>5m</code>.  Set to 0 to disable.</p>
+
+<h3 id="transfers-n">--transfers=N</h3>
+
+<p>The number of file transfers to run in parallel.  It can sometimes be
+useful to set this to a smaller number if the remote is giving a lot
+of timeouts or bigger if you have lots of bandwidth and a fast remote.</p>
+
+<p>The default is to run 4 file transfers in parallel.</p>
+
+<h3 id="u-update">-u, --update</h3>
+
+<p>This forces rclone to skip any files which exist on the destination
+and have a modified time that is newer than the source file.</p>
+
+<p>If an existing destination file has a modification time equal (within
+the computed modify window precision) to the source file&rsquo;s, it will be
+updated if the sizes are different.</p>
+
+<p>On remotes which don&rsquo;t support mod time directly the time checked will
+be the uploaded time.  This means that if uploading to one of these
+remotes, rclone will skip any files which exist on the destination and
+have an uploaded time that is newer than the modification time of the
+source file.</p>
+
+<p>This can be useful when transferring to a remote which doesn&rsquo;t support
+mod times directly as it is more accurate than a <code>--size-only</code> check
+and faster than using <code>--checksum</code>.</p>
+
+<h3 id="v-vv-verbose">-v, -vv, --verbose</h3>
+
+<p>With <code>-v</code> rclone will tell you about each file that is transferred and
+a small number of significant events.</p>
+
+<p>With <code>-vv</code> rclone will become very verbose telling you about every
+file it considers and transfers.  Please send bug reports with a log
+with this setting.</p>
+
+<h3 id="v-version">-V, --version</h3>
+
+<p>Prints the version number</p>
+
+<h2 id="configuration-encryption">Configuration Encryption</h2>
+
+<p>Your configuration file contains information for logging in to
+your cloud services. This means that you should keep your
+<code>.rclone.conf</code> file in a secure location.</p>
+
+<p>If you are in an environment where that isn&rsquo;t possible, you can
+add a password to your configuration. This means that you will
+have to enter the password every time you start rclone.</p>
+
+<p>To add a password to your rclone configuration, execute <code>rclone config</code>.</p>
+
+<pre><code>&gt;rclone config
+Current remotes:
+
+e) Edit existing remote
+n) New remote
+d) Delete remote
+s) Set configuration password
+q) Quit config
+e/n/d/s/q&gt;
+</code></pre>
+
+<p>Go into <code>s</code>, Set configuration password:</p>
+
+<pre><code>e/n/d/s/q&gt; s
+Your configuration is not encrypted.
+If you add a password, you will protect your login information to cloud services.
+a) Add Password
+q) Quit to main menu
+a/q&gt; a
+Enter NEW configuration password:
+password:
+Confirm NEW password:
+password:
+Password set
+Your configuration is encrypted.
+c) Change Password
+u) Unencrypt configuration
+q) Quit to main menu
+c/u/q&gt;
+</code></pre>
+
+<p>Your configuration is now encrypted, and every time you start rclone
+you will now be asked for the password. In the same menu, you can
+change the password or completely remove encryption from your
+configuration.</p>
+
+<p>There is no way to recover the configuration if you lose your password.</p>
+
+<p>rclone uses <a href="https://godoc.org/golang.org/x/crypto/nacl/secretbox">nacl secretbox</a>
+which in turn uses XSalsa20 and Poly1305 to encrypt and authenticate
+your configuration with secret-key cryptography.
+The password is SHA-256 hashed, which produces the key for secretbox.
+The hashed password is not stored.</p>
+
+<p>While this provides very good security, we do not recommend storing
+your encrypted rclone configuration in public if it contains sensitive
+information, maybe except if you use a very strong password.</p>
+
+<p>If it is safe in your environment, you can set the <code>RCLONE_CONFIG_PASS</code>
+environment variable to contain your password, in which case it will be
+used for decrypting the configuration.</p>
+
+<p>You can set this for a session from a script.  For unix like systems
+save this to a file called <code>set-rclone-password</code>:</p>
+
+<pre><code>#!/bin/echo Source this file don't run it
+
+read -s RCLONE_CONFIG_PASS
+export RCLONE_CONFIG_PASS
+</code></pre>
+
+<p>Then source the file when you want to use it.  From the shell you
+would do <code>source set-rclone-password</code>.  It will then ask you for the
+password and set it in the environment variable.</p>
+
+<p>If you are running rclone inside a script, you might want to disable
+password prompts. To do that, pass the parameter
+<code>--ask-password=false</code> to rclone. This will make rclone fail instead
+of asking for a password if <code>RCLONE_CONFIG_PASS</code> doesn&rsquo;t contain
+a valid password.</p>
+
+<h2 id="developer-options">Developer options</h2>
+
+<p>These options are useful when developing or debugging rclone.  There
+are also some more remote specific options which aren&rsquo;t documented
+here which are used for testing.  These start with remote name eg
+<code>--drive-test-option</code> - see the docs for the remote in question.</p>
+
+<h3 id="cpuprofile-file">--cpuprofile=FILE</h3>
+
+<p>Write CPU profile to file.  This can be analysed with <code>go tool pprof</code>.</p>
+
+<h4 id="dump-flag-flag-flag">--dump flag,flag,flag</h4>
+
+<p>The <code>--dump</code> flag takes a comma separated list of flags to dump info
+about.  These are:</p>
+
+<h4 id="dump-headers">--dump headers</h4>
+
+<p>Dump HTTP headers with <code>Authorization:</code> lines removed. May still
+contain sensitive info.  Can be very verbose.  Useful for debugging
+only.</p>
+
+<p>Use <code>--dump auth</code> if you do want the <code>Authorization:</code> headers.</p>
+
+<h4 id="dump-bodies">--dump bodies</h4>
+
+<p>Dump HTTP headers and bodies - may contain sensitive info.  Can be
+very verbose.  Useful for debugging only.</p>
+
+<p>Note that the bodies are buffered in memory so don&rsquo;t use this for
+enormous files.</p>
+
+<h4 id="dump-requests">--dump requests</h4>
+
+<p>Like <code>--dump bodies</code> but dumps the request bodies and the response
+headers.  Useful for debugging download problems.</p>
+
+<h4 id="dump-responses">--dump responses</h4>
+
+<p>Like <code>--dump bodies</code> but dumps the response bodies and the request
+headers. Useful for debugging upload problems.</p>
+
+<h4 id="dump-auth">--dump auth</h4>
+
+<p>Dump HTTP headers - will contain sensitive info such as
+<code>Authorization:</code> headers - use <code>--dump headers</code> to dump without
+<code>Authorization:</code> headers.  Can be very verbose.  Useful for debugging
+only.</p>
+
+<h4 id="dump-filters">--dump filters</h4>
+
+<p>Dump the filters to the output.  Useful to see exactly what include
+and exclude options are filtering on.</p>
+
+<h3 id="memprofile-file">--memprofile=FILE</h3>
+
+<p>Write memory profile to file. This can be analysed with <code>go tool pprof</code>.</p>
+
+<h3 id="no-check-certificate-true-false">--no-check-certificate=true/false</h3>
+
+<p><code>--no-check-certificate</code> controls whether a client verifies the
+server&rsquo;s certificate chain and host name.
+If <code>--no-check-certificate</code> is true, TLS accepts any certificate
+presented by the server and any host name in that certificate.
+In this mode, TLS is susceptible to man-in-the-middle attacks.</p>
+
+<p>This option defaults to <code>false</code>.</p>
+
+<p><strong>This should be used only for testing.</strong></p>
+
+<h2 id="filtering">Filtering</h2>
+
+<p>For the filtering options</p>
+
+<ul>
+<li><code>--delete-excluded</code></li>
+<li><code>--filter</code></li>
+<li><code>--filter-from</code></li>
+<li><code>--exclude</code></li>
+<li><code>--exclude-from</code></li>
+<li><code>--include</code></li>
+<li><code>--include-from</code></li>
+<li><code>--files-from</code></li>
+<li><code>--min-size</code></li>
+<li><code>--max-size</code></li>
+<li><code>--min-age</code></li>
+<li><code>--max-age</code></li>
+<li><code>--dump filters</code></li>
+</ul>
+
+<p>See the <a href="/filtering/">filtering section</a>.</p>
+
+<h2 id="logging">Logging</h2>
+
+<p>rclone has 4 levels of logging, <code>Error</code>, <code>Notice</code>, <code>Info</code> and <code>Debug</code>.</p>
+
+<p>By default, rclone logs to standard error.  This means you can redirect
+standard error and still see the normal output of rclone commands (eg
+<code>rclone ls</code>).</p>
+
+<p>By default, rclone will produce <code>Error</code> and <code>Notice</code> level messages.</p>
+
+<p>If you use the <code>-q</code> flag, rclone will only produce <code>Error</code> messages.</p>
+
+<p>If you use the <code>-v</code> flag, rclone will produce <code>Error</code>, <code>Notice</code> and
+<code>Info</code> messages.</p>
+
+<p>If you use the <code>-vv</code> flag, rclone will produce <code>Error</code>, <code>Notice</code>,
+<code>Info</code> and <code>Debug</code> messages.</p>
+
+<p>You can also control the log levels with the <code>--log-level</code> flag.</p>
+
+<p>If you use the <code>--log-file=FILE</code> option, rclone will redirect <code>Error</code>,
+<code>Info</code> and <code>Debug</code> messages along with standard error to FILE.</p>
+
+<p>If you use the <code>--syslog</code> flag then rclone will log to syslog and the
+<code>--syslog-facility</code> control which facility it uses.</p>
+
+<p>Rclone prefixes all log messages with their level in capitals, eg INFO
+which makes it easy to grep the log file for different kinds of
+information.</p>
+
+<h2 id="exit-code">Exit Code</h2>
+
+<p>If any errors occur during the command execution, rclone will exit with a
+non-zero exit code.  This allows scripts to detect when rclone
+operations have failed.</p>
+
+<p>During the startup phase, rclone will exit immediately if an error is
+detected in the configuration.  There will always be a log message
+immediately before exiting.</p>
+
+<p>When rclone is running it will accumulate errors as it goes along, and
+only exit with a non-zero exit code if (after retries) there were
+still failed transfers.  For every error counted there will be a high
+priority log message (visible with <code>-q</code>) showing the message and
+which file caused the problem. A high priority message is also shown
+when starting a retry so the user can see that any previous error
+messages may not be valid after the retry. If rclone has done a retry
+it will log a high priority message if the retry was successful.</p>
+
+<h3 id="list-of-exit-codes">List of exit codes</h3>
+
+<ul>
+<li><code>0</code> - success</li>
+<li><code>1</code> - Syntax or usage error</li>
+<li><code>2</code> - Error not otherwise categorised</li>
+<li><code>3</code> - Directory not found</li>
+<li><code>4</code> - File not found</li>
+<li><code>5</code> - Temporary error (one that more retries might fix) (Retry errors)</li>
+<li><code>6</code> - Less serious errors (like 461 errors from dropbox) (NoRetry errors)</li>
+<li><code>7</code> - Fatal error (one that more retries won&rsquo;t fix, like account suspended) (Fatal errors)</li>
+</ul>
+
+<h2 id="environment-variables">Environment Variables</h2>
+
+<p>Rclone can be configured entirely using environment variables.  These
+can be used to set defaults for options or config file entries.</p>
+
+<h3 id="options-1">Options</h3>
+
+<p>Every option in rclone can have its default set by environment
+variable.</p>
+
+<p>To find the name of the environment variable, first, take the long
+option name, strip the leading <code>--</code>, change <code>-</code> to <code>_</code>, make
+upper case and prepend <code>RCLONE_</code>.</p>
+
+<p>For example, to always set <code>--stats 5s</code>, set the environment variable
+<code>RCLONE_STATS=5s</code>.  If you set stats on the command line this will
+override the environment variable setting.</p>
+
+<p>Or to always use the trash in drive <code>--drive-use-trash</code>, set
+<code>RCLONE_DRIVE_USE_TRASH=true</code>.</p>
+
+<p>The same parser is used for the options and the environment variables
+so they take exactly the same form.</p>
+
+<h3 id="config-file">Config file</h3>
+
+<p>You can set defaults for values in the config file on an individual
+remote basis.  If you want to use this feature, you will need to
+discover the name of the config items that you want.  The easiest way
+is to run through <code>rclone config</code> by hand, then look in the config
+file to see what the values are (the config file can be found by
+looking at the help for <code>--config</code> in <code>rclone help</code>).</p>
+
+<p>To find the name of the environment variable, you need to set, take
+<code>RCLONE_CONFIG_</code> + name of remote + <code>_</code> + name of config file option
+and make it all uppercase.</p>
+
+<p>For example, to configure an S3 remote named <code>mys3:</code> without a config
+file (using unix ways of setting environment variables):</p>
+
+<pre><code>$ export RCLONE_CONFIG_MYS3_TYPE=s3
+$ export RCLONE_CONFIG_MYS3_ACCESS_KEY_ID=XXX
+$ export RCLONE_CONFIG_MYS3_SECRET_ACCESS_KEY=XXX
+$ rclone lsd MYS3:
+          -1 2016-09-21 12:54:21        -1 my-bucket
+$ rclone listremotes | grep mys3
+mys3:
+</code></pre>
+
+<p>Note that if you want to create a remote using environment variables
+you must create the <code>..._TYPE</code> variable as above.</p>
+
+<h3 id="other-environment-variables">Other environment variables</h3>
+
+<ul>
+<li>RCLONE_CONFIG_PASS` set to contain your config file password (see <a href="#configuration-encryption">Configuration Encryption</a> section)</li>
+<li>HTTP_PROXY, HTTPS_PROXY and NO_PROXY (or the lowercase versions thereof).
+
+<ul>
+<li>HTTPS_PROXY takes precedence over HTTP_PROXY for https requests.</li>
+<li>The environment values may be either a complete URL or a &ldquo;host[:port]&rdquo; for, in which case the &ldquo;http&rdquo; scheme is assumed.</li>
+</ul></li>
+</ul>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

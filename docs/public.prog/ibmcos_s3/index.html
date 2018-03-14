@@ -1,0 +1,816 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rclone docs for Amazon S3">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Amazon S3</title>
+    <link rel="canonical" href="https://rclone.org/ibmcos_s3/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="i-class-fa-fa-amazon-i-amazon-s3"><i class="fa fa-amazon"></i> Amazon S3</h2>
+
+<p>Paths are specified as <code>remote:bucket</code> (or <code>remote:</code> for the <code>lsd</code>
+command.)  You may put subdirectories in too, eg <code>remote:bucket/path/to/dir</code>.</p>
+
+<p>Here is an example of making an s3 configuration.  First run</p>
+
+<pre><code>rclone config
+</code></pre>
+
+<p>This will guide you through an interactive setup process.</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+s) Set configuration password
+n/s&gt; n
+name&gt; remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ &quot;amazon cloud drive&quot;
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ &quot;s3&quot;
+ 3 / Backblaze B2
+   \ &quot;b2&quot;
+ 4 / Dropbox
+   \ &quot;dropbox&quot;
+ 5 / Encrypt/Decrypt a remote
+   \ &quot;crypt&quot;
+ 6 / Google Cloud Storage (this is not Google Drive)
+   \ &quot;google cloud storage&quot;
+ 7 / Google Drive
+   \ &quot;drive&quot;
+ 8 / Hubic
+   \ &quot;hubic&quot;
+ 9 / Local Disk
+   \ &quot;local&quot;
+10 / Microsoft OneDrive
+   \ &quot;onedrive&quot;
+11 / Openstack Swift (Rackspace Cloud Files, Memset Memstore, OVH)
+   \ &quot;swift&quot;
+12 / SSH/SFTP Connection
+   \ &quot;sftp&quot;
+13 / Yandex Disk
+   \ &quot;yandex&quot;
+Storage&gt; 2
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+Choose a number from below, or type in your own value
+ 1 / Enter AWS credentials in the next step
+   \ &quot;false&quot;
+ 2 / Get AWS credentials from the environment (env vars or IAM)
+   \ &quot;true&quot;
+env_auth&gt; 1
+AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+access_key_id&gt; access_key
+AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+secret_access_key&gt; secret_key
+Region to connect to.
+Choose a number from below, or type in your own value
+   / The default endpoint - a good choice if you are unsure.
+ 1 | US Region, Northern Virginia or Pacific Northwest.
+   | Leave location constraint empty.
+   \ &quot;us-east-1&quot;
+   / US West (Oregon) Region
+ 2 | Needs location constraint us-west-2.
+   \ &quot;us-west-2&quot;
+   / US West (Northern California) Region
+ 3 | Needs location constraint us-west-1.
+   \ &quot;us-west-1&quot;
+   / EU (Ireland) Region Region
+ 4 | Needs location constraint EU or eu-west-1.
+   \ &quot;eu-west-1&quot;
+   / EU (Frankfurt) Region
+ 5 | Needs location constraint eu-central-1.
+   \ &quot;eu-central-1&quot;
+   / Asia Pacific (Singapore) Region
+ 6 | Needs location constraint ap-southeast-1.
+   \ &quot;ap-southeast-1&quot;
+   / Asia Pacific (Sydney) Region
+ 7 | Needs location constraint ap-southeast-2.
+   \ &quot;ap-southeast-2&quot;
+   / Asia Pacific (Tokyo) Region
+ 8 | Needs location constraint ap-northeast-1.
+   \ &quot;ap-northeast-1&quot;
+   / Asia Pacific (Seoul)
+ 9 | Needs location constraint ap-northeast-2.
+   \ &quot;ap-northeast-2&quot;
+   / Asia Pacific (Mumbai)
+10 | Needs location constraint ap-south-1.
+   \ &quot;ap-south-1&quot;
+   / South America (Sao Paulo) Region
+11 | Needs location constraint sa-east-1.
+   \ &quot;sa-east-1&quot;
+   / If using an S3 clone that only understands v2 signatures
+12 | eg Ceph/Dreamhost
+   | set this and make sure you set the endpoint.
+   \ &quot;other-v2-signature&quot;
+   / If using an S3 clone that understands v4 signatures set this
+13 | and make sure you set the endpoint.
+   \ &quot;other-v4-signature&quot;
+region&gt; 1
+Endpoint for S3 API.
+Leave blank if using AWS to use the default endpoint for the region.
+Specify if using an S3 clone such as Ceph.
+endpoint&gt;
+Location constraint - must be set to match the Region. Used when creating buckets only.
+Choose a number from below, or type in your own value
+ 1 / Empty for US Region, Northern Virginia or Pacific Northwest.
+   \ &quot;&quot;
+ 2 / US West (Oregon) Region.
+   \ &quot;us-west-2&quot;
+ 3 / US West (Northern California) Region.
+   \ &quot;us-west-1&quot;
+ 4 / EU (Ireland) Region.
+   \ &quot;eu-west-1&quot;
+ 5 / EU Region.
+   \ &quot;EU&quot;
+ 6 / Asia Pacific (Singapore) Region.
+   \ &quot;ap-southeast-1&quot;
+ 7 / Asia Pacific (Sydney) Region.
+   \ &quot;ap-southeast-2&quot;
+ 8 / Asia Pacific (Tokyo) Region.
+   \ &quot;ap-northeast-1&quot;
+ 9 / Asia Pacific (Seoul)
+   \ &quot;ap-northeast-2&quot;
+10 / Asia Pacific (Mumbai)
+   \ &quot;ap-south-1&quot;
+11 / South America (Sao Paulo) Region.
+   \ &quot;sa-east-1&quot;
+location_constraint&gt; 1
+Canned ACL used when creating buckets and/or storing objects in S3.
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+Choose a number from below, or type in your own value
+ 1 / Owner gets FULL_CONTROL. No one else has access rights (default).
+   \ &quot;private&quot;
+ 2 / Owner gets FULL_CONTROL. The AllUsers group gets READ access.
+   \ &quot;public-read&quot;
+   / Owner gets FULL_CONTROL. The AllUsers group gets READ and WRITE access.
+ 3 | Granting this on a bucket is generally not recommended.
+   \ &quot;public-read-write&quot;
+ 4 / Owner gets FULL_CONTROL. The AuthenticatedUsers group gets READ access.
+   \ &quot;authenticated-read&quot;
+   / Object owner gets FULL_CONTROL. Bucket owner gets READ access.
+ 5 | If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+   \ &quot;bucket-owner-read&quot;
+   / Both the object owner and the bucket owner get FULL_CONTROL over the object.
+ 6 | If you specify this canned ACL when creating a bucket, Amazon S3 ignores it.
+   \ &quot;bucket-owner-full-control&quot;
+acl&gt; private
+The server-side encryption algorithm used when storing this object in S3.
+Choose a number from below, or type in your own value
+ 1 / None
+   \ &quot;&quot;
+ 2 / AES256
+   \ &quot;AES256&quot;
+server_side_encryption&gt;
+The storage class to use when storing objects in S3.
+Choose a number from below, or type in your own value
+ 1 / Default
+   \ &quot;&quot;
+ 2 / Standard storage class
+   \ &quot;STANDARD&quot;
+ 3 / Reduced redundancy storage class
+   \ &quot;REDUCED_REDUNDANCY&quot;
+ 4 / Standard Infrequent Access storage class
+   \ &quot;STANDARD_IA&quot;
+storage_class&gt;
+Remote config
+--------------------
+[remote]
+env_auth = false
+access_key_id = access_key
+secret_access_key = secret_key
+region = us-east-1
+endpoint =
+location_constraint =
+acl = private
+server_side_encryption =
+storage_class =
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y
+</code></pre>
+
+<p>This remote is called <code>remote</code> and can now be used like this</p>
+
+<p>See all buckets</p>
+
+<pre><code>rclone lsd remote:
+</code></pre>
+
+<p>Make a new bucket</p>
+
+<pre><code>rclone mkdir remote:bucket
+</code></pre>
+
+<p>List the contents of a bucket</p>
+
+<pre><code>rclone ls remote:bucket
+</code></pre>
+
+<p>Sync <code>/home/local/directory</code> to the remote bucket, deleting any excess
+files in the bucket.</p>
+
+<pre><code>rclone sync /home/local/directory remote:bucket
+</code></pre>
+
+<h3 id="fast-list">--fast-list</h3>
+
+<p>This remote supports <code>--fast-list</code> which allows you to use fewer
+transactions in exchange for more memory. See the <a href="/docs/#fast-list">rclone
+docs</a> for more details.</p>
+
+<h3 id="modified-time">Modified time</h3>
+
+<p>The modified time is stored as metadata on the object as
+<code>X-Amz-Meta-Mtime</code> as floating point since the epoch accurate to 1 ns.</p>
+
+<h3 id="multipart-uploads">Multipart uploads</h3>
+
+<p>rclone supports multipart uploads with S3 which means that it can
+upload files bigger than 5GB.  Note that files uploaded <em>both</em> with
+multipart upload <em>and</em> through crypt remotes do not have MD5 sums.</p>
+
+<h3 id="buckets-and-regions">Buckets and Regions</h3>
+
+<p>With Amazon S3 you can list buckets (<code>rclone lsd</code>) using any region,
+but you can only access the content of a bucket from the region it was
+created in.  If you attempt to access a bucket from the wrong region,
+you will get an error, <code>incorrect region, the bucket is not in 'XXX'
+region</code>.</p>
+
+<h3 id="authentication">Authentication</h3>
+
+<p>There are two ways to supply <code>rclone</code> with a set of AWS
+credentials. In order of precedence:</p>
+
+<ul>
+<li>Directly in the rclone configuration file (as configured by <code>rclone config</code>)
+
+<ul>
+<li>set <code>access_key_id</code> and <code>secret_access_key</code>. <code>session_token</code> can be
+optionally set when using AWS STS.</li>
+</ul></li>
+<li>Runtime configuration:
+
+<ul>
+<li>set <code>env_auth</code> to <code>true</code> in the config file</li>
+<li>Exporting the following environment variables before running <code>rclone</code>
+
+<ul>
+<li>Access Key ID: <code>AWS_ACCESS_KEY_ID</code> or <code>AWS_ACCESS_KEY</code></li>
+<li>Secret Access Key: <code>AWS_SECRET_ACCESS_KEY</code> or <code>AWS_SECRET_KEY</code></li>
+<li>Session Token: <code>AWS_SESSION_TOKEN</code></li>
+</ul></li>
+<li>Running <code>rclone</code> in an ECS task with an IAM role</li>
+<li>Running <code>rclone</code> on an EC2 instance with an IAM role</li>
+</ul></li>
+</ul>
+
+<p>If none of these option actually end up providing <code>rclone</code> with AWS
+credentials then S3 interaction will be non-authenticated (see below).</p>
+
+<h3 id="s3-permissions">S3 Permissions</h3>
+
+<p>When using the <code>sync</code> subcommand of <code>rclone</code> the following minimum
+permissions are required to be available on the bucket being written to:</p>
+
+<ul>
+<li><code>ListBucket</code></li>
+<li><code>DeleteObject</code></li>
+<li><code>GetObject</code></li>
+<li><code>PutObject</code></li>
+<li><code>PutObjectACL</code></li>
+</ul>
+
+<p>Example policy:</p>
+
+<pre><code>{
+    &quot;Version&quot;: &quot;2012-10-17&quot;,
+    &quot;Statement&quot;: [
+        {
+            &quot;Effect&quot;: &quot;Allow&quot;,
+            &quot;Principal&quot;: {
+                &quot;AWS&quot;: &quot;arn:aws:iam::USER_SID:user/USER_NAME&quot;
+            },
+            &quot;Action&quot;: [
+                &quot;s3:ListBucket&quot;,
+                &quot;s3:DeleteObject&quot;,
+                &quot;s3:GetObject&quot;,
+                &quot;s3:PutObject&quot;,
+                &quot;s3:PutObjectAcl&quot;
+            ],
+            &quot;Resource&quot;: [
+              &quot;arn:aws:s3:::BUCKET_NAME/*&quot;,
+              &quot;arn:aws:s3:::BUCKET_NAME&quot;
+            ]
+        }
+    ]
+}
+</code></pre>
+
+<p>Notes on above:</p>
+
+<ol>
+<li>This is a policy that can be used when creating bucket. It assumes
+that <code>USER_NAME</code> has been created.</li>
+<li>The Resource entry must include both resource ARNs, as one implies
+the bucket and the other implies the bucket&rsquo;s objects.</li>
+</ol>
+
+<p>For reference, <a href="https://gist.github.com/ebridges/ebfc9042dd7c756cd101cfa807b7ae2b">here&rsquo;s an Ansible script</a>
+that will generate one or more buckets that will work with <code>rclone sync</code>.</p>
+
+<h3 id="glacier">Glacier</h3>
+
+<p>You can transition objects to glacier storage using a <a href="http://docs.aws.amazon.com/AmazonS3/latest/user-guide/create-lifecycle.html">lifecycle policy</a>.
+The bucket can still be synced or copied into normally, but if rclone
+tries to access the data you will see an error like below.</p>
+
+<pre><code>2017/09/11 19:07:43 Failed to sync: failed to open source object: Object in GLACIER, restore first: path/to/file
+</code></pre>
+
+<p>In this case you need to <a href="http://docs.aws.amazon.com/AmazonS3/latest/user-guide/restore-archived-objects.html">restore</a>
+the object(s) in question before using rclone.</p>
+
+<h3 id="specific-options">Specific options</h3>
+
+<p>Here are the command line options specific to this cloud storage
+system.</p>
+
+<h4 id="s3-acl-string">--s3-acl=STRING</h4>
+
+<p>Canned ACL used when creating buckets and/or storing objects in S3.</p>
+
+<p>For more info visit the <a href="https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl">canned ACL docs</a>.</p>
+
+<h4 id="s3-storage-class-string">--s3-storage-class=STRING</h4>
+
+<p>Storage class to upload new objects with.</p>
+
+<p>Available options include:</p>
+
+<ul>
+<li>STANDARD - default storage class</li>
+<li>STANDARD_IA - for less frequently accessed data (e.g backups)</li>
+<li>REDUCED_REDUNDANCY (only for noncritical, reproducible data, has lower redundancy)</li>
+</ul>
+
+<h3 id="anonymous-access-to-public-buckets">Anonymous access to public buckets</h3>
+
+<p>If you want to use rclone to access a public bucket, configure with a
+blank <code>access_key_id</code> and <code>secret_access_key</code>.  Eg</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+q) Quit config
+n/q&gt; n
+name&gt; anons3
+What type of source is it?
+Choose a number from below
+ 1) amazon cloud drive
+ 2) b2
+ 3) drive
+ 4) dropbox
+ 5) google cloud storage
+ 6) swift
+ 7) hubic
+ 8) local
+ 9) onedrive
+10) s3
+11) yandex
+type&gt; 10
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+Choose a number from below, or type in your own value
+ * Enter AWS credentials in the next step
+ 1) false
+ * Get AWS credentials from the environment (env vars or IAM)
+ 2) true
+env_auth&gt; 1
+AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+access_key_id&gt;
+AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+secret_access_key&gt;
+...
+</code></pre>
+
+<p>Then use it as normal with the name of the public bucket, eg</p>
+
+<pre><code>rclone lsd anons3:1000genomes
+</code></pre>
+
+<p>You will be able to list and copy data but not upload it.</p>
+
+<h3 id="ceph">Ceph</h3>
+
+<p>Ceph is an object storage system which presents an Amazon S3 interface.</p>
+
+<p>To use rclone with ceph, you need to set the following parameters in
+the config.</p>
+
+<pre><code>access_key_id = Whatever
+secret_access_key = Whatever
+endpoint = https://ceph.endpoint.goes.here/
+region = other-v2-signature
+</code></pre>
+
+<p>Note also that Ceph sometimes puts <code>/</code> in the passwords it gives
+users.  If you read the secret access key using the command line tools
+you will get a JSON blob with the <code>/</code> escaped as <code>\/</code>.  Make sure you
+only write <code>/</code> in the secret access key.</p>
+
+<p>Eg the dump from Ceph looks something like this (irrelevant keys
+removed).</p>
+
+<pre><code>{
+    &quot;user_id&quot;: &quot;xxx&quot;,
+    &quot;display_name&quot;: &quot;xxxx&quot;,
+    &quot;keys&quot;: [
+        {
+            &quot;user&quot;: &quot;xxx&quot;,
+            &quot;access_key&quot;: &quot;xxxxxx&quot;,
+            &quot;secret_key&quot;: &quot;xxxxxx\/xxxx&quot;
+        }
+    ],
+}
+</code></pre>
+
+<p>Because this is a json dump, it is encoding the <code>/</code> as <code>\/</code>, so if you
+use the secret key as <code>xxxxxx/xxxx</code>  it will work fine.</p>
+
+<h3 id="digitalocean-spaces">DigitalOcean Spaces</h3>
+
+<p><a href="https://www.digitalocean.com/products/object-storage/">Spaces</a> is an <a href="https://developers.digitalocean.com/documentation/spaces/">S3-interoperable</a> object storage service from cloud provider DigitalOcean.</p>
+
+<p>To connect to DigitalOcean Spaces you will need an access key and secret key. These can be retrieved on the &ldquo;<a href="https://cloud.digitalocean.com/settings/api/tokens">Applications &amp; API</a>&rdquo; page of the DigitalOcean control panel. They will be needed when promted by <code>rclone config</code> for your <code>access_key_id</code> and <code>secret_access_key</code>.</p>
+
+<p>When prompted for a <code>region</code> or <code>location_constraint</code>, press enter to use the default value. The region must be included in the <code>endpoint</code> setting (e.g. <code>nyc3.digitaloceanspaces.com</code>). The defualt values can be used for other settings.</p>
+
+<p>Going through the whole process of creating a new remote by running <code>rclone config</code>, each prompt should be answered as shown below:</p>
+
+<pre><code>Storage&gt; 2
+env_auth&gt; 1
+access_key_id&gt; YOUR_ACCESS_KEY
+secret_access_key&gt; YOUR_SECRET_KEY
+region&gt; 
+endpoint&gt; nyc3.digitaloceanspaces.com
+location_constraint&gt; 
+acl&gt; 
+storage_class&gt; 
+</code></pre>
+
+<p>The resulting configuration file should look like:</p>
+
+<pre><code>[spaces]
+type = s3
+env_auth = false
+access_key_id = YOUR_ACCESS_KEY
+secret_access_key = YOUR_SECRET_KEY
+region = 
+endpoint = nyc3.digitaloceanspaces.com
+location_constraint = 
+acl = 
+server_side_encryption = 
+storage_class = 
+</code></pre>
+
+<p>Once configured, you can create a new Space and begin copying files. For example:</p>
+
+<pre><code>rclone mkdir spaces:my-new-space
+rclone copy /path/to/files spaces:my-new-space
+</code></pre>
+
+<h3 id="minio">Minio</h3>
+
+<p><a href="https://minio.io/">Minio</a> is an object storage server built for cloud application developers and devops.</p>
+
+<p>It is very easy to install and provides an S3 compatible server which can be used by rclone.</p>
+
+<p>To use it, install Minio following the instructions <a href="https://docs.minio.io/docs/minio-quickstart-guide">here</a>.</p>
+
+<p>When it configures itself Minio will print something like this</p>
+
+<pre><code>Endpoint:  http://192.168.1.106:9000  http://172.23.0.1:9000
+AccessKey: USWUXHGYZQYFYFFIT3RE
+SecretKey: MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+Region:    us-east-1
+SQS ARNs:  arn:minio:sqs:us-east-1:1:redis arn:minio:sqs:us-east-1:2:redis
+
+Browser Access:
+   http://192.168.1.106:9000  http://172.23.0.1:9000
+
+Command-line Access: https://docs.minio.io/docs/minio-client-quickstart-guide
+   $ mc config host add myminio http://192.168.1.106:9000 USWUXHGYZQYFYFFIT3RE MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+
+Object API (Amazon S3 compatible):
+   Go:         https://docs.minio.io/docs/golang-client-quickstart-guide
+   Java:       https://docs.minio.io/docs/java-client-quickstart-guide
+   Python:     https://docs.minio.io/docs/python-client-quickstart-guide
+   JavaScript: https://docs.minio.io/docs/javascript-client-quickstart-guide
+   .NET:       https://docs.minio.io/docs/dotnet-client-quickstart-guide
+
+Drive Capacity: 26 GiB Free, 165 GiB Total
+</code></pre>
+
+<p>These details need to go into <code>rclone config</code> like this.  Note that it
+is important to put the region in as stated above.</p>
+
+<pre><code>env_auth&gt; 1
+access_key_id&gt; USWUXHGYZQYFYFFIT3RE
+secret_access_key&gt; MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+region&gt; us-east-1
+endpoint&gt; http://192.168.1.106:9000
+location_constraint&gt;
+server_side_encryption&gt;
+</code></pre>
+
+<p>Which makes the config file look like this</p>
+
+<pre><code>[minio]
+env_auth = false
+access_key_id = USWUXHGYZQYFYFFIT3RE
+secret_access_key = MOJRH0mkL1IPauahWITSVvyDrQbEEIwljvmxdq03
+region = us-east-1
+endpoint = http://192.168.1.106:9000
+location_constraint =
+server_side_encryption =
+</code></pre>
+
+<p>So once set up, for example to copy files into a bucket</p>
+
+<pre><code>rclone copy /path/to/files minio:bucket
+</code></pre>
+
+<h3 id="wasabi">Wasabi</h3>
+
+<p><a href="https://wasabi.com">Wasabi</a> is a cloud-based object storage service for a
+broad range of applications and use cases. Wasabi is designed for
+individuals and organizations that require a high-performance,
+reliable, and secure data storage infrastructure at minimal cost.</p>
+
+<p>Wasabi provides an S3 interface which can be configured for use with
+rclone like this.</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+s) Set configuration password
+n/s&gt; n
+name&gt; wasabi
+Type of storage to configure.
+Choose a number from below, or type in your own value
+ 1 / Amazon Drive
+   \ &quot;amazon cloud drive&quot;
+ 2 / Amazon S3 (also Dreamhost, Ceph, Minio)
+   \ &quot;s3&quot;
+[snip]
+Storage&gt; s3
+Get AWS credentials from runtime (environment variables or EC2/ECS meta data if no env vars). Only applies if access_key_id and secret_access_key is blank.
+Choose a number from below, or type in your own value
+ 1 / Enter AWS credentials in the next step
+   \ &quot;false&quot;
+ 2 / Get AWS credentials from the environment (env vars or IAM)
+   \ &quot;true&quot;
+env_auth&gt; 1
+AWS Access Key ID - leave blank for anonymous access or runtime credentials.
+access_key_id&gt; YOURACCESSKEY
+AWS Secret Access Key (password) - leave blank for anonymous access or runtime credentials.
+secret_access_key&gt; YOURSECRETACCESSKEY
+Region to connect to.
+Choose a number from below, or type in your own value
+   / The default endpoint - a good choice if you are unsure.
+ 1 | US Region, Northern Virginia or Pacific Northwest.
+   | Leave location constraint empty.
+   \ &quot;us-east-1&quot;
+[snip]
+region&gt; us-east-1
+Endpoint for S3 API.
+Leave blank if using AWS to use the default endpoint for the region.
+Specify if using an S3 clone such as Ceph.
+endpoint&gt; s3.wasabisys.com
+Location constraint - must be set to match the Region. Used when creating buckets only.
+Choose a number from below, or type in your own value
+ 1 / Empty for US Region, Northern Virginia or Pacific Northwest.
+   \ &quot;&quot;
+[snip]
+location_constraint&gt; 
+Canned ACL used when creating buckets and/or storing objects in S3.
+For more info visit https://docs.aws.amazon.com/AmazonS3/latest/dev/acl-overview.html#canned-acl
+Choose a number from below, or type in your own value
+ 1 / Owner gets FULL_CONTROL. No one else has access rights (default).
+   \ &quot;private&quot;
+[snip]
+acl&gt; 
+The server-side encryption algorithm used when storing this object in S3.
+Choose a number from below, or type in your own value
+ 1 / None
+   \ &quot;&quot;
+ 2 / AES256
+   \ &quot;AES256&quot;
+server_side_encryption&gt; 
+The storage class to use when storing objects in S3.
+Choose a number from below, or type in your own value
+ 1 / Default
+   \ &quot;&quot;
+ 2 / Standard storage class
+   \ &quot;STANDARD&quot;
+ 3 / Reduced redundancy storage class
+   \ &quot;REDUCED_REDUNDANCY&quot;
+ 4 / Standard Infrequent Access storage class
+   \ &quot;STANDARD_IA&quot;
+storage_class&gt; 
+Remote config
+--------------------
+[wasabi]
+env_auth = false
+access_key_id = YOURACCESSKEY
+secret_access_key = YOURSECRETACCESSKEY
+region = us-east-1
+endpoint = s3.wasabisys.com
+location_constraint = 
+acl = 
+server_side_encryption = 
+storage_class = 
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y
+</code></pre>
+
+<p>This will leave the config file looking like this.</p>
+
+<pre><code>[wasabi]
+env_auth = false
+access_key_id = YOURACCESSKEY
+secret_access_key = YOURSECRETACCESSKEY
+region = us-east-1
+endpoint = s3.wasabisys.com
+location_constraint = 
+acl = 
+server_side_encryption = 
+storage_class = 
+</code></pre>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

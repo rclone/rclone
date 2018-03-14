@@ -1,0 +1,466 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes" ?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>https://rclone.org/alias/</loc>
+    <lastmod>2018-01-30T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_authorize/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_cachestats/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_cat/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_check/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_cleanup/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_create/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_delete/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_dump/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_edit/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_file/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_password/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_providers/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_show/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_config_update/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_copy/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_copyto/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_cryptcheck/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_cryptdecode/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_dbhashsum/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_dedupe/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_delete/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_genautocomplete/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_genautocomplete_bash/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_genautocomplete_zsh/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_gendocs/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_listremotes/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_ls/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_lsd/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_lsjson/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_lsl/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_md5sum/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_mkdir/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_mount/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_move/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_moveto/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_ncdu/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_obscure/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_purge/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_rcat/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_rmdir/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_rmdirs/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_serve/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_serve_http/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_serve_webdav/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_sha1sum/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_size/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_sync/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_touch/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_tree/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/rclone_version/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/changelog/</loc>
+    <lastmod>2017-12-23T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/webdav/</loc>
+    <lastmod>2017-10-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/pcloud/</loc>
+    <lastmod>2017-10-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/about/</loc>
+    <lastmod>2017-09-25T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/cache/</loc>
+    <lastmod>2017-09-03T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/azureblob/</loc>
+    <lastmod>2017-07-30T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/downloads/</loc>
+    <lastmod>2017-07-22T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/googlecloudstorage/</loc>
+    <lastmod>2017-07-18T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/qingstor/</loc>
+    <lastmod>2017-06-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/http/</loc>
+    <lastmod>2017-06-19T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/amazonclouddrive/</loc>
+    <lastmod>2017-06-10T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/sftp/</loc>
+    <lastmod>2017-02-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/ftp/</loc>
+    <lastmod>2017-01-01T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/authors/</loc>
+    <lastmod>2016-11-02T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/b2/</loc>
+    <lastmod>2016-10-25T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/crypt/</loc>
+    <lastmod>2016-07-28T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/ibmcos_s3/</loc>
+    <lastmod>2016-07-11T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/s3/</loc>
+    <lastmod>2016-07-11T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/hubic/</loc>
+    <lastmod>2016-05-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/drive/</loc>
+    <lastmod>2016-04-12T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/install/</loc>
+    <lastmod>2016-03-28T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/dropbox/</loc>
+    <lastmod>2016-02-21T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/filtering/</loc>
+    <lastmod>2016-02-09T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/remote_setup/</loc>
+    <lastmod>2016-01-07T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/yandex/</loc>
+    <lastmod>2015-12-30T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/box/</loc>
+    <lastmod>2015-10-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/onedrive/</loc>
+    <lastmod>2015-10-14T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/donate/</loc>
+    <lastmod>2015-09-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/overview/</loc>
+    <lastmod>2015-09-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/faq/</loc>
+    <lastmod>2015-08-27T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/privacy/</loc>
+    <lastmod>2015-08-19T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/docs/</loc>
+    <lastmod>2015-06-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/licence/</loc>
+    <lastmod>2015-06-06T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/bugs/</loc>
+    <lastmod>2014-06-16T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/contact/</loc>
+    <lastmod>2014-04-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/local/</loc>
+    <lastmod>2014-04-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/swift/</loc>
+    <lastmod>2014-04-26T00:00:00+00:00</lastmod>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/commands/</loc>
+    <lastmod>2017-12-23T13:05:26+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+  <url>
+    <loc>https://rclone.org/</loc>
+    <lastmod>2018-01-30T00:00:00+00:00</lastmod>
+    <priority>0</priority>
+  </url>
+  
+</urlset>

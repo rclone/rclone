@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta name="generator" content="Hugo 0.37" />
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>rclone - rsync for cloud storage</title>
+    <link rel="canonical" href="https://rclone.org/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    <link href="https://rclone.org/index.xml" rel="alternate" type="application/rss+xml" title="rclone - rsync for cloud storage" />
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/ibmcos-s3/"><i class="fa fa-space-shuttle"></i> IBM Cloud Object Storage (S3)</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+    <div class="row">
+        <div class="col-md-9">
+          
+          
+
+<h1 id="rclone">Rclone</h1>
+
+<p><a href="https://rclone.org/"><img src="/img/rclone-120x120.png" alt="Logo" /></a></p>
+
+<p>Rclone is a command line program to sync files and directories to and from:</p>
+
+<ul>
+<li>Amazon Drive <a href="https://www.amazon.com/clouddrive" title="Amazon Drive Home Page"><i class="fa fa-home"></i></a> <a href="/amazonclouddrive/" title="Rclone Config for Amazon Drive"><i class="fa fa-book"></i></a>
+</li>
+<li>Amazon S3 <a href="https://aws.amazon.com/s3/" title="Amazon S3 Home Page"><i class="fa fa-home"></i></a> <a href="/s3/" title="Rclone Config for Amazon S3"><i class="fa fa-book"></i></a>
+</li>
+<li>Backblaze B2 <a href="https://www.backblaze.com/b2/cloud-storage.html" title="Backblaze B2 Home Page"><i class="fa fa-home"></i></a> <a href="/b2/" title="Rclone Config for Backblaze B2"><i class="fa fa-book"></i></a>
+</li>
+<li>Box <a href="https://www.box.com/" title="Box Home Page"><i class="fa fa-home"></i></a> <a href="/box/" title="Rclone Config for Box"><i class="fa fa-book"></i></a>
+</li>
+<li>Ceph <a href="http://ceph.com/" title="Ceph Home Page"><i class="fa fa-home"></i></a> <a href="/s3/#ceph" title="Rclone Config for Ceph"><i class="fa fa-book"></i></a>
+</li>
+<li>DigitalOcean Spaces <a href="https://www.digitalocean.com/products/object-storage/" title="DigitalOcean Spaces Home Page"><i class="fa fa-home"></i></a> <a href="/s3/#digitalocean-spaces" title="Rclone Config for DigitalOcean Spaces"><i class="fa fa-book"></i></a>
+</li>
+<li>Dreamhost <a href="https://www.dreamhost.com/cloud/storage/" title="Dreamhost Home Page"><i class="fa fa-home"></i></a> <a href="/s3/" title="Rclone Config for Dreamhost"><i class="fa fa-book"></i></a>
+</li>
+<li>Dropbox <a href="https://www.dropbox.com/" title="Dropbox Home Page"><i class="fa fa-home"></i></a> <a href="/dropbox/" title="Rclone Config for Dropbox"><i class="fa fa-book"></i></a>
+</li>
+<li>FTP <a href="https://en.wikipedia.org/wiki/File_Transfer_Protocol" title="FTP Home Page"><i class="fa fa-home"></i></a> <a href="/ftp/" title="Rclone Config for FTP"><i class="fa fa-book"></i></a>
+</li>
+<li>Google Cloud Storage <a href="https://cloud.google.com/storage/" title="Google Cloud Storage Home Page"><i class="fa fa-home"></i></a> <a href="/googlecloudstorage/" title="Rclone Config for Google Cloud Storage"><i class="fa fa-book"></i></a>
+</li>
+<li>Google Drive <a href="https://www.google.com/drive/" title="Google Drive Home Page"><i class="fa fa-home"></i></a> <a href="/drive/" title="Rclone Config for Google Drive"><i class="fa fa-book"></i></a>
+</li>
+<li>HTTP <a href="https://en.wikipedia.org/wiki/Hypertext_Transfer_Protocol" title="HTTP Home Page"><i class="fa fa-home"></i></a> <a href="/http/" title="Rclone Config for HTTP"><i class="fa fa-book"></i></a>
+</li>
+<li>Hubic <a href="https://hubic.com/" title="Hubic Home Page"><i class="fa fa-home"></i></a> <a href="/hubic/" title="Rclone Config for Hubic"><i class="fa fa-book"></i></a>
+</li>
+</li>
+<li>IBM Cloud Object Storage - S3 <a href="https://hubic.com/" title="Hubic Home Page"><i class="fa fa-home"></i></a> <a href="/ibmcos_s3/" title="Rclone Config for IBM Cloud Object Storage (S3)"><i class="fa fa-book"></i></a>
+</li>
+<li>Memset Memstore <a href="https://www.memset.com/cloud/storage/" title="Memset Memstore Home Page"><i class="fa fa-home"></i></a> <a href="/swift/" title="Rclone Config for Memset Memstore"><i class="fa fa-book"></i></a>
+</li>
+<li>Microsoft Azure Blob Storage <a href="https://azure.microsoft.com/en-us/services/storage/blobs/" title="Microsoft Azure Blob Storage Home Page"><i class="fa fa-home"></i></a> <a href="/azureblob/" title="Rclone Config for Microsoft Azure Blob Storage"><i class="fa fa-book"></i></a>
+</li>
+<li>Microsoft OneDrive <a href="https://onedrive.live.com/" title="Microsoft OneDrive Home Page"><i class="fa fa-home"></i></a> <a href="/onedrive/" title="Rclone Config for Microsoft OneDrive"><i class="fa fa-book"></i></a>
+</li>
+<li>Minio <a href="https://www.minio.io/" title="Minio Home Page"><i class="fa fa-home"></i></a> <a href="/s3/#minio" title="Rclone Config for Minio"><i class="fa fa-book"></i></a>
+</li>
+<li>Nextloud <a href="https://nextcloud.com/" title="Nextloud Home Page"><i class="fa fa-home"></i></a> <a href="/webdav/#nextcloud" title="Rclone Config for Nextloud"><i class="fa fa-book"></i></a>
+</li>
+<li>OVH <a href="https://www.ovh.co.uk/public-cloud/storage/object-storage/" title="OVH Home Page"><i class="fa fa-home"></i></a> <a href="/swift/" title="Rclone Config for OVH"><i class="fa fa-book"></i></a>
+</li>
+<li>Openstack Swift <a href="https://docs.openstack.org/swift/latest/" title="Openstack Swift Home Page"><i class="fa fa-home"></i></a> <a href="/swift/" title="Rclone Config for Openstack Swift"><i class="fa fa-book"></i></a>
+</li>
+<li>Oracle Cloud Storage <a href="https://cloud.oracle.com/storage-opc" title="Oracle Cloud Storage Home Page"><i class="fa fa-home"></i></a> <a href="/swift/" title="Rclone Config for Oracle Cloud Storage"><i class="fa fa-book"></i></a>
+</li>
+<li>Ownloud <a href="https://owncloud.org/" title="Ownloud Home Page"><i class="fa fa-home"></i></a> <a href="/webdav/#owncloud" title="Rclone Config for Ownloud"><i class="fa fa-book"></i></a>
+</li>
+<li>pCloud <a href="https://www.pcloud.com/" title="pCloud Home Page"><i class="fa fa-home"></i></a> <a href="/pcloud/" title="Rclone Config for pCloud"><i class="fa fa-book"></i></a>
+</li>
+<li>put.io <a href="https://put.io/" title="put.io Home Page"><i class="fa fa-home"></i></a> <a href="/webdav/#put-io" title="Rclone Config for put.io"><i class="fa fa-book"></i></a>
+</li>
+<li>QingStor <a href="https://www.qingcloud.com/products/storage" title="QingStor Home Page"><i class="fa fa-home"></i></a> <a href="/qingstor/" title="Rclone Config for QingStor"><i class="fa fa-book"></i></a>
+</li>
+<li>Rackspace Cloud Files <a href="https://www.rackspace.com/cloud/files" title="Rackspace Cloud Files Home Page"><i class="fa fa-home"></i></a> <a href="/swift/" title="Rclone Config for Rackspace Cloud Files"><i class="fa fa-book"></i></a>
+</li>
+<li>SFTP <a href="https://en.wikipedia.org/wiki/SFTP" title="SFTP Home Page"><i class="fa fa-home"></i></a> <a href="/sftp/" title="Rclone Config for SFTP"><i class="fa fa-book"></i></a>
+</li>
+<li>Wasabi <a href="https://wasabi.com/" title="Wasabi Home Page"><i class="fa fa-home"></i></a> <a href="/s3/#wasabi" title="Rclone Config for Wasabi"><i class="fa fa-book"></i></a>
+</li>
+<li>WebDAV <a href="https://en.wikipedia.org/wiki/WebDAV" title="WebDAV Home Page"><i class="fa fa-home"></i></a> <a href="/webdav/" title="Rclone Config for WebDAV"><i class="fa fa-book"></i></a>
+</li>
+<li>Yandex Disk <a href="https://disk.yandex.com/" title="Yandex Disk Home Page"><i class="fa fa-home"></i></a> <a href="/yandex/" title="Rclone Config for Yandex Disk"><i class="fa fa-book"></i></a>
+</li>
+<li>The local filesystem <a href="/local/" title="The local filesystem Home Page"><i class="fa fa-home"></i></a> <a href="/local/" title="Rclone Config for The local filesystem"><i class="fa fa-book"></i></a>
+</li>
+</ul>
+
+<p>Features</p>
+
+<ul>
+<li>MD5/SHA1 hashes checked at all times for file integrity</li>
+<li>Timestamps preserved on files</li>
+<li>Partial syncs supported on a whole file basis</li>
+<li><a href="/commands/rclone_copy/">Copy</a> mode to just copy new/changed files</li>
+<li><a href="/commands/rclone_sync/">Sync</a> (one way) mode to make a directory identical</li>
+<li><a href="/commands/rclone_check/">Check</a> mode to check for file hash equality</li>
+<li>Can sync to and from network, eg two different cloud accounts</li>
+<li>Optional encryption (<a href="/crypt/">Crypt</a>)</li>
+<li>Optional cache (<a href="/cache/">Cache</a>)</li>
+<li>Optional FUSE mount (<a href="/commands/rclone_mount/">rclone mount</a>)</li>
+</ul>
+
+<p>Links</p>
+
+<ul>
+<li><i class="fa fa-home"></i> <a href="https://rclone.org/">Home page</a></li>
+<li><i class="fa fa-github"></i> <a href="https://github.com/ncw/rclone">Github project page for source and bug tracker</a></li>
+<li><i class="fa fa-comments"></i> <a href="https://forum.rclone.org">Rclone Forum</a></li>
+<li><i class="fa fa-google-plus"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page</a></li>
+<li><i class="fa fa-cloud-download"></i><a href="/downloads/">Downloads</a></li>
+</ul>
+
+          
+        </div>
+
+        
+        <div class="col-md-3">
+            <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+        </div>
+    </div>
+        <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

@@ -15,6 +15,7 @@ import (
 	_ "github.com/ncw/rclone/backend/googlecloudstorage"
 	_ "github.com/ncw/rclone/backend/http"
 	_ "github.com/ncw/rclone/backend/hubic"
+        _ "github.com/ncw/rclone/backend/ibmcos_s3"
 	_ "github.com/ncw/rclone/backend/local"
 	_ "github.com/ncw/rclone/backend/onedrive"
 	_ "github.com/ncw/rclone/backend/pcloud"

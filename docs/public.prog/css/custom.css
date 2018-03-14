@@ -1,0 +1,47 @@
+body {
+    margin-top: 75px; /* 100px is double the height of the navbar - I made it a big larger for some more space - keep it at 50px at least if you want to use the fixed top nav */
+}
+
+footer {
+    margin: 50px 0;
+}
+
+table {
+   background-color:#e0e0ff
+}
+
+tbody td, th {
+    border: 1px solid black;
+    padding: 3px 7px 2px 7px;
+}
+
+thead td, th {
+    border: 1px solid black;
+    padding: 3px 7px 2px 7px;
+    font-weight: bold;
+}
+
+tbody tr:nth-child(odd) {
+   background-color:#d0d0ff
+}
+
+/* Hover over links on headers */
+.header-link {
+  position: absolute;
+  left: -0.5em;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out 0.1s;
+}
+h2:hover .header-link,
+h3:hover .header-link,
+h4:hover .header-link,
+h5:hover .header-link,
+h6:hover .header-link {
+  opacity: 1;
+}
+
+/* Fix spacing between menu items */
+.navbar-default .dropdown-menu>li>a {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}

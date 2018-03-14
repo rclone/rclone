@@ -1,0 +1,765 @@
+<!doctype html>
+<html lang="en">
+<head>
+        <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Rclone docs for Google drive">
+    <meta name="author" content="Nick Craig-Wood">
+    <link rel="shortcut icon" type="image/png" href="/img/rclone-16x16.png"/>
+    <script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+      ga('create', 'UA-51081799-1', 'rclone.org');
+      ga('send', 'pageview');
+    </script>
+
+    <title>Google drive</title>
+    <link rel="canonical" href="https://rclone.org/drive/">
+        <link href="/css/bootstrap.css" rel="stylesheet">
+    <link href="/css/font-awesome.css" rel="stylesheet">
+    <link href="/css/custom.css" rel="stylesheet">
+
+    
+</head>
+
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-ex1-collapse">
+                    <span class="sr-only">Toggle Navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://rclone.org"><i class="fa fa-home"></i> rclone - rsync for cloud storage</a>
+            </div>
+            <div class="collapse navbar-collapse navbar-ex1-collapse">
+              <ul class="nav navbar-nav">
+                <li><a href="/downloads/"><i class="fa fa-cloud-download"></i> Downloads</a></li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Docs</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/install/"><i class="fa fa-book"></i> Installation</a></li>
+                    <li><a href="/docs/"><i class="fa fa-book"></i> Usage</a></li>
+                    <li><a href="/filtering/"><i class="fa fa-book"></i> Filtering</a></li>
+                    <li><a href="/changelog/"><i class="fa fa-book"></i> Changelog</a></li>
+                    <li><a href="/bugs/"><i class="fa fa-book"></i> Bugs</a></li>
+                    <li><a href="/faq/"><i class="fa fa-book"></i> FAQ</a></li>
+                    <li><a href="/licence/"><i class="fa fa-book"></i> Licence</a></li>
+                    <li><a href="/authors/"><i class="fa fa-book"></i> Authors</a></li>
+                    <li><a href="/donate/"><i class="fa fa-heart"></i> Donate</a></li>
+                    <li><a href="/privacy/"><i class="fa fa-book"></i> Privacy Policy</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Commands</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/commands/rclone_config/"><i class="fa fa-book"></i> rclone config</a></li>
+                    <li><a href="/commands/rclone_copy/"><i class="fa fa-book"></i> rclone copy</a></li>
+                    <li><a href="/commands/rclone_sync/"><i class="fa fa-book"></i> rclone sync</a></li>
+                    <li><a href="/commands/rclone_move/"><i class="fa fa-book"></i> rclone move</a></li>
+                    <li><a href="/commands/rclone_purge/"><i class="fa fa-book"></i> rclone purge</a></li>
+                    <li><a href="/commands/rclone_mkdir/"><i class="fa fa-book"></i> rclone mkdir</a></li>
+                    <li><a href="/commands/rclone_rmdir/"><i class="fa fa-book"></i> rclone rmdir</a></li>
+                    <li><a href="/commands/rclone_check/"><i class="fa fa-book"></i> rclone check</a></li>
+                    <li><a href="/commands/rclone_ls/"><i class="fa fa-book"></i> rclone ls</a></li>
+                    <li><a href="/commands/rclone_lsd/"><i class="fa fa-book"></i> rclone lsd</a></li>
+                    <li><a href="/commands/rclone_delete/"><i class="fa fa-book"></i> rclone delete</a></li>
+                    <li><a href="/commands/rclone_size/"><i class="fa fa-book"></i> rclone size</a></li>
+                    <li><a href="/commands/"><i class="fa fa-book"></i> ...and the rest</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown">
+                  <a href="#" class="dropdown-toggle" data-toggle="dropdown"><b class="caret"></b> Storage Systems</a>
+                  <ul class="dropdown-menu">
+                    <li><a href="/overview/"><i class="fa fa-archive"></i> Overview</a></li>
+                    <li><a href="/amazonclouddrive/"><i class="fa fa-amazon"></i> Amazon Drive</a></li>
+                    <li><a href="/s3/"><i class="fa fa-amazon"></i> Amazon S3</a></li>
+                    <li><a href="/b2/"><i class="fa fa-fire"></i> Backblaze B2</a></li>
+                    <li><a href="/box/"><i class="fa fa-archive"></i> Box</a></li>
+                    <li><a href="/cache/"><i class="fa fa-archive"></i> Cache</a></li>
+                    <li><a href="/crypt/"><i class="fa fa-lock"></i> Crypt (encrypts the others)</a></li>
+                    <li><a href="/dropbox/"><i class="fa fa-dropbox"></i> Dropbox</a></li>
+                    <li><a href="/ftp/"><i class="fa fa-file"></i> FTP</a></li>
+                    <li><a href="/googlecloudstorage/"><i class="fa fa-google"></i> Google Cloud Storage</a></li>
+                    <li><a href="/drive/"><i class="fa fa-google"></i> Google Drive</a></li>
+                    <li><a href="/http/"><i class="fa fa-globe"></i> HTTP</a></li>
+                    <li><a href="/hubic/"><i class="fa fa-space-shuttle"></i> Hubic</a></li>
+                    <li><a href="/azureblob/"><i class="fa fa-windows"></i> Microsoft Azure Blob Storage</a></li>
+                    <li><a href="/onedrive/"><i class="fa fa-windows"></i> Microsoft OneDrive</a></li>
+                    <li><a href="/qingstor/"><i class="fa fa-hdd-o"></i> QingStor</a></li>
+                    <li><a href="/swift/"><i class="fa fa-space-shuttle"></i> Openstack Swift</a></li>
+                    <li><a href="/pcloud/"><i class="fa fa-cloud"></i> pCloud</a></li>
+                    <li><a href="/sftp/"><i class="fa fa-server"></i> SFTP</a></li>
+                    <li><a href="/webdav/"><i class="fa fa-server"></i> WebDAV</a></li>
+                    <li><a href="/yandex/"><i class="fa fa-space-shuttle"></i> Yandex Disk</a></li>
+                    <li><a href="/local/"><i class="fa fa-file"></i> The local filesystem</a></li>
+                  </ul>
+                </li>
+                <li><a href="/contact/"><i class="fa fa-envelope"></i> Contact</a></li>
+              </ul>
+            </div>
+        </div>
+    </nav>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-9">
+      
+
+<h2 id="i-class-fa-fa-google-i-google-drive"><i class="fa fa-google"></i> Google Drive</h2>
+
+<p>Paths are specified as <code>drive:path</code></p>
+
+<p>Drive paths may be as deep as required, eg <code>drive:directory/subdirectory</code>.</p>
+
+<p>The initial setup for drive involves getting a token from Google drive
+which you need to do in your browser.  <code>rclone config</code> walks you
+through it.</p>
+
+<p>Here is an example of how to make a remote called <code>remote</code>.  First run:</p>
+
+<pre><code> rclone config
+</code></pre>
+
+<p>This will guide you through an interactive setup process:</p>
+
+<pre><code>No remotes found - make a new one
+n) New remote
+r) Rename remote
+c) Copy remote
+s) Set configuration password
+q) Quit config
+n/r/c/s/q&gt; n
+name&gt; remote
+Type of storage to configure.
+Choose a number from below, or type in your own value
+[snip]
+10 / Google Drive
+   \ &quot;drive&quot;
+[snip]
+Storage&gt; drive
+Google Application Client Id - leave blank normally.
+client_id&gt;
+Google Application Client Secret - leave blank normally.
+client_secret&gt;
+Scope that rclone should use when requesting access from drive.
+Choose a number from below, or type in your own value
+ 1 / Full access all files, excluding Application Data Folder.
+   \ &quot;drive&quot;
+ 2 / Read-only access to file metadata and file contents.
+   \ &quot;drive.readonly&quot;
+   / Access to files created by rclone only.
+ 3 | These are visible in the drive website.
+   | File authorization is revoked when the user deauthorizes the app.
+   \ &quot;drive.file&quot;
+   / Allows read and write access to the Application Data folder.
+ 4 | This is not visible in the drive website.
+   \ &quot;drive.appfolder&quot;
+   / Allows read-only access to file metadata but
+ 5 | does not allow any access to read or download file content.
+   \ &quot;drive.metadata.readonly&quot;
+scope&gt; 1
+ID of the root folder - leave blank normally.  Fill in to access &quot;Computers&quot; folders. (see docs).
+root_folder_id&gt; 
+Service Account Credentials JSON file path - needed only if you want use SA instead of interactive login.
+service_account_file&gt;
+Remote config
+Use auto config?
+ * Say Y if not sure
+ * Say N if you are working on a remote or headless machine or Y didn't work
+y) Yes
+n) No
+y/n&gt; y
+If your browser doesn't open automatically go to the following link: http://127.0.0.1:53682/auth
+Log in and authorize rclone for access
+Waiting for code...
+Got code
+Configure this as a team drive?
+y) Yes
+n) No
+y/n&gt; n
+--------------------
+[remote]
+client_id = 
+client_secret = 
+scope = drive
+root_folder_id = 
+service_account_file =
+token = {&quot;access_token&quot;:&quot;XXX&quot;,&quot;token_type&quot;:&quot;Bearer&quot;,&quot;refresh_token&quot;:&quot;XXX&quot;,&quot;expiry&quot;:&quot;2014-03-16T13:57:58.955387075Z&quot;}
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y
+</code></pre>
+
+<p>Note that rclone runs a webserver on your local machine to collect the
+token as returned from Google if you use auto config mode. This only
+runs from the moment it opens your browser to the moment you get back
+the verification code.  This is on <code>http://127.0.0.1:53682/</code> and this
+it may require you to unblock it temporarily if you are running a host
+firewall, or use manual mode.</p>
+
+<p>You can then use it like this,</p>
+
+<p>List directories in top level of your drive</p>
+
+<pre><code>rclone lsd remote:
+</code></pre>
+
+<p>List all the files in your drive</p>
+
+<pre><code>rclone ls remote:
+</code></pre>
+
+<p>To copy a local directory to a drive directory called backup</p>
+
+<pre><code>rclone copy /home/source remote:backup
+</code></pre>
+
+<h3 id="scopes">Scopes</h3>
+
+<p>Rclone allows you to select which scope you would like for rclone to
+use.  This changes what type of token is granted to rclone.  <a href="https://developers.google.com/drive/v3/web/about-auth">The
+scopes are defined
+here.</a>.</p>
+
+<p>The scope are</p>
+
+<h4 id="drive">drive</h4>
+
+<p>This is the default scope and allows full access to all files, except
+for the Application Data Folder (see below).</p>
+
+<p>Choose this one if you aren&rsquo;t sure.</p>
+
+<h4 id="drive-readonly">drive.readonly</h4>
+
+<p>This allows read only access to all files.  Files may be listed and
+downloaded but not uploaded, renamed or deleted.</p>
+
+<h4 id="drive-file">drive.file</h4>
+
+<p>With this scope rclone can read/view/modify only those files and
+folders it creates.</p>
+
+<p>So if you uploaded files to drive via the web interface (or any other
+means) they will not be visible to rclone.</p>
+
+<p>This can be useful if you are using rclone to backup data and you want
+to be sure confidential data on your drive is not visible to rclone.</p>
+
+<p>Files created with this scope are visible in the web interface.</p>
+
+<h4 id="drive-appfolder">drive.appfolder</h4>
+
+<p>This gives rclone its own private area to store files.  Rclone will
+not be able to see any other files on your drive and you won&rsquo;t be able
+to see rclone&rsquo;s files from the web interface either.</p>
+
+<h4 id="drive-metadata-readonly">drive.metadata.readonly</h4>
+
+<p>This allows read only access to file names only.  It does not allow
+rclone to download or upload data, or rename or delete files or
+directories.</p>
+
+<h3 id="root-folder-id">Root folder ID</h3>
+
+<p>You can set the <code>root_folder_id</code> for rclone.  This is the directory
+(identified by its <code>Folder ID</code>) that rclone considers to be a the root
+of your drive.</p>
+
+<p>Normally you will leave this blank and rclone will determine the
+correct root to use itself.</p>
+
+<p>However you can set this to restrict rclone to a specific folder
+hierarchy or to access data within the &ldquo;Computers&rdquo; tab on the drive
+web interface (where files from Google&rsquo;s Backup and Sync desktop
+program go).</p>
+
+<p>In order to do this you will have to find the <code>Folder ID</code> of the
+directory you wish rclone to display.  This will be the last segment
+of the URL when you open the relevant folder in the drive web
+interface.</p>
+
+<p>So if the folder you want rclone to use has a URL which looks like
+<code>https://drive.google.com/drive/folders/1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh</code>
+in the browser, then you use <code>1XyfxxxxxxxxxxxxxxxxxxxxxxxxxKHCh</code> as
+the <code>root_folder_id</code> in the config.</p>
+
+<p><strong>NB</strong> folders under the &ldquo;Computers&rdquo; tab seem to be read only (drive
+gives a 500 error) when using rclone.</p>
+
+<p>There doesn&rsquo;t appear to be an API to discover the folder IDs of the
+&ldquo;Computers&rdquo; tab - please contact us if you know otherwise!</p>
+
+<p>Note also that rclone can&rsquo;t access any data under the &ldquo;Backups&rdquo; tab on
+the google drive web interface yet.</p>
+
+<h3 id="service-account-support">Service Account support</h3>
+
+<p>You can set up rclone with Google Drive in an unattended mode,
+i.e. not tied to a specific end-user Google account. This is useful
+when you want to synchronise files onto machines that don&rsquo;t have
+actively logged-in users, for example build machines.</p>
+
+<p>To create a service account and obtain its credentials, go to the
+<a href="https://console.developers.google.com">Google Developer Console</a> and
+use the &ldquo;Create Credentials&rdquo; button. After creating an account, a JSON
+file containing the Service Account&rsquo;s credentials will be downloaded
+onto your machine. These credentials are what rclone will use for
+authentication.</p>
+
+<p>To use a Service Account instead of OAuth2 token flow, enter the path
+to your Service Account credentials at the <code>service_account_file</code>
+prompt and rclone won&rsquo;t use the browser based authentication
+flow.</p>
+
+<h3 id="team-drives">Team drives</h3>
+
+<p>If you want to configure the remote to point to a Google Team Drive
+then answer <code>y</code> to the question <code>Configure this as a team drive?</code>.</p>
+
+<p>This will fetch the list of Team Drives from google and allow you to
+configure which one you want to use.  You can also type in a team
+drive ID if you prefer.</p>
+
+<p>For example:</p>
+
+<pre><code>Configure this as a team drive?
+y) Yes
+n) No
+y/n&gt; y
+Fetching team drive list...
+Choose a number from below, or type in your own value
+ 1 / Rclone Test
+   \ &quot;xxxxxxxxxxxxxxxxxxxx&quot;
+ 2 / Rclone Test 2
+   \ &quot;yyyyyyyyyyyyyyyyyyyy&quot;
+ 3 / Rclone Test 3
+   \ &quot;zzzzzzzzzzzzzzzzzzzz&quot;
+Enter a Team Drive ID&gt; 1
+--------------------
+[remote]
+client_id =
+client_secret =
+token = {&quot;AccessToken&quot;:&quot;xxxx.x.xxxxx_xxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;RefreshToken&quot;:&quot;1/xxxxxxxxxxxxxxxx_xxxxxxxxxxxxxxxxxxxxxxxxxx&quot;,&quot;Expiry&quot;:&quot;2014-03-16T13:57:58.955387075Z&quot;,&quot;Extra&quot;:null}
+team_drive = xxxxxxxxxxxxxxxxxxxx
+--------------------
+y) Yes this is OK
+e) Edit this remote
+d) Delete this remote
+y/e/d&gt; y
+</code></pre>
+
+<h3 id="modified-time">Modified time</h3>
+
+<p>Google drive stores modification times accurate to 1 ms.</p>
+
+<h3 id="revisions">Revisions</h3>
+
+<p>Google drive stores revisions of files.  When you upload a change to
+an existing file to google drive using rclone it will create a new
+revision of that file.</p>
+
+<p>Revisions follow the standard google policy which at time of writing
+was</p>
+
+<ul>
+<li>They are deleted after 30 days or 100 revisions (whatever comes first).</li>
+<li>They do not count towards a user storage quota.</li>
+</ul>
+
+<h3 id="deleting-files">Deleting files</h3>
+
+<p>By default rclone will send all files to the trash when deleting
+files.  If deleting them permanently is required then use the
+<code>--drive-use-trash=false</code> flag, or set the equivalent environment
+variable.</p>
+
+<h3 id="emptying-trash">Emptying trash</h3>
+
+<p>If you wish to empty your trash you can use the <code>rclone cleanup remote:</code>
+command which will permanently delete all your trashed files. This command
+does not take any path arguments.</p>
+
+<h3 id="specific-options">Specific options</h3>
+
+<p>Here are the command line options specific to this cloud storage
+system.</p>
+
+<h4 id="drive-auth-owner-only">--drive-auth-owner-only</h4>
+
+<p>Only consider files owned by the authenticated user.</p>
+
+<h4 id="drive-chunk-size-size">--drive-chunk-size=SIZE</h4>
+
+<p>Upload chunk size. Must a power of 2 &gt;= 256k. Default value is 8 MB.</p>
+
+<p>Making this larger will improve performance, but note that each chunk
+is buffered in memory one per transfer.</p>
+
+<p>Reducing this will reduce memory usage but decrease performance.</p>
+
+<h4 id="drive-formats">--drive-formats</h4>
+
+<p>Google documents can only be exported from Google drive.  When rclone
+downloads a Google doc it chooses a format to download depending upon
+this setting.</p>
+
+<p>By default the formats are <code>docx,xlsx,pptx,svg</code> which are a sensible
+default for an editable document.</p>
+
+<p>When choosing a format, rclone runs down the list provided in order
+and chooses the first file format the doc can be exported as from the
+list. If the file can&rsquo;t be exported to a format on the formats list,
+then rclone will choose a format from the default list.</p>
+
+<p>If you prefer an archive copy then you might use <code>--drive-formats
+pdf</code>, or if you prefer openoffice/libreoffice formats you might use
+<code>--drive-formats ods,odt,odp</code>.</p>
+
+<p>Note that rclone adds the extension to the google doc, so if it is
+calles <code>My Spreadsheet</code> on google docs, it will be exported as <code>My
+Spreadsheet.xlsx</code> or <code>My Spreadsheet.pdf</code> etc.</p>
+
+<p>Here are the possible extensions with their corresponding mime types.</p>
+
+<table>
+<thead>
+<tr>
+<th>Extension</th>
+<th>Mime Type</th>
+<th>Description</th>
+</tr>
+</thead>
+
+<tbody>
+<tr>
+<td>csv</td>
+<td>text/csv</td>
+<td>Standard CSV format for Spreadsheets</td>
+</tr>
+
+<tr>
+<td>doc</td>
+<td>application/msword</td>
+<td>Micosoft Office Document</td>
+</tr>
+
+<tr>
+<td>docx</td>
+<td>application/vnd.openxmlformats-officedocument.wordprocessingml.document</td>
+<td>Microsoft Office Document</td>
+</tr>
+
+<tr>
+<td>epub</td>
+<td>application/epub+zip</td>
+<td>E-book format</td>
+</tr>
+
+<tr>
+<td>html</td>
+<td>text/html</td>
+<td>An HTML Document</td>
+</tr>
+
+<tr>
+<td>jpg</td>
+<td>image/jpeg</td>
+<td>A JPEG Image File</td>
+</tr>
+
+<tr>
+<td>odp</td>
+<td>application/vnd.oasis.opendocument.presentation</td>
+<td>Openoffice Presentation</td>
+</tr>
+
+<tr>
+<td>ods</td>
+<td>application/vnd.oasis.opendocument.spreadsheet</td>
+<td>Openoffice Spreadsheet</td>
+</tr>
+
+<tr>
+<td>ods</td>
+<td>application/x-vnd.oasis.opendocument.spreadsheet</td>
+<td>Openoffice Spreadsheet</td>
+</tr>
+
+<tr>
+<td>odt</td>
+<td>application/vnd.oasis.opendocument.text</td>
+<td>Openoffice Document</td>
+</tr>
+
+<tr>
+<td>pdf</td>
+<td>application/pdf</td>
+<td>Adobe PDF Format</td>
+</tr>
+
+<tr>
+<td>png</td>
+<td>image/png</td>
+<td>PNG Image Format</td>
+</tr>
+
+<tr>
+<td>pptx</td>
+<td>application/vnd.openxmlformats-officedocument.presentationml.presentation</td>
+<td>Microsoft Office Powerpoint</td>
+</tr>
+
+<tr>
+<td>rtf</td>
+<td>application/rtf</td>
+<td>Rich Text Format</td>
+</tr>
+
+<tr>
+<td>svg</td>
+<td>image/svg+xml</td>
+<td>Scalable Vector Graphics Format</td>
+</tr>
+
+<tr>
+<td>tsv</td>
+<td>text/tab-separated-values</td>
+<td>Standard TSV format for spreadsheets</td>
+</tr>
+
+<tr>
+<td>txt</td>
+<td>text/plain</td>
+<td>Plain Text</td>
+</tr>
+
+<tr>
+<td>xls</td>
+<td>application/vnd.ms-excel</td>
+<td>Microsoft Office Spreadsheet</td>
+</tr>
+
+<tr>
+<td>xlsx</td>
+<td>application/vnd.openxmlformats-officedocument.spreadsheetml.sheet</td>
+<td>Microsoft Office Spreadsheet</td>
+</tr>
+
+<tr>
+<td>zip</td>
+<td>application/zip</td>
+<td>A ZIP file of HTML, Images CSS</td>
+</tr>
+</tbody>
+</table>
+
+<h4 id="drive-impersonate-user">--drive-impersonate user</h4>
+
+<p>When using a service account, this instructs rclone to impersonate the user passed in.</p>
+
+<h4 id="drive-list-chunk-int">--drive-list-chunk int</h4>
+
+<p>Size of listing chunk 100-1000. 0 to disable. (default 1000)</p>
+
+<h4 id="drive-shared-with-me">--drive-shared-with-me</h4>
+
+<p>Instructs rclone to operate on your &ldquo;Shared with me&rdquo; folder (where
+Google Drive lets you access the files and folders others have shared
+with you).</p>
+
+<p>This works both with the &ldquo;list&rdquo; (lsd, lsl, etc) and the &ldquo;copy&rdquo;
+commands (copy, sync, etc), and with all other commands too.</p>
+
+<h4 id="drive-skip-gdocs">--drive-skip-gdocs</h4>
+
+<p>Skip google documents in all listings. If given, gdocs practically become invisible to rclone.</p>
+
+<h4 id="drive-trashed-only">--drive-trashed-only</h4>
+
+<p>Only show files that are in the trash.  This will show trashed files
+in their original directory structure.</p>
+
+<h4 id="drive-upload-cutoff-size">--drive-upload-cutoff=SIZE</h4>
+
+<p>File size cutoff for switching to chunked upload.  Default is 8 MB.</p>
+
+<h4 id="drive-use-trash">--drive-use-trash</h4>
+
+<p>Controls whether files are sent to the trash or deleted
+permanently. Defaults to true, namely sending files to the trash.  Use
+<code>--drive-use-trash=false</code> to delete files permanently instead.</p>
+
+<h4 id="drive-use-created-date">--drive-use-created-date</h4>
+
+<p>Use the file creation date in place of the modification date. Defaults
+to false.</p>
+
+<p>Useful when downloading data and you want the creation date used in
+place of the last modified date.</p>
+
+<p><strong>WARNING</strong>: This flag may have some unexpected consequences.</p>
+
+<p>When uploading to your drive all files will be overwritten unless they
+haven&rsquo;t been modified since their creation. And the inverse will occur
+while downloading.  This side effect can be avoided by using the
+<code>--checksum</code> flag.</p>
+
+<p>This feature was implemented to retain photos capture date as recorded
+by google photos. You will first need to check the &ldquo;Create a Google
+Photos folder&rdquo; option in your google drive settings. You can then copy
+or move the photos locally and use the date the image was taken
+(created) set as the modification date.</p>
+
+<h3 id="limitations">Limitations</h3>
+
+<p>Drive has quite a lot of rate limiting.  This causes rclone to be
+limited to transferring about 2 files per second only.  Individual
+files may be transferred much faster at 100s of MBytes/s but lots of
+small files can take a long time.</p>
+
+<p>Server side copies are also subject to a separate rate limit. If you
+see User rate limit exceeded errors, wait at least 24 hours and retry.
+You can disable server side copies with <code>--disable copy</code> to download
+and upload the files if you prefer.</p>
+
+<h4 id="limitations-of-google-docs">Limitations of Google Docs</h4>
+
+<p>Google docs will appear as size -1 in <code>rclone ls</code> and as size 0 in
+anything which uses the VFS layer, eg <code>rclone mount</code>, <code>rclone serve</code>.</p>
+
+<p>This is because rclone can&rsquo;t find out the size of the Google docs
+without downloading them.</p>
+
+<p>Google docs will transfer correctly with <code>rclone sync</code>, <code>rclone copy</code>
+etc as rclone knows to ignore the size when doing the transfer.</p>
+
+<p>However an unfortunate consequence of this is that you can&rsquo;t download
+Google docs using <code>rclone mount</code> - you will get a 0 sized file.  If
+you try again the doc may gain its correct size and be downloadable.</p>
+
+<h3 id="duplicated-files">Duplicated files</h3>
+
+<p>Sometimes, for no reason I&rsquo;ve been able to track down, drive will
+duplicate a file that rclone uploads.  Drive unlike all the other
+remotes can have duplicated files.</p>
+
+<p>Duplicated files cause problems with the syncing and you will see
+messages in the log about duplicates.</p>
+
+<p>Use <code>rclone dedupe</code> to fix duplicated files.</p>
+
+<p>Note that this isn&rsquo;t just a problem with rclone, even Google Photos on
+Android duplicates files on drive sometimes.</p>
+
+<h3 id="rclone-appears-to-be-re-copying-files-it-shouldn-t">Rclone appears to be re-copying files it shouldn&rsquo;t</h3>
+
+<p>The most likely cause of this is the duplicated file issue above - run
+<code>rclone dedupe</code> and check your logs for duplicate object or directory
+messages.</p>
+
+<h3 id="making-your-own-client-id">Making your own client_id</h3>
+
+<p>When you use rclone with Google drive in its default configuration you
+are using rclone&rsquo;s client_id.  This is shared between all the rclone
+users.  There is a global rate limit on the number of queries per
+second that each client_id can do set by Google.  rclone already has a
+high quota and I will continue to make sure it is high enough by
+contacting Google.</p>
+
+<p>However you might find you get better performance making your own
+client_id if you are a heavy user. Or you may not depending on exactly
+how Google have been raising rclone&rsquo;s rate limit.</p>
+
+<p>Here is how to create your own Google Drive client ID for rclone:</p>
+
+<ol>
+<li><p>Log into the <a href="https://console.developers.google.com/">Google API
+Console</a> with your Google
+account. It doesn&rsquo;t matter what Google account you use. (It need not
+be the same account as the Google Drive you want to access)</p></li>
+
+<li><p>Select a project or create a new project.</p></li>
+
+<li><p>Under &ldquo;ENABLE APIS AND SERVICES&rdquo; search for &ldquo;Drive&rdquo;, and enable the
+then &ldquo;Google Drive API&rdquo;.</p></li>
+
+<li><p>Click &ldquo;Credentials&rdquo; in the left-side panel (not &ldquo;Create
+credentials&rdquo;, which opens the wizard), then &ldquo;Create credentials&rdquo;, then
+&ldquo;OAuth client ID&rdquo;.  It will prompt you to set the OAuth consent screen
+product name, if you haven&rsquo;t set one already.</p></li>
+
+<li><p>Choose an application type of &ldquo;other&rdquo;, and click &ldquo;Create&rdquo;. (the
+default name is fine)</p></li>
+
+<li><p>It will show you a client ID and client secret.  Use these values
+in rclone config to add a new remote or edit an existing remote.</p></li>
+</ol>
+
+<p>(Thanks to @balazer on github for these instructions.)</p>
+
+    </div>
+    
+    
+    <div class="col-md-3">
+          <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Share and Enjoy.</h4>
+        </div>
+        <div class="panel-body">
+          <a href="//twitter.com/share" class="twitter-share-button" data-count="horizontal" data-via="njcw">Tweet</a>
+          <script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');</script>
+          <br><g:plusone size="medium"></g:plusone>
+          <script type="text/javascript" src="https://apis.google.com/js/plusone.js"></script>
+          <br><iframe src="//ghbtns.com/github-btn.html?user=ncw&repo=rclone&type=watch&count=true" allowtransparency="true" frameborder="0" scrolling="0" width="110px" height="20"></iframe>
+          <br><iframe src="//www.facebook.com/plugins/like.php?href=http%3A%2F%2Frclone.org%2F&amp;width=110&amp;layout=button_count&amp;action=like&amp;show_faces=true&amp;share=true&amp;height=21&amp;appId=232073720158744" scrolling="no" frameborder="0" style="border:none; overflow:hidden; width:200px; height:21px;" allowTransparency="true"></iframe>
+        </div>
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading" style="padding: 2px 15px;">
+            <h4>Links.</h4>
+        </div>
+        <div class="panel-body">
+          <p>
+            <i class="fa fa-comments" aria-hidden="true"></i> <a href="https://forum.rclone.org">Rclone forum.</a><br />
+            <i class="fa fa-github" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone">Github project.</a><br />
+            <i class="fa fa-google-plus" aria-hidden="true"></i> <a href="https://google.com/+RcloneOrg" rel="publisher">Google+ page.</a><br />
+            <i class="fa fa-slack" aria-hidden="true"></i> <a href="https://slack-invite.rclone.org/">Rclone slack chat.</a><br />
+            <i class="fa fa-book" aria-hidden="true"></i> <a href="https://github.com/ncw/rclone/wiki">Rclone Wiki.</a><br />
+            <i class="fa fa-heart" aria-hidden="true"></i> <a href="/donate/">Donate.</a><br />
+            <i class="fa fa-twitter" aria-hidden="true"></i> <a href="https://twitter.com/njcw">@njcw</a>
+          </p>
+        </div>
+    </div>
+
+    </div>
+  </div>
+          <footer>
+            <div class="row">
+                <hr>
+                <div class="col-sm-12">
+                    <p>&copy; <a href="https://www.craig-wood.com/nick/">Nick Craig-Wood</a> 2014-2017<br>
+                      Website hosted on a <a href="https://www.memset.com/dedicated-servers/vps/"><span style="font-weight: bold; font-family: arial black, arial, sans-serif; font-style: italic;">MEMSET CLOUD VPS</span></a>,
+                      uploaded with <a href="https://rclone.org">rclone</a>
+                      and built with <a href="https://github.com/spf13/hugo">Hugo</a></p>
+                </div>
+            </div>
+        </footer>
+
+</div>
+
+    <script src="/js/jquery.js"></script>
+    <script src="/js/bootstrap.js"></script>
+    <script src="/js/custom.js"></script>
+</body>
+</html>
+

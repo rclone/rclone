@@ -35,6 +35,7 @@ docs = [
     "drive.md",
     "http.md",
     "hubic.md",
+    "ibmcos_s3.md",
     "azureblob.md",
     "onedrive.md",
     "qingstor.md",
