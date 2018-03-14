@@ -1,7 +1,6 @@
 package restic
 
 import (
-	"log"
 	"net"
 	"os"
 )
@@ -34,7 +33,6 @@ func (s *StdioConn) Write(p []byte) (int, error) {
 
 // Close closes both streams.
 func (s *StdioConn) Close() error {
-	log.Printf("Server.Close()\n")
 	err1 := s.stdin.Close()
 	err2 := s.stdout.Close()
 	if err1 != nil {
