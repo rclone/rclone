@@ -127,6 +127,9 @@ instance `/home/$USER/.ssh/id_rsa`.
 If you don't specify `pass` or `key_file` then rclone will attempt to
 contact an ssh-agent.
 
+If you set the `--sftp-ask-password` option, rclone will prompt for a
+password when needed and no password has been configured.
+
 ### ssh-agent on macOS ###
 
 Note that there seem to be various problems with using an ssh-agent on
@@ -140,6 +143,14 @@ And then at the end of the session
     eval `ssh-agent -k`
 
 These commands can be used in scripts of course.
+
+### Specific options ###
+
+Here are the command line options specific to this remote.
+
+#### --sftp-ask-password ####
+
+Ask for the SFTP password if needed when no password has been configured.
 
 ### Modified time ###
 
