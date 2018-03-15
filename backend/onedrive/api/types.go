@@ -177,6 +177,11 @@ type SetFileSystemInfo struct {
 	FileSystemInfo FileSystemInfoFacet `json:"fileSystemInfo"` // File system information on client. Read-write.
 }
 
+// CreateUploadRequest is used by CreateUploadSession to set the dates correctly
+type CreateUploadRequest struct {
+	Item SetFileSystemInfo `json:"item"`
+}
+
 // CreateUploadResponse is the response from creating an upload session
 type CreateUploadResponse struct {
 	UploadURL          string    `json:"uploadUrl"`          // "https://sn3302.up.1drv.com/up/fe6987415ace7X4e1eF866337",
