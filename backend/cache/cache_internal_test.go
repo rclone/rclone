@@ -645,7 +645,7 @@ func TestInternalChangeSeenAfterRc(t *testing.T) {
 	require.NotEqual(t, o.ModTime().String(), co.ModTime().String())
 
 	m := make(map[string]string)
-	res, err := http.Post(fmt.Sprintf("http://localhost:5572/cache/expire?remote=%s", runInstance.encryptRemoteIfNeeded(t, "data.bin")), "application/json; charset=utf-8", strings.NewReader(""))
+	res, err := http.Post(fmt.Sprintf("http://localhost:5572/cache/expire?remote=%s", "data.bin"), "application/json; charset=utf-8", strings.NewReader(""))
 	require.NoError(t, err)
 	defer func() {
 		_ = res.Body.Close()

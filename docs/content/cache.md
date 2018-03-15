@@ -248,6 +248,8 @@ By default, the listener is disabled if you do not add the flag.
 
 ### rc cache/expire
 Purge a remote from the cache backend. Supports either a directory or a file.
+It supports both encrypted and unencrypted file names if cache is wrapped by crypt.
+
 Params:
   - **remote** = path to remote **(required)**
   - **withData** = true/false to delete cached data (chunks) as well _(optional, false by default)_
