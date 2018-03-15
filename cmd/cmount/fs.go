@@ -283,7 +283,7 @@ func (fsys *FS) Open(path string, flags int) (errc int, fh uint64) {
 	defer log.Trace(path, "flags=0x%X", flags)("errc=%d, fh=0x%X", &errc, &fh)
 
 	// translate the fuse flags to os flags
-	flags = translateOpenFlags(flags) | os.O_CREATE
+	flags = translateOpenFlags(flags)
 	handle, err := fsys.VFS.OpenFile(path, flags, 0777)
 	if errc != 0 {
 		return translateError(err), fhUnset
