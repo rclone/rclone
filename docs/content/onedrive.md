@@ -153,11 +153,6 @@ system.
 Above this size files will be chunked - must be multiple of 320k. The
 default is 10MB.  Note that the chunks will be buffered into memory.
 
-#### --onedrive-upload-cutoff=SIZE ####
-
-Cutoff for switching to chunked upload - must be <= 100MB. The default
-is 10MB.
-
 ### Limitations ###
 
 Note that OneDrive is case insensitive so you can't have a
@@ -170,3 +165,28 @@ identical looking unicode equivalent.  For example if a file has a `?`
 in it will be mapped to `？` instead.
 
 The largest allowed file size is 10GiB (10,737,418,240 bytes).
+
+### Versioning issue ###
+
+Every change in OneDrive causes the service to create a new version.
+This counts against a users quota.  
+For example changing the modification time of a file creates a second
+version, so the file is using twice the space.
+
+The `copy` is the only rclone command affected by this as we copy
+the file and then afterwards set the modification time to match the
+source file.
+
+User [Weropol](https://github.com/Weropol) has found a method to disable
+versioning on OneDrive
+
+1. Open the settings menu by clicking on the gear symbol at the top of the OneDrive Business page.
+2. Click Site settings.
+3. Once on the Site settings page, navigate to Site Administration > Site libraries and lists.
+4. Click Customize "Documents".
+5. Click General Settings > Versioning Settings.
+6. Under Document Version History select the option No versioning.  
+Note: This will disable the creation of new file versions, but will not remove any previous versions. Your documents are safe.
+7. Apply the changes by clicking OK.
+8. Use rclone to upload or modify files. (I also use the --no-update-modtime flag)
+9. Restore the versioning settings after using rclone. (Optional)
