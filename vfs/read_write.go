@@ -102,8 +102,8 @@ func (fh *RWFileHandle) openPending(truncate bool) (err error) {
 		return nil
 	}
 
-	fh.file.muOpen.Lock()
-	defer fh.file.muOpen.Unlock()
+	fh.file.muRW.Lock()
+	defer fh.file.muRW.Unlock()
 
 	o := fh.file.getObject()
 
@@ -240,8 +240,8 @@ func (fh *RWFileHandle) modified() bool {
 // to give the user a chance to recover it.
 func (fh *RWFileHandle) close() (err error) {
 	defer log.Trace(fh.logPrefix(), "")("err=%v", &err)
-	fh.file.muClose.Lock()
-	defer fh.file.muClose.Unlock()
+	fh.file.muRW.Lock()
+	defer fh.file.muRW.Unlock()
 
 	if fh.closed {
 		return ECLOSED

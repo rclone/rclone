@@ -29,8 +29,7 @@ type File struct {
 	modified          bool       // has the cache file be modified by a RWFileHandle?
 	pendingModTime    time.Time  // will be applied once o becomes available, i.e. after file was written
 
-	muClose sync.Mutex // synchonize RWFileHandle.close()
-	muOpen  sync.Mutex // synchonize RWFileHandle.openPending()
+	muRW sync.Mutex // synchonize RWFileHandle.openPending(), RWFileHandle.close() and File.Remove
 }
 
 // newFile creates a new File
@@ -385,6 +384,8 @@ func (f *File) Sync() error {
 
 // Remove the file
 func (f *File) Remove() error {
+	f.muRW.Lock()
+	defer f.muRW.Unlock()
 	if f.d.vfs.Opt.ReadOnly {
 		return EROFS
 	}
