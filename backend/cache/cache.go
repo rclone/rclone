@@ -447,6 +447,16 @@ func (f *Fs) httpExpireRemote(in rc.Params) (out rc.Params, err error) {
 		withData = true
 	}
 
+	// if it's wrapped by crypt we need to check what format we got
+	if cryptFs, yes := f.isWrappedByCrypt(); yes {
+		_, err := cryptFs.DecryptFileName(remote)
+		// if it failed to decrypt then it is a decrypted format and we need to encrypt it
+		if err != nil {
+			remote = cryptFs.EncryptFileName(remote)
+		}
+		// else it's an encrypted format and we can use it as it is
+	}
+
 	if !f.cache.HasEntry(path.Join(f.Root(), remote)) {
 		return out, errors.Errorf("%s doesn't exist in cache", remote)
 	}
@@ -459,6 +469,8 @@ func (f *Fs) httpExpireRemote(in rc.Params) (out rc.Params, err error) {
 		if err != nil {
 			return out, errors.WithMessage(err, "error expiring directory")
 		}
+		// notify vfs too
+		f.notifyChangeUpstream(cd.Remote(), fs.EntryDirectory)
 		out["status"] = "ok"
 		out["message"] = fmt.Sprintf("cached directory cleared: %v", remote)
 		return out, nil
@@ -469,6 +481,8 @@ func (f *Fs) httpExpireRemote(in rc.Params) (out rc.Params, err error) {
 	if err != nil {
 		return out, errors.WithMessage(err, "error expiring file")
 	}
+	// notify vfs too
+	f.notifyChangeUpstream(co.Remote(), fs.EntryObject)
 	if withData {
 		// safe to ignore as the file might not have been open
 		_ = os.RemoveAll(path.Join(f.cache.dataPath, co.abs()))
