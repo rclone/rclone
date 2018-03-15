@@ -43,7 +43,6 @@ const (
 	driveTypePersonal           = "personal"
 	driveTypeBusiness           = "business"
 	driveTypeSharepoint         = "documentLibrary"
-	singlePartUploadSizeLimit   = fs.SizeSuffix(4 * 1024 * 1024)
 )
 
 // Globals
@@ -843,8 +842,9 @@ func (f *Fs) Copy(src fs.Object, remote string) (fs.Object, error) {
 		return nil, err
 	}
 
-	// we need to copy the modification date from the source
-	// since onedrive sets the current date for the newly created file
+	// Copy does NOT copy the modTime from the source and there seems to
+	// be no way to set date before
+	// This will create TWO versions on OneDrive
 	err = dstObj.SetModTime(srcObj.ModTime())
 	if err != nil {
 		return nil, err
@@ -1364,49 +1364,6 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time) (i
 	return info, nil
 }
 
-// uploadSinglepart uploads a file as a single part
-func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
-	var resp *http.Response
-	var opts rest.Opts
-	_, directoryID, _ := o.fs.dirCache.FindPath(o.remote, false)
-	_, drive, rootURL := parseDirID(directoryID)
-	if drive != "" {
-		opts = rest.Opts{
-			Method:        "PUT",
-			RootURL:       rootURL,
-			Path:          "/" + drive + "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
-			ContentLength: &size,
-			Body:          in,
-		}
-	} else {
-		opts = rest.Opts{
-			Method:        "PUT",
-			Path:          "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
-			ContentLength: &size,
-			Body:          in,
-		}
-	}
-	// for go1.8 (see release notes) we must nil the Body if we want a
-	// "Content-Length: 0" header which onedrive requires for all files.
-	if size == 0 {
-		opts.Body = nil
-	}
-	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
-		resp, err = o.fs.srv.CallJSON(&opts, nil, &info)
-		return shouldRetry(resp, err)
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	err = o.setMetaData(info)
-	if err != nil {
-		return nil, err
-	}
-	// Set the mod time now and read metadata
-	return o.setModTime(modTime)
-}
-
 // Update the object with the contents of the io.Reader, modTime and size
 //
 // The new object may have been created if an error is returned
@@ -1417,22 +1374,11 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 	modTime := src.ModTime()
 
-	var info *api.Item
-	if size <= int64(singlePartUploadSizeLimit) {
-		info, err = o.uploadSinglepart(in, size, modTime)
-	} else {
-		info, err = o.uploadMultipart(in, size, modTime)
-	}
+	info, err := o.uploadMultipart(in, size, modTime)
 	if err != nil {
 		return err
 	}
-
-	// is the info set by either the multipart upload OR the single PUT for smaller files?
-	if nil != info {
-		return o.setMetaData(info)
-	}
-
-	return nil
+	return o.setMetaData(info)
 }
 
 // Remove an object
