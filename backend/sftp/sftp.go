@@ -481,6 +481,14 @@ func (f *Fs) List(dir string) (entries fs.DirEntries, err error) {
 	}
 	for _, info := range infos {
 		remote := path.Join(dir, info.Name())
+		// If file is a symlink (not a regular file is the best cross platform test we can do), do a stat to
+		// pick up the size and type of the destination, instead of the size and type of the symlink.
+		if !info.Mode().IsRegular() {
+			info, err = f.stat(remote)
+			if err != nil {
+				return nil, errors.Wrap(err, "stat of non-regular file/dir failed")
+			}
+		}
 		if info.IsDir() {
 			d := fs.NewDir(remote, info.ModTime())
 			entries = append(entries, d)
@@ -805,14 +813,21 @@ func (o *Object) setMetadata(info os.FileInfo) {
 	o.mode = info.Mode()
 }
 
+// statRemote stats the file or directory at the remote given
+func (f *Fs) stat(remote string) (info os.FileInfo, err error) {
+	c, err := f.getSftpConnection()
+	if err != nil {
+		return nil, errors.Wrap(err, "stat")
+	}
+	absPath := path.Join(f.root, remote)
+	info, err = c.sftpClient.Stat(absPath)
+	f.putSftpConnection(&c, err)
+	return info, err
+}
+
 // stat updates the info in the Object
 func (o *Object) stat() error {
-	c, err := o.fs.getSftpConnection()
-	if err != nil {
-		return errors.Wrap(err, "stat")
-	}
-	info, err := c.sftpClient.Stat(o.path())
-	o.fs.putSftpConnection(&c, err)
+	info, err := o.fs.stat(o.remote)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return fs.ErrorObjectNotFound
