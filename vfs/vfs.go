@@ -233,6 +233,9 @@ func New(f fs.Fs, opt *Options) *VFS {
 		panic(fmt.Sprintf("failed to create local cache: %v", err))
 	}
 	vfs.cache = cache
+
+	// add the remote control
+	vfs.addRC()
 	return vfs
 }
 
