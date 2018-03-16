@@ -140,3 +140,4 @@ Contributors
   * Alexander Neumann <alexander@bumpern.de>
   * Giri Badanahatti <gbadanahatti@us.ibm.com@Giris-MacBook-Pro.local>
   * Leo R. Lundgren <leo@finalresort.org>
+  * wolfv <wolfv6@users.noreply.github.com>
