@@ -33,11 +33,11 @@ func TestVersionWorksWithoutAccessibleConfigFile(t *testing.T) {
 
 	cmd.Root.SetArgs([]string{"version"})
 	assert.NotPanics(t, func() {
-		cmd.Root.Execute()
+		assert.NoError(t, cmd.Root.Execute())
 	})
 
 	cmd.Root.SetArgs([]string{"--version"})
 	assert.NotPanics(t, func() {
-		cmd.Root.Execute()
+		assert.NoError(t, cmd.Root.Execute())
 	})
 }
