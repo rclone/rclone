@@ -199,17 +199,77 @@ i.e. not tied to a specific end-user Google account. This is useful
 when you want to synchronise files onto machines that don't have
 actively logged-in users, for example build machines.
 
-To create a service account and obtain its credentials, go to the
-[Google Developer Console](https://console.developers.google.com) and
-use the "Create Credentials" button. After creating an account, a JSON
-file containing the Service Account's credentials will be downloaded
-onto your machine. These credentials are what rclone will use for
-authentication.
-
 To use a Service Account instead of OAuth2 token flow, enter the path
 to your Service Account credentials at the `service_account_file`
-prompt and rclone won't use the browser based authentication
-flow.
+prompt during `rclone config` and rclone won't use the browser based
+authentication flow.
+
+#### Use case - Google Apps/G-suite account and individual Drive ####
+
+Let's say that you are the administrator of a Google Apps (old) or
+G-suite account.
+The goal is to store data on an individual's Drive account, who IS
+a member of the domain.
+We'll call the domain **example.com**, and the user
+**foo@example.com**.
+
+There's a few steps we need to go through to accomplish this:
+
+##### 1. Create a service account for example.com #####
+  - To create a service account and obtain its credentials, go to the
+[Google Developer Console](https://console.developers.google.com).
+  - You must have a project - create one if you don't.
+  - Then go to "IAM & admin" -> "Service Accounts".
+  - Use the "Create Credentials" button. Fill in "Service account name"
+with something that identifies your client. "Role" can be empty.
+  - Tick "Furnish a new private key" - select "Key type JSON".
+  - Tick "Enable G Suite Domain-wide Delegation". This option makes
+"impersonation" possible, as documented here:
+[Delegating domain-wide authority to the service account](https://developers.google.com/identity/protocols/OAuth2ServiceAccount#delegatingauthority)
+  - These credentials are what rclone will use for authentication.
+If you ever need to remove access, press the "Delete service
+account key" button.
+
+##### 2. Allowing API access to example.com Google Drive #####
+  - Go to example.com's admin console
+  - Go into "Security" (or use the search bar)
+  - Select "Show more" and then "Advanced settings"
+  - Select "Manage API client access" in the "Authentication" section
+  - In the "Client Name" field enter the service account's
+"Client ID" - this can be found in the Developer Console under
+"IAM & Admin" -> "Service Accounts", then "View Client ID" for
+the newly created service account.
+It is a ~21 character numerical string.
+  - In the next field, "One or More API Scopes", enter
+`https://www.googleapis.com/auth/drive`
+to grant access to Google Drive specifically.
+
+##### 3. Configure rclone, assuming a new install #####
+
+```
+rclone config
+
+n/s/q> n         # New
+name>gdrive      # Gdrive is an example name
+Storage>         # Select the number shown for Google Drive
+client_id>       # Can be left blank
+client_secret>   # Can be left blank
+scope>           # Select your scope, 1 for example
+root_folder_id>  # Can be left blank
+service_account_file> /home/foo/myJSONfile.json # This is where the JSON file goes!
+y/n>             # Auto config, y
+
+```
+
+##### 4. Verify that it's working #####
+  - `rclone -v --drive-impersonate foo@example.com lsf gdrive:backup`
+  - The arguments do:
+    - `-v` - verbose logging
+    - `--drive-impersonate foo@example.com` - this is what does
+the magic, pretending to be user foo.
+    - `lsf` - list files in a parsing friendly way
+    - `gdrive:backup` - use the remote called gdrive, work in
+the folder named backup.
 
 ### Team drives ###
 
