@@ -1098,9 +1098,10 @@ func (o *Object) Open(options ...fs.OpenOption) (in io.ReadCloser, err error) {
 func (o *Object) createUploadSession(modTime time.Time) (response *api.CreateUploadResponse, err error) {
 	opts := rest.Opts{
 		Method: "POST",
-		Path:   "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/createUploadSession",
+		Path:   "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/upload.createSession",
 	}
 	createRequest := api.CreateUploadRequest{}
+	createRequest.Item.FileSystemInfo.CreatedDateTime = api.Timestamp(modTime)
 	createRequest.Item.FileSystemInfo.LastModifiedDateTime = api.Timestamp(modTime)
 	var resp *http.Response
 	err = o.fs.pacer.Call(func() (bool, error) {
