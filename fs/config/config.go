@@ -60,7 +60,7 @@ const (
 
 // Global
 var (
-	// configData is the config file data structure
+	// configFile is the global config data structure. Don't read it directly, use getConfigData()
 	configFile *goconfig.ConfigFile
 
 	// ConfigPath points to the config file
