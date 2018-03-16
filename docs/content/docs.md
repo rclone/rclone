@@ -306,6 +306,11 @@ running, you can toggle the limiter like this:
 
     kill -SIGUSR2 $(pidof rclone)
 
+If you configure rclone with a [remote control](/rc) then you can use
+change the bwlimit dynamically:
+
+    rclone rc core/bwlimit rate=1M
+
 ### --buffer-size=SIZE ###
 
 Use this sized buffer to speed up file transfers.  Each `--transfer`

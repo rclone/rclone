@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/rc"
+	"github.com/pkg/errors"
 	"golang.org/x/net/context" // switch to "context" when we stop supporting go1.6
 	"golang.org/x/time/rate"
 )
@@ -111,4 +113,47 @@ func limitBandwidth(n int) {
 	}
 
 	tokenBucketMu.Unlock()
+}
+
+// Remote control for the token bucket
+func init() {
+	rc.Add(rc.Call{
+		Path: "core/bwlimit",
+		Fn: func(in rc.Params) (out rc.Params, err error) {
+			ibwlimit, ok := in["rate"]
+			if !ok {
+				return out, errors.Errorf("parameter rate not found")
+			}
+			bwlimit, ok := ibwlimit.(string)
+			if !ok {
+				return out, errors.Errorf("value must be string rate=%v", ibwlimit)
+			}
+			var bws fs.BwTimetable
+			err = bws.Set(bwlimit)
+			if err != nil {
+				return out, errors.Wrap(err, "bad bwlimit")
+			}
+			if len(bws) != 1 {
+				return out, errors.New("need exactly 1 bandwidth setting")
+			}
+			bw := bws[0]
+			tokenBucketMu.Lock()
+			tokenBucket = newTokenBucket(bw.Bandwidth)
+			tokenBucketMu.Unlock()
+			fs.Logf(nil, "Bandwidth limit set to %v", bw.Bandwidth)
+			return rc.Params{"rate": bw.Bandwidth.String()}, nil
+		},
+		Title: "Set the bandwidth limit.",
+		Help: `
+This sets the bandwidth limit to that passed in.
+
+Eg
+
+    rclone core/bwlimit rate=1M
+    rclone core/bwlimit rate=off
+
+The format of the parameter is exactly the same as passed to --bwlimit
+except only one bandwidth may be specified.
+`,
+	})
 }
