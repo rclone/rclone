@@ -18,6 +18,15 @@ like this:
 
     kill -SIGHUP $(pidof rclone)
 
+If you configure rclone with a [remote control](/rc) then you can use
+rclone rc to flush the whole directory cache:
+
+    rclone rc vfs/forget
+
+Or individual files or directories:
+
+    rclone rc vfs/forget file=path/to/file dir=path/to/dir
+
 ### File Caching
 
 **NB** File caching is **EXPERIMENTAL** - use with care!
