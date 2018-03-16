@@ -69,10 +69,20 @@ control commands.
 
 ## Supported commands
 
+### core/bwlimit: Set the bandwidth limit.
+
+This sets the bandwidth limit to that passed in.
+
+Eg
+
+    rclone core/bwlimit rate=1M
+    rclone core/bwlimit rate=off
+
 ### cache/expire: Purge a remote from cache
 
 Purge a remote from the cache backend. Supports either a directory or a file.
 Params:
+
   - remote = path to remote (required)
   - withData = true/false to delete cached data (chunks) as well (optional)
 
