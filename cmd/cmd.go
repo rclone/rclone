@@ -22,7 +22,6 @@ import (
 
 	"github.com/ncw/rclone/fs"
 	"github.com/ncw/rclone/fs/accounting"
-	"github.com/ncw/rclone/fs/config"
 	"github.com/ncw/rclone/fs/config/configflags"
 	"github.com/ncw/rclone/fs/config/flags"
 	"github.com/ncw/rclone/fs/filter"
@@ -372,9 +371,6 @@ func initConfig() {
 
 	// Finish parsing any command line flags
 	configflags.SetFlags()
-
-	// Load the rest of the config now we have started the logger
-	config.LoadConfig()
 
 	// Load filters
 	var err error
