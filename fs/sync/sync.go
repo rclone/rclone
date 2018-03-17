@@ -91,6 +91,10 @@ func newSyncCopyMove(fdst, fsrc fs.Fs, deleteMode fs.DeleteMode, DoMove bool, de
 			fs.Errorf(fdst, "Ignoring --track-renames as the source and destination do not have a common hash")
 			s.trackRenames = false
 		}
+		if s.deleteMode == fs.DeleteModeOff {
+			fs.Errorf(fdst, "Ignoring --track-renames as it doesn't work with copy or move, only sync")
+			s.trackRenames = false
+		}
 	}
 	if s.trackRenames {
 		// track renames needs delete after
