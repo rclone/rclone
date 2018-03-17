@@ -278,7 +278,7 @@ False
 
 Only encrypts file names, skips directory names
 Example:
-`1/12/123/txt` is encrypted to
+`1/12/123.txt` is encrypted to
 `1/12/qgm4avr35m5loi1th53ato71v0`
 
 
