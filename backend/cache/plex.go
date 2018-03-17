@@ -136,7 +136,7 @@ func (p *plexConnector) isPlaying(co *Object) bool {
 	if cr, yes := p.f.isWrappedByCrypt(); yes {
 		remote, err = cr.DecryptFileName(co.Remote())
 		if err != nil {
-			fs.Errorf("plex", "can not decrypt wrapped file: %v", err)
+			fs.Debugf("plex", "can not decrypt wrapped file: %v", err)
 			return false
 		}
 	}
@@ -166,23 +166,23 @@ func (p *plexConnector) isPlaying(co *Object) bool {
 	}
 	videosGen, ok := get(data, "MediaContainer", "Video")
 	if !ok {
-		fs.Errorf("plex", "empty videos: %v", data)
+		fs.Debugf("plex", "empty videos: %v", data)
 		return false
 	}
 	videos, ok := videosGen.([]interface{})
 	if !ok || len(videos) < 1 {
-		fs.Errorf("plex", "empty videos: %v", data)
+		fs.Debugf("plex", "empty videos: %v", data)
 		return false
 	}
 	for _, v := range videos {
 		keyGen, ok := get(v, "key")
 		if !ok {
-			fs.Errorf("plex", "failed to find: key")
+			fs.Debugf("plex", "failed to find: key")
 			continue
 		}
 		key, ok := keyGen.(string)
 		if !ok {
-			fs.Errorf("plex", "failed to understand: key")
+			fs.Debugf("plex", "failed to understand: key")
 			continue
 		}
 		req, err := http.NewRequest("GET", fmt.Sprintf("%s%s", p.url.String(), key), nil)
