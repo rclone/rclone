@@ -1112,7 +1112,7 @@ func (o *Object) createUploadSession(modTime time.Time) (response *api.CreateUpl
 }
 
 // uploadFragment uploads a part
-func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64, info *api.Item) (err error) {
+func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk io.ReadSeeker, chunkSize int64) (info *api.Item, err error) {
 	opts := rest.Opts{
 		Method:        "PUT",
 		RootURL:       url,
@@ -1131,12 +1131,13 @@ func (o *Object) uploadFragment(url string, start int64, totalSize int64, chunk 
 				// we are done :)
 				// read the item
 				defer fs.CheckClose(resp.Body, &err)
+				info = &api.Item{}
 				return false, json.NewDecoder(resp.Body).Decode(info)
 			}
 		}
 		return retry, err
 	})
-	return err
+	return info, err
 }
 
 // cancelUploadSession cancels an upload session
@@ -1155,16 +1156,16 @@ func (o *Object) cancelUploadSession(url string) (err error) {
 }
 
 // uploadMultipart uploads a file using multipart upload
-func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time, info *api.Item) (err error) {
+func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
 	if chunkSize%(320*1024) != 0 {
-		return errors.Errorf("chunk size %d is not a multiple of 320k", chunkSize)
+		return nil, errors.Errorf("chunk size %d is not a multiple of 320k", chunkSize)
 	}
 
 	// Create upload session
 	fs.Debugf(o, "Starting multipart upload")
 	session, err := o.createUploadSession(modTime)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	uploadURL := session.UploadURL
 
@@ -1189,15 +1190,44 @@ func (o *Object) uploadMultipart(in io.Reader, size int64, modTime time.Time, in
 		}
 		seg := readers.NewRepeatableReader(io.LimitReader(in, n))
 		fs.Debugf(o, "Uploading segment %d/%d size %d", position, size, n)
-		err = o.uploadFragment(uploadURL, position, size, seg, n, info)
+		info, err = o.uploadFragment(uploadURL, position, size, seg, n)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		remaining -= n
 		position += n
 	}
 
-	return nil
+	return info, nil
+}
+
+// uploadSinglepart uploads a file as a single part
+func (o *Object) uploadSinglepart(in io.Reader, size int64, modTime time.Time) (info *api.Item, err error) {
+	var resp *http.Response
+	opts := rest.Opts{
+		Method:        "PUT",
+		Path:          "/root:/" + rest.URLPathEscape(o.srvPath()) + ":/content",
+		ContentLength: &size,
+		Body:          in,
+	}
+	// for go1.8 (see release notes) we must nil the Body if we want a
+	// "Content-Length: 0" header which onedrive requires for all files.
+	if size == 0 {
+		opts.Body = nil
+	}
+	err = o.fs.pacer.CallNoRetry(func() (bool, error) {
+		resp, err = o.fs.srv.CallJSON(&opts, nil, &info)
+		return shouldRetry(resp, err)
+	})
+	if err != nil {
+		return nil, err
+	}
+	err = o.setMetaData(info)
+	if err != nil {
+		return nil, err
+	}
+	// Set the mod time now and read metadata
+	return o.setModTime(modTime)
 }
 
 // Update the object with the contents of the io.Reader, modTime and size
@@ -1210,8 +1240,13 @@ func (o *Object) Update(in io.Reader, src fs.ObjectInfo, options ...fs.OpenOptio
 	size := src.Size()
 	modTime := src.ModTime()
 
-	info := &api.Item{}
-	err = o.uploadMultipart(in, size, modTime, info)
+	var info *api.Item
+	if size <= 0 {
+		// This is for 0 length files, or files with an unknown size
+		info, err = o.uploadSinglepart(in, size, modTime)
+	} else {
+		info, err = o.uploadMultipart(in, size, modTime)
+	}
 	if err != nil {
 		return err
 	}
