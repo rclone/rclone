@@ -6,7 +6,7 @@ Making a release
   * git status - make sure everything is checked in
   * Check travis & appveyor builds are green
   * make check
-  * make test
+  * make test # see integration test server or run locally
   * make tag
   * edit docs/content/changelog.md
   * make doc
@@ -20,6 +20,9 @@ Making a release
   * git push --tags origin master:stable # update the stable branch for packager.io
   * # Wait for the appveyor and travis builds to complete then fetch the windows binaries from appveyor
   * make fetch_windows
+  * make tarball
+  * make sign_upload
+  * make check_sign
   * make upload
   * make upload_website
   * make upload_github

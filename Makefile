@@ -104,6 +104,19 @@ website:
 upload_website:	website
 	rclone -v sync docs/public memstore:www-rclone-org
 
+tarball:
+	git archive -9 --format=tar.gz --prefix=rclone-$(TAG) -o build/rclone-$(TAG).tar.gz $(TAG)
+
+sign_upload:
+	cd build && md5sum rclone-* | gpg --clearsign > MD5SUMS
+	cd build && sha1sum rclone-* | gpg --clearsign > SHA1SUMS
+	cd build && sha256sum rclone-* | gpg --clearsign > SHA256SUMS
+
+check_sign:
+	cd build && gpg --verify MD5SUMS && gpg --decrypt MD5SUMS | md5sum -c
+	cd build && gpg --verify SHA1SUMS && gpg --decrypt SHA1SUMS | sha1sum -c
+	cd build && gpg --verify SHA256SUMS && gpg --decrypt SHA256SUMS | sha256sum -c
+
 upload:
 	rclone -v copy build/ memstore:downloads-rclone-org
 
