@@ -405,14 +405,25 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 	// make sure an empty list is returned, and not a 'nil' value
 	ls := listItems{}
 
-	err := walk.Walk(s.f, remote, true, -1, func(path string, entries fs.DirEntries, err error) error {
-		if err == nil {
+	// if remote supports ListR use that directly, otherwise use recursive Walk
+	var err error
+	if ListR := s.f.Features().ListR; ListR != nil {
+		err = ListR(remote, func(entries fs.DirEntries) error {
 			for _, entry := range entries {
 				ls.add(entry)
 			}
-		}
-		return err
-	})
+			return nil
+		})
+	} else {
+		err = walk.Walk(s.f, remote, true, -1, func(path string, entries fs.DirEntries, err error) error {
+			if err == nil {
+				for _, entry := range entries {
+					ls.add(entry)
+				}
+			}
+			return err
+		})
+	}
 
 	if err != nil {
 		_, err = fserrors.Cause(err)
