@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"net/http"
 	"os"
 	"path"
@@ -18,6 +19,7 @@ import (
 	"github.com/ncw/rclone/cmd/serve/httplib"
 	"github.com/ncw/rclone/cmd/serve/httplib/httpflags"
 	"github.com/ncw/rclone/fs"
+	"github.com/ncw/rclone/fs/accounting"
 	"github.com/ncw/rclone/fs/fserrors"
 	"github.com/ncw/rclone/fs/object"
 	"github.com/ncw/rclone/fs/operations"
@@ -284,16 +286,26 @@ func (s *server) getObject(w http.ResponseWriter, r *http.Request, remote string
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 		return
 	}
+	accounting.Stats.Transferring(o.Remote())
+	in := accounting.NewAccount(file, o) // account the transfer (no buffering)
 	defer func() {
-		err := file.Close()
-		if err != nil {
-			fs.Errorf(remote, "Get request: close failed: %v", err)
+		closeErr := in.Close()
+		if closeErr != nil {
+			fs.Errorf(remote, "Get request: close failed: %v", closeErr)
+			if err == nil {
+				err = closeErr
+			}
+		}
+		ok := err == nil
+		accounting.Stats.DoneTransferring(o.Remote(), ok)
+		if !ok {
+			accounting.Stats.Error(err)
 		}
 	}()
 
 	w.WriteHeader(code)
 
-	n, err := io.Copy(w, file)
+	n, err := io.Copy(w, in)
 	if err != nil {
 		fs.Errorf(remote, "Didn't finish writing GET request (wrote %d/%d bytes): %v", n, size, err)
 		return
@@ -305,8 +317,26 @@ func (s *server) postObject(w http.ResponseWriter, r *http.Request, remote strin
 	// fs.Debugf(s.f, "content length = %d", r.ContentLength)
 	if r.ContentLength >= 0 {
 		// Size known use Put
+		accounting.Stats.Transferring(remote)
+		body := ioutil.NopCloser(r.Body)                                   // we let the server close the body
+		in := accounting.NewAccountSizeName(body, r.ContentLength, remote) // account the transfer (no buffering)
+		var err error
+		defer func() {
+			closeErr := in.Close()
+			if closeErr != nil {
+				fs.Errorf(remote, "Post request: close failed: %v", closeErr)
+				if err == nil {
+					err = closeErr
+				}
+			}
+			ok := err == nil
+			accounting.Stats.DoneTransferring(remote, err == nil)
+			if !ok {
+				accounting.Stats.Error(err)
+			}
+		}()
 		info := object.NewStaticObjectInfo(remote, time.Now(), r.ContentLength, true, nil, s.f)
-		_, err := s.f.Put(r.Body, info)
+		_, err = s.f.Put(in, info)
 		if err != nil {
 			fs.Errorf(remote, "Post request put error: %v", err)
 			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
