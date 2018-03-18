@@ -434,17 +434,14 @@ func (s *server) listObjects(w http.ResponseWriter, r *http.Request, remote stri
 		}
 	}
 
-	data, err := json.Marshal(ls)
+	w.Header().Set("Content-Type", "application/vnd.x.restic.rest.v2")
+	enc := json.NewEncoder(w)
+	err = enc.Encode(ls)
 	if err != nil {
-		fs.Errorf(remote, "list marshal failed: %v", err)
+		fs.Errorf(remote, "failed to write list: %v", err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
-	// fs.Debugf(remote, "ls result = %s", data)
-
-	w.Header().Set("Content-Type", "application/vnd.x.restic.rest.v2")
-
-	_, _ = w.Write(data)
 }
 
 // createRepo creates repository directories.
