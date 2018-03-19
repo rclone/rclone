@@ -118,7 +118,8 @@ check_sign:
 	cd build && gpg --verify SHA256SUMS && gpg --decrypt SHA256SUMS | sha256sum -c
 
 upload:
-	rclone -v copy build/ memstore:downloads-rclone-org
+	rclone -v copy --exclude '*current*' build/ memstore:downloads-rclone-org/$(TAG)
+	rclone -v copy --include '*current*' --include version.txt build/ memstore:downloads-rclone-org
 
 upload_github:
 	./bin/upload-github $(TAG)
