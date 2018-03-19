@@ -1481,7 +1481,7 @@ type ProductPurchase struct {
 	// PurchaseState: The purchase state of the order. Possible values are:
 	//
 	// - Purchased
-	// - Cancelled
+	// - Canceled
 	PurchaseState int64 `json:"purchaseState,omitempty"`
 
 	// PurchaseTimeMillis: The time the product was purchased, in
@@ -1492,6 +1492,7 @@ type ProductPurchase struct {
 	// is only set if this purchase was not made using the standard in-app
 	// billing flow. Possible values are:
 	// - Test (i.e. purchased from a license testing account)
+	// - Promo (i.e. purchased using a promo code)
 	PurchaseType int64 `json:"purchaseType,omitempty"`
 
 	// ServerResponse contains the HTTP response code and headers from the
@@ -1797,13 +1798,13 @@ type SubscriptionPurchase struct {
 	// when it reaches its current expiry time.
 	AutoRenewing bool `json:"autoRenewing,omitempty"`
 
-	// CancelReason: The reason why a subscription was cancelled or is not
+	// CancelReason: The reason why a subscription was canceled or is not
 	// auto-renewing. Possible values are:
-	// - User cancelled the subscription
-	// - Subscription was cancelled by the system, for example because of a
+	// - User canceled the subscription
+	// - Subscription was canceled by the system, for example because of a
 	// billing problem
 	// - Subscription was replaced with a new subscription
-	// - Subscription was cancelled by the developer
+	// - Subscription was canceled by the developer
 	CancelReason *int64 `json:"cancelReason,omitempty"`
 
 	// CountryCode: ISO 3166-1 alpha-2 billing country/region code of the
@@ -2209,7 +2210,7 @@ func (s *UserComment) MarshalJSON() ([]byte, error) {
 }
 
 // VoidedPurchase: A VoidedPurchase resource indicates a purchase that
-// was either cancelled/refunded/charged-back.
+// was either canceled/refunded/charged-back.
 type VoidedPurchase struct {
 	// Kind: This kind represents a voided purchase object in the
 	// androidpublisher service.
@@ -2224,7 +2225,7 @@ type VoidedPurchase struct {
 	PurchaseToken string `json:"purchaseToken,omitempty"`
 
 	// VoidedTimeMillis: The time at which the purchase was
-	// cancelled/refunded/charged-back, in milliseconds since the epoch (Jan
+	// canceled/refunded/charged-back, in milliseconds since the epoch (Jan
 	// 1, 1970).
 	VoidedTimeMillis int64 `json:"voidedTimeMillis,omitempty,string"`
 
@@ -4240,11 +4241,12 @@ func (c *EditsApksUploadCall) doRequest(alt string) (*http.Response, error) {
 		body = new(bytes.Buffer)
 		reqHeaders.Set("Content-Type", "application/json")
 	}
-	body, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
+	body, getBody, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
 	defer cleanup()
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
 	req.Header = reqHeaders
+	gensupport.SetGetBody(req, getBody)
 	googleapi.Expand(req.URL, map[string]string{
 		"packageName": c.packageNameid,
 		"editId":      c.editId,
@@ -4462,11 +4464,12 @@ func (c *EditsDeobfuscationfilesUploadCall) doRequest(alt string) (*http.Respons
 		body = new(bytes.Buffer)
 		reqHeaders.Set("Content-Type", "application/json")
 	}
-	body, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
+	body, getBody, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
 	defer cleanup()
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
 	req.Header = reqHeaders
+	gensupport.SetGetBody(req, getBody)
 	googleapi.Expand(req.URL, map[string]string{
 		"packageName":           c.packageNameid,
 		"editId":                c.editId,
@@ -5662,11 +5665,12 @@ func (c *EditsExpansionfilesUploadCall) doRequest(alt string) (*http.Response, e
 		body = new(bytes.Buffer)
 		reqHeaders.Set("Content-Type", "application/json")
 	}
-	body, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
+	body, getBody, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
 	defer cleanup()
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
 	req.Header = reqHeaders
+	gensupport.SetGetBody(req, getBody)
 	googleapi.Expand(req.URL, map[string]string{
 		"packageName":       c.packageNameid,
 		"editId":            c.editId,
@@ -6427,11 +6431,12 @@ func (c *EditsImagesUploadCall) doRequest(alt string) (*http.Response, error) {
 		body = new(bytes.Buffer)
 		reqHeaders.Set("Content-Type", "application/json")
 	}
-	body, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
+	body, getBody, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
 	defer cleanup()
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
 	req.Header = reqHeaders
+	gensupport.SetGetBody(req, getBody)
 	googleapi.Expand(req.URL, map[string]string{
 		"packageName": c.packageNameid,
 		"editId":      c.editId,
@@ -10391,7 +10396,7 @@ type PurchasesVoidedpurchasesListCall struct {
 	header_      http.Header
 }
 
-// List: Lists the purchases that were cancelled, refunded or
+// List: Lists the purchases that were canceled, refunded or
 // charged-back.
 func (r *PurchasesVoidedpurchasesService) List(packageName string) *PurchasesVoidedpurchasesListCall {
 	c := &PurchasesVoidedpurchasesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -10537,7 +10542,7 @@ func (c *PurchasesVoidedpurchasesListCall) Do(opts ...googleapi.CallOption) (*Vo
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists the purchases that were cancelled, refunded or charged-back.",
+	//   "description": "Lists the purchases that were canceled, refunded or charged-back.",
 	//   "httpMethod": "GET",
 	//   "id": "androidpublisher.purchases.voidedpurchases.list",
 	//   "parameterOrder": [

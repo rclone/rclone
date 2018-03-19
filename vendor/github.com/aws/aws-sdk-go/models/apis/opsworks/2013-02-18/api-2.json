@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"json",
     "serviceFullName":"AWS OpsWorks",
+    "serviceId":"OpsWorks",
     "signatureVersion":"v4",
     "targetPrefix":"OpsWorks_20130218",
     "uid":"opsworks-2013-02-18"
@@ -405,6 +406,14 @@
         "requestUri":"/"
       },
       "output":{"shape":"DescribeMyUserProfileResult"}
+    },
+    "DescribeOperatingSystems":{
+      "name":"DescribeOperatingSystems",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "output":{"shape":"DescribeOperatingSystemsResponse"}
     },
     "DescribePermissions":{
       "name":"DescribePermissions",
@@ -1712,6 +1721,12 @@
         "UserProfile":{"shape":"SelfUserProfile"}
       }
     },
+    "DescribeOperatingSystemsResponse":{
+      "type":"structure",
+      "members":{
+        "OperatingSystems":{"shape":"OperatingSystems"}
+      }
+    },
     "DescribePermissionsRequest":{
       "type":"structure",
       "members":{
@@ -2042,6 +2057,7 @@
         "SetupFailed":{"shape":"Integer"},
         "ShuttingDown":{"shape":"Integer"},
         "StartFailed":{"shape":"Integer"},
+        "StopFailed":{"shape":"Integer"},
         "Stopped":{"shape":"Integer"},
         "Stopping":{"shape":"Integer"},
         "Terminated":{"shape":"Integer"},
@@ -2180,6 +2196,33 @@
       "min":1
     },
     "NextToken":{"type":"string"},
+    "OperatingSystem":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"String"},
+        "Id":{"shape":"String"},
+        "Type":{"shape":"String"},
+        "ConfigurationManagers":{"shape":"OperatingSystemConfigurationManagers"},
+        "ReportedName":{"shape":"String"},
+        "ReportedVersion":{"shape":"String"},
+        "Supported":{"shape":"Boolean"}
+      }
+    },
+    "OperatingSystemConfigurationManager":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"String"},
+        "Version":{"shape":"String"}
+      }
+    },
+    "OperatingSystemConfigurationManagers":{
+      "type":"list",
+      "member":{"shape":"OperatingSystemConfigurationManager"}
+    },
+    "OperatingSystems":{
+      "type":"list",
+      "member":{"shape":"OperatingSystem"}
+    },
     "Parameters":{
       "type":"map",
       "key":{"shape":"String"},
@@ -2532,7 +2575,8 @@
       "type":"structure",
       "required":["InstanceId"],
       "members":{
-        "InstanceId":{"shape":"String"}
+        "InstanceId":{"shape":"String"},
+        "Force":{"shape":"Boolean"}
       }
     },
     "StopStackRequest":{
@@ -2788,7 +2832,8 @@
         "Region":{"shape":"String"},
         "AvailabilityZone":{"shape":"String"},
         "VolumeType":{"shape":"String"},
-        "Iops":{"shape":"Integer"}
+        "Iops":{"shape":"Integer"},
+        "Encrypted":{"shape":"Boolean"}
       }
     },
     "VolumeConfiguration":{
@@ -2804,7 +2849,8 @@
         "NumberOfDisks":{"shape":"Integer"},
         "Size":{"shape":"Integer"},
         "VolumeType":{"shape":"String"},
-        "Iops":{"shape":"Integer"}
+        "Iops":{"shape":"Integer"},
+        "Encrypted":{"shape":"Boolean"}
       }
     },
     "VolumeConfigurations":{

@@ -44,16 +44,16 @@ func NewEndpointsClientWithBaseURI(baseURI string, subscriptionID string) Endpoi
 
 // Create sends the create request.
 //
-// endpointName is name of the endpoint within the CDN profile. endpointProperties is endpoint properties profileName
-// is name of the CDN profile within the resource group. resourceGroupName is name of the resource group within the
-// Azure subscription.
+// endpointName is name of the endpoint within the CDN profile. endpointProperties is endpoint properties
+// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
+// group within the Azure subscription.
 func (client EndpointsClient) Create(ctx context.Context, endpointName string, endpointProperties EndpointCreateParameters, profileName string, resourceGroupName string) (result EndpointsCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: endpointProperties,
 			Constraints: []validation.Constraint{{Target: "endpointProperties.Location", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "endpointProperties.EndpointPropertiesCreateParameters", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "endpointProperties.EndpointPropertiesCreateParameters.Origins", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.EndpointsClient", "Create")
+		return result, validation.NewError("cdn.EndpointsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, endpointName, endpointProperties, profileName, resourceGroupName)
@@ -262,8 +262,8 @@ func (client EndpointsClient) GetResponder(resp *http.Response) (result Endpoint
 
 // ListByProfile sends the list by profile request.
 //
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource group
-// within the Azure subscription.
+// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
+// group within the Azure subscription.
 func (client EndpointsClient) ListByProfile(ctx context.Context, profileName string, resourceGroupName string) (result EndpointListResult, err error) {
 	req, err := client.ListByProfilePreparer(ctx, profileName, resourceGroupName)
 	if err != nil {
@@ -336,7 +336,7 @@ func (client EndpointsClient) LoadContent(ctx context.Context, endpointName stri
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: contentFilePaths,
 			Constraints: []validation.Constraint{{Target: "contentFilePaths.ContentPaths", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.EndpointsClient", "LoadContent")
+		return result, validation.NewError("cdn.EndpointsClient", "LoadContent", err.Error())
 	}
 
 	req, err := client.LoadContentPreparer(ctx, endpointName, contentFilePaths, profileName, resourceGroupName)
@@ -414,7 +414,7 @@ func (client EndpointsClient) PurgeContent(ctx context.Context, endpointName str
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: contentFilePaths,
 			Constraints: []validation.Constraint{{Target: "contentFilePaths.ContentPaths", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.EndpointsClient", "PurgeContent")
+		return result, validation.NewError("cdn.EndpointsClient", "PurgeContent", err.Error())
 	}
 
 	req, err := client.PurgeContentPreparer(ctx, endpointName, contentFilePaths, profileName, resourceGroupName)
@@ -625,9 +625,9 @@ func (client EndpointsClient) StopResponder(resp *http.Response) (result Endpoin
 
 // Update sends the update request.
 //
-// endpointName is name of the endpoint within the CDN profile. endpointProperties is endpoint properties profileName
-// is name of the CDN profile within the resource group. resourceGroupName is name of the resource group within the
-// Azure subscription.
+// endpointName is name of the endpoint within the CDN profile. endpointProperties is endpoint properties
+// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource
+// group within the Azure subscription.
 func (client EndpointsClient) Update(ctx context.Context, endpointName string, endpointProperties EndpointUpdateParameters, profileName string, resourceGroupName string) (result EndpointsUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, endpointName, endpointProperties, profileName, resourceGroupName)
 	if err != nil {
@@ -698,14 +698,14 @@ func (client EndpointsClient) UpdateResponder(resp *http.Response) (result Endpo
 
 // ValidateCustomDomain sends the validate custom domain request.
 //
-// endpointName is name of the endpoint within the CDN profile. customDomainProperties is custom domain to validate.
-// profileName is name of the CDN profile within the resource group. resourceGroupName is name of the resource group
-// within the Azure subscription.
+// endpointName is name of the endpoint within the CDN profile. customDomainProperties is custom domain to
+// validate. profileName is name of the CDN profile within the resource group. resourceGroupName is name of the
+// resource group within the Azure subscription.
 func (client EndpointsClient) ValidateCustomDomain(ctx context.Context, endpointName string, customDomainProperties ValidateCustomDomainInput, profileName string, resourceGroupName string) (result ValidateCustomDomainOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: customDomainProperties,
 			Constraints: []validation.Constraint{{Target: "customDomainProperties.HostName", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.EndpointsClient", "ValidateCustomDomain")
+		return result, validation.NewError("cdn.EndpointsClient", "ValidateCustomDomain", err.Error())
 	}
 
 	req, err := client.ValidateCustomDomainPreparer(ctx, endpointName, customDomainProperties, profileName, resourceGroupName)

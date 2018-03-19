@@ -164,6 +164,29 @@ func TestSomething(t *testing.T) {
   // assert that the expectations were met
   testObj.AssertExpectations(t)
 
+
+}
+
+// TestSomethingElse is a second example of how to use our test object to
+// make assertions about some target code we are testing.
+// This time using a placeholder. Placeholders might be used when the
+// data being passed in is normally dynamically generated and cannot be
+// predicted beforehand (eg. containing hashes that are time sensitive)
+func TestSomethingElse(t *testing.T) {
+
+  // create an instance of our test object
+  testObj := new(MyMockedObject)
+
+  // setup expectations with a placeholder in the argument list
+  testObj.On("DoSomething", mock.Anything).Return(true, nil)
+
+  // call the code we are testing
+  targetFuncThatDoesSomethingWithObj(testObj)
+
+  // assert that the expectations were met
+  testObj.AssertExpectations(t)
+
+
 }
 ```
 
@@ -290,6 +313,13 @@ Staying up to date
 ==================
 
 To update Testify to the latest version, use `go get -u github.com/stretchr/testify`.
+
+------
+
+Supported go versions
+==================
+
+We support the three major Go versions, which are 1.8, 1.9 and 1.10 at the moment.
 
 ------
 

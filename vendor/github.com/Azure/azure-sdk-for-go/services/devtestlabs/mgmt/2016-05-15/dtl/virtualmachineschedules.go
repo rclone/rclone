@@ -42,13 +42,13 @@ func NewVirtualMachineSchedulesClientWithBaseURI(baseURI string, subscriptionID 
 
 // CreateOrUpdate create or replace an existing schedule.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the name
-// of the virtual machine. name is the name of the schedule. schedule is a schedule.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the
+// name of the virtual machine. name is the name of the schedule. schedule is a schedule.
 func (client VirtualMachineSchedulesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, virtualMachineName string, name string, schedule Schedule) (result Schedule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: schedule,
 			Constraints: []validation.Constraint{{Target: "schedule.ScheduleProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.VirtualMachineSchedulesClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.VirtualMachineSchedulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, virtualMachineName, name, schedule)
@@ -119,8 +119,8 @@ func (client VirtualMachineSchedulesClient) CreateOrUpdateResponder(resp *http.R
 
 // Delete delete schedule.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the name
-// of the virtual machine. name is the name of the schedule.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the
+// name of the virtual machine. name is the name of the schedule.
 func (client VirtualMachineSchedulesClient) Delete(ctx context.Context, resourceGroupName string, labName string, virtualMachineName string, name string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, virtualMachineName, name)
 	if err != nil {
@@ -187,8 +187,8 @@ func (client VirtualMachineSchedulesClient) DeleteResponder(resp *http.Response)
 
 // Execute execute a schedule. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the name
-// of the virtual machine. name is the name of the schedule.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the
+// name of the virtual machine. name is the name of the schedule.
 func (client VirtualMachineSchedulesClient) Execute(ctx context.Context, resourceGroupName string, labName string, virtualMachineName string, name string) (result VirtualMachineSchedulesExecuteFuture, err error) {
 	req, err := client.ExecutePreparer(ctx, resourceGroupName, labName, virtualMachineName, name)
 	if err != nil {
@@ -257,8 +257,8 @@ func (client VirtualMachineSchedulesClient) ExecuteResponder(resp *http.Response
 
 // Get get schedule.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the name
-// of the virtual machine. name is the name of the schedule. expand is specify the $expand query. Example:
+// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the
+// name of the virtual machine. name is the name of the schedule. expand is specify the $expand query. Example:
 // 'properties($select=status)'
 func (client VirtualMachineSchedulesClient) Get(ctx context.Context, resourceGroupName string, labName string, virtualMachineName string, name string, expand string) (result Schedule, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, virtualMachineName, name, expand)
@@ -330,10 +330,10 @@ func (client VirtualMachineSchedulesClient) GetResponder(resp *http.Response) (r
 
 // List list schedules in a given virtual machine.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the name
-// of the virtual machine. expand is specify the $expand query. Example: 'properties($select=status)' filter is the
-// filter to apply to the operation. top is the maximum number of resources to return from the operation. orderby is
-// the ordering expression for the results, using OData notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the
+// name of the virtual machine. expand is specify the $expand query. Example: 'properties($select=status)' filter
+// is the filter to apply to the operation. top is the maximum number of resources to return from the operation.
+// orderby is the ordering expression for the results, using OData notation.
 func (client VirtualMachineSchedulesClient) List(ctx context.Context, resourceGroupName string, labName string, virtualMachineName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationSchedulePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, virtualMachineName, expand, filter, top, orderby)
@@ -440,8 +440,8 @@ func (client VirtualMachineSchedulesClient) ListComplete(ctx context.Context, re
 
 // Update modify properties of schedules.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the name
-// of the virtual machine. name is the name of the schedule. schedule is a schedule.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. virtualMachineName is the
+// name of the virtual machine. name is the name of the schedule. schedule is a schedule.
 func (client VirtualMachineSchedulesClient) Update(ctx context.Context, resourceGroupName string, labName string, virtualMachineName string, name string, schedule ScheduleFragment) (result Schedule, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, labName, virtualMachineName, name, schedule)
 	if err != nil {

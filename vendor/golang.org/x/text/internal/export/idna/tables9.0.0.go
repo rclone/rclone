@@ -7,7 +7,7 @@ package idna
 // UnicodeVersion is the Unicode version from which the tables in this package are derived.
 const UnicodeVersion = "9.0.0"
 
-var mappings string = "" + // Size: 8176 bytes
+var mappings string = "" + // Size: 8175 bytes
 	"\x00\x01 \x03 ̈\x01a\x03 ̄\x012\x013\x03 ́\x03 ̧\x011\x01o\x051⁄4\x051⁄2" +
 	"\x053⁄4\x03i̇\x03l·\x03ʼn\x01s\x03dž\x03ⱥ\x03ⱦ\x01h\x01j\x01r\x01w\x01y" +
 	"\x03 ̆\x03 ̇\x03 ̊\x03 ̨\x03 ̃\x03 ̋\x01l\x01x\x04̈́\x03 ι\x01;\x05 ̈́" +
@@ -4483,4 +4483,4 @@ var idnaSparseValues = [1869]valueRange{
 	{value: 0x0040, lo: 0xb0, hi: 0xbf},
 }
 
-// Total table size 41663 bytes (40KiB); checksum: F4A1FA4E
+// Total table size 41662 bytes (40KiB); checksum: 355A58A4

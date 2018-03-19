@@ -68,6 +68,10 @@ type CostExplorerAPI interface {
 	GetDimensionValuesWithContext(aws.Context, *costexplorer.GetDimensionValuesInput, ...request.Option) (*costexplorer.GetDimensionValuesOutput, error)
 	GetDimensionValuesRequest(*costexplorer.GetDimensionValuesInput) (*request.Request, *costexplorer.GetDimensionValuesOutput)
 
+	GetReservationCoverage(*costexplorer.GetReservationCoverageInput) (*costexplorer.GetReservationCoverageOutput, error)
+	GetReservationCoverageWithContext(aws.Context, *costexplorer.GetReservationCoverageInput, ...request.Option) (*costexplorer.GetReservationCoverageOutput, error)
+	GetReservationCoverageRequest(*costexplorer.GetReservationCoverageInput) (*request.Request, *costexplorer.GetReservationCoverageOutput)
+
 	GetReservationUtilization(*costexplorer.GetReservationUtilizationInput) (*costexplorer.GetReservationUtilizationOutput, error)
 	GetReservationUtilizationWithContext(aws.Context, *costexplorer.GetReservationUtilizationInput, ...request.Option) (*costexplorer.GetReservationUtilizationOutput, error)
 	GetReservationUtilizationRequest(*costexplorer.GetReservationUtilizationInput) (*request.Request, *costexplorer.GetReservationUtilizationOutput)

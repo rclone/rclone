@@ -42,8 +42,8 @@ func NewClustersClientWithBaseURI(baseURI string, subscriptionID string) Cluster
 
 // Create create cluster resource
 //
-// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is the
-// name of the cluster resource parameters is put Request
+// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is
+// the name of the cluster resource parameters is put Request
 func (client ClustersClient) Create(ctx context.Context, resourceGroupName string, clusterName string, parameters Cluster) (result ClustersCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -94,7 +94,7 @@ func (client ClustersClient) Create(ctx context.Context, resourceGroupName strin
 								}},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicefabric.ClustersClient", "Create")
+		return result, validation.NewError("servicefabric.ClustersClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, clusterName, parameters)
@@ -165,8 +165,8 @@ func (client ClustersClient) CreateResponder(resp *http.Response) (result Cluste
 
 // Delete delete cluster resource
 //
-// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is the
-// name of the cluster resource
+// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is
+// the name of the cluster resource
 func (client ClustersClient) Delete(ctx context.Context, resourceGroupName string, clusterName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, clusterName)
 	if err != nil {
@@ -231,8 +231,8 @@ func (client ClustersClient) DeleteResponder(resp *http.Response) (result autore
 
 // Get get cluster resource
 //
-// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is the
-// name of the cluster resource
+// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is
+// the name of the cluster resource
 func (client ClustersClient) Get(ctx context.Context, resourceGroupName string, clusterName string) (result Cluster, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, clusterName)
 	if err != nil {
@@ -481,9 +481,9 @@ func (client ClustersClient) ListByResourceGroupComplete(ctx context.Context, re
 
 // Update update cluster configuration
 //
-// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is the
-// name of the cluster resource parameters is the parameters which contains the property value and property name which
-// used to update the cluster configuration
+// resourceGroupName is the name of the resource group to which the resource belongs or get created clusterName is
+// the name of the cluster resource parameters is the parameters which contains the property value and property
+// name which used to update the cluster configuration
 func (client ClustersClient) Update(ctx context.Context, resourceGroupName string, clusterName string, parameters ClusterUpdateParameters) (result ClustersUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, clusterName, parameters)
 	if err != nil {

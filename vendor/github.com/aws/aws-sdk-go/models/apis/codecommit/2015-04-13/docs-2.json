@@ -1,6 +1,6 @@
 {
   "version": "2.0",
-  "service": "<fullname>AWS CodeCommit</fullname> <p>This is the <i>AWS CodeCommit API Reference</i>. This reference provides descriptions of the operations and data types for AWS CodeCommit API along with usage examples.</p> <p>You can use the AWS CodeCommit API to work with the following objects:</p> <p>Repositories, by calling the following:</p> <ul> <li> <p> <a>BatchGetRepositories</a>, which returns information about one or more repositories associated with your AWS account.</p> </li> <li> <p> <a>CreateRepository</a>, which creates an AWS CodeCommit repository.</p> </li> <li> <p> <a>DeleteRepository</a>, which deletes an AWS CodeCommit repository.</p> </li> <li> <p> <a>GetRepository</a>, which returns information about a specified repository.</p> </li> <li> <p> <a>ListRepositories</a>, which lists all AWS CodeCommit repositories associated with your AWS account.</p> </li> <li> <p> <a>UpdateRepositoryDescription</a>, which sets or updates the description of the repository.</p> </li> <li> <p> <a>UpdateRepositoryName</a>, which changes the name of the repository. If you change the name of a repository, no other users of that repository will be able to access it until you send them the new HTTPS or SSH URL to use.</p> </li> </ul> <p>Branches, by calling the following:</p> <ul> <li> <p> <a>CreateBranch</a>, which creates a new branch in a specified repository.</p> </li> <li> <p> <a>DeleteBranch</a>, which deletes the specified branch in a repository unless it is the default branch.</p> </li> <li> <p> <a>GetBranch</a>, which returns information about a specified branch.</p> </li> <li> <p> <a>ListBranches</a>, which lists all branches for a specified repository.</p> </li> <li> <p> <a>UpdateDefaultBranch</a>, which changes the default branch for a repository.</p> </li> </ul> <p>Information about committed code in a repository, by calling the following:</p> <ul> <li> <p> <a>GetBlob</a>, which returns the base-64 encoded content of an individual Git blob object within a repository.</p> </li> <li> <p> <a>GetCommit</a>, which returns information about a commit, including commit messages and author and committer information.</p> </li> <li> <p> <a>GetDifferences</a>, which returns information about the differences in a valid commit specifier (such as a branch, tag, HEAD, commit ID or other fully qualified reference).</p> </li> </ul> <p>Pull requests, by calling the following:</p> <ul> <li> <p> <a>CreatePullRequest</a>, which creates a pull request in a specified repository.</p> </li> <li> <p> <a>DescribePullRequestEvents</a>, which returns information about one or more pull request events.</p> </li> <li> <p> <a>GetCommentsForPullRequest</a>, which returns information about comments on a specified pull request.</p> </li> <li> <p> <a>GetMergeConflicts</a>, which returns information about merge conflicts between the source and destination branch in a pull request.</p> </li> <li> <p> <a>GetPullRequest</a>, which returns information about a specified pull request.</p> </li> <li> <p> <a>ListPullRequests</a>, which lists all pull requests for a repository.</p> </li> <li> <p> <a>MergePullRequestByFastForward</a>, which merges the source destination branch of a pull request into the specified destination branch for that pull request using the fast-forward merge option.</p> </li> <li> <p> <a>PostCommentForPullRequest</a>, which posts a comment to a pull request at the specified line, file, or request.</p> </li> <li> <p> <a>UpdatePullRequestDescription</a>, which updates the description of a pull request.</p> </li> <li> <p> <a>UpdatePullRequestStatus</a>, which updates the status of a pull request.</p> </li> <li> <p> <a>UpdatePullRequestTitle</a>, which updates the title of a pull request.</p> </li> </ul> <p>Information about comments in a repository, by calling the following:</p> <ul> <li> <p> <a>DeleteCommentContent</a>, which deletes the content of a comment on a commit in a repository.</p> </li> <li> <p> <a>GetComment</a>, which returns information about a comment on a commit.</p> </li> <li> <p> <a>GetCommentsForComparedCommit</a>, which returns information about comments on the comparison between two commit specifiers in a repository.</p> </li> <li> <p> <a>PostCommentForComparedCommit</a>, which creates a comment on the comparison between two commit specifiers in a repository.</p> </li> <li> <p> <a>PostCommentReply</a>, which creates a reply to a comment.</p> </li> <li> <p> <a>UpdateComment</a>, which updates the content of a comment on a commit in a repository.</p> </li> </ul> <p>Triggers, by calling the following:</p> <ul> <li> <p> <a>GetRepositoryTriggers</a>, which returns information about triggers configured for a repository.</p> </li> <li> <p> <a>PutRepositoryTriggers</a>, which replaces all triggers for a repository and can be used to create or delete triggers.</p> </li> <li> <p> <a>TestRepositoryTriggers</a>, which tests the functionality of a repository trigger by sending data to the trigger target.</p> </li> </ul> <p>For information about how to use AWS CodeCommit, see the <a href=\"http://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html\">AWS CodeCommit User Guide</a>.</p>",
+  "service": "<fullname>AWS CodeCommit</fullname> <p>This is the <i>AWS CodeCommit API Reference</i>. This reference provides descriptions of the operations and data types for AWS CodeCommit API along with usage examples.</p> <p>You can use the AWS CodeCommit API to work with the following objects:</p> <p>Repositories, by calling the following:</p> <ul> <li> <p> <a>BatchGetRepositories</a>, which returns information about one or more repositories associated with your AWS account.</p> </li> <li> <p> <a>CreateRepository</a>, which creates an AWS CodeCommit repository.</p> </li> <li> <p> <a>DeleteRepository</a>, which deletes an AWS CodeCommit repository.</p> </li> <li> <p> <a>GetRepository</a>, which returns information about a specified repository.</p> </li> <li> <p> <a>ListRepositories</a>, which lists all AWS CodeCommit repositories associated with your AWS account.</p> </li> <li> <p> <a>UpdateRepositoryDescription</a>, which sets or updates the description of the repository.</p> </li> <li> <p> <a>UpdateRepositoryName</a>, which changes the name of the repository. If you change the name of a repository, no other users of that repository will be able to access it until you send them the new HTTPS or SSH URL to use.</p> </li> </ul> <p>Branches, by calling the following:</p> <ul> <li> <p> <a>CreateBranch</a>, which creates a new branch in a specified repository.</p> </li> <li> <p> <a>DeleteBranch</a>, which deletes the specified branch in a repository unless it is the default branch.</p> </li> <li> <p> <a>GetBranch</a>, which returns information about a specified branch.</p> </li> <li> <p> <a>ListBranches</a>, which lists all branches for a specified repository.</p> </li> <li> <p> <a>UpdateDefaultBranch</a>, which changes the default branch for a repository.</p> </li> </ul> <p>Files, by calling the following:</p> <ul> <li> <p> <a>PutFile</a>, which adds or modifies a file in a specified repository and branch.</p> </li> </ul> <p>Information about committed code in a repository, by calling the following:</p> <ul> <li> <p> <a>GetBlob</a>, which returns the base-64 encoded content of an individual Git blob object within a repository.</p> </li> <li> <p> <a>GetCommit</a>, which returns information about a commit, including commit messages and author and committer information.</p> </li> <li> <p> <a>GetDifferences</a>, which returns information about the differences in a valid commit specifier (such as a branch, tag, HEAD, commit ID or other fully qualified reference).</p> </li> </ul> <p>Pull requests, by calling the following:</p> <ul> <li> <p> <a>CreatePullRequest</a>, which creates a pull request in a specified repository.</p> </li> <li> <p> <a>DescribePullRequestEvents</a>, which returns information about one or more pull request events.</p> </li> <li> <p> <a>GetCommentsForPullRequest</a>, which returns information about comments on a specified pull request.</p> </li> <li> <p> <a>GetMergeConflicts</a>, which returns information about merge conflicts between the source and destination branch in a pull request.</p> </li> <li> <p> <a>GetPullRequest</a>, which returns information about a specified pull request.</p> </li> <li> <p> <a>ListPullRequests</a>, which lists all pull requests for a repository.</p> </li> <li> <p> <a>MergePullRequestByFastForward</a>, which merges the source destination branch of a pull request into the specified destination branch for that pull request using the fast-forward merge option.</p> </li> <li> <p> <a>PostCommentForPullRequest</a>, which posts a comment to a pull request at the specified line, file, or request.</p> </li> <li> <p> <a>UpdatePullRequestDescription</a>, which updates the description of a pull request.</p> </li> <li> <p> <a>UpdatePullRequestStatus</a>, which updates the status of a pull request.</p> </li> <li> <p> <a>UpdatePullRequestTitle</a>, which updates the title of a pull request.</p> </li> </ul> <p>Information about comments in a repository, by calling the following:</p> <ul> <li> <p> <a>DeleteCommentContent</a>, which deletes the content of a comment on a commit in a repository.</p> </li> <li> <p> <a>GetComment</a>, which returns information about a comment on a commit.</p> </li> <li> <p> <a>GetCommentsForComparedCommit</a>, which returns information about comments on the comparison between two commit specifiers in a repository.</p> </li> <li> <p> <a>PostCommentForComparedCommit</a>, which creates a comment on the comparison between two commit specifiers in a repository.</p> </li> <li> <p> <a>PostCommentReply</a>, which creates a reply to a comment.</p> </li> <li> <p> <a>UpdateComment</a>, which updates the content of a comment on a commit in a repository.</p> </li> </ul> <p>Triggers, by calling the following:</p> <ul> <li> <p> <a>GetRepositoryTriggers</a>, which returns information about triggers configured for a repository.</p> </li> <li> <p> <a>PutRepositoryTriggers</a>, which replaces all triggers for a repository and can be used to create or delete triggers.</p> </li> <li> <p> <a>TestRepositoryTriggers</a>, which tests the functionality of a repository trigger by sending data to the trigger target.</p> </li> </ul> <p>For information about how to use AWS CodeCommit, see the <a href=\"http://docs.aws.amazon.com/codecommit/latest/userguide/welcome.html\">AWS CodeCommit User Guide</a>.</p>",
   "operations": {
     "BatchGetRepositories": "<p>Returns information about one or more repositories.</p> <note> <p>The description field for a repository accepts all HTML characters and all valid Unicode characters. Applications that do not HTML-encode the description and display it in a web page could expose users to potentially malicious code. Make sure that you HTML-encode the description field in any application that uses this API to display the repository description on a web page.</p> </note>",
     "CreateBranch": "<p>Creates a new branch in a repository and points the branch to a commit.</p> <note> <p>Calling the create branch operation does not set a repository's default branch. To do this, call the update default branch operation.</p> </note>",
@@ -28,6 +28,7 @@
     "PostCommentForComparedCommit": "<p>Posts a comment on the comparison between two commits.</p>",
     "PostCommentForPullRequest": "<p>Posts a comment on a pull request.</p>",
     "PostCommentReply": "<p>Posts a comment in reply to an existing comment on a comparison between commits or a pull request.</p>",
+    "PutFile": "<p>Adds or updates a file in an AWS CodeCommit repository.</p>",
     "PutRepositoryTriggers": "<p>Replaces all triggers for a repository. This can be used to create or delete triggers.</p>",
     "TestRepositoryTriggers": "<p>Tests the functionality of repository triggers by sending information to the trigger target. If real data is available in the repository, the test will send data from the last commit. If no data is available, sample data will be generated.</p>",
     "UpdateComment": "<p>Replaces the contents of a comment.</p>",
@@ -126,12 +127,18 @@
         "CreateBranchInput$branchName": "<p>The name of the new branch to create.</p>",
         "DeleteBranchInput$branchName": "<p>The name of the branch to delete.</p>",
         "GetBranchInput$branchName": "<p>The name of the branch for which you want to retrieve information.</p>",
+        "PutFileInput$branchName": "<p>The name of the branch where you want to add or update the file.</p>",
         "RepositoryMetadata$defaultBranch": "<p>The repository's default branch name.</p>",
         "UpdateDefaultBranchInput$defaultBranchName": "<p>The name of the branch to set as the default.</p>"
       }
     },
     "BranchNameExistsException": {
       "base": "<p>The specified branch name already exists.</p>",
+      "refs": {
+      }
+    },
+    "BranchNameIsTagNameException": {
+      "base": "<p>The specified branch name is not valid because it is a tag name. Type the name of a current branch in the repository. For a list of valid branch names, use <a>ListBranches</a>.</p>",
       "refs": {
       }
     },
@@ -303,7 +310,8 @@
         "PullRequestSourceReferenceUpdatedEventMetadata$beforeCommitId": "<p>The full commit ID of the commit in the destination branch that was the tip of the branch at the time the pull request was updated.</p>",
         "PullRequestSourceReferenceUpdatedEventMetadata$afterCommitId": "<p>The full commit ID of the commit in the source branch that was the tip of the branch at the time the pull request was updated.</p>",
         "PullRequestTarget$destinationCommit": "<p>The full commit ID that is the tip of the destination branch. This is the commit where the pull request was or will be merged.</p>",
-        "PullRequestTarget$sourceCommit": "<p>The full commit ID of the tip of the source branch used to create the pull request. If the pull request branch is updated by a push while the pull request is open, the commit ID will change to reflect the new tip of the branch.</p>"
+        "PullRequestTarget$sourceCommit": "<p>The full commit ID of the tip of the source branch used to create the pull request. If the pull request branch is updated by a push while the pull request is open, the commit ID will change to reflect the new tip of the branch.</p>",
+        "PutFileInput$parentCommitId": "<p>The full commit ID of the head commit in the branch where you want to add or update the file. If the commit ID does not match the ID of the head commit at the time of the operation, an error will occur, and the file will not be added or updated.</p>"
       }
     },
     "CommitIdDoesNotExistException": {
@@ -313,6 +321,11 @@
     },
     "CommitIdRequiredException": {
       "base": "<p>A commit ID was not specified.</p>",
+      "refs": {
+      }
+    },
+    "CommitMessageLengthExceededException": {
+      "base": "<p>The commit message is too long. Provide a shorter string. </p>",
       "refs": {
       }
     },
@@ -376,7 +389,7 @@
     "Date": {
       "base": null,
       "refs": {
-        "UserInfo$date": "<p>The date when the specified commit was pushed to the repository.</p>"
+        "UserInfo$date": "<p>The date when the specified commit was commited, in timestamp format with GMT offset.</p>"
       }
     },
     "DefaultBranchCannotBeDeletedException": {
@@ -444,9 +457,15 @@
         "GetDifferencesOutput$differences": "<p>A differences data type object that contains information about the differences, including whether the difference is added, modified, or deleted (A, D, M).</p>"
       }
     },
+    "DirectoryNameConflictsWithFileNameException": {
+      "base": "<p>A file cannot be added to the repository because the specified path name has the same name as a file that already exists in this repository. Either provide a different name for the file, or specify a different path for the file.</p>",
+      "refs": {
+      }
+    },
     "Email": {
       "base": null,
       "refs": {
+        "PutFileInput$email": "<p>An email address for the person adding or updating the file.</p>",
         "UserInfo$email": "<p>The email address associated with the user who made the commit, if any.</p>"
       }
     },
@@ -479,6 +498,33 @@
       "base": null,
       "refs": {
         "PullRequestEvent$eventDate": "<p>The day and time of the pull request event, in timestamp format.</p>"
+      }
+    },
+    "FileContent": {
+      "base": null,
+      "refs": {
+        "PutFileInput$fileContent": "<p>The content of the file, in binary object format. </p>"
+      }
+    },
+    "FileContentRequiredException": {
+      "base": "<p>The file cannot be added because it is empty. Empty files cannot be added to the repository with this API.</p>",
+      "refs": {
+      }
+    },
+    "FileContentSizeLimitExceededException": {
+      "base": "<p>The file cannot be added because it is too large. The maximum file size that can be added using PutFile is 6 MB. For files larger than 6 MB but smaller than 2 GB, add them using a Git client.</p>",
+      "refs": {
+      }
+    },
+    "FileModeTypeEnum": {
+      "base": null,
+      "refs": {
+        "PutFileInput$fileMode": "<p>The file mode permissions of the blob. Valid file mode permissions are listed below.</p>"
+      }
+    },
+    "FileNameConflictsWithDirectoryNameException": {
+      "base": "<p>A file cannot be added to the repository because the specified file name has the same name as a directory in this repository. Either provide another name for the file, or add the file in a directory that does not match the file name.</p>",
+      "refs": {
       }
     },
     "FileTooLargeException": {
@@ -656,8 +702,18 @@
       "refs": {
       }
     },
+    "InvalidEmailException": {
+      "base": "<p>The specified email address either contains one or more characters that are not allowed, or it exceeds the maximum number of characters allowed for an email address.</p>",
+      "refs": {
+      }
+    },
     "InvalidFileLocationException": {
       "base": "<p>The location of the file is not valid. Make sure that you include the extension of the file as well as the file name.</p>",
+      "refs": {
+      }
+    },
+    "InvalidFileModeException": {
+      "base": "<p>The specified file mode permission is not valid. For a list of valid file mode permissions, see <a>PutFile</a>. </p>",
       "refs": {
       }
     },
@@ -678,6 +734,11 @@
     },
     "InvalidOrderException": {
       "base": "<p>The specified sort order is not valid.</p>",
+      "refs": {
+      }
+    },
+    "InvalidParentCommitIdException": {
+      "base": "<p>The parent commit ID is not valid. The commit ID cannot be empty, and must match the head commit ID for the branch of the repository where you want to add or update a file.</p>",
       "refs": {
       }
     },
@@ -919,7 +980,8 @@
     "Message": {
       "base": null,
       "refs": {
-        "Commit$message": "<p>The commit message associated with the specified commit.</p>"
+        "Commit$message": "<p>The commit message associated with the specified commit.</p>",
+        "PutFileInput$commitMessage": "<p>A message about why this file was added or updated. While optional, adding a message is strongly encouraged in order to provide a more useful commit history for your repository.</p>"
       }
     },
     "Mode": {
@@ -936,7 +998,13 @@
     "Name": {
       "base": null,
       "refs": {
+        "PutFileInput$name": "<p>The name of the person adding or updating the file. While optional, adding a name is strongly encouraged in order to provide a more useful commit history for your repository.</p>",
         "UserInfo$name": "<p>The name of the user who made the specified commit.</p>"
+      }
+    },
+    "NameLengthExceededException": {
+      "base": "<p>The file name is not valid because it has exceeded the character limit for file names. File names, including the path to the file, cannot exceed the character limit. </p>",
+      "refs": {
       }
     },
     "NextToken": {
@@ -974,7 +1042,10 @@
         "PostCommentForComparedCommitOutput$beforeBlobId": "<p>In the directionality you established, the blob ID of the 'before' blob.</p>",
         "PostCommentForComparedCommitOutput$afterBlobId": "<p>In the directionality you established, the blob ID of the 'after' blob.</p>",
         "PostCommentForPullRequestOutput$beforeBlobId": "<p>In the directionality of the pull request, the blob ID of the 'before' blob.</p>",
-        "PostCommentForPullRequestOutput$afterBlobId": "<p>In the directionality of the pull request, the blob ID of the 'after' blob.</p>"
+        "PostCommentForPullRequestOutput$afterBlobId": "<p>In the directionality of the pull request, the blob ID of the 'after' blob.</p>",
+        "PutFileOutput$commitId": "<p>The full SHA of the commit that contains this file change.</p>",
+        "PutFileOutput$blobId": "<p>The ID of the blob, which is its SHA-1 pointer.</p>",
+        "PutFileOutput$treeId": "<p>Tree information for the commit that contains this file change.</p>"
       }
     },
     "OrderEnum": {
@@ -983,10 +1054,25 @@
         "ListRepositoriesInput$order": "<p>The order in which to sort the results of a list repositories operation.</p>"
       }
     },
+    "ParentCommitDoesNotExistException": {
+      "base": "<p>The parent commit ID is not valid. The specified parent commit ID does not exist in the specified branch of the repository.</p>",
+      "refs": {
+      }
+    },
+    "ParentCommitIdOutdatedException": {
+      "base": "<p>The file could not be added because the provided parent commit ID is not the current tip of the specified branch. To view the full commit ID of the current head of the branch, use <a>GetBranch</a>.</p>",
+      "refs": {
+      }
+    },
+    "ParentCommitIdRequiredException": {
+      "base": "<p>A parent commit ID is required. To view the full commit ID of a branch in a repository, use <a>GetBranch</a> or a Git command (for example, git pull or git log).</p>",
+      "refs": {
+      }
+    },
     "ParentList": {
       "base": null,
       "refs": {
-        "Commit$parents": "<p>The parent list for the specified commit.</p>"
+        "Commit$parents": "<p>A list of parent commits for the specified commit. Each parent commit ID is the full commit ID.</p>"
       }
     },
     "Path": {
@@ -995,7 +1081,8 @@
         "BlobMetadata$path": "<p>The path to the blob and any associated file name, if any.</p>",
         "GetDifferencesInput$beforePath": "<p>The file path in which to check for differences. Limits the results to this path. Can also be used to specify the previous name of a directory or folder. If <code>beforePath</code> and <code>afterPath</code> are not specified, differences will be shown for all paths.</p>",
         "GetDifferencesInput$afterPath": "<p>The file path in which to check differences. Limits the results to this path. Can also be used to specify the changed name of a directory or folder, if it has changed. If not specified, differences will be shown for all paths.</p>",
-        "Location$filePath": "<p>The name of the file being compared, including its extension and subdirectory, if any.</p>"
+        "Location$filePath": "<p>The name of the file being compared, including its extension and subdirectory, if any.</p>",
+        "PutFileInput$filePath": "<p>The name of the file you want to add or update, including the relative path to the file in the repository.</p> <note> <p>If the path does not currently exist in the repository, the path will be created as part of adding the file.</p> </note>"
       }
     },
     "PathDoesNotExistException": {
@@ -1157,6 +1244,16 @@
         "PullRequest$pullRequestTargets": "<p>The targets of the pull request, including the source branch and destination branch for the pull request.</p>"
       }
     },
+    "PutFileInput": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "PutFileOutput": {
+      "base": null,
+      "refs": {
+      }
+    },
     "PutRepositoryTriggersInput": {
       "base": "<p>Represents the input ofa put repository triggers operation.</p>",
       "refs": {
@@ -1266,6 +1363,7 @@
         "PullRequestMergedStateChangedEventMetadata$repositoryName": "<p>The name of the repository where the pull request was created.</p>",
         "PullRequestSourceReferenceUpdatedEventMetadata$repositoryName": "<p>The name of the repository where the pull request was updated.</p>",
         "PullRequestTarget$repositoryName": "<p>The name of the repository that contains the pull request source and destination branches.</p>",
+        "PutFileInput$repositoryName": "<p>The name of the repository where you want to add or update the file.</p>",
         "PutRepositoryTriggersInput$repositoryName": "<p>The name of the repository where you want to create or update the trigger.</p>",
         "RepositoryMetadata$repositoryName": "<p>The repository's name.</p>",
         "RepositoryNameIdPair$repositoryName": "<p>The name associated with the repository.</p>",
@@ -1416,6 +1514,11 @@
     },
     "RepositoryTriggersListRequiredException": {
       "base": "<p>The list of triggers for the repository is required but was not specified.</p>",
+      "refs": {
+      }
+    },
+    "SameFileContentException": {
+      "base": "<p>The file was not added or updated because the content of the file is exactly the same as the content of that file in the repository and branch that you specified.</p>",
       "refs": {
       }
     },

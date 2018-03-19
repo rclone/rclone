@@ -48,7 +48,7 @@ func (client AgentRegistrationInformationClient) Get(ctx context.Context, automa
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.AgentRegistrationInformationClient", "Get")
+		return result, validation.NewError("automation.AgentRegistrationInformationClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName)
@@ -121,7 +121,7 @@ func (client AgentRegistrationInformationClient) RegenerateKey(ctx context.Conte
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.AgentRegistrationInformationClient", "RegenerateKey")
+		return result, validation.NewError("automation.AgentRegistrationInformationClient", "RegenerateKey", err.Error())
 	}
 
 	req, err := client.RegenerateKeyPreparer(ctx, automationAccountName, parameters)

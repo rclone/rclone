@@ -133,18 +133,21 @@ type ProjectsRegionsOperationsService struct {
 }
 
 // AcceleratorConfig: Specifies the type and number of accelerator cards
-// attached to the instances of an instance group (see GPUs on Compute
-// Engine).
+// attached to the instances of an instance. See GPUs on Compute Engine.
 type AcceleratorConfig struct {
 	// AcceleratorCount: The number of the accelerator cards of this type
 	// exposed to this instance.
 	AcceleratorCount int64 `json:"acceleratorCount,omitempty"`
 
 	// AcceleratorTypeUri: Full URL, partial URI, or short name of the
-	// accelerator type resource to expose to this instance. See Google
-	// Compute Engine AcceleratorTypes(
-	// /compute/docs/reference/beta/acceleratorTypes)Examples *
-	// https://www.googleapis.com/compute/beta/projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 * projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80 *
+	// accelerator type resource to expose to this instance. See Compute
+	// Engine
+	// AcceleratorTypes.Examples:
+	// https://www.googleapis.com/compute/beta/pro
+	// jects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k80
+	//
+	// projects/[project_id]/zones/us-east1-a/acceleratorTypes/nvidia-tesla-k
+	// 80
 	// nvidia-tesla-k80
 	AcceleratorTypeUri string `json:"acceleratorTypeUri,omitempty"`
 
@@ -177,7 +180,7 @@ type CancelJobRequest struct {
 }
 
 // Cluster: Describes the identifying information, config, and status of
-// a cluster of Google Compute Engine instances.
+// a cluster of Compute Engine instances.
 type Cluster struct {
 	// ClusterName: Required. The cluster name. Cluster names within a
 	// project must be unique. Names of deleted clusters can be reused.
@@ -244,8 +247,8 @@ func (s *Cluster) MarshalJSON() ([]byte, error) {
 
 // ClusterConfig: The cluster config.
 type ClusterConfig struct {
-	// ConfigBucket: Optional. A Google Cloud Storage staging bucket used
-	// for sharing generated SSH keys and config. If you do not specify a
+	// ConfigBucket: Optional. A Cloud Storage staging bucket used for
+	// sharing generated SSH keys and config. If you do not specify a
 	// staging bucket, Cloud Dataproc will determine an appropriate Cloud
 	// Storage location (US, ASIA, or EU) for your cluster's staging bucket
 	// according to the Google Compute Engine zone where your cluster is
@@ -253,8 +256,8 @@ type ClusterConfig struct {
 	// per-location bucket for you.
 	ConfigBucket string `json:"configBucket,omitempty"`
 
-	// GceClusterConfig: Required. The shared Google Compute Engine config
-	// settings for all instances in a cluster.
+	// GceClusterConfig: Required. The shared Compute Engine config settings
+	// for all instances in a cluster.
 	GceClusterConfig *GceClusterConfig `json:"gceClusterConfig,omitempty"`
 
 	// InitializationActions: Optional. Commands to execute on each node
@@ -273,20 +276,20 @@ type ClusterConfig struct {
 	//
 	InitializationActions []*NodeInitializationAction `json:"initializationActions,omitempty"`
 
-	// MasterConfig: Optional. The Google Compute Engine config settings for
-	// the master instance in a cluster.
+	// MasterConfig: Optional. The Compute Engine config settings for the
+	// master instance in a cluster.
 	MasterConfig *InstanceGroupConfig `json:"masterConfig,omitempty"`
 
-	// SecondaryWorkerConfig: Optional. The Google Compute Engine config
-	// settings for additional worker instances in a cluster.
+	// SecondaryWorkerConfig: Optional. The Compute Engine config settings
+	// for additional worker instances in a cluster.
 	SecondaryWorkerConfig *InstanceGroupConfig `json:"secondaryWorkerConfig,omitempty"`
 
 	// SoftwareConfig: Optional. The config settings for software inside the
 	// cluster.
 	SoftwareConfig *SoftwareConfig `json:"softwareConfig,omitempty"`
 
-	// WorkerConfig: Optional. The Google Compute Engine config settings for
-	// worker instances in a cluster.
+	// WorkerConfig: Optional. The Compute Engine config settings for worker
+	// instances in a cluster.
 	WorkerConfig *InstanceGroupConfig `json:"workerConfig,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "ConfigBucket") to
@@ -588,9 +591,8 @@ type Empty struct {
 	googleapi.ServerResponse `json:"-"`
 }
 
-// GceClusterConfig: Common config settings for resources of Google
-// Compute Engine cluster instances, applicable to all instances in the
-// cluster.
+// GceClusterConfig: Common config settings for resources of Compute
+// Engine cluster instances, applicable to all instances in the cluster.
 type GceClusterConfig struct {
 	// InternalIpOnly: Optional. If true, all instances in the cluster will
 	// only have internal IP addresses. By default, clusters are not
@@ -601,15 +603,15 @@ type GceClusterConfig struct {
 	// without external IP addresses.
 	InternalIpOnly bool `json:"internalIpOnly,omitempty"`
 
-	// Metadata: The Google Compute Engine metadata entries to add to all
-	// instances (see Project and instance metadata
+	// Metadata: The Compute Engine metadata entries to add to all instances
+	// (see Project and instance metadata
 	// (https://cloud.google.com/compute/docs/storing-retrieving-metadata#pro
 	// ject_and_instance_metadata)).
 	Metadata map[string]string `json:"metadata,omitempty"`
 
-	// NetworkUri: Optional. The Google Compute Engine network to be used
-	// for machine communications. Cannot be specified with subnetwork_uri.
-	// If neither network_uri nor subnetwork_uri is specified, the "default"
+	// NetworkUri: Optional. The Compute Engine network to be used for
+	// machine communications. Cannot be specified with subnetwork_uri. If
+	// neither network_uri nor subnetwork_uri is specified, the "default"
 	// network of the project is used, if it exists. Cannot be a "Custom
 	// Subnet Network" (see Using Subnetworks for more information).A full
 	// URL, partial URI, or short name are valid.
@@ -622,7 +624,7 @@ type GceClusterConfig struct {
 	NetworkUri string `json:"networkUri,omitempty"`
 
 	// ServiceAccount: Optional. The service account of the instances.
-	// Defaults to the default Google Compute Engine service account. Custom
+	// Defaults to the default Compute Engine service account. Custom
 	// service accounts need permissions equivalent to the folloing IAM
 	// roles:
 	// roles/logging.logWriter
@@ -650,9 +652,9 @@ type GceClusterConfig struct {
 	// https://www.googleapis.com/auth/devstorage.full_control
 	ServiceAccountScopes []string `json:"serviceAccountScopes,omitempty"`
 
-	// SubnetworkUri: Optional. The Google Compute Engine subnetwork to be
-	// used for machine communications. Cannot be specified with
-	// network_uri.A full URL, partial URI, or short name are valid.
+	// SubnetworkUri: Optional. The Compute Engine subnetwork to be used for
+	// machine communications. Cannot be specified with network_uri.A full
+	// URL, partial URI, or short name are valid.
 	// Examples:
 	// https://www.googleapis.com/compute/v1/projects/[project_id]/
 	// regions/us-east1/sub0
@@ -660,14 +662,14 @@ type GceClusterConfig struct {
 	// sub0
 	SubnetworkUri string `json:"subnetworkUri,omitempty"`
 
-	// Tags: The Google Compute Engine tags to add to all instances (see
-	// Tagging instances).
+	// Tags: The Compute Engine tags to add to all instances (see Tagging
+	// instances).
 	Tags []string `json:"tags,omitempty"`
 
-	// ZoneUri: Optional. The zone where the Google Compute Engine cluster
-	// will be located. On a create request, it is required in the "global"
-	// region. If omitted in a non-global Cloud Dataproc region, the service
-	// will pick a zone in the corresponding Compute Engine region. On a get
+	// ZoneUri: Optional. The zone where the Compute Engine cluster will be
+	// located. On a create request, it is required in the "global" region.
+	// If omitted in a non-global Cloud Dataproc region, the service will
+	// pick a zone in the corresponding Compute Engine region. On a get
 	// request, zone will always be present.A full URL, partial URI, or
 	// short name are valid.
 	// Examples:
@@ -826,20 +828,19 @@ func (s *HiveJob) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// InstanceGroupConfig: Optional. The config settings for Google Compute
-// Engine resources in an instance group, such as a master or worker
-// group.
+// InstanceGroupConfig: Optional. The config settings for Compute Engine
+// resources in an instance group, such as a master or worker group.
 type InstanceGroupConfig struct {
-	// Accelerators: Optional. The Google Compute Engine accelerator
-	// configuration for these instances.Beta Feature: This feature is still
-	// under development. It may be changed before final release.
+	// Accelerators: Optional. The Compute Engine accelerator configuration
+	// for these instances.Beta Feature: This feature is still under
+	// development. It may be changed before final release.
 	Accelerators []*AcceleratorConfig `json:"accelerators,omitempty"`
 
 	// DiskConfig: Optional. Disk option config settings.
 	DiskConfig *DiskConfig `json:"diskConfig,omitempty"`
 
-	// ImageUri: Output only. The Google Compute Engine image resource used
-	// for cluster instances. Inferred from SoftwareConfig.image_version.
+	// ImageUri: Output only. The Compute Engine image resource used for
+	// cluster instances. Inferred from SoftwareConfig.image_version.
 	ImageUri string `json:"imageUri,omitempty"`
 
 	// InstanceNames: Optional. The list of instance names. Cloud Dataproc
@@ -852,9 +853,8 @@ type InstanceGroupConfig struct {
 	// preemptible instances.
 	IsPreemptible bool `json:"isPreemptible,omitempty"`
 
-	// MachineTypeUri: Optional. The Google Compute Engine machine type used
-	// for cluster instances.A full URL, partial URI, or short name are
-	// valid.
+	// MachineTypeUri: Optional. The Compute Engine machine type used for
+	// cluster instances.A full URL, partial URI, or short name are valid.
 	// Examples:
 	// https://www.googleapis.com/compute/v1/projects/[project_id]/
 	// zones/us-east1-a/machineTypes/n1-standard-2
@@ -863,7 +863,7 @@ type InstanceGroupConfig struct {
 	// n1-standard-2
 	MachineTypeUri string `json:"machineTypeUri,omitempty"`
 
-	// ManagedGroupConfig: Output only. The config for Google Compute Engine
+	// ManagedGroupConfig: Output only. The config for Compute Engine
 	// Instance Group Manager that manages this group. This is only used for
 	// preemptible instance groups.
 	ManagedGroupConfig *ManagedGroupConfig `json:"managedGroupConfig,omitempty"`
@@ -1343,8 +1343,7 @@ func (s *ManagedGroupConfig) MarshalJSON() ([]byte, error) {
 // NodeInitializationAction: Specifies an executable to run on a fully
 // configured node and a timeout period for executable completion.
 type NodeInitializationAction struct {
-	// ExecutableFile: Required. Google Cloud Storage URI of executable
-	// file.
+	// ExecutableFile: Required. Cloud Storage URI of executable file.
 	ExecutableFile string `json:"executableFile,omitempty"`
 
 	// ExecutionTimeout: Optional. Amount of time executable has to
@@ -1839,6 +1838,16 @@ type SubmitJobRequest struct {
 	// Job: Required. The job resource.
 	Job *Job `json:"job,omitempty"`
 
+	// RequestId: Optional. A unique id used to identify the request. If the
+	// server receives two SubmitJobRequest requests with the same id, then
+	// the second request will be ignored and the first Job created and
+	// stored in the backend is returned.It is recommended to always set
+	// this value to a UUID
+	// (https://en.wikipedia.org/wiki/Universally_unique_identifier).The id
+	// must contain only letters (a-z, A-Z), numbers (0-9), underscores (_),
+	// and hyphens (-). The maximum length is 40 characters.
+	RequestId string `json:"requestId,omitempty"`
+
 	// ForceSendFields is a list of field names (e.g. "Job") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
@@ -1953,6 +1962,20 @@ func (r *ProjectsRegionsClustersService) Create(projectId string, region string,
 	return c
 }
 
+// RequestId sets the optional parameter "requestId": A unique id used
+// to identify the request. If the server receives two
+// CreateClusterRequest requests with the same id, then the second
+// request will be ignored and the first google.longrunning.Operation
+// created and stored in the backend is returned.It is recommended to
+// always set this value to a UUID
+// (https://en.wikipedia.org/wiki/Universally_unique_identifier).The id
+// must contain only letters (a-z, A-Z), numbers (0-9), underscores (_),
+// and hyphens (-). The maximum length is 40 characters.
+func (c *ProjectsRegionsClustersCreateCall) RequestId(requestId string) *ProjectsRegionsClustersCreateCall {
+	c.urlParams_.Set("requestId", requestId)
+	return c
+}
+
 // Fields allows partial responses to be retrieved. See
 // https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
 // for more information.
@@ -2060,6 +2083,11 @@ func (c *ProjectsRegionsClustersCreateCall) Do(opts ...googleapi.CallOption) (*O
 	//       "location": "path",
 	//       "required": true,
 	//       "type": "string"
+	//     },
+	//     "requestId": {
+	//       "description": "Optional. A unique id used to identify the request. If the server receives two CreateClusterRequest requests with the same id, then the second request will be ignored and the first google.longrunning.Operation created and stored in the backend is returned.It is recommended to always set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The id must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+	//       "location": "query",
+	//       "type": "string"
 	//     }
 	//   },
 	//   "path": "v1/projects/{projectId}/regions/{region}/clusters",
@@ -2094,6 +2122,28 @@ func (r *ProjectsRegionsClustersService) Delete(projectId string, region string,
 	c.projectId = projectId
 	c.region = region
 	c.clusterName = clusterName
+	return c
+}
+
+// ClusterUuid sets the optional parameter "clusterUuid": Specifying the
+// cluster_uuid means the RPC should fail (with error NOT_FOUND) if
+// cluster with specified UUID does not exist.
+func (c *ProjectsRegionsClustersDeleteCall) ClusterUuid(clusterUuid string) *ProjectsRegionsClustersDeleteCall {
+	c.urlParams_.Set("clusterUuid", clusterUuid)
+	return c
+}
+
+// RequestId sets the optional parameter "requestId": A unique id used
+// to identify the request. If the server receives two
+// DeleteClusterRequest requests with the same id, then the second
+// request will be ignored and the first google.longrunning.Operation
+// created and stored in the backend is returned.It is recommended to
+// always set this value to a UUID
+// (https://en.wikipedia.org/wiki/Universally_unique_identifier).The id
+// must contain only letters (a-z, A-Z), numbers (0-9), underscores (_),
+// and hyphens (-). The maximum length is 40 characters.
+func (c *ProjectsRegionsClustersDeleteCall) RequestId(requestId string) *ProjectsRegionsClustersDeleteCall {
+	c.urlParams_.Set("requestId", requestId)
 	return c
 }
 
@@ -2196,6 +2246,11 @@ func (c *ProjectsRegionsClustersDeleteCall) Do(opts ...googleapi.CallOption) (*O
 	//       "required": true,
 	//       "type": "string"
 	//     },
+	//     "clusterUuid": {
+	//       "description": "Optional. Specifying the cluster_uuid means the RPC should fail (with error NOT_FOUND) if cluster with specified UUID does not exist.",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
 	//     "projectId": {
 	//       "description": "Required. The ID of the Google Cloud Platform project that the cluster belongs to.",
 	//       "location": "path",
@@ -2206,6 +2261,11 @@ func (c *ProjectsRegionsClustersDeleteCall) Do(opts ...googleapi.CallOption) (*O
 	//       "description": "Required. The Cloud Dataproc region in which to handle the request.",
 	//       "location": "path",
 	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "requestId": {
+	//       "description": "Optional. A unique id used to identify the request. If the server receives two DeleteClusterRequest requests with the same id, then the second request will be ignored and the first google.longrunning.Operation created and stored in the backend is returned.It is recommended to always set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The id must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+	//       "location": "query",
 	//       "type": "string"
 	//     }
 	//   },
@@ -2787,6 +2847,20 @@ func (c *ProjectsRegionsClustersPatchCall) GracefulDecommissionTimeout(gracefulD
 	return c
 }
 
+// RequestId sets the optional parameter "requestId": A unique id used
+// to identify the request. If the server receives two
+// UpdateClusterRequest requests with the same id, then the second
+// request will be ignored and the first google.longrunning.Operation
+// created and stored in the backend is returned.It is recommended to
+// always set this value to a UUID
+// (https://en.wikipedia.org/wiki/Universally_unique_identifier).The id
+// must contain only letters (a-z, A-Z), numbers (0-9), underscores (_),
+// and hyphens (-). The maximum length is 40 characters.
+func (c *ProjectsRegionsClustersPatchCall) RequestId(requestId string) *ProjectsRegionsClustersPatchCall {
+	c.urlParams_.Set("requestId", requestId)
+	return c
+}
+
 // UpdateMask sets the optional parameter "updateMask": Required.
 // Specifies the path, relative to Cluster, of the field to update. For
 // example, to change the number of workers in a cluster to 5, the
@@ -2946,6 +3020,11 @@ func (c *ProjectsRegionsClustersPatchCall) Do(opts ...googleapi.CallOption) (*Op
 	//       "description": "Required. The Cloud Dataproc region in which to handle the request.",
 	//       "location": "path",
 	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "requestId": {
+	//       "description": "Optional. A unique id used to identify the request. If the server receives two UpdateClusterRequest requests with the same id, then the second request will be ignored and the first google.longrunning.Operation created and stored in the backend is returned.It is recommended to always set this value to a UUID (https://en.wikipedia.org/wiki/Universally_unique_identifier).The id must contain only letters (a-z, A-Z), numbers (0-9), underscores (_), and hyphens (-). The maximum length is 40 characters.",
+	//       "location": "query",
 	//       "type": "string"
 	//     },
 	//     "updateMask": {

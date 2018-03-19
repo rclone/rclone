@@ -129,7 +129,6 @@ func (c *KinesisVideoMedia) GetMediaWithContext(ctx aws.Context, input *GetMedia
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-media-2017-09-30/GetMediaInput
 type GetMediaInput struct {
 	_ struct{} `type:"structure"`
 
@@ -199,7 +198,6 @@ func (s *GetMediaInput) SetStreamName(v string) *GetMediaInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-media-2017-09-30/GetMediaOutput
 type GetMediaOutput struct {
 	_ struct{} `type:"structure" payload:"Payload"`
 
@@ -291,7 +289,6 @@ func (s *GetMediaOutput) SetPayload(v io.ReadCloser) *GetMediaOutput {
 //    tag (AWS_KINESISVIDEO_CONTINUATION_TOKEN). If your previous GetMedia request
 //    terminated, you can use this tag value in your next GetMedia request.
 //    The API then starts returning chunks starting where the last API ended.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/kinesis-video-media-2017-09-30/StartSelector
 type StartSelector struct {
 	_ struct{} `type:"structure"`
 

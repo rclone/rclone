@@ -17,6 +17,7 @@
     "DeleteConfigurationTemplate": "<p>Deletes the specified configuration template.</p> <note> <p>When you launch an environment using a configuration template, the environment gets a copy of the template. You can delete or modify the environment's copy of the template without affecting the running environment.</p> </note>",
     "DeleteEnvironmentConfiguration": "<p>Deletes the draft configuration associated with the running environment.</p> <p>Updating a running environment with any configuration changes creates a draft configuration set. You can get the draft configuration using <a>DescribeConfigurationSettings</a> while the update is in progress or if the update fails. The <code>DeploymentStatus</code> for the draft configuration indicates whether the deployment is in process or has failed. The draft configuration remains in existence until it is deleted with this action.</p>",
     "DeletePlatformVersion": "<p>Deletes the specified version of a custom platform.</p>",
+    "DescribeAccountAttributes": null,
     "DescribeApplicationVersions": "<p>Retrieve a list of application versions.</p>",
     "DescribeApplications": "<p>Returns the descriptions of existing applications.</p>",
     "DescribeConfigurationOptions": "<p>Describes the configuration options that are used in a particular configuration template or environment, or that a specified solution stack defines. The description includes the values the options, their default values, and an indication of the required action on a running environment if an option value is changed.</p>",
@@ -263,7 +264,8 @@
       "refs": {
         "BuildConfiguration$TimeoutInMinutes": "<p>How long in minutes, from 5 to 480 (8 hours), for AWS CodeBuild to wait until timing out any related build that does not get marked as completed. The default is 60 minutes.</p>",
         "MaxAgeRule$MaxAgeInDays": "<p>Specify the number of days to retain an application versions.</p>",
-        "MaxCountRule$MaxCount": "<p>Specify the maximum number of application versions to retain.</p>"
+        "MaxCountRule$MaxCount": "<p>Specify the maximum number of application versions to retain.</p>",
+        "ResourceQuota$Maximum": null
       }
     },
     "BuildConfiguration": {
@@ -579,6 +581,11 @@
       "base": null,
       "refs": {
         "Deployment$DeploymentTime": "<p>For in-progress deployments, the time that the deployment started.</p> <p>For completed deployments, the time that the deployment ended.</p>"
+      }
+    },
+    "DescribeAccountAttributesResult": {
+      "base": null,
+      "refs": {
       }
     },
     "DescribeApplicationVersionsMessage": {
@@ -1520,6 +1527,22 @@
     "ResourceNotFoundException": {
       "base": "<p>A resource doesn't exist for the specified Amazon Resource Name (ARN).</p>",
       "refs": {
+      }
+    },
+    "ResourceQuota": {
+      "base": null,
+      "refs": {
+        "ResourceQuotas$ApplicationQuota": null,
+        "ResourceQuotas$ApplicationVersionQuota": null,
+        "ResourceQuotas$EnvironmentQuota": null,
+        "ResourceQuotas$ConfigurationTemplateQuota": null,
+        "ResourceQuotas$CustomPlatformQuota": null
+      }
+    },
+    "ResourceQuotas": {
+      "base": null,
+      "refs": {
+        "DescribeAccountAttributesResult$ResourceQuotas": null
       }
     },
     "ResourceTagsDescriptionMessage": {

@@ -2765,7 +2765,7 @@ func (c *DeviceFarm) ListJobsRequest(input *ListJobsInput) (req *request.Request
 
 // ListJobs API operation for AWS Device Farm.
 //
-// Gets information about jobs.
+// Gets information about jobs for a given test run.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -3919,7 +3919,7 @@ func (c *DeviceFarm) ListSuitesRequest(input *ListSuitesInput) (req *request.Req
 
 // ListSuites API operation for AWS Device Farm.
 //
-// Gets information about suites.
+// Gets information about test suites for a given job.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -4063,7 +4063,7 @@ func (c *DeviceFarm) ListTestsRequest(input *ListTestsInput) (req *request.Reque
 
 // ListTests API operation for AWS Device Farm.
 //
-// Gets information about tests.
+// Gets information about tests in a given test suite.
 //
 // Returns awserr.Error for service API and SDK errors. Use runtime type assertions
 // with awserr.Error's Code and Message methods to get detailed information about
@@ -5177,7 +5177,6 @@ func (c *DeviceFarm) UpdateProjectWithContext(ctx aws.Context, input *UpdateProj
 }
 
 // A container for account-level settings within AWS Device Farm.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/AccountSettings
 type AccountSettings struct {
 	_ struct{} `type:"structure"`
 
@@ -5260,7 +5259,6 @@ func (s *AccountSettings) SetUnmeteredRemoteAccessDevices(v map[string]*int64) *
 }
 
 // Represents the output of a test. Examples of artifacts include logs and screenshots.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Artifact
 type Artifact struct {
 	_ struct{} `type:"structure"`
 
@@ -5373,7 +5371,6 @@ func (s *Artifact) SetUrl(v string) *Artifact {
 // Represents the amount of CPU that an app is using on a physical device.
 //
 // Note that this does not represent system-wide CPU usage.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CPU
 type CPU struct {
 	_ struct{} `type:"structure"`
 
@@ -5417,7 +5414,6 @@ func (s *CPU) SetFrequency(v string) *CPU {
 }
 
 // Represents entity counters.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Counters
 type Counters struct {
 	_ struct{} `type:"structure"`
 
@@ -5496,7 +5492,6 @@ func (s *Counters) SetWarned(v int64) *Counters {
 }
 
 // Represents a request to the create device pool operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateDevicePoolRequest
 type CreateDevicePoolInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5576,7 +5571,6 @@ func (s *CreateDevicePoolInput) SetRules(v []*Rule) *CreateDevicePoolInput {
 }
 
 // Represents the result of a create device pool request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateDevicePoolResult
 type CreateDevicePoolOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5600,7 +5594,6 @@ func (s *CreateDevicePoolOutput) SetDevicePool(v *DevicePool) *CreateDevicePoolO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateNetworkProfileRequest
 type CreateNetworkProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5751,7 +5744,6 @@ func (s *CreateNetworkProfileInput) SetUplinkLossPercent(v int64) *CreateNetwork
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateNetworkProfileResult
 type CreateNetworkProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5776,7 +5768,6 @@ func (s *CreateNetworkProfileOutput) SetNetworkProfile(v *NetworkProfile) *Creat
 }
 
 // Represents a request to the create project operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateProjectRequest
 type CreateProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5827,7 +5818,6 @@ func (s *CreateProjectInput) SetName(v string) *CreateProjectInput {
 }
 
 // Represents the result of a create project request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateProjectResult
 type CreateProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5853,7 +5843,6 @@ func (s *CreateProjectOutput) SetProject(v *Project) *CreateProjectOutput {
 
 // Creates the configuration settings for a remote access session, including
 // the device model and type.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateRemoteAccessSessionConfiguration
 type CreateRemoteAccessSessionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -5878,14 +5867,13 @@ func (s *CreateRemoteAccessSessionConfiguration) SetBillingMethod(v string) *Cre
 }
 
 // Creates and submits a request to start a remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateRemoteAccessSessionRequest
 type CreateRemoteAccessSessionInput struct {
 	_ struct{} `type:"structure"`
 
 	// Unique identifier for the client. If you want access to multiple devices
 	// on the same client, you should pass the same clientId value in each call
 	// to CreateRemoteAccessSession. This is required only if remoteDebugEnabled
-	// is set to true true.
+	// is set to true.
 	ClientId *string `locationName:"clientId" type:"string"`
 
 	// The configuration information for the remote access session request.
@@ -5896,6 +5884,20 @@ type CreateRemoteAccessSessionInput struct {
 	//
 	// DeviceArn is a required field
 	DeviceArn *string `locationName:"deviceArn" min:"32" type:"string" required:"true"`
+
+	// The interaction mode of the remote access session. Valid values are:
+	//
+	//    * INTERACTIVE: You can interact with the iOS device by viewing, touching,
+	//    and rotating the screen. You cannot run XCUITest framework-based tests
+	//    in this mode.
+	//
+	//    * NO_VIDEO: You are connected to the device but cannot interact with it
+	//    or view the screen. This mode has the fastest test execution speed. You
+	//    can run XCUITest framework-based tests in this mode.
+	//
+	//    * VIDEO_ONLY: You can view the screen but cannot touch or rotate it. You
+	//    can run XCUITest framework-based tests and watch the screen in this mode.
+	InteractionMode *string `locationName:"interactionMode" type:"string" enum:"InteractionMode"`
 
 	// The name of the remote access session that you wish to create.
 	Name *string `locationName:"name" type:"string"`
@@ -5909,6 +5911,13 @@ type CreateRemoteAccessSessionInput struct {
 	// Set to true if you want to access devices remotely for debugging in your
 	// remote access session.
 	RemoteDebugEnabled *bool `locationName:"remoteDebugEnabled" type:"boolean"`
+
+	// The Amazon Resource Name (ARN) for the app to be recorded in the remote access
+	// session.
+	RemoteRecordAppArn *string `locationName:"remoteRecordAppArn" min:"32" type:"string"`
+
+	// Set to true to enable remote recording for the remote access session.
+	RemoteRecordEnabled *bool `locationName:"remoteRecordEnabled" type:"boolean"`
 
 	// The public key of the ssh key pair you want to use for connecting to remote
 	// devices in your remote debugging session. This is only required if remoteDebugEnabled
@@ -5941,6 +5950,9 @@ func (s *CreateRemoteAccessSessionInput) Validate() error {
 	if s.ProjectArn != nil && len(*s.ProjectArn) < 32 {
 		invalidParams.Add(request.NewErrParamMinLen("ProjectArn", 32))
 	}
+	if s.RemoteRecordAppArn != nil && len(*s.RemoteRecordAppArn) < 32 {
+		invalidParams.Add(request.NewErrParamMinLen("RemoteRecordAppArn", 32))
+	}
 
 	if invalidParams.Len() > 0 {
 		return invalidParams
@@ -5966,6 +5978,12 @@ func (s *CreateRemoteAccessSessionInput) SetDeviceArn(v string) *CreateRemoteAcc
 	return s
 }
 
+// SetInteractionMode sets the InteractionMode field's value.
+func (s *CreateRemoteAccessSessionInput) SetInteractionMode(v string) *CreateRemoteAccessSessionInput {
+	s.InteractionMode = &v
+	return s
+}
+
 // SetName sets the Name field's value.
 func (s *CreateRemoteAccessSessionInput) SetName(v string) *CreateRemoteAccessSessionInput {
 	s.Name = &v
@@ -5984,6 +6002,18 @@ func (s *CreateRemoteAccessSessionInput) SetRemoteDebugEnabled(v bool) *CreateRe
 	return s
 }
 
+// SetRemoteRecordAppArn sets the RemoteRecordAppArn field's value.
+func (s *CreateRemoteAccessSessionInput) SetRemoteRecordAppArn(v string) *CreateRemoteAccessSessionInput {
+	s.RemoteRecordAppArn = &v
+	return s
+}
+
+// SetRemoteRecordEnabled sets the RemoteRecordEnabled field's value.
+func (s *CreateRemoteAccessSessionInput) SetRemoteRecordEnabled(v bool) *CreateRemoteAccessSessionInput {
+	s.RemoteRecordEnabled = &v
+	return s
+}
+
 // SetSshPublicKey sets the SshPublicKey field's value.
 func (s *CreateRemoteAccessSessionInput) SetSshPublicKey(v string) *CreateRemoteAccessSessionInput {
 	s.SshPublicKey = &v
@@ -5991,7 +6021,6 @@ func (s *CreateRemoteAccessSessionInput) SetSshPublicKey(v string) *CreateRemote
 }
 
 // Represents the server response from a request to create a remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateRemoteAccessSessionResult
 type CreateRemoteAccessSessionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6017,7 +6046,6 @@ func (s *CreateRemoteAccessSessionOutput) SetRemoteAccessSession(v *RemoteAccess
 }
 
 // Represents a request to the create upload operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateUploadRequest
 type CreateUploadInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6140,7 +6168,6 @@ func (s *CreateUploadInput) SetType(v string) *CreateUploadInput {
 }
 
 // Represents the result of a create upload request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CreateUploadResult
 type CreateUploadOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6170,7 +6197,6 @@ func (s *CreateUploadOutput) SetUpload(v *Upload) *CreateUploadOutput {
 // Specify deviceHostPaths and optionally specify either iosPaths or androidPaths.
 //
 // For web app tests, you can specify both iosPaths and androidPaths.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/CustomerArtifactPaths
 type CustomerArtifactPaths struct {
 	_ struct{} `type:"structure"`
 
@@ -6216,7 +6242,6 @@ func (s *CustomerArtifactPaths) SetIosPaths(v []*string) *CustomerArtifactPaths 
 }
 
 // Represents a request to the delete device pool operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteDevicePoolRequest
 type DeleteDevicePoolInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6260,7 +6285,6 @@ func (s *DeleteDevicePoolInput) SetArn(v string) *DeleteDevicePoolInput {
 }
 
 // Represents the result of a delete device pool request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteDevicePoolResult
 type DeleteDevicePoolOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6275,7 +6299,6 @@ func (s DeleteDevicePoolOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteNetworkProfileRequest
 type DeleteNetworkProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6317,7 +6340,6 @@ func (s *DeleteNetworkProfileInput) SetArn(v string) *DeleteNetworkProfileInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteNetworkProfileResult
 type DeleteNetworkProfileOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6333,7 +6355,6 @@ func (s DeleteNetworkProfileOutput) GoString() string {
 }
 
 // Represents a request to the delete project operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteProjectRequest
 type DeleteProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6377,7 +6398,6 @@ func (s *DeleteProjectInput) SetArn(v string) *DeleteProjectInput {
 }
 
 // Represents the result of a delete project request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteProjectResult
 type DeleteProjectOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6393,7 +6413,6 @@ func (s DeleteProjectOutput) GoString() string {
 }
 
 // Represents the request to delete the specified remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteRemoteAccessSessionRequest
 type DeleteRemoteAccessSessionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6438,7 +6457,6 @@ func (s *DeleteRemoteAccessSessionInput) SetArn(v string) *DeleteRemoteAccessSes
 
 // The response from the server when a request is made to delete the remote
 // access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteRemoteAccessSessionResult
 type DeleteRemoteAccessSessionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6454,7 +6472,6 @@ func (s DeleteRemoteAccessSessionOutput) GoString() string {
 }
 
 // Represents a request to the delete run operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteRunRequest
 type DeleteRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6497,7 +6514,6 @@ func (s *DeleteRunInput) SetArn(v string) *DeleteRunInput {
 }
 
 // Represents the result of a delete run request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteRunResult
 type DeleteRunOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6513,7 +6529,6 @@ func (s DeleteRunOutput) GoString() string {
 }
 
 // Represents a request to the delete upload operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteUploadRequest
 type DeleteUploadInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6557,7 +6572,6 @@ func (s *DeleteUploadInput) SetArn(v string) *DeleteUploadInput {
 }
 
 // Represents the result of a delete upload request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeleteUploadResult
 type DeleteUploadOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6573,7 +6587,6 @@ func (s DeleteUploadOutput) GoString() string {
 }
 
 // Represents a device type that an app is tested against.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Device
 type Device struct {
 	_ struct{} `type:"structure"`
 
@@ -6616,6 +6629,9 @@ type Device struct {
 
 	// The device's model name.
 	Model *string `locationName:"model" type:"string"`
+
+	// The device's model ID.
+	ModelId *string `locationName:"modelId" type:"string"`
 
 	// The device's display name.
 	Name *string `locationName:"name" type:"string"`
@@ -6721,6 +6737,12 @@ func (s *Device) SetModel(v string) *Device {
 	return s
 }
 
+// SetModelId sets the ModelId field's value.
+func (s *Device) SetModelId(v string) *Device {
+	s.ModelId = &v
+	return s
+}
+
 // SetName sets the Name field's value.
 func (s *Device) SetName(v string) *Device {
 	s.Name = &v
@@ -6765,7 +6787,6 @@ func (s *Device) SetResolution(v *Resolution) *Device {
 
 // Represents the total (metered or unmetered) minutes used by the resource
 // to run tests. Contains the sum of minutes consumed by all children.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DeviceMinutes
 type DeviceMinutes struct {
 	_ struct{} `type:"structure"`
 
@@ -6811,7 +6832,6 @@ func (s *DeviceMinutes) SetUnmetered(v float64) *DeviceMinutes {
 }
 
 // Represents a collection of device types.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DevicePool
 type DevicePool struct {
 	_ struct{} `type:"structure"`
 
@@ -6879,7 +6899,6 @@ func (s *DevicePool) SetType(v string) *DevicePool {
 }
 
 // Represents a device pool compatibility result.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/DevicePoolCompatibilityResult
 type DevicePoolCompatibilityResult struct {
 	_ struct{} `type:"structure"`
 
@@ -6923,7 +6942,6 @@ func (s *DevicePoolCompatibilityResult) SetIncompatibilityMessages(v []*Incompat
 
 // Represents configuration information about a test run, such as the execution
 // timeout (in minutes).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ExecutionConfiguration
 type ExecutionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -6968,7 +6986,6 @@ func (s *ExecutionConfiguration) SetJobTimeoutMinutes(v int64) *ExecutionConfigu
 }
 
 // Represents the request sent to retrieve the account settings.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetAccountSettingsRequest
 type GetAccountSettingsInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6985,7 +7002,6 @@ func (s GetAccountSettingsInput) GoString() string {
 
 // Represents the account settings return values from the GetAccountSettings
 // request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetAccountSettingsResult
 type GetAccountSettingsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7010,7 +7026,6 @@ func (s *GetAccountSettingsOutput) SetAccountSettings(v *AccountSettings) *GetAc
 }
 
 // Represents a request to the get device request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDeviceRequest
 type GetDeviceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7053,7 +7068,6 @@ func (s *GetDeviceInput) SetArn(v string) *GetDeviceInput {
 }
 
 // Represents the result of a get device request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDeviceResult
 type GetDeviceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7078,7 +7092,6 @@ func (s *GetDeviceOutput) SetDevice(v *Device) *GetDeviceOutput {
 }
 
 // Represents a request to the get device pool compatibility operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDevicePoolCompatibilityRequest
 type GetDevicePoolCompatibilityInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7188,7 +7201,6 @@ func (s *GetDevicePoolCompatibilityInput) SetTestType(v string) *GetDevicePoolCo
 }
 
 // Represents the result of describe device pool compatibility request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDevicePoolCompatibilityResult
 type GetDevicePoolCompatibilityOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7222,7 +7234,6 @@ func (s *GetDevicePoolCompatibilityOutput) SetIncompatibleDevices(v []*DevicePoo
 }
 
 // Represents a request to the get device pool operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDevicePoolRequest
 type GetDevicePoolInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7265,7 +7276,6 @@ func (s *GetDevicePoolInput) SetArn(v string) *GetDevicePoolInput {
 }
 
 // Represents the result of a get device pool request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetDevicePoolResult
 type GetDevicePoolOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7290,7 +7300,6 @@ func (s *GetDevicePoolOutput) SetDevicePool(v *DevicePool) *GetDevicePoolOutput 
 }
 
 // Represents a request to the get job operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetJobRequest
 type GetJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7333,7 +7342,6 @@ func (s *GetJobInput) SetArn(v string) *GetJobInput {
 }
 
 // Represents the result of a get job request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetJobResult
 type GetJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7357,7 +7365,6 @@ func (s *GetJobOutput) SetJob(v *Job) *GetJobOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetNetworkProfileRequest
 type GetNetworkProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7400,7 +7407,6 @@ func (s *GetNetworkProfileInput) SetArn(v string) *GetNetworkProfileInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetNetworkProfileResult
 type GetNetworkProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7426,7 +7432,6 @@ func (s *GetNetworkProfileOutput) SetNetworkProfile(v *NetworkProfile) *GetNetwo
 
 // Represents the request to retrieve the offering status for the specified
 // customer or account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetOfferingStatusRequest
 type GetOfferingStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7465,7 +7470,6 @@ func (s *GetOfferingStatusInput) SetNextToken(v string) *GetOfferingStatusInput 
 }
 
 // Returns the status result for a device offering.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetOfferingStatusResult
 type GetOfferingStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7509,7 +7513,6 @@ func (s *GetOfferingStatusOutput) SetNextToken(v string) *GetOfferingStatusOutpu
 }
 
 // Represents a request to the get project operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetProjectRequest
 type GetProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7552,7 +7555,6 @@ func (s *GetProjectInput) SetArn(v string) *GetProjectInput {
 }
 
 // Represents the result of a get project request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetProjectResult
 type GetProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7578,7 +7580,6 @@ func (s *GetProjectOutput) SetProject(v *Project) *GetProjectOutput {
 
 // Represents the request to get information about the specified remote access
 // session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetRemoteAccessSessionRequest
 type GetRemoteAccessSessionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7623,7 +7624,6 @@ func (s *GetRemoteAccessSessionInput) SetArn(v string) *GetRemoteAccessSessionIn
 
 // Represents the response from the server that lists detailed information about
 // the remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetRemoteAccessSessionResult
 type GetRemoteAccessSessionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7648,7 +7648,6 @@ func (s *GetRemoteAccessSessionOutput) SetRemoteAccessSession(v *RemoteAccessSes
 }
 
 // Represents a request to the get run operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetRunRequest
 type GetRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7691,7 +7690,6 @@ func (s *GetRunInput) SetArn(v string) *GetRunInput {
 }
 
 // Represents the result of a get run request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetRunResult
 type GetRunOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7716,7 +7714,6 @@ func (s *GetRunOutput) SetRun(v *Run) *GetRunOutput {
 }
 
 // Represents a request to the get suite operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetSuiteRequest
 type GetSuiteInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7759,7 +7756,6 @@ func (s *GetSuiteInput) SetArn(v string) *GetSuiteInput {
 }
 
 // Represents the result of a get suite request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetSuiteResult
 type GetSuiteOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7784,7 +7780,6 @@ func (s *GetSuiteOutput) SetSuite(v *Suite) *GetSuiteOutput {
 }
 
 // Represents a request to the get test operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetTestRequest
 type GetTestInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7827,7 +7822,6 @@ func (s *GetTestInput) SetArn(v string) *GetTestInput {
 }
 
 // Represents the result of a get test request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetTestResult
 type GetTestOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7852,7 +7846,6 @@ func (s *GetTestOutput) SetTest(v *Test) *GetTestOutput {
 }
 
 // Represents a request to the get upload operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetUploadRequest
 type GetUploadInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7895,7 +7888,6 @@ func (s *GetUploadInput) SetArn(v string) *GetUploadInput {
 }
 
 // Represents the result of a get upload request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/GetUploadResult
 type GetUploadOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7920,7 +7912,6 @@ func (s *GetUploadOutput) SetUpload(v *Upload) *GetUploadOutput {
 }
 
 // Represents information about incompatibility.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/IncompatibilityMessage
 type IncompatibilityMessage struct {
 	_ struct{} `type:"structure"`
 
@@ -7969,7 +7960,6 @@ func (s *IncompatibilityMessage) SetType(v string) *IncompatibilityMessage {
 
 // Represents the request to install an Android application (in .apk format)
 // or an iOS application (in .ipa format) as part of a remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/InstallToRemoteAccessSessionRequest
 type InstallToRemoteAccessSessionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8032,7 +8022,6 @@ func (s *InstallToRemoteAccessSessionInput) SetRemoteAccessSessionArn(v string) 
 
 // Represents the response from the server after AWS Device Farm makes a request
 // to install to a remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/InstallToRemoteAccessSessionResult
 type InstallToRemoteAccessSessionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8057,7 +8046,6 @@ func (s *InstallToRemoteAccessSessionOutput) SetAppUpload(v *Upload) *InstallToR
 }
 
 // Represents a device.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Job
 type Job struct {
 	_ struct{} `type:"structure"`
 
@@ -8249,7 +8237,6 @@ func (s *Job) SetType(v string) *Job {
 }
 
 // Represents a request to the list artifacts operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListArtifactsRequest
 type ListArtifactsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8327,7 +8314,6 @@ func (s *ListArtifactsInput) SetType(v string) *ListArtifactsInput {
 }
 
 // Represents the result of a list artifacts operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListArtifactsResult
 type ListArtifactsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8363,7 +8349,6 @@ func (s *ListArtifactsOutput) SetNextToken(v string) *ListArtifactsOutput {
 }
 
 // Represents the result of a list device pools request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListDevicePoolsRequest
 type ListDevicePoolsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8435,7 +8420,6 @@ func (s *ListDevicePoolsInput) SetType(v string) *ListDevicePoolsInput {
 }
 
 // Represents the result of a list device pools request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListDevicePoolsResult
 type ListDevicePoolsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8471,7 +8455,6 @@ func (s *ListDevicePoolsOutput) SetNextToken(v string) *ListDevicePoolsOutput {
 }
 
 // Represents the result of a list devices request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListDevicesRequest
 type ListDevicesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8522,7 +8505,6 @@ func (s *ListDevicesInput) SetNextToken(v string) *ListDevicesInput {
 }
 
 // Represents the result of a list devices operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListDevicesResult
 type ListDevicesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8558,11 +8540,10 @@ func (s *ListDevicesOutput) SetNextToken(v string) *ListDevicesOutput {
 }
 
 // Represents a request to the list jobs operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListJobsRequest
 type ListJobsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The jobs' ARNs.
+	// The run's Amazon Resource Name (ARN).
 	//
 	// Arn is a required field
 	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
@@ -8614,7 +8595,6 @@ func (s *ListJobsInput) SetNextToken(v string) *ListJobsInput {
 }
 
 // Represents the result of a list jobs request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListJobsResult
 type ListJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8649,7 +8629,6 @@ func (s *ListJobsOutput) SetNextToken(v string) *ListJobsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListNetworkProfilesRequest
 type ListNetworkProfilesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8715,7 +8694,6 @@ func (s *ListNetworkProfilesInput) SetType(v string) *ListNetworkProfilesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListNetworkProfilesResult
 type ListNetworkProfilesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8749,7 +8727,6 @@ func (s *ListNetworkProfilesOutput) SetNextToken(v string) *ListNetworkProfilesO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListOfferingPromotionsRequest
 type ListOfferingPromotionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8787,7 +8764,6 @@ func (s *ListOfferingPromotionsInput) SetNextToken(v string) *ListOfferingPromot
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListOfferingPromotionsResult
 type ListOfferingPromotionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8822,7 +8798,6 @@ func (s *ListOfferingPromotionsOutput) SetOfferingPromotions(v []*OfferingPromot
 }
 
 // Represents the request to list the offering transaction history.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListOfferingTransactionsRequest
 type ListOfferingTransactionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8861,7 +8836,6 @@ func (s *ListOfferingTransactionsInput) SetNextToken(v string) *ListOfferingTran
 }
 
 // Returns the transaction log of the specified offerings.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListOfferingTransactionsResult
 type ListOfferingTransactionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8897,7 +8871,6 @@ func (s *ListOfferingTransactionsOutput) SetOfferingTransactions(v []*OfferingTr
 }
 
 // Represents the request to list all offerings.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListOfferingsRequest
 type ListOfferingsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -8936,7 +8909,6 @@ func (s *ListOfferingsInput) SetNextToken(v string) *ListOfferingsInput {
 }
 
 // Represents the return values of the list of offerings.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListOfferingsResult
 type ListOfferingsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -8971,7 +8943,6 @@ func (s *ListOfferingsOutput) SetOfferings(v []*Offering) *ListOfferingsOutput {
 }
 
 // Represents a request to the list projects operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListProjectsRequest
 type ListProjectsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9024,7 +8995,6 @@ func (s *ListProjectsInput) SetNextToken(v string) *ListProjectsInput {
 }
 
 // Represents the result of a list projects request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListProjectsResult
 type ListProjectsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9060,7 +9030,6 @@ func (s *ListProjectsOutput) SetProjects(v []*Project) *ListProjectsOutput {
 }
 
 // Represents the request to return information about the remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListRemoteAccessSessionsRequest
 type ListRemoteAccessSessionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9118,7 +9087,6 @@ func (s *ListRemoteAccessSessionsInput) SetNextToken(v string) *ListRemoteAccess
 
 // Represents the response from the server after AWS Device Farm makes a request
 // to return information about the remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListRemoteAccessSessionsResult
 type ListRemoteAccessSessionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9154,7 +9122,6 @@ func (s *ListRemoteAccessSessionsOutput) SetRemoteAccessSessions(v []*RemoteAcce
 }
 
 // Represents a request to the list runs operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListRunsRequest
 type ListRunsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9211,7 +9178,6 @@ func (s *ListRunsInput) SetNextToken(v string) *ListRunsInput {
 }
 
 // Represents the result of a list runs request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListRunsResult
 type ListRunsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9247,7 +9213,6 @@ func (s *ListRunsOutput) SetRuns(v []*Run) *ListRunsOutput {
 }
 
 // Represents a request to the list samples operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListSamplesRequest
 type ListSamplesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9304,7 +9269,6 @@ func (s *ListSamplesInput) SetNextToken(v string) *ListSamplesInput {
 }
 
 // Represents the result of a list samples request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListSamplesResult
 type ListSamplesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9340,11 +9304,10 @@ func (s *ListSamplesOutput) SetSamples(v []*Sample) *ListSamplesOutput {
 }
 
 // Represents a request to the list suites operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListSuitesRequest
 type ListSuitesInput struct {
 	_ struct{} `type:"structure"`
 
-	// The suites' ARNs.
+	// The job's Amazon Resource Name (ARN).
 	//
 	// Arn is a required field
 	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
@@ -9396,7 +9359,6 @@ func (s *ListSuitesInput) SetNextToken(v string) *ListSuitesInput {
 }
 
 // Represents the result of a list suites request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListSuitesResult
 type ListSuitesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9432,11 +9394,10 @@ func (s *ListSuitesOutput) SetSuites(v []*Suite) *ListSuitesOutput {
 }
 
 // Represents a request to the list tests operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListTestsRequest
 type ListTestsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The tests' ARNs.
+	// The test suite's Amazon Resource Name (ARN).
 	//
 	// Arn is a required field
 	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
@@ -9488,7 +9449,6 @@ func (s *ListTestsInput) SetNextToken(v string) *ListTestsInput {
 }
 
 // Represents the result of a list tests request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListTestsResult
 type ListTestsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9524,7 +9484,6 @@ func (s *ListTestsOutput) SetTests(v []*Test) *ListTestsOutput {
 }
 
 // Represents a request to the list unique problems operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListUniqueProblemsRequest
 type ListUniqueProblemsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9580,7 +9539,6 @@ func (s *ListUniqueProblemsInput) SetNextToken(v string) *ListUniqueProblemsInpu
 }
 
 // Represents the result of a list unique problems request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListUniqueProblemsResult
 type ListUniqueProblemsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9632,7 +9590,6 @@ func (s *ListUniqueProblemsOutput) SetUniqueProblems(v map[string][]*UniqueProbl
 }
 
 // Represents a request to the list uploads operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListUploadsRequest
 type ListUploadsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -9689,7 +9646,6 @@ func (s *ListUploadsInput) SetNextToken(v string) *ListUploadsInput {
 }
 
 // Represents the result of a list uploads request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ListUploadsResult
 type ListUploadsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -9728,7 +9684,6 @@ func (s *ListUploadsOutput) SetUploads(v []*Upload) *ListUploadsOutput {
 // system degrees (for example 47.6204, -122.3491).
 //
 // Elevation is currently not supported.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Location
 type Location struct {
 	_ struct{} `type:"structure"`
 
@@ -9782,7 +9737,6 @@ func (s *Location) SetLongitude(v float64) *Location {
 }
 
 // A number representing the monetary amount for an offering or transaction.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/MonetaryAmount
 type MonetaryAmount struct {
 	_ struct{} `type:"structure"`
 
@@ -9816,7 +9770,6 @@ func (s *MonetaryAmount) SetCurrencyCode(v string) *MonetaryAmount {
 }
 
 // An array of settings that describes characteristics of a network profile.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/NetworkProfile
 type NetworkProfile struct {
 	_ struct{} `type:"structure"`
 
@@ -9944,7 +9897,6 @@ func (s *NetworkProfile) SetUplinkLossPercent(v int64) *NetworkProfile {
 }
 
 // Represents the metadata of a device offering.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Offering
 type Offering struct {
 	_ struct{} `type:"structure"`
 
@@ -10005,7 +9957,6 @@ func (s *Offering) SetType(v string) *Offering {
 }
 
 // Represents information about an offering promotion.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/OfferingPromotion
 type OfferingPromotion struct {
 	_ struct{} `type:"structure"`
 
@@ -10039,7 +9990,6 @@ func (s *OfferingPromotion) SetId(v string) *OfferingPromotion {
 }
 
 // The status of the offering.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/OfferingStatus
 type OfferingStatus struct {
 	_ struct{} `type:"structure"`
 
@@ -10091,7 +10041,6 @@ func (s *OfferingStatus) SetType(v string) *OfferingStatus {
 }
 
 // Represents the metadata of an offering transaction.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/OfferingTransaction
 type OfferingTransaction struct {
 	_ struct{} `type:"structure"`
 
@@ -10152,7 +10101,6 @@ func (s *OfferingTransaction) SetTransactionId(v string) *OfferingTransaction {
 }
 
 // Represents a specific warning or failure.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Problem
 type Problem struct {
 	_ struct{} `type:"structure"`
 
@@ -10247,7 +10195,6 @@ func (s *Problem) SetTest(v *ProblemDetail) *Problem {
 }
 
 // Information about a problem detail.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ProblemDetail
 type ProblemDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -10282,7 +10229,6 @@ func (s *ProblemDetail) SetName(v string) *ProblemDetail {
 
 // Represents an operating-system neutral workspace for running and managing
 // tests.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Project
 type Project struct {
 	_ struct{} `type:"structure"`
 
@@ -10335,7 +10281,6 @@ func (s *Project) SetName(v string) *Project {
 }
 
 // Represents a request for a purchase offering.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/PurchaseOfferingRequest
 type PurchaseOfferingInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10394,7 +10339,6 @@ func (s *PurchaseOfferingInput) SetQuantity(v int64) *PurchaseOfferingInput {
 }
 
 // The result of the purchase offering (e.g., success or failure).
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/PurchaseOfferingResult
 type PurchaseOfferingOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10420,7 +10364,6 @@ func (s *PurchaseOfferingOutput) SetOfferingTransaction(v *OfferingTransaction) 
 
 // Represents the set of radios and their states on a device. Examples of radios
 // include Wi-Fi, GPS, Bluetooth, and NFC.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Radios
 type Radios struct {
 	_ struct{} `type:"structure"`
 
@@ -10472,7 +10415,6 @@ func (s *Radios) SetWifi(v bool) *Radios {
 }
 
 // Specifies whether charges for devices will be recurring.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/RecurringCharge
 type RecurringCharge struct {
 	_ struct{} `type:"structure"`
 
@@ -10506,7 +10448,6 @@ func (s *RecurringCharge) SetFrequency(v string) *RecurringCharge {
 }
 
 // Represents information about the remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/RemoteAccessSession
 type RemoteAccessSession struct {
 	_ struct{} `type:"structure"`
 
@@ -10543,6 +10484,20 @@ type RemoteAccessSession struct {
 	// Only returned if remote debugging is enabled for the remote access session.
 	HostAddress *string `locationName:"hostAddress" type:"string"`
 
+	// The interaction mode of the remote access session. Valid values are:
+	//
+	//    * INTERACTIVE: You can interact with the iOS device by viewing, touching,
+	//    and rotating the screen. You cannot run XCUITest framework-based tests
+	//    in this mode.
+	//
+	//    * NO_VIDEO: You are connected to the device but cannot interact with it
+	//    or view the screen. This mode has the fastest test execution speed. You
+	//    can run XCUITest framework-based tests in this mode.
+	//
+	//    * VIDEO_ONLY: You can view the screen but cannot touch or rotate it. You
+	//    can run XCUITest framework-based tests and watch the screen in this mode.
+	InteractionMode *string `locationName:"interactionMode" type:"string" enum:"InteractionMode"`
+
 	// A message about the remote access session.
 	Message *string `locationName:"message" type:"string"`
 
@@ -10552,6 +10507,14 @@ type RemoteAccessSession struct {
 	// This flag is set to true if remote debugging is enabled for the remote access
 	// session.
 	RemoteDebugEnabled *bool `locationName:"remoteDebugEnabled" type:"boolean"`
+
+	// The Amazon Resource Name (ARN) for the app to be recorded in the remote access
+	// session.
+	RemoteRecordAppArn *string `locationName:"remoteRecordAppArn" min:"32" type:"string"`
+
+	// This flag is set to true if remote recording is enabled for the remote access
+	// session.
+	RemoteRecordEnabled *bool `locationName:"remoteRecordEnabled" type:"boolean"`
 
 	// The result of the remote access session. Can be any of the following:
 	//
@@ -10662,6 +10625,12 @@ func (s *RemoteAccessSession) SetHostAddress(v string) *RemoteAccessSession {
 	return s
 }
 
+// SetInteractionMode sets the InteractionMode field's value.
+func (s *RemoteAccessSession) SetInteractionMode(v string) *RemoteAccessSession {
+	s.InteractionMode = &v
+	return s
+}
+
 // SetMessage sets the Message field's value.
 func (s *RemoteAccessSession) SetMessage(v string) *RemoteAccessSession {
 	s.Message = &v
@@ -10677,6 +10646,18 @@ func (s *RemoteAccessSession) SetName(v string) *RemoteAccessSession {
 // SetRemoteDebugEnabled sets the RemoteDebugEnabled field's value.
 func (s *RemoteAccessSession) SetRemoteDebugEnabled(v bool) *RemoteAccessSession {
 	s.RemoteDebugEnabled = &v
+	return s
+}
+
+// SetRemoteRecordAppArn sets the RemoteRecordAppArn field's value.
+func (s *RemoteAccessSession) SetRemoteRecordAppArn(v string) *RemoteAccessSession {
+	s.RemoteRecordAppArn = &v
+	return s
+}
+
+// SetRemoteRecordEnabled sets the RemoteRecordEnabled field's value.
+func (s *RemoteAccessSession) SetRemoteRecordEnabled(v bool) *RemoteAccessSession {
+	s.RemoteRecordEnabled = &v
 	return s
 }
 
@@ -10705,7 +10686,6 @@ func (s *RemoteAccessSession) SetStopped(v time.Time) *RemoteAccessSession {
 }
 
 // A request representing an offering renewal.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/RenewOfferingRequest
 type RenewOfferingInput struct {
 	_ struct{} `type:"structure"`
 
@@ -10752,7 +10732,6 @@ func (s *RenewOfferingInput) SetQuantity(v int64) *RenewOfferingInput {
 }
 
 // The result of a renewal offering.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/RenewOfferingResult
 type RenewOfferingOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -10778,7 +10757,6 @@ func (s *RenewOfferingOutput) SetOfferingTransaction(v *OfferingTransaction) *Re
 
 // Represents the screen resolution of a device in height and width, expressed
 // in pixels.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Resolution
 type Resolution struct {
 	_ struct{} `type:"structure"`
 
@@ -10812,7 +10790,6 @@ func (s *Resolution) SetWidth(v int64) *Resolution {
 }
 
 // Represents a condition for a device pool.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Rule
 type Rule struct {
 	_ struct{} `type:"structure"`
 
@@ -10882,9 +10859,11 @@ func (s *Rule) SetValue(v string) *Rule {
 
 // Represents a test run on a set of devices with a given app package, test
 // parameters, etc.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Run
 type Run struct {
 	_ struct{} `type:"structure"`
+
+	// An app to upload or that has been uploaded.
+	AppUpload *string `locationName:"appUpload" min:"32" type:"string"`
 
 	// The run's ARN.
 	Arn *string `locationName:"arn" min:"32" type:"string"`
@@ -10907,6 +10886,22 @@ type Run struct {
 
 	// Represents the total (metered or unmetered) minutes used by the test run.
 	DeviceMinutes *DeviceMinutes `locationName:"deviceMinutes" type:"structure"`
+
+	// The ARN of the device pool for the run.
+	DevicePoolArn *string `locationName:"devicePoolArn" min:"32" type:"string"`
+
+	// For fuzz tests, this is the number of events, between 1 and 10000, that the
+	// UI fuzz test should perform.
+	EventCount *int64 `locationName:"eventCount" type:"integer"`
+
+	// The number of minutes the job will execute before it times out.
+	JobTimeoutMinutes *int64 `locationName:"jobTimeoutMinutes" type:"integer"`
+
+	// Information about the locale that is used for the run.
+	Locale *string `locationName:"locale" type:"string"`
+
+	// Information about the location that is used for the run.
+	Location *Location `locationName:"location" type:"structure"`
 
 	// A message about the run's result.
 	Message *string `locationName:"message" type:"string"`
@@ -10931,6 +10926,9 @@ type Run struct {
 	//    * IOS: The iOS platform.
 	Platform *string `locationName:"platform" type:"string" enum:"DevicePlatform"`
 
+	// Information about the radio states for the run.
+	Radios *Radios `locationName:"radios" type:"structure"`
+
 	// The run's result.
 	//
 	// Allowed values include:
@@ -10953,6 +10951,10 @@ type Run struct {
 	// Supporting field for the result field. Set only if result is SKIPPED. PARSING_FAILED
 	// if the result is skipped because of test package parsing failure.
 	ResultCode *string `locationName:"resultCode" type:"string" enum:"ExecutionResultCode"`
+
+	// For fuzz tests, this is a seed to use for randomizing the UI fuzz test. Using
+	// the same seed value between tests ensures identical event sequences.
+	Seed *int64 `locationName:"seed" type:"integer"`
 
 	// The run's start time.
 	Started *time.Time `locationName:"started" type:"timestamp" timestampFormat:"unix"`
@@ -11020,6 +11022,10 @@ type Run struct {
 	//
 	//    * XCTEST_UI: The XCode UI test type.
 	Type *string `locationName:"type" type:"string" enum:"TestType"`
+
+	// A pre-signed Amazon S3 URL that can be used with a corresponding GET request
+	// to download the symbol file for the run.
+	WebUrl *string `locationName:"webUrl" type:"string"`
 }
 
 // String returns the string representation
@@ -11030,6 +11036,12 @@ func (s Run) String() string {
 // GoString returns the string representation
 func (s Run) GoString() string {
 	return s.String()
+}
+
+// SetAppUpload sets the AppUpload field's value.
+func (s *Run) SetAppUpload(v string) *Run {
+	s.AppUpload = &v
+	return s
 }
 
 // SetArn sets the Arn field's value.
@@ -11074,6 +11086,36 @@ func (s *Run) SetDeviceMinutes(v *DeviceMinutes) *Run {
 	return s
 }
 
+// SetDevicePoolArn sets the DevicePoolArn field's value.
+func (s *Run) SetDevicePoolArn(v string) *Run {
+	s.DevicePoolArn = &v
+	return s
+}
+
+// SetEventCount sets the EventCount field's value.
+func (s *Run) SetEventCount(v int64) *Run {
+	s.EventCount = &v
+	return s
+}
+
+// SetJobTimeoutMinutes sets the JobTimeoutMinutes field's value.
+func (s *Run) SetJobTimeoutMinutes(v int64) *Run {
+	s.JobTimeoutMinutes = &v
+	return s
+}
+
+// SetLocale sets the Locale field's value.
+func (s *Run) SetLocale(v string) *Run {
+	s.Locale = &v
+	return s
+}
+
+// SetLocation sets the Location field's value.
+func (s *Run) SetLocation(v *Location) *Run {
+	s.Location = v
+	return s
+}
+
 // SetMessage sets the Message field's value.
 func (s *Run) SetMessage(v string) *Run {
 	s.Message = &v
@@ -11104,6 +11146,12 @@ func (s *Run) SetPlatform(v string) *Run {
 	return s
 }
 
+// SetRadios sets the Radios field's value.
+func (s *Run) SetRadios(v *Radios) *Run {
+	s.Radios = v
+	return s
+}
+
 // SetResult sets the Result field's value.
 func (s *Run) SetResult(v string) *Run {
 	s.Result = &v
@@ -11113,6 +11161,12 @@ func (s *Run) SetResult(v string) *Run {
 // SetResultCode sets the ResultCode field's value.
 func (s *Run) SetResultCode(v string) *Run {
 	s.ResultCode = &v
+	return s
+}
+
+// SetSeed sets the Seed field's value.
+func (s *Run) SetSeed(v int64) *Run {
+	s.Seed = &v
 	return s
 }
 
@@ -11146,8 +11200,13 @@ func (s *Run) SetType(v string) *Run {
 	return s
 }
 
+// SetWebUrl sets the WebUrl field's value.
+func (s *Run) SetWebUrl(v string) *Run {
+	s.WebUrl = &v
+	return s
+}
+
 // Represents a sample of performance data.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Sample
 type Sample struct {
 	_ struct{} `type:"structure"`
 
@@ -11233,7 +11292,6 @@ func (s *Sample) SetUrl(v string) *Sample {
 
 // Represents the settings for a run. Includes things like location, radio states,
 // auxiliary apps, and network profiles.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ScheduleRunConfiguration
 type ScheduleRunConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -11345,7 +11403,6 @@ func (s *ScheduleRunConfiguration) SetRadios(v *Radios) *ScheduleRunConfiguratio
 }
 
 // Represents a request to the schedule run operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ScheduleRunRequest
 type ScheduleRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11469,7 +11526,6 @@ func (s *ScheduleRunInput) SetTest(v *ScheduleRunTest) *ScheduleRunInput {
 }
 
 // Represents the result of a schedule run request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ScheduleRunResult
 type ScheduleRunOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11494,7 +11550,6 @@ func (s *ScheduleRunOutput) SetRun(v *Run) *ScheduleRunOutput {
 }
 
 // Represents additional test settings.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/ScheduleRunTest
 type ScheduleRunTest struct {
 	_ struct{} `type:"structure"`
 
@@ -11668,7 +11723,6 @@ func (s *ScheduleRunTest) SetType(v string) *ScheduleRunTest {
 }
 
 // Represents the request to stop the remote access session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/StopRemoteAccessSessionRequest
 type StopRemoteAccessSessionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11712,7 +11766,6 @@ func (s *StopRemoteAccessSessionInput) SetArn(v string) *StopRemoteAccessSession
 
 // Represents the response from the server that describes the remote access
 // session when AWS Device Farm stops the session.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/StopRemoteAccessSessionResult
 type StopRemoteAccessSessionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11738,7 +11791,6 @@ func (s *StopRemoteAccessSessionOutput) SetRemoteAccessSession(v *RemoteAccessSe
 }
 
 // Represents the request to stop a specific run.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/StopRunRequest
 type StopRunInput struct {
 	_ struct{} `type:"structure"`
 
@@ -11782,7 +11834,6 @@ func (s *StopRunInput) SetArn(v string) *StopRunInput {
 }
 
 // Represents the results of your stop run attempt.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/StopRunResult
 type StopRunOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -11807,7 +11858,6 @@ func (s *StopRunOutput) SetRun(v *Run) *StopRunOutput {
 }
 
 // Represents a collection of one or more tests.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Suite
 type Suite struct {
 	_ struct{} `type:"structure"`
 
@@ -11990,7 +12040,6 @@ func (s *Suite) SetType(v string) *Suite {
 }
 
 // Represents a condition that is evaluated.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Test
 type Test struct {
 	_ struct{} `type:"structure"`
 
@@ -12173,7 +12222,6 @@ func (s *Test) SetType(v string) *Test {
 }
 
 // Represents information about free trial device minutes for an AWS account.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/TrialMinutes
 type TrialMinutes struct {
 	_ struct{} `type:"structure"`
 
@@ -12207,7 +12255,6 @@ func (s *TrialMinutes) SetTotal(v float64) *TrialMinutes {
 }
 
 // A collection of one or more problems, grouped by their result.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UniqueProblem
 type UniqueProblem struct {
 	_ struct{} `type:"structure"`
 
@@ -12241,7 +12288,6 @@ func (s *UniqueProblem) SetProblems(v []*Problem) *UniqueProblem {
 }
 
 // Represents a request to the update device pool operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateDevicePoolRequest
 type UpdateDevicePoolInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12314,7 +12360,6 @@ func (s *UpdateDevicePoolInput) SetRules(v []*Rule) *UpdateDevicePoolInput {
 }
 
 // Represents the result of an update device pool request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateDevicePoolResult
 type UpdateDevicePoolOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12338,12 +12383,11 @@ func (s *UpdateDevicePoolOutput) SetDevicePool(v *DevicePool) *UpdateDevicePoolO
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateNetworkProfileRequest
 type UpdateNetworkProfileInput struct {
 	_ struct{} `type:"structure"`
 
-	// The Amazon Resource Name (ARN) of the project that you wish to update network
-	// profile settings.
+	// The Amazon Resource Name (ARN) of the project for which you want to update
+	// network profile settings.
 	//
 	// Arn is a required field
 	Arn *string `locationName:"arn" min:"32" type:"string" required:"true"`
@@ -12485,7 +12529,6 @@ func (s *UpdateNetworkProfileInput) SetUplinkLossPercent(v int64) *UpdateNetwork
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateNetworkProfileResult
 type UpdateNetworkProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12510,7 +12553,6 @@ func (s *UpdateNetworkProfileOutput) SetNetworkProfile(v *NetworkProfile) *Updat
 }
 
 // Represents a request to the update project operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateProjectRequest
 type UpdateProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -12572,7 +12614,6 @@ func (s *UpdateProjectInput) SetName(v string) *UpdateProjectInput {
 }
 
 // Represents the result of an update project request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/UpdateProjectResult
 type UpdateProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -12597,7 +12638,6 @@ func (s *UpdateProjectOutput) SetProject(v *Project) *UpdateProjectOutput {
 }
 
 // An app or a set of one or more tests to upload or that have been uploaded.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/devicefarm-2015-06-23/Upload
 type Upload struct {
 	_ struct{} `type:"structure"`
 
@@ -12955,6 +12995,17 @@ const (
 )
 
 const (
+	// InteractionModeInteractive is a InteractionMode enum value
+	InteractionModeInteractive = "INTERACTIVE"
+
+	// InteractionModeNoVideo is a InteractionMode enum value
+	InteractionModeNoVideo = "NO_VIDEO"
+
+	// InteractionModeVideoOnly is a InteractionMode enum value
+	InteractionModeVideoOnly = "VIDEO_ONLY"
+)
+
+const (
 	// NetworkProfileTypeCurated is a NetworkProfileType enum value
 	NetworkProfileTypeCurated = "CURATED"
 
@@ -13063,6 +13114,9 @@ const (
 	// TestTypeBuiltinExplorer is a TestType enum value
 	TestTypeBuiltinExplorer = "BUILTIN_EXPLORER"
 
+	// TestTypeWebPerformanceProfile is a TestType enum value
+	TestTypeWebPerformanceProfile = "WEB_PERFORMANCE_PROFILE"
+
 	// TestTypeAppiumJavaJunit is a TestType enum value
 	TestTypeAppiumJavaJunit = "APPIUM_JAVA_JUNIT"
 
@@ -13098,6 +13152,12 @@ const (
 
 	// TestTypeXctestUi is a TestType enum value
 	TestTypeXctestUi = "XCTEST_UI"
+
+	// TestTypeRemoteAccessRecord is a TestType enum value
+	TestTypeRemoteAccessRecord = "REMOTE_ACCESS_RECORD"
+
+	// TestTypeRemoteAccessReplay is a TestType enum value
+	TestTypeRemoteAccessReplay = "REMOTE_ACCESS_REPLAY"
 )
 
 const (

@@ -18,9 +18,12 @@ package firestore
 
 import (
 	"fmt"
+	"strings"
 
 	"cloud.google.com/go/internal/testutil"
 	pb "google.golang.org/genproto/googleapis/firestore/v1beta1"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/golang/protobuf/proto"
 	"github.com/golang/protobuf/ptypes/empty"
@@ -54,7 +57,10 @@ func newMockServer() (*mockServer, error) {
 
 // addRPC adds a (request, response) pair to the server's list of expected
 // interactions. The server will compare the incoming request with wantReq
-// using proto.Equal.
+// using proto.Equal. The response can be a message or an error.
+//
+// For the Listen RPC, resp should be a []interface{}, where each element
+// is either ListenResponse or an error.
 //
 // Passing nil for wantReq disables the request check.
 func (s *mockServer) addRPC(wantReq proto.Message, resp interface{}) {
@@ -173,4 +179,29 @@ func (s *mockServer) Rollback(_ context.Context, req *pb.RollbackRequest) (*empt
 		return nil, err
 	}
 	return res.(*empty.Empty), nil
+}
+
+func (s *mockServer) Listen(stream pb.Firestore_ListenServer) error {
+	req, err := stream.Recv()
+	if err != nil {
+		return err
+	}
+	responses, err := s.popRPC(req)
+	if err != nil {
+		if status.Code(err) == codes.Unknown && strings.Contains(err.Error(), "mockServer") {
+			// The stream will retry on Unknown, but we don't want that to happen if
+			// the error comes from us.
+			panic(err)
+		}
+		return err
+	}
+	for _, res := range responses.([]interface{}) {
+		if err, ok := res.(error); ok {
+			return err
+		}
+		if err := stream.Send(res.(*pb.ListenResponse)); err != nil {
+			return err
+		}
+	}
+	return nil
 }

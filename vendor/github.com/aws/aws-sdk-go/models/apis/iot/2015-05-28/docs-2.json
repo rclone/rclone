@@ -840,6 +840,13 @@
         "CodeSigning$customCodeSigning": "<p>A custom method for code signing a file.</p>"
       }
     },
+    "CustomerVersion": {
+      "base": null,
+      "refs": {
+        "CACertificateDescription$customerVersion": null,
+        "CertificateDescription$customerVersion": null
+      }
+    },
     "DateType": {
       "base": null,
       "refs": {
@@ -847,9 +854,14 @@
         "AuthorizerDescription$lastModifiedDate": "<p>The UNIX timestamp of when the authorizer was last updated.</p>",
         "CACertificate$creationDate": "<p>The date the CA certificate was created.</p>",
         "CACertificateDescription$creationDate": "<p>The date the CA certificate was created.</p>",
+        "CACertificateDescription$lastModifiedDate": null,
         "Certificate$creationDate": "<p>The date and time the certificate was created.</p>",
         "CertificateDescription$creationDate": "<p>The date and time the certificate was created.</p>",
         "CertificateDescription$lastModifiedDate": "<p>The date and time the certificate was last modified.</p>",
+        "GetPolicyResponse$creationDate": null,
+        "GetPolicyResponse$lastModifiedDate": null,
+        "GetPolicyVersionResponse$creationDate": null,
+        "GetPolicyVersionResponse$lastModifiedDate": null,
         "Job$createdAt": "<p>The time, in milliseconds since the epoch, when the job was created.</p>",
         "Job$lastUpdatedAt": "<p>The time, in milliseconds since the epoch, when the job was last updated.</p>",
         "Job$completedAt": "<p>The time, in milliseconds since the epoch, when the job was completed.</p>",
@@ -1420,6 +1432,15 @@
       "base": null,
       "refs": {
         "ListTopicRulesRequest$maxResults": "<p>The maximum number of results to return.</p>"
+      }
+    },
+    "GenerationId": {
+      "base": null,
+      "refs": {
+        "CACertificateDescription$generationId": null,
+        "CertificateDescription$generationId": null,
+        "GetPolicyResponse$generationId": null,
+        "GetPolicyVersionResponse$generationId": null
       }
     },
     "GetEffectivePoliciesRequest": {
@@ -2958,6 +2979,7 @@
       "base": null,
       "refs": {
         "CreateRoleAliasResponse$roleAliasArn": "<p>The role alias ARN.</p>",
+        "RoleAliasDescription$roleAliasArn": null,
         "UpdateRoleAliasResponse$roleAliasArn": "<p>The role alias ARN.</p>"
       }
     },

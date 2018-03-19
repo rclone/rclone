@@ -63,7 +63,7 @@ var testCases = []testCase{{
 	},
 	match: []string{
 		"gr -> en",
-		"en-US -> en",
+		"en-US -> en-u-rg-uszzzz",
 	},
 	tags: langs("en"),
 }, {

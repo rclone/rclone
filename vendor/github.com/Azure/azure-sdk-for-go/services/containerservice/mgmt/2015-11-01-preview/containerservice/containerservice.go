@@ -43,9 +43,9 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 // CreateOrUpdate the operation to create or update a container service.
 //
 // resourceGroupName is the name of the resource group. containerServiceName is the name of the container service
-// within the given subscription and resource group. parameters is parameters supplied to the Create Container Service
-// operation.
-func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName string, containerServiceName string, parameters ContainerService) (result ContainerServiceCreateOrUpdateFuture, err error) {
+// within the given subscription and resource group. parameters is parameters supplied to the Create Container
+// Service operation.
+func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName string, containerServiceName string, parameters ContainerService) (result CreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Properties", Name: validation.Null, Rule: false,
@@ -61,7 +61,7 @@ func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName strin
 							{Target: "parameters.Properties.LinuxProfile.SSH", Name: validation.Null, Rule: true, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerservice.Client", "CreateOrUpdate")
+		return result, validation.NewError("containerservice.Client", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, containerServiceName, parameters)
@@ -104,7 +104,7 @@ func (client Client) CreateOrUpdatePreparer(ctx context.Context, resourceGroupNa
 
 // CreateOrUpdateSender sends the CreateOrUpdate request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) CreateOrUpdateSender(req *http.Request) (future ContainerServiceCreateOrUpdateFuture, err error) {
+func (client Client) CreateOrUpdateSender(req *http.Request) (future CreateOrUpdateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -134,7 +134,7 @@ func (client Client) CreateOrUpdateResponder(resp *http.Response) (result Contai
 //
 // resourceGroupName is the name of the resource group. containerServiceName is the name of the container service
 // within the given subscription and resource group.
-func (client Client) Delete(ctx context.Context, resourceGroupName string, containerServiceName string) (result ContainerServiceDeleteFuture, err error) {
+func (client Client) Delete(ctx context.Context, resourceGroupName string, containerServiceName string) (result DeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, containerServiceName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "containerservice.Client", "Delete", nil, "Failure preparing request")
@@ -173,7 +173,7 @@ func (client Client) DeletePreparer(ctx context.Context, resourceGroupName strin
 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) DeleteSender(req *http.Request) (future ContainerServiceDeleteFuture, err error) {
+func (client Client) DeleteSender(req *http.Request) (future DeleteFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req

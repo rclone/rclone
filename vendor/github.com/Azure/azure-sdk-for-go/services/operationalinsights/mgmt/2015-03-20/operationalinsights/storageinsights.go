@@ -58,7 +58,7 @@ func (client StorageInsightsClient) CreateOrUpdate(ctx context.Context, resource
 						{Target: "parameters.StorageInsightProperties.StorageAccount.Key", Name: validation.Null, Rule: true, Chain: nil},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.StorageInsightsClient", "CreateOrUpdate")
+		return result, validation.NewError("operationalinsights.StorageInsightsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, workspaceName, storageInsightName, parameters)
@@ -137,7 +137,7 @@ func (client StorageInsightsClient) Delete(ctx context.Context, resourceGroupNam
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.StorageInsightsClient", "Delete")
+		return result, validation.NewError("operationalinsights.StorageInsightsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, workspaceName, storageInsightName)
@@ -213,7 +213,7 @@ func (client StorageInsightsClient) Get(ctx context.Context, resourceGroupName s
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.StorageInsightsClient", "Get")
+		return result, validation.NewError("operationalinsights.StorageInsightsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, storageInsightName)
@@ -289,7 +289,7 @@ func (client StorageInsightsClient) ListByWorkspace(ctx context.Context, resourc
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.StorageInsightsClient", "ListByWorkspace")
+		return result, validation.NewError("operationalinsights.StorageInsightsClient", "ListByWorkspace", err.Error())
 	}
 
 	result.fn = client.listByWorkspaceNextResults

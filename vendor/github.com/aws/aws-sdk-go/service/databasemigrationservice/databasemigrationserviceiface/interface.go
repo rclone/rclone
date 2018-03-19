@@ -169,6 +169,13 @@ type DatabaseMigrationServiceAPI interface {
 	DescribeRefreshSchemasStatusWithContext(aws.Context, *databasemigrationservice.DescribeRefreshSchemasStatusInput, ...request.Option) (*databasemigrationservice.DescribeRefreshSchemasStatusOutput, error)
 	DescribeRefreshSchemasStatusRequest(*databasemigrationservice.DescribeRefreshSchemasStatusInput) (*request.Request, *databasemigrationservice.DescribeRefreshSchemasStatusOutput)
 
+	DescribeReplicationInstanceTaskLogs(*databasemigrationservice.DescribeReplicationInstanceTaskLogsInput) (*databasemigrationservice.DescribeReplicationInstanceTaskLogsOutput, error)
+	DescribeReplicationInstanceTaskLogsWithContext(aws.Context, *databasemigrationservice.DescribeReplicationInstanceTaskLogsInput, ...request.Option) (*databasemigrationservice.DescribeReplicationInstanceTaskLogsOutput, error)
+	DescribeReplicationInstanceTaskLogsRequest(*databasemigrationservice.DescribeReplicationInstanceTaskLogsInput) (*request.Request, *databasemigrationservice.DescribeReplicationInstanceTaskLogsOutput)
+
+	DescribeReplicationInstanceTaskLogsPages(*databasemigrationservice.DescribeReplicationInstanceTaskLogsInput, func(*databasemigrationservice.DescribeReplicationInstanceTaskLogsOutput, bool) bool) error
+	DescribeReplicationInstanceTaskLogsPagesWithContext(aws.Context, *databasemigrationservice.DescribeReplicationInstanceTaskLogsInput, func(*databasemigrationservice.DescribeReplicationInstanceTaskLogsOutput, bool) bool, ...request.Option) error
+
 	DescribeReplicationInstances(*databasemigrationservice.DescribeReplicationInstancesInput) (*databasemigrationservice.DescribeReplicationInstancesOutput, error)
 	DescribeReplicationInstancesWithContext(aws.Context, *databasemigrationservice.DescribeReplicationInstancesInput, ...request.Option) (*databasemigrationservice.DescribeReplicationInstancesOutput, error)
 	DescribeReplicationInstancesRequest(*databasemigrationservice.DescribeReplicationInstancesInput) (*request.Request, *databasemigrationservice.DescribeReplicationInstancesOutput)
@@ -238,6 +245,10 @@ type DatabaseMigrationServiceAPI interface {
 	ModifyReplicationTask(*databasemigrationservice.ModifyReplicationTaskInput) (*databasemigrationservice.ModifyReplicationTaskOutput, error)
 	ModifyReplicationTaskWithContext(aws.Context, *databasemigrationservice.ModifyReplicationTaskInput, ...request.Option) (*databasemigrationservice.ModifyReplicationTaskOutput, error)
 	ModifyReplicationTaskRequest(*databasemigrationservice.ModifyReplicationTaskInput) (*request.Request, *databasemigrationservice.ModifyReplicationTaskOutput)
+
+	RebootReplicationInstance(*databasemigrationservice.RebootReplicationInstanceInput) (*databasemigrationservice.RebootReplicationInstanceOutput, error)
+	RebootReplicationInstanceWithContext(aws.Context, *databasemigrationservice.RebootReplicationInstanceInput, ...request.Option) (*databasemigrationservice.RebootReplicationInstanceOutput, error)
+	RebootReplicationInstanceRequest(*databasemigrationservice.RebootReplicationInstanceInput) (*request.Request, *databasemigrationservice.RebootReplicationInstanceOutput)
 
 	RefreshSchemas(*databasemigrationservice.RefreshSchemasInput) (*databasemigrationservice.RefreshSchemasOutput, error)
 	RefreshSchemasWithContext(aws.Context, *databasemigrationservice.RefreshSchemasInput, ...request.Option) (*databasemigrationservice.RefreshSchemasOutput, error)

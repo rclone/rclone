@@ -43,9 +43,10 @@ func NewRestorableDroppedDatabasesClientWithBaseURI(baseURI string, subscription
 
 // Get gets a deleted database that can be restored
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. restorableDroppededDatabaseID is the
-// id of the deleted database in the form of databaseName,deletionTimeInFileTimeFormat
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
+// restorableDroppededDatabaseID is the id of the deleted database in the form of
+// databaseName,deletionTimeInFileTimeFormat
 func (client RestorableDroppedDatabasesClient) Get(ctx context.Context, resourceGroupName string, serverName string, restorableDroppededDatabaseID string) (result RestorableDroppedDatabase, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, restorableDroppededDatabaseID)
 	if err != nil {
@@ -112,8 +113,8 @@ func (client RestorableDroppedDatabasesClient) GetResponder(resp *http.Response)
 
 // ListByServer gets a list of deleted databases that can be restored
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client RestorableDroppedDatabasesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result RestorableDroppedDatabaseListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

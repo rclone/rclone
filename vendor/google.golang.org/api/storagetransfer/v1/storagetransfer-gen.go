@@ -1,4 +1,4 @@
-// Package storagetransfer provides access to the Google Storage Transfer API.
+// Package storagetransfer provides access to the Storage Transfer API.
 //
 // See https://cloud.google.com/storage/transfer
 //
@@ -43,7 +43,7 @@ var _ = ctxhttp.Do
 const apiId = "storagetransfer:v1"
 const apiName = "storagetransfer"
 const apiVersion = "v1"
-const basePath = "https://storagetransfer.googleapis.com/"
+const basePath = "https://content-storagetransfer.googleapis.com/"
 
 // OAuth2 scopes used by this API.
 const (
@@ -1263,7 +1263,9 @@ type TransferJob struct {
 	//   "DELETED" - This is a soft delete state. After a transfer job is
 	// set to this
 	// state, the job and all the transfer executions are subject to
-	// garbage collection.
+	// garbage collection. Transfer jobs become eligible for garbage
+	// collection
+	// 30 days after their status is set to `DELETED`.
 	Status string `json:"status,omitempty"`
 
 	// TransferSpec: Transfer specification.

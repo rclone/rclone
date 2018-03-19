@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"json",
     "serviceFullName":"Amazon CloudWatch Events",
+    "serviceId":"CloudWatch Events",
     "signatureVersion":"v4",
     "targetPrefix":"AWSEvents",
     "uid":"events-2015-10-07"
@@ -221,6 +222,31 @@
       "max":1600,
       "min":1
     },
+    "BatchArrayProperties":{
+      "type":"structure",
+      "members":{
+        "Size":{"shape":"Integer"}
+      }
+    },
+    "BatchParameters":{
+      "type":"structure",
+      "required":[
+        "JobDefinition",
+        "JobName"
+      ],
+      "members":{
+        "JobDefinition":{"shape":"String"},
+        "JobName":{"shape":"String"},
+        "ArrayProperties":{"shape":"BatchArrayProperties"},
+        "RetryStrategy":{"shape":"BatchRetryStrategy"}
+      }
+    },
+    "BatchRetryStrategy":{
+      "type":"structure",
+      "members":{
+        "Attempts":{"shape":"Integer"}
+      }
+    },
     "Boolean":{"type":"boolean"},
     "ConcurrentModificationException":{
       "type":"structure",
@@ -292,10 +318,7 @@
     "ErrorCode":{"type":"string"},
     "ErrorMessage":{"type":"string"},
     "EventId":{"type":"string"},
-    "EventPattern":{
-      "type":"string",
-      "max":2048
-    },
+    "EventPattern":{"type":"string"},
     "EventResource":{"type":"string"},
     "EventResourceList":{
       "type":"list",
@@ -676,7 +699,8 @@
         "InputTransformer":{"shape":"InputTransformer"},
         "KinesisParameters":{"shape":"KinesisParameters"},
         "RunCommandParameters":{"shape":"RunCommandParameters"},
-        "EcsParameters":{"shape":"EcsParameters"}
+        "EcsParameters":{"shape":"EcsParameters"},
+        "BatchParameters":{"shape":"BatchParameters"}
       }
     },
     "TargetArn":{

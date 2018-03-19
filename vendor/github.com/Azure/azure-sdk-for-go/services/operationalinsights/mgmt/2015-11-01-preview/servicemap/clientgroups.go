@@ -44,9 +44,9 @@ func NewClientGroupsClientWithBaseURI(baseURI string, subscriptionID string) Cli
 // Get retrieves the specified client group
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. clientGroupName is client Group resource name. startTime is UTC date and time
-// specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime is UTC
-// date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow
+// containing the resources of interest. clientGroupName is client Group resource name. startTime is UTC date and
+// time specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime
+// is UTC date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow
 func (client ClientGroupsClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, clientGroupName string, startTime *date.Time, endTime *date.Time) (result ClientGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -60,7 +60,7 @@ func (client ClientGroupsClient) Get(ctx context.Context, resourceGroupName stri
 		{TargetValue: clientGroupName,
 			Constraints: []validation.Constraint{{Target: "clientGroupName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "clientGroupName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.ClientGroupsClient", "Get")
+		return result, validation.NewError("servicemap.ClientGroupsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, clientGroupName, startTime, endTime)
@@ -135,9 +135,9 @@ func (client ClientGroupsClient) GetResponder(resp *http.Response) (result Clien
 // GetMembersCount returns the approximate number of members in the client group.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. clientGroupName is client Group resource name. startTime is UTC date and time
-// specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime is UTC
-// date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow
+// containing the resources of interest. clientGroupName is client Group resource name. startTime is UTC date and
+// time specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime
+// is UTC date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow
 func (client ClientGroupsClient) GetMembersCount(ctx context.Context, resourceGroupName string, workspaceName string, clientGroupName string, startTime *date.Time, endTime *date.Time) (result ClientGroupMembersCount, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -151,7 +151,7 @@ func (client ClientGroupsClient) GetMembersCount(ctx context.Context, resourceGr
 		{TargetValue: clientGroupName,
 			Constraints: []validation.Constraint{{Target: "clientGroupName", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "clientGroupName", Name: validation.MinLength, Rule: 3, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.ClientGroupsClient", "GetMembersCount")
+		return result, validation.NewError("servicemap.ClientGroupsClient", "GetMembersCount", err.Error())
 	}
 
 	req, err := client.GetMembersCountPreparer(ctx, resourceGroupName, workspaceName, clientGroupName, startTime, endTime)
@@ -226,10 +226,10 @@ func (client ClientGroupsClient) GetMembersCountResponder(resp *http.Response) (
 // ListMembers returns the members of the client group during the specified time interval.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. clientGroupName is client Group resource name. startTime is UTC date and time
-// specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime is UTC
-// date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow top is
-// page size to use. When not specified, the default page size is 100 records.
+// containing the resources of interest. clientGroupName is client Group resource name. startTime is UTC date and
+// time specifying the start time of an interval. When not specified the service uses DateTime.UtcNow - 10m endTime
+// is UTC date and time specifying the end time of an interval. When not specified the service uses DateTime.UtcNow
+// top is page size to use. When not specified, the default page size is 100 records.
 func (client ClientGroupsClient) ListMembers(ctx context.Context, resourceGroupName string, workspaceName string, clientGroupName string, startTime *date.Time, endTime *date.Time, top *int32) (result ClientGroupMembersCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -248,7 +248,7 @@ func (client ClientGroupsClient) ListMembers(ctx context.Context, resourceGroupN
 				Chain: []validation.Constraint{{Target: "top", Name: validation.InclusiveMaximum, Rule: 200, Chain: nil},
 					{Target: "top", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.ClientGroupsClient", "ListMembers")
+		return result, validation.NewError("servicemap.ClientGroupsClient", "ListMembers", err.Error())
 	}
 
 	result.fn = client.listMembersNextResults

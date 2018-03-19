@@ -308,6 +308,7 @@ const (
 	SYS_PWRITEV2               = 377
 	SYS_S390_GUARDED_STORAGE   = 378
 	SYS_STATX                  = 379
+	SYS_S390_STHYI             = 380
 	SYS_SELECT                 = 142
 	SYS_GETRLIMIT              = 191
 	SYS_LCHOWN                 = 198

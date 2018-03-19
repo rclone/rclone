@@ -43,10 +43,10 @@ func NewProjectsClientWithBaseURI(baseURI string, subscriptionID string) Project
 
 // CreateOrUpdate creates or updates a project with the specified parameters.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace. projectName is the name of the machine learning project under a team account workspace. parameters is the
-// parameters for creating or updating a project.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace. projectName is the name of the machine learning project under a team account workspace.
+// parameters is the parameters for creating or updating a project.
 func (client ProjectsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, projectName string, parameters Project) (result Project, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -64,7 +64,7 @@ func (client ProjectsClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ProjectProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.ProjectProperties.FriendlyName", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.ProjectsClient", "CreateOrUpdate")
+		return result, validation.NewError("experimentation.ProjectsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, accountName, workspaceName, projectName, parameters)
@@ -135,9 +135,9 @@ func (client ProjectsClient) CreateOrUpdateResponder(resp *http.Response) (resul
 
 // Delete deletes a project.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace. projectName is the name of the machine learning project under a team account workspace.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace. projectName is the name of the machine learning project under a team account workspace.
 func (client ProjectsClient) Delete(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, projectName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -152,7 +152,7 @@ func (client ProjectsClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "projectName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "projectName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "projectName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.ProjectsClient", "Delete")
+		return result, validation.NewError("experimentation.ProjectsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, workspaceName, projectName)
@@ -220,9 +220,9 @@ func (client ProjectsClient) DeleteResponder(resp *http.Response) (result autore
 
 // Get gets the properties of the specified machine learning project.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace. projectName is the name of the machine learning project under a team account workspace.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace. projectName is the name of the machine learning project under a team account workspace.
 func (client ProjectsClient) Get(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, projectName string) (result Project, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -237,7 +237,7 @@ func (client ProjectsClient) Get(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "projectName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "projectName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "projectName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.ProjectsClient", "Get")
+		return result, validation.NewError("experimentation.ProjectsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, workspaceName, projectName)
@@ -306,9 +306,9 @@ func (client ProjectsClient) GetResponder(resp *http.Response) (result Project, 
 
 // ListByWorkspace lists all the available machine learning projects under the specified workspace.
 //
-// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning team
-// account workspace. resourceGroupName is the name of the resource group to which the machine learning team account
-// belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace. resourceGroupName is the name of the resource group to which the machine learning team
+// account belongs.
 func (client ProjectsClient) ListByWorkspace(ctx context.Context, accountName string, workspaceName string, resourceGroupName string) (result ProjectListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -319,7 +319,7 @@ func (client ProjectsClient) ListByWorkspace(ctx context.Context, accountName st
 			Constraints: []validation.Constraint{{Target: "workspaceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "workspaceName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.ProjectsClient", "ListByWorkspace")
+		return result, validation.NewError("experimentation.ProjectsClient", "ListByWorkspace", err.Error())
 	}
 
 	result.fn = client.listByWorkspaceNextResults
@@ -415,10 +415,10 @@ func (client ProjectsClient) ListByWorkspaceComplete(ctx context.Context, accoun
 
 // Update updates a project with the specified parameters.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace. projectName is the name of the machine learning project under a team account workspace. parameters is the
-// parameters for updating a machine learning team account.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace. projectName is the name of the machine learning project under a team account workspace.
+// parameters is the parameters for updating a machine learning team account.
 func (client ProjectsClient) Update(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, projectName string, parameters ProjectUpdateParameters) (result Project, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -433,7 +433,7 @@ func (client ProjectsClient) Update(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "projectName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "projectName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "projectName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.ProjectsClient", "Update")
+		return result, validation.NewError("experimentation.ProjectsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, workspaceName, projectName, parameters)

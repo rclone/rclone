@@ -261,17 +261,20 @@ func (j *Job) read(ctx context.Context, waitForQuery func(context.Context, strin
 	}
 	destTable := j.config.Query.DestinationTable
 	// The destination table should only be nil if there was a query error.
-	if destTable == nil {
-		return nil, errors.New("bigquery: query job missing destination table")
+	projectID := j.projectID
+	if destTable != nil && projectID != destTable.ProjectId {
+		return nil, fmt.Errorf("bigquery: job project ID is %q, but destination table's is %q", projectID, destTable.ProjectId)
 	}
-	projectID := destTable.ProjectId
 	schema, err := waitForQuery(ctx, projectID)
 	if err != nil {
 		return nil, err
 	}
+	if destTable == nil {
+		return nil, errors.New("bigquery: query job missing destination table")
+	}
 	dt := bqToTable(destTable, j.c)
 	it := newRowIterator(ctx, dt, pf)
-	it.schema = schema
+	it.Schema = schema
 	return it, nil
 }
 

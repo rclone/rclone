@@ -57,6 +57,21 @@
         {"shape":"InternalServerError"}
       ]
     },
+    "DeleteCorsPolicy":{
+      "name":"DeleteCorsPolicy",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteCorsPolicyInput"},
+      "output":{"shape":"DeleteCorsPolicyOutput"},
+      "errors":[
+        {"shape":"ContainerInUseException"},
+        {"shape":"ContainerNotFoundException"},
+        {"shape":"CorsPolicyNotFoundException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "DescribeContainer":{
       "name":"DescribeContainer",
       "http":{
@@ -85,6 +100,21 @@
         {"shape":"InternalServerError"}
       ]
     },
+    "GetCorsPolicy":{
+      "name":"GetCorsPolicy",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetCorsPolicyInput"},
+      "output":{"shape":"GetCorsPolicyOutput"},
+      "errors":[
+        {"shape":"ContainerInUseException"},
+        {"shape":"ContainerNotFoundException"},
+        {"shape":"CorsPolicyNotFoundException"},
+        {"shape":"InternalServerError"}
+      ]
+    },
     "ListContainers":{
       "name":"ListContainers",
       "http":{
@@ -110,9 +140,37 @@
         {"shape":"ContainerInUseException"},
         {"shape":"InternalServerError"}
       ]
+    },
+    "PutCorsPolicy":{
+      "name":"PutCorsPolicy",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PutCorsPolicyInput"},
+      "output":{"shape":"PutCorsPolicyOutput"},
+      "errors":[
+        {"shape":"ContainerNotFoundException"},
+        {"shape":"ContainerInUseException"},
+        {"shape":"InternalServerError"}
+      ]
     }
   },
   "shapes":{
+    "AllowedHeaders":{
+      "type":"list",
+      "member":{"shape":"Header"},
+      "max":100,
+      "min":0
+    },
+    "AllowedMethods":{
+      "type":"list",
+      "member":{"shape":"MethodName"}
+    },
+    "AllowedOrigins":{
+      "type":"list",
+      "member":{"shape":"Origin"}
+    },
     "Container":{
       "type":"structure",
       "members":{
@@ -174,6 +232,29 @@
       "max":16,
       "min":1
     },
+    "CorsPolicy":{
+      "type":"list",
+      "member":{"shape":"CorsRule"},
+      "max":100,
+      "min":1
+    },
+    "CorsPolicyNotFoundException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "CorsRule":{
+      "type":"structure",
+      "members":{
+        "AllowedOrigins":{"shape":"AllowedOrigins"},
+        "AllowedMethods":{"shape":"AllowedMethods"},
+        "AllowedHeaders":{"shape":"AllowedHeaders"},
+        "MaxAgeSeconds":{"shape":"MaxAgeSeconds"},
+        "ExposeHeaders":{"shape":"ExposeHeaders"}
+      }
+    },
     "CreateContainerInput":{
       "type":"structure",
       "required":["ContainerName"],
@@ -212,6 +293,18 @@
       "members":{
       }
     },
+    "DeleteCorsPolicyInput":{
+      "type":"structure",
+      "required":["ContainerName"],
+      "members":{
+        "ContainerName":{"shape":"ContainerName"}
+      }
+    },
+    "DeleteCorsPolicyOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "DescribeContainerInput":{
       "type":"structure",
       "members":{
@@ -235,6 +328,12 @@
       "min":1,
       "pattern":"[ \\w:\\.\\?-]+"
     },
+    "ExposeHeaders":{
+      "type":"list",
+      "member":{"shape":"Header"},
+      "max":100,
+      "min":0
+    },
     "GetContainerPolicyInput":{
       "type":"structure",
       "required":["ContainerName"],
@@ -248,6 +347,26 @@
       "members":{
         "Policy":{"shape":"ContainerPolicy"}
       }
+    },
+    "GetCorsPolicyInput":{
+      "type":"structure",
+      "required":["ContainerName"],
+      "members":{
+        "ContainerName":{"shape":"ContainerName"}
+      }
+    },
+    "GetCorsPolicyOutput":{
+      "type":"structure",
+      "required":["CorsPolicy"],
+      "members":{
+        "CorsPolicy":{"shape":"CorsPolicy"}
+      }
+    },
+    "Header":{
+      "type":"string",
+      "max":8192,
+      "min":1,
+      "pattern":"[\\u0009\\u000A\\u000D\\u0020-\\u00FF]+"
     },
     "InternalServerError":{
       "type":"structure",
@@ -279,6 +398,24 @@
         "NextToken":{"shape":"PaginationToken"}
       }
     },
+    "MaxAgeSeconds":{
+      "type":"integer",
+      "max":2147483647,
+      "min":0
+    },
+    "MethodName":{
+      "type":"string",
+      "enum":[
+        "PUT",
+        "GET",
+        "DELETE",
+        "HEAD"
+      ]
+    },
+    "Origin":{
+      "type":"string",
+      "pattern":"[\\u0009\\u000A\\u000D\\u0020-\\u00FF]+"
+    },
     "PaginationToken":{
       "type":"string",
       "max":255,
@@ -304,6 +441,22 @@
       }
     },
     "PutContainerPolicyOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "PutCorsPolicyInput":{
+      "type":"structure",
+      "required":[
+        "ContainerName",
+        "CorsPolicy"
+      ],
+      "members":{
+        "ContainerName":{"shape":"ContainerName"},
+        "CorsPolicy":{"shape":"CorsPolicy"}
+      }
+    },
+    "PutCorsPolicyOutput":{
       "type":"structure",
       "members":{
       }

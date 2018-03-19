@@ -297,8 +297,8 @@ func (client ClusterVersionsClient) ListByEnvironmentComplete(ctx context.Contex
 
 // ListByVersion list cluster code versions by version
 //
-// location is the location for the cluster code versions, this is different from cluster location clusterVersion is
-// the cluster code version
+// location is the location for the cluster code versions, this is different from cluster location clusterVersion
+// is the cluster code version
 func (client ClusterVersionsClient) ListByVersion(ctx context.Context, location string, clusterVersion string) (result ClusterCodeVersionsListResultPage, err error) {
 	result.fn = client.listByVersionNextResults
 	req, err := client.ListByVersionPreparer(ctx, location, clusterVersion)

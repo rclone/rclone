@@ -64,7 +64,7 @@ func (client BaseClient) CheckNameAvailability(ctx context.Context, checkNameAva
 		{TargetValue: checkNameAvailabilityInput,
 			Constraints: []validation.Constraint{{Target: "checkNameAvailabilityInput.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "checkNameAvailabilityInput.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.BaseClient", "CheckNameAvailability")
+		return result, validation.NewError("cdn.BaseClient", "CheckNameAvailability", err.Error())
 	}
 
 	req, err := client.CheckNameAvailabilityPreparer(ctx, checkNameAvailabilityInput)
@@ -134,7 +134,7 @@ func (client BaseClient) ValidateProbe(ctx context.Context, validateProbeInput V
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: validateProbeInput,
 			Constraints: []validation.Constraint{{Target: "validateProbeInput.ProbeURL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cdn.BaseClient", "ValidateProbe")
+		return result, validation.NewError("cdn.BaseClient", "ValidateProbe", err.Error())
 	}
 
 	req, err := client.ValidateProbePreparer(ctx, validateProbeInput)

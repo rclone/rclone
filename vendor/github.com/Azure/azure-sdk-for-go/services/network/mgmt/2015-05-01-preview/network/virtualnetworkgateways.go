@@ -42,9 +42,9 @@ func NewVirtualNetworkGatewaysClientWithBaseURI(baseURI string, subscriptionID s
 // CreateOrUpdate the Put VirtualNetworkGateway operation creates/updates a virtual network gateway in the specified
 // resource group through Network resource provider.
 //
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual network
-// gateway. parameters is parameters supplied to the Begin Create or update Virtual Network Gateway operation through
-// Network resource provider.
+// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
+// network gateway. parameters is parameters supplied to the Begin Create or update Virtual Network Gateway
+// operation through Network resource provider.
 func (client VirtualNetworkGatewaysClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, parameters VirtualNetworkGateway) (result VirtualNetworkGatewaysCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, virtualNetworkGatewayName, parameters)
 	if err != nil {
@@ -115,8 +115,8 @@ func (client VirtualNetworkGatewaysClient) CreateOrUpdateResponder(resp *http.Re
 // Delete the Delete VirtualNetworkGateway operation deletes the specifed virtual network Gateway through Network
 // resource provider.
 //
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual network
-// gateway.
+// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
+// network gateway.
 func (client VirtualNetworkGatewaysClient) Delete(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string) (result VirtualNetworkGatewaysDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, virtualNetworkGatewayName)
 	if err != nil {
@@ -184,8 +184,8 @@ func (client VirtualNetworkGatewaysClient) DeleteResponder(resp *http.Response) 
 // Get the Get VirtualNetworkGateway operation retrieves information about the specified virtual network gateway
 // through Network resource provider.
 //
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual network
-// gateway.
+// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
+// network gateway.
 func (client VirtualNetworkGatewaysClient) Get(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string) (result VirtualNetworkGateway, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, virtualNetworkGatewayName)
 	if err != nil {
@@ -345,9 +345,9 @@ func (client VirtualNetworkGatewaysClient) ListComplete(ctx context.Context, res
 // Reset the Reset VirtualNetworkGateway operation resets the primary of the virtual network gatewayin the specified
 // resource group through Network resource provider.
 //
-// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual network
-// gateway. parameters is parameters supplied to the Begin Reset Virtual Network Gateway operation through Network
-// resource provider.
+// resourceGroupName is the name of the resource group. virtualNetworkGatewayName is the name of the virtual
+// network gateway. parameters is parameters supplied to the Begin Reset Virtual Network Gateway operation through
+// Network resource provider.
 func (client VirtualNetworkGatewaysClient) Reset(ctx context.Context, resourceGroupName string, virtualNetworkGatewayName string, parameters VirtualNetworkGateway) (result VirtualNetworkGatewaysResetFuture, err error) {
 	req, err := client.ResetPreparer(ctx, resourceGroupName, virtualNetworkGatewayName, parameters)
 	if err != nil {

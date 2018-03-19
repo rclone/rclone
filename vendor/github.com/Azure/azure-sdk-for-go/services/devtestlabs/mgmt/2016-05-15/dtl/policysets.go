@@ -41,8 +41,8 @@ func NewPolicySetsClientWithBaseURI(baseURI string, subscriptionID string) Polic
 
 // EvaluatePolicies evaluates lab policy.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the policy
-// set. evaluatePoliciesRequest is request body for evaluating a policy set.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// policy set. evaluatePoliciesRequest is request body for evaluating a policy set.
 func (client PolicySetsClient) EvaluatePolicies(ctx context.Context, resourceGroupName string, labName string, name string, evaluatePoliciesRequest EvaluatePoliciesRequest) (result EvaluatePoliciesResponse, err error) {
 	req, err := client.EvaluatePoliciesPreparer(ctx, resourceGroupName, labName, name, evaluatePoliciesRequest)
 	if err != nil {

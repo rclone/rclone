@@ -253,6 +253,7 @@ func main() {
 	imageProcessOutput, err = bucket.ImageProcess("imageName", &qs.ImageProcessInput{
 		Action: &operation})
 	checkErr(err)
+	defer imageProcessOutput.Close() // Don't forget to close the output otherwise will be leaking http connections
 	testOutput(imageProcessOutput)
 }
 

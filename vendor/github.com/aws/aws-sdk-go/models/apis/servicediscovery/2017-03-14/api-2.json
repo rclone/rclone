@@ -213,7 +213,10 @@
         "requestUri":"/"
       },
       "input":{"shape":"ListServicesRequest"},
-      "output":{"shape":"ListServicesResponse"}
+      "output":{"shape":"ListServicesResponse"},
+      "errors":[
+        {"shape":"InvalidInput"}
+      ]
     },
     "RegisterInstance":{
       "name":"RegisterInstance",
@@ -229,6 +232,20 @@
         {"shape":"ResourceInUse"},
         {"shape":"ResourceLimitExceeded"},
         {"shape":"ServiceNotFound"}
+      ]
+    },
+    "UpdateInstanceCustomHealthStatus":{
+      "name":"UpdateInstanceCustomHealthStatus",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"UpdateInstanceCustomHealthStatusRequest"},
+      "errors":[
+        {"shape":"InstanceNotFound"},
+        {"shape":"ServiceNotFound"},
+        {"shape":"CustomHealthNotFound"},
+        {"shape":"InvalidInput"}
       ]
     },
     "UpdateService":{
@@ -319,7 +336,8 @@
         },
         "Description":{"shape":"ResourceDescription"},
         "DnsConfig":{"shape":"DnsConfig"},
-        "HealthCheckConfig":{"shape":"HealthCheckConfig"}
+        "HealthCheckConfig":{"shape":"HealthCheckConfig"},
+        "HealthCheckCustomConfig":{"shape":"HealthCheckCustomConfig"}
       }
     },
     "CreateServiceResponse":{
@@ -327,6 +345,20 @@
       "members":{
         "Service":{"shape":"Service"}
       }
+    },
+    "CustomHealthNotFound":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
+    "CustomHealthStatus":{
+      "type":"string",
+      "enum":[
+        "HEALTHY",
+        "UNHEALTHY"
+      ]
     },
     "DeleteNamespaceRequest":{
       "type":"structure",
@@ -378,6 +410,7 @@
       ],
       "members":{
         "NamespaceId":{"shape":"ResourceId"},
+        "RoutingPolicy":{"shape":"RoutingPolicy"},
         "DnsRecords":{"shape":"DnsRecordList"}
       }
     },
@@ -517,6 +550,12 @@
       "members":{
         "Type":{"shape":"HealthCheckType"},
         "ResourcePath":{"shape":"ResourcePath"},
+        "FailureThreshold":{"shape":"FailureThreshold"}
+      }
+    },
+    "HealthCheckCustomConfig":{
+      "type":"structure",
+      "members":{
         "FailureThreshold":{"shape":"FailureThreshold"}
       }
     },
@@ -834,7 +873,8 @@
       "enum":[
         "SRV",
         "A",
-        "AAAA"
+        "AAAA",
+        "CNAME"
       ]
     },
     "RegisterInstanceRequest":{
@@ -887,6 +927,13 @@
       "type":"string",
       "max":255
     },
+    "RoutingPolicy":{
+      "type":"string",
+      "enum":[
+        "MULTIVALUE",
+        "WEIGHTED"
+      ]
+    },
     "Service":{
       "type":"structure",
       "members":{
@@ -897,6 +944,7 @@
         "InstanceCount":{"shape":"ResourceCount"},
         "DnsConfig":{"shape":"DnsConfig"},
         "HealthCheckConfig":{"shape":"HealthCheckConfig"},
+        "HealthCheckCustomConfig":{"shape":"HealthCheckCustomConfig"},
         "CreateDate":{"shape":"Timestamp"},
         "CreatorRequestId":{"shape":"ResourceId"}
       }
@@ -941,7 +989,7 @@
     },
     "ServiceName":{
       "type":"string",
-      "pattern":"((?=^.{1,127}$)^([a-zA-Z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]|[a-zA-Z])(\\.([a-z][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]|[a-zA-Z]))*$)|(^\\.$)"
+      "pattern":"((?=^.{1,127}$)^([a-zA-Z0-9_][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_]|[a-zA-Z0-9])(\\.([a-zA-Z0-9_][a-zA-Z0-9-_]{0,61}[a-zA-Z0-9_]|[a-zA-Z0-9]))*$)|(^\\.$)"
     },
     "ServiceNotFound":{
       "type":"structure",
@@ -965,6 +1013,19 @@
       }
     },
     "Timestamp":{"type":"timestamp"},
+    "UpdateInstanceCustomHealthStatusRequest":{
+      "type":"structure",
+      "required":[
+        "ServiceId",
+        "InstanceId",
+        "Status"
+      ],
+      "members":{
+        "ServiceId":{"shape":"ResourceId"},
+        "InstanceId":{"shape":"ResourceId"},
+        "Status":{"shape":"CustomHealthStatus"}
+      }
+    },
     "UpdateServiceRequest":{
       "type":"structure",
       "required":[

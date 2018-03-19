@@ -241,8 +241,12 @@ type BucketAttrs struct {
 	// a user project (see BucketHandle.UserProject), which will be billed
 	// for the operations.
 	RequesterPays bool
+
 	// Lifecycle is the lifecycle configuration for objects in the bucket.
 	Lifecycle Lifecycle
+
+	// The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+	CORS []CORS
 }
 
 // Lifecycle is the lifecycle configuration for objects in the bucket.
@@ -349,6 +353,7 @@ func newBucket(b *raw.Bucket) *BucketAttrs {
 		Labels:            b.Labels,
 		RequesterPays:     b.Billing != nil && b.Billing.RequesterPays,
 		Lifecycle:         toLifecycle(b.Lifecycle),
+		CORS:              toCORS(b.Cors),
 	}
 	acl := make([]ACLRule, len(b.Acl))
 	for i, rule := range b.Acl {
@@ -411,7 +416,30 @@ func (b *BucketAttrs) toRawBucket() *raw.Bucket {
 		Labels:           labels,
 		Billing:          bb,
 		Lifecycle:        toRawLifecycle(b.Lifecycle),
+		Cors:             toRawCORS(b.CORS),
 	}
+}
+
+// The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+type CORS struct {
+	// MaxAge is the value to return in the Access-Control-Max-Age
+	// header used in preflight responses.
+	MaxAge time.Duration
+
+	// Methods is the list of HTTP methods on which to include CORS response
+	// headers, (GET, OPTIONS, POST, etc) Note: "*" is permitted in the list
+	// of methods, and means "any method".
+	Methods []string
+
+	// Origins is the list of Origins eligible to receive CORS response
+	// headers. Note: "*" is permitted in the list of origins, and means
+	// "any Origin".
+	Origins []string
+
+	// ResponseHeaders is the list of HTTP headers other than the simple
+	// response headers to give permission for the user-agent to share
+	// across domains.
+	ResponseHeaders []string
 }
 
 type BucketAttrsToUpdate struct {
@@ -420,6 +448,11 @@ type BucketAttrsToUpdate struct {
 
 	// RequesterPays, if set, updates whether the bucket is a Requester Pays bucket.
 	RequesterPays optional.Bool
+
+	// CORS, if set, replaces the CORS configuration with a new configuration.
+	// When an empty slice is provided, all CORS policies are removed; when nil
+	// is provided, the value is ignored in the update.
+	CORS []CORS
 
 	setLabels    map[string]string
 	deleteLabels map[string]bool
@@ -445,6 +478,10 @@ func (ua *BucketAttrsToUpdate) DeleteLabel(name string) {
 
 func (ua *BucketAttrsToUpdate) toRawBucket() *raw.Bucket {
 	rb := &raw.Bucket{}
+	if ua.CORS != nil {
+		rb.Cors = toRawCORS(ua.CORS)
+		rb.ForceSendFields = append(rb.ForceSendFields, "Cors")
+	}
 	if ua.VersioningEnabled != nil {
 		rb.Versioning = &raw.BucketVersioning{
 			Enabled:         optional.ToBool(ua.VersioningEnabled),
@@ -542,6 +579,32 @@ func applyBucketConds(method string, conds *BucketConditions, call interface{}) 
 		}
 	}
 	return nil
+}
+
+func toRawCORS(c []CORS) []*raw.BucketCors {
+	var out []*raw.BucketCors
+	for _, v := range c {
+		out = append(out, &raw.BucketCors{
+			MaxAgeSeconds:  int64(v.MaxAge / time.Second),
+			Method:         v.Methods,
+			Origin:         v.Origins,
+			ResponseHeader: v.ResponseHeaders,
+		})
+	}
+	return out
+}
+
+func toCORS(rc []*raw.BucketCors) []CORS {
+	var out []CORS
+	for _, v := range rc {
+		out = append(out, CORS{
+			MaxAge:          time.Duration(v.MaxAgeSeconds) * time.Second,
+			Methods:         v.Method,
+			Origins:         v.Origin,
+			ResponseHeaders: v.ResponseHeader,
+		})
+	}
+	return out
 }
 
 func toRawLifecycle(l Lifecycle) *raw.BucketLifecycle {

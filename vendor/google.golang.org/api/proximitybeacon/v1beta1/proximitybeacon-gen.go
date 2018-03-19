@@ -1,4 +1,4 @@
-// Package proximitybeacon provides access to the Google Proximity Beacon API.
+// Package proximitybeacon provides access to the Proximity Beacon API.
 //
 // See https://developers.google.com/beacons/proximity/
 //

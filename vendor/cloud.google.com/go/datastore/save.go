@@ -88,9 +88,19 @@ func saveStructProperty(props *[]Property, name string, opts saveOpts, v reflect
 				return saveSliceProperty(props, name, opts, v)
 			}
 		case reflect.Ptr:
+			if isValidPointerType(v.Type().Elem()) {
+				if v.IsNil() {
+					// Nil pointer becomes a nil property value (unless omitempty, handled above).
+					p.Value = nil
+					*props = append(*props, p)
+					return nil
+				}
+				return saveStructProperty(props, name, opts, v.Elem())
+			}
 			if v.Type().Elem().Kind() != reflect.Struct {
 				return fmt.Errorf("datastore: unsupported struct field type: %s", v.Type())
 			}
+			// Pointer to struct is a special case.
 			if v.IsNil() {
 				return nil
 			}
@@ -395,10 +405,18 @@ func interfaceToProto(iv interface{}, noIndex bool) (*pb.Value, error) {
 		// than the top-level value.
 		val.ExcludeFromIndexes = false
 	default:
-		if iv != nil {
-			return nil, fmt.Errorf("invalid Value type %t", iv)
+		rv := reflect.ValueOf(iv)
+		if !rv.IsValid() {
+			val.ValueType = &pb.Value_NullValue{}
+		} else if rv.Kind() == reflect.Ptr { // non-nil pointer: dereference
+			if rv.IsNil() {
+				val.ValueType = &pb.Value_NullValue{}
+				return val, nil
+			}
+			return interfaceToProto(rv.Elem().Interface(), noIndex)
+		} else {
+			return nil, fmt.Errorf("invalid Value type %T", iv)
 		}
-		val.ValueType = &pb.Value_NullValue{}
 	}
 	// TODO(jbd): Support EntityValue.
 	return val, nil
@@ -420,6 +438,25 @@ func isEmptyValue(v reflect.Value) bool {
 		return v.Float() == 0
 	case reflect.Interface, reflect.Ptr:
 		return v.IsNil()
+	}
+	return false
+}
+
+// isValidPointerType reports whether a struct field can be a pointer to type t
+// for the purposes of saving and loading.
+func isValidPointerType(t reflect.Type) bool {
+	if t == typeOfTime || t == typeOfGeoPoint {
+		return true
+	}
+	switch t.Kind() {
+	case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
+		return true
+	case reflect.Bool:
+		return true
+	case reflect.String:
+		return true
+	case reflect.Float32, reflect.Float64:
+		return true
 	}
 	return false
 }

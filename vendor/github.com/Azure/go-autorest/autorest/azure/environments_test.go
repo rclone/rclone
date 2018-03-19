@@ -127,6 +127,7 @@ func TestDeserializeEnvironment(t *testing.T) {
 		"ActiveDirectoryEndpoint": "--active-directory-endpoint--",
 		"galleryEndpoint": "--gallery-endpoint--",
 		"graphEndpoint": "--graph-endpoint--",
+		"serviceBusEndpoint": "--service-bus-endpoint--",
 		"keyVaultDNSSuffix": "--key-vault-dns-suffix--",
 		"keyVaultEndpoint": "--key-vault-endpoint--",
 		"managementPortalURL": "--management-portal-url--",
@@ -172,6 +173,9 @@ func TestDeserializeEnvironment(t *testing.T) {
 	if "--key-vault-endpoint--" != testSubject.KeyVaultEndpoint {
 		t.Errorf("Expected KeyVaultEndpoint to be \"--key-vault-endpoint--\", but got %q", testSubject.KeyVaultEndpoint)
 	}
+	if "--service-bus-endpoint--" != testSubject.ServiceBusEndpoint {
+		t.Errorf("Expected ServiceBusEndpoint to be \"--service-bus-endpoint--\", but goet %q", testSubject.ServiceBusEndpoint)
+	}
 	if "--graph-endpoint--" != testSubject.GraphEndpoint {
 		t.Errorf("Expected GraphEndpoint to be \"--graph-endpoint--\", but got %q", testSubject.GraphEndpoint)
 	}
@@ -209,6 +213,7 @@ func TestRoundTripSerialization(t *testing.T) {
 		GalleryEndpoint:              "--gallery-endpoint--",
 		KeyVaultEndpoint:             "--key-vault--endpoint--",
 		GraphEndpoint:                "--graph-endpoint--",
+		ServiceBusEndpoint:           "--service-bus-endpoint--",
 		StorageEndpointSuffix:        "--storage-endpoint-suffix--",
 		SQLDatabaseDNSSuffix:         "--sql-database-dns-suffix--",
 		TrafficManagerDNSSuffix:      "--traffic-manager-dns-suffix--",
@@ -250,6 +255,9 @@ func TestRoundTripSerialization(t *testing.T) {
 	}
 	if env.GalleryEndpoint != testSubject.GalleryEndpoint {
 		t.Errorf("Expected GalleryEndpoint to be %q, but got %q", env.GalleryEndpoint, testSubject.GalleryEndpoint)
+	}
+	if env.ServiceBusEndpoint != testSubject.ServiceBusEndpoint {
+		t.Errorf("Expected ServiceBusEnpoint to be %q, but got %q", env.ServiceBusEndpoint, testSubject.ServiceBusEndpoint)
 	}
 	if env.KeyVaultEndpoint != testSubject.KeyVaultEndpoint {
 		t.Errorf("Expected KeyVaultEndpoint to be %q, but got %q", env.KeyVaultEndpoint, testSubject.KeyVaultEndpoint)

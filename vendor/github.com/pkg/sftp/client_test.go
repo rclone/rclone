@@ -145,3 +145,52 @@ func TestUnmarshalStatus(t *testing.T) {
 		}
 	}
 }
+
+type packetSizeTest struct {
+	size  int
+	valid bool
+}
+
+var maxPacketCheckedTests = []packetSizeTest{
+	{size: 0, valid: false},
+	{size: 1, valid: true},
+	{size: 32768, valid: true},
+	{size: 32769, valid: false},
+}
+
+var maxPacketUncheckedTests = []packetSizeTest{
+	{size: 0, valid: false},
+	{size: 1, valid: true},
+	{size: 32768, valid: true},
+	{size: 32769, valid: true},
+}
+
+func TestMaxPacketChecked(t *testing.T) {
+	for _, tt := range maxPacketCheckedTests {
+		testMaxPacketOption(t, MaxPacketChecked(tt.size), tt)
+	}
+}
+
+func TestMaxPacketUnchecked(t *testing.T) {
+	for _, tt := range maxPacketUncheckedTests {
+		testMaxPacketOption(t, MaxPacketUnchecked(tt.size), tt)
+	}
+}
+
+func TestMaxPacket(t *testing.T) {
+	for _, tt := range maxPacketCheckedTests {
+		testMaxPacketOption(t, MaxPacket(tt.size), tt)
+	}
+}
+
+func testMaxPacketOption(t *testing.T, o ClientOption, tt packetSizeTest) {
+	var c Client
+
+	err := o(&c)
+	if (err == nil) != tt.valid {
+		t.Errorf("MaxPacketChecked(%v)\n- want: %v\n- got: %v", tt.size, tt.valid, err == nil)
+	}
+	if c.maxPacket != tt.size && tt.valid {
+		t.Errorf("MaxPacketChecked(%v)\n- want: %v\n- got: %v", tt.size, tt.size, c.maxPacket)
+	}
+}

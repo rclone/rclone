@@ -57,7 +57,7 @@ func (client AppServiceEnvironmentsClient) CreateOrUpdate(ctx context.Context, r
 					{Target: "hostingEnvironmentEnvelope.AppServiceEnvironment.VirtualNetwork", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "hostingEnvironmentEnvelope.AppServiceEnvironment.WorkerPools", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "CreateOrUpdate")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, name, hostingEnvironmentEnvelope)
@@ -136,7 +136,7 @@ func (client AppServiceEnvironmentsClient) CreateOrUpdateMultiRolePool(ctx conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "CreateOrUpdateMultiRolePool")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "CreateOrUpdateMultiRolePool", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateMultiRolePoolPreparer(ctx, resourceGroupName, name, multiRolePoolEnvelope)
@@ -215,7 +215,7 @@ func (client AppServiceEnvironmentsClient) CreateOrUpdateWorkerPool(ctx context.
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "CreateOrUpdateWorkerPool")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "CreateOrUpdateWorkerPool", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateWorkerPoolPreparer(ctx, resourceGroupName, name, workerPoolName, workerPoolEnvelope)
@@ -296,7 +296,7 @@ func (client AppServiceEnvironmentsClient) Delete(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "Delete")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, name, forceDelete)
@@ -375,7 +375,7 @@ func (client AppServiceEnvironmentsClient) Get(ctx context.Context, resourceGrou
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "Get")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, name)
@@ -450,7 +450,7 @@ func (client AppServiceEnvironmentsClient) GetDiagnosticsItem(ctx context.Contex
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "GetDiagnosticsItem")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "GetDiagnosticsItem", err.Error())
 	}
 
 	req, err := client.GetDiagnosticsItemPreparer(ctx, resourceGroupName, name, diagnosticsName)
@@ -526,7 +526,7 @@ func (client AppServiceEnvironmentsClient) GetMultiRolePool(ctx context.Context,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "GetMultiRolePool")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "GetMultiRolePool", err.Error())
 	}
 
 	req, err := client.GetMultiRolePoolPreparer(ctx, resourceGroupName, name)
@@ -601,7 +601,7 @@ func (client AppServiceEnvironmentsClient) GetWorkerPool(ctx context.Context, re
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "GetWorkerPool")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "GetWorkerPool", err.Error())
 	}
 
 	req, err := client.GetWorkerPoolPreparer(ctx, resourceGroupName, name, workerPoolName)
@@ -767,7 +767,7 @@ func (client AppServiceEnvironmentsClient) ListAppServicePlans(ctx context.Conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListAppServicePlans")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListAppServicePlans", err.Error())
 	}
 
 	result.fn = client.listAppServicePlansNextResults
@@ -869,7 +869,7 @@ func (client AppServiceEnvironmentsClient) ListByResourceGroup(ctx context.Conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListByResourceGroup")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListByResourceGroup", err.Error())
 	}
 
 	result.fn = client.listByResourceGroupNextResults
@@ -971,7 +971,7 @@ func (client AppServiceEnvironmentsClient) ListCapacities(ctx context.Context, r
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListCapacities")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListCapacities", err.Error())
 	}
 
 	result.fn = client.listCapacitiesNextResults
@@ -1074,7 +1074,7 @@ func (client AppServiceEnvironmentsClient) ListDiagnostics(ctx context.Context, 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListDiagnostics")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListDiagnostics", err.Error())
 	}
 
 	req, err := client.ListDiagnosticsPreparer(ctx, resourceGroupName, name)
@@ -1149,7 +1149,7 @@ func (client AppServiceEnvironmentsClient) ListMetricDefinitions(ctx context.Con
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMetricDefinitions")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMetricDefinitions", err.Error())
 	}
 
 	req, err := client.ListMetricDefinitionsPreparer(ctx, resourceGroupName, name)
@@ -1217,17 +1217,17 @@ func (client AppServiceEnvironmentsClient) ListMetricDefinitionsResponder(resp *
 // ListMetrics get global metrics of an App Service Environment.
 //
 // resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// Environment. details is specify <code>true</code> to include instance details. The default is <code>false</code>.
-// filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
-// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq
-// '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
+// Environment. details is specify <code>true</code> to include instance details. The default is
+// <code>false</code>. filter is return only usages/metrics specified in the filter. Filter conforms to odata
+// syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
+// '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client AppServiceEnvironmentsClient) ListMetrics(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMetrics")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMetrics", err.Error())
 	}
 
 	result.fn = client.listMetricsNextResults
@@ -1336,7 +1336,7 @@ func (client AppServiceEnvironmentsClient) ListMultiRoleMetricDefinitions(ctx co
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMultiRoleMetricDefinitions")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMultiRoleMetricDefinitions", err.Error())
 	}
 
 	result.fn = client.listMultiRoleMetricDefinitionsNextResults
@@ -1432,10 +1432,10 @@ func (client AppServiceEnvironmentsClient) ListMultiRoleMetricDefinitionsComplet
 // ListMultiRoleMetrics get metrics for a multi-role pool of an App Service Environment.
 //
 // resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// Environment. startTime is beginning time of the metrics query. endTime is end time of the metrics query. timeGrain
-// is time granularity of the metrics query. details is specify <code>true</code> to include instance details. The
-// default is <code>false</code>. filter is return only usages/metrics specified in the filter. Filter conforms to
-// odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
+// Environment. startTime is beginning time of the metrics query. endTime is end time of the metrics query.
+// timeGrain is time granularity of the metrics query. details is specify <code>true</code> to include instance
+// details. The default is <code>false</code>. filter is return only usages/metrics specified in the filter. Filter
+// conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
 // '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client AppServiceEnvironmentsClient) ListMultiRoleMetrics(ctx context.Context, resourceGroupName string, name string, startTime string, endTime string, timeGrain string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -1443,7 +1443,7 @@ func (client AppServiceEnvironmentsClient) ListMultiRoleMetrics(ctx context.Cont
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMultiRoleMetrics")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMultiRoleMetrics", err.Error())
 	}
 
 	result.fn = client.listMultiRoleMetricsNextResults
@@ -1562,7 +1562,7 @@ func (client AppServiceEnvironmentsClient) ListMultiRolePoolInstanceMetricDefini
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMultiRolePoolInstanceMetricDefinitions")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMultiRolePoolInstanceMetricDefinitions", err.Error())
 	}
 
 	result.fn = client.listMultiRolePoolInstanceMetricDefinitionsNextResults
@@ -1668,7 +1668,7 @@ func (client AppServiceEnvironmentsClient) ListMultiRolePoolInstanceMetrics(ctx 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMultiRolePoolInstanceMetrics")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMultiRolePoolInstanceMetrics", err.Error())
 	}
 
 	result.fn = client.listMultiRolePoolInstanceMetricsNextResults
@@ -1775,7 +1775,7 @@ func (client AppServiceEnvironmentsClient) ListMultiRolePools(ctx context.Contex
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMultiRolePools")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMultiRolePools", err.Error())
 	}
 
 	result.fn = client.listMultiRolePoolsNextResults
@@ -1878,7 +1878,7 @@ func (client AppServiceEnvironmentsClient) ListMultiRolePoolSkus(ctx context.Con
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMultiRolePoolSkus")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMultiRolePoolSkus", err.Error())
 	}
 
 	result.fn = client.listMultiRolePoolSkusNextResults
@@ -1981,7 +1981,7 @@ func (client AppServiceEnvironmentsClient) ListMultiRoleUsages(ctx context.Conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListMultiRoleUsages")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListMultiRoleUsages", err.Error())
 	}
 
 	result.fn = client.listMultiRoleUsagesNextResults
@@ -2084,7 +2084,7 @@ func (client AppServiceEnvironmentsClient) ListOperations(ctx context.Context, r
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListOperations")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListOperations", err.Error())
 	}
 
 	req, err := client.ListOperationsPreparer(ctx, resourceGroupName, name)
@@ -2152,16 +2152,16 @@ func (client AppServiceEnvironmentsClient) ListOperationsResponder(resp *http.Re
 // ListUsages get global usage metrics of an App Service Environment.
 //
 // resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// Environment. filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
-// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq
-// '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
+// Environment. filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax.
+// Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z'
+// and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client AppServiceEnvironmentsClient) ListUsages(ctx context.Context, resourceGroupName string, name string, filter string) (result CsmUsageQuotaCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListUsages")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListUsages", err.Error())
 	}
 
 	result.fn = client.listUsagesNextResults
@@ -2267,7 +2267,7 @@ func (client AppServiceEnvironmentsClient) ListVips(ctx context.Context, resourc
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListVips")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListVips", err.Error())
 	}
 
 	req, err := client.ListVipsPreparer(ctx, resourceGroupName, name)
@@ -2342,7 +2342,7 @@ func (client AppServiceEnvironmentsClient) ListWebApps(ctx context.Context, reso
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWebApps")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWebApps", err.Error())
 	}
 
 	result.fn = client.listWebAppsNextResults
@@ -2448,7 +2448,7 @@ func (client AppServiceEnvironmentsClient) ListWebWorkerMetricDefinitions(ctx co
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWebWorkerMetricDefinitions")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWebWorkerMetricDefinitions", err.Error())
 	}
 
 	result.fn = client.listWebWorkerMetricDefinitionsNextResults
@@ -2545,9 +2545,9 @@ func (client AppServiceEnvironmentsClient) ListWebWorkerMetricDefinitionsComplet
 // ListWebWorkerMetrics get metrics for a worker pool of a AppServiceEnvironment (App Service Environment).
 //
 // resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// Environment. workerPoolName is name of worker pool details is specify <code>true</code> to include instance details.
-// The default is <code>false</code>. filter is return only usages/metrics specified in the filter. Filter conforms to
-// odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
+// Environment. workerPoolName is name of worker pool details is specify <code>true</code> to include instance
+// details. The default is <code>false</code>. filter is return only usages/metrics specified in the filter. Filter
+// conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
 // '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client AppServiceEnvironmentsClient) ListWebWorkerMetrics(ctx context.Context, resourceGroupName string, name string, workerPoolName string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -2555,7 +2555,7 @@ func (client AppServiceEnvironmentsClient) ListWebWorkerMetrics(ctx context.Cont
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWebWorkerMetrics")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWebWorkerMetrics", err.Error())
 	}
 
 	result.fn = client.listWebWorkerMetricsNextResults
@@ -2665,7 +2665,7 @@ func (client AppServiceEnvironmentsClient) ListWebWorkerUsages(ctx context.Conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWebWorkerUsages")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWebWorkerUsages", err.Error())
 	}
 
 	result.fn = client.listWebWorkerUsagesNextResults
@@ -2770,7 +2770,7 @@ func (client AppServiceEnvironmentsClient) ListWorkerPoolInstanceMetricDefinitio
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWorkerPoolInstanceMetricDefinitions")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWorkerPoolInstanceMetricDefinitions", err.Error())
 	}
 
 	result.fn = client.listWorkerPoolInstanceMetricDefinitionsNextResults
@@ -2868,18 +2868,18 @@ func (client AppServiceEnvironmentsClient) ListWorkerPoolInstanceMetricDefinitio
 // ListWorkerPoolInstanceMetrics get metrics for a specific instance of a worker pool of an App Service Environment.
 //
 // resourceGroupName is name of the resource group to which the resource belongs. name is name of the App Service
-// Environment. workerPoolName is name of the worker pool. instance is name of the instance in the worker pool. details
-// is specify <code>true</code> to include instance details. The default is <code>false</code>. filter is return only
-// usages/metrics specified in the filter. Filter conforms to odata syntax. Example: $filter=(name.value eq 'Metric1'
-// or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and
-// timeGrain eq duration'[Hour|Minute|Day]'.
+// Environment. workerPoolName is name of the worker pool. instance is name of the instance in the worker pool.
+// details is specify <code>true</code> to include instance details. The default is <code>false</code>. filter is
+// return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
+// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime
+// eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client AppServiceEnvironmentsClient) ListWorkerPoolInstanceMetrics(ctx context.Context, resourceGroupName string, name string, workerPoolName string, instance string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWorkerPoolInstanceMetrics")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWorkerPoolInstanceMetrics", err.Error())
 	}
 
 	result.fn = client.listWorkerPoolInstanceMetricsNextResults
@@ -2990,7 +2990,7 @@ func (client AppServiceEnvironmentsClient) ListWorkerPools(ctx context.Context, 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWorkerPools")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWorkerPools", err.Error())
 	}
 
 	result.fn = client.listWorkerPoolsNextResults
@@ -3093,7 +3093,7 @@ func (client AppServiceEnvironmentsClient) ListWorkerPoolSkus(ctx context.Contex
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "ListWorkerPoolSkus")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "ListWorkerPoolSkus", err.Error())
 	}
 
 	result.fn = client.listWorkerPoolSkusNextResults
@@ -3197,7 +3197,7 @@ func (client AppServiceEnvironmentsClient) Reboot(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "Reboot")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "Reboot", err.Error())
 	}
 
 	req, err := client.RebootPreparer(ctx, resourceGroupName, name)
@@ -3271,7 +3271,7 @@ func (client AppServiceEnvironmentsClient) Resume(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "Resume")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "Resume", err.Error())
 	}
 
 	req, err := client.ResumePreparer(ctx, resourceGroupName, name)
@@ -3381,7 +3381,7 @@ func (client AppServiceEnvironmentsClient) Suspend(ctx context.Context, resource
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "Suspend")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "Suspend", err.Error())
 	}
 
 	req, err := client.SuspendPreparer(ctx, resourceGroupName, name)
@@ -3491,7 +3491,7 @@ func (client AppServiceEnvironmentsClient) Update(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "Update")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, name, hostingEnvironmentEnvelope)
@@ -3568,7 +3568,7 @@ func (client AppServiceEnvironmentsClient) UpdateMultiRolePool(ctx context.Conte
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "UpdateMultiRolePool")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "UpdateMultiRolePool", err.Error())
 	}
 
 	req, err := client.UpdateMultiRolePoolPreparer(ctx, resourceGroupName, name, multiRolePoolEnvelope)
@@ -3645,7 +3645,7 @@ func (client AppServiceEnvironmentsClient) UpdateWorkerPool(ctx context.Context,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceEnvironmentsClient", "UpdateWorkerPool")
+		return result, validation.NewError("web.AppServiceEnvironmentsClient", "UpdateWorkerPool", err.Error())
 	}
 
 	req, err := client.UpdateWorkerPoolPreparer(ctx, resourceGroupName, name, workerPoolName, workerPoolEnvelope)

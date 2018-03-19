@@ -235,13 +235,15 @@ func TestWithErrorUnlessStatusCode_FoundAzureErrorWithoutDetails(t *testing.T) {
 
 }
 
-func TestWithErrorUnlessStatusCode_FoundAzureErrorWithDetails(t *testing.T) {
+func TestWithErrorUnlessStatusCode_FoundAzureFullError(t *testing.T) {
 	j := `{
 		"error": {
 			"code": "InternalError",
 			"message": "Azure is having trouble right now.",
+			"target": "target1",
 			"details": [{"code": "conflict1", "message":"error message1"}, 
-						{"code": "conflict2", "message":"error message2"}]
+						{"code": "conflict2", "message":"error message2"}],
+			"innererror": { "customKey": "customValue" }
 		}
 	}`
 	uuid := "71FDB9F4-5E49-4C12-B266-DE7B4FD999A6"
@@ -266,12 +268,23 @@ func TestWithErrorUnlessStatusCode_FoundAzureErrorWithDetails(t *testing.T) {
 	if expected := "InternalError"; azErr.ServiceError.Code != expected {
 		t.Fatalf("azure: wrong error code. expected=%q; got=%q", expected, azErr.ServiceError.Code)
 	}
+
 	if azErr.ServiceError.Message == "" {
 		t.Fatalf("azure: error message is not unmarshaled properly")
 	}
-	b, _ := json.Marshal(*azErr.ServiceError.Details)
-	if string(b) != `[{"code":"conflict1","message":"error message1"},{"code":"conflict2","message":"error message2"}]` {
+
+	if *azErr.ServiceError.Target == "" {
+		t.Fatalf("azure: error target is not unmarshaled properly")
+	}
+
+	d, _ := json.Marshal(azErr.ServiceError.Details)
+	if string(d) != `[{"code":"conflict1","message":"error message1"},{"code":"conflict2","message":"error message2"}]` {
 		t.Fatalf("azure: error details is not unmarshaled properly")
+	}
+
+	i, _ := json.Marshal(azErr.ServiceError.InnerError)
+	if string(i) != `{"customKey":"customValue"}` {
+		t.Fatalf("azure: inner error is not unmarshaled properly")
 	}
 
 	if expected := http.StatusInternalServerError; azErr.StatusCode != expected {
@@ -285,7 +298,7 @@ func TestWithErrorUnlessStatusCode_FoundAzureErrorWithDetails(t *testing.T) {
 
 	// the error body should still be there
 	defer r.Body.Close()
-	b, err = ioutil.ReadAll(r.Body)
+	b, err := ioutil.ReadAll(r.Body)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -297,8 +310,8 @@ func TestWithErrorUnlessStatusCode_FoundAzureErrorWithDetails(t *testing.T) {
 
 func TestWithErrorUnlessStatusCode_NoAzureError(t *testing.T) {
 	j := `{
-			"Status":"NotFound"
-		}`
+		"Status":"NotFound"
+	}`
 	uuid := "71FDB9F4-5E49-4C12-B266-DE7B4FD999A6"
 	r := mocks.NewResponseWithContent(j)
 	mocks.SetResponseHeader(r, HeaderRequestID, uuid)
@@ -349,13 +362,13 @@ func TestWithErrorUnlessStatusCode_NoAzureError(t *testing.T) {
 
 func TestWithErrorUnlessStatusCode_UnwrappedError(t *testing.T) {
 	j := `{
-		"target": null,
 		"code": "InternalError",
 		"message": "Azure is having trouble right now.",
+		"target": "target1",
 		"details": [{"code": "conflict1", "message":"error message1"},
 					{"code": "conflict2", "message":"error message2"}],
-		"innererror": []
-}`
+		"innererror": { "customKey": "customValue" }
+    }`
 	uuid := "71FDB9F4-5E49-4C12-B266-DE7B4FD999A6"
 	r := mocks.NewResponseWithContent(j)
 	mocks.SetResponseHeader(r, HeaderRequestID, uuid)
@@ -381,7 +394,7 @@ func TestWithErrorUnlessStatusCode_UnwrappedError(t *testing.T) {
 		t.Fail()
 	}
 
-	if expected := "Azure is having trouble right now."; azErr.ServiceError.Message != expected {
+	if expected := "Azure is having trouble right now."; azErr.Message != expected {
 		t.Logf("Incorrect Message\n\tgot:  %q\n\twant: %q", azErr.Message, expected)
 		t.Fail()
 	}
@@ -391,15 +404,31 @@ func TestWithErrorUnlessStatusCode_UnwrappedError(t *testing.T) {
 		t.Fail()
 	}
 
-	expectedServiceErrorDetails := `[{"code":"conflict1","message":"error message1"},{"code":"conflict2","message":"error message2"}]`
 	if azErr.ServiceError == nil {
 		t.Logf("`ServiceError` was nil when it shouldn't have been.")
 		t.Fail()
-	} else if azErr.ServiceError.Details == nil {
+	}
+
+	if expected := "target1"; *azErr.ServiceError.Target != expected {
+		t.Logf("Incorrect Target\n\tgot:  %q\n\twant: %q", *azErr.ServiceError.Target, expected)
+		t.Fail()
+	}
+
+	expectedServiceErrorDetails := `[{"code":"conflict1","message":"error message1"},{"code":"conflict2","message":"error message2"}]`
+	if azErr.ServiceError.Details == nil {
 		t.Logf("`ServiceError.Details` was nil when it should have been %q", expectedServiceErrorDetails)
 		t.Fail()
-	} else if details, _ := json.Marshal(*azErr.ServiceError.Details); expectedServiceErrorDetails != string(details) {
-		t.Logf("Error detaisl was not unmarshaled properly.\n\tgot:  %q\n\twant: %q", string(details), expectedServiceErrorDetails)
+	} else if details, _ := json.Marshal(azErr.ServiceError.Details); expectedServiceErrorDetails != string(details) {
+		t.Logf("Error details was not unmarshaled properly.\n\tgot:  %q\n\twant: %q", string(details), expectedServiceErrorDetails)
+		t.Fail()
+	}
+
+	expectedServiceErrorInnerError := `{"customKey":"customValue"}`
+	if azErr.ServiceError.InnerError == nil {
+		t.Logf("`ServiceError.InnerError` was nil when it should have been %q", expectedServiceErrorInnerError)
+		t.Fail()
+	} else if innerError, _ := json.Marshal(azErr.ServiceError.InnerError); expectedServiceErrorInnerError != string(innerError) {
+		t.Logf("Inner error was not unmarshaled properly.\n\tgot:  %q\n\twant: %q", string(innerError), expectedServiceErrorInnerError)
 		t.Fail()
 	}
 
@@ -420,7 +449,38 @@ func TestRequestErrorString_WithError(t *testing.T) {
 		"error": {
 			"code": "InternalError",
 			"message": "Conflict",
-			"details": [{"code": "conflict1", "message":"error message1"}]
+			"target": "target1",
+			"details": [{"code": "conflict1", "message":"error message1"}],
+			"innererror": { "customKey": "customValue" }
+		}
+	}`
+	uuid := "71FDB9F4-5E49-4C12-B266-DE7B4FD999A6"
+	r := mocks.NewResponseWithContent(j)
+	mocks.SetResponseHeader(r, HeaderRequestID, uuid)
+	r.Request = mocks.NewRequest()
+	r.StatusCode = http.StatusInternalServerError
+	r.Status = http.StatusText(r.StatusCode)
+
+	err := autorest.Respond(r,
+		WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByClosing())
+
+	if err == nil {
+		t.Fatalf("azure: returned nil error for proper error response")
+	}
+	azErr, _ := err.(*RequestError)
+	expected := "autorest/azure: Service returned an error. Status=500 Code=\"InternalError\" Message=\"Conflict\" Target=\"target1\" Details=[{\"code\":\"conflict1\",\"message\":\"error message1\"}] InnerError={\"customKey\":\"customValue\"}"
+	if expected != azErr.Error() {
+		t.Fatalf("azure: send wrong RequestError.\nexpected=%v\ngot=%v", expected, azErr.Error())
+	}
+}
+
+func TestRequestErrorString_WithErrorNonConforming(t *testing.T) {
+	j := `{
+		"error": {
+			"code": "InternalError",
+			"message": "Conflict",
+			"details": {"code": "conflict1", "message":"error message1"}
 		}
 	}`
 	uuid := "71FDB9F4-5E49-4C12-B266-DE7B4FD999A6"

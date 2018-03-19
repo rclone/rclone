@@ -42,9 +42,9 @@ func NewUsersClientWithBaseURI(baseURI string, subscriptionID string) UsersClien
 
 // CreateOrUpdate creates or Updates a user.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID is
-// user identifier. Must be unique in the current API Management service instance. parameters is create or update
-// parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID
+// is user identifier. Must be unique in the current API Management service instance. parameters is create or
+// update parameters.
 func (client UsersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, UID string, parameters UserCreateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -69,7 +69,7 @@ func (client UsersClient) CreateOrUpdate(ctx context.Context, resourceGroupName 
 					Chain: []validation.Constraint{{Target: "parameters.LastName", Name: validation.MaxLength, Rule: 100, Chain: nil},
 						{Target: "parameters.LastName", Name: validation.MinLength, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UsersClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.UsersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, UID, parameters)
@@ -138,10 +138,10 @@ func (client UsersClient) CreateOrUpdateResponder(resp *http.Response) (result a
 
 // Delete deletes specific user.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID is
-// user identifier. Must be unique in the current API Management service instance. ifMatch is the entity state (Etag)
-// version of the user to delete. A value of "*" can be used for If-Match to unconditionally apply the operation.
-// deleteSubscriptions is whether to delete user's subscription or not.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID
+// is user identifier. Must be unique in the current API Management service instance. ifMatch is the entity state
+// (Etag) version of the user to delete. A value of "*" can be used for If-Match to unconditionally apply the
+// operation. deleteSubscriptions is whether to delete user's subscription or not.
 func (client UsersClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, UID string, ifMatch string, deleteSubscriptions *bool) (result ErrorBodyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -152,7 +152,7 @@ func (client UsersClient) Delete(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "UID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "UID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "UID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UsersClient", "Delete")
+		return result, validation.NewError("apimanagement.UsersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, UID, ifMatch, deleteSubscriptions)
@@ -225,8 +225,8 @@ func (client UsersClient) DeleteResponder(resp *http.Response) (result ErrorBody
 // GenerateSsoURL retrieves a redirection URL containing an authentication token for signing a given user into the
 // developer portal.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID is
-// user identifier. Must be unique in the current API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID
+// is user identifier. Must be unique in the current API Management service instance.
 func (client UsersClient) GenerateSsoURL(ctx context.Context, resourceGroupName string, serviceName string, UID string) (result GenerateSsoURLResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -237,7 +237,7 @@ func (client UsersClient) GenerateSsoURL(ctx context.Context, resourceGroupName 
 			Constraints: []validation.Constraint{{Target: "UID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "UID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "UID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UsersClient", "GenerateSsoURL")
+		return result, validation.NewError("apimanagement.UsersClient", "GenerateSsoURL", err.Error())
 	}
 
 	req, err := client.GenerateSsoURLPreparer(ctx, resourceGroupName, serviceName, UID)
@@ -305,8 +305,8 @@ func (client UsersClient) GenerateSsoURLResponder(resp *http.Response) (result G
 
 // Get gets the details of the user specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID is
-// user identifier. Must be unique in the current API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID
+// is user identifier. Must be unique in the current API Management service instance.
 func (client UsersClient) Get(ctx context.Context, resourceGroupName string, serviceName string, UID string) (result UserContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -317,7 +317,7 @@ func (client UsersClient) Get(ctx context.Context, resourceGroupName string, ser
 			Constraints: []validation.Constraint{{Target: "UID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "UID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "UID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UsersClient", "Get")
+		return result, validation.NewError("apimanagement.UsersClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, UID)
@@ -385,9 +385,9 @@ func (client UsersClient) GetResponder(resp *http.Response) (result UserContract
 
 // GetSharedAccessToken gets the Shared Access Authorization Token for the User.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID is
-// user identifier. Must be unique in the current API Management service instance. parameters is create Authorization
-// Token parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID
+// is user identifier. Must be unique in the current API Management service instance. parameters is create
+// Authorization Token parameters.
 func (client UsersClient) GetSharedAccessToken(ctx context.Context, resourceGroupName string, serviceName string, UID string, parameters UserTokenParameters) (result UserTokenResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -400,7 +400,7 @@ func (client UsersClient) GetSharedAccessToken(ctx context.Context, resourceGrou
 				{Target: "UID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Expiry", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UsersClient", "GetSharedAccessToken")
+		return result, validation.NewError("apimanagement.UsersClient", "GetSharedAccessToken", err.Error())
 	}
 
 	req, err := client.GetSharedAccessTokenPreparer(ctx, resourceGroupName, serviceName, UID, parameters)
@@ -470,8 +470,8 @@ func (client UsersClient) GetSharedAccessTokenResponder(resp *http.Response) (re
 
 // ListByService lists a collection of registered users in the specified service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field            | Supported operators    | Supported functions               |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field            | Supported operators    | Supported functions               |
 // |------------------|------------------------|-----------------------------------|
 // | id               | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | firstName        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
@@ -479,8 +479,8 @@ func (client UsersClient) GetSharedAccessTokenResponder(resp *http.Response) (re
 // | email            | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | state            | eq                     | N/A                               |
 // | registrationDate | ge, le, eq, ne, gt, lt | N/A                               |
-// | note             | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of records
-// to return. skip is number of records to skip.
+// | note             | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith | top is number of
+// records to return. skip is number of records to skip.
 func (client UsersClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result UserCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -493,7 +493,7 @@ func (client UsersClient) ListByService(ctx context.Context, resourceGroupName s
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UsersClient", "ListByService")
+		return result, validation.NewError("apimanagement.UsersClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults
@@ -597,10 +597,10 @@ func (client UsersClient) ListByServiceComplete(ctx context.Context, resourceGro
 
 // Update updates the details of the user specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID is
-// user identifier. Must be unique in the current API Management service instance. parameters is update parameters.
-// ifMatch is the entity state (Etag) version of the user to update. A value of "*" can be used for If-Match to
-// unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. UID
+// is user identifier. Must be unique in the current API Management service instance. parameters is update
+// parameters. ifMatch is the entity state (Etag) version of the user to update. A value of "*" can be used for
+// If-Match to unconditionally apply the operation.
 func (client UsersClient) Update(ctx context.Context, resourceGroupName string, serviceName string, UID string, parameters UserUpdateParameters, ifMatch string) (result ErrorBodyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -611,7 +611,7 @@ func (client UsersClient) Update(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "UID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "UID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "UID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.UsersClient", "Update")
+		return result, validation.NewError("apimanagement.UsersClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, UID, parameters, ifMatch)

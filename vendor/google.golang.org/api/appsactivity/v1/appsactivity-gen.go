@@ -49,18 +49,6 @@ const basePath = "https://www.googleapis.com/appsactivity/v1/"
 const (
 	// View the activity history of your Google apps
 	ActivityScope = "https://www.googleapis.com/auth/activity"
-
-	// View and manage the files in your Google Drive
-	DriveScope = "https://www.googleapis.com/auth/drive"
-
-	// View and manage metadata of files in your Google Drive
-	DriveMetadataScope = "https://www.googleapis.com/auth/drive.metadata"
-
-	// View metadata for files in your Google Drive
-	DriveMetadataReadonlyScope = "https://www.googleapis.com/auth/drive.metadata.readonly"
-
-	// View the files in your Google Drive
-	DriveReadonlyScope = "https://www.googleapis.com/auth/drive.readonly"
 )
 
 func New(client *http.Client) (*Service, error) {
@@ -343,6 +331,7 @@ type Permission struct {
 	// Possible values:
 	//   "commenter"
 	//   "owner"
+	//   "publishedReader"
 	//   "reader"
 	//   "writer"
 	Role string `json:"role,omitempty"`
@@ -785,11 +774,7 @@ func (c *ActivitiesListCall) Do(opts ...googleapi.CallOption) (*ListActivitiesRe
 	//     "$ref": "ListActivitiesResponse"
 	//   },
 	//   "scopes": [
-	//     "https://www.googleapis.com/auth/activity",
-	//     "https://www.googleapis.com/auth/drive",
-	//     "https://www.googleapis.com/auth/drive.metadata",
-	//     "https://www.googleapis.com/auth/drive.metadata.readonly",
-	//     "https://www.googleapis.com/auth/drive.readonly"
+	//     "https://www.googleapis.com/auth/activity"
 	//   ]
 	// }
 

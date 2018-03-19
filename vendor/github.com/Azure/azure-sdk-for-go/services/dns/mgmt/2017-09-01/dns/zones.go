@@ -42,10 +42,10 @@ func NewZonesClientWithBaseURI(baseURI string, subscriptionID string) ZonesClien
 // CreateOrUpdate creates or updates a DNS zone. Does not modify DNS records within the zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the etag of the DNS zone. Omit
-// this value to always overwrite the current zone. Specify the last-seen etag value to prevent accidentally
-// overwritting any concurrent changes. ifNoneMatch is set to '*' to allow a new DNS zone to be created, but to prevent
-// updating an existing zone. Other values will be ignored.
+// dot). parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the etag of the DNS zone.
+// Omit this value to always overwrite the current zone. Specify the last-seen etag value to prevent accidentally
+// overwritting any concurrent changes. ifNoneMatch is set to '*' to allow a new DNS zone to be created, but to
+// prevent updating an existing zone. Other values will be ignored.
 func (client ZonesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, parameters Zone, ifMatch string, ifNoneMatch string) (result Zone, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, zoneName, parameters, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -123,8 +123,8 @@ func (client ZonesClient) CreateOrUpdateResponder(resp *http.Response) (result Z
 // undone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). ifMatch is the etag of the DNS zone. Omit this value to always delete the current zone. Specify the last-seen
-// etag value to prevent accidentally deleting any concurrent changes.
+// dot). ifMatch is the etag of the DNS zone. Omit this value to always delete the current zone. Specify the
+// last-seen etag value to prevent accidentally deleting any concurrent changes.
 func (client ZonesClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, ifMatch string) (result ZonesDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, ifMatch)
 	if err != nil {

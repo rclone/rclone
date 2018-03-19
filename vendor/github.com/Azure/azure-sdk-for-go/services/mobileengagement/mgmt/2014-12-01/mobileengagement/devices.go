@@ -42,8 +42,8 @@ func NewDevicesClientWithBaseURI(baseURI string, subscriptionID string) DevicesC
 
 // GetByDeviceID get the information associated to a device running an application.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. deviceID is device identifier.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. deviceID is device identifier.
 func (client DevicesClient) GetByDeviceID(ctx context.Context, resourceGroupName string, appCollection string, appName string, deviceID string) (result Device, err error) {
 	req, err := client.GetByDeviceIDPreparer(ctx, resourceGroupName, appCollection, appName, deviceID)
 	if err != nil {
@@ -111,8 +111,8 @@ func (client DevicesClient) GetByDeviceIDResponder(resp *http.Response) (result 
 
 // GetByUserID get the information associated to a device running an application using the user identifier.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. userID is user identifier.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. userID is user identifier.
 func (client DevicesClient) GetByUserID(ctx context.Context, resourceGroupName string, appCollection string, appName string, userID string) (result Device, err error) {
 	req, err := client.GetByUserIDPreparer(ctx, resourceGroupName, appCollection, appName, userID)
 	if err != nil {
@@ -180,33 +180,34 @@ func (client DevicesClient) GetByUserIDResponder(resp *http.Response) (result De
 
 // List query the information associated to the devices running an application.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name. top is number of devices to return with each call. Defaults to 100 and cannot return more. Passing a
-// greater value is ignored. The response contains a `nextLink` property describing the URI path to get the next page
-// of results if not all results could be returned at once. selectParameter is by default all `meta` and `appInfo`
-// properties are returned, this property is used to restrict the output to the desired properties. It also excludes
-// all devices from the output that have none of the selected properties. In other terms, only devices having at least
-// one of the selected property being set is part of the results. Examples: - `$select=appInfo` : select all devices
-// having at least 1 appInfo, return them all and don’t return any meta property. - `$select=meta` : return only meta
-// properties in the output. - `$select=appInfo,meta/firstSeen,meta/lastSeen` : return all `appInfo`, plus meta object
-// containing only firstSeen and lastSeen properties. The format is thus a comma separated list of properties to
-// select. Use `appInfo` to select all appInfo properties, `meta` to select all meta properties. Use `appInfo/{key}`
-// and `meta/{key}` to select specific appInfo and meta properties. filter is filter can be used to reduce the number
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name. top is number of devices to return with each call. Defaults to 100 and cannot return
+// more. Passing a greater value is ignored. The response contains a `nextLink` property describing the URI path to
+// get the next page of results if not all results could be returned at once. selectParameter is by default all
+// `meta` and `appInfo` properties are returned, this property is used to restrict the output to the desired
+// properties. It also excludes all devices from the output that have none of the selected properties. In other
+// terms, only devices having at least one of the selected property being set is part of the results. Examples: -
+// `$select=appInfo` : select all devices having at least 1 appInfo, return them all and don’t return any meta
+// property. - `$select=meta` : return only meta properties in the output. -
+// `$select=appInfo,meta/firstSeen,meta/lastSeen` : return all `appInfo`, plus meta object containing only
+// firstSeen and lastSeen properties. The format is thus a comma separated list of properties to select. Use
+// `appInfo` to select all appInfo properties, `meta` to select all meta properties. Use `appInfo/{key}` and
+// `meta/{key}` to select specific appInfo and meta properties. filter is filter can be used to reduce the number
 // of results. Filter is a boolean expression that can look like the following examples: * `$filter=deviceId gt
 // 'abcdef0123456789abcdef0123456789'` * `$filter=lastModified le 1447284263690L` * `$filter=(deviceId ge
 // 'abcdef0123456789abcdef0123456789') and (deviceId lt 'bacdef0123456789abcdef0123456789') and (lastModified gt
 // 1447284263690L)` The first example is used automatically for paging when returning the `nextLink` property. The
-// filter expression is a combination of checks on some properties that can be compared to their value. The available
-// operators are: * `gt`  : greater than * `ge`  : greater than or equals * `lt`  : less than * `le`  : less than or
-// equals * `and` : to add multiple checks (all checks must pass), optional parentheses can be used. The properties
-// that can be used in the expression are the following: * `deviceId {operator} '{deviceIdValue}'` : a lexicographical
-// comparison is made on the deviceId value, use single quotes for the value. * `lastModified {operator} {number}L` :
-// returns only meta properties or appInfo properties whose last value modification timestamp compared to the specified
-// value is matching (value is milliseconds since January 1st, 1970 UTC). Please note the `L` character after the
-// number of milliseconds, its required when the number of milliseconds exceeds `2^31 - 1` (which is always the case
-// for recent timestamps). Using `lastModified` excludes all devices from the output that have no property matching the
-// timestamp criteria, like `$select`. Please note that the internal value of `lastModified` timestamp for a given
-// property is never part of the results.
+// filter expression is a combination of checks on some properties that can be compared to their value. The
+// available operators are: * `gt`  : greater than * `ge`  : greater than or equals * `lt`  : less than * `le`  :
+// less than or equals * `and` : to add multiple checks (all checks must pass), optional parentheses can be used.
+// The properties that can be used in the expression are the following: * `deviceId {operator} '{deviceIdValue}'` :
+// a lexicographical comparison is made on the deviceId value, use single quotes for the value. * `lastModified
+// {operator} {number}L` : returns only meta properties or appInfo properties whose last value modification
+// timestamp compared to the specified value is matching (value is milliseconds since January 1st, 1970 UTC).
+// Please note the `L` character after the number of milliseconds, its required when the number of milliseconds
+// exceeds `2^31 - 1` (which is always the case for recent timestamps). Using `lastModified` excludes all devices
+// from the output that have no property matching the timestamp criteria, like `$select`. Please note that the
+// internal value of `lastModified` timestamp for a given property is never part of the results.
 func (client DevicesClient) List(ctx context.Context, resourceGroupName string, appCollection string, appName string, top *int32, selectParameter string, filter string) (result DevicesQueryResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, appCollection, appName, top, selectParameter, filter)
@@ -312,13 +313,13 @@ func (client DevicesClient) ListComplete(ctx context.Context, resourceGroupName 
 // asynchronously, meaning that a few seconds are needed before the modifications appear in the results of the Get
 // device command.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client DevicesClient) TagByDeviceID(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DeviceTagsParameters) (result DeviceTagsResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Tags", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.DevicesClient", "TagByDeviceID")
+		return result, validation.NewError("mobileengagement.DevicesClient", "TagByDeviceID", err.Error())
 	}
 
 	req, err := client.TagByDeviceIDPreparer(ctx, resourceGroupName, appCollection, appName, parameters)
@@ -390,13 +391,13 @@ func (client DevicesClient) TagByDeviceIDResponder(resp *http.Response) (result 
 // asynchronously, meaning that a few seconds are needed before the modifications appear in the results of the Get
 // device command.
 //
-// resourceGroupName is the name of the resource group. appCollection is application collection. appName is application
-// resource name.
+// resourceGroupName is the name of the resource group. appCollection is application collection. appName is
+// application resource name.
 func (client DevicesClient) TagByUserID(ctx context.Context, resourceGroupName string, appCollection string, appName string, parameters DeviceTagsParameters) (result DeviceTagsResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Tags", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mobileengagement.DevicesClient", "TagByUserID")
+		return result, validation.NewError("mobileengagement.DevicesClient", "TagByUserID", err.Error())
 	}
 
 	req, err := client.TagByUserIDPreparer(ctx, resourceGroupName, appCollection, appName, parameters)

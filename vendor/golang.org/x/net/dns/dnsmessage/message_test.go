@@ -8,6 +8,7 @@ import (
 	"bytes"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -62,7 +63,7 @@ func TestQuestionPackUnpack(t *testing.T) {
 		Type:  TypeA,
 		Class: ClassINET,
 	}
-	buf, err := want.pack(make([]byte, 1, 50), map[string]int{})
+	buf, err := want.pack(make([]byte, 1, 50), map[string]int{}, 1)
 	if err != nil {
 		t.Fatal("Packing failed:", err)
 	}
@@ -129,7 +130,7 @@ func TestNamePackUnpack(t *testing.T) {
 	for _, test := range tests {
 		in := mustNewName(test.in)
 		want := mustNewName(test.want)
-		buf, err := in.pack(make([]byte, 0, 30), map[string]int{})
+		buf, err := in.pack(make([]byte, 0, 30), map[string]int{}, 0)
 		if err != test.err {
 			t.Errorf("Packing of %q: got err = %v, want err = %v", test.in, err, test.err)
 			continue
@@ -154,6 +155,28 @@ func TestNamePackUnpack(t *testing.T) {
 		if got != want {
 			t.Errorf("Unpacking packing of %q: got = %#v, want = %#v", test.in, got, want)
 		}
+	}
+}
+
+func TestIncompressibleName(t *testing.T) {
+	name := mustNewName("example.com.")
+	compression := map[string]int{}
+	buf, err := name.pack(make([]byte, 0, 100), compression, 0)
+	if err != nil {
+		t.Fatal("First packing failed:", err)
+	}
+	buf, err = name.pack(buf, compression, 0)
+	if err != nil {
+		t.Fatal("Second packing failed:", err)
+	}
+	var n1 Name
+	off, err := n1.unpackCompressed(buf, 0, false /* allowCompression */)
+	if err != nil {
+		t.Fatal("Unpacking incompressible name without pointers failed:", err)
+	}
+	var n2 Name
+	if _, err := n2.unpackCompressed(buf, off, false /* allowCompression */); err != errCompressedSRV {
+		t.Errorf("Unpacking compressed incompressible name with pointers: got err = %v, want = %v", err, errCompressedSRV)
 	}
 }
 
@@ -237,6 +260,40 @@ func TestDNSPackUnpack(t *testing.T) {
 		if err != nil {
 			t.Fatalf("%d: packing failed: %v", i, err)
 		}
+		var got Message
+		err = got.Unpack(b)
+		if err != nil {
+			t.Fatalf("%d: unpacking failed: %v", i, err)
+		}
+		if !reflect.DeepEqual(got, want) {
+			t.Errorf("%d: got = %+v, want = %+v", i, &got, &want)
+		}
+	}
+}
+
+func TestDNSAppendPackUnpack(t *testing.T) {
+	wants := []Message{
+		{
+			Questions: []Question{
+				{
+					Name:  mustNewName("."),
+					Type:  TypeAAAA,
+					Class: ClassINET,
+				},
+			},
+			Answers:     []Resource{},
+			Authorities: []Resource{},
+			Additionals: []Resource{},
+		},
+		largeTestMsg(),
+	}
+	for i, want := range wants {
+		b := make([]byte, 2, 514)
+		b, err := want.AppendPack(b)
+		if err != nil {
+			t.Fatalf("%d: packing failed: %v", i, err)
+		}
+		b = b[2:]
 		var got Message
 		err = got.Unpack(b)
 		if err != nil {
@@ -410,9 +467,17 @@ func TestVeryLongTxt(t *testing.T) {
 			Type:  TypeTXT,
 			Class: ClassINET,
 		},
-		&TXTResource{loremIpsum},
+		&TXTResource{[]string{
+			"",
+			"",
+			"foo bar",
+			"",
+			"www.example.com",
+			"www.example.com.",
+			strings.Repeat(".", 255),
+		}},
 	}
-	buf, err := want.pack(make([]byte, 0, 8000), map[string]int{})
+	buf, err := want.pack(make([]byte, 0, 8000), map[string]int{}, 0)
 	if err != nil {
 		t.Fatal("Packing failed:", err)
 	}
@@ -431,6 +496,33 @@ func TestVeryLongTxt(t *testing.T) {
 	}
 	if !reflect.DeepEqual(got, want) {
 		t.Errorf("Got = %#v, want = %#v", got, want)
+	}
+}
+
+func TestTooLongTxt(t *testing.T) {
+	rb := TXTResource{[]string{strings.Repeat(".", 256)}}
+	if _, err := rb.pack(make([]byte, 0, 8000), map[string]int{}, 0); err != errStringTooLong {
+		t.Errorf("Packing TXTRecord with 256 character string: got err = %v, want = %v", err, errStringTooLong)
+	}
+}
+
+func TestStartAppends(t *testing.T) {
+	buf := make([]byte, 2, 514)
+	wantBuf := []byte{4, 44}
+	copy(buf, wantBuf)
+
+	b := NewBuilder(buf, Header{})
+	b.EnableCompression()
+
+	buf, err := b.Finish()
+	if err != nil {
+		t.Fatal("Building failed:", err)
+	}
+	if got, want := len(buf), headerLen+2; got != want {
+		t.Errorf("Got len(buf} = %d, want = %d", got, want)
+	}
+	if string(buf[:2]) != string(wantBuf) {
+		t.Errorf("Original data not preserved, got = %v, want = %v", buf[:2], wantBuf)
 	}
 }
 
@@ -514,8 +606,8 @@ func TestBuilder(t *testing.T) {
 		t.Fatal("Packing without builder:", err)
 	}
 
-	var b Builder
-	b.Start(nil, msg.Header)
+	b := NewBuilder(nil, msg.Header)
+	b.EnableCompression()
 
 	if err := b.StartQuestions(); err != nil {
 		t.Fatal("b.StartQuestions():", err)
@@ -653,9 +745,7 @@ func TestResourcePack(t *testing.T) {
 	}
 }
 
-func BenchmarkParsing(b *testing.B) {
-	b.ReportAllocs()
-
+func benchmarkParsingSetup() ([]byte, error) {
 	name := mustNewName("foo.bar.example.com.")
 	msg := Message{
 		Header: Header{Response: true, Authoritative: true},
@@ -700,111 +790,148 @@ func BenchmarkParsing(b *testing.B) {
 
 	buf, err := msg.Pack()
 	if err != nil {
-		b.Fatal("msg.Pack():", err)
+		return nil, fmt.Errorf("msg.Pack(): %v", err)
+	}
+	return buf, nil
+}
+
+func benchmarkParsing(tb testing.TB, buf []byte) {
+	var p Parser
+	if _, err := p.Start(buf); err != nil {
+		tb.Fatal("p.Start(buf):", err)
 	}
 
-	for i := 0; i < b.N; i++ {
-		var p Parser
-		if _, err := p.Start(buf); err != nil {
-			b.Fatal("p.Start(buf):", err)
+	for {
+		_, err := p.Question()
+		if err == ErrSectionDone {
+			break
+		}
+		if err != nil {
+			tb.Fatal("p.Question():", err)
+		}
+	}
+
+	for {
+		h, err := p.AnswerHeader()
+		if err == ErrSectionDone {
+			break
+		}
+		if err != nil {
+			panic(err)
 		}
 
-		for {
-			_, err := p.Question()
-			if err == ErrSectionDone {
-				break
+		switch h.Type {
+		case TypeA:
+			if _, err := p.AResource(); err != nil {
+				tb.Fatal("p.AResource():", err)
 			}
-			if err != nil {
-				b.Fatal("p.Question():", err)
+		case TypeAAAA:
+			if _, err := p.AAAAResource(); err != nil {
+				tb.Fatal("p.AAAAResource():", err)
 			}
-		}
-
-		for {
-			h, err := p.AnswerHeader()
-			if err == ErrSectionDone {
-				break
+		case TypeCNAME:
+			if _, err := p.CNAMEResource(); err != nil {
+				tb.Fatal("p.CNAMEResource():", err)
 			}
-			if err != nil {
-				panic(err)
+		case TypeNS:
+			if _, err := p.NSResource(); err != nil {
+				tb.Fatal("p.NSResource():", err)
 			}
-
-			switch h.Type {
-			case TypeA:
-				if _, err := p.AResource(); err != nil {
-					b.Fatal("p.AResource():", err)
-				}
-			case TypeAAAA:
-				if _, err := p.AAAAResource(); err != nil {
-					b.Fatal("p.AAAAResource():", err)
-				}
-			case TypeCNAME:
-				if _, err := p.CNAMEResource(); err != nil {
-					b.Fatal("p.CNAMEResource():", err)
-				}
-			case TypeNS:
-				if _, err := p.NSResource(); err != nil {
-					b.Fatal("p.NSResource():", err)
-				}
-			default:
-				b.Fatalf("unknown type: %T", h)
-			}
+		default:
+			tb.Fatalf("unknown type: %T", h)
 		}
 	}
 }
 
-func BenchmarkBuilding(b *testing.B) {
-	b.ReportAllocs()
+func BenchmarkParsing(b *testing.B) {
+	buf, err := benchmarkParsingSetup()
+	if err != nil {
+		b.Fatal(err)
+	}
 
+	b.ReportAllocs()
+	for i := 0; i < b.N; i++ {
+		benchmarkParsing(b, buf)
+	}
+}
+
+func TestParsingAllocs(t *testing.T) {
+	buf, err := benchmarkParsingSetup()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if allocs := testing.AllocsPerRun(100, func() { benchmarkParsing(t, buf) }); allocs > 0.5 {
+		t.Errorf("Allocations during parsing: got = %f, want ~0", allocs)
+	}
+}
+
+func benchmarkBuildingSetup() (Name, []byte) {
 	name := mustNewName("foo.bar.example.com.")
 	buf := make([]byte, 0, packStartingCap)
+	return name, buf
+}
 
+func benchmarkBuilding(tb testing.TB, name Name, buf []byte) {
+	bld := NewBuilder(buf, Header{Response: true, Authoritative: true})
+
+	if err := bld.StartQuestions(); err != nil {
+		tb.Fatal("bld.StartQuestions():", err)
+	}
+	q := Question{
+		Name:  name,
+		Type:  TypeA,
+		Class: ClassINET,
+	}
+	if err := bld.Question(q); err != nil {
+		tb.Fatalf("bld.Question(%+v): %v", q, err)
+	}
+
+	hdr := ResourceHeader{
+		Name:  name,
+		Class: ClassINET,
+	}
+	if err := bld.StartAnswers(); err != nil {
+		tb.Fatal("bld.StartQuestions():", err)
+	}
+
+	ar := AResource{[4]byte{}}
+	if err := bld.AResource(hdr, ar); err != nil {
+		tb.Fatalf("bld.AResource(%+v, %+v): %v", hdr, ar, err)
+	}
+
+	aaar := AAAAResource{[16]byte{}}
+	if err := bld.AAAAResource(hdr, aaar); err != nil {
+		tb.Fatalf("bld.AAAAResource(%+v, %+v): %v", hdr, aaar, err)
+	}
+
+	cnr := CNAMEResource{name}
+	if err := bld.CNAMEResource(hdr, cnr); err != nil {
+		tb.Fatalf("bld.CNAMEResource(%+v, %+v): %v", hdr, cnr, err)
+	}
+
+	nsr := NSResource{name}
+	if err := bld.NSResource(hdr, nsr); err != nil {
+		tb.Fatalf("bld.NSResource(%+v, %+v): %v", hdr, nsr, err)
+	}
+
+	if _, err := bld.Finish(); err != nil {
+		tb.Fatal("bld.Finish():", err)
+	}
+}
+
+func BenchmarkBuilding(b *testing.B) {
+	name, buf := benchmarkBuildingSetup()
+	b.ReportAllocs()
 	for i := 0; i < b.N; i++ {
-		var bld Builder
-		bld.StartWithoutCompression(buf, Header{Response: true, Authoritative: true})
+		benchmarkBuilding(b, name, buf)
+	}
+}
 
-		if err := bld.StartQuestions(); err != nil {
-			b.Fatal("bld.StartQuestions():", err)
-		}
-		q := Question{
-			Name:  name,
-			Type:  TypeA,
-			Class: ClassINET,
-		}
-		if err := bld.Question(q); err != nil {
-			b.Fatalf("bld.Question(%+v): %v", q, err)
-		}
-
-		hdr := ResourceHeader{
-			Name:  name,
-			Class: ClassINET,
-		}
-		if err := bld.StartAnswers(); err != nil {
-			b.Fatal("bld.StartQuestions():", err)
-		}
-
-		ar := AResource{[4]byte{}}
-		if err := bld.AResource(hdr, ar); err != nil {
-			b.Fatalf("bld.AResource(%+v, %+v): %v", hdr, ar, err)
-		}
-
-		aaar := AAAAResource{[16]byte{}}
-		if err := bld.AAAAResource(hdr, aaar); err != nil {
-			b.Fatalf("bld.AAAAResource(%+v, %+v): %v", hdr, aaar, err)
-		}
-
-		cnr := CNAMEResource{name}
-		if err := bld.CNAMEResource(hdr, cnr); err != nil {
-			b.Fatalf("bld.CNAMEResource(%+v, %+v): %v", hdr, cnr, err)
-		}
-
-		nsr := NSResource{name}
-		if err := bld.NSResource(hdr, nsr); err != nil {
-			b.Fatalf("bld.NSResource(%+v, %+v): %v", hdr, nsr, err)
-		}
-
-		if _, err := bld.Finish(); err != nil {
-			b.Fatal("bld.Finish():", err)
-		}
+func TestBuildingAllocs(t *testing.T) {
+	name, buf := benchmarkBuildingSetup()
+	if allocs := testing.AllocsPerRun(100, func() { benchmarkBuilding(t, name, buf) }); allocs > 0.5 {
+		t.Errorf("Allocations during building: got = %f, want ~0", allocs)
 	}
 }
 
@@ -995,7 +1122,7 @@ func largeTestMsg() Message {
 					Type:  TypeTXT,
 					Class: ClassINET,
 				},
-				&TXTResource{"So Long, and Thanks for All the Fish"},
+				&TXTResource{[]string{"So Long, and Thanks for All the Fish"}},
 			},
 			{
 				ResourceHeader{
@@ -1003,139 +1130,8 @@ func largeTestMsg() Message {
 					Type:  TypeTXT,
 					Class: ClassINET,
 				},
-				&TXTResource{"Hamster Huey and the Gooey Kablooie"},
+				&TXTResource{[]string{"Hamster Huey and the Gooey Kablooie"}},
 			},
 		},
 	}
 }
-
-const loremIpsum = `
-Lorem ipsum dolor sit amet, nec enim antiopam id, an ullum choro
-nonumes qui, pro eu debet honestatis mediocritatem. No alia enim eos,
-magna signiferumque ex vis. Mei no aperiri dissentias, cu vel quas
-regione. Malorum quaeque vim ut, eum cu semper aliquid invidunt, ei
-nam ipsum assentior.
-
-Nostrum appellantur usu no, vis ex probatus adipiscing. Cu usu illum
-facilis eleifend. Iusto conceptam complectitur vim id. Tale omnesque
-no usu, ei oblique sadipscing vim. At nullam voluptua usu, mei laudem
-reformidans et. Qui ei eros porro reformidans, ius suas veritus
-torquatos ex. Mea te facer alterum consequat.
-
-Soleat torquatos democritum sed et, no mea congue appareat, facer
-aliquam nec in. Has te ipsum tritani. At justo dicta option nec, movet
-phaedrum ad nam. Ea detracto verterem liberavisse has, delectus
-suscipiantur in mei. Ex nam meliore complectitur. Ut nam omnis
-honestatis quaerendum, ea mea nihil affert detracto, ad vix rebum
-mollis.
-
-Ut epicurei praesent neglegentur pri, prima fuisset intellegebat ad
-vim. An habemus comprehensam usu, at enim dignissim pro. Eam reque
-vivendum adipisci ea. Vel ne odio choro minimum. Sea admodum
-dissentiet ex. Mundi tamquam evertitur ius cu. Homero postea iisque ut
-pro, vel ne saepe senserit consetetur.
-
-Nulla utamur facilisis ius ea, in viderer diceret pertinax eum. Mei no
-enim quodsi facilisi, ex sed aeterno appareat mediocritatem, eum
-sententiae deterruisset ut. At suas timeam euismod cum, offendit
-appareat interpretaris ne vix. Vel ea civibus albucius, ex vim quidam
-accusata intellegebat, noluisse instructior sea id. Nec te nonumes
-habemus appellantur, quis dignissim vituperata eu nam.
-
-At vix apeirian patrioque vituperatoribus, an usu agam assum. Debet
-iisque an mea. Per eu dicant ponderum accommodare. Pri alienum
-placerat senserit an, ne eum ferri abhorreant vituperatoribus. Ut mea
-eligendi disputationi. Ius no tation everti impedit, ei magna quidam
-mediocritatem pri.
-
-Legendos perpetua iracundia ne usu, no ius ullum epicurei intellegam,
-ad modus epicuri lucilius eam. In unum quaerendum usu. Ne diam paulo
-has, ea veri virtute sed. Alia honestatis conclusionemque mea eu, ut
-iudico albucius his.
-
-Usu essent probatus eu, sed omnis dolor delicatissimi ex. No qui augue
-dissentias dissentiet. Laudem recteque no usu, vel an velit noluisse,
-an sed utinam eirmod appetere. Ne mea fuisset inimicus ocurreret. At
-vis dicant abhorreant, utinam forensibus nec ne, mei te docendi
-consequat. Brute inermis persecuti cum id. Ut ipsum munere propriae
-usu, dicit graeco disputando id has.
-
-Eros dolore quaerendum nam ei. Timeam ornatus inciderint pro id. Nec
-torquatos sadipscing ei, ancillae molestie per in. Malis principes duo
-ea, usu liber postulant ei.
-
-Graece timeam voluptatibus eu eam. Alia probatus quo no, ea scripta
-feugiat duo. Congue option meliore ex qui, noster invenire appellantur
-ea vel. Eu exerci legendos vel. Consetetur repudiandae vim ut. Vix an
-probo minimum, et nam illud falli tempor.
-
-Cum dico signiferumque eu. Sed ut regione maiorum, id veritus insolens
-tacimates vix. Eu mel sint tamquam lucilius, duo no oporteat
-tacimates. Atqui augue concludaturque vix ei, id mel utroque menandri.
-
-Ad oratio blandit aliquando pro. Vis et dolorum rationibus
-philosophia, ad cum nulla molestie. Hinc fuisset adversarium eum et,
-ne qui nisl verear saperet, vel te quaestio forensibus. Per odio
-option delenit an. Alii placerat has no, in pri nihil platonem
-cotidieque. Est ut elit copiosae scaevola, debet tollit maluisset sea
-an.
-
-Te sea hinc debet pericula, liber ridens fabulas cu sed, quem mutat
-accusam mea et. Elitr labitur albucius et pri, an labore feugait mel.
-Velit zril melius usu ea. Ad stet putent interpretaris qui. Mel no
-error volumus scripserit. In pro paulo iudico, quo ei dolorem
-verterem, affert fabellas dissentiet ea vix.
-
-Vis quot deserunt te. Error aliquid detraxit eu usu, vis alia eruditi
-salutatus cu. Est nostrud bonorum an, ei usu alii salutatus. Vel at
-nisl primis, eum ex aperiri noluisse reformidans. Ad veri velit
-utroque vis, ex equidem detraxit temporibus has.
-
-Inermis appareat usu ne. Eros placerat periculis mea ad, in dictas
-pericula pro. Errem postulant at usu, ea nec amet ornatus mentitum. Ad
-mazim graeco eum, vel ex percipit volutpat iudicabit, sit ne delicata
-interesset. Mel sapientem prodesset abhorreant et, oblique suscipit
-eam id.
-
-An maluisset disputando mea, vidit mnesarchum pri et. Malis insolens
-inciderint no sea. Ea persius maluisset vix, ne vim appellantur
-instructior, consul quidam definiebas pri id. Cum integre feugiat
-pericula in, ex sed persius similique, mel ne natum dicit percipitur.
-
-Primis discere ne pri, errem putent definitionem at vis. Ei mel dolore
-neglegentur, mei tincidunt percipitur ei. Pro ad simul integre
-rationibus. Eu vel alii honestatis definitiones, mea no nonumy
-reprehendunt.
-
-Dicta appareat legendos est cu. Eu vel congue dicunt omittam, no vix
-adhuc minimum constituam, quot noluisse id mel. Eu quot sale mutat
-duo, ex nisl munere invenire duo. Ne nec ullum utamur. Pro alterum
-debitis nostrum no, ut vel aliquid vivendo.
-
-Aliquip fierent praesent quo ne, id sit audiam recusabo delicatissimi.
-Usu postulant incorrupte cu. At pro dicit tibique intellegam, cibo
-dolore impedit id eam, et aeque feugait assentior has. Quando sensibus
-nec ex. Possit sensibus pri ad, unum mutat periculis cu vix.
-
-Mundi tibique vix te, duo simul partiendo qualisque id, est at vidit
-sonet tempor. No per solet aeterno deseruisse. Petentium salutandi
-definiebas pri cu. Munere vivendum est in. Ei justo congue eligendi
-vis, modus offendit omittantur te mel.
-
-Integre voluptaria in qui, sit habemus tractatos constituam no. Utinam
-melius conceptam est ne, quo in minimum apeirian delicata, ut ius
-porro recusabo. Dicant expetenda vix no, ludus scripserit sed ex, eu
-his modo nostro. Ut etiam sonet his, quodsi inciderint philosophia te
-per. Nullam lobortis eu cum, vix an sonet efficiendi repudiandae. Vis
-ad idque fabellas intellegebat.
-
-Eum commodo senserit conclusionemque ex. Sed forensibus sadipscing ut,
-mei in facer delicata periculis, sea ne hinc putent cetero. Nec ne
-alia corpora invenire, alia prima soleat te cum. Eleifend posidonium
-nam at.
-
-Dolorum indoctum cu quo, ex dolor legendos recteque eam, cu pri zril
-discere. Nec civibus officiis dissentiunt ex, est te liber ludus
-elaboraret. Cum ea fabellas invenire. Ex vim nostrud eripuit
-comprehensam, nam te inermis delectus, saepe inermis senserit.
-`

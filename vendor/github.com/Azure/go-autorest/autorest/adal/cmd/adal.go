@@ -281,7 +281,7 @@ func main() {
 			resource,
 			callback)
 		if err == nil {
-			err = saveToken(spt.Token)
+			err = saveToken(spt.Token())
 		}
 	case refreshMode:
 		_, err = refreshToken(

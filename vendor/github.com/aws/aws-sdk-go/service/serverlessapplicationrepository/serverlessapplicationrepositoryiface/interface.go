@@ -72,6 +72,10 @@ type ServerlessApplicationRepositoryAPI interface {
 	CreateCloudFormationChangeSetWithContext(aws.Context, *serverlessapplicationrepository.CreateCloudFormationChangeSetRequest, ...request.Option) (*serverlessapplicationrepository.CreateCloudFormationChangeSetOutput, error)
 	CreateCloudFormationChangeSetRequest(*serverlessapplicationrepository.CreateCloudFormationChangeSetRequest) (*request.Request, *serverlessapplicationrepository.CreateCloudFormationChangeSetOutput)
 
+	DeleteApplication(*serverlessapplicationrepository.DeleteApplicationInput) (*serverlessapplicationrepository.DeleteApplicationOutput, error)
+	DeleteApplicationWithContext(aws.Context, *serverlessapplicationrepository.DeleteApplicationInput, ...request.Option) (*serverlessapplicationrepository.DeleteApplicationOutput, error)
+	DeleteApplicationRequest(*serverlessapplicationrepository.DeleteApplicationInput) (*request.Request, *serverlessapplicationrepository.DeleteApplicationOutput)
+
 	GetApplication(*serverlessapplicationrepository.GetApplicationInput) (*serverlessapplicationrepository.GetApplicationOutput, error)
 	GetApplicationWithContext(aws.Context, *serverlessapplicationrepository.GetApplicationInput, ...request.Option) (*serverlessapplicationrepository.GetApplicationOutput, error)
 	GetApplicationRequest(*serverlessapplicationrepository.GetApplicationInput) (*request.Request, *serverlessapplicationrepository.GetApplicationOutput)
@@ -84,9 +88,15 @@ type ServerlessApplicationRepositoryAPI interface {
 	ListApplicationVersionsWithContext(aws.Context, *serverlessapplicationrepository.ListApplicationVersionsInput, ...request.Option) (*serverlessapplicationrepository.ListApplicationVersionsOutput, error)
 	ListApplicationVersionsRequest(*serverlessapplicationrepository.ListApplicationVersionsInput) (*request.Request, *serverlessapplicationrepository.ListApplicationVersionsOutput)
 
+	ListApplicationVersionsPages(*serverlessapplicationrepository.ListApplicationVersionsInput, func(*serverlessapplicationrepository.ListApplicationVersionsOutput, bool) bool) error
+	ListApplicationVersionsPagesWithContext(aws.Context, *serverlessapplicationrepository.ListApplicationVersionsInput, func(*serverlessapplicationrepository.ListApplicationVersionsOutput, bool) bool, ...request.Option) error
+
 	ListApplications(*serverlessapplicationrepository.ListApplicationsInput) (*serverlessapplicationrepository.ListApplicationsOutput, error)
 	ListApplicationsWithContext(aws.Context, *serverlessapplicationrepository.ListApplicationsInput, ...request.Option) (*serverlessapplicationrepository.ListApplicationsOutput, error)
 	ListApplicationsRequest(*serverlessapplicationrepository.ListApplicationsInput) (*request.Request, *serverlessapplicationrepository.ListApplicationsOutput)
+
+	ListApplicationsPages(*serverlessapplicationrepository.ListApplicationsInput, func(*serverlessapplicationrepository.ListApplicationsOutput, bool) bool) error
+	ListApplicationsPagesWithContext(aws.Context, *serverlessapplicationrepository.ListApplicationsInput, func(*serverlessapplicationrepository.ListApplicationsOutput, bool) bool, ...request.Option) error
 
 	PutApplicationPolicy(*serverlessapplicationrepository.PutApplicationPolicyInput) (*serverlessapplicationrepository.PutApplicationPolicyOutput, error)
 	PutApplicationPolicyWithContext(aws.Context, *serverlessapplicationrepository.PutApplicationPolicyInput, ...request.Option) (*serverlessapplicationrepository.PutApplicationPolicyOutput, error)

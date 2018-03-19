@@ -183,13 +183,41 @@ type AssetItem struct {
 	// LocationInfo - Access information for the asset.
 	LocationInfo *AssetLocation `json:"locationInfo,omitempty"`
 	// InputPorts - Information about the asset's input ports.
-	InputPorts *map[string]*InputPort `json:"inputPorts,omitempty"`
+	InputPorts map[string]*InputPort `json:"inputPorts"`
 	// OutputPorts - Information about the asset's output ports.
-	OutputPorts *map[string]*OutputPort `json:"outputPorts,omitempty"`
+	OutputPorts map[string]*OutputPort `json:"outputPorts"`
 	// Metadata - If the asset is a custom module, this holds the module's metadata.
-	Metadata *map[string]*string `json:"metadata,omitempty"`
+	Metadata map[string]*string `json:"metadata"`
 	// Parameters - If the asset is a custom module, this holds the module's parameters.
 	Parameters *[]ModuleAssetParameter `json:"parameters,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for AssetItem.
+func (ai AssetItem) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ai.Name != nil {
+		objectMap["name"] = ai.Name
+	}
+	if ai.ID != nil {
+		objectMap["id"] = ai.ID
+	}
+	objectMap["type"] = ai.Type
+	if ai.LocationInfo != nil {
+		objectMap["locationInfo"] = ai.LocationInfo
+	}
+	if ai.InputPorts != nil {
+		objectMap["inputPorts"] = ai.InputPorts
+	}
+	if ai.OutputPorts != nil {
+		objectMap["outputPorts"] = ai.OutputPorts
+	}
+	if ai.Metadata != nil {
+		objectMap["metadata"] = ai.Metadata
+	}
+	if ai.Parameters != nil {
+		objectMap["parameters"] = ai.Parameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // AssetLocation describes the access location for a web service asset.
@@ -208,7 +236,7 @@ type ColumnSpecification struct {
 	// Format - Additional format information for the data type. Possible values include: 'Byte', 'Char', 'Complex64', 'Complex128', 'DateTime', 'DateTimeOffset', 'Double', 'Duration', 'Float', 'Int8', 'Int16', 'Int32', 'Int64', 'Uint8', 'Uint16', 'Uint32', 'Uint64'
 	Format ColumnFormat `json:"format,omitempty"`
 	// Enum - If the data type is categorical, this provides the list of accepted categories.
-	Enum *[]map[string]interface{} `json:"enum,omitempty"`
+	Enum *[]interface{} `json:"enum,omitempty"`
 	// XMsIsnullable - Flag indicating if the type supports null values or not.
 	XMsIsnullable *bool `json:"x-ms-isnullable,omitempty"`
 	// XMsIsordered - Flag indicating whether the categories are treated as an ordered set or not, if this is a categorical column.
@@ -219,6 +247,54 @@ type ColumnSpecification struct {
 type CommitmentPlan struct {
 	// ID - Specifies the Azure Resource Manager ID of the commitment plan associated with the web service.
 	ID *string `json:"id,omitempty"`
+}
+
+// CreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type CreateOrUpdateFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future CreateOrUpdateFuture) Result(client Client) (ws WebService, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return ws, azure.NewAsyncOpIncompleteError("webservices.CreateOrUpdateFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		ws, err = client.CreateOrUpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	ws, err = client.CreateOrUpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.CreateOrUpdateFuture", "Result", resp, "Failure responding to request")
+	}
+	return
 }
 
 // DiagnosticsConfiguration diagnostics settings for an Azure ML web service.
@@ -232,9 +308,21 @@ type DiagnosticsConfiguration struct {
 // ExampleRequest sample input data for the service's input(s).
 type ExampleRequest struct {
 	// Inputs - Sample input data for the web service's input(s) given as an input name to sample input values matrix map.
-	Inputs *map[string][][]map[string]interface{} `json:"inputs,omitempty"`
+	Inputs map[string][][]interface{} `json:"inputs"`
 	// GlobalParameters - Sample input data for the web service's global parameters
-	GlobalParameters *map[string]*map[string]interface{} `json:"globalParameters,omitempty"`
+	GlobalParameters map[string]interface{} `json:"globalParameters"`
+}
+
+// MarshalJSON is the custom marshaler for ExampleRequest.
+func (er ExampleRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if er.Inputs != nil {
+		objectMap["inputs"] = er.Inputs
+	}
+	if er.GlobalParameters != nil {
+		objectMap["globalParameters"] = er.GlobalParameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // GraphEdge defines an edge within the web service's graph.
@@ -249,8 +337,8 @@ type GraphEdge struct {
 	TargetPortID *string `json:"targetPortId,omitempty"`
 }
 
-// GraphNode specifies a node in the web service graph. The node can either be an input, output or asset node, so only
-// one of the corresponding id properties is populated at any given time.
+// GraphNode specifies a node in the web service graph. The node can either be an input, output or asset node, so
+// only one of the corresponding id properties is populated at any given time.
 type GraphNode struct {
 	// AssetID - The id of the asset represented by this node.
 	AssetID *string `json:"assetId,omitempty"`
@@ -259,17 +347,50 @@ type GraphNode struct {
 	// OutputID - The id of the output element represented by this node.
 	OutputID *string `json:"outputId,omitempty"`
 	// Parameters - If applicable, parameters of the node. Global graph parameters map into these, with values set at runtime.
-	Parameters *map[string]*string `json:"parameters,omitempty"`
+	Parameters map[string]*string `json:"parameters"`
+}
+
+// MarshalJSON is the custom marshaler for GraphNode.
+func (gn GraphNode) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gn.AssetID != nil {
+		objectMap["assetId"] = gn.AssetID
+	}
+	if gn.InputID != nil {
+		objectMap["inputId"] = gn.InputID
+	}
+	if gn.OutputID != nil {
+		objectMap["outputId"] = gn.OutputID
+	}
+	if gn.Parameters != nil {
+		objectMap["parameters"] = gn.Parameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // GraphPackage defines the graph of modules making up the machine learning solution.
 type GraphPackage struct {
 	// Nodes - The set of nodes making up the graph, provided as a nodeId to GraphNode map
-	Nodes *map[string]*GraphNode `json:"nodes,omitempty"`
+	Nodes map[string]*GraphNode `json:"nodes"`
 	// Edges - The list of edges making up the graph.
 	Edges *[]GraphEdge `json:"edges,omitempty"`
 	// GraphParameters - The collection of global parameters for the graph, given as a global parameter name to GraphParameter map. Each parameter here has a 1:1 match with the global parameters values map declared at the WebServiceProperties level.
-	GraphParameters *map[string]*GraphParameter `json:"graphParameters,omitempty"`
+	GraphParameters map[string]*GraphParameter `json:"graphParameters"`
+}
+
+// MarshalJSON is the custom marshaler for GraphPackage.
+func (gp GraphPackage) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gp.Nodes != nil {
+		objectMap["nodes"] = gp.Nodes
+	}
+	if gp.Edges != nil {
+		objectMap["edges"] = gp.Edges
+	}
+	if gp.GraphParameters != nil {
+		objectMap["graphParameters"] = gp.GraphParameters
+	}
+	return json.Marshal(objectMap)
 }
 
 // GraphParameter defines a global parameter in the graph.
@@ -305,8 +426,8 @@ type Keys struct {
 	Secondary *string `json:"secondary,omitempty"`
 }
 
-// MachineLearningWorkspace information about the machine learning workspace containing the experiment that is source
-// for the web service.
+// MachineLearningWorkspace information about the machine learning workspace containing the experiment that is
+// source for the web service.
 type MachineLearningWorkspace struct {
 	// ID - Specifies the workspace ID of the machine learning workspace associated with the web service
 	ID *string `json:"id,omitempty"`
@@ -327,7 +448,22 @@ type ModuleAssetParameter struct {
 	// ParameterType - Parameter type.
 	ParameterType *string `json:"parameterType,omitempty"`
 	// ModeValuesInfo - Definitions for nested interface parameters if this is a complex module parameter.
-	ModeValuesInfo *map[string]*ModeValueInfo `json:"modeValuesInfo,omitempty"`
+	ModeValuesInfo map[string]*ModeValueInfo `json:"modeValuesInfo"`
+}
+
+// MarshalJSON is the custom marshaler for ModuleAssetParameter.
+func (mapVar ModuleAssetParameter) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if mapVar.Name != nil {
+		objectMap["name"] = mapVar.Name
+	}
+	if mapVar.ParameterType != nil {
+		objectMap["parameterType"] = mapVar.ParameterType
+	}
+	if mapVar.ModeValuesInfo != nil {
+		objectMap["modeValuesInfo"] = mapVar.ModeValuesInfo
+	}
+	return json.Marshal(objectMap)
 }
 
 // OutputPort asset output port
@@ -438,6 +574,54 @@ func (page PaginatedWebServicesListPage) Values() []WebService {
 	return *page.pwsl.Value
 }
 
+// PatchFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type PatchFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future PatchFuture) Result(client Client) (ws WebService, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return ws, azure.NewAsyncOpIncompleteError("webservices.PatchFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		ws, err = client.PatchResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	ws, err = client.PatchResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.PatchFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
 // BasicProperties the set of properties specific to the Azure ML web service resource.
 type BasicProperties interface {
 	AsPropertiesForGraph() (*PropertiesForGraph, bool)
@@ -481,9 +665,9 @@ type Properties struct {
 	// ExampleRequest - Defines sample input data for one or more of the service's inputs.
 	ExampleRequest *ExampleRequest `json:"exampleRequest,omitempty"`
 	// Assets - Contains user defined properties describing web service assets. Properties are expressed as Key/Value pairs.
-	Assets *map[string]*AssetItem `json:"assets,omitempty"`
+	Assets map[string]*AssetItem `json:"assets"`
 	// Parameters - The set of global parameters values defined for the web service, given as a global parameter name to default value map. If no default value is specified, the parameter is considered to be required.
-	Parameters *map[string]*string `json:"parameters,omitempty"`
+	Parameters map[string]*string `json:"parameters"`
 	// PackageType - Possible values include: 'PackageTypeWebServiceProperties', 'PackageTypeGraph'
 	PackageType PackageType `json:"packageType,omitempty"`
 }
@@ -528,12 +712,64 @@ func unmarshalBasicPropertiesArray(body []byte) ([]BasicProperties, error) {
 // MarshalJSON is the custom marshaler for Properties.
 func (p Properties) MarshalJSON() ([]byte, error) {
 	p.PackageType = PackageTypeWebServiceProperties
-	type Alias Properties
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(p),
-	})
+	objectMap := make(map[string]interface{})
+	if p.Title != nil {
+		objectMap["title"] = p.Title
+	}
+	if p.Description != nil {
+		objectMap["description"] = p.Description
+	}
+	if p.CreatedOn != nil {
+		objectMap["createdOn"] = p.CreatedOn
+	}
+	if p.ModifiedOn != nil {
+		objectMap["modifiedOn"] = p.ModifiedOn
+	}
+	objectMap["provisioningState"] = p.ProvisioningState
+	if p.Keys != nil {
+		objectMap["keys"] = p.Keys
+	}
+	if p.ReadOnly != nil {
+		objectMap["readOnly"] = p.ReadOnly
+	}
+	if p.SwaggerLocation != nil {
+		objectMap["swaggerLocation"] = p.SwaggerLocation
+	}
+	if p.ExposeSampleData != nil {
+		objectMap["exposeSampleData"] = p.ExposeSampleData
+	}
+	if p.RealtimeConfiguration != nil {
+		objectMap["realtimeConfiguration"] = p.RealtimeConfiguration
+	}
+	if p.Diagnostics != nil {
+		objectMap["diagnostics"] = p.Diagnostics
+	}
+	if p.StorageAccount != nil {
+		objectMap["storageAccount"] = p.StorageAccount
+	}
+	if p.MachineLearningWorkspace != nil {
+		objectMap["machineLearningWorkspace"] = p.MachineLearningWorkspace
+	}
+	if p.CommitmentPlan != nil {
+		objectMap["commitmentPlan"] = p.CommitmentPlan
+	}
+	if p.Input != nil {
+		objectMap["input"] = p.Input
+	}
+	if p.Output != nil {
+		objectMap["output"] = p.Output
+	}
+	if p.ExampleRequest != nil {
+		objectMap["exampleRequest"] = p.ExampleRequest
+	}
+	if p.Assets != nil {
+		objectMap["assets"] = p.Assets
+	}
+	if p.Parameters != nil {
+		objectMap["parameters"] = p.Parameters
+	}
+	objectMap["packageType"] = p.PackageType
+	return json.Marshal(objectMap)
 }
 
 // AsPropertiesForGraph is the BasicProperties implementation for Properties.
@@ -553,6 +789,8 @@ func (p Properties) AsBasicProperties() (BasicProperties, bool) {
 
 // PropertiesForGraph properties specific to a Graph based web service.
 type PropertiesForGraph struct {
+	// Package - The definition of the graph package making up this web service.
+	Package *GraphPackage `json:"package,omitempty"`
 	// Title - The title of the web service.
 	Title *string `json:"title,omitempty"`
 	// Description - The description of the web service.
@@ -588,24 +826,77 @@ type PropertiesForGraph struct {
 	// ExampleRequest - Defines sample input data for one or more of the service's inputs.
 	ExampleRequest *ExampleRequest `json:"exampleRequest,omitempty"`
 	// Assets - Contains user defined properties describing web service assets. Properties are expressed as Key/Value pairs.
-	Assets *map[string]*AssetItem `json:"assets,omitempty"`
+	Assets map[string]*AssetItem `json:"assets"`
 	// Parameters - The set of global parameters values defined for the web service, given as a global parameter name to default value map. If no default value is specified, the parameter is considered to be required.
-	Parameters *map[string]*string `json:"parameters,omitempty"`
+	Parameters map[string]*string `json:"parameters"`
 	// PackageType - Possible values include: 'PackageTypeWebServiceProperties', 'PackageTypeGraph'
 	PackageType PackageType `json:"packageType,omitempty"`
-	// Package - The definition of the graph package making up this web service.
-	Package *GraphPackage `json:"package,omitempty"`
 }
 
 // MarshalJSON is the custom marshaler for PropertiesForGraph.
 func (pfg PropertiesForGraph) MarshalJSON() ([]byte, error) {
 	pfg.PackageType = PackageTypeGraph
-	type Alias PropertiesForGraph
-	return json.Marshal(&struct {
-		Alias
-	}{
-		Alias: (Alias)(pfg),
-	})
+	objectMap := make(map[string]interface{})
+	if pfg.Package != nil {
+		objectMap["package"] = pfg.Package
+	}
+	if pfg.Title != nil {
+		objectMap["title"] = pfg.Title
+	}
+	if pfg.Description != nil {
+		objectMap["description"] = pfg.Description
+	}
+	if pfg.CreatedOn != nil {
+		objectMap["createdOn"] = pfg.CreatedOn
+	}
+	if pfg.ModifiedOn != nil {
+		objectMap["modifiedOn"] = pfg.ModifiedOn
+	}
+	objectMap["provisioningState"] = pfg.ProvisioningState
+	if pfg.Keys != nil {
+		objectMap["keys"] = pfg.Keys
+	}
+	if pfg.ReadOnly != nil {
+		objectMap["readOnly"] = pfg.ReadOnly
+	}
+	if pfg.SwaggerLocation != nil {
+		objectMap["swaggerLocation"] = pfg.SwaggerLocation
+	}
+	if pfg.ExposeSampleData != nil {
+		objectMap["exposeSampleData"] = pfg.ExposeSampleData
+	}
+	if pfg.RealtimeConfiguration != nil {
+		objectMap["realtimeConfiguration"] = pfg.RealtimeConfiguration
+	}
+	if pfg.Diagnostics != nil {
+		objectMap["diagnostics"] = pfg.Diagnostics
+	}
+	if pfg.StorageAccount != nil {
+		objectMap["storageAccount"] = pfg.StorageAccount
+	}
+	if pfg.MachineLearningWorkspace != nil {
+		objectMap["machineLearningWorkspace"] = pfg.MachineLearningWorkspace
+	}
+	if pfg.CommitmentPlan != nil {
+		objectMap["commitmentPlan"] = pfg.CommitmentPlan
+	}
+	if pfg.Input != nil {
+		objectMap["input"] = pfg.Input
+	}
+	if pfg.Output != nil {
+		objectMap["output"] = pfg.Output
+	}
+	if pfg.ExampleRequest != nil {
+		objectMap["exampleRequest"] = pfg.ExampleRequest
+	}
+	if pfg.Assets != nil {
+		objectMap["assets"] = pfg.Assets
+	}
+	if pfg.Parameters != nil {
+		objectMap["parameters"] = pfg.Parameters
+	}
+	objectMap["packageType"] = pfg.PackageType
+	return json.Marshal(objectMap)
 }
 
 // AsPropertiesForGraph is the BasicProperties implementation for PropertiesForGraph.
@@ -629,6 +920,54 @@ type RealtimeConfiguration struct {
 	MaxConcurrentCalls *int32 `json:"maxConcurrentCalls,omitempty"`
 }
 
+// RemoveFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type RemoveFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future RemoveFuture) Result(client Client) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.RemoveFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return ar, azure.NewAsyncOpIncompleteError("webservices.RemoveFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		ar, err = client.RemoveResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "webservices.RemoveFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.RemoveFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	ar, err = client.RemoveResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "webservices.RemoveFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
 // Resource ...
 type Resource struct {
 	// ID - Specifies the resource ID.
@@ -640,7 +979,28 @@ type Resource struct {
 	// Type - Specifies the type of the resource.
 	Type *string `json:"type,omitempty"`
 	// Tags - Contains resource tags defined as key/value pairs.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ServiceInputOutputSpecification the swagger 2.0 schema describing the service's inputs or outputs. See Swagger
@@ -653,7 +1013,25 @@ type ServiceInputOutputSpecification struct {
 	// Type - The type of the entity described in swagger. Always 'object'.
 	Type *string `json:"type,omitempty"`
 	// Properties - Specifies a collection that contains the column schema for each input or output of the web service. For more information, see the Swagger specification.
-	Properties *map[string]*TableSpecification `json:"properties,omitempty"`
+	Properties map[string]*TableSpecification `json:"properties"`
+}
+
+// MarshalJSON is the custom marshaler for ServiceInputOutputSpecification.
+func (sios ServiceInputOutputSpecification) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sios.Title != nil {
+		objectMap["title"] = sios.Title
+	}
+	if sios.Description != nil {
+		objectMap["description"] = sios.Description
+	}
+	if sios.Type != nil {
+		objectMap["type"] = sios.Type
+	}
+	if sios.Properties != nil {
+		objectMap["properties"] = sios.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // StorageAccount access information for a storage account.
@@ -664,8 +1042,8 @@ type StorageAccount struct {
 	Key *string `json:"key,omitempty"`
 }
 
-// TableSpecification the swagger 2.0 schema describing a single service input or output. See Swagger specification:
-// http://swagger.io/specification/
+// TableSpecification the swagger 2.0 schema describing a single service input or output. See Swagger
+// specification: http://swagger.io/specification/
 type TableSpecification struct {
 	// Title - Swagger schema title.
 	Title *string `json:"title,omitempty"`
@@ -676,12 +1054,35 @@ type TableSpecification struct {
 	// Format - The format, if 'type' is not 'object'
 	Format *string `json:"format,omitempty"`
 	// Properties - The set of columns within the data table.
-	Properties *map[string]*ColumnSpecification `json:"properties,omitempty"`
+	Properties map[string]*ColumnSpecification `json:"properties"`
+}
+
+// MarshalJSON is the custom marshaler for TableSpecification.
+func (ts TableSpecification) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ts.Title != nil {
+		objectMap["title"] = ts.Title
+	}
+	if ts.Description != nil {
+		objectMap["description"] = ts.Description
+	}
+	if ts.Type != nil {
+		objectMap["type"] = ts.Type
+	}
+	if ts.Format != nil {
+		objectMap["format"] = ts.Format
+	}
+	if ts.Properties != nil {
+		objectMap["properties"] = ts.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // WebService instance of an Azure ML web service resource.
 type WebService struct {
 	autorest.Response `json:"-"`
+	// Properties - Contains the property payload that describes the web service.
+	Properties BasicProperties `json:"properties,omitempty"`
 	// ID - Specifies the resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Specifies the name of the resource.
@@ -691,9 +1092,29 @@ type WebService struct {
 	// Type - Specifies the type of the resource.
 	Type *string `json:"type,omitempty"`
 	// Tags - Contains resource tags defined as key/value pairs.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Properties - Contains the property payload that describes the web service.
-	Properties BasicProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for WebService.
+func (ws WebService) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["properties"] = ws.Properties
+	if ws.ID != nil {
+		objectMap["id"] = ws.ID
+	}
+	if ws.Name != nil {
+		objectMap["name"] = ws.Name
+	}
+	if ws.Location != nil {
+		objectMap["location"] = ws.Location
+	}
+	if ws.Type != nil {
+		objectMap["type"] = ws.Type
+	}
+	if ws.Tags != nil {
+		objectMap["tags"] = ws.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for WebService struct.
@@ -703,160 +1124,63 @@ func (ws *WebService) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		properties, err := unmarshalBasicProperties(*m["properties"])
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				properties, err := unmarshalBasicProperties(*v)
+				if err != nil {
+					return err
+				}
+				ws.Properties = properties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ws.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ws.Name = &name
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				ws.Location = &location
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ws.Type = &typeVar
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ws.Tags = tags
+			}
 		}
-		ws.Properties = properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ws.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ws.Name = &name
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		ws.Location = &location
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ws.Type = &typeVar
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		ws.Tags = &tags
 	}
 
 	return nil
-}
-
-// WebServicesCreateOrUpdateFuture an abstraction for monitoring and retrieving the results of a long-running
-// operation.
-type WebServicesCreateOrUpdateFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future WebServicesCreateOrUpdateFuture) Result(client Client) (ws WebService, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return ws, autorest.NewError("webservices.WebServicesCreateOrUpdateFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ws, err = client.CreateOrUpdateResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	ws, err = client.CreateOrUpdateResponder(resp)
-	return
-}
-
-// WebServicesPatchFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type WebServicesPatchFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future WebServicesPatchFuture) Result(client Client) (ws WebService, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return ws, autorest.NewError("webservices.WebServicesPatchFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ws, err = client.PatchResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	ws, err = client.PatchResponder(resp)
-	return
-}
-
-// WebServicesRemoveFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type WebServicesRemoveFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future WebServicesRemoveFuture) Result(client Client) (ar autorest.Response, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return ar, autorest.NewError("webservices.WebServicesRemoveFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.RemoveResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	ar, err = client.RemoveResponder(resp)
-	return
 }

@@ -49,7 +49,7 @@ func (client GroupsClient) CheckExistence(ctx context.Context, resourceGroupName
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.GroupsClient", "CheckExistence")
+		return result, validation.NewError("resources.GroupsClient", "CheckExistence", err.Error())
 	}
 
 	req, err := client.CheckExistencePreparer(ctx, resourceGroupName)
@@ -114,8 +114,8 @@ func (client GroupsClient) CheckExistenceResponder(resp *http.Response) (result 
 
 // CreateOrUpdate create a resource group.
 //
-// resourceGroupName is the name of the resource group to be created or updated. parameters is parameters supplied to
-// the create or update resource group service operation.
+// resourceGroupName is the name of the resource group to be created or updated. parameters is parameters supplied
+// to the create or update resource group service operation.
 func (client GroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, parameters Group) (result Group, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -124,7 +124,7 @@ func (client GroupsClient) CreateOrUpdate(ctx context.Context, resourceGroupName
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.GroupsClient", "CreateOrUpdate")
+		return result, validation.NewError("resources.GroupsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, parameters)
@@ -199,7 +199,7 @@ func (client GroupsClient) Delete(ctx context.Context, resourceGroupName string)
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.GroupsClient", "Delete")
+		return result, validation.NewError("resources.GroupsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName)
@@ -266,15 +266,15 @@ func (client GroupsClient) DeleteResponder(resp *http.Response) (result autorest
 
 // ExportTemplate captures the specified resource group as a template.
 //
-// resourceGroupName is the name of the resource group to be created or updated. parameters is parameters supplied to
-// the export template resource group operation.
+// resourceGroupName is the name of the resource group to be created or updated. parameters is parameters supplied
+// to the export template resource group operation.
 func (client GroupsClient) ExportTemplate(ctx context.Context, resourceGroupName string, parameters ExportTemplateRequest) (result GroupExportResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.GroupsClient", "ExportTemplate")
+		return result, validation.NewError("resources.GroupsClient", "ExportTemplate", err.Error())
 	}
 
 	req, err := client.ExportTemplatePreparer(ctx, resourceGroupName, parameters)
@@ -349,7 +349,7 @@ func (client GroupsClient) Get(ctx context.Context, resourceGroupName string) (r
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.GroupsClient", "Get")
+		return result, validation.NewError("resources.GroupsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName)
@@ -514,16 +514,16 @@ func (client GroupsClient) ListComplete(ctx context.Context, filter string, top 
 
 // ListResources get all of the resources under a subscription.
 //
-// resourceGroupName is query parameters. If null is passed returns all resource groups. filter is the filter to apply
-// on the operation. expand is the $expand query parameter top is query parameters. If null is passed returns all
-// resource groups.
+// resourceGroupName is query parameters. If null is passed returns all resource groups. filter is the filter to
+// apply on the operation. expand is the $expand query parameter top is query parameters. If null is passed returns
+// all resource groups.
 func (client GroupsClient) ListResources(ctx context.Context, resourceGroupName string, filter string, expand string, top *int32) (result ListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.GroupsClient", "ListResources")
+		return result, validation.NewError("resources.GroupsClient", "ListResources", err.Error())
 	}
 
 	result.fn = client.listResourcesNextResults
@@ -636,7 +636,7 @@ func (client GroupsClient) Patch(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.GroupsClient", "Patch")
+		return result, validation.NewError("resources.GroupsClient", "Patch", err.Error())
 	}
 
 	req, err := client.PatchPreparer(ctx, resourceGroupName, parameters)

@@ -63,7 +63,7 @@ func (client ManagedClustersClient) CreateOrUpdate(ctx context.Context, resource
 								}},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "containerservice.ManagedClustersClient", "CreateOrUpdate")
+		return result, validation.NewError("containerservice.ManagedClustersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, resourceName, parameters)

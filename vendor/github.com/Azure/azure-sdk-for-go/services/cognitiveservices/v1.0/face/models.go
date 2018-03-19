@@ -20,40 +20,53 @@ package face
 import (
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/date"
+	"github.com/satori/go.uuid"
 )
 
-// AttributeTypes enumerates the values for attribute types.
-type AttributeTypes string
+// AccessoryType enumerates the values for accessory type.
+type AccessoryType string
 
 const (
-	// AttributeTypesAccessories ...
-	AttributeTypesAccessories AttributeTypes = "accessories"
-	// AttributeTypesAge ...
-	AttributeTypesAge AttributeTypes = "age"
-	// AttributeTypesBlur ...
-	AttributeTypesBlur AttributeTypes = "blur"
-	// AttributeTypesEmotion ...
-	AttributeTypesEmotion AttributeTypes = "emotion"
-	// AttributeTypesExposure ...
-	AttributeTypesExposure AttributeTypes = "exposure"
-	// AttributeTypesFacialHair ...
-	AttributeTypesFacialHair AttributeTypes = "facialHair"
-	// AttributeTypesGender ...
-	AttributeTypesGender AttributeTypes = "gender"
-	// AttributeTypesGlasses ...
-	AttributeTypesGlasses AttributeTypes = "glasses"
-	// AttributeTypesHair ...
-	AttributeTypesHair AttributeTypes = "hair"
-	// AttributeTypesHeadPose ...
-	AttributeTypesHeadPose AttributeTypes = "headPose"
-	// AttributeTypesMakeup ...
-	AttributeTypesMakeup AttributeTypes = "makeup"
-	// AttributeTypesNoise ...
-	AttributeTypesNoise AttributeTypes = "noise"
-	// AttributeTypesOcclusion ...
-	AttributeTypesOcclusion AttributeTypes = "occlusion"
-	// AttributeTypesSmile ...
-	AttributeTypesSmile AttributeTypes = "smile"
+	// Glasses ...
+	Glasses AccessoryType = "glasses"
+	// HeadWear ...
+	HeadWear AccessoryType = "headWear"
+	// Mask ...
+	Mask AccessoryType = "mask"
+)
+
+// AttributeType enumerates the values for attribute type.
+type AttributeType string
+
+const (
+	// AttributeTypeAccessories ...
+	AttributeTypeAccessories AttributeType = "accessories"
+	// AttributeTypeAge ...
+	AttributeTypeAge AttributeType = "age"
+	// AttributeTypeBlur ...
+	AttributeTypeBlur AttributeType = "blur"
+	// AttributeTypeEmotion ...
+	AttributeTypeEmotion AttributeType = "emotion"
+	// AttributeTypeExposure ...
+	AttributeTypeExposure AttributeType = "exposure"
+	// AttributeTypeFacialHair ...
+	AttributeTypeFacialHair AttributeType = "facialHair"
+	// AttributeTypeGender ...
+	AttributeTypeGender AttributeType = "gender"
+	// AttributeTypeGlasses ...
+	AttributeTypeGlasses AttributeType = "glasses"
+	// AttributeTypeHair ...
+	AttributeTypeHair AttributeType = "hair"
+	// AttributeTypeHeadPose ...
+	AttributeTypeHeadPose AttributeType = "headPose"
+	// AttributeTypeMakeup ...
+	AttributeTypeMakeup AttributeType = "makeup"
+	// AttributeTypeNoise ...
+	AttributeTypeNoise AttributeType = "noise"
+	// AttributeTypeOcclusion ...
+	AttributeTypeOcclusion AttributeType = "occlusion"
+	// AttributeTypeSmile ...
+	AttributeTypeSmile AttributeType = "smile"
 )
 
 // AzureRegions enumerates the values for azure regions.
@@ -86,28 +99,38 @@ const (
 	Westus2 AzureRegions = "westus2"
 )
 
-// BlurLevels enumerates the values for blur levels.
-type BlurLevels string
+// BlurLevel enumerates the values for blur level.
+type BlurLevel string
 
 const (
 	// High ...
-	High BlurLevels = "High"
+	High BlurLevel = "High"
 	// Low ...
-	Low BlurLevels = "Low"
+	Low BlurLevel = "Low"
 	// Medium ...
-	Medium BlurLevels = "Medium"
+	Medium BlurLevel = "Medium"
 )
 
-// ExposureLevels enumerates the values for exposure levels.
-type ExposureLevels string
+// ExposureLevel enumerates the values for exposure level.
+type ExposureLevel string
 
 const (
 	// GoodExposure ...
-	GoodExposure ExposureLevels = "GoodExposure"
+	GoodExposure ExposureLevel = "GoodExposure"
 	// OverExposure ...
-	OverExposure ExposureLevels = "OverExposure"
+	OverExposure ExposureLevel = "OverExposure"
 	// UnderExposure ...
-	UnderExposure ExposureLevels = "UnderExposure"
+	UnderExposure ExposureLevel = "UnderExposure"
+)
+
+// FindSimilarMatchMode enumerates the values for find similar match mode.
+type FindSimilarMatchMode string
+
+const (
+	// MatchFace ...
+	MatchFace FindSimilarMatchMode = "matchFace"
+	// MatchPerson ...
+	MatchPerson FindSimilarMatchMode = "matchPerson"
 )
 
 // Gender enumerates the values for gender.
@@ -122,40 +145,52 @@ const (
 	Male Gender = "male"
 )
 
-// GlassesTypes enumerates the values for glasses types.
-type GlassesTypes string
+// GlassesType enumerates the values for glasses type.
+type GlassesType string
 
 const (
 	// NoGlasses ...
-	NoGlasses GlassesTypes = "noGlasses"
+	NoGlasses GlassesType = "noGlasses"
 	// ReadingGlasses ...
-	ReadingGlasses GlassesTypes = "readingGlasses"
+	ReadingGlasses GlassesType = "readingGlasses"
 	// Sunglasses ...
-	Sunglasses GlassesTypes = "sunglasses"
+	Sunglasses GlassesType = "sunglasses"
 	// SwimmingGoggles ...
-	SwimmingGoggles GlassesTypes = "swimmingGoggles"
+	SwimmingGoggles GlassesType = "swimmingGoggles"
 )
 
-// MatchingMode enumerates the values for matching mode.
-type MatchingMode string
+// HairColorType enumerates the values for hair color type.
+type HairColorType string
 
 const (
-	// MatchFace ...
-	MatchFace MatchingMode = "matchFace"
-	// MatchPerson ...
-	MatchPerson MatchingMode = "matchPerson"
+	// Black ...
+	Black HairColorType = "black"
+	// Blond ...
+	Blond HairColorType = "blond"
+	// Brown ...
+	Brown HairColorType = "brown"
+	// Gray ...
+	Gray HairColorType = "gray"
+	// Other ...
+	Other HairColorType = "other"
+	// Red ...
+	Red HairColorType = "red"
+	// Unknown ...
+	Unknown HairColorType = "unknown"
+	// White ...
+	White HairColorType = "white"
 )
 
-// NoiseLevels enumerates the values for noise levels.
-type NoiseLevels string
+// NoiseLevel enumerates the values for noise level.
+type NoiseLevel string
 
 const (
-	// NoiseLevelsHigh ...
-	NoiseLevelsHigh NoiseLevels = "High"
-	// NoiseLevelsLow ...
-	NoiseLevelsLow NoiseLevels = "Low"
-	// NoiseLevelsMedium ...
-	NoiseLevelsMedium NoiseLevels = "Medium"
+	// NoiseLevelHigh ...
+	NoiseLevelHigh NoiseLevel = "High"
+	// NoiseLevelLow ...
+	NoiseLevelLow NoiseLevel = "Low"
+	// NoiseLevelMedium ...
+	NoiseLevelMedium NoiseLevel = "Medium"
 )
 
 // TrainingStatusType enumerates the values for training status type.
@@ -172,10 +207,11 @@ const (
 	Succeeded TrainingStatusType = "succeeded"
 )
 
-// AccessoryItem accessory item and corresponding confidence level.
-type AccessoryItem struct {
-	// Type - Description of an accessory
-	Type       *string  `json:"type,omitempty"`
+// Accessory accessory item and corresponding confidence level.
+type Accessory struct {
+	// Type - Type of an accessory. Possible values include: 'HeadWear', 'Glasses', 'Mask'
+	Type AccessoryType `json:"type,omitempty"`
+	// Confidence - Confidence level of an accessory
 	Confidence *float64 `json:"confidence,omitempty"`
 }
 
@@ -191,77 +227,57 @@ type Attributes struct {
 	// Gender - Possible gender of the face. Possible values include: 'Male', 'Female', 'Genderless'
 	Gender Gender `json:"gender,omitempty"`
 	// Smile - Smile intensity, a number between [0,1]
-	Smile      *float64              `json:"smile,omitempty"`
-	FacialHair *FacialHairProperties `json:"facialHair,omitempty"`
+	Smile *float64 `json:"smile,omitempty"`
+	// FacialHair - Properties describing facial hair attributes.
+	FacialHair *FacialHair `json:"facialHair,omitempty"`
 	// Glasses - Glasses type if any of the face. Possible values include: 'NoGlasses', 'ReadingGlasses', 'Sunglasses', 'SwimmingGoggles'
-	Glasses     GlassesTypes         `json:"glasses,omitempty"`
-	HeadPose    *HeadPoseProperties  `json:"headPose,omitempty"`
-	Emotion     *EmotionProperties   `json:"emotion,omitempty"`
-	Hair        *HairProperties      `json:"hair,omitempty"`
-	Makeup      *MakeupProperties    `json:"makeup,omitempty"`
-	Occlusion   *OcclusionProperties `json:"occlusion,omitempty"`
-	Accessories *[]AccessoryItem     `json:"accessories,omitempty"`
-	Blur        *BlurProperties      `json:"blur,omitempty"`
-	Exposure    *ExposureProperties  `json:"exposure,omitempty"`
-	Noise       *NoiseProperties     `json:"noise,omitempty"`
+	Glasses GlassesType `json:"glasses,omitempty"`
+	// HeadPose - Properties indicating head pose of the face.
+	HeadPose *HeadPose `json:"headPose,omitempty"`
+	// Emotion - Properties describing facial emotion in form of confidence ranging from 0 to 1.
+	Emotion *Emotion `json:"emotion,omitempty"`
+	// Hair - Properties describing hair attributes.
+	Hair *Hair `json:"hair,omitempty"`
+	// Makeup - Properties describing present makeups on a given face.
+	Makeup *Makeup `json:"makeup,omitempty"`
+	// Occlusion - Properties describing occlusions on a given face.
+	Occlusion *Occlusion `json:"occlusion,omitempty"`
+	// Accessories - Properties describing any accessories on a given face.
+	Accessories *[]Accessory `json:"accessories,omitempty"`
+	// Blur - Properties describing any presence of blur within the image.
+	Blur *Blur `json:"blur,omitempty"`
+	// Exposure - Properties describing exposure level of the image.
+	Exposure *Exposure `json:"exposure,omitempty"`
+	// Noise - Properties describing noise level of the image.
+	Noise *Noise `json:"noise,omitempty"`
 }
 
-// BlurProperties properties describing any presence of blur within the image.
-type BlurProperties struct {
+// Blur properties describing any presence of blur within the image.
+type Blur struct {
 	// BlurLevel - An enum value indicating level of blurriness. Possible values include: 'Low', 'Medium', 'High'
-	BlurLevel BlurLevels `json:"blurLevel,omitempty"`
+	BlurLevel BlurLevel `json:"blurLevel,omitempty"`
 	// Value - A number indicating level of blurriness ranging from 0 to 1.
 	Value *float64 `json:"value,omitempty"`
 }
 
-// ColorProperty hair color and associated confidence
-type ColorProperty struct {
-	// Color - Name of the color.
-	Color      *string  `json:"color,omitempty"`
-	Confidence *float64 `json:"confidence,omitempty"`
-}
-
-// CreateFaceListRequest request to create a face list.
-type CreateFaceListRequest struct {
-	// Name - Name of the face list, maximum length is 128.
-	Name *string `json:"name,omitempty"`
-	// UserData - Optional user defined data for the face list. Length should not exceed 16KB.
-	UserData *string `json:"userData,omitempty"`
-}
-
-// CreatePersonGroupRequest request to create a person group.
-type CreatePersonGroupRequest struct {
-	// Name - Person group display name. The maximum length is 128.
-	Name *string `json:"name,omitempty"`
-	// UserData - User-provided data attached to the person group. The size limit is 16KB.
-	UserData *string `json:"userData,omitempty"`
-}
-
-// CreatePersonRequest request to create a person object.
-type CreatePersonRequest struct {
-	// Name - Display name of the target person. The maximum length is 128.
-	Name *string `json:"name,omitempty"`
-	// UserData - Optional fields for user-provided data attached to a person. Size limit is 16KB.
-	UserData *string `json:"userData,omitempty"`
-}
-
-// CreatePersonResult result of creating person.
-type CreatePersonResult struct {
-	autorest.Response `json:"-"`
-	// PersonID - personID of the new created person.
-	PersonID *string `json:"personId,omitempty"`
+// Coordinate coordinates within an image
+type Coordinate struct {
+	// X - The horizontal component, in pixels.
+	X *float64 `json:"x,omitempty"`
+	// Y - The vertical component, in pixels.
+	Y *float64 `json:"y,omitempty"`
 }
 
 // DetectedFace detected Face object.
 type DetectedFace struct {
-	FaceID         *string     `json:"faceId,omitempty"`
+	FaceID         *uuid.UUID  `json:"faceId,omitempty"`
 	FaceRectangle  *Rectangle  `json:"faceRectangle,omitempty"`
 	FaceLandmarks  *Landmarks  `json:"faceLandmarks,omitempty"`
 	FaceAttributes *Attributes `json:"faceAttributes,omitempty"`
 }
 
-// EmotionProperties properties describing facial emotion in form of confidence ranging from 0 to 1.
-type EmotionProperties struct {
+// Emotion properties describing facial emotion in form of confidence ranging from 0 to 1.
+type Emotion struct {
 	Anger     *float64 `json:"anger,omitempty"`
 	Contempt  *float64 `json:"contempt,omitempty"`
 	Disgust   *float64 `json:"disgust,omitempty"`
@@ -278,16 +294,16 @@ type Error struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// ExposureProperties properties describing exposure level of the image.
-type ExposureProperties struct {
+// Exposure properties describing exposure level of the image.
+type Exposure struct {
 	// ExposureLevel - An enum value indicating level of exposure. Possible values include: 'UnderExposure', 'GoodExposure', 'OverExposure'
-	ExposureLevel ExposureLevels `json:"exposureLevel,omitempty"`
+	ExposureLevel ExposureLevel `json:"exposureLevel,omitempty"`
 	// Value - A number indicating level of exposure level ranging from 0 to 1. [0, 0.25) is under exposure. [0.25, 0.75) is good exposure. [0.75, 1] is over exposure.
 	Value *float64 `json:"value,omitempty"`
 }
 
-// FacialHairProperties properties describing facial hair attributes.
-type FacialHairProperties struct {
+// FacialHair properties describing facial hair attributes.
+type FacialHair struct {
 	Moustache *float64 `json:"moustache,omitempty"`
 	Beard     *float64 `json:"beard,omitempty"`
 	Sideburns *float64 `json:"sideburns,omitempty"`
@@ -296,84 +312,83 @@ type FacialHairProperties struct {
 // FindSimilarRequest request body for find similar operation.
 type FindSimilarRequest struct {
 	// FaceID - FaceId of the query face. User needs to call Face - Detect first to get a valid faceId. Note that this faceId is not persisted and will expire 24 hours after the detection call
-	FaceID *string `json:"faceId,omitempty"`
+	FaceID *uuid.UUID `json:"faceId,omitempty"`
 	// FaceListID - An existing user-specified unique candidate face list, created in Face List - Create a Face List. Face list contains a set of persistedFaceIds which are persisted and will never expire. Parameter faceListId and faceIds should not be provided at the same time
 	FaceListID *string `json:"faceListId,omitempty"`
 	// FaceIds - An array of candidate faceIds. All of them are created by Face - Detect and the faceIds will expire 24 hours after the detection call.
-	FaceIds *[]string `json:"faceIds,omitempty"`
+	FaceIds *[]uuid.UUID `json:"faceIds,omitempty"`
 	// MaxNumOfCandidatesReturned - The number of top similar faces returned. The valid range is [1, 1000].
 	MaxNumOfCandidatesReturned *int32 `json:"maxNumOfCandidatesReturned,omitempty"`
 	// Mode - Similar face searching mode. It can be "matchPerson" or "matchFace". Possible values include: 'MatchPerson', 'MatchFace'
-	Mode MatchingMode `json:"mode,omitempty"`
-}
-
-// GetFaceListResult result of the GetFaceList operation.
-type GetFaceListResult struct {
-	autorest.Response `json:"-"`
-	// FaceListID - faceListId of the target face list.
-	FaceListID *string `json:"faceListId,omitempty"`
-	// Name - Face list's display name, maximum length is 128.
-	Name *string `json:"name,omitempty"`
-	// UserData - User-provided data attached to this face list. Length should not exceed 16KB.
-	UserData *string `json:"userData,omitempty"`
-	// PersistedFaces - Persisted faces within the face list.
-	PersistedFaces *[]PersonFaceResult `json:"persistedFaces,omitempty"`
+	Mode FindSimilarMatchMode `json:"mode,omitempty"`
 }
 
 // GroupRequest request body for group request.
 type GroupRequest struct {
 	// FaceIds - Array of candidate faceId created by Face - Detect. The maximum is 1000 faces
-	FaceIds *[]string `json:"faceIds,omitempty"`
+	FaceIds *[]uuid.UUID `json:"faceIds,omitempty"`
 }
 
-// GroupResponse an array of face groups based on face similarity.
-type GroupResponse struct {
+// GroupResult an array of face groups based on face similarity.
+type GroupResult struct {
 	autorest.Response `json:"-"`
 	// Groups - A partition of the original faces based on face similarity. Groups are ranked by number of faces
-	Groups *[][]string `json:"groups,omitempty"`
+	Groups *[][]uuid.UUID `json:"groups,omitempty"`
 	// MessyGroup - Face ids array of faces that cannot find any similar faces from original faces.
-	MessyGroup *[]string `json:"messyGroup,omitempty"`
+	MessyGroup *[]uuid.UUID `json:"messyGroup,omitempty"`
 }
 
-// HairProperties properties describing hair attributes.
-type HairProperties struct {
+// Hair properties describing hair attributes.
+type Hair struct {
 	// Bald - A number describing confidence level of whether the person is bald.
 	Bald *float64 `json:"bald,omitempty"`
 	// Invisible - A boolean value describing whether the hair is visible in the image.
-	Invisible *bool            `json:"invisible,omitempty"`
-	HairColor *[]ColorProperty `json:"hairColor,omitempty"`
+	Invisible *bool `json:"invisible,omitempty"`
+	// HairColor - An array of candidate colors and confidence level in the presence of each.
+	HairColor *[]HairColor `json:"hairColor,omitempty"`
 }
 
-// HeadPoseProperties properties indicating head pose of the face.
-type HeadPoseProperties struct {
+// HairColor hair color and associated confidence
+type HairColor struct {
+	// Color - Name of the hair color. Possible values include: 'Unknown', 'White', 'Gray', 'Blond', 'Brown', 'Red', 'Black', 'Other'
+	Color HairColorType `json:"color,omitempty"`
+	// Confidence - Confidence level of the color
+	Confidence *float64 `json:"confidence,omitempty"`
+}
+
+// HeadPose properties indicating head pose of the face.
+type HeadPose struct {
 	Roll  *float64 `json:"roll,omitempty"`
 	Yaw   *float64 `json:"yaw,omitempty"`
 	Pitch *float64 `json:"pitch,omitempty"`
 }
 
-// IdentifyRequest request body for identify face operation.
-type IdentifyRequest struct {
-	// PersonGroupID - personGroupId of the target person group, created by PersonGroups.Create
-	PersonGroupID *string `json:"personGroupId,omitempty"`
-	// FaceIds - Array of candidate faceId created by Face - Detect.
-	FaceIds *[]string `json:"faceIds,omitempty"`
-	// MaxNumOfCandidatesReturned - The number of top similar faces returned.
-	MaxNumOfCandidatesReturned *int32   `json:"maxNumOfCandidatesReturned,omitempty"`
-	ConfidenceThreshold        *float64 `json:"confidenceThreshold,omitempty"`
-}
-
-// IdentifyResultCandidate all possible faces that may qualify.
-type IdentifyResultCandidate struct {
+// IdentifyCandidate all possible faces that may qualify.
+type IdentifyCandidate struct {
 	// PersonID - Id of candidate
-	PersonID   *string  `json:"personId,omitempty"`
+	PersonID *uuid.UUID `json:"personId,omitempty"`
+	// Confidence - Confidence threshold of identification, used to judge whether one face belong to one person. The range of confidenceThreshold is [0, 1] (default specified by algorithm).
 	Confidence *float64 `json:"confidence,omitempty"`
 }
 
-// IdentifyResultItem response body for identify face operation.
-type IdentifyResultItem struct {
-	// FaceID - faceId of the query face
-	FaceID     *string                    `json:"faceId,omitempty"`
-	Candidates *[]IdentifyResultCandidate `json:"candidates,omitempty"`
+// IdentifyRequest request body for identify face operation.
+type IdentifyRequest struct {
+	// PersonGroupID - PersonGroupId of the target person group, created by PersonGroups.Create
+	PersonGroupID *string `json:"personGroupId,omitempty"`
+	// FaceIds - Array of query faces faceIds, created by the Face - Detect. Each of the faces are identified independently. The valid number of faceIds is between [1, 10].
+	FaceIds *[]uuid.UUID `json:"faceIds,omitempty"`
+	// MaxNumOfCandidatesReturned - The range of maxNumOfCandidatesReturned is between 1 and 5 (default is 1).
+	MaxNumOfCandidatesReturned *int32 `json:"maxNumOfCandidatesReturned,omitempty"`
+	// ConfidenceThreshold - Confidence threshold of identification, used to judge whether one face belong to one person. The range of confidenceThreshold is [0, 1] (default specified by algorithm).
+	ConfidenceThreshold *float64 `json:"confidenceThreshold,omitempty"`
+}
+
+// IdentifyResult response body for identify face operation.
+type IdentifyResult struct {
+	// FaceID - FaceId of the query face
+	FaceID *uuid.UUID `json:"faceId,omitempty"`
+	// Candidates - Identified person candidates for that face (ranked by confidence). Array size should be no larger than input maxNumOfCandidatesReturned. If no person is identified, will return an empty array.
+	Candidates *[]IdentifyCandidate `json:"candidates,omitempty"`
 }
 
 // ImageURL ...
@@ -383,33 +398,46 @@ type ImageURL struct {
 
 // Landmarks a collection of 27-point face landmarks pointing to the important positions of face components.
 type Landmarks struct {
-	PupilLeft           *Position `json:"pupilLeft,omitempty"`
-	PupilRight          *Position `json:"pupilRight,omitempty"`
-	NoseTip             *Position `json:"noseTip,omitempty"`
-	MouthLeft           *Position `json:"mouthLeft,omitempty"`
-	MouthRight          *Position `json:"mouthRight,omitempty"`
-	EyebrowLeftOuter    *Position `json:"eyebrowLeftOuter,omitempty"`
-	EyebrowLeftInner    *Position `json:"eyebrowLeftInner,omitempty"`
-	EyeLeftOuter        *Position `json:"eyeLeftOuter,omitempty"`
-	EyeLeftTop          *Position `json:"eyeLeftTop,omitempty"`
-	EyeLeftBottom       *Position `json:"eyeLeftBottom,omitempty"`
-	EyeLeftInner        *Position `json:"eyeLeftInner,omitempty"`
-	EyebrowRightInner   *Position `json:"eyebrowRightInner,omitempty"`
-	EyebrowRightOuter   *Position `json:"eyebrowRightOuter,omitempty"`
-	EyeRightInner       *Position `json:"eyeRightInner,omitempty"`
-	EyeRightTop         *Position `json:"eyeRightTop,omitempty"`
-	EyeRightBottom      *Position `json:"eyeRightBottom,omitempty"`
-	EyeRightOuter       *Position `json:"eyeRightOuter,omitempty"`
-	NoseRootLeft        *Position `json:"noseRootLeft,omitempty"`
-	NoseRootRight       *Position `json:"noseRootRight,omitempty"`
-	NoseLeftAlarTop     *Position `json:"noseLeftAlarTop,omitempty"`
-	NoseRightAlarTop    *Position `json:"noseRightAlarTop,omitempty"`
-	NoseLeftAlarOutTip  *Position `json:"noseLeftAlarOutTip,omitempty"`
-	NoseRightAlarOutTip *Position `json:"noseRightAlarOutTip,omitempty"`
-	UpperLipTop         *Position `json:"upperLipTop,omitempty"`
-	UpperLipBottom      *Position `json:"upperLipBottom,omitempty"`
-	UnderLipTop         *Position `json:"underLipTop,omitempty"`
-	UnderLipBottom      *Position `json:"underLipBottom,omitempty"`
+	PupilLeft           *Coordinate `json:"pupilLeft,omitempty"`
+	PupilRight          *Coordinate `json:"pupilRight,omitempty"`
+	NoseTip             *Coordinate `json:"noseTip,omitempty"`
+	MouthLeft           *Coordinate `json:"mouthLeft,omitempty"`
+	MouthRight          *Coordinate `json:"mouthRight,omitempty"`
+	EyebrowLeftOuter    *Coordinate `json:"eyebrowLeftOuter,omitempty"`
+	EyebrowLeftInner    *Coordinate `json:"eyebrowLeftInner,omitempty"`
+	EyeLeftOuter        *Coordinate `json:"eyeLeftOuter,omitempty"`
+	EyeLeftTop          *Coordinate `json:"eyeLeftTop,omitempty"`
+	EyeLeftBottom       *Coordinate `json:"eyeLeftBottom,omitempty"`
+	EyeLeftInner        *Coordinate `json:"eyeLeftInner,omitempty"`
+	EyebrowRightInner   *Coordinate `json:"eyebrowRightInner,omitempty"`
+	EyebrowRightOuter   *Coordinate `json:"eyebrowRightOuter,omitempty"`
+	EyeRightInner       *Coordinate `json:"eyeRightInner,omitempty"`
+	EyeRightTop         *Coordinate `json:"eyeRightTop,omitempty"`
+	EyeRightBottom      *Coordinate `json:"eyeRightBottom,omitempty"`
+	EyeRightOuter       *Coordinate `json:"eyeRightOuter,omitempty"`
+	NoseRootLeft        *Coordinate `json:"noseRootLeft,omitempty"`
+	NoseRootRight       *Coordinate `json:"noseRootRight,omitempty"`
+	NoseLeftAlarTop     *Coordinate `json:"noseLeftAlarTop,omitempty"`
+	NoseRightAlarTop    *Coordinate `json:"noseRightAlarTop,omitempty"`
+	NoseLeftAlarOutTip  *Coordinate `json:"noseLeftAlarOutTip,omitempty"`
+	NoseRightAlarOutTip *Coordinate `json:"noseRightAlarOutTip,omitempty"`
+	UpperLipTop         *Coordinate `json:"upperLipTop,omitempty"`
+	UpperLipBottom      *Coordinate `json:"upperLipBottom,omitempty"`
+	UnderLipTop         *Coordinate `json:"underLipTop,omitempty"`
+	UnderLipBottom      *Coordinate `json:"underLipBottom,omitempty"`
+}
+
+// List face list object.
+type List struct {
+	autorest.Response `json:"-"`
+	// FaceListID - FaceListId of the target face list.
+	FaceListID *string `json:"faceListId,omitempty"`
+	// PersistedFaces - Persisted faces within the face list.
+	PersistedFaces *[]PersistedFace `json:"persistedFaces,omitempty"`
+	// Name - User defined name, maximum length is 128.
+	Name *string `json:"name,omitempty"`
+	// UserData - User specified data. Length should not exceed 16KB.
+	UserData *string `json:"userData,omitempty"`
 }
 
 // ListDetectedFace ...
@@ -418,54 +446,63 @@ type ListDetectedFace struct {
 	Value             *[]DetectedFace `json:"value,omitempty"`
 }
 
-// ListGetFaceListResult ...
-type ListGetFaceListResult struct {
+// ListIdentifyResult ...
+type ListIdentifyResult struct {
 	autorest.Response `json:"-"`
-	Value             *[]GetFaceListResult `json:"value,omitempty"`
+	Value             *[]IdentifyResult `json:"value,omitempty"`
 }
 
-// ListIdentifyResultItem ...
-type ListIdentifyResultItem struct {
+// ListList ...
+type ListList struct {
 	autorest.Response `json:"-"`
-	Value             *[]IdentifyResultItem `json:"value,omitempty"`
+	Value             *[]List `json:"value,omitempty"`
 }
 
-// ListPersonGroupResult ...
-type ListPersonGroupResult struct {
+// ListPerson ...
+type ListPerson struct {
 	autorest.Response `json:"-"`
-	Value             *[]PersonGroupResult `json:"value,omitempty"`
+	Value             *[]Person `json:"value,omitempty"`
 }
 
-// ListPersonResult ...
-type ListPersonResult struct {
+// ListPersonGroup ...
+type ListPersonGroup struct {
 	autorest.Response `json:"-"`
-	Value             *[]PersonResult `json:"value,omitempty"`
+	Value             *[]PersonGroup `json:"value,omitempty"`
 }
 
-// ListSimilarFaceResult ...
-type ListSimilarFaceResult struct {
+// ListSimilarFace ...
+type ListSimilarFace struct {
 	autorest.Response `json:"-"`
-	Value             *[]SimilarFaceResult `json:"value,omitempty"`
+	Value             *[]SimilarFace `json:"value,omitempty"`
 }
 
-// MakeupProperties properties describing present makeups on a given face.
-type MakeupProperties struct {
+// Makeup properties describing present makeups on a given face.
+type Makeup struct {
 	// EyeMakeup - A boolean value describing whether eye makeup is present on a face.
 	EyeMakeup *bool `json:"eyeMakeup,omitempty"`
 	// LipMakeup - A boolean value describing whether lip makeup is present on a face.
 	LipMakeup *bool `json:"lipMakeup,omitempty"`
 }
 
-// NoiseProperties properties describing noise level of the image.
-type NoiseProperties struct {
-	// NoiseLevel - An enum value indicating level of noise. Possible values include: 'NoiseLevelsLow', 'NoiseLevelsMedium', 'NoiseLevelsHigh'
-	NoiseLevel NoiseLevels `json:"noiseLevel,omitempty"`
+// NameAndUserDataContract a combination of user defined name and user specified data for the person, personGroup,
+// and faceList
+type NameAndUserDataContract struct {
+	// Name - User defined name, maximum length is 128.
+	Name *string `json:"name,omitempty"`
+	// UserData - User specified data. Length should not exceed 16KB.
+	UserData *string `json:"userData,omitempty"`
+}
+
+// Noise properties describing noise level of the image.
+type Noise struct {
+	// NoiseLevel - An enum value indicating level of noise. Possible values include: 'NoiseLevelLow', 'NoiseLevelMedium', 'NoiseLevelHigh'
+	NoiseLevel NoiseLevel `json:"noiseLevel,omitempty"`
 	// Value - A number indicating level of noise level ranging from 0 to 1. [0, 0.25) is under exposure. [0.25, 0.75) is good exposure. [0.75, 1] is over exposure. [0, 0.3) is low noise level. [0.3, 0.7) is medium noise level. [0.7, 1] is high noise level.
 	Value *float64 `json:"value,omitempty"`
 }
 
-// OcclusionProperties properties describing occulusions on a given face.
-type OcclusionProperties struct {
+// Occlusion properties describing occlusions on a given face.
+type Occlusion struct {
 	// ForeheadOccluded - A boolean value indicating whether forehead is occluded.
 	ForeheadOccluded *bool `json:"foreheadOccluded,omitempty"`
 	// EyeOccluded - A boolean value indicating whether eyes are occluded.
@@ -474,52 +511,37 @@ type OcclusionProperties struct {
 	MouthOccluded *bool `json:"mouthOccluded,omitempty"`
 }
 
-// PersistedFaceResult persisted face result.
-type PersistedFaceResult struct {
-	autorest.Response `json:"-"`
-	// PersistedFaceID - persistedFaceId of candidate face when find by faceListId. persistedFaceId in face list is persisted and will not expire. As showed in below response
-	PersistedFaceID *string `json:"persistedFaceId,omitempty"`
-}
-
-// PersonFaceResult personFace object.
-type PersonFaceResult struct {
+// PersistedFace personFace object.
+type PersistedFace struct {
 	autorest.Response `json:"-"`
 	// PersistedFaceID - The persistedFaceId of the target face, which is persisted and will not expire. Different from faceId created by Face - Detect and will expire in 24 hours after the detection call.
-	PersistedFaceID *string `json:"persistedFaceId,omitempty"`
+	PersistedFaceID *uuid.UUID `json:"persistedFaceId,omitempty"`
 	// UserData - User-provided data attached to the face. The size limit is 1KB.
 	UserData *string `json:"userData,omitempty"`
 }
 
-// PersonGroupResult person group object.
-type PersonGroupResult struct {
+// Person person object.
+type Person struct {
 	autorest.Response `json:"-"`
-	// PersonGroupID - personGroupId of the existing person groups.
+	// PersonID - PersonId of the target face list.
+	PersonID *uuid.UUID `json:"personId,omitempty"`
+	// PersistedFaceIds - PersistedFaceIds of registered faces in the person. These persistedFaceIds are returned from Person - Add a Person Face, and will not expire.
+	PersistedFaceIds *[]uuid.UUID `json:"persistedFaceIds,omitempty"`
+	// Name - User defined name, maximum length is 128.
+	Name *string `json:"name,omitempty"`
+	// UserData - User specified data. Length should not exceed 16KB.
+	UserData *string `json:"userData,omitempty"`
+}
+
+// PersonGroup person group object.
+type PersonGroup struct {
+	autorest.Response `json:"-"`
+	// PersonGroupID - PersonGroupId of the existing person groups.
 	PersonGroupID *string `json:"personGroupId,omitempty"`
-	// Name - Person group's display name, maximum length is 128.
+	// Name - User defined name, maximum length is 128.
 	Name *string `json:"name,omitempty"`
-	// UserData - User-provided data attached to this person group. Length should not exceed 16KB.
+	// UserData - User specified data. Length should not exceed 16KB.
 	UserData *string `json:"userData,omitempty"`
-}
-
-// PersonResult person object.
-type PersonResult struct {
-	autorest.Response `json:"-"`
-	// PersonID - personId of the target face list.
-	PersonID *string `json:"personId,omitempty"`
-	// PersistedFaceIds - persistedFaceIds of registered faces in the person. These persistedFaceIds are returned from Person - Add a Person Face, and will not expire.
-	PersistedFaceIds *[]string `json:"persistedFaceIds,omitempty"`
-	// Name - Person's display name, maximum length is 128.
-	Name *string `json:"name,omitempty"`
-	// UserData - User-provided data attached to this person. Length should not exceed 16KB.
-	UserData *string `json:"userData,omitempty"`
-}
-
-// Position coordinates within an image
-type Position struct {
-	// X - The horizontal component, in pixels.
-	X *float64 `json:"x,omitempty"`
-	// Y - The vertical component, in pixels.
-	Y *float64 `json:"y,omitempty"`
 }
 
 // Rectangle a rectangle within which a face can be found
@@ -534,13 +556,14 @@ type Rectangle struct {
 	Top *int32 `json:"top,omitempty"`
 }
 
-// SimilarFaceResult response body for find similar face operation.
-type SimilarFaceResult struct {
-	// FaceID - faceId of candidate face when find by faceIds. faceId is created by Face - Detect and will expire 24 hours after the detection call
-	FaceID *string `json:"faceId,omitempty"`
-	// PersistedFaceID - persistedFaceId of candidate face when find by faceListId. persistedFaceId in face list is persisted and will not expire. As showed in below response
-	PersistedFaceID *string  `json:"persistedFaceId,omitempty"`
-	Confidence      *float64 `json:"confidence,omitempty"`
+// SimilarFace response body for find similar face operation.
+type SimilarFace struct {
+	// FaceID - FaceId of candidate face when find by faceIds. faceId is created by Face - Detect and will expire 24 hours after the detection call
+	FaceID *uuid.UUID `json:"faceId,omitempty"`
+	// PersistedFaceID - PersistedFaceId of candidate face when find by faceListId. persistedFaceId in face list is persisted and will not expire. As showed in below response
+	PersistedFaceID *uuid.UUID `json:"persistedFaceId,omitempty"`
+	// Confidence - Similarity confidence of the candidate face. The higher confidence, the more similar. Range between [0,1].
+	Confidence *float64 `json:"confidence,omitempty"`
 }
 
 // TrainingStatus training status object.
@@ -556,34 +579,35 @@ type TrainingStatus struct {
 	Message *string `json:"message,omitempty"`
 }
 
-// UpdatePersonFaceDataRequest request to update person face data.
-type UpdatePersonFaceDataRequest struct {
+// UpdatePersonFaceRequest request to update person face data.
+type UpdatePersonFaceRequest struct {
 	// UserData - User-provided data attached to the face. The size limit is 1KB.
 	UserData *string `json:"userData,omitempty"`
 }
 
-// VerifyPersonGroupRequest request body for verify operation.
-type VerifyPersonGroupRequest struct {
-	// FaceID - faceId the face, comes from Face - Detect
-	FaceID *string `json:"faceId,omitempty"`
-	// PersonID - Specify a certain person in a person group. personId is created in Persons.Create.
-	PersonID *string `json:"personId,omitempty"`
-	// PersonGroupID - Using existing personGroupId and personId for fast loading a specified person. personGroupId is created in Person Groups.Create.
-	PersonGroupID *string `json:"personGroupId,omitempty"`
+// VerifyFaceToFaceRequest request body for verify operation.
+type VerifyFaceToFaceRequest struct {
+	// FaceID1 - FaceId of the first face, comes from Face - Detect
+	FaceID1 *uuid.UUID `json:"faceId1,omitempty"`
+	// FaceID2 - FaceId of the second face, comes from Face - Detect
+	FaceID2 *uuid.UUID `json:"faceId2,omitempty"`
 }
 
-// VerifyRequest request body for verify operation.
-type VerifyRequest struct {
-	// FaceID1 - faceId of the first face, comes from Face - Detect
-	FaceID1 *string `json:"faceId1,omitempty"`
-	// FaceID2 - faceId of the second face, comes from Face - Detect
-	FaceID2 *string `json:"faceId2,omitempty"`
+// VerifyFaceToPersonRequest request body for verify operation.
+type VerifyFaceToPersonRequest struct {
+	// FaceID - FaceId the face, comes from Face - Detect
+	FaceID *uuid.UUID `json:"faceId,omitempty"`
+	// PersonGroupID - Using existing personGroupId and personId for fast loading a specified person. personGroupId is created in Person Groups.Create.
+	PersonGroupID *string `json:"personGroupId,omitempty"`
+	// PersonID - Specify a certain person in a person group. personId is created in Persons.Create.
+	PersonID *uuid.UUID `json:"personId,omitempty"`
 }
 
 // VerifyResult result of the verify operation.
 type VerifyResult struct {
 	autorest.Response `json:"-"`
 	// IsIdentical - True if the two faces belong to the same person or the face belongs to the person, otherwise false.
-	IsIdentical *bool    `json:"isIdentical,omitempty"`
-	Confidence  *float64 `json:"confidence,omitempty"`
+	IsIdentical *bool `json:"isIdentical,omitempty"`
+	// Confidence - A number indicates the similarity confidence of whether two faces belong to the same person, or whether the face belongs to the person. By default, isIdentical is set to True if similarity confidence is greater than or equal to 0.5. This is useful for advanced users to override "isIdentical" and fine-tune the result on their own data.
+	Confidence *float64 `json:"confidence,omitempty"`
 }

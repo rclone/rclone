@@ -157,7 +157,8 @@ func (s *RemoteConfig) MarshalJSON() ([]byte, error) {
 // these (because order matters) are
 // part of a single RemoteConfig template.
 type RemoteConfigCondition struct {
-	// Description: Optional.
+	// Description: DO NOT USE. Implementation removed and will not be added
+	// unless requested.
 	// A description for this Condition. Length must be less than or equal
 	// to
 	// 100 characters (or more precisely, unicode code points, which is

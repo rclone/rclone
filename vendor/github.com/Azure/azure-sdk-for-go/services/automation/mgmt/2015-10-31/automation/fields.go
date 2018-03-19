@@ -48,7 +48,7 @@ func (client FieldsClient) ListByType(ctx context.Context, automationAccountName
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.FieldsClient", "ListByType")
+		return result, validation.NewError("automation.FieldsClient", "ListByType", err.Error())
 	}
 
 	req, err := client.ListByTypePreparer(ctx, automationAccountName, moduleName, typeName)

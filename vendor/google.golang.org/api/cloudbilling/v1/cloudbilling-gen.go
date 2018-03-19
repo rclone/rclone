@@ -1,4 +1,4 @@
-// Package cloudbilling provides access to the Google Cloud Billing API.
+// Package cloudbilling provides access to the Cloud Billing API.
 //
 // See https://cloud.google.com/billing/
 //
@@ -177,16 +177,182 @@ func (s *AggregationInfo) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// BillingAccount: A billing account in [Google
-// Cloud
-// Console](https://console.cloud.google.com/). You can assign a billing
-// account
-// to one or more projects.
+// AuditConfig: Specifies the audit configuration for a service.
+// The configuration determines which permission types are logged, and
+// what
+// identities, if any, are exempted from logging.
+// An AuditConfig must have one or more AuditLogConfigs.
+//
+// If there are AuditConfigs for both `allServices` and a specific
+// service,
+// the union of the two AuditConfigs is used for that service: the
+// log_types
+// specified in each AuditConfig are enabled, and the exempted_members
+// in each
+// AuditLogConfig are exempted.
+//
+// Example Policy with multiple AuditConfigs:
+//
+//     {
+//       "audit_configs": [
+//         {
+//           "service": "allServices"
+//           "audit_log_configs": [
+//             {
+//               "log_type": "DATA_READ",
+//               "exempted_members": [
+//                 "user:foo@gmail.com"
+//               ]
+//             },
+//             {
+//               "log_type": "DATA_WRITE",
+//             },
+//             {
+//               "log_type": "ADMIN_READ",
+//             }
+//           ]
+//         },
+//         {
+//           "service": "fooservice.googleapis.com"
+//           "audit_log_configs": [
+//             {
+//               "log_type": "DATA_READ",
+//             },
+//             {
+//               "log_type": "DATA_WRITE",
+//               "exempted_members": [
+//                 "user:bar@gmail.com"
+//               ]
+//             }
+//           ]
+//         }
+//       ]
+//     }
+//
+// For fooservice, this policy enables DATA_READ, DATA_WRITE and
+// ADMIN_READ
+// logging. It also exempts foo@gmail.com from DATA_READ logging,
+// and
+// bar@gmail.com from DATA_WRITE logging.
+type AuditConfig struct {
+	// AuditLogConfigs: The configuration for logging of each type of
+	// permission.
+	// Next ID: 4
+	AuditLogConfigs []*AuditLogConfig `json:"auditLogConfigs,omitempty"`
+
+	// Service: Specifies a service that will be enabled for audit
+	// logging.
+	// For example, `storage.googleapis.com`,
+	// `cloudsql.googleapis.com`.
+	// `allServices` is a special value that covers all services.
+	Service string `json:"service,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AuditLogConfigs") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AuditLogConfigs") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AuditConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod AuditConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AuditLogConfig: Provides the configuration for logging a type of
+// permissions.
+// Example:
+//
+//     {
+//       "audit_log_configs": [
+//         {
+//           "log_type": "DATA_READ",
+//           "exempted_members": [
+//             "user:foo@gmail.com"
+//           ]
+//         },
+//         {
+//           "log_type": "DATA_WRITE",
+//         }
+//       ]
+//     }
+//
+// This enables 'DATA_READ' and 'DATA_WRITE' logging, while
+// exempting
+// foo@gmail.com from DATA_READ logging.
+type AuditLogConfig struct {
+	// ExemptedMembers: Specifies the identities that do not cause logging
+	// for this type of
+	// permission.
+	// Follows the same format of Binding.members.
+	ExemptedMembers []string `json:"exemptedMembers,omitempty"`
+
+	// LogType: The log type that this config enables.
+	//
+	// Possible values:
+	//   "LOG_TYPE_UNSPECIFIED" - Default case. Should never be this.
+	//   "ADMIN_READ" - Admin reads. Example: CloudIAM getIamPolicy
+	//   "DATA_WRITE" - Data writes. Example: CloudSQL Users create
+	//   "DATA_READ" - Data reads. Example: CloudSQL Users list
+	LogType string `json:"logType,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "ExemptedMembers") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "ExemptedMembers") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AuditLogConfig) MarshalJSON() ([]byte, error) {
+	type NoMethod AuditLogConfig
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// BillingAccount: A billing account in [GCP
+// Console](https://console.cloud.google.com/).
+// You can assign a billing account to one or more projects.
 type BillingAccount struct {
 	// DisplayName: The display name given to the billing account, such as
 	// `My Billing
-	// Account`. This name is displayed in the Google Cloud Console.
+	// Account`. This name is displayed in the GCP Console.
 	DisplayName string `json:"displayName,omitempty"`
+
+	// MasterBillingAccount: If this account is
+	// a
+	// [subaccount](https://cloud.google.com/billing/docs/concepts), then
+	// this
+	// will be the resource name of the master billing account that it is
+	// being
+	// resold through.
+	// Otherwise this will be empty.
+	//
+	// > This field is currently in
+	// > [Beta](https://cloud.google.com/terms/launch-stages).
+	MasterBillingAccount string `json:"masterBillingAccount,omitempty"`
 
 	// Name: The resource name of the billing account. The resource name has
 	// the form
@@ -228,6 +394,72 @@ type BillingAccount struct {
 
 func (s *BillingAccount) MarshalJSON() ([]byte, error) {
 	type NoMethod BillingAccount
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// Binding: Associates `members` with a `role`.
+type Binding struct {
+	// Members: Specifies the identities requesting access for a Cloud
+	// Platform resource.
+	// `members` can have the following values:
+	//
+	// * `allUsers`: A special identifier that represents anyone who is
+	//    on the internet; with or without a Google account.
+	//
+	// * `allAuthenticatedUsers`: A special identifier that represents
+	// anyone
+	//    who is authenticated with a Google account or a service
+	// account.
+	//
+	// * `user:{emailid}`: An email address that represents a specific
+	// Google
+	//    account. For example, `alice@gmail.com` or `joe@example.com`.
+	//
+	//
+	// * `serviceAccount:{emailid}`: An email address that represents a
+	// service
+	//    account. For example,
+	// `my-other-app@appspot.gserviceaccount.com`.
+	//
+	// * `group:{emailid}`: An email address that represents a Google
+	// group.
+	//    For example, `admins@example.com`.
+	//
+	//
+	// * `domain:{domain}`: A Google Apps domain name that represents all
+	// the
+	//    users of that domain. For example, `google.com` or
+	// `example.com`.
+	//
+	//
+	Members []string `json:"members,omitempty"`
+
+	// Role: Role that is assigned to `members`.
+	// For example, `roles/viewer`, `roles/editor`, or
+	// `roles/owner`.
+	// Required
+	Role string `json:"role,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Members") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Members") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Binding) MarshalJSON() ([]byte, error) {
+	type NoMethod Binding
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
@@ -476,6 +708,101 @@ func (s *Money) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// Policy: Defines an Identity and Access Management (IAM) policy. It is
+// used to
+// specify access control policies for Cloud Platform resources.
+//
+//
+// A `Policy` consists of a list of `bindings`. A `Binding` binds a list
+// of
+// `members` to a `role`, where the members can be user accounts, Google
+// groups,
+// Google domains, and service accounts. A `role` is a named list of
+// permissions
+// defined by IAM.
+//
+// **Example**
+//
+//     {
+//       "bindings": [
+//         {
+//           "role": "roles/owner",
+//           "members": [
+//             "user:mike@example.com",
+//             "group:admins@example.com",
+//             "domain:google.com",
+//
+// "serviceAccount:my-other-app@appspot.gserviceaccount.com",
+//           ]
+//         },
+//         {
+//           "role": "roles/viewer",
+//           "members": ["user:sean@example.com"]
+//         }
+//       ]
+//     }
+//
+// For a description of IAM and its features, see the
+// [IAM developer's guide](https://cloud.google.com/iam/docs).
+type Policy struct {
+	// AuditConfigs: Specifies cloud audit logging configuration for this
+	// policy.
+	AuditConfigs []*AuditConfig `json:"auditConfigs,omitempty"`
+
+	// Bindings: Associates a list of `members` to a `role`.
+	// `bindings` with no members will result in an error.
+	Bindings []*Binding `json:"bindings,omitempty"`
+
+	// Etag: `etag` is used for optimistic concurrency control as a way to
+	// help
+	// prevent simultaneous updates of a policy from overwriting each
+	// other.
+	// It is strongly suggested that systems make use of the `etag` in
+	// the
+	// read-modify-write cycle to perform policy updates in order to avoid
+	// race
+	// conditions: An `etag` is returned in the response to `getIamPolicy`,
+	// and
+	// systems are expected to put that etag in the request to
+	// `setIamPolicy` to
+	// ensure that their change will be applied to the same version of the
+	// policy.
+	//
+	// If no `etag` is provided in the call to `setIamPolicy`, then the
+	// existing
+	// policy is overwritten blindly.
+	Etag string `json:"etag,omitempty"`
+
+	// Version: Deprecated.
+	Version int64 `json:"version,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "AuditConfigs") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AuditConfigs") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *Policy) MarshalJSON() ([]byte, error) {
+	type NoMethod Policy
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // PricingExpression: Expresses a mathematical pricing formula. For
 // Example:-
 //
@@ -589,14 +916,27 @@ type PricingInfo struct {
 	// doesn't require aggregation.
 	AggregationInfo *AggregationInfo `json:"aggregationInfo,omitempty"`
 
-	// CurrencyConversionRate: Conversion rate for currency conversion, from
-	// USD to the currency specified
-	// in the request. If the currency is not specified this defaults to
-	// 1.0.
+	// CurrencyConversionRate: Conversion rate used for currency conversion,
+	// from USD to the currency
+	// specified in the request. This includes any surcharge collected for
+	// billing
+	// in non USD currency. If a currency is not specified in the request
+	// this
+	// defaults to 1.0.
 	// Example: USD * currency_conversion_rate = JPY
 	CurrencyConversionRate float64 `json:"currencyConversionRate,omitempty"`
 
-	// EffectiveTime: The timestamp from which this pricing was effective.
+	// EffectiveTime: The timestamp from which this pricing was effective
+	// within the requested
+	// time range. This is guaranteed to be greater than or equal to
+	// the
+	// start_time field in the request and less than the end_time field in
+	// the
+	// request. If a time range was not specified in the request this field
+	// will
+	// be equivalent to a time within the last 12 hours, indicating the
+	// latest
+	// pricing info.
 	EffectiveTime string `json:"effectiveTime,omitempty"`
 
 	// PricingExpression: Expresses the pricing formula. See
@@ -646,7 +986,7 @@ func (s *PricingInfo) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-// ProjectBillingInfo: Encapsulation of billing information for a Cloud
+// ProjectBillingInfo: Encapsulation of billing information for a GCP
 // Console project. A project
 // has at most one associated billing account at a time (but a billing
 // account
@@ -747,6 +1087,48 @@ func (s *Service) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// SetIamPolicyRequest: Request message for `SetIamPolicy` method.
+type SetIamPolicyRequest struct {
+	// Policy: REQUIRED: The complete policy to be applied to the
+	// `resource`. The size of
+	// the policy is limited to a few 10s of KB. An empty policy is a
+	// valid policy but certain Cloud Platform services (such as
+	// Projects)
+	// might reject them.
+	Policy *Policy `json:"policy,omitempty"`
+
+	// UpdateMask: OPTIONAL: A FieldMask specifying which fields of the
+	// policy to modify. Only
+	// the fields in the mask will be modified. If no mask is provided,
+	// the
+	// following default mask is used:
+	// paths: "bindings, etag"
+	// This field is only used by Cloud IAM.
+	UpdateMask string `json:"updateMask,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Policy") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Policy") to include in API
+	// requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *SetIamPolicyRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod SetIamPolicyRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Sku: Encapsulates a single SKU in Google Cloud Platform
 type Sku struct {
 	// Category: The category hierarchy of this SKU, purely for
@@ -804,6 +1186,76 @@ func (s *Sku) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// TestIamPermissionsRequest: Request message for `TestIamPermissions`
+// method.
+type TestIamPermissionsRequest struct {
+	// Permissions: The set of permissions to check for the `resource`.
+	// Permissions with
+	// wildcards (such as '*' or 'storage.*') are not allowed. For
+	// more
+	// information see
+	// [IAM
+	// Overview](https://cloud.google.com/iam/docs/overview#permissions).
+	Permissions []string `json:"permissions,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "Permissions") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Permissions") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TestIamPermissionsRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod TestIamPermissionsRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// TestIamPermissionsResponse: Response message for `TestIamPermissions`
+// method.
+type TestIamPermissionsResponse struct {
+	// Permissions: A subset of `TestPermissionsRequest.permissions` that
+	// the caller is
+	// allowed.
+	Permissions []string `json:"permissions,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Permissions") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Permissions") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TestIamPermissionsResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod TestIamPermissionsResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // TierRate: The price rate indicating starting usage and its
 // corresponding price.
 type TierRate struct {
@@ -857,6 +1309,140 @@ func (s *TierRate) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+// method id "cloudbilling.billingAccounts.create":
+
+type BillingAccountsCreateCall struct {
+	s              *APIService
+	billingaccount *BillingAccount
+	urlParams_     gensupport.URLParams
+	ctx_           context.Context
+	header_        http.Header
+}
+
+// Create: Creates a billing account.
+// This method can only be used to create
+// [billing
+// subaccounts](https://cloud.google.com/billing/docs/concepts).
+// When creating a subaccount, the current authenticated user must have
+// the
+// `billing.accounts.update` IAM permission on the master account, which
+// is
+// typically given to billing
+// account
+// [administrators](https://cloud.google.com/billing/docs/how-to/
+// billing-access).
+//
+// > This method is currently in
+// > [Beta](https://cloud.google.com/terms/launch-stages).
+func (r *BillingAccountsService) Create(billingaccount *BillingAccount) *BillingAccountsCreateCall {
+	c := &BillingAccountsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.billingaccount = billingaccount
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *BillingAccountsCreateCall) Fields(s ...googleapi.Field) *BillingAccountsCreateCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *BillingAccountsCreateCall) Context(ctx context.Context) *BillingAccountsCreateCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BillingAccountsCreateCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *BillingAccountsCreateCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.billingaccount)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/billingAccounts")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudbilling.billingAccounts.create" call.
+// Exactly one of *BillingAccount or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *BillingAccount.ServerResponse.Header or (if a response was returned
+// at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *BillingAccountsCreateCall) Do(opts ...googleapi.CallOption) (*BillingAccount, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &BillingAccount{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Creates a billing account.\nThis method can only be used to create\n[billing subaccounts](https://cloud.google.com/billing/docs/concepts).\nWhen creating a subaccount, the current authenticated user must have the\n`billing.accounts.update` IAM permission on the master account, which is\ntypically given to billing account\n[administrators](https://cloud.google.com/billing/docs/how-to/billing-access).\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+	//   "flatPath": "v1/billingAccounts",
+	//   "httpMethod": "POST",
+	//   "id": "cloudbilling.billingAccounts.create",
+	//   "parameterOrder": [],
+	//   "parameters": {},
+	//   "path": "v1/billingAccounts",
+	//   "request": {
+	//     "$ref": "BillingAccount"
+	//   },
+	//   "response": {
+	//     "$ref": "BillingAccount"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "cloudbilling.billingAccounts.get":
 
 type BillingAccountsGetCall struct {
@@ -870,9 +1456,10 @@ type BillingAccountsGetCall struct {
 
 // Get: Gets information about a billing account. The current
 // authenticated user
-// must be an [owner of the
+// must be a [viewer of the
 // billing
-// account](https://support.google.com/cloud/answer/4430947).
+// account](https://cloud.google.com/billing/docs/how-to/billing-
+// access).
 func (r *BillingAccountsService) Get(name string) *BillingAccountsGetCall {
 	c := &BillingAccountsGetCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -973,7 +1560,7 @@ func (c *BillingAccountsGetCall) Do(opts ...googleapi.CallOption) (*BillingAccou
 	}
 	return ret, nil
 	// {
-	//   "description": "Gets information about a billing account. The current authenticated user\nmust be an [owner of the billing\naccount](https://support.google.com/cloud/answer/4430947).",
+	//   "description": "Gets information about a billing account. The current authenticated user\nmust be a [viewer of the billing\naccount](https://cloud.google.com/billing/docs/how-to/billing-access).",
 	//   "flatPath": "v1/billingAccounts/{billingAccountsId}",
 	//   "httpMethod": "GET",
 	//   "id": "cloudbilling.billingAccounts.get",
@@ -1000,6 +1587,155 @@ func (c *BillingAccountsGetCall) Do(opts ...googleapi.CallOption) (*BillingAccou
 
 }
 
+// method id "cloudbilling.billingAccounts.getIamPolicy":
+
+type BillingAccountsGetIamPolicyCall struct {
+	s            *APIService
+	resource     string
+	urlParams_   gensupport.URLParams
+	ifNoneMatch_ string
+	ctx_         context.Context
+	header_      http.Header
+}
+
+// GetIamPolicy: Gets the access control policy for a billing
+// account.
+// The caller must have the `billing.accounts.getIamPolicy` permission
+// on the
+// account, which is often given to billing
+// account
+// [viewers](https://cloud.google.com/billing/docs/how-to/billing
+// -access).
+//
+// > This method is currently in
+// > [Beta](https://cloud.google.com/terms/launch-stages).
+func (r *BillingAccountsService) GetIamPolicy(resource string) *BillingAccountsGetIamPolicyCall {
+	c := &BillingAccountsGetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *BillingAccountsGetIamPolicyCall) Fields(s ...googleapi.Field) *BillingAccountsGetIamPolicyCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// IfNoneMatch sets the optional parameter which makes the operation
+// fail if the object's ETag matches the given value. This is useful for
+// getting updates only after the object has changed since the last
+// request. Use googleapi.IsNotModified to check whether the response
+// error from Do is the result of In-None-Match.
+func (c *BillingAccountsGetIamPolicyCall) IfNoneMatch(entityTag string) *BillingAccountsGetIamPolicyCall {
+	c.ifNoneMatch_ = entityTag
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *BillingAccountsGetIamPolicyCall) Context(ctx context.Context) *BillingAccountsGetIamPolicyCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BillingAccountsGetIamPolicyCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *BillingAccountsGetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	if c.ifNoneMatch_ != "" {
+		reqHeaders.Set("If-None-Match", c.ifNoneMatch_)
+	}
+	var body io.Reader = nil
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:getIamPolicy")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("GET", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudbilling.billingAccounts.getIamPolicy" call.
+// Exactly one of *Policy or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Policy.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *BillingAccountsGetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Policy, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Policy{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Gets the access control policy for a billing account.\nThe caller must have the `billing.accounts.getIamPolicy` permission on the\naccount, which is often given to billing account\n[viewers](https://cloud.google.com/billing/docs/how-to/billing-access).\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+	//   "flatPath": "v1/billingAccounts/{billingAccountsId}:getIamPolicy",
+	//   "httpMethod": "GET",
+	//   "id": "cloudbilling.billingAccounts.getIamPolicy",
+	//   "parameterOrder": [
+	//     "resource"
+	//   ],
+	//   "parameters": {
+	//     "resource": {
+	//       "description": "REQUIRED: The resource for which the policy is being requested.\nSee the operation documentation for the appropriate value for this field.",
+	//       "location": "path",
+	//       "pattern": "^billingAccounts/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+resource}:getIamPolicy",
+	//   "response": {
+	//     "$ref": "Policy"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "cloudbilling.billingAccounts.list":
 
 type BillingAccountsListCall struct {
@@ -1010,11 +1746,31 @@ type BillingAccountsListCall struct {
 	header_      http.Header
 }
 
-// List: Lists the billing accounts that the current authenticated
-// user
-// [owns](https://support.google.com/cloud/answer/4430947).
+// List: Lists the billing accounts that the current authenticated user
+// has
+// permission to
+// [view](https://cloud.google.com/billing/docs/how-to/billing-access).
 func (r *BillingAccountsService) List() *BillingAccountsListCall {
 	c := &BillingAccountsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	return c
+}
+
+// Filter sets the optional parameter "filter": Options for how to
+// filter the returned billing accounts.
+// Currently this only supports filtering
+// for
+// [subaccounts](https://cloud.google.com/billing/docs/concepts) under
+// a
+// single provided reseller billing account.
+// (e.g.
+// "master_billing_account=billingAccounts/012345-678901-ABCDEF").
+// Boolea
+// n algebra and other fields are not currently supported.
+//
+// > This field is currently in
+// > [Beta](https://cloud.google.com/terms/launch-stages).
+func (c *BillingAccountsListCall) Filter(filter string) *BillingAccountsListCall {
+	c.urlParams_.Set("filter", filter)
 	return c
 }
 
@@ -1128,12 +1884,17 @@ func (c *BillingAccountsListCall) Do(opts ...googleapi.CallOption) (*ListBilling
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists the billing accounts that the current authenticated user\n[owns](https://support.google.com/cloud/answer/4430947).",
+	//   "description": "Lists the billing accounts that the current authenticated user has\npermission to [view](https://cloud.google.com/billing/docs/how-to/billing-access).",
 	//   "flatPath": "v1/billingAccounts",
 	//   "httpMethod": "GET",
 	//   "id": "cloudbilling.billingAccounts.list",
 	//   "parameterOrder": [],
 	//   "parameters": {
+	//     "filter": {
+	//       "description": "Options for how to filter the returned billing accounts.\nCurrently this only supports filtering for\n[subaccounts](https://cloud.google.com/billing/docs/concepts) under a\nsingle provided reseller billing account.\n(e.g. \"master_billing_account=billingAccounts/012345-678901-ABCDEF\").\nBoolean algebra and other fields are not currently supported.\n\n\u003e This field is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+	//       "location": "query",
+	//       "type": "string"
+	//     },
 	//     "pageSize": {
 	//       "description": "Requested page size. The maximum page size is 100; this is also the\ndefault.",
 	//       "format": "int32",
@@ -1178,6 +1939,455 @@ func (c *BillingAccountsListCall) Pages(ctx context.Context, f func(*ListBilling
 	}
 }
 
+// method id "cloudbilling.billingAccounts.patch":
+
+type BillingAccountsPatchCall struct {
+	s              *APIService
+	name           string
+	billingaccount *BillingAccount
+	urlParams_     gensupport.URLParams
+	ctx_           context.Context
+	header_        http.Header
+}
+
+// Patch: Updates a billing account's fields.
+// Currently the only field that can be edited is `display_name`.
+// The current authenticated user must have the
+// `billing.accounts.update`
+// IAM permission, which is typically given to
+// the
+// [administrator](https://cloud.google.com/billing/docs/how-to/billi
+// ng-access)
+// of the billing account.
+//
+// > This method is currently in
+// > [Beta](https://cloud.google.com/terms/launch-stages).
+func (r *BillingAccountsService) Patch(name string, billingaccount *BillingAccount) *BillingAccountsPatchCall {
+	c := &BillingAccountsPatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.name = name
+	c.billingaccount = billingaccount
+	return c
+}
+
+// UpdateMask sets the optional parameter "updateMask": The update mask
+// applied to the resource.
+// Only "display_name" is currently supported.
+func (c *BillingAccountsPatchCall) UpdateMask(updateMask string) *BillingAccountsPatchCall {
+	c.urlParams_.Set("updateMask", updateMask)
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *BillingAccountsPatchCall) Fields(s ...googleapi.Field) *BillingAccountsPatchCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *BillingAccountsPatchCall) Context(ctx context.Context) *BillingAccountsPatchCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BillingAccountsPatchCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *BillingAccountsPatchCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.billingaccount)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+name}")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("PATCH", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"name": c.name,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudbilling.billingAccounts.patch" call.
+// Exactly one of *BillingAccount or error will be non-nil. Any non-2xx
+// status code is an error. Response headers are in either
+// *BillingAccount.ServerResponse.Header or (if a response was returned
+// at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *BillingAccountsPatchCall) Do(opts ...googleapi.CallOption) (*BillingAccount, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &BillingAccount{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Updates a billing account's fields.\nCurrently the only field that can be edited is `display_name`.\nThe current authenticated user must have the `billing.accounts.update`\nIAM permission, which is typically given to the\n[administrator](https://cloud.google.com/billing/docs/how-to/billing-access)\nof the billing account.\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+	//   "flatPath": "v1/billingAccounts/{billingAccountsId}",
+	//   "httpMethod": "PATCH",
+	//   "id": "cloudbilling.billingAccounts.patch",
+	//   "parameterOrder": [
+	//     "name"
+	//   ],
+	//   "parameters": {
+	//     "name": {
+	//       "description": "The name of the billing account resource to be updated.",
+	//       "location": "path",
+	//       "pattern": "^billingAccounts/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     },
+	//     "updateMask": {
+	//       "description": "The update mask applied to the resource.\nOnly \"display_name\" is currently supported.",
+	//       "format": "google-fieldmask",
+	//       "location": "query",
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+name}",
+	//   "request": {
+	//     "$ref": "BillingAccount"
+	//   },
+	//   "response": {
+	//     "$ref": "BillingAccount"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudbilling.billingAccounts.setIamPolicy":
+
+type BillingAccountsSetIamPolicyCall struct {
+	s                   *APIService
+	resource            string
+	setiampolicyrequest *SetIamPolicyRequest
+	urlParams_          gensupport.URLParams
+	ctx_                context.Context
+	header_             http.Header
+}
+
+// SetIamPolicy: Sets the access control policy for a billing account.
+// Replaces any existing
+// policy.
+// The caller must have the `billing.accounts.setIamPolicy` permission
+// on the
+// account, which is often given to billing
+// account
+// [administrators](https://cloud.google.com/billing/docs/how-to/
+// billing-access).
+//
+// > This method is currently in
+// > [Beta](https://cloud.google.com/terms/launch-stages).
+func (r *BillingAccountsService) SetIamPolicy(resource string, setiampolicyrequest *SetIamPolicyRequest) *BillingAccountsSetIamPolicyCall {
+	c := &BillingAccountsSetIamPolicyCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	c.setiampolicyrequest = setiampolicyrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *BillingAccountsSetIamPolicyCall) Fields(s ...googleapi.Field) *BillingAccountsSetIamPolicyCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *BillingAccountsSetIamPolicyCall) Context(ctx context.Context) *BillingAccountsSetIamPolicyCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BillingAccountsSetIamPolicyCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *BillingAccountsSetIamPolicyCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.setiampolicyrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:setIamPolicy")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudbilling.billingAccounts.setIamPolicy" call.
+// Exactly one of *Policy or error will be non-nil. Any non-2xx status
+// code is an error. Response headers are in either
+// *Policy.ServerResponse.Header or (if a response was returned at all)
+// in error.(*googleapi.Error).Header. Use googleapi.IsNotModified to
+// check whether the returned error was because http.StatusNotModified
+// was returned.
+func (c *BillingAccountsSetIamPolicyCall) Do(opts ...googleapi.CallOption) (*Policy, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &Policy{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Sets the access control policy for a billing account. Replaces any existing\npolicy.\nThe caller must have the `billing.accounts.setIamPolicy` permission on the\naccount, which is often given to billing account\n[administrators](https://cloud.google.com/billing/docs/how-to/billing-access).\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+	//   "flatPath": "v1/billingAccounts/{billingAccountsId}:setIamPolicy",
+	//   "httpMethod": "POST",
+	//   "id": "cloudbilling.billingAccounts.setIamPolicy",
+	//   "parameterOrder": [
+	//     "resource"
+	//   ],
+	//   "parameters": {
+	//     "resource": {
+	//       "description": "REQUIRED: The resource for which the policy is being specified.\nSee the operation documentation for the appropriate value for this field.",
+	//       "location": "path",
+	//       "pattern": "^billingAccounts/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+resource}:setIamPolicy",
+	//   "request": {
+	//     "$ref": "SetIamPolicyRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "Policy"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
+// method id "cloudbilling.billingAccounts.testIamPermissions":
+
+type BillingAccountsTestIamPermissionsCall struct {
+	s                         *APIService
+	resource                  string
+	testiampermissionsrequest *TestIamPermissionsRequest
+	urlParams_                gensupport.URLParams
+	ctx_                      context.Context
+	header_                   http.Header
+}
+
+// TestIamPermissions: Tests the access control policy for a billing
+// account. This method takes
+// the resource and a set of permissions as input and returns the subset
+// of
+// the input permissions that the caller is allowed for that
+// resource.
+//
+// > This method is currently in
+// > [Beta](https://cloud.google.com/terms/launch-stages).
+func (r *BillingAccountsService) TestIamPermissions(resource string, testiampermissionsrequest *TestIamPermissionsRequest) *BillingAccountsTestIamPermissionsCall {
+	c := &BillingAccountsTestIamPermissionsCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.resource = resource
+	c.testiampermissionsrequest = testiampermissionsrequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *BillingAccountsTestIamPermissionsCall) Fields(s ...googleapi.Field) *BillingAccountsTestIamPermissionsCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *BillingAccountsTestIamPermissionsCall) Context(ctx context.Context) *BillingAccountsTestIamPermissionsCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *BillingAccountsTestIamPermissionsCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *BillingAccountsTestIamPermissionsCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.testiampermissionsrequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "v1/{+resource}:testIamPermissions")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	googleapi.Expand(req.URL, map[string]string{
+		"resource": c.resource,
+	})
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "cloudbilling.billingAccounts.testIamPermissions" call.
+// Exactly one of *TestIamPermissionsResponse or error will be non-nil.
+// Any non-2xx status code is an error. Response headers are in either
+// *TestIamPermissionsResponse.ServerResponse.Header or (if a response
+// was returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *BillingAccountsTestIamPermissionsCall) Do(opts ...googleapi.CallOption) (*TestIamPermissionsResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &TestIamPermissionsResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Tests the access control policy for a billing account. This method takes\nthe resource and a set of permissions as input and returns the subset of\nthe input permissions that the caller is allowed for that resource.\n\n\u003e This method is currently in\n\u003e [Beta](https://cloud.google.com/terms/launch-stages).",
+	//   "flatPath": "v1/billingAccounts/{billingAccountsId}:testIamPermissions",
+	//   "httpMethod": "POST",
+	//   "id": "cloudbilling.billingAccounts.testIamPermissions",
+	//   "parameterOrder": [
+	//     "resource"
+	//   ],
+	//   "parameters": {
+	//     "resource": {
+	//       "description": "REQUIRED: The resource for which the policy detail is being requested.\nSee the operation documentation for the appropriate value for this field.",
+	//       "location": "path",
+	//       "pattern": "^billingAccounts/[^/]+$",
+	//       "required": true,
+	//       "type": "string"
+	//     }
+	//   },
+	//   "path": "v1/{+resource}:testIamPermissions",
+	//   "request": {
+	//     "$ref": "TestIamPermissionsRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "TestIamPermissionsResponse"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/cloud-platform"
+	//   ]
+	// }
+
+}
+
 // method id "cloudbilling.billingAccounts.projects.list":
 
 type BillingAccountsProjectsListCall struct {
@@ -1191,11 +2401,12 @@ type BillingAccountsProjectsListCall struct {
 
 // List: Lists the projects associated with a billing account. The
 // current
-// authenticated user must have the "billing.resourceAssociations.list"
+// authenticated user must have the `billing.resourceAssociations.list`
 // IAM
 // permission, which is often given to billing
 // account
-// [viewers](https://support.google.com/cloud/answer/4430947).
+// [viewers](https://cloud.google.com/billing/docs/how-to/billing
+// -access).
 func (r *BillingAccountsProjectsService) List(name string) *BillingAccountsProjectsListCall {
 	c := &BillingAccountsProjectsListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.name = name
@@ -1315,7 +2526,7 @@ func (c *BillingAccountsProjectsListCall) Do(opts ...googleapi.CallOption) (*Lis
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists the projects associated with a billing account. The current\nauthenticated user must have the \"billing.resourceAssociations.list\" IAM\npermission, which is often given to billing account\n[viewers](https://support.google.com/cloud/answer/4430947).",
+	//   "description": "Lists the projects associated with a billing account. The current\nauthenticated user must have the `billing.resourceAssociations.list` IAM\npermission, which is often given to billing account\n[viewers](https://cloud.google.com/billing/docs/how-to/billing-access).",
 	//   "flatPath": "v1/billingAccounts/{billingAccountsId}/projects",
 	//   "httpMethod": "GET",
 	//   "id": "cloudbilling.billingAccounts.projects.list",
@@ -1546,7 +2757,7 @@ type ProjectsUpdateBillingInfoCall struct {
 //
 // *Note:* Incurred charges that have not yet been reported in the
 // transaction
-// history of the Google Cloud Console may be billed to the new
+// history of the GCP Console might be billed to the new
 // billing
 // account, even if the charge occurred before the new billing account
 // was
@@ -1559,10 +2770,10 @@ type ProjectsUpdateBillingInfoCall struct {
 // 0oxofvnoo
 // ) and the
 // [billing
-// account](https://support.google.com/cloud/answer/4430947).
+// account](https://cloud.google.com/billing/docs/how-to/billing
+// -access).
 //
-// Y
-// ou can disable billing on the project by setting
+// You can disable billing on the project by setting
 // the
 // `billing_account_name` field to empty. This action disassociates
 // the
@@ -1679,7 +2890,7 @@ func (c *ProjectsUpdateBillingInfoCall) Do(opts ...googleapi.CallOption) (*Proje
 	}
 	return ret, nil
 	// {
-	//   "description": "Sets or updates the billing account associated with a project. You specify\nthe new billing account by setting the `billing_account_name` in the\n`ProjectBillingInfo` resource to the resource name of a billing account.\nAssociating a project with an open billing account enables billing on the\nproject and allows charges for resource usage. If the project already had a\nbilling account, this method changes the billing account used for resource\nusage charges.\n\n*Note:* Incurred charges that have not yet been reported in the transaction\nhistory of the Google Cloud Console may be billed to the new billing\naccount, even if the charge occurred before the new billing account was\nassigned to the project.\n\nThe current authenticated user must have ownership privileges for both the\n[project](https://cloud.google.com/docs/permissions-overview#h.bgs0oxofvnoo\n) and the [billing\naccount](https://support.google.com/cloud/answer/4430947).\n\nYou can disable billing on the project by setting the\n`billing_account_name` field to empty. This action disassociates the\ncurrent billing account from the project. Any billable activity of your\nin-use services will stop, and your application could stop functioning as\nexpected. Any unbilled charges to date will be billed to the previously\nassociated account. The current authenticated user must be either an owner\nof the project or an owner of the billing account for the project.\n\nNote that associating a project with a *closed* billing account will have\nmuch the same effect as disabling billing on the project: any paid\nresources used by the project will be shut down. Thus, unless you wish to\ndisable billing, you should always call this method with the name of an\n*open* billing account.",
+	//   "description": "Sets or updates the billing account associated with a project. You specify\nthe new billing account by setting the `billing_account_name` in the\n`ProjectBillingInfo` resource to the resource name of a billing account.\nAssociating a project with an open billing account enables billing on the\nproject and allows charges for resource usage. If the project already had a\nbilling account, this method changes the billing account used for resource\nusage charges.\n\n*Note:* Incurred charges that have not yet been reported in the transaction\nhistory of the GCP Console might be billed to the new billing\naccount, even if the charge occurred before the new billing account was\nassigned to the project.\n\nThe current authenticated user must have ownership privileges for both the\n[project](https://cloud.google.com/docs/permissions-overview#h.bgs0oxofvnoo\n) and the [billing\naccount](https://cloud.google.com/billing/docs/how-to/billing-access).\n\nYou can disable billing on the project by setting the\n`billing_account_name` field to empty. This action disassociates the\ncurrent billing account from the project. Any billable activity of your\nin-use services will stop, and your application could stop functioning as\nexpected. Any unbilled charges to date will be billed to the previously\nassociated account. The current authenticated user must be either an owner\nof the project or an owner of the billing account for the project.\n\nNote that associating a project with a *closed* billing account will have\nmuch the same effect as disabling billing on the project: any paid\nresources used by the project will be shut down. Thus, unless you wish to\ndisable billing, you should always call this method with the name of an\n*open* billing account.",
 	//   "flatPath": "v1/projects/{projectsId}/billingInfo",
 	//   "httpMethod": "PUT",
 	//   "id": "cloudbilling.projects.updateBillingInfo",

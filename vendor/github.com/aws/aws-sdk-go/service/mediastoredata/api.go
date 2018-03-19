@@ -438,7 +438,6 @@ func (c *MediaStoreData) PutObjectWithContext(ctx aws.Context, input *PutObjectI
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/DeleteObjectRequest
 type DeleteObjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -481,7 +480,6 @@ func (s *DeleteObjectInput) SetPath(v string) *DeleteObjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/DeleteObjectResponse
 type DeleteObjectOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -496,7 +494,6 @@ func (s DeleteObjectOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/DescribeObjectRequest
 type DescribeObjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -539,7 +536,6 @@ func (s *DescribeObjectInput) SetPath(v string) *DescribeObjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/DescribeObjectResponse
 type DescribeObjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -603,7 +599,6 @@ func (s *DescribeObjectOutput) SetLastModified(v time.Time) *DescribeObjectOutpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/GetObjectRequest
 type GetObjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -678,7 +673,6 @@ func (s *GetObjectInput) SetRange(v string) *GetObjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/GetObjectResponse
 type GetObjectOutput struct {
 	_ struct{} `type:"structure" payload:"Body"`
 
@@ -774,7 +768,6 @@ func (s *GetObjectOutput) SetStatusCode(v int64) *GetObjectOutput {
 }
 
 // A metadata entry for a folder or object.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/Item
 type Item struct {
 	_ struct{} `type:"structure"`
 
@@ -843,7 +836,6 @@ func (s *Item) SetType(v string) *Item {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/ListItemsRequest
 type ListItemsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -900,7 +892,6 @@ func (s *ListItemsInput) SetPath(v string) *ListItemsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/ListItemsResponse
 type ListItemsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -933,7 +924,6 @@ func (s *ListItemsOutput) SetNextToken(v string) *ListItemsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/PutObjectRequest
 type PutObjectInput struct {
 	_ struct{} `type:"structure" payload:"Body"`
 
@@ -1047,7 +1037,6 @@ func (s *PutObjectInput) SetStorageClass(v string) *PutObjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/mediastore-data-2017-09-01/PutObjectResponse
 type PutObjectOutput struct {
 	_ struct{} `type:"structure"`
 

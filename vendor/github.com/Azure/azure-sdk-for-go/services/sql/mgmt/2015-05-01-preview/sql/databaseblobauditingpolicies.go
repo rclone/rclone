@@ -44,12 +44,12 @@ func NewDatabaseBlobAuditingPoliciesClientWithBaseURI(baseURI string, subscripti
 
 // CreateOrUpdate creates or updates a database's blob auditing policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database for which the blob auditing policy will be defined. blobAuditingPolicyName is the name of the blob auditing
-// policy. parameters is the database blob auditing policy.
-func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, blobAuditingPolicyName string, parameters DatabaseBlobAuditingPolicy) (result DatabaseBlobAuditingPolicy, err error) {
-	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, blobAuditingPolicyName, parameters)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database for which the blob auditing policy will be defined. parameters is the database blob auditing
+// policy.
+func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DatabaseBlobAuditingPolicy) (result DatabaseBlobAuditingPolicy, err error) {
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.DatabaseBlobAuditingPoliciesClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -71,9 +71,9 @@ func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdate(ctx context.Cont
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, blobAuditingPolicyName string, parameters DatabaseBlobAuditingPolicy) (*http.Request, error) {
+func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters DatabaseBlobAuditingPolicy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"blobAuditingPolicyName": autorest.Encode("path", blobAuditingPolicyName),
+		"blobAuditingPolicyName": autorest.Encode("path", "default"),
 		"databaseName":           autorest.Encode("path", databaseName),
 		"resourceGroupName":      autorest.Encode("path", resourceGroupName),
 		"serverName":             autorest.Encode("path", serverName),
@@ -117,11 +117,11 @@ func (client DatabaseBlobAuditingPoliciesClient) CreateOrUpdateResponder(resp *h
 
 // Get gets a database's blob auditing policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database for which the blob audit policy is defined. blobAuditingPolicyName is the name of the blob auditing policy.
-func (client DatabaseBlobAuditingPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, blobAuditingPolicyName string) (result DatabaseBlobAuditingPolicy, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, blobAuditingPolicyName)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database for which the blob audit policy is defined.
+func (client DatabaseBlobAuditingPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result DatabaseBlobAuditingPolicy, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.DatabaseBlobAuditingPoliciesClient", "Get", nil, "Failure preparing request")
 		return
@@ -143,9 +143,9 @@ func (client DatabaseBlobAuditingPoliciesClient) Get(ctx context.Context, resour
 }
 
 // GetPreparer prepares the Get request.
-func (client DatabaseBlobAuditingPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, blobAuditingPolicyName string) (*http.Request, error) {
+func (client DatabaseBlobAuditingPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"blobAuditingPolicyName": autorest.Encode("path", blobAuditingPolicyName),
+		"blobAuditingPolicyName": autorest.Encode("path", "default"),
 		"databaseName":           autorest.Encode("path", databaseName),
 		"resourceGroupName":      autorest.Encode("path", resourceGroupName),
 		"serverName":             autorest.Encode("path", serverName),

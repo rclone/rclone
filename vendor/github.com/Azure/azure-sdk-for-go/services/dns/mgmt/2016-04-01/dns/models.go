@@ -234,56 +234,54 @@ func (rs *RecordSet) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rs.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rs.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rs.Type = &typeVar
+			}
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				rs.Etag = &etag
+			}
+		case "properties":
+			if v != nil {
+				var recordSetProperties RecordSetProperties
+				err = json.Unmarshal(*v, &recordSetProperties)
+				if err != nil {
+					return err
+				}
+				rs.RecordSetProperties = &recordSetProperties
+			}
 		}
-		rs.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		rs.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		rs.Type = &typeVar
-	}
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
-		}
-		rs.Etag = &etag
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties RecordSetProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		rs.RecordSetProperties = &properties
 	}
 
 	return nil
@@ -394,7 +392,7 @@ func (page RecordSetListResultPage) Values() []RecordSet {
 // RecordSetProperties represents the properties of the records in the record set.
 type RecordSetProperties struct {
 	// Metadata - The metadata attached to the record set.
-	Metadata *map[string]*string `json:"metadata,omitempty"`
+	Metadata map[string]*string `json:"metadata"`
 	// TTL - The TTL (time-to-live) of the records in the record set.
 	TTL *int64 `json:"TTL,omitempty"`
 	// ARecords - The list of A records in the record set.
@@ -417,6 +415,45 @@ type RecordSetProperties struct {
 	SoaRecord *SoaRecord `json:"SOARecord,omitempty"`
 }
 
+// MarshalJSON is the custom marshaler for RecordSetProperties.
+func (rsp RecordSetProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rsp.Metadata != nil {
+		objectMap["metadata"] = rsp.Metadata
+	}
+	if rsp.TTL != nil {
+		objectMap["TTL"] = rsp.TTL
+	}
+	if rsp.ARecords != nil {
+		objectMap["ARecords"] = rsp.ARecords
+	}
+	if rsp.AaaaRecords != nil {
+		objectMap["AAAARecords"] = rsp.AaaaRecords
+	}
+	if rsp.MxRecords != nil {
+		objectMap["MXRecords"] = rsp.MxRecords
+	}
+	if rsp.NsRecords != nil {
+		objectMap["NSRecords"] = rsp.NsRecords
+	}
+	if rsp.PtrRecords != nil {
+		objectMap["PTRRecords"] = rsp.PtrRecords
+	}
+	if rsp.SrvRecords != nil {
+		objectMap["SRVRecords"] = rsp.SrvRecords
+	}
+	if rsp.TxtRecords != nil {
+		objectMap["TXTRecords"] = rsp.TxtRecords
+	}
+	if rsp.CnameRecord != nil {
+		objectMap["CNAMERecord"] = rsp.CnameRecord
+	}
+	if rsp.SoaRecord != nil {
+		objectMap["SOARecord"] = rsp.SoaRecord
+	}
+	return json.Marshal(objectMap)
+}
+
 // RecordSetUpdateParameters parameters supplied to update a record set.
 type RecordSetUpdateParameters struct {
 	// RecordSet - Specifies information about the record set being updated.
@@ -434,7 +471,28 @@ type Resource struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // SoaRecord an SOA record.
@@ -482,6 +540,10 @@ type TxtRecord struct {
 // Zone describes a DNS zone.
 type Zone struct {
 	autorest.Response `json:"-"`
+	// Etag - The etag of the zone.
+	Etag *string `json:"etag,omitempty"`
+	// ZoneProperties - The properties of the zone.
+	*ZoneProperties `json:"properties,omitempty"`
 	// ID - Resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name.
@@ -491,11 +553,34 @@ type Zone struct {
 	// Location - Resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Etag - The etag of the zone.
-	Etag *string `json:"etag,omitempty"`
-	// ZoneProperties - The properties of the zone.
-	*ZoneProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Zone.
+func (z Zone) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if z.Etag != nil {
+		objectMap["etag"] = z.Etag
+	}
+	if z.ZoneProperties != nil {
+		objectMap["properties"] = z.ZoneProperties
+	}
+	if z.ID != nil {
+		objectMap["id"] = z.ID
+	}
+	if z.Name != nil {
+		objectMap["name"] = z.Name
+	}
+	if z.Type != nil {
+		objectMap["type"] = z.Type
+	}
+	if z.Location != nil {
+		objectMap["location"] = z.Location
+	}
+	if z.Tags != nil {
+		objectMap["tags"] = z.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Zone struct.
@@ -505,76 +590,72 @@ func (z *Zone) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["etag"]
-	if v != nil {
-		var etag string
-		err = json.Unmarshal(*m["etag"], &etag)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "etag":
+			if v != nil {
+				var etag string
+				err = json.Unmarshal(*v, &etag)
+				if err != nil {
+					return err
+				}
+				z.Etag = &etag
+			}
+		case "properties":
+			if v != nil {
+				var zoneProperties ZoneProperties
+				err = json.Unmarshal(*v, &zoneProperties)
+				if err != nil {
+					return err
+				}
+				z.ZoneProperties = &zoneProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				z.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				z.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				z.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				z.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				z.Tags = tags
+			}
 		}
-		z.Etag = &etag
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties ZoneProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		z.ZoneProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		z.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		z.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		z.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		z.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		z.Tags = &tags
 	}
 
 	return nil
@@ -716,21 +797,38 @@ func (future ZonesDeleteFuture) Result(client ZonesClient) (zdr ZoneDeleteResult
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return zdr, autorest.NewError("dns.ZonesDeleteFuture", "Result", "asynchronous operation has not completed")
+		return zdr, azure.NewAsyncOpIncompleteError("dns.ZonesDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		zdr, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	zdr, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "dns.ZonesDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }

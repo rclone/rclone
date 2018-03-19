@@ -25,7 +25,7 @@ import (
 )
 
 // LogFilesClient is the the Microsoft Azure management API provides create, read, update, and delete functionality for
-// Azure MySQL resources including servers, databases, firewall rules, VNET rules, log files and configurations.
+// Azure MySQL resources including servers, databases, firewall rules, log files and configurations.
 type LogFilesClient struct {
 	BaseClient
 }
@@ -42,8 +42,8 @@ func NewLogFilesClientWithBaseURI(baseURI string, subscriptionID string) LogFile
 
 // ListByServer list all the log files in a given server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client LogFilesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result LogFileListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

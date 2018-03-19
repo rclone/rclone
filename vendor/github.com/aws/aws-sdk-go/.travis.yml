@@ -8,6 +8,7 @@ go:
   - 1.7.x
   - 1.8.x
   - 1.9.x
+  - 1.10.x
   - tip
     
 # Use Go 1.5's vendoring experiment for 1.5 tests.

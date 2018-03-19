@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"json",
     "serviceFullName":"AWS Service Catalog",
+    "serviceId":"Service Catalog",
     "signatureVersion":"v4",
     "targetPrefix":"AWS242ServiceCatalogService",
     "uid":"servicecatalog-2015-12-10"
@@ -140,6 +141,20 @@
         {"shape":"TagOptionNotMigratedException"}
       ]
     },
+    "CreateProvisionedProductPlan":{
+      "name":"CreateProvisionedProductPlan",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"CreateProvisionedProductPlanInput"},
+      "output":{"shape":"CreateProvisionedProductPlanOutput"},
+      "errors":[
+        {"shape":"InvalidParametersException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidStateException"}
+      ]
+    },
     "CreateProvisioningArtifact":{
       "name":"CreateProvisioningArtifact",
       "http":{
@@ -223,6 +238,19 @@
         {"shape":"TagOptionNotMigratedException"}
       ]
     },
+    "DeleteProvisionedProductPlan":{
+      "name":"DeleteProvisionedProductPlan",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteProvisionedProductPlanInput"},
+      "output":{"shape":"DeleteProvisionedProductPlanOutput"},
+      "errors":[
+        {"shape":"InvalidParametersException"},
+        {"shape":"ResourceNotFoundException"}
+      ]
+    },
     "DeleteProvisioningArtifact":{
       "name":"DeleteProvisioningArtifact",
       "http":{
@@ -235,6 +263,20 @@
         {"shape":"ResourceNotFoundException"},
         {"shape":"ResourceInUseException"},
         {"shape":"InvalidParametersException"}
+      ]
+    },
+    "DeleteTagOption":{
+      "name":"DeleteTagOption",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteTagOptionInput"},
+      "output":{"shape":"DeleteTagOptionOutput"},
+      "errors":[
+        {"shape":"TagOptionNotMigratedException"},
+        {"shape":"ResourceInUseException"},
+        {"shape":"ResourceNotFoundException"}
       ]
     },
     "DescribeConstraint":{
@@ -321,6 +363,19 @@
       "output":{"shape":"DescribeProvisionedProductOutput"},
       "errors":[
         {"shape":"ResourceNotFoundException"}
+      ]
+    },
+    "DescribeProvisionedProductPlan":{
+      "name":"DescribeProvisionedProductPlan",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeProvisionedProductPlanInput"},
+      "output":{"shape":"DescribeProvisionedProductPlanOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidParametersException"}
       ]
     },
     "DescribeProvisioningArtifact":{
@@ -413,6 +468,20 @@
         {"shape":"ResourceNotFoundException"}
       ]
     },
+    "ExecuteProvisionedProductPlan":{
+      "name":"ExecuteProvisionedProductPlan",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ExecuteProvisionedProductPlanInput"},
+      "output":{"shape":"ExecuteProvisionedProductPlanOutput"},
+      "errors":[
+        {"shape":"InvalidParametersException"},
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidStateException"}
+      ]
+    },
     "ListAcceptedPortfolioShares":{
       "name":"ListAcceptedPortfolioShares",
       "http":{
@@ -496,6 +565,19 @@
       },
       "input":{"shape":"ListPrincipalsForPortfolioInput"},
       "output":{"shape":"ListPrincipalsForPortfolioOutput"},
+      "errors":[
+        {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidParametersException"}
+      ]
+    },
+    "ListProvisionedProductPlans":{
+      "name":"ListProvisionedProductPlans",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"ListProvisionedProductPlansInput"},
+      "output":{"shape":"ListProvisionedProductPlansOutput"},
       "errors":[
         {"shape":"ResourceNotFoundException"},
         {"shape":"InvalidParametersException"}
@@ -613,6 +695,18 @@
       "output":{"shape":"SearchProductsAsAdminOutput"},
       "errors":[
         {"shape":"ResourceNotFoundException"},
+        {"shape":"InvalidParametersException"}
+      ]
+    },
+    "SearchProvisionedProducts":{
+      "name":"SearchProvisionedProducts",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"SearchProvisionedProductsInput"},
+      "output":{"shape":"SearchProvisionedProductsOutput"},
+      "errors":[
         {"shape":"InvalidParametersException"}
       ]
     },
@@ -816,6 +910,26 @@
       }
     },
     "AttributeValue":{"type":"string"},
+    "CausingEntity":{"type":"string"},
+    "ChangeAction":{
+      "type":"string",
+      "enum":[
+        "ADD",
+        "MODIFY",
+        "REMOVE"
+      ]
+    },
+    "CloudWatchDashboard":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"CloudWatchDashboardName"}
+      }
+    },
+    "CloudWatchDashboardName":{"type":"string"},
+    "CloudWatchDashboards":{
+      "type":"list",
+      "member":{"shape":"CloudWatchDashboard"}
+    },
     "ConstraintDescription":{
       "type":"string",
       "max":2000
@@ -999,6 +1113,43 @@
         "Tags":{"shape":"Tags"}
       }
     },
+    "CreateProvisionedProductPlanInput":{
+      "type":"structure",
+      "required":[
+        "PlanName",
+        "PlanType",
+        "ProductId",
+        "ProvisionedProductName",
+        "ProvisioningArtifactId",
+        "IdempotencyToken"
+      ],
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "PlanName":{"shape":"ProvisionedProductPlanName"},
+        "PlanType":{"shape":"ProvisionedProductPlanType"},
+        "NotificationArns":{"shape":"NotificationArns"},
+        "PathId":{"shape":"Id"},
+        "ProductId":{"shape":"Id"},
+        "ProvisionedProductName":{"shape":"ProvisionedProductName"},
+        "ProvisioningArtifactId":{"shape":"Id"},
+        "ProvisioningParameters":{"shape":"UpdateProvisioningParameters"},
+        "IdempotencyToken":{
+          "shape":"IdempotencyToken",
+          "idempotencyToken":true
+        },
+        "Tags":{"shape":"Tags"}
+      }
+    },
+    "CreateProvisionedProductPlanOutput":{
+      "type":"structure",
+      "members":{
+        "PlanName":{"shape":"ProvisionedProductPlanName"},
+        "PlanId":{"shape":"Id"},
+        "ProvisionProductId":{"shape":"Id"},
+        "ProvisionedProductName":{"shape":"ProvisionedProductName"},
+        "ProvisioningArtifactId":{"shape":"Id"}
+      }
+    },
     "CreateProvisioningArtifactInput":{
       "type":"structure",
       "required":[
@@ -1100,6 +1251,20 @@
       "members":{
       }
     },
+    "DeleteProvisionedProductPlanInput":{
+      "type":"structure",
+      "required":["PlanId"],
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "PlanId":{"shape":"Id"},
+        "IgnoreErrors":{"shape":"IgnoreErrors"}
+      }
+    },
+    "DeleteProvisionedProductPlanOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
     "DeleteProvisioningArtifactInput":{
       "type":"structure",
       "required":[
@@ -1113,6 +1278,18 @@
       }
     },
     "DeleteProvisioningArtifactOutput":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "DeleteTagOptionInput":{
+      "type":"structure",
+      "required":["Id"],
+      "members":{
+        "Id":{"shape":"TagOptionId"}
+      }
+    },
+    "DeleteTagOptionOutput":{
       "type":"structure",
       "members":{
       }
@@ -1223,7 +1400,26 @@
     "DescribeProvisionedProductOutput":{
       "type":"structure",
       "members":{
-        "ProvisionedProductDetail":{"shape":"ProvisionedProductDetail"}
+        "ProvisionedProductDetail":{"shape":"ProvisionedProductDetail"},
+        "CloudWatchDashboards":{"shape":"CloudWatchDashboards"}
+      }
+    },
+    "DescribeProvisionedProductPlanInput":{
+      "type":"structure",
+      "required":["PlanId"],
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "PlanId":{"shape":"Id"},
+        "PageSize":{"shape":"PageSize"},
+        "PageToken":{"shape":"PageToken"}
+      }
+    },
+    "DescribeProvisionedProductPlanOutput":{
+      "type":"structure",
+      "members":{
+        "ProvisionedProductPlanDetails":{"shape":"ProvisionedProductPlanDetails"},
+        "ResourceChanges":{"shape":"ResourceChanges"},
+        "NextPageToken":{"shape":"PageToken"}
       }
     },
     "DescribeProvisioningArtifactInput":{
@@ -1359,6 +1555,34 @@
     },
     "ErrorCode":{"type":"string"},
     "ErrorDescription":{"type":"string"},
+    "EvaluationType":{
+      "type":"string",
+      "enum":[
+        "STATIC",
+        "DYNAMIC"
+      ]
+    },
+    "ExecuteProvisionedProductPlanInput":{
+      "type":"structure",
+      "required":[
+        "PlanId",
+        "IdempotencyToken"
+      ],
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "PlanId":{"shape":"Id"},
+        "IdempotencyToken":{
+          "shape":"IdempotencyToken",
+          "idempotencyToken":true
+        }
+      }
+    },
+    "ExecuteProvisionedProductPlanOutput":{
+      "type":"structure",
+      "members":{
+        "RecordDetail":{"shape":"RecordDetail"}
+      }
+    },
     "HasDefaultPath":{"type":"boolean"},
     "Id":{
       "type":"string",
@@ -1520,6 +1744,23 @@
         "NextPageToken":{"shape":"PageToken"}
       }
     },
+    "ListProvisionedProductPlansInput":{
+      "type":"structure",
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "ProvisionProductId":{"shape":"Id"},
+        "PageSize":{"shape":"PageSize"},
+        "PageToken":{"shape":"PageToken"},
+        "AccessLevelFilter":{"shape":"AccessLevelFilter"}
+      }
+    },
+    "ListProvisionedProductPlansOutput":{
+      "type":"structure",
+      "members":{
+        "ProvisionedProductPlans":{"shape":"ProvisionedProductPlans"},
+        "NextPageToken":{"shape":"PageToken"}
+      }
+    },
     "ListProvisioningArtifactsInput":{
       "type":"structure",
       "required":["ProductId"],
@@ -1599,6 +1840,7 @@
         "PageToken":{"shape":"PageToken"}
       }
     },
+    "LogicalResourceId":{"type":"string"},
     "NoEcho":{"type":"boolean"},
     "NotificationArn":{
       "type":"string",
@@ -1637,6 +1879,13 @@
     "ParameterValue":{
       "type":"string",
       "max":4096
+    },
+    "PhysicalId":{"type":"string"},
+    "PhysicalResourceId":{"type":"string"},
+    "PlanResourceType":{
+      "type":"string",
+      "max":256,
+      "min":1
     },
     "PortfolioDescription":{
       "type":"string",
@@ -1781,9 +2030,10 @@
         "SupportUrl":{"shape":"SupportUrl"}
       }
     },
+    "PropertyName":{"type":"string"},
     "ProviderName":{
       "type":"string",
-      "max":20,
+      "max":50,
       "min":1
     },
     "ProvisionProductInput":{
@@ -1815,6 +2065,30 @@
         "RecordDetail":{"shape":"RecordDetail"}
       }
     },
+    "ProvisionedProductAttribute":{
+      "type":"structure",
+      "members":{
+        "Name":{"shape":"ProvisionedProductNameOrArn"},
+        "Arn":{"shape":"ProvisionedProductNameOrArn"},
+        "Type":{"shape":"ProvisionedProductType"},
+        "Id":{"shape":"Id"},
+        "Status":{"shape":"ProvisionedProductStatus"},
+        "StatusMessage":{"shape":"ProvisionedProductStatusMessage"},
+        "CreatedTime":{"shape":"CreatedTime"},
+        "IdempotencyToken":{"shape":"IdempotencyToken"},
+        "LastRecordId":{"shape":"Id"},
+        "Tags":{"shape":"Tags"},
+        "PhysicalId":{"shape":"PhysicalId"},
+        "ProductId":{"shape":"Id"},
+        "ProvisioningArtifactId":{"shape":"Id"},
+        "UserArn":{"shape":"UserArn"},
+        "UserArnSession":{"shape":"UserArnSession"}
+      }
+    },
+    "ProvisionedProductAttributes":{
+      "type":"list",
+      "member":{"shape":"ProvisionedProductAttribute"}
+    },
     "ProvisionedProductDetail":{
       "type":"structure",
       "members":{
@@ -1833,6 +2107,11 @@
       "type":"list",
       "member":{"shape":"ProvisionedProductDetail"}
     },
+    "ProvisionedProductFilters":{
+      "type":"map",
+      "key":{"shape":"ProvisionedProductViewFilterBy"},
+      "value":{"shape":"ProvisionedProductViewFilterValues"}
+    },
     "ProvisionedProductId":{"type":"string"},
     "ProvisionedProductName":{
       "type":"string",
@@ -1846,17 +2125,78 @@
       "min":1,
       "pattern":"[a-zA-Z0-9][a-zA-Z0-9._-]{0,127}|arn:[a-z0-9-\\.]{1,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[a-z0-9-\\.]{0,63}:[^/].{0,1023}"
     },
+    "ProvisionedProductPlanDetails":{
+      "type":"structure",
+      "members":{
+        "CreatedTime":{"shape":"CreatedTime"},
+        "PathId":{"shape":"Id"},
+        "ProductId":{"shape":"Id"},
+        "PlanName":{"shape":"ProvisionedProductPlanName"},
+        "PlanId":{"shape":"Id"},
+        "ProvisionProductId":{"shape":"Id"},
+        "ProvisionProductName":{"shape":"ProvisionedProductName"},
+        "PlanType":{"shape":"ProvisionedProductPlanType"},
+        "ProvisioningArtifactId":{"shape":"Id"},
+        "Status":{"shape":"ProvisionedProductPlanStatus"},
+        "UpdatedTime":{"shape":"UpdatedTime"},
+        "NotificationArns":{"shape":"NotificationArns"},
+        "ProvisioningParameters":{"shape":"UpdateProvisioningParameters"},
+        "Tags":{"shape":"Tags"},
+        "StatusMessage":{"shape":"StatusMessage"}
+      }
+    },
+    "ProvisionedProductPlanName":{"type":"string"},
+    "ProvisionedProductPlanStatus":{
+      "type":"string",
+      "enum":[
+        "CREATE_IN_PROGRESS",
+        "CREATE_SUCCESS",
+        "CREATE_FAILED",
+        "EXECUTE_IN_PROGRESS",
+        "EXECUTE_SUCCESS",
+        "EXECUTE_FAILED"
+      ]
+    },
+    "ProvisionedProductPlanSummary":{
+      "type":"structure",
+      "members":{
+        "PlanName":{"shape":"ProvisionedProductPlanName"},
+        "PlanId":{"shape":"Id"},
+        "ProvisionProductId":{"shape":"Id"},
+        "ProvisionProductName":{"shape":"ProvisionedProductName"},
+        "PlanType":{"shape":"ProvisionedProductPlanType"},
+        "ProvisioningArtifactId":{"shape":"Id"}
+      }
+    },
+    "ProvisionedProductPlanType":{
+      "type":"string",
+      "enum":["CLOUDFORMATION"]
+    },
+    "ProvisionedProductPlans":{
+      "type":"list",
+      "member":{"shape":"ProvisionedProductPlanSummary"}
+    },
     "ProvisionedProductStatus":{
       "type":"string",
       "enum":[
         "AVAILABLE",
         "UNDER_CHANGE",
         "TAINTED",
-        "ERROR"
+        "ERROR",
+        "PLAN_IN_PROGRESS"
       ]
     },
     "ProvisionedProductStatusMessage":{"type":"string"},
     "ProvisionedProductType":{"type":"string"},
+    "ProvisionedProductViewFilterBy":{
+      "type":"string",
+      "enum":["SearchQuery"]
+    },
+    "ProvisionedProductViewFilterValue":{"type":"string"},
+    "ProvisionedProductViewFilterValues":{
+      "type":"list",
+      "member":{"shape":"ProvisionedProductViewFilterValue"}
+    },
     "ProvisioningArtifact":{
       "type":"structure",
       "members":{
@@ -2054,10 +2394,65 @@
       "members":{
       }
     },
+    "Replacement":{
+      "type":"string",
+      "enum":[
+        "TRUE",
+        "FALSE",
+        "CONDITIONAL"
+      ]
+    },
+    "RequiresRecreation":{
+      "type":"string",
+      "enum":[
+        "NEVER",
+        "CONDITIONALLY",
+        "ALWAYS"
+      ]
+    },
     "ResourceARN":{
       "type":"string",
       "max":150,
       "min":1
+    },
+    "ResourceAttribute":{
+      "type":"string",
+      "enum":[
+        "PROPERTIES",
+        "METADATA",
+        "CREATIONPOLICY",
+        "UPDATEPOLICY",
+        "DELETIONPOLICY",
+        "TAGS"
+      ]
+    },
+    "ResourceChange":{
+      "type":"structure",
+      "members":{
+        "Action":{"shape":"ChangeAction"},
+        "LogicalResourceId":{"shape":"LogicalResourceId"},
+        "PhysicalResourceId":{"shape":"PhysicalResourceId"},
+        "ResourceType":{"shape":"PlanResourceType"},
+        "Replacement":{"shape":"Replacement"},
+        "Scope":{"shape":"Scope"},
+        "Details":{"shape":"ResourceChangeDetails"}
+      }
+    },
+    "ResourceChangeDetail":{
+      "type":"structure",
+      "members":{
+        "Target":{"shape":"ResourceTargetDefinition"},
+        "Evaluation":{"shape":"EvaluationType"},
+        "CausingEntity":{"shape":"CausingEntity"}
+      }
+    },
+    "ResourceChangeDetails":{
+      "type":"list",
+      "member":{"shape":"ResourceChangeDetail"}
+    },
+    "ResourceChanges":{
+      "type":"list",
+      "member":{"shape":"ResourceChange"}
     },
     "ResourceDetail":{
       "type":"structure",
@@ -2091,6 +2486,14 @@
       },
       "exception":true
     },
+    "ResourceTargetDefinition":{
+      "type":"structure",
+      "members":{
+        "Attribute":{"shape":"ResourceAttribute"},
+        "Name":{"shape":"PropertyName"},
+        "RequiresRecreation":{"shape":"RequiresRecreation"}
+      }
+    },
     "ResourceType":{"type":"string"},
     "ScanProvisionedProductsInput":{
       "type":"structure",
@@ -2107,6 +2510,10 @@
         "ProvisionedProducts":{"shape":"ProvisionedProductDetails"},
         "NextPageToken":{"shape":"PageToken"}
       }
+    },
+    "Scope":{
+      "type":"list",
+      "member":{"shape":"ResourceAttribute"}
     },
     "SearchFilterKey":{"type":"string"},
     "SearchFilterValue":{"type":"string"},
@@ -2149,6 +2556,32 @@
         "NextPageToken":{"shape":"PageToken"}
       }
     },
+    "SearchProvisionedProductsInput":{
+      "type":"structure",
+      "members":{
+        "AcceptLanguage":{"shape":"AcceptLanguage"},
+        "AccessLevelFilter":{"shape":"AccessLevelFilter"},
+        "Filters":{"shape":"ProvisionedProductFilters"},
+        "SortBy":{"shape":"SortField"},
+        "SortOrder":{"shape":"SortOrder"},
+        "PageSize":{"shape":"SearchProvisionedProductsPageSize"},
+        "PageToken":{"shape":"PageToken"}
+      }
+    },
+    "SearchProvisionedProductsOutput":{
+      "type":"structure",
+      "members":{
+        "ProvisionedProducts":{"shape":"ProvisionedProductAttributes"},
+        "TotalResultsCount":{"shape":"TotalResultsCount"},
+        "NextPageToken":{"shape":"PageToken"}
+      }
+    },
+    "SearchProvisionedProductsPageSize":{
+      "type":"integer",
+      "max":100,
+      "min":0
+    },
+    "SortField":{"type":"string"},
     "SortOrder":{
       "type":"string",
       "enum":[
@@ -2174,6 +2607,10 @@
       ]
     },
     "StatusDetail":{"type":"string"},
+    "StatusMessage":{
+      "type":"string",
+      "pattern":"[\\u0009\\u000a\\u000d\\u0020-\\uD7FF\\uE000-\\uFFFD]*"
+    },
     "SupportDescription":{"type":"string"},
     "SupportEmail":{"type":"string"},
     "SupportUrl":{"type":"string"},
@@ -2281,6 +2718,7 @@
         "RecordDetail":{"shape":"RecordDetail"}
       }
     },
+    "TotalResultsCount":{"type":"integer"},
     "UpdateConstraintInput":{
       "type":"structure",
       "required":["Id"],
@@ -2428,6 +2866,8 @@
       "member":{"shape":"UsageInstruction"}
     },
     "UsePreviousValue":{"type":"boolean"},
+    "UserArn":{"type":"string"},
+    "UserArnSession":{"type":"string"},
     "Verbose":{"type":"boolean"}
   }
 }

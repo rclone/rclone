@@ -2,10 +2,11 @@ package main
 
 import (
 	"fmt"
-	"github.com/sevlyar/go-daemon"
 	"html"
 	"log"
 	"net/http"
+
+	"github.com/sevlyar/go-daemon"
 )
 
 // To terminate the daemon use:
@@ -34,10 +35,10 @@ func main() {
 	log.Print("- - - - - - - - - - - - - - -")
 	log.Print("daemon started")
 
-	serveHttp()
+	serveHTTP()
 }
 
-func serveHttp() {
+func serveHTTP() {
 	http.HandleFunc("/", httpHandler)
 	http.ListenAndServe("127.0.0.1:8080", nil)
 }

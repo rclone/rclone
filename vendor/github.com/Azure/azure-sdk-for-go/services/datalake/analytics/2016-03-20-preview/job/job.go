@@ -39,15 +39,15 @@ func NewClient() Client {
 // Build builds (compiles) the specified job in the specified Data Lake Analytics account for job correctness and
 // validation.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. parameters is the parameters to
-// build a job.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. parameters is the parameters
+// to build a job.
 func (client Client) Build(ctx context.Context, accountName string, parameters Information) (result Information, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Properties", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.Properties.Script", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "job.Client", "Build")
+		return result, validation.NewError("job.Client", "Build", err.Error())
 	}
 
 	req, err := client.BuildPreparer(ctx, accountName, parameters)
@@ -192,7 +192,7 @@ func (client Client) Create(ctx context.Context, accountName string, jobIdentity
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Properties", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.Properties.Script", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "job.Client", "Create")
+		return result, validation.NewError("job.Client", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, accountName, jobIdentity, parameters)
@@ -402,8 +402,8 @@ func (client Client) GetDebugDataPathResponder(resp *http.Response) (result Data
 
 // GetStatistics gets statistics of the specified job.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job Information
-// ID.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. jobIdentity is job
+// Information ID.
 func (client Client) GetStatistics(ctx context.Context, accountName string, jobIdentity uuid.UUID) (result Statistics, err error) {
 	req, err := client.GetStatisticsPreparer(ctx, accountName, jobIdentity)
 	if err != nil {
@@ -473,19 +473,19 @@ func (client Client) GetStatisticsResponder(resp *http.Response) (result Statist
 // List lists the jobs, if any, associated with the specified Data Lake Analytics account. The response includes a link
 // to the next page of results, if any.
 //
-// accountName is the Azure Data Lake Analytics account to execute job operations on. filter is oData filter. Optional.
-// top is the number of items to return. Optional. skip is the number of items to skip over before returning elements.
-// Optional. expand is oData expansion. Expand related resources in line with the retrieved resources, e.g.
-// Categories?$expand=Products would expand Product data in line with each Category entry. Optional. selectParameter is
-// oData Select statement. Limits the properties on each entry to just those requested, e.g.
-// Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more comma-separated
-// expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the values sorted, e.g.
-// Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false to request a count of
-// the matching resources included with the resources in the response, e.g. Categories?$count=true. Optional. search is
-// a free form search. A free-text search expression to match for whether a particular entry should be included in the
-// feed, e.g. Categories?$search=blue OR green. Optional. formatParameter is the return format. Return the response in
-// particular formatxii without access to request headers for standard content-type negotiation (e.g
-// Orders?$format=json). Optional.
+// accountName is the Azure Data Lake Analytics account to execute job operations on. filter is oData filter.
+// Optional. top is the number of items to return. Optional. skip is the number of items to skip over before
+// returning elements. Optional. expand is oData expansion. Expand related resources in line with the retrieved
+// resources, e.g. Categories?$expand=Products would expand Product data in line with each Category entry.
+// Optional. selectParameter is oData Select statement. Limits the properties on each entry to just those
+// requested, e.g. Categories?$select=CategoryName,Description. Optional. orderby is orderBy clause. One or more
+// comma-separated expressions with an optional "asc" (the default) or "desc" depending on the order you'd like the
+// values sorted, e.g. Categories?$orderby=CategoryName desc. Optional. count is the Boolean value of true or false
+// to request a count of the matching resources included with the resources in the response, e.g.
+// Categories?$count=true. Optional. search is a free form search. A free-text search expression to match for
+// whether a particular entry should be included in the feed, e.g. Categories?$search=blue OR green. Optional.
+// formatParameter is the return format. Return the response in particular formatxii without access to request
+// headers for standard content-type negotiation (e.g Orders?$format=json). Optional.
 func (client Client) List(ctx context.Context, accountName string, filter string, top *int32, skip *int32, expand string, selectParameter string, orderby string, count *bool, search string, formatParameter string) (result InfoListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, accountName, filter, top, skip, expand, selectParameter, orderby, count, search, formatParameter)

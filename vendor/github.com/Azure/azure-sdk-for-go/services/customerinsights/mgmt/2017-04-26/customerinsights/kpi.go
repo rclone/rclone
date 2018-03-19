@@ -44,8 +44,8 @@ func NewKpiClientWithBaseURI(baseURI string, subscriptionID string) KpiClient {
 
 // CreateOrUpdate creates a KPI or updates an existing KPI in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the KPI.
-// parameters is parameters supplied to the create/update KPI operation.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the
+// KPI. parameters is parameters supplied to the create/update KPI operation.
 func (client KpiClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, hubName string, kpiName string, parameters KpiResourceFormat) (result KpiCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: kpiName,
@@ -62,7 +62,7 @@ func (client KpiClient) CreateOrUpdate(ctx context.Context, resourceGroupName st
 							{Target: "parameters.KpiDefinition.ThresHolds.IncreasingKpi", Name: validation.Null, Rule: true, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.KpiClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.KpiClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, kpiName, parameters)
@@ -134,7 +134,8 @@ func (client KpiClient) CreateOrUpdateResponder(resp *http.Response) (result Kpi
 
 // Delete deletes a KPI in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the KPI.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the
+// KPI.
 func (client KpiClient) Delete(ctx context.Context, resourceGroupName string, hubName string, kpiName string) (result KpiDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, kpiName)
 	if err != nil {
@@ -202,7 +203,8 @@ func (client KpiClient) DeleteResponder(resp *http.Response) (result autorest.Re
 
 // Get gets a KPI in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the KPI.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the
+// KPI.
 func (client KpiClient) Get(ctx context.Context, resourceGroupName string, hubName string, kpiName string) (result KpiResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, kpiName)
 	if err != nil {
@@ -363,7 +365,8 @@ func (client KpiClient) ListByHubComplete(ctx context.Context, resourceGroupName
 
 // Reprocess reprocesses the Kpi values of the specified KPI.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the KPI.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. kpiName is the name of the
+// KPI.
 func (client KpiClient) Reprocess(ctx context.Context, resourceGroupName string, hubName string, kpiName string) (result autorest.Response, err error) {
 	req, err := client.ReprocessPreparer(ctx, resourceGroupName, hubName, kpiName)
 	if err != nil {

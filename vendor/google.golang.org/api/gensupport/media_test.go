@@ -6,6 +6,7 @@ package gensupport
 
 import (
 	"bytes"
+	"crypto/rand"
 	"io"
 	"io/ioutil"
 	"net/http"
@@ -267,6 +268,75 @@ func TestUploadRequest(t *testing.T) {
 	}
 }
 
+func TestUploadRequestGetBody(t *testing.T) {
+	// Test that a single chunk results in a getBody function that is non-nil, and
+	// that produces the same content as the original body.
+
+	// Mock out rand.Reader so we use the same multipart boundary every time.
+	rr := rand.Reader
+	rand.Reader = &nullReader{1000}
+	defer func() {
+		rand.Reader = rr
+	}()
+
+	for _, test := range []struct {
+		desc            string
+		r               io.Reader
+		chunkSize       int
+		wantGetBody     bool
+		wantContentType string
+		wantUploadType  string
+	}{
+		{
+			desc:        "chunk size of zero: no getBody",
+			r:           &nullReader{10},
+			chunkSize:   0,
+			wantGetBody: false,
+		},
+		{
+			desc:        "chunk size == data size: 1 chunk, getBody",
+			r:           &nullReader{googleapi.MinUploadChunkSize},
+			chunkSize:   1,
+			wantGetBody: true,
+		},
+		{
+			desc: "chunk size < data size: MediaBuffer, >1 chunk, no getBody",
+			// No getBody here, because the initial request contains no media data
+			// Note that ChunkSize = 1 is rounded up to googleapi.MinUploadChunkSize.
+			r:           &nullReader{2 * googleapi.MinUploadChunkSize},
+			chunkSize:   1,
+			wantGetBody: false,
+		},
+	} {
+		mi := NewInfoFromMedia(test.r, []googleapi.MediaOption{googleapi.ChunkSize(test.chunkSize)})
+		r, getBody, _ := mi.UploadRequest(http.Header{}, bytes.NewBuffer([]byte("body")))
+		if got, want := (getBody != nil), test.wantGetBody; got != want {
+			t.Errorf("%s: getBody: got %t, want %t", test.desc, got, want)
+			continue
+		}
+		if getBody == nil {
+			continue
+		}
+		want, err := ioutil.ReadAll(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for i := 0; i < 3; i++ {
+			rc, err := getBody()
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := ioutil.ReadAll(rc)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !bytes.Equal(got, want) {
+				t.Errorf("%s, %d:\ngot:\n%s\nwant:\n%s", test.desc, i, string(got), string(want))
+			}
+		}
+	}
+}
+
 func TestResumableUpload(t *testing.T) {
 	for _, test := range []struct {
 		desc                string
@@ -275,7 +345,6 @@ func TestResumableUpload(t *testing.T) {
 		wantUploadType      string
 		wantResumableUpload bool
 	}{
-
 		{
 			desc:                "chunk size of zero: don't use a MediaBuffer; upload as a single chunk",
 			r:                   strings.NewReader("12345"),

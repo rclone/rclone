@@ -34,28 +34,18 @@ type BaseClient struct {
 	autorest.Client
 	BaseURI        string
 	SubscriptionID string
-	Filter         string
-	Filter1        string
-	DatabaseRid    string
-	CollectionRid  string
-	Region         string
 }
 
 // New creates an instance of the BaseClient client.
-func New(subscriptionID string, filter string, filter1 string, databaseRid string, collectionRid string, region string) BaseClient {
-	return NewWithBaseURI(DefaultBaseURI, subscriptionID, filter, filter1, databaseRid, collectionRid, region)
+func New(subscriptionID string) BaseClient {
+	return NewWithBaseURI(DefaultBaseURI, subscriptionID)
 }
 
 // NewWithBaseURI creates an instance of the BaseClient client.
-func NewWithBaseURI(baseURI string, subscriptionID string, filter string, filter1 string, databaseRid string, collectionRid string, region string) BaseClient {
+func NewWithBaseURI(baseURI string, subscriptionID string) BaseClient {
 	return BaseClient{
 		Client:         autorest.NewClientWithUserAgent(UserAgent()),
 		BaseURI:        baseURI,
 		SubscriptionID: subscriptionID,
-		Filter:         filter,
-		Filter1:        filter1,
-		DatabaseRid:    databaseRid,
-		CollectionRid:  collectionRid,
-		Region:         region,
 	}
 }

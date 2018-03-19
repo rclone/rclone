@@ -1,4 +1,4 @@
-// +build !darwin,!linux gccgo
+// +build !darwin,!linux
 
 package sftp
 

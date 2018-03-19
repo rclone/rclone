@@ -44,8 +44,8 @@ func NewDiagnosticsClientWithBaseURI(baseURI string, subscriptionID string) Diag
 // ExecuteSiteAnalysis execute Analysis
 //
 // resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name
-// diagnosticCategory is category Name analysisName is analysis Resource Name startTime is start Time endTime is end
-// Time timeGrain is time Grain
+// diagnosticCategory is category Name analysisName is analysis Resource Name startTime is start Time endTime is
+// end Time timeGrain is time Grain
 func (client DiagnosticsClient) ExecuteSiteAnalysis(ctx context.Context, resourceGroupName string, siteName string, diagnosticCategory string, analysisName string, startTime *date.Time, endTime *date.Time, timeGrain string) (result DiagnosticAnalysis, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +54,7 @@ func (client DiagnosticsClient) ExecuteSiteAnalysis(ctx context.Context, resourc
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}},
 		{TargetValue: timeGrain,
 			Constraints: []validation.Constraint{{Target: "timeGrain", Name: validation.Pattern, Rule: `PT[1-9][0-9]+[SMH]`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ExecuteSiteAnalysis")
+		return result, validation.NewError("web.DiagnosticsClient", "ExecuteSiteAnalysis", err.Error())
 	}
 
 	req, err := client.ExecuteSiteAnalysisPreparer(ctx, resourceGroupName, siteName, diagnosticCategory, analysisName, startTime, endTime, timeGrain)
@@ -133,8 +133,8 @@ func (client DiagnosticsClient) ExecuteSiteAnalysisResponder(resp *http.Response
 // ExecuteSiteAnalysisSlot execute Analysis
 //
 // resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name
-// diagnosticCategory is category Name analysisName is analysis Resource Name slot is slot Name startTime is start Time
-// endTime is end Time timeGrain is time Grain
+// diagnosticCategory is category Name analysisName is analysis Resource Name slot is slot Name startTime is start
+// Time endTime is end Time timeGrain is time Grain
 func (client DiagnosticsClient) ExecuteSiteAnalysisSlot(ctx context.Context, resourceGroupName string, siteName string, diagnosticCategory string, analysisName string, slot string, startTime *date.Time, endTime *date.Time, timeGrain string) (result DiagnosticAnalysis, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -143,7 +143,7 @@ func (client DiagnosticsClient) ExecuteSiteAnalysisSlot(ctx context.Context, res
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}},
 		{TargetValue: timeGrain,
 			Constraints: []validation.Constraint{{Target: "timeGrain", Name: validation.Pattern, Rule: `PT[1-9][0-9]+[SMH]`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ExecuteSiteAnalysisSlot")
+		return result, validation.NewError("web.DiagnosticsClient", "ExecuteSiteAnalysisSlot", err.Error())
 	}
 
 	req, err := client.ExecuteSiteAnalysisSlotPreparer(ctx, resourceGroupName, siteName, diagnosticCategory, analysisName, slot, startTime, endTime, timeGrain)
@@ -222,9 +222,9 @@ func (client DiagnosticsClient) ExecuteSiteAnalysisSlotResponder(resp *http.Resp
 
 // ExecuteSiteDetector execute Detector
 //
-// resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name detectorName is
-// detector Resource Name diagnosticCategory is category Name startTime is start Time endTime is end Time timeGrain is
-// time Grain
+// resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name
+// detectorName is detector Resource Name diagnosticCategory is category Name startTime is start Time endTime is
+// end Time timeGrain is time Grain
 func (client DiagnosticsClient) ExecuteSiteDetector(ctx context.Context, resourceGroupName string, siteName string, detectorName string, diagnosticCategory string, startTime *date.Time, endTime *date.Time, timeGrain string) (result DiagnosticDetectorResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -233,7 +233,7 @@ func (client DiagnosticsClient) ExecuteSiteDetector(ctx context.Context, resourc
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}},
 		{TargetValue: timeGrain,
 			Constraints: []validation.Constraint{{Target: "timeGrain", Name: validation.Pattern, Rule: `PT[1-9][0-9]+[SMH]`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ExecuteSiteDetector")
+		return result, validation.NewError("web.DiagnosticsClient", "ExecuteSiteDetector", err.Error())
 	}
 
 	req, err := client.ExecuteSiteDetectorPreparer(ctx, resourceGroupName, siteName, detectorName, diagnosticCategory, startTime, endTime, timeGrain)
@@ -311,9 +311,9 @@ func (client DiagnosticsClient) ExecuteSiteDetectorResponder(resp *http.Response
 
 // ExecuteSiteDetectorSlot execute Detector
 //
-// resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name detectorName is
-// detector Resource Name diagnosticCategory is category Name slot is slot Name startTime is start Time endTime is end
-// Time timeGrain is time Grain
+// resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name
+// detectorName is detector Resource Name diagnosticCategory is category Name slot is slot Name startTime is start
+// Time endTime is end Time timeGrain is time Grain
 func (client DiagnosticsClient) ExecuteSiteDetectorSlot(ctx context.Context, resourceGroupName string, siteName string, detectorName string, diagnosticCategory string, slot string, startTime *date.Time, endTime *date.Time, timeGrain string) (result DiagnosticDetectorResponse, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -322,7 +322,7 @@ func (client DiagnosticsClient) ExecuteSiteDetectorSlot(ctx context.Context, res
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}},
 		{TargetValue: timeGrain,
 			Constraints: []validation.Constraint{{Target: "timeGrain", Name: validation.Pattern, Rule: `PT[1-9][0-9]+[SMH]`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ExecuteSiteDetectorSlot")
+		return result, validation.NewError("web.DiagnosticsClient", "ExecuteSiteDetectorSlot", err.Error())
 	}
 
 	req, err := client.ExecuteSiteDetectorSlotPreparer(ctx, resourceGroupName, siteName, detectorName, diagnosticCategory, slot, startTime, endTime, timeGrain)
@@ -409,7 +409,7 @@ func (client DiagnosticsClient) GetSiteAnalysis(ctx context.Context, resourceGro
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "GetSiteAnalysis")
+		return result, validation.NewError("web.DiagnosticsClient", "GetSiteAnalysis", err.Error())
 	}
 
 	req, err := client.GetSiteAnalysisPreparer(ctx, resourceGroupName, siteName, diagnosticCategory, analysisName)
@@ -486,7 +486,7 @@ func (client DiagnosticsClient) GetSiteAnalysisSlot(ctx context.Context, resourc
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "GetSiteAnalysisSlot")
+		return result, validation.NewError("web.DiagnosticsClient", "GetSiteAnalysisSlot", err.Error())
 	}
 
 	req, err := client.GetSiteAnalysisSlotPreparer(ctx, resourceGroupName, siteName, diagnosticCategory, analysisName, slot)
@@ -564,7 +564,7 @@ func (client DiagnosticsClient) GetSiteDetector(ctx context.Context, resourceGro
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "GetSiteDetector")
+		return result, validation.NewError("web.DiagnosticsClient", "GetSiteDetector", err.Error())
 	}
 
 	result.fn = client.getSiteDetectorNextResults
@@ -669,7 +669,7 @@ func (client DiagnosticsClient) GetSiteDetectorSlot(ctx context.Context, resourc
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "GetSiteDetectorSlot")
+		return result, validation.NewError("web.DiagnosticsClient", "GetSiteDetectorSlot", err.Error())
 	}
 
 	result.fn = client.getSiteDetectorSlotNextResults
@@ -775,7 +775,7 @@ func (client DiagnosticsClient) GetSiteDiagnosticCategory(ctx context.Context, r
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "GetSiteDiagnosticCategory")
+		return result, validation.NewError("web.DiagnosticsClient", "GetSiteDiagnosticCategory", err.Error())
 	}
 
 	req, err := client.GetSiteDiagnosticCategoryPreparer(ctx, resourceGroupName, siteName, diagnosticCategory)
@@ -851,7 +851,7 @@ func (client DiagnosticsClient) GetSiteDiagnosticCategorySlot(ctx context.Contex
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "GetSiteDiagnosticCategorySlot")
+		return result, validation.NewError("web.DiagnosticsClient", "GetSiteDiagnosticCategorySlot", err.Error())
 	}
 
 	req, err := client.GetSiteDiagnosticCategorySlotPreparer(ctx, resourceGroupName, siteName, diagnosticCategory, slot)
@@ -928,7 +928,7 @@ func (client DiagnosticsClient) ListSiteAnalyses(ctx context.Context, resourceGr
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ListSiteAnalyses")
+		return result, validation.NewError("web.DiagnosticsClient", "ListSiteAnalyses", err.Error())
 	}
 
 	result.fn = client.listSiteAnalysesNextResults
@@ -1032,7 +1032,7 @@ func (client DiagnosticsClient) ListSiteAnalysesSlot(ctx context.Context, resour
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ListSiteAnalysesSlot")
+		return result, validation.NewError("web.DiagnosticsClient", "ListSiteAnalysesSlot", err.Error())
 	}
 
 	result.fn = client.listSiteAnalysesSlotNextResults
@@ -1137,7 +1137,7 @@ func (client DiagnosticsClient) ListSiteDetectors(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ListSiteDetectors")
+		return result, validation.NewError("web.DiagnosticsClient", "ListSiteDetectors", err.Error())
 	}
 
 	result.fn = client.listSiteDetectorsNextResults
@@ -1241,7 +1241,7 @@ func (client DiagnosticsClient) ListSiteDetectorsSlot(ctx context.Context, resou
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ListSiteDetectorsSlot")
+		return result, validation.NewError("web.DiagnosticsClient", "ListSiteDetectorsSlot", err.Error())
 	}
 
 	result.fn = client.listSiteDetectorsSlotNextResults
@@ -1345,7 +1345,7 @@ func (client DiagnosticsClient) ListSiteDiagnosticCategories(ctx context.Context
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ListSiteDiagnosticCategories")
+		return result, validation.NewError("web.DiagnosticsClient", "ListSiteDiagnosticCategories", err.Error())
 	}
 
 	result.fn = client.listSiteDiagnosticCategoriesNextResults
@@ -1440,15 +1440,15 @@ func (client DiagnosticsClient) ListSiteDiagnosticCategoriesComplete(ctx context
 
 // ListSiteDiagnosticCategoriesSlot get Diagnostics Categories
 //
-// resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name slot is slot
-// Name
+// resourceGroupName is name of the resource group to which the resource belongs. siteName is site Name slot is
+// slot Name
 func (client DiagnosticsClient) ListSiteDiagnosticCategoriesSlot(ctx context.Context, resourceGroupName string, siteName string, slot string) (result DiagnosticCategoryCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.DiagnosticsClient", "ListSiteDiagnosticCategoriesSlot")
+		return result, validation.NewError("web.DiagnosticsClient", "ListSiteDiagnosticCategoriesSlot", err.Error())
 	}
 
 	result.fn = client.listSiteDiagnosticCategoriesSlotNextResults

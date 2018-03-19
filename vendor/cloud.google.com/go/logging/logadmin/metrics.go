@@ -49,7 +49,7 @@ type Metric struct {
 // CreateMetric creates a logs-based metric.
 func (c *Client) CreateMetric(ctx context.Context, m *Metric) error {
 	_, err := c.mClient.CreateLogMetric(ctx, &logpb.CreateLogMetricRequest{
-		Parent: c.parent(),
+		Parent: c.parent,
 		Metric: toLogMetric(m),
 	})
 	return err
@@ -87,14 +87,14 @@ func (c *Client) UpdateMetric(ctx context.Context, m *Metric) error {
 }
 
 func (c *Client) metricPath(metricID string) string {
-	return fmt.Sprintf("%s/metrics/%s", c.parent(), metricID)
+	return fmt.Sprintf("%s/metrics/%s", c.parent, metricID)
 }
 
 // Metrics returns a MetricIterator for iterating over all Metrics in the Client's project.
 // Requires ReadScope or AdminScope.
 func (c *Client) Metrics(ctx context.Context) *MetricIterator {
 	it := &MetricIterator{
-		it: c.mClient.ListLogMetrics(ctx, &logpb.ListLogMetricsRequest{Parent: c.parent()}),
+		it: c.mClient.ListLogMetrics(ctx, &logpb.ListLogMetricsRequest{Parent: c.parent}),
 	}
 	it.pageInfo, it.nextFunc = iterator.NewPageInfo(
 		it.fetch,

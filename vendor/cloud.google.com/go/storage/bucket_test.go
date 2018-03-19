@@ -22,7 +22,6 @@ import (
 
 	"github.com/google/go-cmp/cmp"
 
-	"cloud.google.com/go/internal/pretty"
 	"cloud.google.com/go/internal/testutil"
 	"google.golang.org/api/googleapi"
 	raw "google.golang.org/api/storage/v1"
@@ -41,6 +40,14 @@ func TestBucketAttrsToRawBucket(t *testing.T) {
 		MetaGeneration: 39,
 		Created:        time.Now(),
 		Labels:         map[string]string{"label": "value"},
+		CORS: []CORS{
+			{
+				MaxAge:          time.Hour,
+				Methods:         []string{"GET", "POST"},
+				Origins:         []string{"*"},
+				ResponseHeaders: []string{"FOO"},
+			},
+		},
 	}
 	got := attrs.toRawBucket()
 	want := &raw.Bucket{
@@ -55,12 +62,16 @@ func TestBucketAttrsToRawBucket(t *testing.T) {
 		StorageClass: "class",
 		Versioning:   nil, // ignore VersioningEnabled if false
 		Labels:       map[string]string{"label": "value"},
+		Cors: []*raw.BucketCors{
+			{
+				MaxAgeSeconds:  3600,
+				Method:         []string{"GET", "POST"},
+				Origin:         []string{"*"},
+				ResponseHeader: []string{"FOO"},
+			},
+		},
 	}
-	msg, ok, err := pretty.Diff(want, got)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !ok {
+	if msg := testutil.Diff(got, want); msg != "" {
 		t.Error(msg)
 	}
 
@@ -69,11 +80,7 @@ func TestBucketAttrsToRawBucket(t *testing.T) {
 	got = attrs.toRawBucket()
 	want.Versioning = &raw.BucketVersioning{Enabled: true}
 	want.Billing = &raw.BucketBilling{RequesterPays: true}
-	msg, ok, err = pretty.Diff(want, got)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !ok {
+	if msg := testutil.Diff(got, want); msg != "" {
 		t.Error(msg)
 	}
 }
@@ -103,11 +110,7 @@ func TestBucketAttrsToUpdateToRawBucket(t *testing.T) {
 		},
 		NullFields: []string{"Labels.b"},
 	}
-	msg, ok, err := pretty.Diff(want, got)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !ok {
+	if msg := testutil.Diff(got, want); msg != "" {
 		t.Error(msg)
 	}
 
@@ -119,14 +122,10 @@ func TestBucketAttrsToUpdateToRawBucket(t *testing.T) {
 		ForceSendFields: []string{"Labels"},
 		NullFields:      []string{"Labels.b"},
 	}
-	msg, ok, err = pretty.Diff(want, got)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if !ok {
+
+	if msg := testutil.Diff(got, want); msg != "" {
 		t.Error(msg)
 	}
-
 }
 
 func TestCallBuilders(t *testing.T) {
@@ -248,6 +247,14 @@ func TestNewBucket(t *testing.T) {
 				},
 			}},
 		},
+		Cors: []*raw.BucketCors{
+			{
+				MaxAgeSeconds:  3600,
+				Method:         []string{"GET", "POST"},
+				Origin:         []string{"*"},
+				ResponseHeader: []string{"FOO"},
+			},
+		},
 		Acl: []*raw.BucketAccessControl{
 			{Bucket: "name", Role: "READER", Email: "joe@example.com", Entity: "allUsers"},
 		},
@@ -276,6 +283,14 @@ func TestNewBucket(t *testing.T) {
 						NumNewerVersions:      3,
 					},
 				},
+			},
+		},
+		CORS: []CORS{
+			{
+				MaxAge:          time.Hour,
+				Methods:         []string{"GET", "POST"},
+				Origins:         []string{"*"},
+				ResponseHeaders: []string{"FOO"},
 			},
 		},
 		ACL:              []ACLRule{{Entity: "allUsers", Role: RoleReader}},

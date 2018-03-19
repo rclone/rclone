@@ -43,12 +43,12 @@ func NewAPIOperationsPolicyClientWithBaseURI(baseURI string, subscriptionID stri
 
 // CreateOrUpdate creates or updates policy configuration for the API Operation level.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. operationID is operation identifier
-// within an API. Must be unique in the current API Management service instance. parameters is the policy contents to
-// apply. parameters will be closed upon successful return. Callers should ensure closure when receiving an
-// error.ifMatch is the entity state (Etag) version of the Api Operation policy to update. A value of "*" can be used
-// for If-Match to unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
+// identifier within an API. Must be unique in the current API Management service instance. parameters is the
+// policy contents to apply. parameters will be closed upon successful return. Callers should ensure closure when
+// receiving an error.ifMatch is the entity state (Etag) version of the Api Operation policy to update. A value of
+// "*" can be used for If-Match to unconditionally apply the operation.
 func (client APIOperationsPolicyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, parameters io.ReadCloser, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -63,7 +63,7 @@ func (client APIOperationsPolicyClient) CreateOrUpdate(ctx context.Context, reso
 			Constraints: []validation.Constraint{{Target: "operationID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "operationID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "operationID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsPolicyClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.APIOperationsPolicyClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, apiid, operationID, parameters, ifMatch)
@@ -103,6 +103,7 @@ func (client APIOperationsPolicyClient) CreateOrUpdatePreparer(ctx context.Conte
 	}
 
 	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
 		autorest.AsPut(),
 		autorest.WithBaseURL(client.BaseURI),
 		autorest.WithPathParameters("/subscriptions/{subscriptionId}/resourceGroups/{resourceGroupName}/providers/Microsoft.ApiManagement/service/{serviceName}/apis/{apiId}/operations/{operationId}/policy", pathParameters),
@@ -133,11 +134,11 @@ func (client APIOperationsPolicyClient) CreateOrUpdateResponder(resp *http.Respo
 
 // Delete deletes the policy configuration at the Api Operation.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. operationID is operation identifier
-// within an API. Must be unique in the current API Management service instance. ifMatch is the entity state (Etag)
-// version of the Api operation policy to update. A value of "*" can be used for If-Match to unconditionally apply the
-// operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
+// identifier within an API. Must be unique in the current API Management service instance. ifMatch is the entity
+// state (Etag) version of the Api operation policy to update. A value of "*" can be used for If-Match to
+// unconditionally apply the operation.
 func (client APIOperationsPolicyClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -152,7 +153,7 @@ func (client APIOperationsPolicyClient) Delete(ctx context.Context, resourceGrou
 			Constraints: []validation.Constraint{{Target: "operationID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "operationID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "operationID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsPolicyClient", "Delete")
+		return result, validation.NewError("apimanagement.APIOperationsPolicyClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, apiid, operationID, ifMatch)
@@ -221,9 +222,9 @@ func (client APIOperationsPolicyClient) DeleteResponder(resp *http.Response) (re
 
 // Get get the policy configuration at the API Operation level.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. operationID is operation identifier
-// within an API. Must be unique in the current API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
+// identifier within an API. Must be unique in the current API Management service instance.
 func (client APIOperationsPolicyClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string) (result ReadCloser, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -238,7 +239,7 @@ func (client APIOperationsPolicyClient) Get(ctx context.Context, resourceGroupNa
 			Constraints: []validation.Constraint{{Target: "operationID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "operationID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "operationID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsPolicyClient", "Get")
+		return result, validation.NewError("apimanagement.APIOperationsPolicyClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, apiid, operationID)

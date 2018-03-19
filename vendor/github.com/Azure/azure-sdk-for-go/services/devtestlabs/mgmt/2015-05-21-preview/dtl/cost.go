@@ -41,7 +41,8 @@ func NewCostClientWithBaseURI(baseURI string, subscriptionID string) CostClient 
 
 // GetResource get cost.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the cost.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// cost.
 func (client CostClient) GetResource(ctx context.Context, resourceGroupName string, labName string, name string) (result Cost, err error) {
 	req, err := client.GetResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -108,8 +109,8 @@ func (client CostClient) GetResourceResponder(resp *http.Response) (result Cost,
 
 // List list costs.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to apply
-// on the operation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
+// apply on the operation.
 func (client CostClient) List(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationCostPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, filter, top, orderBy)
@@ -212,7 +213,8 @@ func (client CostClient) ListComplete(ctx context.Context, resourceGroupName str
 
 // RefreshData refresh Lab's Cost Data. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the cost.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// cost.
 func (client CostClient) RefreshData(ctx context.Context, resourceGroupName string, labName string, name string) (result CostRefreshDataFuture, err error) {
 	req, err := client.RefreshDataPreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {

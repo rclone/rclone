@@ -898,6 +898,15 @@
       "input":{"shape":"DescribeAddressesRequest"},
       "output":{"shape":"DescribeAddressesResult"}
     },
+    "DescribeAggregateIdFormat":{
+      "name":"DescribeAggregateIdFormat",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribeAggregateIdFormatRequest"},
+      "output":{"shape":"DescribeAggregateIdFormatResult"}
+    },
     "DescribeAvailabilityZones":{
       "name":"DescribeAvailabilityZones",
       "http":{
@@ -1239,6 +1248,15 @@
       },
       "input":{"shape":"DescribePrefixListsRequest"},
       "output":{"shape":"DescribePrefixListsResult"}
+    },
+    "DescribePrincipalIdFormat":{
+      "name":"DescribePrincipalIdFormat",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DescribePrincipalIdFormatRequest"},
+      "output":{"shape":"DescribePrincipalIdFormatResult"}
     },
     "DescribeRegions":{
       "name":"DescribeRegions",
@@ -4617,6 +4635,10 @@
       "members":{
         "Description":{"shape":"String"},
         "VolumeId":{"shape":"String"},
+        "TagSpecifications":{
+          "shape":"TagSpecificationList",
+          "locationName":"TagSpecification"
+        },
         "DryRun":{
           "shape":"Boolean",
           "locationName":"dryRun"
@@ -5627,6 +5649,25 @@
         "Addresses":{
           "shape":"AddressList",
           "locationName":"addressesSet"
+        }
+      }
+    },
+    "DescribeAggregateIdFormatRequest":{
+      "type":"structure",
+      "members":{
+        "DryRun":{"shape":"Boolean"}
+      }
+    },
+    "DescribeAggregateIdFormatResult":{
+      "type":"structure",
+      "members":{
+        "UseLongIdsAggregated":{
+          "shape":"Boolean",
+          "locationName":"useLongIdsAggregated"
+        },
+        "Statuses":{
+          "shape":"IdFormatList",
+          "locationName":"statusSet"
         }
       }
     },
@@ -6683,6 +6724,31 @@
         "PrefixLists":{
           "shape":"PrefixListSet",
           "locationName":"prefixListSet"
+        }
+      }
+    },
+    "DescribePrincipalIdFormatRequest":{
+      "type":"structure",
+      "members":{
+        "DryRun":{"shape":"Boolean"},
+        "Resources":{
+          "shape":"ResourceList",
+          "locationName":"Resource"
+        },
+        "MaxResults":{"shape":"Integer"},
+        "NextToken":{"shape":"String"}
+      }
+    },
+    "DescribePrincipalIdFormatResult":{
+      "type":"structure",
+      "members":{
+        "Principals":{
+          "shape":"PrincipalIdFormatList",
+          "locationName":"principalSet"
+        },
+        "NextToken":{
+          "shape":"String",
+          "locationName":"nextToken"
         }
       }
     },
@@ -12242,6 +12308,7 @@
           "shape":"Affinity",
           "locationName":"affinity"
         },
+        "GroupName":{"shape":"String"},
         "HostId":{
           "shape":"String",
           "locationName":"hostId"
@@ -12524,11 +12591,11 @@
         "AcceptanceRequired":{"shape":"Boolean"},
         "AddNetworkLoadBalancerArns":{
           "shape":"ValueStringList",
-          "locationName":"addNetworkLoadBalancerArn"
+          "locationName":"AddNetworkLoadBalancerArn"
         },
         "RemoveNetworkLoadBalancerArns":{
           "shape":"ValueStringList",
-          "locationName":"removeNetworkLoadBalancerArn"
+          "locationName":"RemoveNetworkLoadBalancerArn"
         }
       }
     },
@@ -13186,6 +13253,7 @@
       "type":"string",
       "enum":[
         "available",
+        "associated",
         "attaching",
         "in-use",
         "detaching"
@@ -13525,6 +13593,26 @@
       "type":"list",
       "member":{
         "shape":"PricingDetail",
+        "locationName":"item"
+      }
+    },
+    "PrincipalIdFormat":{
+      "type":"structure",
+      "members":{
+        "Arn":{
+          "shape":"String",
+          "locationName":"arn"
+        },
+        "Statuses":{
+          "shape":"IdFormatList",
+          "locationName":"statusSet"
+        }
+      }
+    },
+    "PrincipalIdFormatList":{
+      "type":"list",
+      "member":{
+        "shape":"PrincipalIdFormat",
         "locationName":"item"
       }
     },
@@ -15037,6 +15125,13 @@
     "ResourceIdList":{
       "type":"list",
       "member":{"shape":"String"}
+    },
+    "ResourceList":{
+      "type":"list",
+      "member":{
+        "shape":"String",
+        "locationName":"item"
+      }
     },
     "ResourceType":{
       "type":"string",

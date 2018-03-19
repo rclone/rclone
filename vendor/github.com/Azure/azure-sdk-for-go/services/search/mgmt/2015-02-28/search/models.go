@@ -18,6 +18,7 @@ package search
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 )
 
@@ -98,7 +99,28 @@ type Resource struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ServiceCreateOrUpdateParameters properties that describe an Azure Search service.
@@ -106,9 +128,24 @@ type ServiceCreateOrUpdateParameters struct {
 	// Location - The geographic location of the Search service.
 	Location *string `json:"location,omitempty"`
 	// Tags - Tags to help categorize the Search service in the Azure Portal.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Properties of the Search service.
 	Properties *ServiceProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServiceCreateOrUpdateParameters.
+func (scoup ServiceCreateOrUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if scoup.Location != nil {
+		objectMap["location"] = scoup.Location
+	}
+	if scoup.Tags != nil {
+		objectMap["tags"] = scoup.Tags
+	}
+	if scoup.Properties != nil {
+		objectMap["properties"] = scoup.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // ServiceListResult response containing a list of Azure Search services for a given resource group.
@@ -154,9 +191,30 @@ type ServiceResource struct {
 	// Location - The geographic location of the Search service.
 	Location *string `json:"location,omitempty"`
 	// Tags - Tags to help categorize the Search service in the Azure Portal.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Properties of the Search service.
 	Properties *ServiceReadableProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServiceResource.
+func (sr ServiceResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sr.ID != nil {
+		objectMap["id"] = sr.ID
+	}
+	if sr.Name != nil {
+		objectMap["name"] = sr.Name
+	}
+	if sr.Location != nil {
+		objectMap["location"] = sr.Location
+	}
+	if sr.Tags != nil {
+		objectMap["tags"] = sr.Tags
+	}
+	if sr.Properties != nil {
+		objectMap["properties"] = sr.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // Sku defines the SKU of an Azure Search Service, which determines price tier and capacity limits.

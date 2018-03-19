@@ -1081,11 +1081,8 @@ func TestFuture_Marshalling(t *testing.T) {
 		t.Fatalf("azure: TestFuture failed to unmarshal")
 	}
 
-	if future.ps.Code != future2.ps.Code {
-		t.Fatalf("azure: TestFuture marshalling codes don't match")
-	}
-	if future.ps.Message != future2.ps.Message {
-		t.Fatalf("azure: TestFuture marshalling messages don't match")
+	if future.ps.ServiceError != future2.ps.ServiceError {
+		t.Fatalf("azure: TestFuture marshalling ServiceError don't match")
 	}
 	if future.ps.PollingMethod != future2.ps.PollingMethod {
 		t.Fatalf("azure: TestFuture marshalling response formats don't match")
@@ -1095,6 +1092,23 @@ func TestFuture_Marshalling(t *testing.T) {
 	}
 	if future.ps.URI != future2.ps.URI {
 		t.Fatalf("azure: TestFuture marshalling URIs don't match")
+	}
+}
+
+func TestFuture_MarshallingWithServiceError(t *testing.T) {
+	client := mocks.NewSender()
+	client.AppendResponse(newAsynchronousResponseWithError("400 Bad Request", http.StatusBadRequest))
+
+	future := NewFuture(mocks.NewRequest())
+	done, err := future.Done(client)
+	if err == nil {
+		t.Fatalf("azure: TestFuture marshalling didn't fail")
+	}
+	if done {
+		t.Fatalf("azure: TestFuture marshalling shouldn't be done")
+	}
+	if future.PollingMethod() != "" {
+		t.Fatalf("azure: future shouldn't have polling method")
 	}
 }
 

@@ -24,7 +24,7 @@ func handler(w http.ResponseWriter, r *http.Request) {
 	t, q, err := language.ParseAcceptLanguage(r.Header.Get("Accept-Language"))
 	// We ignore the error: the default language will be selected for t == nil.
 	tag, _, _ := matcher.Match(t...)
-	fmt.Printf("%5v (t: %6v; q: %3v; err: %v)\n", tag, t, q, err)
+	fmt.Printf("%17v (t: %6v; q: %3v; err: %v)\n", tag, t, q, err)
 }
 
 func ExampleParseAcceptLanguage() {
@@ -41,8 +41,8 @@ func ExampleParseAcceptLanguage() {
 	}
 
 	// Output:
-	// en-GB (t: [    en  en-US     nn]; q: [  1 0.8 0.3]; err: <nil>)
-	// en-GB (t: [   gsw  en-US     en]; q: [  1 0.8 0.7]; err: <nil>)
-	//    de (t: [   gsw     nl     da]; q: [  1   1   1]; err: <nil>)
-	// en-GB (t: []; q: []; err: language: tag is not well-formed)
+	//             en-GB (t: [    en  en-US     nn]; q: [  1 0.8 0.3]; err: <nil>)
+	// en-GB-u-rg-uszzzz (t: [   gsw  en-US     en]; q: [  1 0.8 0.7]; err: <nil>)
+	//                de (t: [   gsw     nl     da]; q: [  1   1   1]; err: <nil>)
+	//             en-GB (t: []; q: []; err: language: tag is not well-formed)
 }

@@ -47,7 +47,7 @@ func (client GlobalSchedulesClient) CreateOrUpdate(ctx context.Context, resource
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: schedule,
 			Constraints: []validation.Constraint{{Target: "schedule.ScheduleProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.GlobalSchedulesClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.GlobalSchedulesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, name, schedule)
@@ -248,8 +248,8 @@ func (client GlobalSchedulesClient) ExecuteResponder(resp *http.Response) (resul
 
 // Get get schedule.
 //
-// resourceGroupName is the name of the resource group. name is the name of the schedule. expand is specify the $expand
-// query. Example: 'properties($select=status)'
+// resourceGroupName is the name of the resource group. name is the name of the schedule. expand is specify the
+// $expand query. Example: 'properties($select=status)'
 func (client GlobalSchedulesClient) Get(ctx context.Context, resourceGroupName string, name string, expand string) (result Schedule, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, name, expand)
 	if err != nil {
@@ -319,8 +319,9 @@ func (client GlobalSchedulesClient) GetResponder(resp *http.Response) (result Sc
 // ListByResourceGroup list schedules in a resource group.
 //
 // resourceGroupName is the name of the resource group. expand is specify the $expand query. Example:
-// 'properties($select=status)' filter is the filter to apply to the operation. top is the maximum number of resources
-// to return from the operation. orderby is the ordering expression for the results, using OData notation.
+// 'properties($select=status)' filter is the filter to apply to the operation. top is the maximum number of
+// resources to return from the operation. orderby is the ordering expression for the results, using OData
+// notation.
 func (client GlobalSchedulesClient) ListByResourceGroup(ctx context.Context, resourceGroupName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationSchedulePage, err error) {
 	result.fn = client.listByResourceGroupNextResults
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName, expand, filter, top, orderby)
@@ -426,8 +427,8 @@ func (client GlobalSchedulesClient) ListByResourceGroupComplete(ctx context.Cont
 // ListBySubscription list schedules in a subscription.
 //
 // expand is specify the $expand query. Example: 'properties($select=status)' filter is the filter to apply to the
-// operation. top is the maximum number of resources to return from the operation. orderby is the ordering expression
-// for the results, using OData notation.
+// operation. top is the maximum number of resources to return from the operation. orderby is the ordering
+// expression for the results, using OData notation.
 func (client GlobalSchedulesClient) ListBySubscription(ctx context.Context, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationSchedulePage, err error) {
 	result.fn = client.listBySubscriptionNextResults
 	req, err := client.ListBySubscriptionPreparer(ctx, expand, filter, top, orderby)
@@ -531,8 +532,8 @@ func (client GlobalSchedulesClient) ListBySubscriptionComplete(ctx context.Conte
 
 // Retarget updates a schedule's target resource Id. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. name is the name of the schedule. retargetScheduleProperties is
-// properties for retargeting a virtual machine schedule.
+// resourceGroupName is the name of the resource group. name is the name of the schedule.
+// retargetScheduleProperties is properties for retargeting a virtual machine schedule.
 func (client GlobalSchedulesClient) Retarget(ctx context.Context, resourceGroupName string, name string, retargetScheduleProperties RetargetScheduleProperties) (result GlobalSchedulesRetargetFuture, err error) {
 	req, err := client.RetargetPreparer(ctx, resourceGroupName, name, retargetScheduleProperties)
 	if err != nil {

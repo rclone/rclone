@@ -432,8 +432,8 @@ func (client IntegrationAccountsClient) ListBySubscriptionComplete(ctx context.C
 
 // ListCallbackURL lists the integration account callback URL.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. parameters is
-// the callback URL parameters.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name. parameters
+// is the callback URL parameters.
 func (client IntegrationAccountsClient) ListCallbackURL(ctx context.Context, resourceGroupName string, integrationAccountName string, parameters ListCallbackURLParameters) (result CallbackURL, err error) {
 	req, err := client.ListCallbackURLPreparer(ctx, resourceGroupName, integrationAccountName, parameters)
 	if err != nil {

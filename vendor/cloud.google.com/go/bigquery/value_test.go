@@ -24,7 +24,6 @@ import (
 	"github.com/google/go-cmp/cmp"
 
 	"cloud.google.com/go/civil"
-	"cloud.google.com/go/internal/pretty"
 	"cloud.google.com/go/internal/testutil"
 
 	bq "google.golang.org/api/bigquery/v2"
@@ -86,6 +85,20 @@ func TestConvertTime(t *testing.T) {
 	}
 	if got[0].(time.Time).Location() != time.UTC {
 		t.Errorf("expected time zone UTC: got:\n%v", got)
+	}
+}
+
+func TestConvertSmallTimes(t *testing.T) {
+	for _, year := range []int{1600, 1066, 1} {
+		want := time.Date(year, time.January, 1, 0, 0, 0, 0, time.UTC)
+		s := fmt.Sprintf("%.10f", float64(want.Unix()))
+		got, err := convertBasicType(s, TimestampFieldType)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !got.(time.Time).Equal(want) {
+			t.Errorf("got %v, want %v", got, want)
+		}
 	}
 }
 
@@ -393,7 +406,10 @@ func TestValuesSaverConvertsToMap(t *testing.T) {
 				},
 				InsertID: "iid",
 				Row: []Value{1, "a",
-					civil.DateTime{civil.Date{1, 2, 3}, civil.Time{4, 5, 6, 7000}}},
+					civil.DateTime{
+						Date: civil.Date{Year: 1, Month: 2, Day: 3},
+						Time: civil.Time{Hour: 4, Minute: 5, Second: 6, Nanosecond: 7000}},
+				},
 			},
 			wantInsertID: "iid",
 			wantRow: map[string]Value{"intField": 1, "strField": "a",
@@ -512,6 +528,7 @@ func TestStructSaver(t *testing.T) {
 		{Name: "rnested", Type: RecordFieldType, Repeated: true, Schema: Schema{
 			{Name: "b", Type: BooleanFieldType},
 		}},
+		{Name: "p", Type: IntegerFieldType, Required: false},
 	}
 
 	type (
@@ -523,6 +540,7 @@ func TestStructSaver(t *testing.T) {
 			TR      []civil.Time
 			Nested  *N
 			Rnested []*N
+			P       NullInt64
 		}
 	)
 
@@ -539,12 +557,13 @@ func TestStructSaver(t *testing.T) {
 		if wantIID := "iid"; gotIID != wantIID {
 			t.Errorf("%s: InsertID: got %q, want %q", msg, gotIID, wantIID)
 		}
-		if !testutil.Equal(got, want) {
-			t.Errorf("%s:\ngot\n%#v\nwant\n%#v", msg, got, want)
+		if diff := testutil.Diff(got, want); diff != "" {
+			t.Errorf("%s: %s", msg, diff)
 		}
 	}
-	ct1 := civil.Time{1, 2, 3, 4000}
-	ct2 := civil.Time{5, 6, 7, 8000}
+
+	ct1 := civil.Time{Hour: 1, Minute: 2, Second: 3, Nanosecond: 4000}
+	ct2 := civil.Time{Hour: 5, Minute: 6, Second: 7, Nanosecond: 8000}
 	in := T{
 		S:       "x",
 		R:       []int{1, 2},
@@ -552,6 +571,7 @@ func TestStructSaver(t *testing.T) {
 		TR:      []civil.Time{ct1, ct2},
 		Nested:  &N{B: true},
 		Rnested: []*N{{true}, {false}},
+		P:       NullInt64{Valid: true, Int64: 17},
 	}
 	want := map[string]Value{
 		"s":       "x",
@@ -560,10 +580,11 @@ func TestStructSaver(t *testing.T) {
 		"tr":      []string{"01:02:03.000004", "05:06:07.000008"},
 		"nested":  map[string]Value{"b": true},
 		"rnested": []Value{map[string]Value{"b": true}, map[string]Value{"b": false}},
+		"p":       NullInt64{Valid: true, Int64: 17},
 	}
 	check("all values", in, want)
 	check("all values, ptr", &in, want)
-	check("empty struct", T{}, map[string]Value{"s": "", "t": "00:00:00"})
+	check("empty struct", T{}, map[string]Value{"s": "", "t": "00:00:00", "p": NullInt64{}})
 
 	// Missing and extra fields ignored.
 	type T2 struct {
@@ -577,6 +598,7 @@ func TestStructSaver(t *testing.T) {
 		map[string]Value{
 			"s":       "",
 			"t":       "00:00:00",
+			"p":       NullInt64{},
 			"rnested": []Value{map[string]Value{"b": true}, map[string]Value(nil), map[string]Value{"b": false}},
 		})
 }
@@ -713,6 +735,22 @@ func TestValueMap(t *testing.T) {
 		t.Errorf("got\n%+v\nwant\n%+v", vm, want)
 	}
 
+	in = make([]Value, len(schema))
+	want = map[string]Value{
+		"s":  nil,
+		"i":  nil,
+		"f":  nil,
+		"b":  nil,
+		"n":  nil,
+		"rn": nil,
+	}
+	var vm2 valueMap
+	if err := vm2.Load(in, schema); err != nil {
+		t.Fatal(err)
+	}
+	if !testutil.Equal(vm2, valueMap(want)) {
+		t.Errorf("got\n%+v\nwant\n%+v", vm2, want)
+	}
 }
 
 var (
@@ -722,6 +760,7 @@ var (
 		{Name: "s2", Type: StringFieldType},
 		{Name: "by", Type: BytesFieldType},
 		{Name: "I", Type: IntegerFieldType},
+		{Name: "U", Type: IntegerFieldType},
 		{Name: "F", Type: FloatFieldType},
 		{Name: "B", Type: BooleanFieldType},
 		{Name: "TS", Type: TimestampFieldType},
@@ -736,11 +775,11 @@ var (
 	}
 
 	testTimestamp = time.Date(2016, 11, 5, 7, 50, 22, 8, time.UTC)
-	testDate      = civil.Date{2016, 11, 5}
-	testTime      = civil.Time{7, 50, 22, 8}
-	testDateTime  = civil.DateTime{testDate, testTime}
+	testDate      = civil.Date{Year: 2016, Month: 11, Day: 5}
+	testTime      = civil.Time{Hour: 7, Minute: 50, Second: 22, Nanosecond: 8}
+	testDateTime  = civil.DateTime{Date: testDate, Time: testTime}
 
-	testValues = []Value{"x", "y", []byte{1, 2, 3}, int64(7), 3.14, true,
+	testValues = []Value{"x", "y", []byte{1, 2, 3}, int64(7), int64(8), 3.14, true,
 		testTimestamp, testDate, testTime, testDateTime,
 		[]Value{"nested", int64(17)}, "z"}
 )
@@ -748,6 +787,7 @@ var (
 type testStruct1 struct {
 	B bool
 	I int
+	U uint16
 	times
 	S      string
 	S2     String
@@ -774,14 +814,13 @@ type times struct {
 
 func TestStructLoader(t *testing.T) {
 	var ts1 testStruct1
-	if err := load(&ts1, schema2, testValues); err != nil {
-		t.Fatal(err)
-	}
+	mustLoad(t, &ts1, schema2, testValues)
 	// Note: the schema field named "s" gets matched to the exported struct
 	// field "S", not the unexported "s".
 	want := &testStruct1{
 		B:      true,
 		I:      7,
+		U:      8,
 		F:      3.14,
 		times:  times{TS: testTimestamp, T: testTime, D: testDate, DT: testDateTime},
 		S:      "x",
@@ -790,33 +829,25 @@ func TestStructLoader(t *testing.T) {
 		Nested: nested{NestS: "nested", NestI: 17},
 		Tagged: "z",
 	}
-	if !testutil.Equal(&ts1, want, cmp.AllowUnexported(testStruct1{})) {
-		t.Errorf("got %+v, want %+v", pretty.Value(ts1), pretty.Value(*want))
-		d, _, err := pretty.Diff(*want, ts1)
-		if err == nil {
-			t.Logf("diff:\n%s", d)
-		}
+	if diff := testutil.Diff(&ts1, want, cmp.AllowUnexported(testStruct1{})); diff != "" {
+		t.Error(diff)
 	}
 
 	// Test pointers to nested structs.
 	type nestedPtr struct{ Nested *nested }
 	var np nestedPtr
-	if err := load(&np, schema2, testValues); err != nil {
-		t.Fatal(err)
-	}
+	mustLoad(t, &np, schema2, testValues)
 	want2 := &nestedPtr{Nested: &nested{NestS: "nested", NestI: 17}}
-	if !testutil.Equal(&np, want2) {
-		t.Errorf("got %+v, want %+v", pretty.Value(np), pretty.Value(*want2))
+	if diff := testutil.Diff(&np, want2); diff != "" {
+		t.Error(diff)
 	}
 
 	// Existing values should be reused.
 	nst := &nested{NestS: "x", NestI: -10}
 	np = nestedPtr{Nested: nst}
-	if err := load(&np, schema2, testValues); err != nil {
-		t.Fatal(err)
-	}
-	if !testutil.Equal(&np, want2) {
-		t.Errorf("got %+v, want %+v", pretty.Value(np), pretty.Value(*want2))
+	mustLoad(t, &np, schema2, testValues)
+	if diff := testutil.Diff(&np, want2); diff != "" {
+		t.Error(diff)
 	}
 	if np.Nested != nst {
 		t.Error("nested struct pointers not equal")
@@ -851,28 +882,23 @@ var (
 
 func TestStructLoaderRepeated(t *testing.T) {
 	var r1 repStruct
-	if err := load(&r1, repSchema, repValues); err != nil {
-		t.Fatal(err)
-	}
+	mustLoad(t, &r1, repSchema, repValues)
 	want := repStruct{
 		Nums:      []int{1, 2, 3},
 		ShortNums: [...]int{1, 2}, // extra values discarded
 		LongNums:  [...]int{1, 2, 3, 0, 0},
 		Nested:    []*nested{{"x", 1}, {"y", 2}},
 	}
-	if !testutil.Equal(r1, want) {
-		t.Errorf("got %+v, want %+v", pretty.Value(r1), pretty.Value(want))
+	if diff := testutil.Diff(r1, want); diff != "" {
+		t.Error(diff)
 	}
-
 	r2 := repStruct{
 		Nums:     []int{-1, -2, -3, -4, -5},    // truncated to zero and appended to
 		LongNums: [...]int{-1, -2, -3, -4, -5}, // unset elements are zeroed
 	}
-	if err := load(&r2, repSchema, repValues); err != nil {
-		t.Fatal(err)
-	}
-	if !testutil.Equal(r2, want) {
-		t.Errorf("got %+v, want %+v", pretty.Value(r2), pretty.Value(want))
+	mustLoad(t, &r2, repSchema, repValues)
+	if diff := testutil.Diff(r2, want); diff != "" {
+		t.Error(diff)
 	}
 	if got, want := cap(r2.Nums), 5; got != want {
 		t.Errorf("cap(r2.Nums) = %d, want %d", got, want)
@@ -880,33 +906,109 @@ func TestStructLoaderRepeated(t *testing.T) {
 
 	// Short slice case.
 	r3 := repStruct{Nums: []int{-1}}
-	if err := load(&r3, repSchema, repValues); err != nil {
-		t.Fatal(err)
-	}
-	if !testutil.Equal(r3, want) {
-		t.Errorf("got %+v, want %+v", pretty.Value(r3), pretty.Value(want))
+	mustLoad(t, &r3, repSchema, repValues)
+	if diff := testutil.Diff(r3, want); diff != "" {
+		t.Error(diff)
 	}
 	if got, want := cap(r3.Nums), 3; got != want {
 		t.Errorf("cap(r3.Nums) = %d, want %d", got, want)
 	}
+}
 
+type testStructNullable struct {
+	String    NullString
+	Bytes     []byte
+	Integer   NullInt64
+	Float     NullFloat64
+	Boolean   NullBool
+	Timestamp NullTimestamp
+	Date      NullDate
+	Time      NullTime
+	DateTime  NullDateTime
+	Record    *subNullable
+}
+
+type subNullable struct {
+	X NullInt64
+}
+
+var testStructNullableSchema = Schema{
+	{Name: "String", Type: StringFieldType, Required: false},
+	{Name: "Bytes", Type: BytesFieldType, Required: false},
+	{Name: "Integer", Type: IntegerFieldType, Required: false},
+	{Name: "Float", Type: FloatFieldType, Required: false},
+	{Name: "Boolean", Type: BooleanFieldType, Required: false},
+	{Name: "Timestamp", Type: TimestampFieldType, Required: false},
+	{Name: "Date", Type: DateFieldType, Required: false},
+	{Name: "Time", Type: TimeFieldType, Required: false},
+	{Name: "DateTime", Type: DateTimeFieldType, Required: false},
+	{Name: "Record", Type: RecordFieldType, Required: false, Schema: Schema{
+		{Name: "X", Type: IntegerFieldType, Required: false},
+	}},
+}
+
+func TestStructLoaderNullable(t *testing.T) {
+	var ts testStructNullable
+	nilVals := []Value{nil, nil, nil, nil, nil, nil, nil, nil, nil, nil}
+	mustLoad(t, &ts, testStructNullableSchema, nilVals)
+	want := testStructNullable{}
+	if diff := testutil.Diff(ts, want); diff != "" {
+		t.Error(diff)
+	}
+
+	nonnilVals := []Value{"x", []byte{1, 2, 3}, int64(1), 2.3, true, testTimestamp, testDate, testTime, testDateTime, []Value{int64(4)}}
+
+	// All ts fields are nil. Loading non-nil values will cause them all to
+	// be allocated.
+	mustLoad(t, &ts, testStructNullableSchema, nonnilVals)
+	want = testStructNullable{
+		String:    NullString{StringVal: "x", Valid: true},
+		Bytes:     []byte{1, 2, 3},
+		Integer:   NullInt64{Int64: 1, Valid: true},
+		Float:     NullFloat64{Float64: 2.3, Valid: true},
+		Boolean:   NullBool{Bool: true, Valid: true},
+		Timestamp: NullTimestamp{Timestamp: testTimestamp, Valid: true},
+		Date:      NullDate{Date: testDate, Valid: true},
+		Time:      NullTime{Time: testTime, Valid: true},
+		DateTime:  NullDateTime{DateTime: testDateTime, Valid: true},
+		Record:    &subNullable{X: NullInt64{Int64: 4, Valid: true}},
+	}
+	if diff := testutil.Diff(ts, want); diff != "" {
+		t.Error(diff)
+	}
+
+	// Struct pointers are reused, byte slices are not.
+	want = ts
+	want.Bytes = []byte{17}
+	vals2 := []Value{nil, []byte{17}, nil, nil, nil, nil, nil, nil, nil, []Value{int64(7)}}
+	mustLoad(t, &ts, testStructNullableSchema, vals2)
+	if ts.Record != want.Record {
+		t.Error("record pointers not identical")
+	}
 }
 
 func TestStructLoaderOverflow(t *testing.T) {
 	type S struct {
 		I int16
+		U uint16
 		F float32
 	}
 	schema := Schema{
 		{Name: "I", Type: IntegerFieldType},
+		{Name: "U", Type: IntegerFieldType},
 		{Name: "F", Type: FloatFieldType},
 	}
 	var s S
-	if err := load(&s, schema, []Value{int64(math.MaxInt16 + 1), 0}); err == nil {
-		t.Error("int: got nil, want error")
-	}
-	if err := load(&s, schema, []Value{int64(0), math.MaxFloat32 * 2}); err == nil {
-		t.Error("float: got nil, want error")
+	z64 := int64(0)
+	for _, vals := range [][]Value{
+		{int64(math.MaxInt16 + 1), z64, 0},
+		{z64, int64(math.MaxInt32), 0},
+		{z64, int64(-1), 0},
+		{z64, z64, math.MaxFloat32 * 2},
+	} {
+		if err := load(&s, schema, vals); err == nil {
+			t.Errorf("%+v: got nil, want error", vals)
+		}
 	}
 }
 
@@ -922,20 +1024,18 @@ func TestStructLoaderFieldOverlap(t *testing.T) {
 		t.Fatal(err)
 	}
 	want1 := S1{I: 7}
-	if !testutil.Equal(s1, want1) {
-		t.Errorf("got %+v, want %+v", pretty.Value(s1), pretty.Value(want1))
+	if diff := testutil.Diff(s1, want1); diff != "" {
+		t.Error(diff)
 	}
 
 	// It's even valid to have no overlapping fields at all.
 	type S2 struct{ Z int }
 
 	var s2 S2
-	if err := load(&s2, schema2, testValues); err != nil {
-		t.Fatal(err)
-	}
+	mustLoad(t, &s2, schema2, testValues)
 	want2 := S2{}
-	if !testutil.Equal(s2, want2) {
-		t.Errorf("got %+v, want %+v", pretty.Value(s2), pretty.Value(want2))
+	if diff := testutil.Diff(s2, want2); diff != "" {
+		t.Error(diff)
 	}
 }
 
@@ -989,21 +1089,17 @@ func TestStructLoaderErrors(t *testing.T) {
 		{Name: "f", Type: FloatFieldType},
 		{Name: "b", Type: BooleanFieldType},
 		{Name: "s", Type: StringFieldType},
-		{Name: "by", Type: BytesFieldType},
 		{Name: "d", Type: DateFieldType},
 	}
 	type s struct {
-		I  int
-		F  float64
-		B  bool
-		S  string
-		By []byte
-		D  civil.Date
+		I int
+		F float64
+		B bool
+		S string
+		D civil.Date
 	}
-	vals := []Value{int64(0), 0.0, false, "", []byte{}, testDate}
-	if err := load(&s{}, schema, vals); err != nil {
-		t.Fatal(err)
-	}
+	vals := []Value{int64(0), 0.0, false, "", testDate}
+	mustLoad(t, &s{}, schema, vals)
 	for i, e := range vals {
 		vals[i] = nil
 		got := load(&s{}, schema, vals)
@@ -1030,6 +1126,12 @@ func TestStructLoaderErrors(t *testing.T) {
 	err = sl.set(&different{}, schema2)
 	if err == nil {
 		t.Error("different struct types: got nil, want error")
+	}
+}
+
+func mustLoad(t *testing.T, pval interface{}, schema Schema, vals []Value) {
+	if err := load(pval, schema, vals); err != nil {
+		t.Fatalf("loading: %v", err)
 	}
 }
 

@@ -42,12 +42,12 @@ func NewPropertiesClientWithBaseURI(baseURI string, subscriptionID string) Prope
 
 // ListByService lists a collection of properties defined within a service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field | Supported operators    | Supported functions                                   |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field | Supported operators    | Supported functions                                   |
 // |-------|------------------------|-------------------------------------------------------|
 // | tags  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith, any, all |
-// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith           | top is number of records
-// to return. skip is number of records to skip.
+// | name  | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith           | top is number of
+// records to return. skip is number of records to skip.
 func (client PropertiesClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32) (result PropertyCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -60,7 +60,7 @@ func (client PropertiesClient) ListByService(ctx context.Context, resourceGroupN
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.PropertiesClient", "ListByService")
+		return result, validation.NewError("apimanagement.PropertiesClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults

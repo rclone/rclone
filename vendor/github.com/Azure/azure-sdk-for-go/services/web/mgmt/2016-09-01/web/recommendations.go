@@ -49,7 +49,7 @@ func (client RecommendationsClient) DisableAllForWebApp(ctx context.Context, res
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.RecommendationsClient", "DisableAllForWebApp")
+		return result, validation.NewError("web.RecommendationsClient", "DisableAllForWebApp", err.Error())
 	}
 
 	req, err := client.DisableAllForWebAppPreparer(ctx, resourceGroupName, siteName)
@@ -115,8 +115,8 @@ func (client RecommendationsClient) DisableAllForWebAppResponder(resp *http.Resp
 
 // GetRuleDetailsByWebApp get a recommendation rule for an app.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. siteName is name of the app. name is
-// name of the recommendation. updateSeen is specify <code>true</code> to update the last-seen timestamp of the
+// resourceGroupName is name of the resource group to which the resource belongs. siteName is name of the app. name
+// is name of the recommendation. updateSeen is specify <code>true</code> to update the last-seen timestamp of the
 // recommendation object.
 func (client RecommendationsClient) GetRuleDetailsByWebApp(ctx context.Context, resourceGroupName string, siteName string, name string, updateSeen *bool) (result RecommendationRule, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -124,7 +124,7 @@ func (client RecommendationsClient) GetRuleDetailsByWebApp(ctx context.Context, 
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.RecommendationsClient", "GetRuleDetailsByWebApp")
+		return result, validation.NewError("web.RecommendationsClient", "GetRuleDetailsByWebApp", err.Error())
 	}
 
 	req, err := client.GetRuleDetailsByWebAppPreparer(ctx, resourceGroupName, siteName, name, updateSeen)
@@ -196,9 +196,9 @@ func (client RecommendationsClient) GetRuleDetailsByWebAppResponder(resp *http.R
 // List list all recommendations for a subscription.
 //
 // featured is specify <code>true</code> to return only the most critical recommendations. The default is
-// <code>false</code>, which returns all recommendations. filter is filter is specified by using OData syntax. Example:
-// $filter=channels eq 'Api' or channel eq 'Notification' and startTime eq '2014-01-01T00:00:00Z' and endTime eq
-// '2014-12-31T23:59:59Z' and timeGrain eq duration'[PT1H|PT1M|P1D]
+// <code>false</code>, which returns all recommendations. filter is filter is specified by using OData syntax.
+// Example: $filter=channels eq 'Api' or channel eq 'Notification' and startTime eq '2014-01-01T00:00:00Z' and
+// endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[PT1H|PT1M|P1D]
 func (client RecommendationsClient) List(ctx context.Context, featured *bool, filter string) (result ListRecommendation, err error) {
 	req, err := client.ListPreparer(ctx, featured, filter)
 	if err != nil {
@@ -268,16 +268,17 @@ func (client RecommendationsClient) ListResponder(resp *http.Response) (result L
 
 // ListHistoryForWebApp get past recommendations for an app, optionally specified by the time range.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. siteName is name of the app. filter
-// is filter is specified by using OData syntax. Example: $filter=channels eq 'Api' or channel eq 'Notification' and
-// startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[PT1H|PT1M|P1D]
+// resourceGroupName is name of the resource group to which the resource belongs. siteName is name of the app.
+// filter is filter is specified by using OData syntax. Example: $filter=channels eq 'Api' or channel eq
+// 'Notification' and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq
+// duration'[PT1H|PT1M|P1D]
 func (client RecommendationsClient) ListHistoryForWebApp(ctx context.Context, resourceGroupName string, siteName string, filter string) (result ListRecommendation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.RecommendationsClient", "ListHistoryForWebApp")
+		return result, validation.NewError("web.RecommendationsClient", "ListHistoryForWebApp", err.Error())
 	}
 
 	req, err := client.ListHistoryForWebAppPreparer(ctx, resourceGroupName, siteName, filter)
@@ -347,17 +348,17 @@ func (client RecommendationsClient) ListHistoryForWebAppResponder(resp *http.Res
 
 // ListRecommendedRulesForWebApp get all recommendations for an app.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. siteName is name of the app. featured
-// is specify <code>true</code> to return only the most critical recommendations. The default is <code>false</code>,
-// which returns all recommendations. filter is return only channels specified in the filter. Filter is specified by
-// using OData syntax. Example: $filter=channels eq 'Api' or channel eq 'Notification'
+// resourceGroupName is name of the resource group to which the resource belongs. siteName is name of the app.
+// featured is specify <code>true</code> to return only the most critical recommendations. The default is
+// <code>false</code>, which returns all recommendations. filter is return only channels specified in the filter.
+// Filter is specified by using OData syntax. Example: $filter=channels eq 'Api' or channel eq 'Notification'
 func (client RecommendationsClient) ListRecommendedRulesForWebApp(ctx context.Context, resourceGroupName string, siteName string, featured *bool, filter string) (result ListRecommendation, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.RecommendationsClient", "ListRecommendedRulesForWebApp")
+		return result, validation.NewError("web.RecommendationsClient", "ListRecommendedRulesForWebApp", err.Error())
 	}
 
 	req, err := client.ListRecommendedRulesForWebAppPreparer(ctx, resourceGroupName, siteName, featured, filter)
@@ -498,7 +499,7 @@ func (client RecommendationsClient) ResetAllFiltersForWebApp(ctx context.Context
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.RecommendationsClient", "ResetAllFiltersForWebApp")
+		return result, validation.NewError("web.RecommendationsClient", "ResetAllFiltersForWebApp", err.Error())
 	}
 
 	req, err := client.ResetAllFiltersForWebAppPreparer(ctx, resourceGroupName, siteName)

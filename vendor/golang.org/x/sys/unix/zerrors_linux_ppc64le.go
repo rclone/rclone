@@ -121,6 +121,7 @@ const (
 	ARPHRD_PPP                           = 0x200
 	ARPHRD_PRONET                        = 0x4
 	ARPHRD_RAWHDLC                       = 0x206
+	ARPHRD_RAWIP                         = 0x207
 	ARPHRD_ROSE                          = 0x10e
 	ARPHRD_RSRVD                         = 0x104
 	ARPHRD_SIT                           = 0x308
@@ -390,6 +391,7 @@ const (
 	ETH_P_DSA                            = 0x1b
 	ETH_P_ECONET                         = 0x18
 	ETH_P_EDSA                           = 0xdada
+	ETH_P_ERSPAN                         = 0x88be
 	ETH_P_FCOE                           = 0x8906
 	ETH_P_FIP                            = 0x8914
 	ETH_P_HDLC                           = 0x19
@@ -398,6 +400,7 @@ const (
 	ETH_P_IEEE802154                     = 0xf6
 	ETH_P_IEEEPUP                        = 0xa00
 	ETH_P_IEEEPUPAT                      = 0xa01
+	ETH_P_IFE                            = 0xed3e
 	ETH_P_IP                             = 0x800
 	ETH_P_IPV6                           = 0x86dd
 	ETH_P_IPX                            = 0x8137
@@ -408,11 +411,13 @@ const (
 	ETH_P_LOOP                           = 0x60
 	ETH_P_LOOPBACK                       = 0x9000
 	ETH_P_MACSEC                         = 0x88e5
+	ETH_P_MAP                            = 0xf9
 	ETH_P_MOBITEX                        = 0x15
 	ETH_P_MPLS_MC                        = 0x8848
 	ETH_P_MPLS_UC                        = 0x8847
 	ETH_P_MVRP                           = 0x88f5
 	ETH_P_NCSI                           = 0x88f8
+	ETH_P_NSH                            = 0x894f
 	ETH_P_PAE                            = 0x888e
 	ETH_P_PAUSE                          = 0x8808
 	ETH_P_PHONET                         = 0xf5
@@ -476,6 +481,7 @@ const (
 	FS_POLICY_FLAGS_PAD_8                = 0x1
 	FS_POLICY_FLAGS_PAD_MASK             = 0x3
 	FS_POLICY_FLAGS_VALID                = 0x3
+	F_ADD_SEALS                          = 0x409
 	F_DUPFD                              = 0x0
 	F_DUPFD_CLOEXEC                      = 0x406
 	F_EXLCK                              = 0x4
@@ -488,6 +494,9 @@ const (
 	F_GETOWN_EX                          = 0x10
 	F_GETPIPE_SZ                         = 0x408
 	F_GETSIG                             = 0xb
+	F_GET_FILE_RW_HINT                   = 0x40d
+	F_GET_RW_HINT                        = 0x40b
+	F_GET_SEALS                          = 0x40a
 	F_LOCK                               = 0x1
 	F_NOTIFY                             = 0x402
 	F_OFD_GETLK                          = 0x24
@@ -495,6 +504,10 @@ const (
 	F_OFD_SETLKW                         = 0x26
 	F_OK                                 = 0x0
 	F_RDLCK                              = 0x0
+	F_SEAL_GROW                          = 0x4
+	F_SEAL_SEAL                          = 0x1
+	F_SEAL_SHRINK                        = 0x2
+	F_SEAL_WRITE                         = 0x8
 	F_SETFD                              = 0x2
 	F_SETFL                              = 0x4
 	F_SETLEASE                           = 0x400
@@ -506,6 +519,8 @@ const (
 	F_SETOWN_EX                          = 0xf
 	F_SETPIPE_SZ                         = 0x407
 	F_SETSIG                             = 0xa
+	F_SET_FILE_RW_HINT                   = 0x40e
+	F_SET_RW_HINT                        = 0x40c
 	F_SHLCK                              = 0x8
 	F_TEST                               = 0x3
 	F_TLOCK                              = 0x2
@@ -561,6 +576,8 @@ const (
 	IFF_MASTER                           = 0x400
 	IFF_MULTICAST                        = 0x1000
 	IFF_MULTI_QUEUE                      = 0x100
+	IFF_NAPI                             = 0x10
+	IFF_NAPI_FRAGS                       = 0x20
 	IFF_NOARP                            = 0x80
 	IFF_NOFILTER                         = 0x1000
 	IFF_NOTRAILERS                       = 0x20
@@ -845,6 +862,7 @@ const (
 	MADV_FREE                            = 0x8
 	MADV_HUGEPAGE                        = 0xe
 	MADV_HWPOISON                        = 0x64
+	MADV_KEEPONFORK                      = 0x13
 	MADV_MERGEABLE                       = 0xc
 	MADV_NOHUGEPAGE                      = 0xf
 	MADV_NORMAL                          = 0x0
@@ -853,6 +871,7 @@ const (
 	MADV_SEQUENTIAL                      = 0x2
 	MADV_UNMERGEABLE                     = 0xd
 	MADV_WILLNEED                        = 0x3
+	MADV_WIPEONFORK                      = 0x12
 	MAP_ANON                             = 0x20
 	MAP_ANONYMOUS                        = 0x20
 	MAP_DENYWRITE                        = 0x800
@@ -898,6 +917,7 @@ const (
 	MSG_TRYHARD                          = 0x4
 	MSG_WAITALL                          = 0x100
 	MSG_WAITFORONE                       = 0x10000
+	MSG_ZEROCOPY                         = 0x4000000
 	MS_ACTIVE                            = 0x40000000
 	MS_ASYNC                             = 0x1
 	MS_BIND                              = 0x1000
@@ -999,6 +1019,7 @@ const (
 	NLM_F_EXCL                           = 0x200
 	NLM_F_MATCH                          = 0x200
 	NLM_F_MULTI                          = 0x2
+	NLM_F_NONREC                         = 0x100
 	NLM_F_REPLACE                        = 0x100
 	NLM_F_REQUEST                        = 0x1
 	NLM_F_ROOT                           = 0x100
@@ -1198,6 +1219,11 @@ const (
 	PR_SET_TIMING                        = 0xe
 	PR_SET_TSC                           = 0x1a
 	PR_SET_UNALIGN                       = 0x6
+	PR_SVE_GET_VL                        = 0x33
+	PR_SVE_SET_VL                        = 0x32
+	PR_SVE_SET_VL_ONEXEC                 = 0x40000
+	PR_SVE_VL_INHERIT                    = 0x20000
+	PR_SVE_VL_LEN_MASK                   = 0xffff
 	PR_TASK_PERF_EVENTS_DISABLE          = 0x1f
 	PR_TASK_PERF_EVENTS_ENABLE           = 0x20
 	PR_TIMING_STATISTICAL                = 0x0
@@ -1340,6 +1366,7 @@ const (
 	RTAX_ADVMSS                          = 0x8
 	RTAX_CC_ALGO                         = 0x10
 	RTAX_CWND                            = 0x7
+	RTAX_FASTOPEN_NO_COOKIE              = 0x11
 	RTAX_FEATURES                        = 0xc
 	RTAX_FEATURE_ALLFRAG                 = 0x8
 	RTAX_FEATURE_ECN                     = 0x1
@@ -1350,7 +1377,7 @@ const (
 	RTAX_INITCWND                        = 0xb
 	RTAX_INITRWND                        = 0xe
 	RTAX_LOCK                            = 0x1
-	RTAX_MAX                             = 0x10
+	RTAX_MAX                             = 0x11
 	RTAX_MTU                             = 0x2
 	RTAX_QUICKACK                        = 0xf
 	RTAX_REORDERING                      = 0x9
@@ -1624,6 +1651,7 @@ const (
 	SOL_SOCKET                           = 0x1
 	SOL_TCP                              = 0x6
 	SOL_TIPC                             = 0x10f
+	SOL_TLS                              = 0x11a
 	SOL_X25                              = 0x106
 	SOMAXCONN                            = 0x80
 	SO_ACCEPTCONN                        = 0x1e
@@ -1692,6 +1720,7 @@ const (
 	SO_VM_SOCKETS_PEER_HOST_VM_ID        = 0x3
 	SO_VM_SOCKETS_TRUSTED                = 0x5
 	SO_WIFI_STATUS                       = 0x29
+	SO_ZEROCOPY                          = 0x3c
 	SPLICE_F_GIFT                        = 0x8
 	SPLICE_F_MORE                        = 0x4
 	SPLICE_F_MOVE                        = 0x1
@@ -1786,6 +1815,8 @@ const (
 	TCP_MAXWIN                           = 0xffff
 	TCP_MAX_WINSHIFT                     = 0xe
 	TCP_MD5SIG                           = 0xe
+	TCP_MD5SIG_EXT                       = 0x20
+	TCP_MD5SIG_FLAG_PREFIX               = 0x1
 	TCP_MD5SIG_MAXKEYLEN                 = 0x50
 	TCP_MSS                              = 0x200
 	TCP_MSS_DEFAULT                      = 0x218
@@ -1806,6 +1837,7 @@ const (
 	TCP_THIN_DUPACK                      = 0x11
 	TCP_THIN_LINEAR_TIMEOUTS             = 0x10
 	TCP_TIMESTAMP                        = 0x18
+	TCP_ULP                              = 0x1f
 	TCP_USER_TIMEOUT                     = 0x12
 	TCP_WINDOW_CLAMP                     = 0xa
 	TCSAFLUSH                            = 0x2

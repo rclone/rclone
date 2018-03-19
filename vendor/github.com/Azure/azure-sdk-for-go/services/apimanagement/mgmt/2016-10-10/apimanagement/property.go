@@ -42,8 +42,8 @@ func NewPropertyClientWithBaseURI(baseURI string, subscriptionID string) Propert
 
 // CreateOrUpdate creates or updates a property.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. propID
-// is identifier of the property. parameters is create parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// propID is identifier of the property. parameters is create parameters.
 func (client PropertyClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, propID string, parameters PropertyCreateParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -65,7 +65,7 @@ func (client PropertyClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 					}},
 				{Target: "parameters.Tags", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "parameters.Tags", Name: validation.MaxItems, Rule: 32, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.PropertyClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.PropertyClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, propID, parameters)
@@ -134,9 +134,9 @@ func (client PropertyClient) CreateOrUpdateResponder(resp *http.Response) (resul
 
 // Delete deletes specific property from the the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. propID
-// is identifier of the property. ifMatch is the entity state (Etag) version of the property to delete. A value of "*"
-// can be used for If-Match to unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// propID is identifier of the property. ifMatch is the entity state (Etag) version of the property to delete. A
+// value of "*" can be used for If-Match to unconditionally apply the operation.
 func (client PropertyClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, propID string, ifMatch string) (result ErrorBodyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -146,7 +146,7 @@ func (client PropertyClient) Delete(ctx context.Context, resourceGroupName strin
 		{TargetValue: propID,
 			Constraints: []validation.Constraint{{Target: "propID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "propID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.PropertyClient", "Delete")
+		return result, validation.NewError("apimanagement.PropertyClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, propID, ifMatch)
@@ -215,8 +215,8 @@ func (client PropertyClient) DeleteResponder(resp *http.Response) (result ErrorB
 
 // Get gets the details of the property specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. propID
-// is identifier of the property.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// propID is identifier of the property.
 func (client PropertyClient) Get(ctx context.Context, resourceGroupName string, serviceName string, propID string) (result PropertyContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -226,7 +226,7 @@ func (client PropertyClient) Get(ctx context.Context, resourceGroupName string, 
 		{TargetValue: propID,
 			Constraints: []validation.Constraint{{Target: "propID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "propID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.PropertyClient", "Get")
+		return result, validation.NewError("apimanagement.PropertyClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, propID)
@@ -294,9 +294,10 @@ func (client PropertyClient) GetResponder(resp *http.Response) (result PropertyC
 
 // Update updates the specific property.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. propID
-// is identifier of the property. parameters is update parameters. ifMatch is the entity state (Etag) version of the
-// property to update. A value of "*" can be used for If-Match to unconditionally apply the operation.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// propID is identifier of the property. parameters is update parameters. ifMatch is the entity state (Etag)
+// version of the property to update. A value of "*" can be used for If-Match to unconditionally apply the
+// operation.
 func (client PropertyClient) Update(ctx context.Context, resourceGroupName string, serviceName string, propID string, parameters PropertyUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -306,7 +307,7 @@ func (client PropertyClient) Update(ctx context.Context, resourceGroupName strin
 		{TargetValue: propID,
 			Constraints: []validation.Constraint{{Target: "propID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "propID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.PropertyClient", "Update")
+		return result, validation.NewError("apimanagement.PropertyClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, propID, parameters, ifMatch)

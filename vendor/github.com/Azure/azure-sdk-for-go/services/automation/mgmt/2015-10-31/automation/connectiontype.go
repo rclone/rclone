@@ -42,9 +42,9 @@ func NewConnectionTypeClientWithBaseURI(baseURI string, subscriptionID string, r
 
 // CreateOrUpdate create a connectiontype.
 //
-// automationAccountName is the automation account name. connectionTypeName is the parameters supplied to the create or
-// update connectiontype operation. parameters is the parameters supplied to the create or update connectiontype
-// operation.
+// automationAccountName is the automation account name. connectionTypeName is the parameters supplied to the
+// create or update connectiontype operation. parameters is the parameters supplied to the create or update
+// connectiontype operation.
 func (client ConnectionTypeClient) CreateOrUpdate(ctx context.Context, automationAccountName string, connectionTypeName string, parameters ConnectionTypeCreateOrUpdateParameters) (result ConnectionType, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
@@ -53,7 +53,7 @@ func (client ConnectionTypeClient) CreateOrUpdate(ctx context.Context, automatio
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.ConnectionTypeCreateOrUpdateProperties", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.ConnectionTypeCreateOrUpdateProperties.FieldDefinitions", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionTypeClient", "CreateOrUpdate")
+		return result, validation.NewError("automation.ConnectionTypeClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, automationAccountName, connectionTypeName, parameters)
@@ -128,7 +128,7 @@ func (client ConnectionTypeClient) Delete(ctx context.Context, automationAccount
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionTypeClient", "Delete")
+		return result, validation.NewError("automation.ConnectionTypeClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, connectionTypeName)
@@ -200,7 +200,7 @@ func (client ConnectionTypeClient) Get(ctx context.Context, automationAccountNam
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionTypeClient", "Get")
+		return result, validation.NewError("automation.ConnectionTypeClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, connectionTypeName)
@@ -273,7 +273,7 @@ func (client ConnectionTypeClient) ListByAutomationAccount(ctx context.Context, 
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.ConnectionTypeClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.ConnectionTypeClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults

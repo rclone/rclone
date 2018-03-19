@@ -44,7 +44,9 @@ type Signature struct {
 const CertTimeInfinity = 1<<64 - 1
 
 // An Certificate represents an OpenSSH certificate as defined in
-// [PROTOCOL.certkeys]?rev=1.8.
+// [PROTOCOL.certkeys]?rev=1.8. The Certificate type implements the
+// PublicKey interface, so it can be unmarshaled using
+// ParsePublicKey.
 type Certificate struct {
 	Nonce           []byte
 	Key             PublicKey

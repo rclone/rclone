@@ -18,6 +18,7 @@ package scheduler
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -206,18 +207,16 @@ const (
 
 // BasicAuthentication ...
 type BasicAuthentication struct {
-	// Type - Gets or sets the http authentication type. Possible values include: 'NotSpecified', 'ClientCertificate', 'ActiveDirectoryOAuth', 'Basic'
-	Type HTTPAuthenticationType `json:"type,omitempty"`
 	// Username - Gets or sets the username.
 	Username *string `json:"username,omitempty"`
 	// Password - Gets or sets the password.
 	Password *string `json:"password,omitempty"`
+	// Type - Gets or sets the http authentication type. Possible values include: 'NotSpecified', 'ClientCertificate', 'ActiveDirectoryOAuth', 'Basic'
+	Type HTTPAuthenticationType `json:"type,omitempty"`
 }
 
 // ClientCertAuthentication ...
 type ClientCertAuthentication struct {
-	// Type - Gets or sets the http authentication type. Possible values include: 'NotSpecified', 'ClientCertificate', 'ActiveDirectoryOAuth', 'Basic'
-	Type HTTPAuthenticationType `json:"type,omitempty"`
 	// Password - Gets or sets the password.
 	Password *string `json:"password,omitempty"`
 	// Pfx - Gets or sets the pfx.
@@ -228,6 +227,8 @@ type ClientCertAuthentication struct {
 	CertificateExpirationDate *date.Time `json:"certificateExpirationDate,omitempty"`
 	// CertificateSubjectName - Gets or sets the certificate subject name.
 	CertificateSubjectName *string `json:"certificateSubjectName,omitempty"`
+	// Type - Gets or sets the http authentication type. Possible values include: 'NotSpecified', 'ClientCertificate', 'ActiveDirectoryOAuth', 'Basic'
+	Type HTTPAuthenticationType `json:"type,omitempty"`
 }
 
 // HTTPAuthentication ...
@@ -247,7 +248,28 @@ type HTTPRequest struct {
 	// Body - Gets or sets the request body.
 	Body *string `json:"body,omitempty"`
 	// Headers - Gets or sets the headers.
-	Headers *map[string]*string `json:"headers,omitempty"`
+	Headers map[string]*string `json:"headers"`
+}
+
+// MarshalJSON is the custom marshaler for HTTPRequest.
+func (hr HTTPRequest) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if hr.Authentication != nil {
+		objectMap["authentication"] = hr.Authentication
+	}
+	if hr.URI != nil {
+		objectMap["uri"] = hr.URI
+	}
+	if hr.Method != nil {
+		objectMap["method"] = hr.Method
+	}
+	if hr.Body != nil {
+		objectMap["body"] = hr.Body
+	}
+	if hr.Headers != nil {
+		objectMap["headers"] = hr.Headers
+	}
+	return json.Marshal(objectMap)
 }
 
 // JobAction ...
@@ -280,9 +302,33 @@ type JobCollectionDefinition struct {
 	// Location - Gets or sets the storage account location.
 	Location *string `json:"location,omitempty"`
 	// Tags - Gets or sets the tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - Gets or sets the job collection properties.
 	Properties *JobCollectionProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for JobCollectionDefinition.
+func (jcd JobCollectionDefinition) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if jcd.ID != nil {
+		objectMap["id"] = jcd.ID
+	}
+	if jcd.Type != nil {
+		objectMap["type"] = jcd.Type
+	}
+	if jcd.Name != nil {
+		objectMap["name"] = jcd.Name
+	}
+	if jcd.Location != nil {
+		objectMap["location"] = jcd.Location
+	}
+	if jcd.Tags != nil {
+		objectMap["tags"] = jcd.Tags
+	}
+	if jcd.Properties != nil {
+		objectMap["properties"] = jcd.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // JobCollectionListResult ...
@@ -757,8 +803,6 @@ type JobStatus struct {
 
 // OAuthAuthentication ...
 type OAuthAuthentication struct {
-	// Type - Gets or sets the http authentication type. Possible values include: 'NotSpecified', 'ClientCertificate', 'ActiveDirectoryOAuth', 'Basic'
-	Type HTTPAuthenticationType `json:"type,omitempty"`
 	// Secret - Gets or sets the secret.
 	Secret *string `json:"secret,omitempty"`
 	// Tenant - Gets or sets the tenant.
@@ -767,6 +811,8 @@ type OAuthAuthentication struct {
 	Audience *string `json:"audience,omitempty"`
 	// ClientID - Gets or sets the client identifier.
 	ClientID *string `json:"clientId,omitempty"`
+	// Type - Gets or sets the http authentication type. Possible values include: 'NotSpecified', 'ClientCertificate', 'ActiveDirectoryOAuth', 'Basic'
+	Type HTTPAuthenticationType `json:"type,omitempty"`
 }
 
 // RetryPolicy ...
@@ -826,49 +872,121 @@ type ServiceBusMessage struct {
 	// BrokeredMessageProperties - Gets or sets the brokered message properties.
 	BrokeredMessageProperties *ServiceBusBrokeredMessageProperties `json:"brokeredMessageProperties,omitempty"`
 	// CustomMessageProperties - Gets or sets the custom message properties.
-	CustomMessageProperties *map[string]*string `json:"customMessageProperties,omitempty"`
+	CustomMessageProperties map[string]*string `json:"customMessageProperties"`
 	// Message - Gets or sets the message.
 	Message *string `json:"message,omitempty"`
 	// Namespace - Gets or sets the namespace.
 	Namespace *string `json:"namespace,omitempty"`
 	// TransportType - Gets or sets the transport type. Possible values include: 'ServiceBusTransportTypeNotSpecified', 'ServiceBusTransportTypeNetMessaging', 'ServiceBusTransportTypeAMQP'
 	TransportType ServiceBusTransportType `json:"transportType,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServiceBusMessage.
+func (sbm ServiceBusMessage) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sbm.Authentication != nil {
+		objectMap["authentication"] = sbm.Authentication
+	}
+	if sbm.BrokeredMessageProperties != nil {
+		objectMap["brokeredMessageProperties"] = sbm.BrokeredMessageProperties
+	}
+	if sbm.CustomMessageProperties != nil {
+		objectMap["customMessageProperties"] = sbm.CustomMessageProperties
+	}
+	if sbm.Message != nil {
+		objectMap["message"] = sbm.Message
+	}
+	if sbm.Namespace != nil {
+		objectMap["namespace"] = sbm.Namespace
+	}
+	objectMap["transportType"] = sbm.TransportType
+	return json.Marshal(objectMap)
 }
 
 // ServiceBusQueueMessage ...
 type ServiceBusQueueMessage struct {
+	// QueueName - Gets or sets the queue name.
+	QueueName *string `json:"queueName,omitempty"`
 	// Authentication - Gets or sets the authentication.
 	Authentication *ServiceBusAuthentication `json:"authentication,omitempty"`
 	// BrokeredMessageProperties - Gets or sets the brokered message properties.
 	BrokeredMessageProperties *ServiceBusBrokeredMessageProperties `json:"brokeredMessageProperties,omitempty"`
 	// CustomMessageProperties - Gets or sets the custom message properties.
-	CustomMessageProperties *map[string]*string `json:"customMessageProperties,omitempty"`
+	CustomMessageProperties map[string]*string `json:"customMessageProperties"`
 	// Message - Gets or sets the message.
 	Message *string `json:"message,omitempty"`
 	// Namespace - Gets or sets the namespace.
 	Namespace *string `json:"namespace,omitempty"`
 	// TransportType - Gets or sets the transport type. Possible values include: 'ServiceBusTransportTypeNotSpecified', 'ServiceBusTransportTypeNetMessaging', 'ServiceBusTransportTypeAMQP'
 	TransportType ServiceBusTransportType `json:"transportType,omitempty"`
-	// QueueName - Gets or sets the queue name.
-	QueueName *string `json:"queueName,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServiceBusQueueMessage.
+func (sbqm ServiceBusQueueMessage) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sbqm.QueueName != nil {
+		objectMap["queueName"] = sbqm.QueueName
+	}
+	if sbqm.Authentication != nil {
+		objectMap["authentication"] = sbqm.Authentication
+	}
+	if sbqm.BrokeredMessageProperties != nil {
+		objectMap["brokeredMessageProperties"] = sbqm.BrokeredMessageProperties
+	}
+	if sbqm.CustomMessageProperties != nil {
+		objectMap["customMessageProperties"] = sbqm.CustomMessageProperties
+	}
+	if sbqm.Message != nil {
+		objectMap["message"] = sbqm.Message
+	}
+	if sbqm.Namespace != nil {
+		objectMap["namespace"] = sbqm.Namespace
+	}
+	objectMap["transportType"] = sbqm.TransportType
+	return json.Marshal(objectMap)
 }
 
 // ServiceBusTopicMessage ...
 type ServiceBusTopicMessage struct {
+	// TopicPath - Gets or sets the topic path.
+	TopicPath *string `json:"topicPath,omitempty"`
 	// Authentication - Gets or sets the authentication.
 	Authentication *ServiceBusAuthentication `json:"authentication,omitempty"`
 	// BrokeredMessageProperties - Gets or sets the brokered message properties.
 	BrokeredMessageProperties *ServiceBusBrokeredMessageProperties `json:"brokeredMessageProperties,omitempty"`
 	// CustomMessageProperties - Gets or sets the custom message properties.
-	CustomMessageProperties *map[string]*string `json:"customMessageProperties,omitempty"`
+	CustomMessageProperties map[string]*string `json:"customMessageProperties"`
 	// Message - Gets or sets the message.
 	Message *string `json:"message,omitempty"`
 	// Namespace - Gets or sets the namespace.
 	Namespace *string `json:"namespace,omitempty"`
 	// TransportType - Gets or sets the transport type. Possible values include: 'ServiceBusTransportTypeNotSpecified', 'ServiceBusTransportTypeNetMessaging', 'ServiceBusTransportTypeAMQP'
 	TransportType ServiceBusTransportType `json:"transportType,omitempty"`
-	// TopicPath - Gets or sets the topic path.
-	TopicPath *string `json:"topicPath,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServiceBusTopicMessage.
+func (sbtm ServiceBusTopicMessage) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sbtm.TopicPath != nil {
+		objectMap["topicPath"] = sbtm.TopicPath
+	}
+	if sbtm.Authentication != nil {
+		objectMap["authentication"] = sbtm.Authentication
+	}
+	if sbtm.BrokeredMessageProperties != nil {
+		objectMap["brokeredMessageProperties"] = sbtm.BrokeredMessageProperties
+	}
+	if sbtm.CustomMessageProperties != nil {
+		objectMap["customMessageProperties"] = sbtm.CustomMessageProperties
+	}
+	if sbtm.Message != nil {
+		objectMap["message"] = sbtm.Message
+	}
+	if sbtm.Namespace != nil {
+		objectMap["namespace"] = sbtm.Namespace
+	}
+	objectMap["transportType"] = sbtm.TransportType
+	return json.Marshal(objectMap)
 }
 
 // Sku ...

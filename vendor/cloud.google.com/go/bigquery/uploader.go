@@ -54,6 +54,9 @@ type Uploader struct {
 
 // Uploader returns an Uploader that can be used to append rows to t.
 // The returned Uploader may optionally be further configured before its Put method is called.
+//
+// To stream rows into a date-partitioned table at a particular date, add the
+// $yyyymmdd suffix to the table name when constructing the Table.
 func (t *Table) Uploader() *Uploader {
 	return &Uploader{t: t}
 }

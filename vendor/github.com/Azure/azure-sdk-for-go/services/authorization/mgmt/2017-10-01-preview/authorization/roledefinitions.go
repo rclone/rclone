@@ -44,8 +44,8 @@ func NewRoleDefinitionsClientWithBaseURI(baseURI string, subscriptionID string) 
 
 // CreateOrUpdate creates or updates a role definition.
 //
-// scope is the scope of the role definition. roleDefinitionID is the ID of the role definition. roleDefinition is the
-// values for the role definition.
+// scope is the scope of the role definition. roleDefinitionID is the ID of the role definition. roleDefinition is
+// the values for the role definition.
 func (client RoleDefinitionsClient) CreateOrUpdate(ctx context.Context, scope string, roleDefinitionID string, roleDefinition RoleDefinition) (result RoleDefinition, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, scope, roleDefinitionID, roleDefinition)
 	if err != nil {
@@ -243,9 +243,9 @@ func (client RoleDefinitionsClient) GetResponder(resp *http.Response) (result Ro
 // GetByID gets a role definition by ID.
 //
 // roleDefinitionID is the fully qualified role definition ID. Use the format,
-// /subscriptions/{guid}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId} for subscription level
-// role definitions, or /providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId} for tenant level role
-// definitions.
+// /subscriptions/{guid}/providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId} for subscription
+// level role definitions, or /providers/Microsoft.Authorization/roleDefinitions/{roleDefinitionId} for tenant
+// level role definitions.
 func (client RoleDefinitionsClient) GetByID(ctx context.Context, roleDefinitionID string) (result RoleDefinition, err error) {
 	req, err := client.GetByIDPreparer(ctx, roleDefinitionID)
 	if err != nil {

@@ -9499,6 +9499,9 @@ func (c *IoT) SetDefaultAuthorizerRequest(input *SetDefaultAuthorizerInput) (req
 //   * ErrCodeInternalFailureException "InternalFailureException"
 //   An unexpected error has occurred.
 //
+//   * ErrCodeResourceAlreadyExistsException "ResourceAlreadyExistsException"
+//   The resource already exists.
+//
 func (c *IoT) SetDefaultAuthorizer(input *SetDefaultAuthorizerInput) (*SetDefaultAuthorizerOutput, error) {
 	req, out := c.SetDefaultAuthorizerRequest(input)
 	return out, req.Send()
@@ -12280,6 +12283,12 @@ type CACertificateDescription struct {
 	// The date the CA certificate was created.
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix"`
 
+	CustomerVersion *int64 `locationName:"customerVersion" min:"1" type:"integer"`
+
+	GenerationId *string `locationName:"generationId" type:"string"`
+
+	LastModifiedDate *time.Time `locationName:"lastModifiedDate" type:"timestamp" timestampFormat:"unix"`
+
 	// The owner of the CA certificate.
 	OwnedBy *string `locationName:"ownedBy" type:"string"`
 
@@ -12324,6 +12333,24 @@ func (s *CACertificateDescription) SetCertificatePem(v string) *CACertificateDes
 // SetCreationDate sets the CreationDate field's value.
 func (s *CACertificateDescription) SetCreationDate(v time.Time) *CACertificateDescription {
 	s.CreationDate = &v
+	return s
+}
+
+// SetCustomerVersion sets the CustomerVersion field's value.
+func (s *CACertificateDescription) SetCustomerVersion(v int64) *CACertificateDescription {
+	s.CustomerVersion = &v
+	return s
+}
+
+// SetGenerationId sets the GenerationId field's value.
+func (s *CACertificateDescription) SetGenerationId(v string) *CACertificateDescription {
+	s.GenerationId = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *CACertificateDescription) SetLastModifiedDate(v time.Time) *CACertificateDescription {
+	s.LastModifiedDate = &v
 	return s
 }
 
@@ -12558,6 +12585,10 @@ type CertificateDescription struct {
 	// The date and time the certificate was created.
 	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix"`
 
+	CustomerVersion *int64 `locationName:"customerVersion" min:"1" type:"integer"`
+
+	GenerationId *string `locationName:"generationId" type:"string"`
+
 	// The date and time the certificate was last modified.
 	LastModifiedDate *time.Time `locationName:"lastModifiedDate" type:"timestamp" timestampFormat:"unix"`
 
@@ -12611,6 +12642,18 @@ func (s *CertificateDescription) SetCertificatePem(v string) *CertificateDescrip
 // SetCreationDate sets the CreationDate field's value.
 func (s *CertificateDescription) SetCreationDate(v time.Time) *CertificateDescription {
 	s.CreationDate = &v
+	return s
+}
+
+// SetCustomerVersion sets the CustomerVersion field's value.
+func (s *CertificateDescription) SetCustomerVersion(v int64) *CertificateDescription {
+	s.CustomerVersion = &v
+	return s
+}
+
+// SetGenerationId sets the GenerationId field's value.
+func (s *CertificateDescription) SetGenerationId(v string) *CertificateDescription {
+	s.GenerationId = &v
 	return s
 }
 
@@ -17902,8 +17945,14 @@ func (s *GetPolicyInput) SetPolicyName(v string) *GetPolicyInput {
 type GetPolicyOutput struct {
 	_ struct{} `type:"structure"`
 
+	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix"`
+
 	// The default policy version ID.
 	DefaultVersionId *string `locationName:"defaultVersionId" type:"string"`
+
+	GenerationId *string `locationName:"generationId" type:"string"`
+
+	LastModifiedDate *time.Time `locationName:"lastModifiedDate" type:"timestamp" timestampFormat:"unix"`
 
 	// The policy ARN.
 	PolicyArn *string `locationName:"policyArn" type:"string"`
@@ -17925,9 +17974,27 @@ func (s GetPolicyOutput) GoString() string {
 	return s.String()
 }
 
+// SetCreationDate sets the CreationDate field's value.
+func (s *GetPolicyOutput) SetCreationDate(v time.Time) *GetPolicyOutput {
+	s.CreationDate = &v
+	return s
+}
+
 // SetDefaultVersionId sets the DefaultVersionId field's value.
 func (s *GetPolicyOutput) SetDefaultVersionId(v string) *GetPolicyOutput {
 	s.DefaultVersionId = &v
+	return s
+}
+
+// SetGenerationId sets the GenerationId field's value.
+func (s *GetPolicyOutput) SetGenerationId(v string) *GetPolicyOutput {
+	s.GenerationId = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *GetPolicyOutput) SetLastModifiedDate(v time.Time) *GetPolicyOutput {
+	s.LastModifiedDate = &v
 	return s
 }
 
@@ -18009,8 +18076,14 @@ func (s *GetPolicyVersionInput) SetPolicyVersionId(v string) *GetPolicyVersionIn
 type GetPolicyVersionOutput struct {
 	_ struct{} `type:"structure"`
 
+	CreationDate *time.Time `locationName:"creationDate" type:"timestamp" timestampFormat:"unix"`
+
+	GenerationId *string `locationName:"generationId" type:"string"`
+
 	// Specifies whether the policy version is the default.
 	IsDefaultVersion *bool `locationName:"isDefaultVersion" type:"boolean"`
+
+	LastModifiedDate *time.Time `locationName:"lastModifiedDate" type:"timestamp" timestampFormat:"unix"`
 
 	// The policy ARN.
 	PolicyArn *string `locationName:"policyArn" type:"string"`
@@ -18035,9 +18108,27 @@ func (s GetPolicyVersionOutput) GoString() string {
 	return s.String()
 }
 
+// SetCreationDate sets the CreationDate field's value.
+func (s *GetPolicyVersionOutput) SetCreationDate(v time.Time) *GetPolicyVersionOutput {
+	s.CreationDate = &v
+	return s
+}
+
+// SetGenerationId sets the GenerationId field's value.
+func (s *GetPolicyVersionOutput) SetGenerationId(v string) *GetPolicyVersionOutput {
+	s.GenerationId = &v
+	return s
+}
+
 // SetIsDefaultVersion sets the IsDefaultVersion field's value.
 func (s *GetPolicyVersionOutput) SetIsDefaultVersion(v bool) *GetPolicyVersionOutput {
 	s.IsDefaultVersion = &v
+	return s
+}
+
+// SetLastModifiedDate sets the LastModifiedDate field's value.
+func (s *GetPolicyVersionOutput) SetLastModifiedDate(v time.Time) *GetPolicyVersionOutput {
+	s.LastModifiedDate = &v
 	return s
 }
 
@@ -23077,6 +23168,8 @@ type RoleAliasDescription struct {
 	// The role alias.
 	RoleAlias *string `locationName:"roleAlias" min:"1" type:"string"`
 
+	RoleAliasArn *string `locationName:"roleAliasArn" type:"string"`
+
 	// The role ARN.
 	RoleArn *string `locationName:"roleArn" min:"20" type:"string"`
 }
@@ -23118,6 +23211,12 @@ func (s *RoleAliasDescription) SetOwner(v string) *RoleAliasDescription {
 // SetRoleAlias sets the RoleAlias field's value.
 func (s *RoleAliasDescription) SetRoleAlias(v string) *RoleAliasDescription {
 	s.RoleAlias = &v
+	return s
+}
+
+// SetRoleAliasArn sets the RoleAliasArn field's value.
+func (s *RoleAliasDescription) SetRoleAliasArn(v string) *RoleAliasDescription {
+	s.RoleAliasArn = &v
 	return s
 }
 

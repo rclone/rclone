@@ -61,7 +61,7 @@ func (client MachineGroupsClient) Create(ctx context.Context, resourceGroupName 
 						{Target: "machineGroup.MachineGroupProperties.DisplayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.MachineGroupsClient", "Create")
+		return result, validation.NewError("servicemap.MachineGroupsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, workspaceName, machineGroup)
@@ -145,7 +145,7 @@ func (client MachineGroupsClient) Delete(ctx context.Context, resourceGroupName 
 		{TargetValue: machineGroupName,
 			Constraints: []validation.Constraint{{Target: "machineGroupName", Name: validation.MaxLength, Rule: 36, Chain: nil},
 				{Target: "machineGroupName", Name: validation.MinLength, Rule: 36, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.MachineGroupsClient", "Delete")
+		return result, validation.NewError("servicemap.MachineGroupsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, workspaceName, machineGroupName)
@@ -227,7 +227,7 @@ func (client MachineGroupsClient) Get(ctx context.Context, resourceGroupName str
 		{TargetValue: machineGroupName,
 			Constraints: []validation.Constraint{{Target: "machineGroupName", Name: validation.MaxLength, Rule: 36, Chain: nil},
 				{Target: "machineGroupName", Name: validation.MinLength, Rule: 36, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.MachineGroupsClient", "Get")
+		return result, validation.NewError("servicemap.MachineGroupsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, machineGroupName)
@@ -307,7 +307,7 @@ func (client MachineGroupsClient) ListByWorkspace(ctx context.Context, resourceG
 			Constraints: []validation.Constraint{{Target: "workspaceName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "workspaceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `[a-zA-Z0-9_][a-zA-Z0-9_-]+[a-zA-Z0-9_]`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.MachineGroupsClient", "ListByWorkspace")
+		return result, validation.NewError("servicemap.MachineGroupsClient", "ListByWorkspace", err.Error())
 	}
 
 	result.fn = client.listByWorkspaceNextResults
@@ -403,8 +403,8 @@ func (client MachineGroupsClient) ListByWorkspaceComplete(ctx context.Context, r
 // Update updates a machine group.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. machineGroupName is machine Group resource name. machineGroup is machine Group
-// resource to update.
+// containing the resources of interest. machineGroupName is machine Group resource name. machineGroup is machine
+// Group resource to update.
 func (client MachineGroupsClient) Update(ctx context.Context, resourceGroupName string, workspaceName string, machineGroupName string, machineGroup MachineGroup) (result MachineGroup, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -425,7 +425,7 @@ func (client MachineGroupsClient) Update(ctx context.Context, resourceGroupName 
 						{Target: "machineGroup.MachineGroupProperties.DisplayName", Name: validation.MinLength, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.MachineGroupsClient", "Update")
+		return result, validation.NewError("servicemap.MachineGroupsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, workspaceName, machineGroupName, machineGroup)

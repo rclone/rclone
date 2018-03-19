@@ -2,8 +2,10 @@ package cobra
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -17,6 +19,16 @@ func checkOmit(t *testing.T, found, unexpected string) {
 func check(t *testing.T, found, expected string) {
 	if !strings.Contains(found, expected) {
 		t.Errorf("Expecting to contain: \n %q\nGot:\n %q\n", expected, found)
+	}
+}
+
+func checkRegex(t *testing.T, found, pattern string) {
+	matched, err := regexp.MatchString(pattern, found)
+	if err != nil {
+		t.Errorf("Error thrown performing MatchString: \n %s\n", err)
+	}
+	if !matched {
+		t.Errorf("Expecting to match: \n %q\nGot:\n %q\n", pattern, found)
 	}
 }
 
@@ -85,6 +97,11 @@ func TestBashCompletions(t *testing.T) {
 		Run:     emptyRun,
 	}
 
+	echoCmd.Flags().String("filename", "", "Enter a filename")
+	echoCmd.MarkFlagFilename("filename", "json", "yaml", "yml")
+	echoCmd.Flags().String("config", "", "config to use (located in /config/PROFILE/)")
+	echoCmd.Flags().SetAnnotation("config", BashCompSubdirsInDir, []string{"config"})
+
 	printCmd := &Command{
 		Use:   "print [string to print]",
 		Args:  MinimumNArgs(1),
@@ -146,11 +163,15 @@ func TestBashCompletions(t *testing.T) {
 	// check for filename extension flags
 	check(t, output, `must_have_one_noun+=("three")`)
 	// check for filename extension flags
-	check(t, output, `flags_completion+=("__handle_filename_extension_flag json|yaml|yml")`)
+	check(t, output, fmt.Sprintf(`flags_completion+=("__%s_handle_filename_extension_flag json|yaml|yml")`, rootCmd.Name()))
+	// check for filename extension flags in a subcommand
+	checkRegex(t, output, fmt.Sprintf(`_root_echo\(\)\n{[^}]*flags_completion\+=\("__%s_handle_filename_extension_flag json\|yaml\|yml"\)`, rootCmd.Name()))
 	// check for custom flags
 	check(t, output, `flags_completion+=("__complete_custom")`)
 	// check for subdirs_in_dir flags
-	check(t, output, `flags_completion+=("__handle_subdirs_in_dir_flag themes")`)
+	check(t, output, fmt.Sprintf(`flags_completion+=("__%s_handle_subdirs_in_dir_flag themes")`, rootCmd.Name()))
+	// check for subdirs_in_dir flags in a subcommand
+	checkRegex(t, output, fmt.Sprintf(`_root_echo\(\)\n{[^}]*flags_completion\+=\("__%s_handle_subdirs_in_dir_flag config"\)`, rootCmd.Name()))
 
 	checkOmit(t, output, deprecatedCmd.Name())
 

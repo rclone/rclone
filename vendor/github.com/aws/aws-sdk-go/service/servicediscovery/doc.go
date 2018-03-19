@@ -3,10 +3,10 @@
 // Package servicediscovery provides the client and types for making API
 // requests to Amazon Route 53 Auto Naming.
 //
-// Amazon Route 53 autonaming lets you configure public or private namespaces
+// Amazon Route 53 auto naming lets you configure public or private namespaces
 // that your microservice applications run in. When instances of the service
-// become available, you can call the autonaming API to register the instance,
-// and Amazon Route 53 automatically creates up to five DNS records and an optional
+// become available, you can call the auto naming API to register the instance,
+// and Route 53 automatically creates up to five DNS records and an optional
 // health check. Clients that submit DNS queries for the service receive an
 // answer that contains up to eight healthy records.
 //

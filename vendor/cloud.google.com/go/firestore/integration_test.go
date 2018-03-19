@@ -783,6 +783,7 @@ func TestIntegration_RunTransaction(t *testing.T) {
 		}
 		return anError
 	}
+
 	mustCreate("RunTransaction", t, patDoc, pat)
 	err := client.RunTransaction(ctx, incPat)
 	if err != nil {
@@ -810,6 +811,41 @@ func TestIntegration_RunTransaction(t *testing.T) {
 	// want is same as before.
 	if got != want {
 		t.Errorf("got %+v, want %+v", got, want)
+	}
+}
+
+func TestIntegration_TransactionGetAll(t *testing.T) {
+	ctx := context.Background()
+	type Player struct {
+		Name  string
+		Score int
+	}
+	lee := Player{Name: "Lee", Score: 3}
+	sam := Player{Name: "Sam", Score: 1}
+	client := integrationClient(t)
+	leeDoc := iColl.Doc("lee")
+	samDoc := iColl.Doc("sam")
+	mustCreate("TransactionGetAll", t, leeDoc, lee)
+	mustCreate("TransactionGetAll", t, samDoc, sam)
+
+	err := client.RunTransaction(ctx, func(_ context.Context, tx *Transaction) error {
+		docs, err := tx.GetAll([]*DocumentRef{samDoc, leeDoc})
+		if err != nil {
+			return err
+		}
+		for i, want := range []Player{sam, lee} {
+			var got Player
+			if err := docs[i].DataTo(&got); err != nil {
+				return err
+			}
+			if !testutil.Equal(got, want) {
+				return fmt.Errorf("got %+v, want %+v", got, want)
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
 	}
 }
 

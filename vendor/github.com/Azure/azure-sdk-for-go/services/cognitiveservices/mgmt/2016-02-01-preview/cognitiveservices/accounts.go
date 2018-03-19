@@ -43,10 +43,10 @@ func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) Account
 // Create create Cognitive Services Account. Accounts is a resource group wide resource type. It holds the keys for
 // developer to access intelligent APIs. It's also the resource type for billing.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// cognitive services account within the specified resource group. Cognitive Services account names must be between 3
-// and 24 characters in length and use numbers and lower-case letters only. parameters is the parameters to provide for
-// the created account.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the cognitive services account within the specified resource group. Cognitive Services account names must be
+// between 3 and 24 characters in length and use numbers and lower-case letters only. parameters is the parameters
+// to provide for the created account.
 func (client AccountsClient) Create(ctx context.Context, resourceGroupName string, accountName string, parameters AccountCreateParameters) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -57,7 +57,7 @@ func (client AccountsClient) Create(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "parameters.Sku", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Properties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "Create")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, accountName, parameters)
@@ -126,16 +126,16 @@ func (client AccountsClient) CreateResponder(resp *http.Response) (result Accoun
 
 // Delete deletes a Cognitive Services account from the resource group.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// cognitive services account within the specified resource group. Cognitive Services account names must be between 3
-// and 24 characters in length and use numbers and lower-case letters only.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the cognitive services account within the specified resource group. Cognitive Services account names must be
+// between 3 and 24 characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) Delete(ctx context.Context, resourceGroupName string, accountName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "Delete")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
@@ -201,16 +201,16 @@ func (client AccountsClient) DeleteResponder(resp *http.Response) (result autore
 
 // GetProperties returns a Cognitive Services account specified by the parameters.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// cognitive services account within the specified resource group. Cognitive Services account names must be between 3
-// and 24 characters in length and use numbers and lower-case letters only.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the cognitive services account within the specified resource group. Cognitive Services account names must be
+// between 3 and 24 characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) GetProperties(ctx context.Context, resourceGroupName string, accountName string) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "GetProperties")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "GetProperties", err.Error())
 	}
 
 	req, err := client.GetPropertiesPreparer(ctx, resourceGroupName, accountName)
@@ -404,16 +404,16 @@ func (client AccountsClient) ListByResourceGroupResponder(resp *http.Response) (
 
 // ListKeys lists the account keys for the specified Cognitive Services account.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// cognitive services account within the specified resource group. Congitive Services account names must be between 3
-// and 24 characters in length and use numbers and lower-case letters only.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the cognitive services account within the specified resource group. Congitive Services account names must be
+// between 3 and 24 characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) ListKeys(ctx context.Context, resourceGroupName string, accountName string) (result AccountKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "ListKeys")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "ListKeys", err.Error())
 	}
 
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, accountName)
@@ -480,16 +480,16 @@ func (client AccountsClient) ListKeysResponder(resp *http.Response) (result Acco
 
 // ListSkus list available SKUs for the requested Cognitive Services account
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// cognitive services account within the specified resource group. Cognitive Services account names must be between 3
-// and 24 characters in length and use numbers and lower-case letters only.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the cognitive services account within the specified resource group. Cognitive Services account names must be
+// between 3 and 24 characters in length and use numbers and lower-case letters only.
 func (client AccountsClient) ListSkus(ctx context.Context, resourceGroupName string, accountName string) (result AccountEnumerateSkusResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "ListSkus")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "ListSkus", err.Error())
 	}
 
 	req, err := client.ListSkusPreparer(ctx, resourceGroupName, accountName)
@@ -556,16 +556,17 @@ func (client AccountsClient) ListSkusResponder(resp *http.Response) (result Acco
 
 // RegenerateKey regenerates the specified account key for the specified Cognitive Services account.
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// cognitive services account within the specified resource group. Cognitive Services account names must be between 3
-// and 24 characters in length and use numbers and lower-case letters only. body is regenerate key parameters.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the cognitive services account within the specified resource group. Cognitive Services account names must be
+// between 3 and 24 characters in length and use numbers and lower-case letters only. body is regenerate key
+// parameters.
 func (client AccountsClient) RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, body RegenerateKeyParameters) (result AccountKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "RegenerateKey")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "RegenerateKey", err.Error())
 	}
 
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, accountName, body)
@@ -634,17 +635,17 @@ func (client AccountsClient) RegenerateKeyResponder(resp *http.Response) (result
 
 // Update updates a Cognitive Services account
 //
-// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of the
-// cognitive services account within the specified resource group. Cognitive Services account names must be between 3
-// and 24 characters in length and use numbers and lower-case letters only. body is the parameters to provide for the
-// created account.
+// resourceGroupName is the name of the resource group within the user's subscription. accountName is the name of
+// the cognitive services account within the specified resource group. Cognitive Services account names must be
+// between 3 and 24 characters in length and use numbers and lower-case letters only. body is the parameters to
+// provide for the created account.
 func (client AccountsClient) Update(ctx context.Context, resourceGroupName string, accountName string, body AccountUpdateParameters) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "Update")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, body)

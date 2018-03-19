@@ -41,8 +41,8 @@ func NewVirtualNetworksClientWithBaseURI(baseURI string, subscriptionID string) 
 
 // CreateOrUpdate create or replace an existing virtual network. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network. virtualNetwork is a virtual network.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network. virtualNetwork is a virtual network.
 func (client VirtualNetworksClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, labName string, name string, virtualNetwork VirtualNetwork) (result VirtualNetworksCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, name, virtualNetwork)
 	if err != nil {
@@ -113,8 +113,8 @@ func (client VirtualNetworksClient) CreateOrUpdateResponder(resp *http.Response)
 
 // Delete delete virtual network. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network.
 func (client VirtualNetworksClient) Delete(ctx context.Context, resourceGroupName string, labName string, name string) (result VirtualNetworksDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -182,8 +182,8 @@ func (client VirtualNetworksClient) DeleteResponder(resp *http.Response) (result
 
 // Get get virtual network.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network. expand is specify the $expand query. Example: 'properties($expand=externalSubnets)'
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network. expand is specify the $expand query. Example: 'properties($expand=externalSubnets)'
 func (client VirtualNetworksClient) Get(ctx context.Context, resourceGroupName string, labName string, name string, expand string) (result VirtualNetwork, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, labName, name, expand)
 	if err != nil {
@@ -253,10 +253,10 @@ func (client VirtualNetworksClient) GetResponder(resp *http.Response) (result Vi
 
 // List list virtual networks in a given lab.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the $expand
-// query. Example: 'properties($expand=externalSubnets)' filter is the filter to apply to the operation. top is the
-// maximum number of resources to return from the operation. orderby is the ordering expression for the results, using
-// OData notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
+// $expand query. Example: 'properties($expand=externalSubnets)' filter is the filter to apply to the operation.
+// top is the maximum number of resources to return from the operation. orderby is the ordering expression for the
+// results, using OData notation.
 func (client VirtualNetworksClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationVirtualNetworkPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)
@@ -362,8 +362,8 @@ func (client VirtualNetworksClient) ListComplete(ctx context.Context, resourceGr
 
 // Update modify properties of virtual networks.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// network. virtualNetwork is a virtual network.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual network. virtualNetwork is a virtual network.
 func (client VirtualNetworksClient) Update(ctx context.Context, resourceGroupName string, labName string, name string, virtualNetwork VirtualNetworkFragment) (result VirtualNetwork, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, labName, name, virtualNetwork)
 	if err != nil {

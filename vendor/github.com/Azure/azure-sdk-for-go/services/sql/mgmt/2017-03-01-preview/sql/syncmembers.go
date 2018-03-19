@@ -43,10 +43,11 @@ func NewSyncMembersClientWithBaseURI(baseURI string, subscriptionID string) Sync
 
 // CreateOrUpdate creates or updates a sync member.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync member is
-// hosted. syncMemberName is the name of the sync member. parameters is the requested sync member resource state.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync
+// member is hosted. syncMemberName is the name of the sync member. parameters is the requested sync member
+// resource state.
 func (client SyncMembersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, syncMemberName string, parameters SyncMember) (result SyncMembersCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, syncMemberName, parameters)
 	if err != nil {
@@ -119,10 +120,10 @@ func (client SyncMembersClient) CreateOrUpdateResponder(resp *http.Response) (re
 
 // Delete deletes a sync member.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync member is
-// hosted. syncMemberName is the name of the sync member.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync
+// member is hosted. syncMemberName is the name of the sync member.
 func (client SyncMembersClient) Delete(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, syncMemberName string) (result SyncMembersDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, syncMemberName)
 	if err != nil {
@@ -192,10 +193,10 @@ func (client SyncMembersClient) DeleteResponder(resp *http.Response) (result aut
 
 // Get gets a sync member.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync member is
-// hosted. syncMemberName is the name of the sync member.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync
+// member is hosted. syncMemberName is the name of the sync member.
 func (client SyncMembersClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, syncMemberName string) (result SyncMember, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, syncMemberName)
 	if err != nil {
@@ -264,9 +265,9 @@ func (client SyncMembersClient) GetResponder(resp *http.Response) (result SyncMe
 
 // ListBySyncGroup lists sync members in the given sync group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group.
 func (client SyncMembersClient) ListBySyncGroup(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string) (result SyncMemberListResultPage, err error) {
 	result.fn = client.listBySyncGroupNextResults
 	req, err := client.ListBySyncGroupPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName)
@@ -362,10 +363,10 @@ func (client SyncMembersClient) ListBySyncGroupComplete(ctx context.Context, res
 
 // ListMemberSchemas gets a sync member database schema.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync member is
-// hosted. syncMemberName is the name of the sync member.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync
+// member is hosted. syncMemberName is the name of the sync member.
 func (client SyncMembersClient) ListMemberSchemas(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, syncMemberName string) (result SyncFullSchemaPropertiesListResultPage, err error) {
 	result.fn = client.listMemberSchemasNextResults
 	req, err := client.ListMemberSchemasPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, syncMemberName)
@@ -462,10 +463,10 @@ func (client SyncMembersClient) ListMemberSchemasComplete(ctx context.Context, r
 
 // RefreshMemberSchema refreshes a sync member database schema.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync member is
-// hosted. syncMemberName is the name of the sync member.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync
+// member is hosted. syncMemberName is the name of the sync member.
 func (client SyncMembersClient) RefreshMemberSchema(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, syncMemberName string) (result SyncMembersRefreshMemberSchemaFuture, err error) {
 	req, err := client.RefreshMemberSchemaPreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, syncMemberName)
 	if err != nil {
@@ -535,10 +536,11 @@ func (client SyncMembersClient) RefreshMemberSchemaResponder(resp *http.Response
 
 // Update updates an existing sync member.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync member is
-// hosted. syncMemberName is the name of the sync member. parameters is the requested sync member resource state.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database on which the sync group is hosted. syncGroupName is the name of the sync group on which the sync
+// member is hosted. syncMemberName is the name of the sync member. parameters is the requested sync member
+// resource state.
 func (client SyncMembersClient) Update(ctx context.Context, resourceGroupName string, serverName string, databaseName string, syncGroupName string, syncMemberName string, parameters SyncMember) (result SyncMembersUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serverName, databaseName, syncGroupName, syncMemberName, parameters)
 	if err != nil {

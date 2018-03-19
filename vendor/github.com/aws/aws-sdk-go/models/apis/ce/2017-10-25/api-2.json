@@ -23,7 +23,10 @@
       "input":{"shape":"GetCostAndUsageRequest"},
       "output":{"shape":"GetCostAndUsageResponse"},
       "errors":[
-        {"shape":"LimitExceededException"}
+        {"shape":"LimitExceededException"},
+        {"shape":"BillExpirationException"},
+        {"shape":"DataUnavailableException"},
+        {"shape":"InvalidNextTokenException"}
       ]
     },
     "GetDimensionValues":{
@@ -35,7 +38,23 @@
       "input":{"shape":"GetDimensionValuesRequest"},
       "output":{"shape":"GetDimensionValuesResponse"},
       "errors":[
-        {"shape":"LimitExceededException"}
+        {"shape":"LimitExceededException"},
+        {"shape":"BillExpirationException"},
+        {"shape":"InvalidNextTokenException"}
+      ]
+    },
+    "GetReservationCoverage":{
+      "name":"GetReservationCoverage",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetReservationCoverageRequest"},
+      "output":{"shape":"GetReservationCoverageResponse"},
+      "errors":[
+        {"shape":"LimitExceededException"},
+        {"shape":"DataUnavailableException"},
+        {"shape":"InvalidNextTokenException"}
       ]
     },
     "GetReservationUtilization":{
@@ -47,7 +66,9 @@
       "input":{"shape":"GetReservationUtilizationRequest"},
       "output":{"shape":"GetReservationUtilizationResponse"},
       "errors":[
-        {"shape":"LimitExceededException"}
+        {"shape":"LimitExceededException"},
+        {"shape":"DataUnavailableException"},
+        {"shape":"InvalidNextTokenException"}
       ]
     },
     "GetTags":{
@@ -59,7 +80,9 @@
       "input":{"shape":"GetTagsRequest"},
       "output":{"shape":"GetTagsResponse"},
       "errors":[
-        {"shape":"LimitExceededException"}
+        {"shape":"LimitExceededException"},
+        {"shape":"BillExpirationException"},
+        {"shape":"InvalidNextTokenException"}
       ]
     }
   },
@@ -71,12 +94,54 @@
       "key":{"shape":"AttributeType"},
       "value":{"shape":"AttributeValue"}
     },
+    "BillExpirationException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
     "Context":{
       "type":"string",
       "enum":[
         "COST_AND_USAGE",
         "RESERVATIONS"
       ]
+    },
+    "Coverage":{
+      "type":"structure",
+      "members":{
+        "CoverageHours":{"shape":"CoverageHours"}
+      }
+    },
+    "CoverageByTime":{
+      "type":"structure",
+      "members":{
+        "TimePeriod":{"shape":"DateInterval"},
+        "Groups":{"shape":"ReservationCoverageGroups"},
+        "Total":{"shape":"Coverage"}
+      }
+    },
+    "CoverageHours":{
+      "type":"structure",
+      "members":{
+        "OnDemandHours":{"shape":"OnDemandHours"},
+        "ReservedHours":{"shape":"ReservedHours"},
+        "TotalRunningHours":{"shape":"TotalRunningHours"},
+        "CoverageHoursPercentage":{"shape":"CoverageHoursPercentage"}
+      }
+    },
+    "CoverageHoursPercentage":{"type":"string"},
+    "CoveragesByTime":{
+      "type":"list",
+      "member":{"shape":"CoverageByTime"}
+    },
+    "DataUnavailableException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
     },
     "DateInterval":{
       "type":"structure",
@@ -106,7 +171,12 @@
         "TENANCY",
         "SCOPE",
         "PLATFORM",
-        "SUBSCRIPTION_ID"
+        "SUBSCRIPTION_ID",
+        "LEGAL_ENTITY_NAME",
+        "DEPLOYMENT_OPTION",
+        "DATABASE_ENGINE",
+        "CACHE_ENGINE",
+        "INSTANCE_TYPE_FAMILY"
       ]
     },
     "DimensionValues":{
@@ -191,6 +261,26 @@
         "NextPageToken":{"shape":"NextPageToken"}
       }
     },
+    "GetReservationCoverageRequest":{
+      "type":"structure",
+      "required":["TimePeriod"],
+      "members":{
+        "TimePeriod":{"shape":"DateInterval"},
+        "GroupBy":{"shape":"GroupDefinitions"},
+        "Granularity":{"shape":"Granularity"},
+        "Filter":{"shape":"Expression"},
+        "NextPageToken":{"shape":"NextPageToken"}
+      }
+    },
+    "GetReservationCoverageResponse":{
+      "type":"structure",
+      "required":["CoveragesByTime"],
+      "members":{
+        "CoveragesByTime":{"shape":"CoveragesByTime"},
+        "Total":{"shape":"Coverage"},
+        "NextPageToken":{"shape":"NextPageToken"}
+      }
+    },
     "GetReservationUtilizationRequest":{
       "type":"structure",
       "required":["TimePeriod"],
@@ -272,6 +362,13 @@
       "type":"list",
       "member":{"shape":"Group"}
     },
+    "InvalidNextTokenException":{
+      "type":"structure",
+      "members":{
+        "Message":{"shape":"ErrorMessage"}
+      },
+      "exception":true
+    },
     "Key":{"type":"string"},
     "Keys":{
       "type":"list",
@@ -304,6 +401,7 @@
       "value":{"shape":"MetricValue"}
     },
     "NextPageToken":{"type":"string"},
+    "OnDemandHours":{"type":"string"},
     "PageSize":{"type":"integer"},
     "PurchasedHours":{"type":"string"},
     "ReservationAggregates":{
@@ -314,6 +412,17 @@
         "TotalActualHours":{"shape":"TotalActualHours"},
         "UnusedHours":{"shape":"UnusedHours"}
       }
+    },
+    "ReservationCoverageGroup":{
+      "type":"structure",
+      "members":{
+        "Attributes":{"shape":"Attributes"},
+        "Coverage":{"shape":"Coverage"}
+      }
+    },
+    "ReservationCoverageGroups":{
+      "type":"list",
+      "member":{"shape":"ReservationCoverageGroup"}
     },
     "ReservationGroupKey":{"type":"string"},
     "ReservationGroupValue":{"type":"string"},
@@ -330,6 +439,7 @@
       "type":"list",
       "member":{"shape":"ReservationUtilizationGroup"}
     },
+    "ReservedHours":{"type":"string"},
     "ResultByTime":{
       "type":"structure",
       "members":{
@@ -357,6 +467,7 @@
       }
     },
     "TotalActualHours":{"type":"string"},
+    "TotalRunningHours":{"type":"string"},
     "UnusedHours":{"type":"string"},
     "UtilizationByTime":{
       "type":"structure",

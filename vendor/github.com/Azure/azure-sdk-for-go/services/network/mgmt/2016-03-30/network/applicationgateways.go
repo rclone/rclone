@@ -41,8 +41,8 @@ func NewApplicationGatewaysClientWithBaseURI(baseURI string, subscriptionID stri
 
 // CreateOrUpdate the Put ApplicationGateway operation creates/updates a ApplicationGateway
 //
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the ApplicationGateway.
-// parameters is parameters supplied to the create/delete ApplicationGateway operation
+// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the
+// ApplicationGateway. parameters is parameters supplied to the create/delete ApplicationGateway operation
 func (client ApplicationGatewaysClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, applicationGatewayName string, parameters ApplicationGateway) (result ApplicationGatewaysCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, applicationGatewayName, parameters)
 	if err != nil {
@@ -112,7 +112,8 @@ func (client ApplicationGatewaysClient) CreateOrUpdateResponder(resp *http.Respo
 
 // Delete the delete applicationgateway operation deletes the specified applicationgateway.
 //
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the applicationgateway.
+// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the
+// applicationgateway.
 func (client ApplicationGatewaysClient) Delete(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGatewaysDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {
@@ -179,7 +180,8 @@ func (client ApplicationGatewaysClient) DeleteResponder(resp *http.Response) (re
 
 // Get the Get applicationgateway operation retreives information about the specified applicationgateway.
 //
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the applicationgateway.
+// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the
+// applicationgateway.
 func (client ApplicationGatewaysClient) Get(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGateway, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {
@@ -429,7 +431,8 @@ func (client ApplicationGatewaysClient) ListAllComplete(ctx context.Context) (re
 // Start the Start ApplicationGateway operation starts application gatewayin the specified resource group through
 // Network resource provider.
 //
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application gateway.
+// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
+// gateway.
 func (client ApplicationGatewaysClient) Start(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGatewaysStartFuture, err error) {
 	req, err := client.StartPreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {
@@ -497,7 +500,8 @@ func (client ApplicationGatewaysClient) StartResponder(resp *http.Response) (res
 // Stop the STOP ApplicationGateway operation stops application gatewayin the specified resource group through Network
 // resource provider.
 //
-// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application gateway.
+// resourceGroupName is the name of the resource group. applicationGatewayName is the name of the application
+// gateway.
 func (client ApplicationGatewaysClient) Stop(ctx context.Context, resourceGroupName string, applicationGatewayName string) (result ApplicationGatewaysStopFuture, err error) {
 	req, err := client.StopPreparer(ctx, resourceGroupName, applicationGatewayName)
 	if err != nil {

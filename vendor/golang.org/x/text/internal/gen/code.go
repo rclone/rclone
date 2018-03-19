@@ -199,7 +199,6 @@ func (w *CodeWriter) writeValue(v reflect.Value) {
 
 // WriteString writes a string literal.
 func (w *CodeWriter) WriteString(s string) {
-	s = strings.Replace(s, `\`, `\\`, -1)
 	io.WriteString(w.Hash, s) // content hash
 	w.Size += len(s)
 
@@ -250,6 +249,9 @@ func (w *CodeWriter) WriteString(s string) {
 				out = fmt.Sprintf("\\U%08x", r)
 			}
 			chars = len(out)
+		} else if r == '\\' {
+			out = "\\" + string(r)
+			chars = 2
 		}
 		if n -= chars; n < 0 {
 			nLines++

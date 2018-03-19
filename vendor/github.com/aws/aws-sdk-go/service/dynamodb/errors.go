@@ -57,12 +57,21 @@ const (
 	// ErrCodeLimitExceededException for service response error code
 	// "LimitExceededException".
 	//
-	// The number of concurrent table requests (cumulative number of tables in the
-	// CREATING, DELETING or UPDATING state) exceeds the maximum allowed of 10.
+	// Up to 50 CreateBackup operations are allowed per second, per account. There
+	// is no limit to the number of daily on-demand backups that can be taken.
 	//
-	// Also, for tables with secondary indexes, only one of those tables can be
-	// in the CREATING state at any point in time. Do not attempt to create more
-	// than one such table simultaneously.
+	// Up to 10 simultaneous table operations are allowed per account. These operations
+	// include CreateTable, UpdateTable, DeleteTable,UpdateTimeToLive, and RestoreTableFromBackup.
+	//
+	// For tables with secondary indexes, only one of those tables can be in the
+	// CREATING state at any point in time. Do not attempt to create more than one
+	// such table simultaneously.
+	//
+	// The total limit of tables in the ACTIVE state is 250.
+	//
+	// For tables with secondary indexes, only one of those tables can be in the
+	// CREATING state at any point in time. Do not attempt to create more than one
+	// such table simultaneously.
 	//
 	// The total limit of tables in the ACTIVE state is 250.
 	ErrCodeLimitExceededException = "LimitExceededException"

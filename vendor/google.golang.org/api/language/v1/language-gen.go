@@ -1,4 +1,4 @@
-// Package language provides access to the Google Cloud Natural Language API.
+// Package language provides access to the Cloud Natural Language API.
 //
 // See https://cloud.google.com/natural-language/
 //

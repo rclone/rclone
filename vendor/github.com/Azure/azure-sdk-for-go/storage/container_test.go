@@ -679,6 +679,25 @@ func (s *ContainerSuite) TestGetAndSetContainerMetadata(c *chk.C) {
 	c.Check(cnt2.Metadata, chk.DeepEquals, metaPut)
 }
 
+func (s *ContainerSuite) TestGetContainerProperties(c *chk.C) {
+	cli := getBlobClient(c)
+	rec := cli.client.appendRecorder(c)
+	defer rec.Stop()
+
+	// Get empty metadata
+	cnt1 := cli.GetContainerReference(containerName(c, "1"))
+	c.Assert(cnt1.Create(nil), chk.IsNil)
+	defer cnt1.Delete(nil)
+
+	// should be empty until we get properties
+	c.Assert(cnt1.Properties.Etag, chk.HasLen, 0)
+
+	err := cnt1.GetProperties()
+	c.Assert(err, chk.IsNil)
+	c.Assert(cnt1.Properties.Etag, chk.Equals, `"0x8D522402DA67448"`)
+	c.Assert(cnt1.Properties.PublicAccess, chk.Equals, ContainerAccessType("blob"))
+}
+
 func (cli *BlobStorageClient) deleteTestContainers(c *chk.C) error {
 	for {
 		resp, err := cli.ListContainers(ListContainersParameters{})

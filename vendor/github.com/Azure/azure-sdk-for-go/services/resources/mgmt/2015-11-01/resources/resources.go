@@ -51,7 +51,7 @@ func (client Client) CheckExistence(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.Client", "CheckExistence")
+		return result, validation.NewError("resources.Client", "CheckExistence", err.Error())
 	}
 
 	req, err := client.CheckExistencePreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName)
@@ -129,7 +129,7 @@ func (client Client) CreateOrUpdate(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.Client", "CreateOrUpdate")
+		return result, validation.NewError("resources.Client", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, parameters)
@@ -210,7 +210,7 @@ func (client Client) Delete(ctx context.Context, resourceGroupName string, resou
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.Client", "Delete")
+		return result, validation.NewError("resources.Client", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName)
@@ -288,7 +288,7 @@ func (client Client) Get(ctx context.Context, resourceGroupName string, resource
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.Client", "Get")
+		return result, validation.NewError("resources.Client", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName)
@@ -459,13 +459,13 @@ func (client Client) ListComplete(ctx context.Context, filter string, top *int32
 // GetLongRunningOperationStatus.
 //
 // sourceResourceGroupName is source resource group name. parameters is move resources' parameters.
-func (client Client) MoveResources(ctx context.Context, sourceResourceGroupName string, parameters MoveInfo) (result ResourcesMoveResourcesFuture, err error) {
+func (client Client) MoveResources(ctx context.Context, sourceResourceGroupName string, parameters MoveInfo) (result MoveResourcesFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: sourceResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "sourceResourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "sourceResourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "sourceResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.Client", "MoveResources")
+		return result, validation.NewError("resources.Client", "MoveResources", err.Error())
 	}
 
 	req, err := client.MoveResourcesPreparer(ctx, sourceResourceGroupName, parameters)
@@ -507,7 +507,7 @@ func (client Client) MoveResourcesPreparer(ctx context.Context, sourceResourceGr
 
 // MoveResourcesSender sends the MoveResources request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) MoveResourcesSender(req *http.Request) (future ResourcesMoveResourcesFuture, err error) {
+func (client Client) MoveResourcesSender(req *http.Request) (future MoveResourcesFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -536,15 +536,15 @@ func (client Client) MoveResourcesResponder(resp *http.Response) (result autores
 //
 // resourceGroupName is the name of the resource group for the resource. The name is case insensitive.
 // resourceProviderNamespace is the namespace of the resource provider. parentResourcePath is the parent resource
-// identity. resourceType is the resource type of the resource to update. resourceName is the name of the resource to
-// update. parameters is parameters for updating the resource.
-func (client Client) Update(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, parameters GenericResource) (result ResourcesUpdateFuture, err error) {
+// identity. resourceType is the resource type of the resource to update. resourceName is the name of the resource
+// to update. parameters is parameters for updating the resource.
+func (client Client) Update(ctx context.Context, resourceGroupName string, resourceProviderNamespace string, parentResourcePath string, resourceType string, resourceName string, parameters GenericResource) (result UpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "resources.Client", "Update")
+		return result, validation.NewError("resources.Client", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, resourceProviderNamespace, parentResourcePath, resourceType, resourceName, parameters)
@@ -590,7 +590,7 @@ func (client Client) UpdatePreparer(ctx context.Context, resourceGroupName strin
 
 // UpdateSender sends the Update request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) UpdateSender(req *http.Request) (future ResourcesUpdateFuture, err error) {
+func (client Client) UpdateSender(req *http.Request) (future UpdateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req

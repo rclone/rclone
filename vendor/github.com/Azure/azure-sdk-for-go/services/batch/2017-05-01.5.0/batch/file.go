@@ -1,4 +1,4 @@
-package xpackagex
+package batch
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -45,32 +45,32 @@ func NewFileClientWithBaseURI(baseURI string) FileClient {
 // DeleteFromComputeNode sends the delete from compute node request.
 //
 // poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node from which you
-// want to delete the file. filePath is the path to the file that you want to delete. recursive is whether to delete
-// children of a directory. If the filePath parameter represents a directory instead of a file, you can set recursive
-// to true to delete the directory and all of the files and subdirectories in it. If recursive is false then the
-// directory must be empty or deletion will fail. timeout is the maximum time that the server can spend processing the
-// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
-// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// want to delete the file. filePath is the path to the file that you want to delete. recursive is whether to
+// delete children of a directory. If the filePath parameter represents a directory instead of a file, you can set
+// recursive to true to delete the directory and all of the files and subdirectories in it. If recursive is false
+// then the directory must be empty or deletion will fail. timeout is the maximum time that the server can spend
+// processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
+// identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client FileClient) DeleteFromComputeNode(ctx context.Context, poolID string, nodeID string, filePath string, recursive *bool, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DeleteFromComputeNodePreparer(ctx, poolID, nodeID, filePath, recursive, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "DeleteFromComputeNode", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "DeleteFromComputeNode", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.DeleteFromComputeNodeSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "DeleteFromComputeNode", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "DeleteFromComputeNode", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.DeleteFromComputeNodeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "DeleteFromComputeNode", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "DeleteFromComputeNode", resp, "Failure responding to request")
 	}
 
 	return
@@ -93,6 +93,8 @@ func (client FileClient) DeleteFromComputeNodePreparer(ctx context.Context, pool
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -107,6 +109,9 @@ func (client FileClient) DeleteFromComputeNodePreparer(ctx context.Context, pool
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -139,30 +144,30 @@ func (client FileClient) DeleteFromComputeNodeResponder(resp *http.Response) (re
 // jobID is the ID of the job that contains the task. taskID is the ID of the task whose file you want to delete.
 // filePath is the path to the task file that you want to delete. recursive is whether to delete children of a
 // directory. If the filePath parameter represents a directory instead of a file, you can set recursive to true to
-// delete the directory and all of the files and subdirectories in it. If recursive is false then the directory must be
-// empty or deletion will fail. timeout is the maximum time that the server can spend processing the request, in
-// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID
-// with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether
-// the server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// delete the directory and all of the files and subdirectories in it. If recursive is false then the directory
+// must be empty or deletion will fail. timeout is the maximum time that the server can spend processing the
+// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
+// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
+// time the request was issued. Client libraries typically set this to the current system clock time; set it
+// explicitly if you are calling the REST API directly.
 func (client FileClient) DeleteFromTask(ctx context.Context, jobID string, taskID string, filePath string, recursive *bool, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DeleteFromTaskPreparer(ctx, jobID, taskID, filePath, recursive, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "DeleteFromTask", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "DeleteFromTask", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.DeleteFromTaskSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "DeleteFromTask", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "DeleteFromTask", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.DeleteFromTaskResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "DeleteFromTask", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "DeleteFromTask", resp, "Failure responding to request")
 	}
 
 	return
@@ -185,6 +190,8 @@ func (client FileClient) DeleteFromTaskPreparer(ctx context.Context, jobID strin
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -199,6 +206,9 @@ func (client FileClient) DeleteFromTaskPreparer(ctx context.Context, jobID strin
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -228,35 +238,36 @@ func (client FileClient) DeleteFromTaskResponder(resp *http.Response) (result au
 
 // GetFromComputeNode returns the content of the specified compute node file.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that contains the
-// file. filePath is the path to the compute node file that you want to get the content of. timeout is the maximum time
-// that the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ocpRange is the byte
-// range to be retrieved. The default is to retrieve the entire file. The format is bytes=startRange-endRange.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The operation
-// will be performed only if the resource on the service has been modified since the specified time. ifUnmodifiedSince
-// is a timestamp indicating the last modified time of the resource known to the client. The operation will be
-// performed only if the resource on the service has not been modified since the specified time.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that contains
+// the file. filePath is the path to the compute node file that you want to get the content of. timeout is the
+// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
+// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
+// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly. ocpRange is
+// the byte range to be retrieved. The default is to retrieve the entire file. The format is
+// bytes=startRange-endRange. ifModifiedSince is a timestamp indicating the last modified time of the resource
+// known to the client. The operation will be performed only if the resource on the service has been modified since
+// the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to
+// the client. The operation will be performed only if the resource on the service has not been modified since the
+// specified time.
 func (client FileClient) GetFromComputeNode(ctx context.Context, poolID string, nodeID string, filePath string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ocpRange string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result ReadCloser, err error) {
 	req, err := client.GetFromComputeNodePreparer(ctx, poolID, nodeID, filePath, timeout, clientRequestID, returnClientRequestID, ocpDate, ocpRange, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetFromComputeNode", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetFromComputeNode", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetFromComputeNodeSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetFromComputeNode", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetFromComputeNode", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetFromComputeNodeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetFromComputeNode", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetFromComputeNode", resp, "Failure responding to request")
 	}
 
 	return
@@ -276,6 +287,8 @@ func (client FileClient) GetFromComputeNodePreparer(ctx context.Context, poolID 
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -290,6 +303,9 @@ func (client FileClient) GetFromComputeNodePreparer(ctx context.Context, poolID 
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -336,30 +352,31 @@ func (client FileClient) GetFromComputeNodeResponder(resp *http.Response) (resul
 // server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
 // caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
 // 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ocpRange is the byte
-// range to be retrieved. The default is to retrieve the entire file. The format is bytes=startRange-endRange.
-// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The operation
-// will be performed only if the resource on the service has been modified since the specified time. ifUnmodifiedSince
-// is a timestamp indicating the last modified time of the resource known to the client. The operation will be
-// performed only if the resource on the service has not been modified since the specified time.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly. ocpRange is
+// the byte range to be retrieved. The default is to retrieve the entire file. The format is
+// bytes=startRange-endRange. ifModifiedSince is a timestamp indicating the last modified time of the resource
+// known to the client. The operation will be performed only if the resource on the service has been modified since
+// the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to
+// the client. The operation will be performed only if the resource on the service has not been modified since the
+// specified time.
 func (client FileClient) GetFromTask(ctx context.Context, jobID string, taskID string, filePath string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ocpRange string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result ReadCloser, err error) {
 	req, err := client.GetFromTaskPreparer(ctx, jobID, taskID, filePath, timeout, clientRequestID, returnClientRequestID, ocpDate, ocpRange, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetFromTask", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetFromTask", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetFromTaskSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetFromTask", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetFromTask", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetFromTaskResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetFromTask", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetFromTask", resp, "Failure responding to request")
 	}
 
 	return
@@ -379,6 +396,8 @@ func (client FileClient) GetFromTaskPreparer(ctx context.Context, jobID string, 
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -393,6 +412,9 @@ func (client FileClient) GetFromTaskPreparer(ctx context.Context, jobID string, 
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -434,34 +456,34 @@ func (client FileClient) GetFromTaskResponder(resp *http.Response) (result ReadC
 
 // GetPropertiesFromComputeNode gets the properties of the specified compute node file.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that contains the
-// file. filePath is the path to the compute node file that you want to get the properties of. timeout is the maximum
-// time that the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ifModifiedSince is a
-// timestamp indicating the last modified time of the resource known to the client. The operation will be performed
-// only if the resource on the service has been modified since the specified time. ifUnmodifiedSince is a timestamp
-// indicating the last modified time of the resource known to the client. The operation will be performed only if the
-// resource on the service has not been modified since the specified time.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node that contains
+// the file. filePath is the path to the compute node file that you want to get the properties of. timeout is the
+// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
+// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
+// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified time.
 func (client FileClient) GetPropertiesFromComputeNode(ctx context.Context, poolID string, nodeID string, filePath string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.GetPropertiesFromComputeNodePreparer(ctx, poolID, nodeID, filePath, timeout, clientRequestID, returnClientRequestID, ocpDate, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetPropertiesFromComputeNode", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetPropertiesFromComputeNode", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetPropertiesFromComputeNodeSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetPropertiesFromComputeNode", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetPropertiesFromComputeNode", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetPropertiesFromComputeNodeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetPropertiesFromComputeNode", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetPropertiesFromComputeNode", resp, "Failure responding to request")
 	}
 
 	return
@@ -481,6 +503,8 @@ func (client FileClient) GetPropertiesFromComputeNodePreparer(ctx context.Contex
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -495,6 +519,9 @@ func (client FileClient) GetPropertiesFromComputeNodePreparer(ctx context.Contex
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -533,33 +560,33 @@ func (client FileClient) GetPropertiesFromComputeNodeResponder(resp *http.Respon
 // GetPropertiesFromTask gets the properties of the specified task file.
 //
 // jobID is the ID of the job that contains the task. taskID is the ID of the task whose file you want to get the
-// properties of. filePath is the path to the task file that you want to get the properties of. timeout is the maximum
-// time that the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ifModifiedSince is a
-// timestamp indicating the last modified time of the resource known to the client. The operation will be performed
-// only if the resource on the service has been modified since the specified time. ifUnmodifiedSince is a timestamp
-// indicating the last modified time of the resource known to the client. The operation will be performed only if the
-// resource on the service has not been modified since the specified time.
+// properties of. filePath is the path to the task file that you want to get the properties of. timeout is the
+// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
+// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
+// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
+// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified time.
 func (client FileClient) GetPropertiesFromTask(ctx context.Context, jobID string, taskID string, filePath string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.GetPropertiesFromTaskPreparer(ctx, jobID, taskID, filePath, timeout, clientRequestID, returnClientRequestID, ocpDate, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetPropertiesFromTask", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetPropertiesFromTask", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetPropertiesFromTaskSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetPropertiesFromTask", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetPropertiesFromTask", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetPropertiesFromTaskResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "GetPropertiesFromTask", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "GetPropertiesFromTask", resp, "Failure responding to request")
 	}
 
 	return
@@ -579,6 +606,8 @@ func (client FileClient) GetPropertiesFromTaskPreparer(ctx context.Context, jobI
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -593,6 +622,9 @@ func (client FileClient) GetPropertiesFromTaskPreparer(ctx context.Context, jobI
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -630,14 +662,14 @@ func (client FileClient) GetPropertiesFromTaskResponder(resp *http.Response) (re
 
 // ListFromComputeNode sends the list from compute node request.
 //
-// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node whose files you
-// want to list. filter is an OData $filter clause. recursive is whether to list children of a directory. maxResults is
-// the maximum number of items to return in the response. A maximum of 1000 files can be returned. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// poolID is the ID of the pool that contains the compute node. nodeID is the ID of the compute node whose files
+// you want to list. filter is an OData $filter clause. recursive is whether to list children of a directory.
+// maxResults is the maximum number of items to return in the response. A maximum of 1000 files can be returned.
+// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such
+// as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should
+// return the client-request-id in the response. ocpDate is the time the request was issued. Client libraries
+// typically set this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client FileClient) ListFromComputeNode(ctx context.Context, poolID string, nodeID string, filter string, recursive *bool, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result NodeFileListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -645,26 +677,26 @@ func (client FileClient) ListFromComputeNode(ctx context.Context, poolID string,
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.FileClient", "ListFromComputeNode")
+		return result, validation.NewError("batch.FileClient", "ListFromComputeNode", err.Error())
 	}
 
 	result.fn = client.listFromComputeNodeNextResults
 	req, err := client.ListFromComputeNodePreparer(ctx, poolID, nodeID, filter, recursive, maxResults, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "ListFromComputeNode", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "ListFromComputeNode", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListFromComputeNodeSender(req)
 	if err != nil {
 		result.nflr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "ListFromComputeNode", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "ListFromComputeNode", resp, "Failure sending request")
 		return
 	}
 
 	result.nflr, err = client.ListFromComputeNodeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "ListFromComputeNode", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "ListFromComputeNode", resp, "Failure responding to request")
 	}
 
 	return
@@ -689,9 +721,13 @@ func (client FileClient) ListFromComputeNodePreparer(ctx context.Context, poolID
 	}
 	if maxResults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
+	} else {
+		queryParameters["maxresults"] = autorest.Encode("query", 1000)
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -706,6 +742,9 @@ func (client FileClient) ListFromComputeNodePreparer(ctx context.Context, poolID
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -738,7 +777,7 @@ func (client FileClient) ListFromComputeNodeResponder(resp *http.Response) (resu
 func (client FileClient) listFromComputeNodeNextResults(lastResults NodeFileListResult) (result NodeFileListResult, err error) {
 	req, err := lastResults.nodeFileListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "xpackagex.FileClient", "listFromComputeNodeNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "batch.FileClient", "listFromComputeNodeNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -746,11 +785,11 @@ func (client FileClient) listFromComputeNodeNextResults(lastResults NodeFileList
 	resp, err := client.ListFromComputeNodeSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "xpackagex.FileClient", "listFromComputeNodeNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "batch.FileClient", "listFromComputeNodeNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListFromComputeNodeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "listFromComputeNodeNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "listFromComputeNodeNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }
@@ -763,15 +802,15 @@ func (client FileClient) ListFromComputeNodeComplete(ctx context.Context, poolID
 
 // ListFromTask sends the list from task request.
 //
-// jobID is the ID of the job that contains the task. taskID is the ID of the task whose files you want to list. filter
-// is an OData $filter clause. recursive is whether to list children of a directory. This parameter can be used in
-// combination with the filter parameter to list specific type of files. maxResults is the maximum number of items to
-// return in the response. A maximum of 1000 files can be returned. timeout is the maximum time that the server can
-// spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
-// identity, in the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// jobID is the ID of the job that contains the task. taskID is the ID of the task whose files you want to list.
+// filter is an OData $filter clause. recursive is whether to list children of a directory. This parameter can be
+// used in combination with the filter parameter to list specific type of files. maxResults is the maximum number
+// of items to return in the response. A maximum of 1000 files can be returned. timeout is the maximum time that
+// the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
+// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client FileClient) ListFromTask(ctx context.Context, jobID string, taskID string, filter string, recursive *bool, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result NodeFileListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -779,26 +818,26 @@ func (client FileClient) ListFromTask(ctx context.Context, jobID string, taskID 
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.FileClient", "ListFromTask")
+		return result, validation.NewError("batch.FileClient", "ListFromTask", err.Error())
 	}
 
 	result.fn = client.listFromTaskNextResults
 	req, err := client.ListFromTaskPreparer(ctx, jobID, taskID, filter, recursive, maxResults, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "ListFromTask", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "ListFromTask", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListFromTaskSender(req)
 	if err != nil {
 		result.nflr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "ListFromTask", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "ListFromTask", resp, "Failure sending request")
 		return
 	}
 
 	result.nflr, err = client.ListFromTaskResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "ListFromTask", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "ListFromTask", resp, "Failure responding to request")
 	}
 
 	return
@@ -823,9 +862,13 @@ func (client FileClient) ListFromTaskPreparer(ctx context.Context, jobID string,
 	}
 	if maxResults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
+	} else {
+		queryParameters["maxresults"] = autorest.Encode("query", 1000)
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -840,6 +883,9 @@ func (client FileClient) ListFromTaskPreparer(ctx context.Context, jobID string,
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -872,7 +918,7 @@ func (client FileClient) ListFromTaskResponder(resp *http.Response) (result Node
 func (client FileClient) listFromTaskNextResults(lastResults NodeFileListResult) (result NodeFileListResult, err error) {
 	req, err := lastResults.nodeFileListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "xpackagex.FileClient", "listFromTaskNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "batch.FileClient", "listFromTaskNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -880,11 +926,11 @@ func (client FileClient) listFromTaskNextResults(lastResults NodeFileListResult)
 	resp, err := client.ListFromTaskSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "xpackagex.FileClient", "listFromTaskNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "batch.FileClient", "listFromTaskNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListFromTaskResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.FileClient", "listFromTaskNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "batch.FileClient", "listFromTaskNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }

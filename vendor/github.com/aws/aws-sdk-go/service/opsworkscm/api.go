@@ -1426,7 +1426,6 @@ func (c *OpsWorksCM) UpdateServerEngineAttributesWithContext(ctx aws.Context, in
 }
 
 // Stores account attributes.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/AccountAttribute
 type AccountAttribute struct {
 	_ struct{} `type:"structure"`
 
@@ -1476,7 +1475,6 @@ func (s *AccountAttribute) SetUsed(v int64) *AccountAttribute {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/AssociateNodeRequest
 type AssociateNodeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1559,7 +1557,6 @@ func (s *AssociateNodeInput) SetServerName(v string) *AssociateNodeInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/AssociateNodeResponse
 type AssociateNodeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1585,7 +1582,6 @@ func (s *AssociateNodeOutput) SetNodeAssociationStatusToken(v string) *Associate
 }
 
 // Describes a single backup.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/Backup
 type Backup struct {
 	_ struct{} `type:"structure"`
 
@@ -1825,7 +1821,6 @@ func (s *Backup) SetUserArn(v string) *Backup {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/CreateBackupRequest
 type CreateBackupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1876,7 +1871,6 @@ func (s *CreateBackupInput) SetServerName(v string) *CreateBackupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/CreateBackupResponse
 type CreateBackupOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1900,7 +1894,6 @@ func (s *CreateBackupOutput) SetBackup(v *Backup) *CreateBackupOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/CreateServerRequest
 type CreateServerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2185,7 +2178,6 @@ func (s *CreateServerInput) SetSubnetIds(v []*string) *CreateServerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/CreateServerResponse
 type CreateServerOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2209,7 +2201,6 @@ func (s *CreateServerOutput) SetServer(v *Server) *CreateServerOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DeleteBackupRequest
 type DeleteBackupInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2249,7 +2240,6 @@ func (s *DeleteBackupInput) SetBackupId(v string) *DeleteBackupInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DeleteBackupResponse
 type DeleteBackupOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2264,7 +2254,6 @@ func (s DeleteBackupOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DeleteServerRequest
 type DeleteServerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2306,7 +2295,6 @@ func (s *DeleteServerInput) SetServerName(v string) *DeleteServerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DeleteServerResponse
 type DeleteServerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2321,7 +2309,6 @@ func (s DeleteServerOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeAccountAttributesRequest
 type DescribeAccountAttributesInput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2336,7 +2323,6 @@ func (s DescribeAccountAttributesInput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeAccountAttributesResponse
 type DescribeAccountAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2360,7 +2346,6 @@ func (s *DescribeAccountAttributesOutput) SetAttributes(v []*AccountAttribute) *
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeBackupsRequest
 type DescribeBackupsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2438,7 +2423,6 @@ func (s *DescribeBackupsInput) SetServerName(v string) *DescribeBackupsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeBackupsResponse
 type DescribeBackupsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2478,7 +2462,6 @@ func (s *DescribeBackupsOutput) SetNextToken(v string) *DescribeBackupsOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeEventsRequest
 type DescribeEventsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2552,7 +2535,6 @@ func (s *DescribeEventsInput) SetServerName(v string) *DescribeEventsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeEventsResponse
 type DescribeEventsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2592,7 +2574,6 @@ func (s *DescribeEventsOutput) SetServerEvents(v []*ServerEvent) *DescribeEvents
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeNodeAssociationStatusRequest
 type DescribeNodeAssociationStatusInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2648,7 +2629,6 @@ func (s *DescribeNodeAssociationStatusInput) SetServerName(v string) *DescribeNo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeNodeAssociationStatusResponse
 type DescribeNodeAssociationStatusOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2690,7 +2670,6 @@ func (s *DescribeNodeAssociationStatusOutput) SetNodeAssociationStatus(v string)
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeServersRequest
 type DescribeServersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2759,7 +2738,6 @@ func (s *DescribeServersInput) SetServerName(v string) *DescribeServersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DescribeServersResponse
 type DescribeServersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2804,7 +2782,6 @@ func (s *DescribeServersOutput) SetServers(v []*Server) *DescribeServersOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DisassociateNodeRequest
 type DisassociateNodeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2875,7 +2852,6 @@ func (s *DisassociateNodeInput) SetServerName(v string) *DisassociateNodeInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/DisassociateNodeResponse
 type DisassociateNodeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2901,7 +2877,6 @@ func (s *DisassociateNodeOutput) SetNodeAssociationStatusToken(v string) *Disass
 }
 
 // A name and value pair that is specific to the engine of the server.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/EngineAttribute
 type EngineAttribute struct {
 	_ struct{} `type:"structure"`
 
@@ -2934,7 +2909,6 @@ func (s *EngineAttribute) SetValue(v string) *EngineAttribute {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/RestoreServerRequest
 type RestoreServerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3012,7 +2986,6 @@ func (s *RestoreServerInput) SetServerName(v string) *RestoreServerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/RestoreServerResponse
 type RestoreServerOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3028,7 +3001,6 @@ func (s RestoreServerOutput) GoString() string {
 }
 
 // Describes a configuration management server.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/Server
 type Server struct {
 	_ struct{} `type:"structure"`
 
@@ -3287,7 +3259,6 @@ func (s *Server) SetSubnetIds(v []*string) *Server {
 
 // An event that is related to the server, such as the start of maintenance
 // or backup.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/ServerEvent
 type ServerEvent struct {
 	_ struct{} `type:"structure"`
 
@@ -3338,7 +3309,6 @@ func (s *ServerEvent) SetServerName(v string) *ServerEvent {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/StartMaintenanceRequest
 type StartMaintenanceInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3390,7 +3360,6 @@ func (s *StartMaintenanceInput) SetServerName(v string) *StartMaintenanceInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/StartMaintenanceResponse
 type StartMaintenanceOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3414,7 +3383,6 @@ func (s *StartMaintenanceOutput) SetServer(v *Server) *StartMaintenanceOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/UpdateServerEngineAttributesRequest
 type UpdateServerEngineAttributesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3482,7 +3450,6 @@ func (s *UpdateServerEngineAttributesInput) SetServerName(v string) *UpdateServe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/UpdateServerEngineAttributesResponse
 type UpdateServerEngineAttributesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3506,7 +3473,6 @@ func (s *UpdateServerEngineAttributesOutput) SetServer(v *Server) *UpdateServerE
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/UpdateServerRequest
 type UpdateServerInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3591,7 +3557,6 @@ func (s *UpdateServerInput) SetServerName(v string) *UpdateServerInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/opsworkscm-2016-11-01/UpdateServerResponse
 type UpdateServerOutput struct {
 	_ struct{} `type:"structure"`
 

@@ -7,6 +7,7 @@
     "protocol":"query",
     "serviceAbbreviation":"AWS STS",
     "serviceFullName":"AWS Security Token Service",
+    "serviceId":"STS",
     "signatureVersion":"v4",
     "uid":"sts-2011-06-15",
     "xmlNamespace":"https://sts.amazonaws.com/doc/2011-06-15/"
@@ -405,7 +406,7 @@
     },
     "SAMLAssertionType":{
       "type":"string",
-      "max":50000,
+      "max":100000,
       "min":4
     },
     "Subject":{"type":"string"},

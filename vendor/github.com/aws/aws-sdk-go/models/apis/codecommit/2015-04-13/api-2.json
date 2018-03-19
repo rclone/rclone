@@ -7,6 +7,7 @@
     "protocol":"json",
     "serviceAbbreviation":"CodeCommit",
     "serviceFullName":"AWS CodeCommit",
+    "serviceId":"CodeCommit",
     "signatureVersion":"v4",
     "targetPrefix":"CodeCommit_20150413",
     "uid":"codecommit-2015-04-13"
@@ -616,6 +617,44 @@
       ],
       "idempotent":true
     },
+    "PutFile":{
+      "name":"PutFile",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"PutFileInput"},
+      "output":{"shape":"PutFileOutput"},
+      "errors":[
+        {"shape":"RepositoryNameRequiredException"},
+        {"shape":"InvalidRepositoryNameException"},
+        {"shape":"RepositoryDoesNotExistException"},
+        {"shape":"ParentCommitIdRequiredException"},
+        {"shape":"InvalidParentCommitIdException"},
+        {"shape":"ParentCommitDoesNotExistException"},
+        {"shape":"ParentCommitIdOutdatedException"},
+        {"shape":"FileContentRequiredException"},
+        {"shape":"FileContentSizeLimitExceededException"},
+        {"shape":"PathRequiredException"},
+        {"shape":"InvalidPathException"},
+        {"shape":"BranchNameRequiredException"},
+        {"shape":"InvalidBranchNameException"},
+        {"shape":"BranchDoesNotExistException"},
+        {"shape":"BranchNameIsTagNameException"},
+        {"shape":"InvalidFileModeException"},
+        {"shape":"NameLengthExceededException"},
+        {"shape":"InvalidEmailException"},
+        {"shape":"CommitMessageLengthExceededException"},
+        {"shape":"EncryptionIntegrityChecksFailedException"},
+        {"shape":"EncryptionKeyAccessDeniedException"},
+        {"shape":"EncryptionKeyDisabledException"},
+        {"shape":"EncryptionKeyNotFoundException"},
+        {"shape":"EncryptionKeyUnavailableException"},
+        {"shape":"SameFileContentException"},
+        {"shape":"FileNameConflictsWithDirectoryNameException"},
+        {"shape":"DirectoryNameConflictsWithFileNameException"}
+      ]
+    },
     "PutRepositoryTriggers":{
       "name":"PutRepositoryTriggers",
       "http":{
@@ -888,6 +927,12 @@
       },
       "exception":true
     },
+    "BranchNameIsTagNameException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "BranchNameList":{
       "type":"list",
       "member":{"shape":"BranchName"}
@@ -1028,6 +1073,12 @@
       "exception":true
     },
     "CommitIdRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "CommitMessageLengthExceededException":{
       "type":"structure",
       "members":{
       },
@@ -1177,6 +1228,12 @@
       "type":"list",
       "member":{"shape":"Difference"}
     },
+    "DirectoryNameConflictsWithFileNameException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "Email":{"type":"string"},
     "EncryptionIntegrityChecksFailedException":{
       "type":"structure",
@@ -1210,6 +1267,36 @@
       "exception":true
     },
     "EventDate":{"type":"timestamp"},
+    "FileContent":{
+      "type":"blob",
+      "max":6291456
+    },
+    "FileContentRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "FileContentSizeLimitExceededException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "FileModeTypeEnum":{
+      "type":"string",
+      "enum":[
+        "EXECUTABLE",
+        "NORMAL",
+        "SYMLINK"
+      ]
+    },
+    "FileNameConflictsWithDirectoryNameException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "FileTooLargeException":{
       "type":"structure",
       "members":{
@@ -1482,7 +1569,19 @@
       },
       "exception":true
     },
+    "InvalidEmailException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "InvalidFileLocationException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidFileModeException":{
       "type":"structure",
       "members":{
       },
@@ -1507,6 +1606,12 @@
       "exception":true
     },
     "InvalidOrderException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "InvalidParentCommitIdException":{
       "type":"structure",
       "members":{
       },
@@ -1772,6 +1877,12 @@
       "exception":true
     },
     "Name":{"type":"string"},
+    "NameLengthExceededException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
     "NextToken":{"type":"string"},
     "ObjectId":{"type":"string"},
     "OrderEnum":{
@@ -1780,6 +1891,24 @@
         "ascending",
         "descending"
       ]
+    },
+    "ParentCommitDoesNotExistException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "ParentCommitIdOutdatedException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "ParentCommitIdRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
     },
     "ParentList":{
       "type":"list",
@@ -1998,6 +2127,39 @@
       "type":"list",
       "member":{"shape":"PullRequestTarget"}
     },
+    "PutFileInput":{
+      "type":"structure",
+      "required":[
+        "repositoryName",
+        "branchName",
+        "fileContent",
+        "filePath"
+      ],
+      "members":{
+        "repositoryName":{"shape":"RepositoryName"},
+        "branchName":{"shape":"BranchName"},
+        "fileContent":{"shape":"FileContent"},
+        "filePath":{"shape":"Path"},
+        "fileMode":{"shape":"FileModeTypeEnum"},
+        "parentCommitId":{"shape":"CommitId"},
+        "commitMessage":{"shape":"Message"},
+        "name":{"shape":"Name"},
+        "email":{"shape":"Email"}
+      }
+    },
+    "PutFileOutput":{
+      "type":"structure",
+      "required":[
+        "commitId",
+        "blobId",
+        "treeId"
+      ],
+      "members":{
+        "commitId":{"shape":"ObjectId"},
+        "blobId":{"shape":"ObjectId"},
+        "treeId":{"shape":"ObjectId"}
+      }
+    },
     "PutRepositoryTriggersInput":{
       "type":"structure",
       "required":[
@@ -2202,6 +2364,12 @@
       "member":{"shape":"RepositoryTrigger"}
     },
     "RepositoryTriggersListRequiredException":{
+      "type":"structure",
+      "members":{
+      },
+      "exception":true
+    },
+    "SameFileContentException":{
       "type":"structure",
       "members":{
       },

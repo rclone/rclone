@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -169,53 +169,6 @@ func (c *Client) SetGoogleClientInfo(keyval ...string) {
 	kv := append([]string{"gl-go", version.Go()}, keyval...)
 	kv = append(kv, "gapic", version.Repo, "gax", gax.Version, "grpc", grpc.Version)
 	c.xGoogMetadata = metadata.Pairs("x-goog-api-client", gax.XGoogHeader(kv...))
-}
-
-// DatabaseRootPath returns the path for the database root resource.
-func DatabaseRootPath(project, database string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/databases/" +
-		database +
-		""
-}
-
-// DocumentRootPath returns the path for the document root resource.
-func DocumentRootPath(project, database string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/databases/" +
-		database +
-		"/documents" +
-		""
-}
-
-// DocumentPathPath returns the path for the document path resource.
-func DocumentPathPath(project, database, documentPath string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/databases/" +
-		database +
-		"/documents/" +
-		documentPath +
-		""
-}
-
-// AnyPathPath returns the path for the any path resource.
-func AnyPathPath(project, database, document, anyPath string) string {
-	return "" +
-		"projects/" +
-		project +
-		"/databases/" +
-		database +
-		"/documents/" +
-		document +
-		"/" +
-		anyPath +
-		""
 }
 
 // GetDocument gets a single document.

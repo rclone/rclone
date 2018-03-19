@@ -43,8 +43,8 @@ func NewProductsClientWithBaseURI(baseURI string, subscriptionID string) Product
 // CreateOrUpdate creates or Updates a product.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. parameters is create
-// or update parameters.
+// productID is product identifier. Must be unique in the current API Management service instance. parameters is
+// create or update parameters.
 func (client ProductsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, productID string, parameters ProductContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -64,7 +64,7 @@ func (client ProductsClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 					Chain: []validation.Constraint{{Target: "parameters.Description", Name: validation.MaxLength, Rule: 1000, Chain: nil},
 						{Target: "parameters.Description", Name: validation.MinLength, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductsClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.ProductsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, productID, parameters)
@@ -134,9 +134,10 @@ func (client ProductsClient) CreateOrUpdateResponder(resp *http.Response) (resul
 // Delete delete product.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. ifMatch is eTag of
-// the Product Entity. ETag should match the current entity state from the header response of the GET request or it
-// should be * for unconditional update. deleteSubscriptions is delete existing subscriptions to the product or not.
+// productID is product identifier. Must be unique in the current API Management service instance. ifMatch is eTag
+// of the Product Entity. ETag should match the current entity state from the header response of the GET request or
+// it should be * for unconditional update. deleteSubscriptions is delete existing subscriptions to the product or
+// not.
 func (client ProductsClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, productID string, ifMatch string, deleteSubscriptions *bool) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -147,7 +148,7 @@ func (client ProductsClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "productID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "productID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "productID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductsClient", "Delete")
+		return result, validation.NewError("apimanagement.ProductsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, productID, ifMatch, deleteSubscriptions)
@@ -230,7 +231,7 @@ func (client ProductsClient) Get(ctx context.Context, resourceGroupName string, 
 			Constraints: []validation.Constraint{{Target: "productID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "productID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "productID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductsClient", "Get")
+		return result, validation.NewError("apimanagement.ProductsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, productID)
@@ -298,16 +299,16 @@ func (client ProductsClient) GetResponder(resp *http.Response) (result ProductCo
 
 // ListByService lists a collection of products in the specified service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field       | Supported operators    | Supported functions                         |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field       | Supported operators    | Supported functions                         |
 // |-------------|------------------------|---------------------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | name        | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | description | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
 // | terms       | ge, le, eq, ne, gt, lt | substringof, contains, startswith, endswith |
-// | state       | eq                     |                                             | top is number of records to
-// return. skip is number of records to skip. expandGroups is when set to true, the response contains an array of
-// groups that have visibility to the product. The default is false.
+// | state       | eq                     |                                             | top is number of records
+// to return. skip is number of records to skip. expandGroups is when set to true, the response contains an array
+// of groups that have visibility to the product. The default is false.
 func (client ProductsClient) ListByService(ctx context.Context, resourceGroupName string, serviceName string, filter string, top *int32, skip *int32, expandGroups *bool) (result ProductCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -320,7 +321,7 @@ func (client ProductsClient) ListByService(ctx context.Context, resourceGroupNam
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductsClient", "ListByService")
+		return result, validation.NewError("apimanagement.ProductsClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults
@@ -428,9 +429,9 @@ func (client ProductsClient) ListByServiceComplete(ctx context.Context, resource
 // Update update product.
 //
 // resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
-// productID is product identifier. Must be unique in the current API Management service instance. parameters is update
-// parameters. ifMatch is eTag of the Product Entity. ETag should match the current entity state from the header
-// response of the GET request or it should be * for unconditional update.
+// productID is product identifier. Must be unique in the current API Management service instance. parameters is
+// update parameters. ifMatch is eTag of the Product Entity. ETag should match the current entity state from the
+// header response of the GET request or it should be * for unconditional update.
 func (client ProductsClient) Update(ctx context.Context, resourceGroupName string, serviceName string, productID string, parameters ProductUpdateParameters, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -441,7 +442,7 @@ func (client ProductsClient) Update(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "productID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "productID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "productID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ProductsClient", "Update")
+		return result, validation.NewError("apimanagement.ProductsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, productID, parameters, ifMatch)

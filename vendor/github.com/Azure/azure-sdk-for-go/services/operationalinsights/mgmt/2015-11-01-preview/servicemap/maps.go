@@ -54,7 +54,7 @@ func (client MapsClient) Generate(ctx context.Context, resourceGroupName string,
 			Constraints: []validation.Constraint{{Target: "workspaceName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "workspaceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `[a-zA-Z0-9_][a-zA-Z0-9_-]+[a-zA-Z0-9_]`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.MapsClient", "Generate")
+		return result, validation.NewError("servicemap.MapsClient", "Generate", err.Error())
 	}
 
 	req, err := client.GeneratePreparer(ctx, resourceGroupName, workspaceName, request)

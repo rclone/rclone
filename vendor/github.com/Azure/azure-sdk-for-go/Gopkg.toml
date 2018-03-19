@@ -1,4 +1,3 @@
-
 # Gopkg.toml example
 #
 # Refer to https://github.com/golang/dep/blob/master/docs/Gopkg.toml.md
@@ -23,11 +22,15 @@
 
 [[constraint]]
   name = "github.com/Azure/go-autorest"
-  version = "9.6.0"
+  version = "10.1.0"
 
 [[constraint]]
   branch = "master"
   name = "github.com/dnaeon/go-vcr"
+
+[[constraint]]
+  branch = "master"
+  name = "github.com/globalsign/mgo"
 
 [[constraint]]
   name = "github.com/marstr/collection"
@@ -38,8 +41,8 @@
   name = "github.com/marstr/goalias"
 
 [[constraint]]
-  revision = "8bdf7d1a087ccc975cf37dd6507da50698fd19ca"
   name = "github.com/marstr/guid"
+  version = "1.1.0"
 
 [[constraint]]
   branch = "master"
@@ -47,20 +50,20 @@
 
 [[constraint]]
   name = "github.com/satori/go.uuid"
-  version = "1.1.0"
+  version = "1.2.0"
 
 [[constraint]]
-  branch = "master"
   name = "github.com/shopspring/decimal"
+  version = "1.0.0"
 
 [[constraint]]
   branch = "master"
   name = "golang.org/x/crypto"
 
 [[constraint]]
-  branch = "v1"
-  name = "gopkg.in/check.v1"
+  branch = "master"
+  name = "golang.org/x/tools"
 
 [[constraint]]
-  branch = "v2"
-  name = "gopkg.in/mgo.v2"
+  branch = "v1"
+  name = "gopkg.in/check.v1"

@@ -7,19 +7,6 @@ set -eo pipefail
 set -x
 
 cd git/gocloud
-
-# Run test only if profiler directory is touched.
-profiler_test=false
-for f in $(git diff-tree --no-commit-id --name-only -r HEAD); do
-  if [[ "$(dirname $f)" == "profiler" ]]; then
-    profiler_test=true
-  fi
-done
-
-if [[ "$profiler_test" = false ]]; then
-  exit 0
-fi
-
 COMMIT=$(git rev-parse HEAD)
 
 # Set $GOPATH

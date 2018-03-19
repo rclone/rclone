@@ -1407,7 +1407,6 @@ func (c *Batch) UpdateJobQueueWithContext(ctx aws.Context, input *UpdateJobQueue
 }
 
 // An object representing an AWS Batch array job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ArrayProperties
 type ArrayProperties struct {
 	_ struct{} `type:"structure"`
 
@@ -1432,7 +1431,6 @@ func (s *ArrayProperties) SetSize(v int64) *ArrayProperties {
 }
 
 // An object representing the array properties of a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ArrayPropertiesDetail
 type ArrayPropertiesDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -1477,7 +1475,6 @@ func (s *ArrayPropertiesDetail) SetStatusSummary(v map[string]*int64) *ArrayProp
 }
 
 // An object representing the array properties of a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ArrayPropertiesSummary
 type ArrayPropertiesSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -1512,7 +1509,6 @@ func (s *ArrayPropertiesSummary) SetSize(v int64) *ArrayPropertiesSummary {
 }
 
 // An object representing the details of a container that is part of a job attempt.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/AttemptContainerDetail
 type AttemptContainerDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -1579,7 +1575,6 @@ func (s *AttemptContainerDetail) SetTaskArn(v string) *AttemptContainerDetail {
 }
 
 // An object representing a job attempt.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/AttemptDetail
 type AttemptDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -1633,7 +1628,6 @@ func (s *AttemptDetail) SetStoppedAt(v int64) *AttemptDetail {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/CancelJobRequest
 type CancelJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1688,7 +1682,6 @@ func (s *CancelJobInput) SetReason(v string) *CancelJobInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/CancelJobResponse
 type CancelJobOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1704,7 +1697,6 @@ func (s CancelJobOutput) GoString() string {
 }
 
 // An object representing an AWS Batch compute environment.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ComputeEnvironmentDetail
 type ComputeEnvironmentDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -1815,7 +1807,6 @@ func (s *ComputeEnvironmentDetail) SetType(v string) *ComputeEnvironmentDetail {
 // a queue. Compute environments are tried in ascending order. For example,
 // if two compute environments are associated with a job queue, the compute
 // environment with a lower order integer value is tried for job placement first.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ComputeEnvironmentOrder
 type ComputeEnvironmentOrder struct {
 	_ struct{} `type:"structure"`
 
@@ -1869,7 +1860,6 @@ func (s *ComputeEnvironmentOrder) SetOrder(v int64) *ComputeEnvironmentOrder {
 }
 
 // An object representing an AWS Batch compute resource.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ComputeResource
 type ComputeResource struct {
 	_ struct{} `type:"structure"`
 
@@ -2063,7 +2053,6 @@ func (s *ComputeResource) SetType(v string) *ComputeResource {
 
 // An object representing the attributes of a compute environment that can be
 // updated.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ComputeResourceUpdate
 type ComputeResourceUpdate struct {
 	_ struct{} `type:"structure"`
 
@@ -2106,7 +2095,6 @@ func (s *ComputeResourceUpdate) SetMinvCpus(v int64) *ComputeResourceUpdate {
 }
 
 // An object representing the details of a container that is part of a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ContainerDetail
 type ContainerDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -2286,7 +2274,6 @@ func (s *ContainerDetail) SetVolumes(v []*Volume) *ContainerDetail {
 }
 
 // The overrides that should be sent to a container.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ContainerOverrides
 type ContainerOverrides struct {
 	_ struct{} `type:"structure"`
 
@@ -2347,7 +2334,6 @@ func (s *ContainerOverrides) SetVcpus(v int64) *ContainerOverrides {
 
 // Container properties are used in job definitions to describe the container
 // that is launched as part of a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ContainerProperties
 type ContainerProperties struct {
 	_ struct{} `type:"structure"`
 
@@ -2568,7 +2554,6 @@ func (s *ContainerProperties) SetVolumes(v []*Volume) *ContainerProperties {
 }
 
 // An object representing summary details of a container within a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ContainerSummary
 type ContainerSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -2602,7 +2587,6 @@ func (s *ContainerSummary) SetReason(v string) *ContainerSummary {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/CreateComputeEnvironmentRequest
 type CreateComputeEnvironmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2707,7 +2691,6 @@ func (s *CreateComputeEnvironmentInput) SetType(v string) *CreateComputeEnvironm
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/CreateComputeEnvironmentResponse
 type CreateComputeEnvironmentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2740,7 +2723,6 @@ func (s *CreateComputeEnvironmentOutput) SetComputeEnvironmentName(v string) *Cr
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/CreateJobQueueRequest
 type CreateJobQueueInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2835,7 +2817,6 @@ func (s *CreateJobQueueInput) SetState(v string) *CreateJobQueueInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/CreateJobQueueResponse
 type CreateJobQueueOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2872,7 +2853,6 @@ func (s *CreateJobQueueOutput) SetJobQueueName(v string) *CreateJobQueueOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DeleteComputeEnvironmentRequest
 type DeleteComputeEnvironmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2911,7 +2891,6 @@ func (s *DeleteComputeEnvironmentInput) SetComputeEnvironment(v string) *DeleteC
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DeleteComputeEnvironmentResponse
 type DeleteComputeEnvironmentOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2926,7 +2905,6 @@ func (s DeleteComputeEnvironmentOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DeleteJobQueueRequest
 type DeleteJobQueueInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2965,7 +2943,6 @@ func (s *DeleteJobQueueInput) SetJobQueue(v string) *DeleteJobQueueInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DeleteJobQueueResponse
 type DeleteJobQueueOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2980,7 +2957,6 @@ func (s DeleteJobQueueOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DeregisterJobDefinitionRequest
 type DeregisterJobDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3020,7 +2996,6 @@ func (s *DeregisterJobDefinitionInput) SetJobDefinition(v string) *DeregisterJob
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DeregisterJobDefinitionResponse
 type DeregisterJobDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3035,7 +3010,6 @@ func (s DeregisterJobDefinitionOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeComputeEnvironmentsRequest
 type DescribeComputeEnvironmentsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3092,7 +3066,6 @@ func (s *DescribeComputeEnvironmentsInput) SetNextToken(v string) *DescribeCompu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeComputeEnvironmentsResponse
 type DescribeComputeEnvironmentsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3128,7 +3101,6 @@ func (s *DescribeComputeEnvironmentsOutput) SetNextToken(v string) *DescribeComp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeJobDefinitionsRequest
 type DescribeJobDefinitionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3202,7 +3174,6 @@ func (s *DescribeJobDefinitionsInput) SetStatus(v string) *DescribeJobDefinition
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeJobDefinitionsResponse
 type DescribeJobDefinitionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3238,7 +3209,6 @@ func (s *DescribeJobDefinitionsOutput) SetNextToken(v string) *DescribeJobDefini
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeJobQueuesRequest
 type DescribeJobQueuesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3294,7 +3264,6 @@ func (s *DescribeJobQueuesInput) SetNextToken(v string) *DescribeJobQueuesInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeJobQueuesResponse
 type DescribeJobQueuesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3330,7 +3299,6 @@ func (s *DescribeJobQueuesOutput) SetNextToken(v string) *DescribeJobQueuesOutpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeJobsRequest
 type DescribeJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3369,7 +3337,6 @@ func (s *DescribeJobsInput) SetJobs(v []*string) *DescribeJobsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/DescribeJobsResponse
 type DescribeJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3398,7 +3365,6 @@ func (s *DescribeJobsOutput) SetJobs(v []*JobDetail) *DescribeJobsOutput {
 // is empty, then the Docker daemon assigns a host path for your data volume,
 // but the data is not guaranteed to persist after the containers associated
 // with it stop running.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/Host
 type Host struct {
 	_ struct{} `type:"structure"`
 
@@ -3429,7 +3395,6 @@ func (s *Host) SetSourcePath(v string) *Host {
 }
 
 // An object representing an AWS Batch job definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/JobDefinition
 type JobDefinition struct {
 	_ struct{} `type:"structure"`
 
@@ -3529,7 +3494,6 @@ func (s *JobDefinition) SetType(v string) *JobDefinition {
 }
 
 // An object representing an AWS Batch job dependency.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/JobDependency
 type JobDependency struct {
 	_ struct{} `type:"structure"`
 
@@ -3563,7 +3527,6 @@ func (s *JobDependency) SetType(v string) *JobDependency {
 }
 
 // An object representing an AWS Batch job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/JobDetail
 type JobDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -3735,7 +3698,6 @@ func (s *JobDetail) SetStoppedAt(v int64) *JobDetail {
 }
 
 // An object representing the details of an AWS Batch job queue.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/JobQueueDetail
 type JobQueueDetail struct {
 	_ struct{} `type:"structure"`
 
@@ -3827,7 +3789,6 @@ func (s *JobQueueDetail) SetStatusReason(v string) *JobQueueDetail {
 }
 
 // An object representing summary details of a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/JobSummary
 type JobSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -3935,7 +3896,6 @@ func (s *JobSummary) SetStoppedAt(v int64) *JobSummary {
 }
 
 // A key-value pair object.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/KeyValuePair
 type KeyValuePair struct {
 	_ struct{} `type:"structure"`
 
@@ -3970,7 +3930,6 @@ func (s *KeyValuePair) SetValue(v string) *KeyValuePair {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ListJobsRequest
 type ListJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4045,7 +4004,6 @@ func (s *ListJobsInput) SetNextToken(v string) *ListJobsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/ListJobsResponse
 type ListJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4085,7 +4043,6 @@ func (s *ListJobsOutput) SetNextToken(v string) *ListJobsOutput {
 
 // Details on a Docker volume mount point that is used in a job's container
 // properties.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/MountPoint
 type MountPoint struct {
 	_ struct{} `type:"structure"`
 
@@ -4128,7 +4085,6 @@ func (s *MountPoint) SetSourceVolume(v string) *MountPoint {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/RegisterJobDefinitionRequest
 type RegisterJobDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4219,7 +4175,6 @@ func (s *RegisterJobDefinitionInput) SetType(v string) *RegisterJobDefinitionInp
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/RegisterJobDefinitionResponse
 type RegisterJobDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4268,7 +4223,6 @@ func (s *RegisterJobDefinitionOutput) SetRevision(v int64) *RegisterJobDefinitio
 }
 
 // The retry strategy associated with a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/RetryStrategy
 type RetryStrategy struct {
 	_ struct{} `type:"structure"`
 
@@ -4294,7 +4248,6 @@ func (s *RetryStrategy) SetAttempts(v int64) *RetryStrategy {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/SubmitJobRequest
 type SubmitJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4430,7 +4383,6 @@ func (s *SubmitJobInput) SetRetryStrategy(v *RetryStrategy) *SubmitJobInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/SubmitJobResponse
 type SubmitJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4467,7 +4419,6 @@ func (s *SubmitJobOutput) SetJobName(v string) *SubmitJobOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/TerminateJobRequest
 type TerminateJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4522,7 +4473,6 @@ func (s *TerminateJobInput) SetReason(v string) *TerminateJobInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/TerminateJobResponse
 type TerminateJobOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4538,7 +4488,6 @@ func (s TerminateJobOutput) GoString() string {
 }
 
 // The ulimit settings to pass to the container.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/Ulimit
 type Ulimit struct {
 	_ struct{} `type:"structure"`
 
@@ -4605,7 +4554,6 @@ func (s *Ulimit) SetSoftLimit(v int64) *Ulimit {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/UpdateComputeEnvironmentRequest
 type UpdateComputeEnvironmentInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4686,7 +4634,6 @@ func (s *UpdateComputeEnvironmentInput) SetState(v string) *UpdateComputeEnviron
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/UpdateComputeEnvironmentResponse
 type UpdateComputeEnvironmentOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4719,7 +4666,6 @@ func (s *UpdateComputeEnvironmentOutput) SetComputeEnvironmentName(v string) *Up
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/UpdateJobQueueRequest
 type UpdateJobQueueInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4801,7 +4747,6 @@ func (s *UpdateJobQueueInput) SetState(v string) *UpdateJobQueueInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/UpdateJobQueueResponse
 type UpdateJobQueueOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4835,7 +4780,6 @@ func (s *UpdateJobQueueOutput) SetJobQueueName(v string) *UpdateJobQueueOutput {
 }
 
 // A data volume used in a job's container properties.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/batch-2016-08-10/Volume
 type Volume struct {
 	_ struct{} `type:"structure"`
 

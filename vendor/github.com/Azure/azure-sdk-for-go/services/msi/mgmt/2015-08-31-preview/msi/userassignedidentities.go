@@ -41,8 +41,8 @@ func NewUserAssignedIdentitiesClientWithBaseURI(baseURI string, subscriptionID s
 
 // CreateOrUpdate create or update an identity in the specified subscription and resource group.
 //
-// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of the
-// identity resource. parameters is parameters to create or update the identity
+// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
+// the identity resource. parameters is parameters to create or update the identity
 func (client UserAssignedIdentitiesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, resourceName string, parameters Identity) (result Identity, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, resourceName, parameters)
 	if err != nil {
@@ -110,8 +110,8 @@ func (client UserAssignedIdentitiesClient) CreateOrUpdateResponder(resp *http.Re
 
 // Delete deletes the identity.
 //
-// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of the
-// identity resource.
+// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
+// the identity resource.
 func (client UserAssignedIdentitiesClient) Delete(ctx context.Context, resourceGroupName string, resourceName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -176,8 +176,8 @@ func (client UserAssignedIdentitiesClient) DeleteResponder(resp *http.Response) 
 
 // Get gets the identity.
 //
-// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of the
-// identity resource.
+// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
+// the identity resource.
 func (client UserAssignedIdentitiesClient) Get(ctx context.Context, resourceGroupName string, resourceName string) (result Identity, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {
@@ -426,8 +426,8 @@ func (client UserAssignedIdentitiesClient) ListBySubscriptionComplete(ctx contex
 
 // Update update an identity in the specified subscription and resource group.
 //
-// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of the
-// identity resource. parameters is parameters to update the identity
+// resourceGroupName is the name of the Resource Group to which the identity belongs. resourceName is the name of
+// the identity resource. parameters is parameters to update the identity
 func (client UserAssignedIdentitiesClient) Update(ctx context.Context, resourceGroupName string, resourceName string, parameters Identity) (result Identity, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, resourceName, parameters)
 	if err != nil {

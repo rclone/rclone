@@ -123,6 +123,12 @@ type Config struct {
 	// than Go 1.8.
 	MutexProfiling bool
 
+	// When true, collecting the heap profiles is disabled.
+	NoHeapProfiling bool
+
+	// When true, collecting the goroutine profiles is disabled.
+	NoGoroutineProfiling bool
+
 	// ProjectID is the Cloud Console project ID to use instead of
 	// the one read from the VM metadata server.
 	//
@@ -411,7 +417,13 @@ func initializeAgent(c pb.ProfilerServiceClient) *agent {
 		profileLabels[instanceLabel] = config.instance
 	}
 
-	profileTypes := []pb.ProfileType{pb.ProfileType_CPU, pb.ProfileType_HEAP, pb.ProfileType_THREADS}
+	profileTypes := []pb.ProfileType{pb.ProfileType_CPU}
+	if !config.NoHeapProfiling {
+		profileTypes = append(profileTypes, pb.ProfileType_HEAP)
+	}
+	if !config.NoGoroutineProfiling {
+		profileTypes = append(profileTypes, pb.ProfileType_THREADS)
+	}
 	if mutexEnabled {
 		profileTypes = append(profileTypes, pb.ProfileType_CONTENTION)
 	}
@@ -442,6 +454,15 @@ func initializeConfig(cfg Config) error {
 		config.ServiceVersion = os.Getenv("GAE_VERSION")
 	}
 
+	if projectID := os.Getenv("GOOGLE_CLOUD_PROJECT"); config.ProjectID == "" && projectID != "" {
+		// Cloud Shell and App Engine set this environment variable to the project
+		// ID, so use it if present. In case of App Engine the project ID is also
+		// available from the GCE metadata server, but by using the environment
+		// variable saves one request to the metadata server. The environment
+		// project ID is only used if no project ID is provided in the
+		// configuration.
+		config.ProjectID = projectID
+	}
 	if onGCE() {
 		var err error
 		if config.ProjectID == "" {

@@ -44,18 +44,17 @@ func NewGeoBackupPoliciesClientWithBaseURI(baseURI string, subscriptionID string
 
 // CreateOrUpdate updates a database geo backup policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database. geoBackupPolicyName is the name of the geo backup policy. parameters is the required parameters for
-// creating or updating the geo backup policy.
-func (client GeoBackupPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, geoBackupPolicyName string, parameters GeoBackupPolicy) (result GeoBackupPolicy, err error) {
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database. parameters is the required parameters for creating or updating the geo backup policy.
+func (client GeoBackupPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters GeoBackupPolicy) (result GeoBackupPolicy, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.GeoBackupPolicyProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.GeoBackupPoliciesClient", "CreateOrUpdate")
+		return result, validation.NewError("sql.GeoBackupPoliciesClient", "CreateOrUpdate", err.Error())
 	}
 
-	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, geoBackupPolicyName, parameters)
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, databaseName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.GeoBackupPoliciesClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -77,10 +76,10 @@ func (client GeoBackupPoliciesClient) CreateOrUpdate(ctx context.Context, resour
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client GeoBackupPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, geoBackupPolicyName string, parameters GeoBackupPolicy) (*http.Request, error) {
+func (client GeoBackupPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, parameters GeoBackupPolicy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"databaseName":        autorest.Encode("path", databaseName),
-		"geoBackupPolicyName": autorest.Encode("path", geoBackupPolicyName),
+		"geoBackupPolicyName": autorest.Encode("path", "Default"),
 		"resourceGroupName":   autorest.Encode("path", resourceGroupName),
 		"serverName":          autorest.Encode("path", serverName),
 		"subscriptionId":      autorest.Encode("path", client.SubscriptionID),
@@ -123,11 +122,11 @@ func (client GeoBackupPoliciesClient) CreateOrUpdateResponder(resp *http.Respons
 
 // Get gets a geo backup policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database. geoBackupPolicyName is the name of the geo backup policy.
-func (client GeoBackupPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string, geoBackupPolicyName string) (result GeoBackupPolicy, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName, geoBackupPolicyName)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database.
+func (client GeoBackupPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result GeoBackupPolicy, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.GeoBackupPoliciesClient", "Get", nil, "Failure preparing request")
 		return
@@ -149,10 +148,10 @@ func (client GeoBackupPoliciesClient) Get(ctx context.Context, resourceGroupName
 }
 
 // GetPreparer prepares the Get request.
-func (client GeoBackupPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string, geoBackupPolicyName string) (*http.Request, error) {
+func (client GeoBackupPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
 		"databaseName":        autorest.Encode("path", databaseName),
-		"geoBackupPolicyName": autorest.Encode("path", geoBackupPolicyName),
+		"geoBackupPolicyName": autorest.Encode("path", "Default"),
 		"resourceGroupName":   autorest.Encode("path", resourceGroupName),
 		"serverName":          autorest.Encode("path", serverName),
 		"subscriptionId":      autorest.Encode("path", client.SubscriptionID),
@@ -193,9 +192,9 @@ func (client GeoBackupPoliciesClient) GetResponder(resp *http.Response) (result 
 
 // ListByDatabase returns a list of geo backup policies.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of the
-// database.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. databaseName is the name of
+// the database.
 func (client GeoBackupPoliciesClient) ListByDatabase(ctx context.Context, resourceGroupName string, serverName string, databaseName string) (result GeoBackupPolicyListResult, err error) {
 	req, err := client.ListByDatabasePreparer(ctx, resourceGroupName, serverName, databaseName)
 	if err != nil {

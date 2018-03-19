@@ -148,6 +148,10 @@ type AppSyncAPI interface {
 	StartSchemaCreationWithContext(aws.Context, *appsync.StartSchemaCreationInput, ...request.Option) (*appsync.StartSchemaCreationOutput, error)
 	StartSchemaCreationRequest(*appsync.StartSchemaCreationInput) (*request.Request, *appsync.StartSchemaCreationOutput)
 
+	UpdateApiKey(*appsync.UpdateApiKeyInput) (*appsync.UpdateApiKeyOutput, error)
+	UpdateApiKeyWithContext(aws.Context, *appsync.UpdateApiKeyInput, ...request.Option) (*appsync.UpdateApiKeyOutput, error)
+	UpdateApiKeyRequest(*appsync.UpdateApiKeyInput) (*request.Request, *appsync.UpdateApiKeyOutput)
+
 	UpdateDataSource(*appsync.UpdateDataSourceInput) (*appsync.UpdateDataSourceOutput, error)
 	UpdateDataSourceWithContext(aws.Context, *appsync.UpdateDataSourceInput, ...request.Option) (*appsync.UpdateDataSourceOutput, error)
 	UpdateDataSourceRequest(*appsync.UpdateDataSourceInput) (*request.Request, *appsync.UpdateDataSourceOutput)

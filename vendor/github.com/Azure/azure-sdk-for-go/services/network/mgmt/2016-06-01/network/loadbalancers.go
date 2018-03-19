@@ -41,8 +41,8 @@ func NewLoadBalancersClientWithBaseURI(baseURI string, subscriptionID string) Lo
 
 // CreateOrUpdate the Put LoadBalancer operation creates/updates a LoadBalancer
 //
-// resourceGroupName is the name of the resource group. loadBalancerName is the name of the loadBalancer. parameters is
-// parameters supplied to the create/delete LoadBalancer operation
+// resourceGroupName is the name of the resource group. loadBalancerName is the name of the loadBalancer.
+// parameters is parameters supplied to the create/delete LoadBalancer operation
 func (client LoadBalancersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, loadBalancerName string, parameters LoadBalancer) (result LoadBalancersCreateOrUpdateFuture, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, loadBalancerName, parameters)
 	if err != nil {

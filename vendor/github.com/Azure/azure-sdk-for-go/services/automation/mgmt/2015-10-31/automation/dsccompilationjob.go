@@ -43,8 +43,8 @@ func NewDscCompilationJobClientWithBaseURI(baseURI string, subscriptionID string
 
 // Create creates the Dsc compilation job of the configuration.
 //
-// automationAccountName is the automation account name. compilationJobID is the the DSC configuration Id. parameters
-// is the parameters supplied to the create compilation job operation.
+// automationAccountName is the automation account name. compilationJobID is the the DSC configuration Id.
+// parameters is the parameters supplied to the create compilation job operation.
 func (client DscCompilationJobClient) Create(ctx context.Context, automationAccountName string, compilationJobID uuid.UUID, parameters DscCompilationJobCreateParameters) (result DscCompilationJob, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
@@ -52,7 +52,7 @@ func (client DscCompilationJobClient) Create(ctx context.Context, automationAcco
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.DscCompilationJobCreateProperties", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.DscCompilationJobCreateProperties.Configuration", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscCompilationJobClient", "Create")
+		return result, validation.NewError("automation.DscCompilationJobClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, automationAccountName, compilationJobID, parameters)
@@ -122,12 +122,13 @@ func (client DscCompilationJobClient) CreateResponder(resp *http.Response) (resu
 
 // Get retrieve the Dsc configuration compilation job identified by job id.
 //
-// automationAccountName is the automation account name. compilationJobID is the Dsc configuration compilation job id.
+// automationAccountName is the automation account name. compilationJobID is the Dsc configuration compilation job
+// id.
 func (client DscCompilationJobClient) Get(ctx context.Context, automationAccountName string, compilationJobID uuid.UUID) (result DscCompilationJob, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscCompilationJobClient", "Get")
+		return result, validation.NewError("automation.DscCompilationJobClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, compilationJobID)
@@ -200,7 +201,7 @@ func (client DscCompilationJobClient) GetStream(ctx context.Context, automationA
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscCompilationJobClient", "GetStream")
+		return result, validation.NewError("automation.DscCompilationJobClient", "GetStream", err.Error())
 	}
 
 	req, err := client.GetStreamPreparer(ctx, automationAccountName, jobID, jobStreamID)
@@ -274,7 +275,7 @@ func (client DscCompilationJobClient) ListByAutomationAccount(ctx context.Contex
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscCompilationJobClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.DscCompilationJobClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults

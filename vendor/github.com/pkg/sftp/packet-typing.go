@@ -58,6 +58,7 @@ func (p sshFxpFsetstatPacket) getHandle() string { return p.Handle }
 func (p sshFxpReadPacket) getHandle() string     { return p.Handle }
 func (p sshFxpWritePacket) getHandle() string    { return p.Handle }
 func (p sshFxpReaddirPacket) getHandle() string  { return p.Handle }
+func (p sshFxpClosePacket) getHandle() string    { return p.Handle }
 
 // notReadOnly
 func (p sshFxpWritePacket) notReadOnly()               {}
@@ -69,9 +70,6 @@ func (p sshFxpRmdirPacket) notReadOnly()               {}
 func (p sshFxpRenamePacket) notReadOnly()              {}
 func (p sshFxpSymlinkPacket) notReadOnly()             {}
 func (p sshFxpExtendedPacketPosixRename) notReadOnly() {}
-
-// this has a handle, but is only used for close
-func (p sshFxpClosePacket) getHandle() string { return p.Handle }
 
 // some packets with ID are missing id()
 func (p sshFxpDataPacket) id() uint32   { return p.ID }

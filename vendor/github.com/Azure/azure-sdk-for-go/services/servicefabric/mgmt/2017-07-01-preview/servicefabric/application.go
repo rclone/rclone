@@ -246,8 +246,8 @@ func (client ApplicationClient) ListResponder(resp *http.Response) (result Appli
 // Patch updates an application resource with the specified name.
 //
 // subscriptionID is the customer subscription identifier resourceGroupName is the name of the resource group.
-// clusterName is the name of the cluster resource applicationName is the name of the application resource. parameters
-// is the application resource for patch operations.
+// clusterName is the name of the cluster resource applicationName is the name of the application resource.
+// parameters is the application resource for patch operations.
 func (client ApplicationClient) Patch(ctx context.Context, subscriptionID string, resourceGroupName string, clusterName string, applicationName string, parameters ApplicationResourceUpdate) (result ApplicationPatchFuture, err error) {
 	req, err := client.PatchPreparer(ctx, subscriptionID, resourceGroupName, clusterName, applicationName, parameters)
 	if err != nil {
@@ -319,8 +319,8 @@ func (client ApplicationClient) PatchResponder(resp *http.Response) (result Appl
 // Put creates or updates an application resource with the specified name.
 //
 // subscriptionID is the customer subscription identifier resourceGroupName is the name of the resource group.
-// clusterName is the name of the cluster resource applicationName is the name of the application resource. parameters
-// is the application resource.
+// clusterName is the name of the cluster resource applicationName is the name of the application resource.
+// parameters is the application resource.
 func (client ApplicationClient) Put(ctx context.Context, subscriptionID string, resourceGroupName string, clusterName string, applicationName string, parameters ApplicationResource) (result ApplicationPutFuture, err error) {
 	req, err := client.PutPreparer(ctx, subscriptionID, resourceGroupName, clusterName, applicationName, parameters)
 	if err != nil {

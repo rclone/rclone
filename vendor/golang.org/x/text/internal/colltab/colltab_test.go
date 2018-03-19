@@ -57,8 +57,10 @@ func TestMatchLang(t *testing.T) {
 		{0, language.MustParse("und-Jpan-BR")}, // Infers "ja", so no match.
 		{0, language.MustParse("zu")},          // No match past index.
 	} {
-		if x := MatchLang(tc.t, tags); x != tc.x {
-			t.Errorf("%d: MatchLang(%q, tags) = %d; want %d", i, tc.t, x, tc.x)
-		}
+		t.Run(tc.t.String(), func(t *testing.T) {
+			if x := MatchLang(tc.t, tags); x != tc.x {
+				t.Errorf("%d: MatchLang(%q, tags) = %d; want %d", i, tc.t, x, tc.x)
+			}
+		})
 	}
 }

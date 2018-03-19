@@ -255,8 +255,8 @@ func (client HostingEnvironmentsClient) CreateOrUpdateWorkerPoolResponder(resp *
 
 // DeleteHostingEnvironment sends the delete hosting environment request.
 //
-// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) forceDelete
-// is delete even if the hostingEnvironment (App Service Environment) contains resources
+// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment)
+// forceDelete is delete even if the hostingEnvironment (App Service Environment) contains resources
 func (client HostingEnvironmentsClient) DeleteHostingEnvironment(ctx context.Context, resourceGroupName string, name string, forceDelete *bool) (result HostingEnvironmentsDeleteHostingEnvironmentFuture, err error) {
 	req, err := client.DeleteHostingEnvironmentPreparer(ctx, resourceGroupName, name, forceDelete)
 	if err != nil {
@@ -687,9 +687,9 @@ func (client HostingEnvironmentsClient) GetHostingEnvironmentMetricDefinitionsRe
 
 // GetHostingEnvironmentMetrics sends the get hosting environment metrics request.
 //
-// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) details is
-// include instance details filter is return only usages/metrics specified in the filter. Filter conforms to odata
-// syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
+// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) details
+// is include instance details filter is return only usages/metrics specified in the filter. Filter conforms to
+// odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
 // '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client HostingEnvironmentsClient) GetHostingEnvironmentMetrics(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	result.fn = client.getHostingEnvironmentMetricsNextResults
@@ -885,11 +885,12 @@ func (client HostingEnvironmentsClient) GetHostingEnvironmentMultiRoleMetricDefi
 
 // GetHostingEnvironmentMultiRoleMetrics sends the get hosting environment multi role metrics request.
 //
-// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) startTime
-// is beginning time of metrics query endTime is end time of metrics query timeGrain is time granularity of metrics
-// query details is include instance details filter is return only usages/metrics specified in the filter. Filter
-// conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
-// '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
+// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment)
+// startTime is beginning time of metrics query endTime is end time of metrics query timeGrain is time granularity
+// of metrics query details is include instance details filter is return only usages/metrics specified in the
+// filter. Filter conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2')
+// and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq
+// duration'[Hour|Minute|Day]'.
 func (client HostingEnvironmentsClient) GetHostingEnvironmentMultiRoleMetrics(ctx context.Context, resourceGroupName string, name string, startTime string, endTime string, timeGrain string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	result.fn = client.getHostingEnvironmentMultiRoleMetricsNextResults
 	req, err := client.GetHostingEnvironmentMultiRoleMetricsPreparer(ctx, resourceGroupName, name, startTime, endTime, timeGrain, details, filter)
@@ -1092,8 +1093,8 @@ func (client HostingEnvironmentsClient) GetHostingEnvironmentMultiRoleUsagesComp
 
 // GetHostingEnvironmentOperation sends the get hosting environment operation request.
 //
-// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) operationID
-// is operation identifier GUID
+// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment)
+// operationID is operation identifier GUID
 func (client HostingEnvironmentsClient) GetHostingEnvironmentOperation(ctx context.Context, resourceGroupName string, name string, operationID string) (result SetObject, err error) {
 	req, err := client.GetHostingEnvironmentOperationPreparer(ctx, resourceGroupName, name, operationID)
 	if err != nil {
@@ -1511,10 +1512,10 @@ func (client HostingEnvironmentsClient) GetHostingEnvironmentSitesComplete(ctx c
 
 // GetHostingEnvironmentUsages sends the get hosting environment usages request.
 //
-// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) filter is
-// return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example: $filter=(name.value eq
-// 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z'
-// and timeGrain eq duration'[Hour|Minute|Day]'.
+// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) filter
+// is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
+// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime
+// eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client HostingEnvironmentsClient) GetHostingEnvironmentUsages(ctx context.Context, resourceGroupName string, name string, filter string) (result CsmUsageQuotaCollectionPage, err error) {
 	result.fn = client.getHostingEnvironmentUsagesNextResults
 	req, err := client.GetHostingEnvironmentUsagesPreparer(ctx, resourceGroupName, name, filter)
@@ -1870,9 +1871,9 @@ func (client HostingEnvironmentsClient) GetHostingEnvironmentWebWorkerMetricDefi
 //
 // resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment)
 // workerPoolName is name of worker pool details is include instance details filter is return only usages/metrics
-// specified in the filter. Filter conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq
-// 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq
-// duration'[Hour|Minute|Day]'.
+// specified in the filter. Filter conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or
+// name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and
+// timeGrain eq duration'[Hour|Minute|Day]'.
 func (client HostingEnvironmentsClient) GetHostingEnvironmentWebWorkerMetrics(ctx context.Context, resourceGroupName string, name string, workerPoolName string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	result.fn = client.getHostingEnvironmentWebWorkerMetricsNextResults
 	req, err := client.GetHostingEnvironmentWebWorkerMetricsPreparer(ctx, resourceGroupName, name, workerPoolName, details, filter)
@@ -2135,8 +2136,8 @@ func (client HostingEnvironmentsClient) GetMultiRolePoolResponder(resp *http.Res
 
 // GetMultiRolePoolInstanceMetricDefinitions sends the get multi role pool instance metric definitions request.
 //
-// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) instance is
-// name of instance in the multiRole pool&gt;
+// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment)
+// instance is name of instance in the multiRole pool&gt;
 func (client HostingEnvironmentsClient) GetMultiRolePoolInstanceMetricDefinitions(ctx context.Context, resourceGroupName string, name string, instance string) (result SetObject, err error) {
 	req, err := client.GetMultiRolePoolInstanceMetricDefinitionsPreparer(ctx, resourceGroupName, name, instance)
 	if err != nil {
@@ -2203,8 +2204,8 @@ func (client HostingEnvironmentsClient) GetMultiRolePoolInstanceMetricDefinition
 
 // GetMultiRolePoolInstanceMetrics sends the get multi role pool instance metrics request.
 //
-// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment) instance is
-// name of instance in the multiRole pool details is include instance details
+// resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment)
+// instance is name of instance in the multiRole pool details is include instance details
 func (client HostingEnvironmentsClient) GetMultiRolePoolInstanceMetrics(ctx context.Context, resourceGroupName string, name string, instance string, details *bool) (result SetObject, err error) {
 	req, err := client.GetMultiRolePoolInstanceMetricsPreparer(ctx, resourceGroupName, name, instance, details)
 	if err != nil {
@@ -2600,10 +2601,10 @@ func (client HostingEnvironmentsClient) GetWorkerPoolInstanceMetricDefinitionsRe
 // GetWorkerPoolInstanceMetrics sends the get worker pool instance metrics request.
 //
 // resourceGroupName is name of resource group name is name of hostingEnvironment (App Service Environment)
-// workerPoolName is name of worker pool instance is name of instance in the worker pool details is include instance
-// details filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax. Example:
-// $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z' and endTime eq
-// '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
+// workerPoolName is name of worker pool instance is name of instance in the worker pool details is include
+// instance details filter is return only usages/metrics specified in the filter. Filter conforms to odata syntax.
+// Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq '2014-01-01T00:00:00Z'
+// and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client HostingEnvironmentsClient) GetWorkerPoolInstanceMetrics(ctx context.Context, resourceGroupName string, name string, workerPoolName string, instance string, details *bool, filter string) (result SetObject, err error) {
 	req, err := client.GetWorkerPoolInstanceMetricsPreparer(ctx, resourceGroupName, name, workerPoolName, instance, details, filter)
 	if err != nil {

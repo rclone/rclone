@@ -20,7 +20,6 @@ import (
 	"fmt"
 	"reflect"
 	"regexp"
-	"strings"
 	"time"
 
 	"cloud.google.com/go/civil"
@@ -205,6 +204,8 @@ func paramValue(v reflect.Value) (bq.QueryParameterValue, error) {
 
 	case typeOfTime:
 		// civil.Time has nanosecond resolution, but BigQuery TIME only microsecond.
+		// (If we send nanoseconds, then when we try to read the result we get "query job
+		// missing destination table").
 		res.Value = CivilTimeString(v.Interface().(civil.Time))
 		return res, nil
 
@@ -306,11 +307,7 @@ func convertParamValue(qval *bq.QueryParameterValue, qtype *bq.QueryParameterTyp
 	case "TIMESTAMP":
 		return time.Parse(timestampFormat, qval.Value)
 	case "DATETIME":
-		parts := strings.Fields(qval.Value)
-		if len(parts) != 2 {
-			return nil, fmt.Errorf("bigquery: bad DATETIME value %q", qval.Value)
-		}
-		return civil.ParseDateTime(parts[0] + "T" + parts[1])
+		return parseCivilDateTime(qval.Value)
 	default:
 		return convertBasicType(qval.Value, paramTypeToFieldType[qtype.Type])
 	}

@@ -43,9 +43,9 @@ func NewAccountsClientWithBaseURI(baseURI string, subscriptionID string) Account
 
 // CreateOrUpdate creates or updates a team account with the specified parameters.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. parameters is the parameters for creating or updating a machine
-// learning team account.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. parameters is the parameters for creating or
+// updating a machine learning team account.
 func (client AccountsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, parameters Account) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -61,7 +61,7 @@ func (client AccountsClient) CreateOrUpdate(ctx context.Context, resourceGroupNa
 							{Target: "parameters.AccountProperties.StorageAccount.AccessKey", Name: validation.Null, Rule: true, Chain: nil},
 						}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.AccountsClient", "CreateOrUpdate")
+		return result, validation.NewError("experimentation.AccountsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, accountName, parameters)
@@ -130,15 +130,15 @@ func (client AccountsClient) CreateOrUpdateResponder(resp *http.Response) (resul
 
 // Delete deletes a machine learning team account.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account.
 func (client AccountsClient) Delete(ctx context.Context, resourceGroupName string, accountName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.AccountsClient", "Delete")
+		return result, validation.NewError("experimentation.AccountsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
@@ -204,15 +204,15 @@ func (client AccountsClient) DeleteResponder(resp *http.Response) (result autore
 
 // Get gets the properties of the specified machine learning team account.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account.
 func (client AccountsClient) Get(ctx context.Context, resourceGroupName string, accountName string) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.AccountsClient", "Get")
+		return result, validation.NewError("experimentation.AccountsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName)
@@ -462,16 +462,16 @@ func (client AccountsClient) ListByResourceGroupComplete(ctx context.Context, re
 
 // Update updates a machine learning team account with the specified parameters.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. parameters is the parameters for updating a machine learning team
-// account.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. parameters is the parameters for updating a
+// machine learning team account.
 func (client AccountsClient) Update(ctx context.Context, resourceGroupName string, accountName string, parameters AccountUpdateParameters) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.AccountsClient", "Update")
+		return result, validation.NewError("experimentation.AccountsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, parameters)

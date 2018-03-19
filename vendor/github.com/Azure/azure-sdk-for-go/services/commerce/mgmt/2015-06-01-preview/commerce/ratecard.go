@@ -46,9 +46,9 @@ func NewRateCardClientWithBaseURI(baseURI string, subscriptionID string) RateCar
 // identify each billable item. If the billing meter GUID is scheduled to change due to a new billing model, you will
 // be notified in advance of the change.
 //
-// filter is the filter to apply on the operation. It ONLY supports the 'eq' and 'and' logical operators at this time.
-// All the 4 query parameters 'OfferDurableId',  'Currency', 'Locale', 'Region' are required to be a part of the
-// $filter.
+// filter is the filter to apply on the operation. It ONLY supports the 'eq' and 'and' logical operators at this
+// time. All the 4 query parameters 'OfferDurableId',  'Currency', 'Locale', 'Region' are required to be a part of
+// the $filter.
 func (client RateCardClient) Get(ctx context.Context, filter string) (result ResourceRateCardInfo, err error) {
 	req, err := client.GetPreparer(ctx, filter)
 	if err != nil {

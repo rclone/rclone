@@ -43,14 +43,14 @@ func NewGroupsClientWithBaseURI(baseURI string, tenantID string) GroupsClient {
 
 // AddMember add a member to a group.
 //
-// groupObjectID is the object ID of the group to which to add the member. parameters is the URL of the member object,
-// such as
+// groupObjectID is the object ID of the group to which to add the member. parameters is the URL of the member
+// object, such as
 // https://graph.windows.net/0b1f9851-1bf0-433f-aec3-cb9272f093dc/directoryObjects/f260bbc4-c254-447b-94cf-293b5ec434dd.
 func (client GroupsClient) AddMember(ctx context.Context, groupObjectID string, parameters GroupAddMemberParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.URL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "graphrbac.GroupsClient", "AddMember")
+		return result, validation.NewError("graphrbac.GroupsClient", "AddMember", err.Error())
 	}
 
 	req, err := client.AddMemberPreparer(ctx, groupObjectID, parameters)
@@ -125,7 +125,7 @@ func (client GroupsClient) Create(ctx context.Context, parameters GroupCreatePar
 				{Target: "parameters.MailEnabled", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.MailNickname", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.SecurityEnabled", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "graphrbac.GroupsClient", "Create")
+		return result, validation.NewError("graphrbac.GroupsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, parameters)
@@ -463,12 +463,13 @@ func (client GroupsClient) GetGroupMembersNextResponder(resp *http.Response) (re
 
 // GetMemberGroups gets a collection of object IDs of groups of which the specified group is a member.
 //
-// objectID is the object ID of the group for which to get group membership. parameters is group filtering parameters.
+// objectID is the object ID of the group for which to get group membership. parameters is group filtering
+// parameters.
 func (client GroupsClient) GetMemberGroups(ctx context.Context, objectID string, parameters GroupGetMemberGroupsParameters) (result GroupGetMemberGroupsResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.SecurityEnabledOnly", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "graphrbac.GroupsClient", "GetMemberGroups")
+		return result, validation.NewError("graphrbac.GroupsClient", "GetMemberGroups", err.Error())
 	}
 
 	req, err := client.GetMemberGroupsPreparer(ctx, objectID, parameters)
@@ -543,7 +544,7 @@ func (client GroupsClient) IsMemberOf(ctx context.Context, parameters CheckGroup
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.GroupID", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.MemberID", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "graphrbac.GroupsClient", "IsMemberOf")
+		return result, validation.NewError("graphrbac.GroupsClient", "IsMemberOf", err.Error())
 	}
 
 	req, err := client.IsMemberOfPreparer(ctx, parameters)

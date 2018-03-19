@@ -192,7 +192,31 @@ type Resource struct {
 	// Sku - The SKU of the Analysis Services resource.
 	Sku *ResourceSku `json:"sku,omitempty"`
 	// Tags - Key-value pairs of additional resource provisioning properties.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Sku != nil {
+		objectMap["sku"] = r.Sku
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceSku represents the SKU name and Azure pricing tier for Analysis Services resource.
@@ -206,6 +230,8 @@ type ResourceSku struct {
 // Server represents an instance of an Analysis Services resource.
 type Server struct {
 	autorest.Response `json:"-"`
+	// ServerProperties - Properties of the provision operation request.
+	*ServerProperties `json:"properties,omitempty"`
 	// ID - An identifier that represents the Analysis Services resource.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the Analysis Services resource.
@@ -217,9 +243,34 @@ type Server struct {
 	// Sku - The SKU of the Analysis Services resource.
 	Sku *ResourceSku `json:"sku,omitempty"`
 	// Tags - Key-value pairs of additional resource provisioning properties.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// ServerProperties - Properties of the provision operation request.
-	*ServerProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Server.
+func (s Server) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if s.ServerProperties != nil {
+		objectMap["properties"] = s.ServerProperties
+	}
+	if s.ID != nil {
+		objectMap["id"] = s.ID
+	}
+	if s.Name != nil {
+		objectMap["name"] = s.Name
+	}
+	if s.Type != nil {
+		objectMap["type"] = s.Type
+	}
+	if s.Location != nil {
+		objectMap["location"] = s.Location
+	}
+	if s.Sku != nil {
+		objectMap["sku"] = s.Sku
+	}
+	if s.Tags != nil {
+		objectMap["tags"] = s.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Server struct.
@@ -229,76 +280,72 @@ func (s *Server) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ServerProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var serverProperties ServerProperties
+				err = json.Unmarshal(*v, &serverProperties)
+				if err != nil {
+					return err
+				}
+				s.ServerProperties = &serverProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				s.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				s.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				s.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				s.Location = &location
+			}
+		case "sku":
+			if v != nil {
+				var sku ResourceSku
+				err = json.Unmarshal(*v, &sku)
+				if err != nil {
+					return err
+				}
+				s.Sku = &sku
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				s.Tags = tags
+			}
 		}
-		s.ServerProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		s.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		s.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		s.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		s.Location = &location
-	}
-
-	v = m["sku"]
-	if v != nil {
-		var sku ResourceSku
-		err = json.Unmarshal(*m["sku"], &sku)
-		if err != nil {
-			return err
-		}
-		s.Sku = &sku
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		s.Tags = &tags
 	}
 
 	return nil
@@ -322,18 +369,18 @@ type ServerMutableProperties struct {
 
 // ServerProperties properties of Analysis Services resource.
 type ServerProperties struct {
-	// AsAdministrators - A collection of AS server administrators
-	AsAdministrators *ServerAdministrators `json:"asAdministrators,omitempty"`
-	// BackupBlobContainerURI - The SAS container URI to the backup container.
-	BackupBlobContainerURI *string `json:"backupBlobContainerUri,omitempty"`
-	// GatewayDetails - The gateway details configured for the AS server.
-	GatewayDetails *GatewayDetails `json:"gatewayDetails,omitempty"`
 	// State - The current state of Analysis Services resource. The state is to indicate more states outside of resource provisioning. Possible values include: 'StateDeleting', 'StateSucceeded', 'StateFailed', 'StatePaused', 'StateSuspended', 'StateProvisioning', 'StateUpdating', 'StateSuspending', 'StatePausing', 'StateResuming', 'StatePreparing', 'StateScaling'
 	State State `json:"state,omitempty"`
 	// ProvisioningState - The current deployment state of Analysis Services resource. The provisioningState is to indicate states for resource provisioning. Possible values include: 'Deleting', 'Succeeded', 'Failed', 'Paused', 'Suspended', 'Provisioning', 'Updating', 'Suspending', 'Pausing', 'Resuming', 'Preparing', 'Scaling'
 	ProvisioningState ProvisioningState `json:"provisioningState,omitempty"`
 	// ServerFullName - The full name of the Analysis Services resource.
 	ServerFullName *string `json:"serverFullName,omitempty"`
+	// AsAdministrators - A collection of AS server administrators
+	AsAdministrators *ServerAdministrators `json:"asAdministrators,omitempty"`
+	// BackupBlobContainerURI - The SAS container URI to the backup container.
+	BackupBlobContainerURI *string `json:"backupBlobContainerUri,omitempty"`
+	// GatewayDetails - The gateway details configured for the AS server.
+	GatewayDetails *GatewayDetails `json:"gatewayDetails,omitempty"`
 }
 
 // Servers an array of Analysis Services resources.
@@ -355,22 +402,39 @@ func (future ServersCreateFuture) Result(client ServersClient) (s Server, err er
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersCreateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return s, autorest.NewError("analysisservices.ServersCreateFuture", "Result", "asynchronous operation has not completed")
+		return s, azure.NewAsyncOpIncompleteError("analysisservices.ServersCreateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		s, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "analysisservices.ServersCreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersCreateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	s, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersCreateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -386,22 +450,39 @@ func (future ServersDeleteFuture) Result(client ServersClient) (ar autorest.Resp
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersDeleteFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("analysisservices.ServersDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("analysisservices.ServersDeleteFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "analysisservices.ServersDeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersDeleteFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersDeleteFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -417,22 +498,39 @@ func (future ServersResumeFuture) Result(client ServersClient) (ar autorest.Resp
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersResumeFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("analysisservices.ServersResumeFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("analysisservices.ServersResumeFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.ResumeResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "analysisservices.ServersResumeFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersResumeFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.ResumeResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersResumeFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -448,22 +546,39 @@ func (future ServersSuspendFuture) Result(client ServersClient) (ar autorest.Res
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersSuspendFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("analysisservices.ServersSuspendFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("analysisservices.ServersSuspendFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.SuspendResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "analysisservices.ServersSuspendFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersSuspendFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.SuspendResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersSuspendFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -479,22 +594,39 @@ func (future ServersUpdateFuture) Result(client ServersClient) (s Server, err er
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersUpdateFuture", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return s, autorest.NewError("analysisservices.ServersUpdateFuture", "Result", "asynchronous operation has not completed")
+		return s, azure.NewAsyncOpIncompleteError("analysisservices.ServersUpdateFuture")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		s, err = client.UpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "analysisservices.ServersUpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersUpdateFuture", "Result", resp, "Failure sending request")
 		return
 	}
 	s, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "analysisservices.ServersUpdateFuture", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
@@ -503,9 +635,24 @@ type ServerUpdateParameters struct {
 	// Sku - The SKU of the Analysis Services resource.
 	Sku *ResourceSku `json:"sku,omitempty"`
 	// Tags - Key-value pairs of additional provisioning properties.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// ServerMutableProperties - Properties of the provision operation request.
 	*ServerMutableProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for ServerUpdateParameters.
+func (sup ServerUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sup.Sku != nil {
+		objectMap["sku"] = sup.Sku
+	}
+	if sup.Tags != nil {
+		objectMap["tags"] = sup.Tags
+	}
+	if sup.ServerMutableProperties != nil {
+		objectMap["properties"] = sup.ServerMutableProperties
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for ServerUpdateParameters struct.
@@ -515,36 +662,36 @@ func (sup *ServerUpdateParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["sku"]
-	if v != nil {
-		var sku ResourceSku
-		err = json.Unmarshal(*m["sku"], &sku)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "sku":
+			if v != nil {
+				var sku ResourceSku
+				err = json.Unmarshal(*v, &sku)
+				if err != nil {
+					return err
+				}
+				sup.Sku = &sku
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				sup.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var serverMutableProperties ServerMutableProperties
+				err = json.Unmarshal(*v, &serverMutableProperties)
+				if err != nil {
+					return err
+				}
+				sup.ServerMutableProperties = &serverMutableProperties
+			}
 		}
-		sup.Sku = &sku
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		sup.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties ServerMutableProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		sup.ServerMutableProperties = &properties
 	}
 
 	return nil

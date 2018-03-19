@@ -42,14 +42,14 @@ func NewLocationClientWithBaseURI(baseURI string, subscriptionID string) Locatio
 
 // CheckNameAvailability checks whether the Batch account name is available in the specified region.
 //
-// locationName is the desired region for the name check. parameters is properties needed to check the availability of
-// a name.
+// locationName is the desired region for the name check. parameters is properties needed to check the availability
+// of a name.
 func (client LocationClient) CheckNameAvailability(ctx context.Context, locationName string, parameters CheckNameAvailabilityParameters) (result CheckNameAvailabilityResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.LocationClient", "CheckNameAvailability")
+		return result, validation.NewError("batch.LocationClient", "CheckNameAvailability", err.Error())
 	}
 
 	req, err := client.CheckNameAvailabilityPreparer(ctx, locationName, parameters)

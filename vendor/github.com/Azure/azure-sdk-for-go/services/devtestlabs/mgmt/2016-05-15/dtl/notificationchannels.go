@@ -48,7 +48,7 @@ func (client NotificationChannelsClient) CreateOrUpdate(ctx context.Context, res
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: notificationChannel,
 			Constraints: []validation.Constraint{{Target: "notificationChannel.NotificationChannelProperties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "dtl.NotificationChannelsClient", "CreateOrUpdate")
+		return result, validation.NewError("dtl.NotificationChannelsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, labName, name, notificationChannel)
@@ -256,10 +256,10 @@ func (client NotificationChannelsClient) GetResponder(resp *http.Response) (resu
 
 // List list notificationchannels in a given lab.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the $expand
-// query. Example: 'properties($select=webHookUrl)' filter is the filter to apply to the operation. top is the maximum
-// number of resources to return from the operation. orderby is the ordering expression for the results, using OData
-// notation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. expand is specify the
+// $expand query. Example: 'properties($select=webHookUrl)' filter is the filter to apply to the operation. top is
+// the maximum number of resources to return from the operation. orderby is the ordering expression for the
+// results, using OData notation.
 func (client NotificationChannelsClient) List(ctx context.Context, resourceGroupName string, labName string, expand string, filter string, top *int32, orderby string) (result ResponseWithContinuationNotificationChannelPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, expand, filter, top, orderby)

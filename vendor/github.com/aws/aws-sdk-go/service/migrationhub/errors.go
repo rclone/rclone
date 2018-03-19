@@ -7,8 +7,7 @@ const (
 	// ErrCodeAccessDeniedException for service response error code
 	// "AccessDeniedException".
 	//
-	// Exception raised when the account making the call is not whitelisted or there
-	// are other authentication errors.
+	// You do not have sufficient access to perform this action.
 	ErrCodeAccessDeniedException = "AccessDeniedException"
 
 	// ErrCodeDryRunOperation for service response error code
@@ -36,8 +35,8 @@ const (
 	// "PolicyErrorException".
 	//
 	// Exception raised when there are problems accessing ADS (Application Discovery
-	// Service); most likely due to a misconfigured policy or the ADSCaller role
-	// is missing or not configured correctly.
+	// Service); most likely due to a misconfigured policy or the migrationhub-discovery
+	// role is missing or not configured correctly.
 	ErrCodePolicyErrorException = "PolicyErrorException"
 
 	// ErrCodeResourceNotFoundException for service response error code
@@ -51,8 +50,8 @@ const (
 	// ErrCodeServiceUnavailableException for service response error code
 	// "ServiceUnavailableException".
 	//
-	// Exception raised when the service encounters throttled communication with
-	// upstream dependencies or is overloaded with requests.
+	// Exception raised when there is an internal, configuration, or dependency
+	// error encountered.
 	ErrCodeServiceUnavailableException = "ServiceUnavailableException"
 
 	// ErrCodeUnauthorizedOperation for service response error code

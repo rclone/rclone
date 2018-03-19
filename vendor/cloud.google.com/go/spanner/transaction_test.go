@@ -18,7 +18,6 @@ package spanner
 
 import (
 	"errors"
-	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -74,13 +73,13 @@ func TestReadOnlyAcquire(t *testing.T) {
 		t.Errorf("Acquire for single use, got %v, want nil.", e)
 	}
 	_, _, e = txn.acquire(context.Background())
-	if wantErr := errTxClosed(); !reflect.DeepEqual(e, wantErr) {
+	if wantErr := errTxClosed(); !testEqual(e, wantErr) {
 		t.Errorf("Second acquire for single use, got %v, want %v.", e, wantErr)
 	}
 	// Multiuse can recover from acquire failure.
 	txn = client.ReadOnlyTransaction()
 	_, _, e = txn.acquire(context.Background())
-	if wantErr := toSpannerError(errUsr); !reflect.DeepEqual(e, wantErr) {
+	if wantErr := toSpannerError(errUsr); !testEqual(e, wantErr) {
 		t.Errorf("Acquire for multi use, got %v, want %v.", e, wantErr)
 	}
 	_, _, e = txn.acquire(context.Background())
@@ -90,7 +89,7 @@ func TestReadOnlyAcquire(t *testing.T) {
 	txn.Close()
 	// Multiuse can not be used after close.
 	_, _, e = txn.acquire(context.Background())
-	if wantErr := errTxClosed(); !reflect.DeepEqual(e, wantErr) {
+	if wantErr := errTxClosed(); !testEqual(e, wantErr) {
 		t.Errorf("Second acquire for multi use, got %v, want %v.", e, wantErr)
 	}
 	// Multiuse can be acquired concurrently.
@@ -118,10 +117,10 @@ func TestReadOnlyAcquire(t *testing.T) {
 	<-time.After(100 * time.Millisecond)
 	mc.Unfreeze()
 	wg.Wait()
-	if !reflect.DeepEqual(sh1, sh2) {
+	if !testEqual(sh1.session, sh2.session) {
 		t.Errorf("Expect acquire to get same session handle, got %v and %v.", sh1, sh2)
 	}
-	if !reflect.DeepEqual(ts1, ts2) {
+	if !testEqual(ts1, ts2) {
 		t.Errorf("Expect acquire to get same transaction selector, got %v and %v.", ts1, ts2)
 	}
 }
@@ -183,14 +182,14 @@ func TestBadSession(t *testing.T) {
 	)
 	txn := client.ReadOnlyTransaction()
 	defer txn.Close()
-	if _, _, got := txn.acquire(ctx); !reflect.DeepEqual(wantErr, got) {
+	if _, _, got := txn.acquire(ctx); !testEqual(wantErr, got) {
 		t.Errorf("Expect acquire to fail, got %v, want %v.", got, wantErr)
 	}
 	// The failure should recycle the session, we expect it to be used in following requests.
-	if got := txn.Query(ctx, NewStatement("SELECT 1")); !reflect.DeepEqual(wantErr, got.err) {
+	if got := txn.Query(ctx, NewStatement("SELECT 1")); !testEqual(wantErr, got.err) {
 		t.Errorf("Expect Query to fail, got %v, want %v.", got.err, wantErr)
 	}
-	if got := txn.Read(ctx, "Users", KeySets(Key{"alice"}, Key{"bob"}), []string{"name", "email"}); !reflect.DeepEqual(wantErr, got.err) {
+	if got := txn.Read(ctx, "Users", KeySets(Key{"alice"}, Key{"bob"}), []string{"name", "email"}); !testEqual(wantErr, got.err) {
 		t.Errorf("Expect Read to fail, got %v, want %v.", got.err, wantErr)
 	}
 	// writeOnlyTransaction
@@ -199,7 +198,7 @@ func TestBadSession(t *testing.T) {
 		Insert("Accounts", []string{"AccountId", "Nickname", "Balance"}, []interface{}{int64(2), "Bar", int64(1)}),
 	}
 	mc.SetActions(testutil.Action{"Commit", wantErr})
-	if _, got := client.Apply(context.Background(), ms, ApplyAtLeastOnce()); !reflect.DeepEqual(wantErr, got) {
+	if _, got := client.Apply(context.Background(), ms, ApplyAtLeastOnce()); !testEqual(wantErr, got) {
 		t.Errorf("Expect applyAtLeastOnce to fail, got %v, want %v.", got, wantErr)
 	}
 }

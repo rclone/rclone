@@ -718,6 +718,169 @@ func (s *AccountTicket) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// AccountTreeRequest: JSON template for an Analytics account tree
+// requests. The account tree request is used in the provisioning api to
+// create an account, property, and view (profile). It contains the
+// basic information required to make these fields.
+type AccountTreeRequest struct {
+	AccountName string `json:"accountName,omitempty"`
+
+	AccountSettings *AccountTreeRequestAccountSettings `json:"accountSettings,omitempty"`
+
+	// Kind: Resource type for account ticket.
+	Kind string `json:"kind,omitempty"`
+
+	ProfileName string `json:"profileName,omitempty"`
+
+	Timezone string `json:"timezone,omitempty"`
+
+	WebpropertyName string `json:"webpropertyName,omitempty"`
+
+	WebsiteUrl string `json:"websiteUrl,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AccountName") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AccountName") to include
+	// in API requests with the JSON null value. By default, fields with
+	// empty values are omitted from API requests. However, any field with
+	// an empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AccountTreeRequest) MarshalJSON() ([]byte, error) {
+	type NoMethod AccountTreeRequest
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type AccountTreeRequestAccountSettings struct {
+	AdmobReporting bool `json:"admobReporting,omitempty"`
+
+	SharingWithGoogleAnySales bool `json:"sharingWithGoogleAnySales,omitempty"`
+
+	SharingWithGoogleProducts bool `json:"sharingWithGoogleProducts,omitempty"`
+
+	SharingWithGoogleSales bool `json:"sharingWithGoogleSales,omitempty"`
+
+	SharingWithGoogleSupport bool `json:"sharingWithGoogleSupport,omitempty"`
+
+	SharingWithOthers bool `json:"sharingWithOthers,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AdmobReporting") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AdmobReporting") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AccountTreeRequestAccountSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod AccountTreeRequestAccountSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+// AccountTreeResponse: JSON template for an Analytics account tree
+// response. The account tree response is used in the provisioning api
+// to return the result of creating an account, property, and view
+// (profile).
+type AccountTreeResponse struct {
+	// Account: The account created.
+	Account *Account `json:"account,omitempty"`
+
+	AccountSettings *AccountTreeResponseAccountSettings `json:"accountSettings,omitempty"`
+
+	// Kind: Resource type for account ticket.
+	Kind string `json:"kind,omitempty"`
+
+	// Profile: View (Profile) for the account.
+	Profile *Profile `json:"profile,omitempty"`
+
+	// Webproperty: Web property for the account.
+	Webproperty *Webproperty `json:"webproperty,omitempty"`
+
+	// ServerResponse contains the HTTP response code and headers from the
+	// server.
+	googleapi.ServerResponse `json:"-"`
+
+	// ForceSendFields is a list of field names (e.g. "Account") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "Account") to include in
+	// API requests with the JSON null value. By default, fields with empty
+	// values are omitted from API requests. However, any field with an
+	// empty value appearing in NullFields will be sent to the server as
+	// null. It is an error if a field in this list has a non-empty value.
+	// This may be used to include null fields in Patch requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AccountTreeResponse) MarshalJSON() ([]byte, error) {
+	type NoMethod AccountTreeResponse
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type AccountTreeResponseAccountSettings struct {
+	AdmobReporting bool `json:"admobReporting,omitempty"`
+
+	SharingWithGoogleAnySales bool `json:"sharingWithGoogleAnySales,omitempty"`
+
+	SharingWithGoogleProducts bool `json:"sharingWithGoogleProducts,omitempty"`
+
+	SharingWithGoogleSales bool `json:"sharingWithGoogleSales,omitempty"`
+
+	SharingWithGoogleSupport bool `json:"sharingWithGoogleSupport,omitempty"`
+
+	SharingWithOthers bool `json:"sharingWithOthers,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "AdmobReporting") to
+	// unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "AdmobReporting") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *AccountTreeResponseAccountSettings) MarshalJSON() ([]byte, error) {
+	type NoMethod AccountTreeResponseAccountSettings
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
 // Accounts: An account collection provides a list of Analytics accounts
 // to which a user has access. The account collection is the entry point
 // to all management information. Each resource in the collection
@@ -16443,11 +16606,12 @@ func (c *ManagementUploadsUploadDataCall) doRequest(alt string) (*http.Response,
 		body = new(bytes.Buffer)
 		reqHeaders.Set("Content-Type", "application/json")
 	}
-	body, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
+	body, getBody, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)
 	defer cleanup()
 	urls += "?" + c.urlParams_.Encode()
 	req, _ := http.NewRequest("POST", urls, body)
 	req.Header = reqHeaders
+	gensupport.SetGetBody(req, getBody)
 	googleapi.Expand(req.URL, map[string]string{
 		"accountId":          c.accountId,
 		"webPropertyId":      c.webPropertyId,
@@ -19047,6 +19211,123 @@ func (c *ProvisioningCreateAccountTicketCall) Do(opts ...googleapi.CallOption) (
 	//   },
 	//   "response": {
 	//     "$ref": "AccountTicket"
+	//   },
+	//   "scopes": [
+	//     "https://www.googleapis.com/auth/analytics.provision"
+	//   ]
+	// }
+
+}
+
+// method id "analytics.provisioning.createAccountTree":
+
+type ProvisioningCreateAccountTreeCall struct {
+	s                  *Service
+	accounttreerequest *AccountTreeRequest
+	urlParams_         gensupport.URLParams
+	ctx_               context.Context
+	header_            http.Header
+}
+
+// CreateAccountTree: Provision account.
+func (r *ProvisioningService) CreateAccountTree(accounttreerequest *AccountTreeRequest) *ProvisioningCreateAccountTreeCall {
+	c := &ProvisioningCreateAccountTreeCall{s: r.s, urlParams_: make(gensupport.URLParams)}
+	c.accounttreerequest = accounttreerequest
+	return c
+}
+
+// Fields allows partial responses to be retrieved. See
+// https://developers.google.com/gdata/docs/2.0/basics#PartialResponse
+// for more information.
+func (c *ProvisioningCreateAccountTreeCall) Fields(s ...googleapi.Field) *ProvisioningCreateAccountTreeCall {
+	c.urlParams_.Set("fields", googleapi.CombineFields(s))
+	return c
+}
+
+// Context sets the context to be used in this call's Do method. Any
+// pending HTTP request will be aborted if the provided context is
+// canceled.
+func (c *ProvisioningCreateAccountTreeCall) Context(ctx context.Context) *ProvisioningCreateAccountTreeCall {
+	c.ctx_ = ctx
+	return c
+}
+
+// Header returns an http.Header that can be modified by the caller to
+// add HTTP headers to the request.
+func (c *ProvisioningCreateAccountTreeCall) Header() http.Header {
+	if c.header_ == nil {
+		c.header_ = make(http.Header)
+	}
+	return c.header_
+}
+
+func (c *ProvisioningCreateAccountTreeCall) doRequest(alt string) (*http.Response, error) {
+	reqHeaders := make(http.Header)
+	for k, v := range c.header_ {
+		reqHeaders[k] = v
+	}
+	reqHeaders.Set("User-Agent", c.s.userAgent())
+	var body io.Reader = nil
+	body, err := googleapi.WithoutDataWrapper.JSONReader(c.accounttreerequest)
+	if err != nil {
+		return nil, err
+	}
+	reqHeaders.Set("Content-Type", "application/json")
+	c.urlParams_.Set("alt", alt)
+	urls := googleapi.ResolveRelative(c.s.BasePath, "provisioning/createAccountTree")
+	urls += "?" + c.urlParams_.Encode()
+	req, _ := http.NewRequest("POST", urls, body)
+	req.Header = reqHeaders
+	return gensupport.SendRequest(c.ctx_, c.s.client, req)
+}
+
+// Do executes the "analytics.provisioning.createAccountTree" call.
+// Exactly one of *AccountTreeResponse or error will be non-nil. Any
+// non-2xx status code is an error. Response headers are in either
+// *AccountTreeResponse.ServerResponse.Header or (if a response was
+// returned at all) in error.(*googleapi.Error).Header. Use
+// googleapi.IsNotModified to check whether the returned error was
+// because http.StatusNotModified was returned.
+func (c *ProvisioningCreateAccountTreeCall) Do(opts ...googleapi.CallOption) (*AccountTreeResponse, error) {
+	gensupport.SetOptions(c.urlParams_, opts...)
+	res, err := c.doRequest("json")
+	if res != nil && res.StatusCode == http.StatusNotModified {
+		if res.Body != nil {
+			res.Body.Close()
+		}
+		return nil, &googleapi.Error{
+			Code:   res.StatusCode,
+			Header: res.Header,
+		}
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer googleapi.CloseBody(res)
+	if err := googleapi.CheckResponse(res); err != nil {
+		return nil, err
+	}
+	ret := &AccountTreeResponse{
+		ServerResponse: googleapi.ServerResponse{
+			Header:         res.Header,
+			HTTPStatusCode: res.StatusCode,
+		},
+	}
+	target := &ret
+	if err := gensupport.DecodeResponse(target, res); err != nil {
+		return nil, err
+	}
+	return ret, nil
+	// {
+	//   "description": "Provision account.",
+	//   "httpMethod": "POST",
+	//   "id": "analytics.provisioning.createAccountTree",
+	//   "path": "provisioning/createAccountTree",
+	//   "request": {
+	//     "$ref": "AccountTreeRequest"
+	//   },
+	//   "response": {
+	//     "$ref": "AccountTreeResponse"
 	//   },
 	//   "scopes": [
 	//     "https://www.googleapis.com/auth/analytics.provision"

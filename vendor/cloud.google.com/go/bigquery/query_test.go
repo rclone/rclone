@@ -16,6 +16,7 @@ package bigquery
 
 import (
 	"testing"
+	"time"
 
 	"github.com/google/go-cmp/cmp"
 
@@ -350,6 +351,8 @@ func TestConfiguringQuery(t *testing.T) {
 	query.JobID = "ajob"
 	query.DefaultProjectID = "def-project-id"
 	query.DefaultDatasetID = "def-dataset-id"
+	query.TimePartitioning = &TimePartitioning{Expiration: 1234 * time.Second, Field: "f"}
+	query.DestinationEncryptionConfig = &EncryptionConfig{KMSKeyName: "keyName"}
 	// Note: Other configuration fields are tested in other tests above.
 	// A lot of that can be consolidated once Client.Copy is gone.
 
@@ -361,8 +364,10 @@ func TestConfiguringQuery(t *testing.T) {
 					ProjectId: "def-project-id",
 					DatasetId: "def-dataset-id",
 				},
-				UseLegacySql:    false,
-				ForceSendFields: []string{"UseLegacySql"},
+				UseLegacySql:                       false,
+				TimePartitioning:                   &bq.TimePartitioning{ExpirationMs: 1234000, Field: "f", Type: "DAY"},
+				DestinationEncryptionConfiguration: &bq.EncryptionConfiguration{KmsKeyName: "keyName"},
+				ForceSendFields:                    []string{"UseLegacySql"},
 			},
 		},
 		JobReference: &bq.JobReference{

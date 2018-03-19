@@ -453,6 +453,7 @@ func (c *Client) Put(ctx context.Context, key *Key, src interface{}) (*Key, erro
 //
 // src must satisfy the same conditions as the dst argument to GetMulti.
 func (c *Client) PutMulti(ctx context.Context, keys []*Key, src interface{}) ([]*Key, error) {
+	// TODO(jba): rewrite in terms of Mutate.
 	mutations, err := putMutations(keys, src)
 	if err != nil {
 		return nil, err
@@ -541,6 +542,7 @@ func (c *Client) Delete(ctx context.Context, key *Key) error {
 
 // DeleteMulti is a batch version of Delete.
 func (c *Client) DeleteMulti(ctx context.Context, keys []*Key) error {
+	// TODO(jba): rewrite in terms of Mutate.
 	mutations, err := deleteMutations(keys)
 	if err != nil {
 		return err
@@ -571,4 +573,39 @@ func deleteMutations(keys []*Key) ([]*pb.Mutation, error) {
 		set[ks] = true
 	}
 	return mutations, nil
+}
+
+// Mutate applies one or more mutations atomically.
+// It returns the keys of the argument Mutations, in the same order.
+//
+// If any of the mutations are invalid, Mutate returns a MultiError with the errors.
+// Mutate returns a MultiError in this case even if there is only one Mutation.
+func (c *Client) Mutate(ctx context.Context, muts ...*Mutation) ([]*Key, error) {
+	pmuts, err := mutationProtos(muts)
+	if err != nil {
+		return nil, err
+	}
+	req := &pb.CommitRequest{
+		ProjectId: c.dataset,
+		Mutations: pmuts,
+		Mode:      pb.CommitRequest_NON_TRANSACTIONAL,
+	}
+	resp, err := c.client.Commit(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+	// Copy any newly minted keys into the returned keys.
+	ret := make([]*Key, len(muts))
+	for i, mut := range muts {
+		if mut.key.Incomplete() {
+			// This key is in the mutation results.
+			ret[i], err = protoToKey(resp.MutationResults[i].Key)
+			if err != nil {
+				return nil, errors.New("datastore: internal error: server returned an invalid key")
+			}
+		} else {
+			ret[i] = mut.key
+		}
+	}
+	return ret, nil
 }

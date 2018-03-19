@@ -42,8 +42,8 @@ func NewAppServiceCertificateOrdersClientWithBaseURI(baseURI string, subscriptio
 
 // CreateOrUpdate create or update a certificate purchase order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. certificateDistinguishedName is distinguished name to to use for the certificate order.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. certificateDistinguishedName is distinguished name to to use for the certificate order.
 func (client AppServiceCertificateOrdersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, certificateOrderName string, certificateDistinguishedName AppServiceCertificateOrder) (result AppServiceCertificateOrdersCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -57,7 +57,7 @@ func (client AppServiceCertificateOrdersClient) CreateOrUpdate(ctx context.Conte
 						{Target: "certificateDistinguishedName.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "CreateOrUpdate")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, certificateOrderName, certificateDistinguishedName)
@@ -128,15 +128,16 @@ func (client AppServiceCertificateOrdersClient) CreateOrUpdateResponder(resp *ht
 
 // CreateOrUpdateCertificate creates or updates a certificate and associates with key vault secret.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. name is name of the certificate. keyVaultCertificate is key vault certificate resource Id.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. name is name of the certificate. keyVaultCertificate is key vault certificate resource
+// Id.
 func (client AppServiceCertificateOrdersClient) CreateOrUpdateCertificate(ctx context.Context, resourceGroupName string, certificateOrderName string, name string, keyVaultCertificate AppServiceCertificateResource) (result AppServiceCertificateOrdersCreateOrUpdateCertificateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "CreateOrUpdateCertificate")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "CreateOrUpdateCertificate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateCertificatePreparer(ctx, resourceGroupName, certificateOrderName, name, keyVaultCertificate)
@@ -208,15 +209,15 @@ func (client AppServiceCertificateOrdersClient) CreateOrUpdateCertificateRespond
 
 // Delete delete an existing certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order.
 func (client AppServiceCertificateOrdersClient) Delete(ctx context.Context, resourceGroupName string, certificateOrderName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "Delete")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, certificateOrderName)
@@ -282,15 +283,15 @@ func (client AppServiceCertificateOrdersClient) DeleteResponder(resp *http.Respo
 
 // DeleteCertificate delete the certificate associated with a certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. name is name of the certificate.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. name is name of the certificate.
 func (client AppServiceCertificateOrdersClient) DeleteCertificate(ctx context.Context, resourceGroupName string, certificateOrderName string, name string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "DeleteCertificate")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "DeleteCertificate", err.Error())
 	}
 
 	req, err := client.DeleteCertificatePreparer(ctx, resourceGroupName, certificateOrderName, name)
@@ -357,15 +358,15 @@ func (client AppServiceCertificateOrdersClient) DeleteCertificateResponder(resp 
 
 // Get get a certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order..
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order..
 func (client AppServiceCertificateOrdersClient) Get(ctx context.Context, resourceGroupName string, certificateOrderName string) (result AppServiceCertificateOrder, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "Get")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, certificateOrderName)
@@ -432,15 +433,15 @@ func (client AppServiceCertificateOrdersClient) GetResponder(resp *http.Response
 
 // GetCertificate get the certificate associated with a certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. name is name of the certificate.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. name is name of the certificate.
 func (client AppServiceCertificateOrdersClient) GetCertificate(ctx context.Context, resourceGroupName string, certificateOrderName string, name string) (result AppServiceCertificateResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "GetCertificate")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "GetCertificate", err.Error())
 	}
 
 	req, err := client.GetCertificatePreparer(ctx, resourceGroupName, certificateOrderName, name)
@@ -605,7 +606,7 @@ func (client AppServiceCertificateOrdersClient) ListByResourceGroup(ctx context.
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "ListByResourceGroup")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "ListByResourceGroup", err.Error())
 	}
 
 	result.fn = client.listByResourceGroupNextResults
@@ -699,15 +700,15 @@ func (client AppServiceCertificateOrdersClient) ListByResourceGroupComplete(ctx 
 
 // ListCertificates list all certificates associated with a certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order.
 func (client AppServiceCertificateOrdersClient) ListCertificates(ctx context.Context, resourceGroupName string, certificateOrderName string) (result AppServiceCertificateCollectionPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "ListCertificates")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "ListCertificates", err.Error())
 	}
 
 	result.fn = client.listCertificatesNextResults
@@ -802,15 +803,15 @@ func (client AppServiceCertificateOrdersClient) ListCertificatesComplete(ctx con
 
 // Reissue reissue an existing certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. reissueCertificateOrderRequest is parameters for the reissue.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. reissueCertificateOrderRequest is parameters for the reissue.
 func (client AppServiceCertificateOrdersClient) Reissue(ctx context.Context, resourceGroupName string, certificateOrderName string, reissueCertificateOrderRequest ReissueCertificateOrderRequest) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "Reissue")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "Reissue", err.Error())
 	}
 
 	req, err := client.ReissuePreparer(ctx, resourceGroupName, certificateOrderName, reissueCertificateOrderRequest)
@@ -878,15 +879,15 @@ func (client AppServiceCertificateOrdersClient) ReissueResponder(resp *http.Resp
 
 // Renew renew an existing certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. renewCertificateOrderRequest is renew parameters
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. renewCertificateOrderRequest is renew parameters
 func (client AppServiceCertificateOrdersClient) Renew(ctx context.Context, resourceGroupName string, certificateOrderName string, renewCertificateOrderRequest RenewCertificateOrderRequest) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "Renew")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "Renew", err.Error())
 	}
 
 	req, err := client.RenewPreparer(ctx, resourceGroupName, certificateOrderName, renewCertificateOrderRequest)
@@ -954,15 +955,15 @@ func (client AppServiceCertificateOrdersClient) RenewResponder(resp *http.Respon
 
 // ResendEmail resend certificate email.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order.
 func (client AppServiceCertificateOrdersClient) ResendEmail(ctx context.Context, resourceGroupName string, certificateOrderName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "ResendEmail")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "ResendEmail", err.Error())
 	}
 
 	req, err := client.ResendEmailPreparer(ctx, resourceGroupName, certificateOrderName)
@@ -1028,15 +1029,15 @@ func (client AppServiceCertificateOrdersClient) ResendEmailResponder(resp *http.
 
 // ResendRequestEmails verify domain ownership for this certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. nameIdentifier is email address
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. nameIdentifier is email address
 func (client AppServiceCertificateOrdersClient) ResendRequestEmails(ctx context.Context, resourceGroupName string, certificateOrderName string, nameIdentifier NameIdentifier) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "ResendRequestEmails")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "ResendRequestEmails", err.Error())
 	}
 
 	req, err := client.ResendRequestEmailsPreparer(ctx, resourceGroupName, certificateOrderName, nameIdentifier)
@@ -1112,7 +1113,7 @@ func (client AppServiceCertificateOrdersClient) RetrieveCertificateActions(ctx c
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "RetrieveCertificateActions")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "RetrieveCertificateActions", err.Error())
 	}
 
 	req, err := client.RetrieveCertificateActionsPreparer(ctx, resourceGroupName, name)
@@ -1187,7 +1188,7 @@ func (client AppServiceCertificateOrdersClient) RetrieveCertificateEmailHistory(
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "RetrieveCertificateEmailHistory")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "RetrieveCertificateEmailHistory", err.Error())
 	}
 
 	req, err := client.RetrieveCertificateEmailHistoryPreparer(ctx, resourceGroupName, name)
@@ -1254,15 +1255,15 @@ func (client AppServiceCertificateOrdersClient) RetrieveCertificateEmailHistoryR
 
 // RetrieveSiteSeal verify domain ownership for this certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. siteSealRequest is site seal request.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. siteSealRequest is site seal request.
 func (client AppServiceCertificateOrdersClient) RetrieveSiteSeal(ctx context.Context, resourceGroupName string, certificateOrderName string, siteSealRequest SiteSealRequest) (result SiteSeal, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "RetrieveSiteSeal")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "RetrieveSiteSeal", err.Error())
 	}
 
 	req, err := client.RetrieveSiteSealPreparer(ctx, resourceGroupName, certificateOrderName, siteSealRequest)
@@ -1331,15 +1332,15 @@ func (client AppServiceCertificateOrdersClient) RetrieveSiteSealResponder(resp *
 
 // Update create or update a certificate purchase order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. certificateDistinguishedName is distinguished name to to use for the certificate order.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. certificateDistinguishedName is distinguished name to to use for the certificate order.
 func (client AppServiceCertificateOrdersClient) Update(ctx context.Context, resourceGroupName string, certificateOrderName string, certificateDistinguishedName AppServiceCertificateOrderPatchResource) (result AppServiceCertificateOrder, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "Update")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, certificateOrderName, certificateDistinguishedName)
@@ -1408,15 +1409,16 @@ func (client AppServiceCertificateOrdersClient) UpdateResponder(resp *http.Respo
 
 // UpdateCertificate creates or updates a certificate and associates with key vault secret.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order. name is name of the certificate. keyVaultCertificate is key vault certificate resource Id.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order. name is name of the certificate. keyVaultCertificate is key vault certificate resource
+// Id.
 func (client AppServiceCertificateOrdersClient) UpdateCertificate(ctx context.Context, resourceGroupName string, certificateOrderName string, name string, keyVaultCertificate AppServiceCertificatePatchResource) (result AppServiceCertificateResource, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "UpdateCertificate")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "UpdateCertificate", err.Error())
 	}
 
 	req, err := client.UpdateCertificatePreparer(ctx, resourceGroupName, certificateOrderName, name, keyVaultCertificate)
@@ -1496,7 +1498,7 @@ func (client AppServiceCertificateOrdersClient) ValidatePurchaseInformation(ctx 
 						{Target: "appServiceCertificateOrder.AppServiceCertificateOrderProperties.ValidityInYears", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "ValidatePurchaseInformation")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "ValidatePurchaseInformation", err.Error())
 	}
 
 	req, err := client.ValidatePurchaseInformationPreparer(ctx, appServiceCertificateOrder)
@@ -1562,15 +1564,15 @@ func (client AppServiceCertificateOrdersClient) ValidatePurchaseInformationRespo
 
 // VerifyDomainOwnership verify domain ownership for this certificate order.
 //
-// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of the
-// certificate order.
+// resourceGroupName is name of the resource group to which the resource belongs. certificateOrderName is name of
+// the certificate order.
 func (client AppServiceCertificateOrdersClient) VerifyDomainOwnership(ctx context.Context, resourceGroupName string, certificateOrderName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+[^\.]$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "web.AppServiceCertificateOrdersClient", "VerifyDomainOwnership")
+		return result, validation.NewError("web.AppServiceCertificateOrdersClient", "VerifyDomainOwnership", err.Error())
 	}
 
 	req, err := client.VerifyDomainOwnershipPreparer(ctx, resourceGroupName, certificateOrderName)

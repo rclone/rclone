@@ -47,7 +47,7 @@ func (client DscNodeClient) Delete(ctx context.Context, automationAccountName st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeClient", "Delete")
+		return result, validation.NewError("automation.DscNodeClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, nodeID)
@@ -120,7 +120,7 @@ func (client DscNodeClient) Get(ctx context.Context, automationAccountName strin
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeClient", "Get")
+		return result, validation.NewError("automation.DscNodeClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, nodeID)
@@ -193,7 +193,7 @@ func (client DscNodeClient) ListByAutomationAccount(ctx context.Context, automat
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.DscNodeClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults
@@ -297,7 +297,7 @@ func (client DscNodeClient) Update(ctx context.Context, automationAccountName st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.DscNodeClient", "Update")
+		return result, validation.NewError("automation.DscNodeClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, automationAccountName, nodeID, parameters)

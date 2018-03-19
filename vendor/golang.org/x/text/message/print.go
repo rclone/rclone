@@ -467,6 +467,11 @@ func (p *printer) fmtString(v string, verb rune) {
 		p.fmt.fmt_sx(v, udigits)
 	case 'q':
 		p.fmt.fmt_q(v)
+	case 'm':
+		ctx := p.cat.Context(p.tag, rawPrinter{p})
+		if ctx.Execute(v) == catalog.ErrNotFound {
+			p.WriteString(v)
+		}
 	default:
 		p.badVerb(verb)
 	}

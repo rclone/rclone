@@ -42,8 +42,8 @@ func NewRecommendationsClientWithBaseURI(baseURI string, subscriptionID string) 
 // GetRecommendationBySubscription sends the get recommendation by subscription request.
 //
 // featured is if set, this API returns only the most critical recommendation among the others. Otherwise this API
-// returns all recommendations available filter is return only channels specified in the filter. Filter is specified by
-// using OData syntax. Example: $filter=channels eq 'Api' or channel eq 'Notification'
+// returns all recommendations available filter is return only channels specified in the filter. Filter is
+// specified by using OData syntax. Example: $filter=channels eq 'Api' or channel eq 'Notification'
 func (client RecommendationsClient) GetRecommendationBySubscription(ctx context.Context, featured *bool, filter string) (result ListRecommendation, err error) {
 	req, err := client.GetRecommendationBySubscriptionPreparer(ctx, featured, filter)
 	if err != nil {
@@ -113,9 +113,10 @@ func (client RecommendationsClient) GetRecommendationBySubscriptionResponder(res
 
 // GetRecommendationHistoryForSite sends the get recommendation history for site request.
 //
-// resourceGroupName is resource group name siteName is site name startTime is the start time of a time range to query,
-// e.g. $filter=startTime eq '2015-01-01T00:00:00Z' and endTime eq '2015-01-02T00:00:00Z' endTime is the end time of a
-// time range to query, e.g. $filter=startTime eq '2015-01-01T00:00:00Z' and endTime eq '2015-01-02T00:00:00Z'
+// resourceGroupName is resource group name siteName is site name startTime is the start time of a time range to
+// query, e.g. $filter=startTime eq '2015-01-01T00:00:00Z' and endTime eq '2015-01-02T00:00:00Z' endTime is the end
+// time of a time range to query, e.g. $filter=startTime eq '2015-01-01T00:00:00Z' and endTime eq
+// '2015-01-02T00:00:00Z'
 func (client RecommendationsClient) GetRecommendationHistoryForSite(ctx context.Context, resourceGroupName string, siteName string, startTime string, endTime string) (result ListRecommendation, err error) {
 	req, err := client.GetRecommendationHistoryForSitePreparer(ctx, resourceGroupName, siteName, startTime, endTime)
 	if err != nil {
@@ -187,9 +188,9 @@ func (client RecommendationsClient) GetRecommendationHistoryForSiteResponder(res
 
 // GetRecommendedRulesForSite sends the get recommended rules for site request.
 //
-// resourceGroupName is resource group name siteName is site name featured is if set, this API returns only the most
-// critical recommendation among the others. Otherwise this API returns all recommendations available siteSku is the
-// name of site SKU. numSlots is the number of site slots associated to the site
+// resourceGroupName is resource group name siteName is site name featured is if set, this API returns only the
+// most critical recommendation among the others. Otherwise this API returns all recommendations available siteSku
+// is the name of site SKU. numSlots is the number of site slots associated to the site
 func (client RecommendationsClient) GetRecommendedRulesForSite(ctx context.Context, resourceGroupName string, siteName string, featured *bool, siteSku string, numSlots *int32) (result ListRecommendation, err error) {
 	req, err := client.GetRecommendedRulesForSitePreparer(ctx, resourceGroupName, siteName, featured, siteSku, numSlots)
 	if err != nil {

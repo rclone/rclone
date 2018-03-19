@@ -6,7 +6,10 @@ package packet
 
 import (
 	"bytes"
+	"crypto/ecdsa"
+	"crypto/elliptic"
 	"encoding/hex"
+	"math/big"
 	"testing"
 	"time"
 )
@@ -184,6 +187,29 @@ func TestEcc384Serialize(t *testing.T) {
 		r = bytes.NewBuffer(w.Bytes())
 		w.Reset()
 	}
+}
+
+func TestP256KeyID(t *testing.T) {
+	// Confirm that key IDs are correctly calculated for ECC keys.
+	ecdsaPub := &ecdsa.PublicKey{
+		Curve: elliptic.P256(),
+		X:     fromHex("81fbbc20eea9e8d1c3ceabb0a8185925b113d1ac42cd5c78403bd83da19235c6"),
+		Y:     fromHex("5ed6db13d91db34507d0129bf88981878d29adbf8fcd1720afdb767bb3fcaaff"),
+	}
+	pub := NewECDSAPublicKey(time.Unix(1297309478, 0), ecdsaPub)
+
+	const want = uint64(0xd01055fbcadd268e)
+	if pub.KeyId != want {
+		t.Errorf("want key ID: %x, got %x", want, pub.KeyId)
+	}
+}
+
+func fromHex(hex string) *big.Int {
+	n, ok := new(big.Int).SetString(hex, 16)
+	if !ok {
+		panic("bad hex number: " + hex)
+	}
+	return n
 }
 
 const rsaFingerprintHex = "5fb74b1d03b1e3cb31bc2f8aa34d7e18c20c31bb"

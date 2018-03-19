@@ -41,8 +41,8 @@ func NewCostInsightClientWithBaseURI(baseURI string, subscriptionID string) Cost
 
 // GetResource get cost insight.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the cost
-// insight.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// cost insight.
 func (client CostInsightClient) GetResource(ctx context.Context, resourceGroupName string, labName string, name string) (result CostInsight, err error) {
 	req, err := client.GetResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -109,8 +109,8 @@ func (client CostInsightClient) GetResourceResponder(resp *http.Response) (resul
 
 // List list cost insights.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to apply
-// on the operation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
+// apply on the operation.
 func (client CostInsightClient) List(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationCostInsightPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, filter, top, orderBy)
@@ -213,8 +213,8 @@ func (client CostInsightClient) ListComplete(ctx context.Context, resourceGroupN
 
 // RefreshData refresh Lab's Cost Insight Data. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the cost
-// insight.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// cost insight.
 func (client CostInsightClient) RefreshData(ctx context.Context, resourceGroupName string, labName string, name string) (result CostInsightRefreshDataFuture, err error) {
 	req, err := client.RefreshDataPreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {

@@ -1597,7 +1597,6 @@ func (c *CodeStar) UpdateUserProfileWithContext(ctx aws.Context, input *UpdateUs
 	return out, req.Send()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMemberRequest
 type AssociateTeamMemberInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1696,7 +1695,6 @@ func (s *AssociateTeamMemberInput) SetUserArn(v string) *AssociateTeamMemberInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/AssociateTeamMemberResult
 type AssociateTeamMemberOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1721,7 +1719,6 @@ func (s *AssociateTeamMemberOutput) SetClientRequestToken(v string) *AssociateTe
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProjectRequest
 type CreateProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1801,7 +1798,6 @@ func (s *CreateProjectInput) SetName(v string) *CreateProjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateProjectResult
 type CreateProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1856,7 +1852,6 @@ func (s *CreateProjectOutput) SetProjectTemplateId(v string) *CreateProjectOutpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfileRequest
 type CreateUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1945,7 +1940,6 @@ func (s *CreateUserProfileInput) SetUserArn(v string) *CreateUserProfileInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/CreateUserProfileResult
 type CreateUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2019,7 +2013,6 @@ func (s *CreateUserProfileOutput) SetUserArn(v string) *CreateUserProfileOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProjectRequest
 type DeleteProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2086,7 +2079,6 @@ func (s *DeleteProjectInput) SetId(v string) *DeleteProjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteProjectResult
 type DeleteProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2120,7 +2112,6 @@ func (s *DeleteProjectOutput) SetStackId(v string) *DeleteProjectOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfileRequest
 type DeleteUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2162,7 +2153,6 @@ func (s *DeleteUserProfileInput) SetUserArn(v string) *DeleteUserProfileInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DeleteUserProfileResult
 type DeleteUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2188,7 +2178,6 @@ func (s *DeleteUserProfileOutput) SetUserArn(v string) *DeleteUserProfileOutput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProjectRequest
 type DescribeProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2230,7 +2219,6 @@ func (s *DescribeProjectInput) SetId(v string) *DescribeProjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeProjectResult
 type DescribeProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2319,7 +2307,6 @@ func (s *DescribeProjectOutput) SetStackId(v string) *DescribeProjectOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfileRequest
 type DescribeUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2361,7 +2348,6 @@ func (s *DescribeUserProfileInput) SetUserArn(v string) *DescribeUserProfileInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DescribeUserProfileResult
 type DescribeUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2448,7 +2434,6 @@ func (s *DescribeUserProfileOutput) SetUserArn(v string) *DescribeUserProfileOut
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMemberRequest
 type DisassociateTeamMemberInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2508,7 +2493,6 @@ func (s *DisassociateTeamMemberInput) SetUserArn(v string) *DisassociateTeamMemb
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/DisassociateTeamMemberResult
 type DisassociateTeamMemberOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2523,7 +2507,6 @@ func (s DisassociateTeamMemberOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjectsRequest
 type ListProjectsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2573,7 +2556,6 @@ func (s *ListProjectsInput) SetNextToken(v string) *ListProjectsInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListProjectsResult
 type ListProjectsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2609,7 +2591,6 @@ func (s *ListProjectsOutput) SetProjects(v []*ProjectSummary) *ListProjectsOutpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResourcesRequest
 type ListResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2676,7 +2657,6 @@ func (s *ListResourcesInput) SetProjectId(v string) *ListResourcesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListResourcesResult
 type ListResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2710,7 +2690,6 @@ func (s *ListResourcesOutput) SetResources(v []*Resource) *ListResourcesOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectRequest
 type ListTagsForProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2776,7 +2755,6 @@ func (s *ListTagsForProjectInput) SetNextToken(v string) *ListTagsForProjectInpu
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTagsForProjectResult
 type ListTagsForProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2809,7 +2787,6 @@ func (s *ListTagsForProjectOutput) SetTags(v map[string]*string) *ListTagsForPro
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembersRequest
 type ListTeamMembersInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2876,7 +2853,6 @@ func (s *ListTeamMembersInput) SetProjectId(v string) *ListTeamMembersInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListTeamMembersResult
 type ListTeamMembersOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2912,7 +2888,6 @@ func (s *ListTeamMembersOutput) SetTeamMembers(v []*TeamMember) *ListTeamMembers
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfilesRequest
 type ListUserProfilesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2962,7 +2937,6 @@ func (s *ListUserProfilesInput) SetNextToken(v string) *ListUserProfilesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ListUserProfilesResult
 type ListUserProfilesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2999,7 +2973,6 @@ func (s *ListUserProfilesOutput) SetUserProfiles(v []*UserProfileSummary) *ListU
 }
 
 // Information about the metadata for a project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/ProjectSummary
 type ProjectSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -3033,7 +3006,6 @@ func (s *ProjectSummary) SetProjectId(v string) *ProjectSummary {
 }
 
 // Information about a resource for a project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/Resource
 type Resource struct {
 	_ struct{} `type:"structure"`
 
@@ -3059,7 +3031,6 @@ func (s *Resource) SetId(v string) *Resource {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectRequest
 type TagProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3115,7 +3086,6 @@ func (s *TagProjectInput) SetTags(v map[string]*string) *TagProjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TagProjectResult
 type TagProjectOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3140,7 +3110,6 @@ func (s *TagProjectOutput) SetTags(v map[string]*string) *TagProjectOutput {
 }
 
 // Information about a team member in a project.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/TeamMember
 type TeamMember struct {
 	_ struct{} `type:"structure"`
 
@@ -3189,7 +3158,6 @@ func (s *TeamMember) SetUserArn(v string) *TeamMember {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectRequest
 type UntagProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3245,7 +3213,6 @@ func (s *UntagProjectInput) SetTags(v []*string) *UntagProjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UntagProjectResult
 type UntagProjectOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3260,7 +3227,6 @@ func (s UntagProjectOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProjectRequest
 type UpdateProjectInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3323,7 +3289,6 @@ func (s *UpdateProjectInput) SetName(v string) *UpdateProjectInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateProjectResult
 type UpdateProjectOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -3338,7 +3303,6 @@ func (s UpdateProjectOutput) GoString() string {
 	return s.String()
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMemberRequest
 type UpdateTeamMemberInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3421,7 +3385,6 @@ func (s *UpdateTeamMemberInput) SetUserArn(v string) *UpdateTeamMemberInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateTeamMemberResult
 type UpdateTeamMemberOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3465,7 +3428,6 @@ func (s *UpdateTeamMemberOutput) SetUserArn(v string) *UpdateTeamMemberOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfileRequest
 type UpdateUserProfileInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3544,7 +3506,6 @@ func (s *UpdateUserProfileInput) SetUserArn(v string) *UpdateUserProfileInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UpdateUserProfileResult
 type UpdateUserProfileOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -3619,7 +3580,6 @@ func (s *UpdateUserProfileOutput) SetUserArn(v string) *UpdateUserProfileOutput 
 }
 
 // Information about a user's profile in AWS CodeStar.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codestar-2017-04-19/UserProfileSummary
 type UserProfileSummary struct {
 	_ struct{} `type:"structure"`
 

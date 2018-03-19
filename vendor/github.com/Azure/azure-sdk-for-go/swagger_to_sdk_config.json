@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "after_scripts": [
+      "dep ensure",
+      "cd ./tools/profileBuilder/",
+      "dep ensure",
+      "go install",
+      "cd ../..",
+      "go generate ./profiles/...",
+      "gofmt -w ./services/",
+      "gofmt -w ./profiles/"
+    ],
+    "autorest_options": {
+      "use": "@microsoft.azure/autorest.go@~2",
+      "go": "",
+      "verbose": "",
+      "sdkrel:go-sdk-folder": ".",
+      "multiapi": "",
+      "package-version": "latest",
+      "user-agent": "Azure-SDK-For-Go/latest services"
+    },
+    "version": "0.2.0"
+  }
+}

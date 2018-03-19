@@ -54,7 +54,7 @@ func (client CredentialClient) CreateOrUpdate(ctx context.Context, automationAcc
 					Chain: []validation.Constraint{{Target: "parameters.CredentialCreateOrUpdateProperties.UserName", Name: validation.Null, Rule: true, Chain: nil},
 						{Target: "parameters.CredentialCreateOrUpdateProperties.Password", Name: validation.Null, Rule: true, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.CredentialClient", "CreateOrUpdate")
+		return result, validation.NewError("automation.CredentialClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, automationAccountName, credentialName, parameters)
@@ -129,7 +129,7 @@ func (client CredentialClient) Delete(ctx context.Context, automationAccountName
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.CredentialClient", "Delete")
+		return result, validation.NewError("automation.CredentialClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, automationAccountName, credentialName)
@@ -201,7 +201,7 @@ func (client CredentialClient) Get(ctx context.Context, automationAccountName st
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.CredentialClient", "Get")
+		return result, validation.NewError("automation.CredentialClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, automationAccountName, credentialName)
@@ -274,7 +274,7 @@ func (client CredentialClient) ListByAutomationAccount(ctx context.Context, auto
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.CredentialClient", "ListByAutomationAccount")
+		return result, validation.NewError("automation.CredentialClient", "ListByAutomationAccount", err.Error())
 	}
 
 	result.fn = client.listByAutomationAccountNextResults
@@ -375,7 +375,7 @@ func (client CredentialClient) Update(ctx context.Context, automationAccountName
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: client.ResourceGroupName,
 			Constraints: []validation.Constraint{{Target: "client.ResourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "automation.CredentialClient", "Update")
+		return result, validation.NewError("automation.CredentialClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, automationAccountName, credentialName, parameters)

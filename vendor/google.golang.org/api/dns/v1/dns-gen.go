@@ -258,6 +258,9 @@ type ManagedZone struct {
 	// string "dns#managedZone".
 	Kind string `json:"kind,omitempty"`
 
+	// Labels: User labels.
+	Labels map[string]string `json:"labels,omitempty"`
+
 	// Name: User assigned name for this resource. Must be unique within the
 	// project. The name must be 1-63 characters long, must begin with a
 	// letter, end with a letter or digit, and only contain lowercase

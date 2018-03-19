@@ -33,6 +33,76 @@ make backwards-incompatible changes.
 
 ## News
 
+_February 26, 2018_
+
+*v0.19.0*
+
+- bigquery:
+  - Support customer-managed encryption keys.
+
+- bigtable:
+  - Improved emulator support.
+  - Support GetCluster.
+
+- datastore:
+  - Add general mutations.
+  - Support pointer struct fields.
+  - Support transaction options.
+
+- firestore:
+  - Add Transaction.GetAll.
+  - Support document cursors.
+
+- logging:
+  - Support concurrent RPCs to the service.
+  - Support per-entry resources.
+
+- profiler:
+  - Add config options to disable heap and thread profiling.
+  - Read the project ID from $GOOGLE_CLOUD_PROJECT when it's set.
+
+- pubsub:
+  - BEHAVIOR CHANGE: Release flow control after ack/nack (instead of after the
+    callback returns).
+  - Add SubscriptionInProject.
+  - Add OpenCensus instrumentation for streaming pull.
+
+- storage:
+  - Support CORS.
+
+
+_January 18, 2018_
+
+*v0.18.0*
+
+- bigquery:
+  - Marked stable.
+  - Schema inference of nullable fields supported.
+  - Added TimePartitioning to QueryConfig.
+
+- firestore: Data provided to DocumentRef.Set with a Merge option can contain
+  Delete sentinels.
+
+- logging: Clients can accept parent resources other than projects.
+
+- pubsub:
+  - pubsub/pstest: A lighweight fake for pubsub. Experimental; feedback welcome.
+  - Support updating more subscription metadata: AckDeadline,
+    RetainAckedMessages and RetentionDuration.
+
+- oslogin/apiv1beta: New client for the Cloud OS Login API.
+
+- rpcreplay: A package for recording and replaying gRPC traffic.
+
+- spanner:
+  - Add a ReadWithOptions that supports a row limit, as well as an index.
+  - Support query plan and execution statistics.
+  - Added [OpenCensus](http://opencensus.io) support.
+
+- storage: Clarify checksum validation for gzipped files (it is not validated
+  when the file is served uncompressed).
+
+
 _December 11, 2017_
 
 *v0.17.0*
@@ -65,67 +135,31 @@ _December 11, 2017_
   - TimePartitioning supports "Field".
 
 
-_October 30, 2017_
-
-*v0.16.0*
-
-- Other bigquery changes:
-  - `JobIterator.Next` returns `*Job`; removed `JobInfo` (BREAKING CHANGE).
-  - UseStandardSQL is deprecated; set UseLegacySQL to true if you need
-    Legacy SQL.
-  - Uploader.Put will generate a random insert ID if you do not provide one.
-  - Support time partitioning for load jobs.
-  - Support dry-run queries.
-  - A `Job` remembers its last retrieved status.
-  - Support retrieving job configuration.
-  - Support labels for jobs and tables.
-  - Support dataset access lists.
-  - Improve support for external data sources, including data from Bigtable and
-    Google Sheets, and tables with external data.
-  - Support updating a table's view configuration.
-  - Fix uploading civil times with nanoseconds.
-
-- storage: 
-  - Support PubSub notifications.
-  - Support Requester Pays buckets.
-
-- profiler: Support goroutine and mutex profile types.
-
-
-_October 3, 2017_
-
-*v0.15.0*
-
-- firestore: beta release. See the
-  [announcement](https://firebase.googleblog.com/2017/10/introducing-cloud-firestore.html).
-
-- errorreporting: The existing package has been redesigned.
-
-- errors: This package has been removed. Use errorreporting.
-
-
 [Older news](https://github.com/GoogleCloudPlatform/google-cloud-go/blob/master/old-news.md)
 
 ## Supported APIs
 
 Google API                       | Status       | Package
 ---------------------------------|--------------|-----------------------------------------------------------
+[BigQuery][cloud-bigquery]       | stable       | [`cloud.google.com/go/bigquery`][cloud-bigquery-ref]
+[Bigtable][cloud-bigtable]       | stable       | [`cloud.google.com/go/bigtable`][cloud-bigtable-ref]
+[Container][cloud-container]     | alpha        | [`cloud.google.com/go/container/apiv1`][cloud-container-ref]
+[Data Loss Prevention][cloud-dlp]| alpha        | [`cloud.google.com/go/dlp/apiv2beta1`][cloud-dlp-ref]
 [Datastore][cloud-datastore]     | stable       | [`cloud.google.com/go/datastore`][cloud-datastore-ref]
+[Debugger][cloud-debugger]       | alpha        | [`cloud.google.com/go/debugger/apiv2`][cloud-debugger-ref]
+[ErrorReporting][cloud-errors]   | alpha        | [`cloud.google.com/go/errorreporting`][cloud-errors-ref]
 [Firestore][cloud-firestore]     | beta         | [`cloud.google.com/go/firestore`][cloud-firestore-ref]
-[Storage][cloud-storage]         | stable       | [`cloud.google.com/go/storage`][cloud-storage-ref]
-[Bigtable][cloud-bigtable]       | beta         | [`cloud.google.com/go/bigtable`][cloud-bigtable-ref]
-[BigQuery][cloud-bigquery]       | beta         | [`cloud.google.com/go/bigquery`][cloud-bigquery-ref]
+[Language][cloud-language]       | stable       | [`cloud.google.com/go/language/apiv1`][cloud-language-ref]
 [Logging][cloud-logging]         | stable       | [`cloud.google.com/go/logging`][cloud-logging-ref]
 [Monitoring][cloud-monitoring]   | beta         | [`cloud.google.com/go/monitoring/apiv3`][cloud-monitoring-ref]
+[OS Login][cloud-oslogin]        | alpha        | [`cloud.google.com/compute/docs/oslogin/rest`][cloud-oslogin-ref]
 [Pub/Sub][cloud-pubsub]          | beta         | [`cloud.google.com/go/pubsub`][cloud-pubsub-ref]
-[Vision][cloud-vision]           | stable       | [`cloud.google.com/go/vision/apiv1`][cloud-vision-ref]
-[Language][cloud-language]       | stable       | [`cloud.google.com/go/language/apiv1`][cloud-language-ref]
-[Speech][cloud-speech]           | stable       | [`cloud.google.com/go/speech/apiv1`][cloud-speech-ref]
 [Spanner][cloud-spanner]         | stable       | [`cloud.google.com/go/spanner`][cloud-spanner-ref]
+[Speech][cloud-speech]           | stable       | [`cloud.google.com/go/speech/apiv1`][cloud-speech-ref]
+[Storage][cloud-storage]         | stable       | [`cloud.google.com/go/storage`][cloud-storage-ref]
 [Translation][cloud-translation] | stable       | [`cloud.google.com/go/translate`][cloud-translation-ref]
-[Trace][cloud-trace]             | alpha        | [`cloud.google.com/go/trace`][cloud-trace-ref]
 [Video Intelligence][cloud-video]| beta         | [`cloud.google.com/go/videointelligence/apiv1beta1`][cloud-video-ref]
-[ErrorReporting][cloud-errors]   | alpha        | [`cloud.google.com/go/errorreporting`][cloud-errors-ref]
+[Vision][cloud-vision]           | stable       | [`cloud.google.com/go/vision/apiv1`][cloud-vision-ref]
 
 
 > **Alpha status**: the API is still being actively developed. As a
@@ -480,6 +514,9 @@ for more information.
 [cloud-language]: https://cloud.google.com/natural-language
 [cloud-language-ref]: https://godoc.org/cloud.google.com/go/language/apiv1
 
+[cloud-oslogin]: https://cloud.google.com/compute/docs/oslogin/rest
+[cloud-oslogin-ref]: https://cloud.google.com/compute/docs/oslogin/rest
+
 [cloud-speech]: https://cloud.google.com/speech
 [cloud-speech-ref]: https://godoc.org/cloud.google.com/go/speech/apiv1
 
@@ -490,13 +527,19 @@ for more information.
 [cloud-translation]: https://cloud.google.com/translation
 [cloud-translation-ref]: https://godoc.org/cloud.google.com/go/translation
 
-[cloud-trace]: https://cloud.google.com/trace/
-[cloud-trace-ref]: https://godoc.org/cloud.google.com/go/trace
-
 [cloud-video]: https://cloud.google.com/video-intelligence/
 [cloud-video-ref]: https://godoc.org/cloud.google.com/go/videointelligence/apiv1beta1
 
 [cloud-errors]: https://cloud.google.com/error-reporting/
 [cloud-errors-ref]: https://godoc.org/cloud.google.com/go/errorreporting
+
+[cloud-container]: https://cloud.google.com/containers/
+[cloud-container-ref]: https://godoc.org/cloud.google.com/go/container/apiv1
+
+[cloud-debugger]: https://cloud.google.com/debugger/
+[cloud-debugger-ref]: https://godoc.org/cloud.google.com/go/debugger/apiv2
+
+[cloud-dlp]: https://cloud.google.com/dlp/
+[cloud-dlp-ref]: https://godoc.org/cloud.google.com/go/dlp/apiv2beta1
 
 [default-creds]: https://developers.google.com/identity/protocols/application-default-credentials

@@ -71,6 +71,21 @@
         {"shape":"OperationTimeoutException"}
       ]
     },
+    "BatchDeleteTableVersion":{
+      "name":"BatchDeleteTableVersion",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"BatchDeleteTableVersionRequest"},
+      "output":{"shape":"BatchDeleteTableVersionResponse"},
+      "errors":[
+        {"shape":"EntityNotFoundException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"InternalServiceException"},
+        {"shape":"OperationTimeoutException"}
+      ]
+    },
     "BatchGetPartition":{
       "name":"BatchGetPartition",
       "http":{
@@ -125,7 +140,8 @@
       "errors":[
         {"shape":"AlreadyExistsException"},
         {"shape":"InvalidInputException"},
-        {"shape":"OperationTimeoutException"}
+        {"shape":"OperationTimeoutException"},
+        {"shape":"ResourceNumberLimitExceededException"}
       ]
     },
     "CreateCrawler":{
@@ -275,7 +291,8 @@
         {"shape":"InvalidInputException"},
         {"shape":"InternalServiceException"},
         {"shape":"EntityNotFoundException"},
-        {"shape":"OperationTimeoutException"}
+        {"shape":"OperationTimeoutException"},
+        {"shape":"ResourceNumberLimitExceededException"}
       ]
     },
     "DeleteClassifier":{
@@ -386,6 +403,21 @@
       },
       "input":{"shape":"DeleteTableRequest"},
       "output":{"shape":"DeleteTableResponse"},
+      "errors":[
+        {"shape":"EntityNotFoundException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"InternalServiceException"},
+        {"shape":"OperationTimeoutException"}
+      ]
+    },
+    "DeleteTableVersion":{
+      "name":"DeleteTableVersion",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"DeleteTableVersionRequest"},
+      "output":{"shape":"DeleteTableVersionResponse"},
       "errors":[
         {"shape":"EntityNotFoundException"},
         {"shape":"InvalidInputException"},
@@ -724,6 +756,21 @@
       },
       "input":{"shape":"GetTableRequest"},
       "output":{"shape":"GetTableResponse"},
+      "errors":[
+        {"shape":"EntityNotFoundException"},
+        {"shape":"InvalidInputException"},
+        {"shape":"InternalServiceException"},
+        {"shape":"OperationTimeoutException"}
+      ]
+    },
+    "GetTableVersion":{
+      "name":"GetTableVersion",
+      "http":{
+        "method":"POST",
+        "requestUri":"/"
+      },
+      "input":{"shape":"GetTableVersionRequest"},
+      "output":{"shape":"GetTableVersionResponse"},
       "errors":[
         {"shape":"EntityNotFoundException"},
         {"shape":"InvalidInputException"},
@@ -1095,7 +1142,8 @@
         {"shape":"InvalidInputException"},
         {"shape":"InternalServiceException"},
         {"shape":"OperationTimeoutException"},
-        {"shape":"ConcurrentModificationException"}
+        {"shape":"ConcurrentModificationException"},
+        {"shape":"ResourceNumberLimitExceededException"}
       ]
     },
     "UpdateTrigger":{
@@ -1242,6 +1290,32 @@
         "Errors":{"shape":"TableErrors"}
       }
     },
+    "BatchDeleteTableVersionList":{
+      "type":"list",
+      "member":{"shape":"VersionString"},
+      "max":100,
+      "min":0
+    },
+    "BatchDeleteTableVersionRequest":{
+      "type":"structure",
+      "required":[
+        "DatabaseName",
+        "TableName",
+        "VersionIds"
+      ],
+      "members":{
+        "CatalogId":{"shape":"CatalogIdString"},
+        "DatabaseName":{"shape":"NameString"},
+        "TableName":{"shape":"NameString"},
+        "VersionIds":{"shape":"BatchDeleteTableVersionList"}
+      }
+    },
+    "BatchDeleteTableVersionResponse":{
+      "type":"structure",
+      "members":{
+        "Errors":{"shape":"TableVersionErrors"}
+      }
+    },
     "BatchGetPartitionRequest":{
       "type":"structure",
       "required":[
@@ -1317,6 +1391,7 @@
       "member":{"shape":"BatchStopJobRunSuccessfulSubmission"}
     },
     "Boolean":{"type":"boolean"},
+    "BooleanNullable":{"type":"boolean"},
     "BooleanValue":{"type":"boolean"},
     "BoundedPartitionValueList":{
       "type":"list",
@@ -1358,7 +1433,8 @@
       "type":"structure",
       "members":{
         "GrokClassifier":{"shape":"GrokClassifier"},
-        "XMLClassifier":{"shape":"XMLClassifier"}
+        "XMLClassifier":{"shape":"XMLClassifier"},
+        "JsonClassifier":{"shape":"JsonClassifier"}
       }
     },
     "ClassifierList":{
@@ -1494,6 +1570,11 @@
     },
     "ConnectionInput":{
       "type":"structure",
+      "required":[
+        "Name",
+        "ConnectionType",
+        "ConnectionProperties"
+      ],
       "members":{
         "Name":{"shape":"NameString"},
         "Description":{"shape":"DescriptionString"},
@@ -1633,7 +1714,8 @@
       "type":"structure",
       "members":{
         "GrokClassifier":{"shape":"CreateGrokClassifierRequest"},
-        "XMLClassifier":{"shape":"CreateXMLClassifierRequest"}
+        "XMLClassifier":{"shape":"CreateXMLClassifierRequest"},
+        "JsonClassifier":{"shape":"CreateJsonClassifierRequest"}
       }
     },
     "CreateClassifierResponse":{
@@ -1768,6 +1850,17 @@
       "type":"structure",
       "members":{
         "Name":{"shape":"NameString"}
+      }
+    },
+    "CreateJsonClassifierRequest":{
+      "type":"structure",
+      "required":[
+        "Name",
+        "JsonPath"
+      ],
+      "members":{
+        "Name":{"shape":"NameString"},
+        "JsonPath":{"shape":"JsonPath"}
       }
     },
     "CreatePartitionRequest":{
@@ -2034,6 +2127,25 @@
       }
     },
     "DeleteTableResponse":{
+      "type":"structure",
+      "members":{
+      }
+    },
+    "DeleteTableVersionRequest":{
+      "type":"structure",
+      "required":[
+        "DatabaseName",
+        "TableName",
+        "VersionId"
+      ],
+      "members":{
+        "CatalogId":{"shape":"CatalogIdString"},
+        "DatabaseName":{"shape":"NameString"},
+        "TableName":{"shape":"NameString"},
+        "VersionId":{"shape":"VersionString"}
+      }
+    },
+    "DeleteTableVersionResponse":{
       "type":"structure",
       "members":{
       }
@@ -2505,6 +2617,25 @@
         "Table":{"shape":"Table"}
       }
     },
+    "GetTableVersionRequest":{
+      "type":"structure",
+      "required":[
+        "DatabaseName",
+        "TableName"
+      ],
+      "members":{
+        "CatalogId":{"shape":"CatalogIdString"},
+        "DatabaseName":{"shape":"NameString"},
+        "TableName":{"shape":"NameString"},
+        "VersionId":{"shape":"VersionString"}
+      }
+    },
+    "GetTableVersionResponse":{
+      "type":"structure",
+      "members":{
+        "TableVersion":{"shape":"TableVersion"}
+      }
+    },
     "GetTableVersionsList":{
       "type":"list",
       "member":{"shape":"TableVersion"}
@@ -2782,6 +2913,21 @@
         "AllocatedCapacity":{"shape":"IntegerValue"}
       }
     },
+    "JsonClassifier":{
+      "type":"structure",
+      "required":[
+        "Name",
+        "JsonPath"
+      ],
+      "members":{
+        "Name":{"shape":"NameString"},
+        "CreationTime":{"shape":"Timestamp"},
+        "LastUpdated":{"shape":"Timestamp"},
+        "Version":{"shape":"VersionId"},
+        "JsonPath":{"shape":"JsonPath"}
+      }
+    },
+    "JsonPath":{"type":"string"},
     "JsonValue":{"type":"string"},
     "KeyString":{
       "type":"string",
@@ -2946,7 +3092,7 @@
     },
     "ParametersMapValue":{
       "type":"string",
-      "max":51200
+      "max":512000
     },
     "Partition":{
       "type":"structure",
@@ -3366,6 +3512,18 @@
         "VersionId":{"shape":"VersionString"}
       }
     },
+    "TableVersionError":{
+      "type":"structure",
+      "members":{
+        "TableName":{"shape":"NameString"},
+        "VersionId":{"shape":"VersionString"},
+        "ErrorDetail":{"shape":"ErrorDetail"}
+      }
+    },
+    "TableVersionErrors":{
+      "type":"list",
+      "member":{"shape":"TableVersionError"}
+    },
     "Timestamp":{"type":"timestamp"},
     "TimestampValue":{"type":"timestamp"},
     "Token":{"type":"string"},
@@ -3439,7 +3597,8 @@
       "type":"structure",
       "members":{
         "GrokClassifier":{"shape":"UpdateGrokClassifierRequest"},
-        "XMLClassifier":{"shape":"UpdateXMLClassifierRequest"}
+        "XMLClassifier":{"shape":"UpdateXMLClassifierRequest"},
+        "JsonClassifier":{"shape":"UpdateJsonClassifierRequest"}
       }
     },
     "UpdateClassifierResponse":{
@@ -3557,6 +3716,14 @@
         "JobName":{"shape":"NameString"}
       }
     },
+    "UpdateJsonClassifierRequest":{
+      "type":"structure",
+      "required":["Name"],
+      "members":{
+        "Name":{"shape":"NameString"},
+        "JsonPath":{"shape":"JsonPath"}
+      }
+    },
     "UpdatePartitionRequest":{
       "type":"structure",
       "required":[
@@ -3587,7 +3754,8 @@
       "members":{
         "CatalogId":{"shape":"CatalogIdString"},
         "DatabaseName":{"shape":"NameString"},
-        "TableInput":{"shape":"TableInput"}
+        "TableInput":{"shape":"TableInput"},
+        "SkipArchive":{"shape":"BooleanNullable"}
       }
     },
     "UpdateTableResponse":{
@@ -3697,7 +3865,7 @@
     },
     "ViewTextString":{
       "type":"string",
-      "max":2048
+      "max":409600
     },
     "XMLClassifier":{
       "type":"structure",

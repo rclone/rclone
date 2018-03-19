@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -208,7 +208,7 @@ func TestErrorGroupServiceGetGroup(t *testing.T) {
 
 	mockErrorGroup.resps = append(mockErrorGroup.resps[:0], expectedResponse)
 
-	var formattedGroupName string = ErrorGroupGroupPath("[PROJECT]", "[GROUP]")
+	var formattedGroupName string = fmt.Sprintf("projects/%s/groups/%s", "[PROJECT]", "[GROUP]")
 	var request = &clouderrorreportingpb.GetGroupRequest{
 		GroupName: formattedGroupName,
 	}
@@ -237,7 +237,7 @@ func TestErrorGroupServiceGetGroupError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockErrorGroup.err = gstatus.Error(errCode, "test error")
 
-	var formattedGroupName string = ErrorGroupGroupPath("[PROJECT]", "[GROUP]")
+	var formattedGroupName string = fmt.Sprintf("projects/%s/groups/%s", "[PROJECT]", "[GROUP]")
 	var request = &clouderrorreportingpb.GetGroupRequest{
 		GroupName: formattedGroupName,
 	}
@@ -331,7 +331,7 @@ func TestErrorStatsServiceListGroupStats(t *testing.T) {
 
 	mockErrorStats.resps = append(mockErrorStats.resps[:0], expectedResponse)
 
-	var formattedProjectName string = ErrorStatsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var timeRange *clouderrorreportingpb.QueryTimeRange = &clouderrorreportingpb.QueryTimeRange{}
 	var request = &clouderrorreportingpb.ListGroupStatsRequest{
 		ProjectName: formattedProjectName,
@@ -372,7 +372,7 @@ func TestErrorStatsServiceListGroupStatsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockErrorStats.err = gstatus.Error(errCode, "test error")
 
-	var formattedProjectName string = ErrorStatsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var timeRange *clouderrorreportingpb.QueryTimeRange = &clouderrorreportingpb.QueryTimeRange{}
 	var request = &clouderrorreportingpb.ListGroupStatsRequest{
 		ProjectName: formattedProjectName,
@@ -407,7 +407,7 @@ func TestErrorStatsServiceListEvents(t *testing.T) {
 
 	mockErrorStats.resps = append(mockErrorStats.resps[:0], expectedResponse)
 
-	var formattedProjectName string = ErrorStatsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var groupId string = "groupId506361563"
 	var request = &clouderrorreportingpb.ListEventsRequest{
 		ProjectName: formattedProjectName,
@@ -448,7 +448,7 @@ func TestErrorStatsServiceListEventsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockErrorStats.err = gstatus.Error(errCode, "test error")
 
-	var formattedProjectName string = ErrorStatsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var groupId string = "groupId506361563"
 	var request = &clouderrorreportingpb.ListEventsRequest{
 		ProjectName: formattedProjectName,
@@ -477,7 +477,7 @@ func TestErrorStatsServiceDeleteEvents(t *testing.T) {
 
 	mockErrorStats.resps = append(mockErrorStats.resps[:0], expectedResponse)
 
-	var formattedProjectName string = ErrorStatsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &clouderrorreportingpb.DeleteEventsRequest{
 		ProjectName: formattedProjectName,
 	}
@@ -506,7 +506,7 @@ func TestErrorStatsServiceDeleteEventsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockErrorStats.err = gstatus.Error(errCode, "test error")
 
-	var formattedProjectName string = ErrorStatsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var request = &clouderrorreportingpb.DeleteEventsRequest{
 		ProjectName: formattedProjectName,
 	}
@@ -533,7 +533,7 @@ func TestReportErrorsServiceReportErrorEvent(t *testing.T) {
 
 	mockReportErrors.resps = append(mockReportErrors.resps[:0], expectedResponse)
 
-	var formattedProjectName string = ReportErrorsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var event *clouderrorreportingpb.ReportedErrorEvent = &clouderrorreportingpb.ReportedErrorEvent{}
 	var request = &clouderrorreportingpb.ReportErrorEventRequest{
 		ProjectName: formattedProjectName,
@@ -564,7 +564,7 @@ func TestReportErrorsServiceReportErrorEventError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockReportErrors.err = gstatus.Error(errCode, "test error")
 
-	var formattedProjectName string = ReportErrorsProjectPath("[PROJECT]")
+	var formattedProjectName string = fmt.Sprintf("projects/%s", "[PROJECT]")
 	var event *clouderrorreportingpb.ReportedErrorEvent = &clouderrorreportingpb.ReportedErrorEvent{}
 	var request = &clouderrorreportingpb.ReportErrorEventRequest{
 		ProjectName: formattedProjectName,

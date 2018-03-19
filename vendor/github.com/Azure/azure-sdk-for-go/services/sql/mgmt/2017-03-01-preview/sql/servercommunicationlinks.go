@@ -44,15 +44,16 @@ func NewServerCommunicationLinksClientWithBaseURI(baseURI string, subscriptionID
 
 // CreateOrUpdate creates a server communication link.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. communicationLinkName is the name of
-// the server communication link. parameters is the required parameters for creating a server communication link.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. communicationLinkName is the
+// name of the server communication link. parameters is the required parameters for creating a server communication
+// link.
 func (client ServerCommunicationLinksClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, communicationLinkName string, parameters ServerCommunicationLink) (result ServerCommunicationLinksCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ServerCommunicationLinkProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.ServerCommunicationLinkProperties.PartnerServer", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "sql.ServerCommunicationLinksClient", "CreateOrUpdate")
+		return result, validation.NewError("sql.ServerCommunicationLinksClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, communicationLinkName, parameters)
@@ -124,9 +125,9 @@ func (client ServerCommunicationLinksClient) CreateOrUpdateResponder(resp *http.
 
 // Delete deletes a server communication link.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. communicationLinkName is the name of
-// the server communication link.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. communicationLinkName is the
+// name of the server communication link.
 func (client ServerCommunicationLinksClient) Delete(ctx context.Context, resourceGroupName string, serverName string, communicationLinkName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName, communicationLinkName)
 	if err != nil {
@@ -192,9 +193,9 @@ func (client ServerCommunicationLinksClient) DeleteResponder(resp *http.Response
 
 // Get returns a server communication link.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. communicationLinkName is the name of
-// the server communication link.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. communicationLinkName is the
+// name of the server communication link.
 func (client ServerCommunicationLinksClient) Get(ctx context.Context, resourceGroupName string, serverName string, communicationLinkName string) (result ServerCommunicationLink, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, communicationLinkName)
 	if err != nil {
@@ -261,8 +262,8 @@ func (client ServerCommunicationLinksClient) GetResponder(resp *http.Response) (
 
 // ListByServer gets a list of server communication links.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client ServerCommunicationLinksClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result ServerCommunicationLinkListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

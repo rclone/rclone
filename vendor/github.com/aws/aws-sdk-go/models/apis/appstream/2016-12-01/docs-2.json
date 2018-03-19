@@ -3,6 +3,7 @@
   "service": "<fullname>Amazon AppStream 2.0</fullname> <p>You can use Amazon AppStream 2.0 to stream desktop applications to any device running a web browser, without rewriting them.</p>",
   "operations": {
     "AssociateFleet": "<p>Associates the specified fleet with the specified stack.</p>",
+    "CopyImage": "<p>Copies the image within the same region or to a new region within the same AWS account. Note that any tags you added to the image will not be copied.</p>",
     "CreateDirectoryConfig": "<p>Creates a directory configuration.</p>",
     "CreateFleet": "<p>Creates a fleet.</p>",
     "CreateImageBuilder": "<p>Creates an image builder.</p> <p>The initial state of the builder is <code>PENDING</code>. When it is ready, the state is <code>RUNNING</code>.</p>",
@@ -14,7 +15,7 @@
     "DeleteImage": "<p>Deletes the specified image. You cannot delete an image that is currently in use. After you delete an image, you cannot provision new capacity using the image.</p>",
     "DeleteImageBuilder": "<p>Deletes the specified image builder and releases the capacity.</p>",
     "DeleteStack": "<p>Deletes the specified stack. After this operation completes, the environment can no longer be activated and any reservations made for the stack are released.</p>",
-    "DescribeDirectoryConfigs": "<p>Describes the specified directory configurations.</p>",
+    "DescribeDirectoryConfigs": "<p>Describes the specified directory configurations. Note that although the response syntax in this topic includes the account password, this password is not returned in the actual response. </p>",
     "DescribeFleets": "<p>Describes the specified fleets or all fleets in the account.</p>",
     "DescribeImageBuilders": "<p>Describes the specified image builders or all image builders in the account.</p>",
     "DescribeImages": "<p>Describes the specified images or all images in the account.</p>",
@@ -24,13 +25,13 @@
     "ExpireSession": "<p>Stops the specified streaming session.</p>",
     "ListAssociatedFleets": "<p>Lists the fleets associated with the specified stack.</p>",
     "ListAssociatedStacks": "<p>Lists the stacks associated with the specified fleet.</p>",
-    "ListTagsForResource": "<p>Lists the tags for the specified AppStream 2.0 resource. You can tag AppStream 2.0 image builders, images, fleets, and stacks.</p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/appstream2/latest/developerguide/tagging-basic\">Tagging Your Resources</a> in the <i>Amazon AppStream 2.0 Developer Guide</i>.</p>",
+    "ListTagsForResource": "<p>Lists the tags for the specified AppStream 2.0 resource. You can tag AppStream 2.0 image builders, images, fleets, and stacks.</p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/appstream2/latest/developerguide/tagging-basic.html\">Tagging Your Resources</a> in the <i>Amazon AppStream 2.0 Developer Guide</i>.</p>",
     "StartFleet": "<p>Starts the specified fleet.</p>",
     "StartImageBuilder": "<p>Starts the specified image builder.</p>",
     "StopFleet": "<p>Stops the specified fleet.</p>",
     "StopImageBuilder": "<p>Stops the specified image builder.</p>",
-    "TagResource": "<p>Adds or overwrites one or more tags for the specified AppStream 2.0 resource. You can tag AppStream 2.0 image builders, images, fleets, and stacks.</p> <p>Each tag consists of a key and an optional value. If a resource already has a tag with the same key, this operation updates its value.</p> <p>To list the current tags for your resources, use <a>ListTagsForResource</a>. To disassociate tags from your resources, use <a>UntagResource</a>.</p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/appstream2/latest/developerguide/tagging-basic\">Tagging Your Resources</a> in the <i>Amazon AppStream 2.0 Developer Guide</i>.</p>",
-    "UntagResource": "<p>Disassociates the specified tags from the specified AppStream 2.0 resource.</p> <p>To list the current tags for your resources, use <a>ListTagsForResource</a>.</p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/appstream2/latest/developerguide/tagging-basic\">Tagging Your Resources</a> in the <i>Amazon AppStream 2.0 Developer Guide</i>.</p>",
+    "TagResource": "<p>Adds or overwrites one or more tags for the specified AppStream 2.0 resource. You can tag AppStream 2.0 image builders, images, fleets, and stacks.</p> <p>Each tag consists of a key and an optional value. If a resource already has a tag with the same key, this operation updates its value.</p> <p>To list the current tags for your resources, use <a>ListTagsForResource</a>. To disassociate tags from your resources, use <a>UntagResource</a>.</p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/appstream2/latest/developerguide/tagging-basic.html\">Tagging Your Resources</a> in the <i>Amazon AppStream 2.0 Developer Guide</i>.</p>",
+    "UntagResource": "<p>Disassociates the specified tags from the specified AppStream 2.0 resource.</p> <p>To list the current tags for your resources, use <a>ListTagsForResource</a>.</p> <p>For more information about tags, see <a href=\"http://docs.aws.amazon.com/appstream2/latest/developerguide/tagging-basic.html\">Tagging Your Resources</a> in the <i>Amazon AppStream 2.0 Developer Guide</i>.</p>",
     "UpdateDirectoryConfig": "<p>Updates the specified directory configuration.</p>",
     "UpdateFleet": "<p>Updates the specified fleet.</p> <p>If the fleet is in the <code>STOPPED</code> state, you can update any attribute except the fleet name. If the fleet is in the <code>RUNNING</code> state, you can update the <code>DisplayName</code> and <code>ComputeCapacity</code> attributes. If the fleet is in the <code>STARTING</code> or <code>STOPPING</code> state, you can't update it.</p>",
     "UpdateStack": "<p>Updates the specified stack.</p>"
@@ -134,6 +135,16 @@
     },
     "ConcurrentModificationException": {
       "base": "<p>An API error occurred. Wait a few minutes and try again.</p>",
+      "refs": {
+      }
+    },
+    "CopyImageRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CopyImageResponse": {
+      "base": null,
       "refs": {
       }
     },
@@ -310,6 +321,7 @@
     "Description": {
       "base": null,
       "refs": {
+        "CopyImageRequest$DestinationImageDescription": "<p>The description that the image will have when it is copied to the destination.</p>",
         "CreateFleetRequest$Description": "<p>The description for display.</p>",
         "CreateImageBuilderRequest$Description": "<p>The description for display.</p>",
         "CreateStackRequest$Description": "<p>The description for display.</p>",
@@ -328,7 +340,7 @@
     "DirectoryConfigList": {
       "base": null,
       "refs": {
-        "DescribeDirectoryConfigsResult$DirectoryConfigs": "<p>Information about the directory configurations.</p>"
+        "DescribeDirectoryConfigsResult$DirectoryConfigs": "<p>Information about the directory configurations. Note that although the response syntax in this topic includes the account password, this password is not returned in the actual response. </p>"
       }
     },
     "DirectoryName": {
@@ -611,6 +623,9 @@
     "Name": {
       "base": null,
       "refs": {
+        "CopyImageRequest$SourceImageName": "<p>The name of the image to copy.</p>",
+        "CopyImageRequest$DestinationImageName": "<p>The name that the image will have when it is copied to the destination.</p>",
+        "CopyImageResponse$DestinationImageName": "<p>The name of the destination image.</p>",
         "CreateFleetRequest$Name": "<p>A unique name for the fleet.</p>",
         "CreateImageBuilderRequest$Name": "<p>A unique name for the image builder.</p>",
         "DeleteImageBuilderRequest$Name": "<p>The name of the image builder.</p>",
@@ -642,6 +657,20 @@
       "refs": {
         "Image$Platform": "<p>The operating system platform of the image.</p>",
         "ImageBuilder$Platform": "<p>The operating system platform of the image builder.</p>"
+      }
+    },
+    "RedirectURL": {
+      "base": null,
+      "refs": {
+        "CreateStackRequest$RedirectURL": "<p>The URL the user is redirected to after the streaming session ends.</p>",
+        "Stack$RedirectURL": "<p>The URL the user is redirected to after the streaming session ends.</p>",
+        "UpdateStackRequest$RedirectURL": "<p>The URL the user is redirected to after the streaming session ends.</p>"
+      }
+    },
+    "RegionName": {
+      "base": null,
+      "refs": {
+        "CopyImageRequest$DestinationRegion": "<p>The destination region to which the image will be copied. This parameter is required, even if you are copying an image within the same region.</p>"
       }
     },
     "ResourceAlreadyExistsException": {
@@ -720,6 +749,18 @@
         "CreateStackResult$Stack": "<p>Information about the stack.</p>",
         "StackList$member": null,
         "UpdateStackResult$Stack": "<p>Information about the stack.</p>"
+      }
+    },
+    "StackAttribute": {
+      "base": null,
+      "refs": {
+        "StackAttributes$member": null
+      }
+    },
+    "StackAttributes": {
+      "base": null,
+      "refs": {
+        "UpdateStackRequest$AttributesToDelete": "<p>The stack attributes to delete.</p>"
       }
     },
     "StackError": {
@@ -842,8 +883,8 @@
         "DescribeFleetsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
         "DescribeImageBuildersRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
         "DescribeImageBuildersResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
-        "DescribeSessionsRequest$StackName": "<p>The name of the stack.</p>",
-        "DescribeSessionsRequest$FleetName": "<p>The name of the fleet.</p>",
+        "DescribeSessionsRequest$StackName": "<p>The name of the stack. This value is case-sensitive.</p>",
+        "DescribeSessionsRequest$FleetName": "<p>The name of the fleet. This value is case-sensitive.</p>",
         "DescribeSessionsRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",
         "DescribeSessionsResult$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If there are no more pages, this value is null.</p>",
         "DescribeStacksRequest$NextToken": "<p>The pagination token to use to retrieve the next page of results for this operation. If this value is null, it retrieves the first page.</p>",

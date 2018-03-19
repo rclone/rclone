@@ -1,5 +1,7 @@
 package policy
 
+import "github.com/Azure/azure-sdk-for-go/version"
+
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -19,10 +21,10 @@ package policy
 
 // UserAgent returns the UserAgent string to use when sending http.Requests.
 func UserAgent() string {
-	return "Azure-SDK-For-Go/v12.2.0-beta services"
+	return "Azure-SDK-For-Go/" + version.Number + " policy/2015-10-01-preview"
 }
 
 // Version returns the semantic version (see http://semver.org) of the client.
 func Version() string {
-	return "v12.2.0-beta"
+	return version.Number
 }

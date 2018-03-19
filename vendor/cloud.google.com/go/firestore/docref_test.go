@@ -187,59 +187,51 @@ var (
 
 // Update is tested by the cross-language tests.
 
-func TestApplyFieldPaths(t *testing.T) {
-	submap := mapval(map[string]*pb.Value{
-		"b": intval(1),
-		"c": intval(2),
-	})
-	fields := map[string]*pb.Value{
-		"a": submap,
-		"d": intval(3),
-	}
+func TestFPVsFromData(t *testing.T) {
+	type S struct{ X int }
+
 	for _, test := range []struct {
-		fps  []FieldPath
-		want map[string]*pb.Value
+		in   interface{}
+		want []fpv
 	}{
-		{nil, nil},
-		{[]FieldPath{[]string{"z"}}, nil},
-		{[]FieldPath{[]string{"a"}}, map[string]*pb.Value{"a": submap}},
-		{[]FieldPath{[]string{"a", "b", "c"}}, nil},
-		{[]FieldPath{[]string{"d"}}, map[string]*pb.Value{"d": intval(3)}},
 		{
-			[]FieldPath{[]string{"d"}, []string{"a", "c"}},
-			map[string]*pb.Value{
-				"a": mapval(map[string]*pb.Value{"c": intval(2)}),
-				"d": intval(3),
+			in:   nil,
+			want: []fpv{{nil, nil}},
+		},
+		{
+			in:   map[string]interface{}{"a": nil},
+			want: []fpv{{[]string{"a"}, nil}},
+		},
+		{
+			in:   map[string]interface{}{"a": 1},
+			want: []fpv{{[]string{"a"}, 1}},
+		},
+		{
+			in: map[string]interface{}{
+				"a": 1,
+				"b": map[string]interface{}{"c": 2},
 			},
+			want: []fpv{{[]string{"a"}, 1}, {[]string{"b", "c"}, 2}},
+		},
+		{
+			in:   map[string]interface{}{"s": &S{X: 3}},
+			want: []fpv{{[]string{"s"}, &S{X: 3}}},
 		},
 	} {
-		got := applyFieldPaths(fields, test.fps, nil)
-		if !testEqual(got, test.want) {
-			t.Errorf("%v:\ngot %v\nwant \n%v", test.fps, got, test.want)
-		}
-	}
-}
-
-func TestFieldPathsFromMap(t *testing.T) {
-	for _, test := range []struct {
-		in   map[string]interface{}
-		want []string
-	}{
-		{nil, nil},
-		{map[string]interface{}{"a": 1}, []string{"a"}},
-		{map[string]interface{}{
-			"a": 1,
-			"b": map[string]interface{}{"c": 2},
-		}, []string{"a", "b.c"}},
-	} {
-		fps := fieldPathsFromMap(reflect.ValueOf(test.in), nil)
-		got := toServiceFieldPaths(fps)
-		sort.Strings(got)
+		var got []fpv
+		fpvsFromData(reflect.ValueOf(test.in), nil, &got)
+		sort.Sort(byFieldPath(got))
 		if !testEqual(got, test.want) {
 			t.Errorf("%+v: got %v, want %v", test.in, got, test.want)
 		}
 	}
 }
+
+type byFieldPath []fpv
+
+func (b byFieldPath) Len() int           { return len(b) }
+func (b byFieldPath) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b byFieldPath) Less(i, j int) bool { return b[i].fieldPath.less(b[j].fieldPath) }
 
 func commitRequestForSet() *pb.CommitRequest {
 	return &pb.CommitRequest{

@@ -42,8 +42,8 @@ func NewTopicsClientWithBaseURI(baseURI string, subscriptionID string) TopicsCli
 
 // CreateOrUpdate creates a topic in the specified namespace.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. parameters is parameters supplied to create a topic resource.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. parameters is parameters supplied to create a topic resource.
 func (client TopicsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, parameters SBTopic) (result SBTopic, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -54,7 +54,7 @@ func (client TopicsClient) CreateOrUpdate(ctx context.Context, resourceGroupName
 				{Target: "namespaceName", Name: validation.MinLength, Rule: 6, Chain: nil}}},
 		{TargetValue: topicName,
 			Constraints: []validation.Constraint{{Target: "topicName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "CreateOrUpdate")
+		return result, validation.NewError("servicebus.TopicsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, namespaceName, topicName, parameters)
@@ -124,9 +124,9 @@ func (client TopicsClient) CreateOrUpdateResponder(resp *http.Response) (result 
 
 // CreateOrUpdateAuthorizationRule creates an authorizatio rule for the specified topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. authorizationRuleName is the authorizationrule name. parameters is the shared access
-// authorization rule.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. authorizationRuleName is the authorizationrule name. parameters is the shared
+// access authorization rule.
 func (client TopicsClient) CreateOrUpdateAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, authorizationRuleName string, parameters SBAuthorizationRule) (result SBAuthorizationRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -143,7 +143,7 @@ func (client TopicsClient) CreateOrUpdateAuthorizationRule(ctx context.Context, 
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.SBAuthorizationRuleProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.SBAuthorizationRuleProperties.Rights", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "CreateOrUpdateAuthorizationRule")
+		return result, validation.NewError("servicebus.TopicsClient", "CreateOrUpdateAuthorizationRule", err.Error())
 	}
 
 	req, err := client.CreateOrUpdateAuthorizationRulePreparer(ctx, resourceGroupName, namespaceName, topicName, authorizationRuleName, parameters)
@@ -214,8 +214,8 @@ func (client TopicsClient) CreateOrUpdateAuthorizationRuleResponder(resp *http.R
 
 // Delete deletes a topic from the specified namespace and resource group.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name.
 func (client TopicsClient) Delete(ctx context.Context, resourceGroupName string, namespaceName string, topicName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -226,7 +226,7 @@ func (client TopicsClient) Delete(ctx context.Context, resourceGroupName string,
 				{Target: "namespaceName", Name: validation.MinLength, Rule: 6, Chain: nil}}},
 		{TargetValue: topicName,
 			Constraints: []validation.Constraint{{Target: "topicName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "Delete")
+		return result, validation.NewError("servicebus.TopicsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, namespaceName, topicName)
@@ -293,8 +293,8 @@ func (client TopicsClient) DeleteResponder(resp *http.Response) (result autorest
 
 // DeleteAuthorizationRule deletes a topic authorization rule.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. authorizationRuleName is the authorizationrule name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. authorizationRuleName is the authorizationrule name.
 func (client TopicsClient) DeleteAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, authorizationRuleName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -308,7 +308,7 @@ func (client TopicsClient) DeleteAuthorizationRule(ctx context.Context, resource
 		{TargetValue: authorizationRuleName,
 			Constraints: []validation.Constraint{{Target: "authorizationRuleName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "authorizationRuleName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "DeleteAuthorizationRule")
+		return result, validation.NewError("servicebus.TopicsClient", "DeleteAuthorizationRule", err.Error())
 	}
 
 	req, err := client.DeleteAuthorizationRulePreparer(ctx, resourceGroupName, namespaceName, topicName, authorizationRuleName)
@@ -376,8 +376,8 @@ func (client TopicsClient) DeleteAuthorizationRuleResponder(resp *http.Response)
 
 // Get returns a description for the specified topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name.
 func (client TopicsClient) Get(ctx context.Context, resourceGroupName string, namespaceName string, topicName string) (result SBTopic, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -388,7 +388,7 @@ func (client TopicsClient) Get(ctx context.Context, resourceGroupName string, na
 				{Target: "namespaceName", Name: validation.MinLength, Rule: 6, Chain: nil}}},
 		{TargetValue: topicName,
 			Constraints: []validation.Constraint{{Target: "topicName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "Get")
+		return result, validation.NewError("servicebus.TopicsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, namespaceName, topicName)
@@ -456,8 +456,8 @@ func (client TopicsClient) GetResponder(resp *http.Response) (result SBTopic, er
 
 // GetAuthorizationRule returns the specified authorization rule.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. authorizationRuleName is the authorizationrule name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. authorizationRuleName is the authorizationrule name.
 func (client TopicsClient) GetAuthorizationRule(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, authorizationRuleName string) (result SBAuthorizationRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -471,7 +471,7 @@ func (client TopicsClient) GetAuthorizationRule(ctx context.Context, resourceGro
 		{TargetValue: authorizationRuleName,
 			Constraints: []validation.Constraint{{Target: "authorizationRuleName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "authorizationRuleName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "GetAuthorizationRule")
+		return result, validation.NewError("servicebus.TopicsClient", "GetAuthorizationRule", err.Error())
 	}
 
 	req, err := client.GetAuthorizationRulePreparer(ctx, resourceGroupName, namespaceName, topicName, authorizationRuleName)
@@ -540,8 +540,8 @@ func (client TopicsClient) GetAuthorizationRuleResponder(resp *http.Response) (r
 
 // ListAuthorizationRules gets authorization rules for a topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name.
 func (client TopicsClient) ListAuthorizationRules(ctx context.Context, resourceGroupName string, namespaceName string, topicName string) (result SBAuthorizationRuleListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -552,7 +552,7 @@ func (client TopicsClient) ListAuthorizationRules(ctx context.Context, resourceG
 				{Target: "namespaceName", Name: validation.MinLength, Rule: 6, Chain: nil}}},
 		{TargetValue: topicName,
 			Constraints: []validation.Constraint{{Target: "topicName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "ListAuthorizationRules")
+		return result, validation.NewError("servicebus.TopicsClient", "ListAuthorizationRules", err.Error())
 	}
 
 	result.fn = client.listAuthorizationRulesNextResults
@@ -648,7 +648,8 @@ func (client TopicsClient) ListAuthorizationRulesComplete(ctx context.Context, r
 
 // ListByNamespace gets all the topics in a namespace.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name
 func (client TopicsClient) ListByNamespace(ctx context.Context, resourceGroupName string, namespaceName string) (result SBTopicListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -657,7 +658,7 @@ func (client TopicsClient) ListByNamespace(ctx context.Context, resourceGroupNam
 		{TargetValue: namespaceName,
 			Constraints: []validation.Constraint{{Target: "namespaceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "namespaceName", Name: validation.MinLength, Rule: 6, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "ListByNamespace")
+		return result, validation.NewError("servicebus.TopicsClient", "ListByNamespace", err.Error())
 	}
 
 	result.fn = client.listByNamespaceNextResults
@@ -752,8 +753,8 @@ func (client TopicsClient) ListByNamespaceComplete(ctx context.Context, resource
 
 // ListKeys gets the primary and secondary connection strings for the topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. authorizationRuleName is the authorizationrule name.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. authorizationRuleName is the authorizationrule name.
 func (client TopicsClient) ListKeys(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, authorizationRuleName string) (result AccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -767,7 +768,7 @@ func (client TopicsClient) ListKeys(ctx context.Context, resourceGroupName strin
 		{TargetValue: authorizationRuleName,
 			Constraints: []validation.Constraint{{Target: "authorizationRuleName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "authorizationRuleName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "ListKeys")
+		return result, validation.NewError("servicebus.TopicsClient", "ListKeys", err.Error())
 	}
 
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, namespaceName, topicName, authorizationRuleName)
@@ -836,9 +837,9 @@ func (client TopicsClient) ListKeysResponder(resp *http.Response) (result Access
 
 // RegenerateKeys regenerates primary or secondary connection strings for the topic.
 //
-// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace name
-// topicName is the topic name. authorizationRuleName is the authorizationrule name. parameters is parameters supplied
-// to regenerate the authorization rule.
+// resourceGroupName is name of the Resource group within the Azure subscription. namespaceName is the namespace
+// name topicName is the topic name. authorizationRuleName is the authorizationrule name. parameters is parameters
+// supplied to regenerate the authorization rule.
 func (client TopicsClient) RegenerateKeys(ctx context.Context, resourceGroupName string, namespaceName string, topicName string, authorizationRuleName string, parameters RegenerateAccessKeyParameters) (result AccessKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -852,7 +853,7 @@ func (client TopicsClient) RegenerateKeys(ctx context.Context, resourceGroupName
 		{TargetValue: authorizationRuleName,
 			Constraints: []validation.Constraint{{Target: "authorizationRuleName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "authorizationRuleName", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.TopicsClient", "RegenerateKeys")
+		return result, validation.NewError("servicebus.TopicsClient", "RegenerateKeys", err.Error())
 	}
 
 	req, err := client.RegenerateKeysPreparer(ctx, resourceGroupName, namespaceName, topicName, authorizationRuleName, parameters)

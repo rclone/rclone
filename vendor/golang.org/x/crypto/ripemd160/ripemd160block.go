@@ -8,6 +8,10 @@
 
 package ripemd160
 
+import (
+	"math/bits"
+)
+
 // work buffer indices and roll amounts for one line
 var _n = [80]uint{
 	0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15,
@@ -59,16 +63,16 @@ func _Block(md *digest, p []byte) int {
 		i := 0
 		for i < 16 {
 			alpha = a + (b ^ c ^ d) + x[_n[i]]
-			s := _r[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + e
-			beta = c<<10 | c>>22
+			s := int(_r[i])
+			alpha = bits.RotateLeft32(alpha, s) + e
+			beta = bits.RotateLeft32(c, 10)
 			a, b, c, d, e = e, alpha, b, beta, d
 
 			// parallel line
 			alpha = aa + (bb ^ (cc | ^dd)) + x[n_[i]] + 0x50a28be6
-			s = r_[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + ee
-			beta = cc<<10 | cc>>22
+			s = int(r_[i])
+			alpha = bits.RotateLeft32(alpha, s) + ee
+			beta = bits.RotateLeft32(cc, 10)
 			aa, bb, cc, dd, ee = ee, alpha, bb, beta, dd
 
 			i++
@@ -77,16 +81,16 @@ func _Block(md *digest, p []byte) int {
 		// round 2
 		for i < 32 {
 			alpha = a + (b&c | ^b&d) + x[_n[i]] + 0x5a827999
-			s := _r[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + e
-			beta = c<<10 | c>>22
+			s := int(_r[i])
+			alpha = bits.RotateLeft32(alpha, s) + e
+			beta = bits.RotateLeft32(c, 10)
 			a, b, c, d, e = e, alpha, b, beta, d
 
 			// parallel line
 			alpha = aa + (bb&dd | cc&^dd) + x[n_[i]] + 0x5c4dd124
-			s = r_[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + ee
-			beta = cc<<10 | cc>>22
+			s = int(r_[i])
+			alpha = bits.RotateLeft32(alpha, s) + ee
+			beta = bits.RotateLeft32(cc, 10)
 			aa, bb, cc, dd, ee = ee, alpha, bb, beta, dd
 
 			i++
@@ -95,16 +99,16 @@ func _Block(md *digest, p []byte) int {
 		// round 3
 		for i < 48 {
 			alpha = a + (b | ^c ^ d) + x[_n[i]] + 0x6ed9eba1
-			s := _r[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + e
-			beta = c<<10 | c>>22
+			s := int(_r[i])
+			alpha = bits.RotateLeft32(alpha, s) + e
+			beta = bits.RotateLeft32(c, 10)
 			a, b, c, d, e = e, alpha, b, beta, d
 
 			// parallel line
 			alpha = aa + (bb | ^cc ^ dd) + x[n_[i]] + 0x6d703ef3
-			s = r_[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + ee
-			beta = cc<<10 | cc>>22
+			s = int(r_[i])
+			alpha = bits.RotateLeft32(alpha, s) + ee
+			beta = bits.RotateLeft32(cc, 10)
 			aa, bb, cc, dd, ee = ee, alpha, bb, beta, dd
 
 			i++
@@ -113,16 +117,16 @@ func _Block(md *digest, p []byte) int {
 		// round 4
 		for i < 64 {
 			alpha = a + (b&d | c&^d) + x[_n[i]] + 0x8f1bbcdc
-			s := _r[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + e
-			beta = c<<10 | c>>22
+			s := int(_r[i])
+			alpha = bits.RotateLeft32(alpha, s) + e
+			beta = bits.RotateLeft32(c, 10)
 			a, b, c, d, e = e, alpha, b, beta, d
 
 			// parallel line
 			alpha = aa + (bb&cc | ^bb&dd) + x[n_[i]] + 0x7a6d76e9
-			s = r_[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + ee
-			beta = cc<<10 | cc>>22
+			s = int(r_[i])
+			alpha = bits.RotateLeft32(alpha, s) + ee
+			beta = bits.RotateLeft32(cc, 10)
 			aa, bb, cc, dd, ee = ee, alpha, bb, beta, dd
 
 			i++
@@ -131,16 +135,16 @@ func _Block(md *digest, p []byte) int {
 		// round 5
 		for i < 80 {
 			alpha = a + (b ^ (c | ^d)) + x[_n[i]] + 0xa953fd4e
-			s := _r[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + e
-			beta = c<<10 | c>>22
+			s := int(_r[i])
+			alpha = bits.RotateLeft32(alpha, s) + e
+			beta = bits.RotateLeft32(c, 10)
 			a, b, c, d, e = e, alpha, b, beta, d
 
 			// parallel line
 			alpha = aa + (bb ^ cc ^ dd) + x[n_[i]]
-			s = r_[i]
-			alpha = (alpha<<s | alpha>>(32-s)) + ee
-			beta = cc<<10 | cc>>22
+			s = int(r_[i])
+			alpha = bits.RotateLeft32(alpha, s) + ee
+			beta = bits.RotateLeft32(cc, 10)
 			aa, bb, cc, dd, ee = ee, alpha, bb, beta, dd
 
 			i++

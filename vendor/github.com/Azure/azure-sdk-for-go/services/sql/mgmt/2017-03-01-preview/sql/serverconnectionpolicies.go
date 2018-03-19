@@ -43,11 +43,11 @@ func NewServerConnectionPoliciesClientWithBaseURI(baseURI string, subscriptionID
 
 // CreateOrUpdate creates or updates the server's connection policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. connectionPolicyName is the name of
-// the connection policy. parameters is the required parameters for updating a secure connection policy.
-func (client ServerConnectionPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, connectionPolicyName string, parameters ServerConnectionPolicy) (result ServerConnectionPolicy, err error) {
-	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, connectionPolicyName, parameters)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
+// parameters for updating a secure connection policy.
+func (client ServerConnectionPoliciesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, parameters ServerConnectionPolicy) (result ServerConnectionPolicy, err error) {
+	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, parameters)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.ServerConnectionPoliciesClient", "CreateOrUpdate", nil, "Failure preparing request")
 		return
@@ -69,9 +69,9 @@ func (client ServerConnectionPoliciesClient) CreateOrUpdate(ctx context.Context,
 }
 
 // CreateOrUpdatePreparer prepares the CreateOrUpdate request.
-func (client ServerConnectionPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, connectionPolicyName string, parameters ServerConnectionPolicy) (*http.Request, error) {
+func (client ServerConnectionPoliciesClient) CreateOrUpdatePreparer(ctx context.Context, resourceGroupName string, serverName string, parameters ServerConnectionPolicy) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"connectionPolicyName": autorest.Encode("path", connectionPolicyName),
+		"connectionPolicyName": autorest.Encode("path", "default"),
 		"resourceGroupName":    autorest.Encode("path", resourceGroupName),
 		"serverName":           autorest.Encode("path", serverName),
 		"subscriptionId":       autorest.Encode("path", client.SubscriptionID),
@@ -114,11 +114,10 @@ func (client ServerConnectionPoliciesClient) CreateOrUpdateResponder(resp *http.
 
 // Get gets the server's secure connection policy.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. connectionPolicyName is the name of
-// the connection policy.
-func (client ServerConnectionPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string, connectionPolicyName string) (result ServerConnectionPolicy, err error) {
-	req, err := client.GetPreparer(ctx, resourceGroupName, serverName, connectionPolicyName)
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
+func (client ServerConnectionPoliciesClient) Get(ctx context.Context, resourceGroupName string, serverName string) (result ServerConnectionPolicy, err error) {
+	req, err := client.GetPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "sql.ServerConnectionPoliciesClient", "Get", nil, "Failure preparing request")
 		return
@@ -140,9 +139,9 @@ func (client ServerConnectionPoliciesClient) Get(ctx context.Context, resourceGr
 }
 
 // GetPreparer prepares the Get request.
-func (client ServerConnectionPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string, connectionPolicyName string) (*http.Request, error) {
+func (client ServerConnectionPoliciesClient) GetPreparer(ctx context.Context, resourceGroupName string, serverName string) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"connectionPolicyName": autorest.Encode("path", connectionPolicyName),
+		"connectionPolicyName": autorest.Encode("path", "default"),
 		"resourceGroupName":    autorest.Encode("path", resourceGroupName),
 		"serverName":           autorest.Encode("path", serverName),
 		"subscriptionId":       autorest.Encode("path", client.SubscriptionID),

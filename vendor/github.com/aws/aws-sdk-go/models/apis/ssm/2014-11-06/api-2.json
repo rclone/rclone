@@ -2393,8 +2393,13 @@
         "ApprovalRules":{"shape":"PatchRuleGroup"},
         "ApprovedPatches":{"shape":"PatchIdList"},
         "ApprovedPatchesComplianceLevel":{"shape":"PatchComplianceLevel"},
+        "ApprovedPatchesEnableNonSecurity":{
+          "shape":"Boolean",
+          "box":true
+        },
         "RejectedPatches":{"shape":"PatchIdList"},
         "Description":{"shape":"BaselineDescription"},
+        "Sources":{"shape":"PatchSourceList"},
         "ClientToken":{
           "shape":"ClientToken",
           "idempotencyToken":true
@@ -3797,11 +3802,16 @@
         "ApprovalRules":{"shape":"PatchRuleGroup"},
         "ApprovedPatches":{"shape":"PatchIdList"},
         "ApprovedPatchesComplianceLevel":{"shape":"PatchComplianceLevel"},
+        "ApprovedPatchesEnableNonSecurity":{
+          "shape":"Boolean",
+          "box":true
+        },
         "RejectedPatches":{"shape":"PatchIdList"},
         "PatchGroups":{"shape":"PatchGroupList"},
         "CreatedDate":{"shape":"DateTime"},
         "ModifiedDate":{"shape":"DateTime"},
-        "Description":{"shape":"BaselineDescription"}
+        "Description":{"shape":"BaselineDescription"},
+        "Sources":{"shape":"PatchSourceList"}
       }
     },
     "HierarchyLevelLimitExceededException":{
@@ -4581,6 +4591,7 @@
       "type":"list",
       "member":{"shape":"TagKey"}
     },
+    "LastResourceDataSyncMessage":{"type":"string"},
     "LastResourceDataSyncStatus":{
       "type":"string",
       "enum":[
@@ -5302,7 +5313,8 @@
         "WINDOWS",
         "AMAZON_LINUX",
         "UBUNTU",
-        "REDHAT_ENTERPRISE_LINUX"
+        "REDHAT_ENTERPRISE_LINUX",
+        "SUSE"
       ]
     },
     "OwnerInformation":{
@@ -5755,6 +5767,10 @@
         "ApproveAfterDays":{
           "shape":"ApproveAfterDays",
           "box":true
+        },
+        "EnableNonSecurity":{
+          "shape":"Boolean",
+          "box":true
         }
       }
     },
@@ -5772,6 +5788,46 @@
       "min":0
     },
     "PatchSeverity":{"type":"string"},
+    "PatchSource":{
+      "type":"structure",
+      "required":[
+        "Name",
+        "Products",
+        "Configuration"
+      ],
+      "members":{
+        "Name":{"shape":"PatchSourceName"},
+        "Products":{"shape":"PatchSourceProductList"},
+        "Configuration":{"shape":"PatchSourceConfiguration"}
+      }
+    },
+    "PatchSourceConfiguration":{
+      "type":"string",
+      "max":512,
+      "min":1,
+      "sensitive":true
+    },
+    "PatchSourceList":{
+      "type":"list",
+      "member":{"shape":"PatchSource"},
+      "max":20,
+      "min":0
+    },
+    "PatchSourceName":{
+      "type":"string",
+      "pattern":"^[a-zA-Z0-9_\\-.]{3,50}$"
+    },
+    "PatchSourceProduct":{
+      "type":"string",
+      "max":128,
+      "min":1
+    },
+    "PatchSourceProductList":{
+      "type":"list",
+      "member":{"shape":"PatchSourceProduct"},
+      "max":20,
+      "min":1
+    },
     "PatchStatus":{
       "type":"structure",
       "members":{
@@ -6052,7 +6108,8 @@
         "LastSyncTime":{"shape":"LastResourceDataSyncTime"},
         "LastSuccessfulSyncTime":{"shape":"LastSuccessfulResourceDataSyncTime"},
         "LastStatus":{"shape":"LastResourceDataSyncStatus"},
-        "SyncCreatedTime":{"shape":"ResourceDataSyncCreatedTime"}
+        "SyncCreatedTime":{"shape":"ResourceDataSyncCreatedTime"},
+        "LastSyncStatusMessage":{"shape":"LastResourceDataSyncMessage"}
       }
     },
     "ResourceDataSyncItemList":{
@@ -6774,8 +6831,17 @@
         "ApprovalRules":{"shape":"PatchRuleGroup"},
         "ApprovedPatches":{"shape":"PatchIdList"},
         "ApprovedPatchesComplianceLevel":{"shape":"PatchComplianceLevel"},
+        "ApprovedPatchesEnableNonSecurity":{
+          "shape":"Boolean",
+          "box":true
+        },
         "RejectedPatches":{"shape":"PatchIdList"},
-        "Description":{"shape":"BaselineDescription"}
+        "Description":{"shape":"BaselineDescription"},
+        "Sources":{"shape":"PatchSourceList"},
+        "Replace":{
+          "shape":"Boolean",
+          "box":true
+        }
       }
     },
     "UpdatePatchBaselineResult":{
@@ -6788,10 +6854,15 @@
         "ApprovalRules":{"shape":"PatchRuleGroup"},
         "ApprovedPatches":{"shape":"PatchIdList"},
         "ApprovedPatchesComplianceLevel":{"shape":"PatchComplianceLevel"},
+        "ApprovedPatchesEnableNonSecurity":{
+          "shape":"Boolean",
+          "box":true
+        },
         "RejectedPatches":{"shape":"PatchIdList"},
         "CreatedDate":{"shape":"DateTime"},
         "ModifiedDate":{"shape":"DateTime"},
-        "Description":{"shape":"BaselineDescription"}
+        "Description":{"shape":"BaselineDescription"},
+        "Sources":{"shape":"PatchSourceList"}
       }
     },
     "Url":{"type":"string"},

@@ -30,7 +30,7 @@ import (
 
 const (
 	googleDiscoveryURL = "https://www.googleapis.com/discovery/v1/apis"
-	generatorVersion   = "20170210"
+	generatorVersion   = "2018018"
 )
 
 var (
@@ -450,6 +450,19 @@ func (a *API) jsonBytes() []byte {
 			}
 		} else {
 			slurp = slurpURL(a.DiscoveryURL())
+			if slurp != nil {
+				// Make sure that keys are sorted by re-marshalling.
+				d := make(map[string]interface{})
+				json.Unmarshal(slurp, &d)
+				if err != nil {
+					log.Fatal(err)
+				}
+				var err error
+				slurp, err = json.MarshalIndent(d, "", "  ")
+				if err != nil {
+					log.Fatal(err)
+				}
+			}
 		}
 		a.forceJSON = slurp
 	}
@@ -1841,12 +1854,15 @@ func (meth *Method) generateCode() {
 		pn(" body = new(bytes.Buffer)")
 		pn(` reqHeaders.Set("Content-Type", "application/json")`)
 		pn("}")
-		pn("body, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)")
+		pn("body, getBody, cleanup := c.mediaInfo_.UploadRequest(reqHeaders, body)")
 		pn("defer cleanup()")
 	}
 	pn("urls += \"?\" + c.urlParams_.Encode()")
 	pn("req, _ := http.NewRequest(%q, urls, body)", httpMethod)
 	pn("req.Header = reqHeaders")
+	if meth.supportsMediaUpload() {
+		pn("gensupport.SetGetBody(req, getBody)")
+	}
 
 	// Replace param values after NewRequest to avoid reencoding them.
 	// E.g. Cloud Storage API requires '%2F' in entity param to be kept, but url.Parse replaces it with '/'.
@@ -2129,6 +2145,8 @@ func (a *argument) exprAsString(prefix string) string {
 		return "strconv.FormatInt(" + prefix + a.goname + ", 10)"
 	case "uint64":
 		return "strconv.FormatUint(" + prefix + a.goname + ", 10)"
+	case "bool":
+		return "strconv.FormatBool(" + prefix + a.goname + ")"
 	}
 	log.Panicf("unknown type: apitype=%q, gotype=%q", a.apitype, a.gotype)
 	return ""

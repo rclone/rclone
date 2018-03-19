@@ -3,13 +3,15 @@
 // Package applicationautoscaling provides the client and types for making API
 // requests to Application Auto Scaling.
 //
-// With Application Auto Scaling, you can automatically scale your AWS resources.
-// The experience is similar to that of Auto Scaling (https://aws.amazon.com/autoscaling/).
-// You can use Application Auto Scaling to accomplish the following tasks:
+// With Application Auto Scaling, you can configure automatic scaling for your
+// scalable AWS resources. You can use Application Auto Scaling to accomplish
+// the following tasks:
 //
 //    * Define scaling policies to automatically scale your AWS resources
 //
 //    * Scale your resources in response to CloudWatch alarms
+//
+//    * Schedule one-time or recurring scaling actions
 //
 //    * View the history of your scaling events
 //
@@ -17,7 +19,7 @@
 //
 //    * Amazon ECS services. For more information, see Service Auto Scaling
 //    (http://docs.aws.amazon.com/AmazonECS/latest/developerguide/service-auto-scaling.html)
-//    in the Amazon EC2 Container Service Developer Guide.
+//    in the Amazon Elastic Container Service Developer Guide.
 //
 //    * Amazon EC2 Spot fleets. For more information, see Automatic Scaling
 //    for Spot Fleet (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/fleet-auto-scaling.html)
@@ -36,8 +38,15 @@
 //    Automatically with DynamoDB Auto Scaling (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/AutoScaling.html)
 //    in the Amazon DynamoDB Developer Guide.
 //
-//    * Amazon Aurora Replicas. For more information, see Using Application
-//    Auto Scaling with an Amazon Aurora DB Cluster (http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Aurora.Integrating.AutoScaling.html).
+//    * Amazon Aurora Replicas. For more information, see Using Amazon Aurora
+//    Auto Scaling with Aurora Replicas (http://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/Aurora.Integrating.AutoScaling.html).
+//
+//    * Amazon SageMaker endpoints. For more information, see Automatically
+//    Scaling Amazon SageMaker Models (http://docs.aws.amazon.com/sagemaker/latest/dg/endpoint-auto-scaling.html).
+//
+// To configure automatic scaling for multiple resources across multiple services,
+// use AWS Auto Scaling to create a scaling plan for your application. For more
+// information, see AWS Auto Scaling (http://aws.amazon.com/autoscaling).
 //
 // For a list of supported regions, see AWS Regions and Endpoints: Application
 // Auto Scaling (http://docs.aws.amazon.com/general/latest/gr/rande.html#as-app_region)

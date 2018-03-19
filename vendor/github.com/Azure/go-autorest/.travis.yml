@@ -3,16 +3,21 @@ sudo: false
 language: go
 
 go:
-  - 1.9
-  - 1.8
-  - 1.7
+  - master
+  - 1.10.x
+  - 1.9.x
+  - 1.8.x
+
+matrix:
+  allow_failures:
+    - go: master
 
 install:
   - go get -u github.com/golang/lint/golint
-  - go get -u github.com/Masterminds/glide
+  - go get -u github.com/golang/dep/cmd/dep
   - go get -u github.com/stretchr/testify
   - go get -u github.com/GoASTScanner/gas
-  - glide install
+  - dep ensure
 
 script:
   - grep -L -r --include *.go --exclude-dir vendor -P "Copyright (\d{4}|\(c\)) Microsoft" ./ | tee /dev/stderr | test -z "$(< /dev/stdin)"

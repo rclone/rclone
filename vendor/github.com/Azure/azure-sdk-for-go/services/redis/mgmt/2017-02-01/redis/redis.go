@@ -42,16 +42,16 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 
 // Create create or replace (overwrite/recreate, with potential downtime) an existing Redis cache.
 //
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is parameters
-// supplied to the Create Redis operation.
-func (client Client) Create(ctx context.Context, resourceGroupName string, name string, parameters CreateParameters) (result RedisCreateFuture, err error) {
+// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
+// parameters supplied to the Create Redis operation.
+func (client Client) Create(ctx context.Context, resourceGroupName string, name string, parameters CreateParameters) (result CreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.CreateProperties", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.CreateProperties.Sku", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "parameters.CreateProperties.Sku.Capacity", Name: validation.Null, Rule: true, Chain: nil}}},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "redis.Client", "Create")
+		return result, validation.NewError("redis.Client", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, name, parameters)
@@ -94,7 +94,7 @@ func (client Client) CreatePreparer(ctx context.Context, resourceGroupName strin
 
 // CreateSender sends the Create request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) CreateSender(req *http.Request) (future RedisCreateFuture, err error) {
+func (client Client) CreateSender(req *http.Request) (future CreateFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -123,7 +123,7 @@ func (client Client) CreateResponder(resp *http.Response) (result ResourceType, 
 // Delete deletes a Redis cache.
 //
 // resourceGroupName is the name of the resource group. name is the name of the Redis cache.
-func (client Client) Delete(ctx context.Context, resourceGroupName string, name string) (result RedisDeleteFuture, err error) {
+func (client Client) Delete(ctx context.Context, resourceGroupName string, name string) (result DeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, name)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "redis.Client", "Delete", nil, "Failure preparing request")
@@ -162,7 +162,7 @@ func (client Client) DeletePreparer(ctx context.Context, resourceGroupName strin
 
 // DeleteSender sends the Delete request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) DeleteSender(req *http.Request) (future RedisDeleteFuture, err error) {
+func (client Client) DeleteSender(req *http.Request) (future DeleteFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -189,14 +189,14 @@ func (client Client) DeleteResponder(resp *http.Response) (result autorest.Respo
 
 // ExportData export data from the redis cache to blobs in a container.
 //
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is parameters
-// for Redis export operation.
-func (client Client) ExportData(ctx context.Context, resourceGroupName string, name string, parameters ExportRDBParameters) (result RedisExportDataFuture, err error) {
+// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
+// parameters for Redis export operation.
+func (client Client) ExportData(ctx context.Context, resourceGroupName string, name string, parameters ExportRDBParameters) (result ExportDataFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Prefix", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Container", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "redis.Client", "ExportData")
+		return result, validation.NewError("redis.Client", "ExportData", err.Error())
 	}
 
 	req, err := client.ExportDataPreparer(ctx, resourceGroupName, name, parameters)
@@ -239,7 +239,7 @@ func (client Client) ExportDataPreparer(ctx context.Context, resourceGroupName s
 
 // ExportDataSender sends the ExportData request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) ExportDataSender(req *http.Request) (future RedisExportDataFuture, err error) {
+func (client Client) ExportDataSender(req *http.Request) (future ExportDataFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -267,8 +267,8 @@ func (client Client) ExportDataResponder(resp *http.Response) (result autorest.R
 // ForceReboot reboot specified Redis node(s). This operation requires write permission to the cache resource. There
 // can be potential data loss.
 //
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is specifies
-// which Redis node(s) to reboot.
+// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
+// specifies which Redis node(s) to reboot.
 func (client Client) ForceReboot(ctx context.Context, resourceGroupName string, name string, parameters RebootParameters) (result ForceRebootResponse, err error) {
 	req, err := client.ForceRebootPreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
@@ -402,13 +402,13 @@ func (client Client) GetResponder(resp *http.Response) (result ResourceType, err
 
 // ImportData import data into Redis cache.
 //
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is parameters
-// for Redis import operation.
-func (client Client) ImportData(ctx context.Context, resourceGroupName string, name string, parameters ImportRDBParameters) (result RedisImportDataFuture, err error) {
+// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
+// parameters for Redis import operation.
+func (client Client) ImportData(ctx context.Context, resourceGroupName string, name string, parameters ImportRDBParameters) (result ImportDataFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Files", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "redis.Client", "ImportData")
+		return result, validation.NewError("redis.Client", "ImportData", err.Error())
 	}
 
 	req, err := client.ImportDataPreparer(ctx, resourceGroupName, name, parameters)
@@ -451,7 +451,7 @@ func (client Client) ImportDataPreparer(ctx context.Context, resourceGroupName s
 
 // ImportDataSender sends the ImportData request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) ImportDataSender(req *http.Request) (future RedisImportDataFuture, err error) {
+func (client Client) ImportDataSender(req *http.Request) (future ImportDataFuture, err error) {
 	sender := autorest.DecorateSender(client, azure.DoRetryWithRegistration(client.Client))
 	future.Future = azure.NewFuture(req)
 	future.req = req
@@ -727,8 +727,8 @@ func (client Client) ListKeysResponder(resp *http.Response) (result AccessKeys, 
 
 // RegenerateKey regenerate Redis cache's access keys. This operation requires write permission to the cache resource.
 //
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is specifies
-// which key to regenerate.
+// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
+// specifies which key to regenerate.
 func (client Client) RegenerateKey(ctx context.Context, resourceGroupName string, name string, parameters RegenerateKeyParameters) (result AccessKeys, err error) {
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {
@@ -796,8 +796,8 @@ func (client Client) RegenerateKeyResponder(resp *http.Response) (result AccessK
 
 // Update update an existing Redis cache.
 //
-// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is parameters
-// supplied to the Update Redis operation.
+// resourceGroupName is the name of the resource group. name is the name of the Redis cache. parameters is
+// parameters supplied to the Update Redis operation.
 func (client Client) Update(ctx context.Context, resourceGroupName string, name string, parameters UpdateParameters) (result ResourceType, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, name, parameters)
 	if err != nil {

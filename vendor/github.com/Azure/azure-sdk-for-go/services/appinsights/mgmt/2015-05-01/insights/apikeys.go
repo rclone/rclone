@@ -41,9 +41,9 @@ func NewAPIKeysClientWithBaseURI(baseURI string, subscriptionID string) APIKeysC
 
 // Create create an API Key of an Application Insights component.
 //
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights component
-// resource. APIKeyProperties is properties that need to be specified to create an API key of a Application Insights
-// component.
+// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
+// component resource. APIKeyProperties is properties that need to be specified to create an API key of a
+// Application Insights component.
 func (client APIKeysClient) Create(ctx context.Context, resourceGroupName string, resourceName string, APIKeyProperties APIKeyRequest) (result ApplicationInsightsComponentAPIKey, err error) {
 	req, err := client.CreatePreparer(ctx, resourceGroupName, resourceName, APIKeyProperties)
 	if err != nil {
@@ -111,8 +111,8 @@ func (client APIKeysClient) CreateResponder(resp *http.Response) (result Applica
 
 // Delete delete an API Key of an Application Insights component.
 //
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights component
-// resource. keyID is the API Key ID. This is unique within a Application Insights component.
+// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
+// component resource. keyID is the API Key ID. This is unique within a Application Insights component.
 func (client APIKeysClient) Delete(ctx context.Context, resourceGroupName string, resourceName string, keyID string) (result ApplicationInsightsComponentAPIKey, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, resourceName, keyID)
 	if err != nil {
@@ -179,8 +179,8 @@ func (client APIKeysClient) DeleteResponder(resp *http.Response) (result Applica
 
 // Get get the API Key for this key id.
 //
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights component
-// resource. keyID is the API Key ID. This is unique within a Application Insights component.
+// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
+// component resource. keyID is the API Key ID. This is unique within a Application Insights component.
 func (client APIKeysClient) Get(ctx context.Context, resourceGroupName string, resourceName string, keyID string) (result ApplicationInsightsComponentAPIKey, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, resourceName, keyID)
 	if err != nil {
@@ -247,8 +247,8 @@ func (client APIKeysClient) GetResponder(resp *http.Response) (result Applicatio
 
 // List gets a list of API keys of an Application Insights component.
 //
-// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights component
-// resource.
+// resourceGroupName is the name of the resource group. resourceName is the name of the Application Insights
+// component resource.
 func (client APIKeysClient) List(ctx context.Context, resourceGroupName string, resourceName string) (result ApplicationInsightsComponentAPIKeyListResult, err error) {
 	req, err := client.ListPreparer(ctx, resourceGroupName, resourceName)
 	if err != nil {

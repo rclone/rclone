@@ -80,46 +80,45 @@ func (e *Endpoint) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				e.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				e.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				e.Type = &typeVar
+			}
+		case "properties":
+			if v != nil {
+				var endpointProperties EndpointProperties
+				err = json.Unmarshal(*v, &endpointProperties)
+				if err != nil {
+					return err
+				}
+				e.EndpointProperties = &endpointProperties
+			}
 		}
-		e.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		e.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		e.Type = &typeVar
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties EndpointProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		e.EndpointProperties = &properties
 	}
 
 	return nil
@@ -149,7 +148,8 @@ type EndpointProperties struct {
 
 // GeographicHierarchy class representing the Geographic hierarchy used with the Geographic traffic routing method.
 type GeographicHierarchy struct {
-	autorest.Response `json:"-"`
+	autorest.Response              `json:"-"`
+	*GeographicHierarchyProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -159,8 +159,31 @@ type GeographicHierarchy struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags                           *map[string]*string `json:"tags,omitempty"`
-	*GeographicHierarchyProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for GeographicHierarchy.
+func (gh GeographicHierarchy) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if gh.GeographicHierarchyProperties != nil {
+		objectMap["properties"] = gh.GeographicHierarchyProperties
+	}
+	if gh.ID != nil {
+		objectMap["id"] = gh.ID
+	}
+	if gh.Name != nil {
+		objectMap["name"] = gh.Name
+	}
+	if gh.Type != nil {
+		objectMap["type"] = gh.Type
+	}
+	if gh.Location != nil {
+		objectMap["location"] = gh.Location
+	}
+	if gh.Tags != nil {
+		objectMap["tags"] = gh.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for GeographicHierarchy struct.
@@ -170,73 +193,70 @@ func (gh *GeographicHierarchy) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties GeographicHierarchyProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var geographicHierarchyProperties GeographicHierarchyProperties
+				err = json.Unmarshal(*v, &geographicHierarchyProperties)
+				if err != nil {
+					return err
+				}
+				gh.GeographicHierarchyProperties = &geographicHierarchyProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				gh.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				gh.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				gh.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				gh.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				gh.Tags = tags
+			}
 		}
-		gh.GeographicHierarchyProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		gh.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		gh.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		gh.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		gh.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		gh.Tags = &tags
 	}
 
 	return nil
 }
 
-// GeographicHierarchyProperties class representing the properties of the Geographic hierarchy used with the Geographic
-// traffic routing method.
+// GeographicHierarchyProperties class representing the properties of the Geographic hierarchy used with the
+// Geographic traffic routing method.
 type GeographicHierarchyProperties struct {
 	// GeographicHierarchy - The region at the root of the hierarchy from all the regions in the hierarchy can be retrieved.
 	GeographicHierarchy *Region `json:"geographicHierarchy,omitempty"`
@@ -271,7 +291,8 @@ type NameAvailability struct {
 
 // Profile class representing a Traffic Manager profile.
 type Profile struct {
-	autorest.Response `json:"-"`
+	autorest.Response  `json:"-"`
+	*ProfileProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -281,8 +302,31 @@ type Profile struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags               *map[string]*string `json:"tags,omitempty"`
-	*ProfileProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Profile.
+func (p Profile) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if p.ProfileProperties != nil {
+		objectMap["properties"] = p.ProfileProperties
+	}
+	if p.ID != nil {
+		objectMap["id"] = p.ID
+	}
+	if p.Name != nil {
+		objectMap["name"] = p.Name
+	}
+	if p.Type != nil {
+		objectMap["type"] = p.Type
+	}
+	if p.Location != nil {
+		objectMap["location"] = p.Location
+	}
+	if p.Tags != nil {
+		objectMap["tags"] = p.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Profile struct.
@@ -292,66 +336,63 @@ func (p *Profile) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties ProfileProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var profileProperties ProfileProperties
+				err = json.Unmarshal(*v, &profileProperties)
+				if err != nil {
+					return err
+				}
+				p.ProfileProperties = &profileProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				p.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				p.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				p.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				p.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				p.Tags = tags
+			}
 		}
-		p.ProfileProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		p.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		p.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		p.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		p.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		p.Tags = &tags
 	}
 
 	return nil
@@ -399,7 +440,28 @@ type Resource struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // SubResource ...

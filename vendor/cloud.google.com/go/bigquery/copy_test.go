@@ -84,15 +84,17 @@ func TestCopy(t *testing.T) {
 				},
 			},
 			config: CopyConfig{
-				CreateDisposition: CreateNever,
-				WriteDisposition:  WriteTruncate,
-				Labels:            map[string]string{"a": "b"},
+				CreateDisposition:           CreateNever,
+				WriteDisposition:            WriteTruncate,
+				DestinationEncryptionConfig: &EncryptionConfig{KMSKeyName: "keyName"},
+				Labels: map[string]string{"a": "b"},
 			},
 			want: func() *bq.Job {
 				j := defaultCopyJob()
 				j.Configuration.Labels = map[string]string{"a": "b"}
 				j.Configuration.Copy.CreateDisposition = "CREATE_NEVER"
 				j.Configuration.Copy.WriteDisposition = "WRITE_TRUNCATE"
+				j.Configuration.Copy.DestinationEncryptionConfiguration = &bq.EncryptionConfiguration{KmsKeyName: "keyName"}
 				return j
 			}(),
 		},

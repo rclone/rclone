@@ -61,11 +61,33 @@ type Identity struct {
 	// Location - The Azure region where the identity lives.
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// IdentityProperties - The properties associated with the identity.
 	*IdentityProperties `json:"properties,omitempty"`
 	// Type - The type of resource i.e. Microsoft.ManagedIdentity/userAssignedIdentities. Possible values include: 'MicrosoftManagedIdentityuserAssignedIdentities'
 	Type UserAssignedIdentities `json:"type,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for Identity.
+func (i Identity) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if i.ID != nil {
+		objectMap["id"] = i.ID
+	}
+	if i.Name != nil {
+		objectMap["name"] = i.Name
+	}
+	if i.Location != nil {
+		objectMap["location"] = i.Location
+	}
+	if i.Tags != nil {
+		objectMap["tags"] = i.Tags
+	}
+	if i.IdentityProperties != nil {
+		objectMap["properties"] = i.IdentityProperties
+	}
+	objectMap["type"] = i.Type
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for Identity struct.
@@ -75,66 +97,63 @@ func (i *Identity) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				i.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				i.Name = &name
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				i.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				i.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var identityProperties IdentityProperties
+				err = json.Unmarshal(*v, &identityProperties)
+				if err != nil {
+					return err
+				}
+				i.IdentityProperties = &identityProperties
+			}
+		case "type":
+			if v != nil {
+				var typeVar UserAssignedIdentities
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				i.Type = typeVar
+			}
 		}
-		i.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		i.Name = &name
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		i.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		i.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties IdentityProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		i.IdentityProperties = &properties
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar UserAssignedIdentities
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		i.Type = typeVar
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package xpackagex
+package batch
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -47,34 +47,34 @@ func NewCertificateClientWithBaseURI(baseURI string) CertificateClient {
 // certificate is the certificate to be added. timeout is the maximum time that the server can spend processing the
 // request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
 // form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
+// time the request was issued. Client libraries typically set this to the current system clock time; set it
+// explicitly if you are calling the REST API directly.
 func (client CertificateClient) Add(ctx context.Context, certificate CertificateAddParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: certificate,
 			Constraints: []validation.Constraint{{Target: "certificate.Thumbprint", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "certificate.ThumbprintAlgorithm", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "certificate.Data", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.CertificateClient", "Add")
+		return result, validation.NewError("batch.CertificateClient", "Add", err.Error())
 	}
 
 	req, err := client.AddPreparer(ctx, certificate, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Add", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Add", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.AddSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Add", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Add", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.AddResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Add", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Add", resp, "Failure responding to request")
 	}
 
 	return
@@ -88,6 +88,8 @@ func (client CertificateClient) AddPreparer(ctx context.Context, certificate Cer
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -104,6 +106,9 @@ func (client CertificateClient) AddPreparer(ctx context.Context, certificate Cer
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -137,30 +142,30 @@ func (client CertificateClient) AddResponder(resp *http.Response) (result autore
 // need to run this operation after the deletion failed. You must make sure that the certificate is not being used by
 // any resources, and then you can try again to delete the certificate.
 //
-// thumbprintAlgorithm is the algorithm used to derive the thumbprint parameter. This must be sha1. thumbprint is the
-// thumbprint of the certificate being deleted. timeout is the maximum time that the server can spend processing the
-// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
-// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// thumbprintAlgorithm is the algorithm used to derive the thumbprint parameter. This must be sha1. thumbprint is
+// the thumbprint of the certificate being deleted. timeout is the maximum time that the server can spend
+// processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
+// identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client CertificateClient) CancelDeletion(ctx context.Context, thumbprintAlgorithm string, thumbprint string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.CancelDeletionPreparer(ctx, thumbprintAlgorithm, thumbprint, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "CancelDeletion", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "CancelDeletion", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.CancelDeletionSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "CancelDeletion", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "CancelDeletion", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.CancelDeletionResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "CancelDeletion", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "CancelDeletion", resp, "Failure responding to request")
 	}
 
 	return
@@ -179,6 +184,8 @@ func (client CertificateClient) CancelDeletionPreparer(ctx context.Context, thum
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -193,6 +200,9 @@ func (client CertificateClient) CancelDeletionPreparer(ctx context.Context, thum
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -228,30 +238,30 @@ func (client CertificateClient) CancelDeletionResponder(resp *http.Response) (re
 // can use Cancel Delete Certificate to set the status back to active if you decide that you want to continue using the
 // certificate.
 //
-// thumbprintAlgorithm is the algorithm used to derive the thumbprint parameter. This must be sha1. thumbprint is the
-// thumbprint of the certificate to be deleted. timeout is the maximum time that the server can spend processing the
-// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
-// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// thumbprintAlgorithm is the algorithm used to derive the thumbprint parameter. This must be sha1. thumbprint is
+// the thumbprint of the certificate to be deleted. timeout is the maximum time that the server can spend
+// processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
+// identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client CertificateClient) Delete(ctx context.Context, thumbprintAlgorithm string, thumbprint string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, thumbprintAlgorithm, thumbprint, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Delete", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Delete", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.DeleteSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Delete", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Delete", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.DeleteResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Delete", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Delete", resp, "Failure responding to request")
 	}
 
 	return
@@ -270,6 +280,8 @@ func (client CertificateClient) DeletePreparer(ctx context.Context, thumbprintAl
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -284,6 +296,9 @@ func (client CertificateClient) DeletePreparer(ctx context.Context, thumbprintAl
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -313,30 +328,30 @@ func (client CertificateClient) DeleteResponder(resp *http.Response) (result aut
 
 // Get gets information about the specified certificate.
 //
-// thumbprintAlgorithm is the algorithm used to derive the thumbprint parameter. This must be sha1. thumbprint is the
-// thumbprint of the certificate to get. selectParameter is an OData $select clause. timeout is the maximum time that
-// the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// thumbprintAlgorithm is the algorithm used to derive the thumbprint parameter. This must be sha1. thumbprint is
+// the thumbprint of the certificate to get. selectParameter is an OData $select clause. timeout is the maximum
+// time that the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is
+// the caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
 // 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client CertificateClient) Get(ctx context.Context, thumbprintAlgorithm string, thumbprint string, selectParameter string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result Certificate, err error) {
 	req, err := client.GetPreparer(ctx, thumbprintAlgorithm, thumbprint, selectParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Get", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Get", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Get", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Get", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "Get", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "Get", resp, "Failure responding to request")
 	}
 
 	return
@@ -358,6 +373,8 @@ func (client CertificateClient) GetPreparer(ctx context.Context, thumbprintAlgor
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -372,6 +389,9 @@ func (client CertificateClient) GetPreparer(ctx context.Context, thumbprintAlgor
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -402,13 +422,13 @@ func (client CertificateClient) GetResponder(resp *http.Response) (result Certif
 
 // List sends the list request.
 //
-// filter is an OData $filter clause. selectParameter is an OData $select clause. maxResults is the maximum number of
-// items to return in the response. A maximum of 1000 certificates can be returned. timeout is the maximum time that
-// the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
+// filter is an OData $filter clause. selectParameter is an OData $select clause. maxResults is the maximum number
+// of items to return in the response. A maximum of 1000 certificates can be returned. timeout is the maximum time
+// that the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
 // caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
 // 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client CertificateClient) List(ctx context.Context, filter string, selectParameter string, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result CertificateListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -416,26 +436,26 @@ func (client CertificateClient) List(ctx context.Context, filter string, selectP
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.CertificateClient", "List")
+		return result, validation.NewError("batch.CertificateClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter, selectParameter, maxResults, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "List", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "List", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.clr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "List", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "List", resp, "Failure sending request")
 		return
 	}
 
 	result.clr, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "List", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "List", resp, "Failure responding to request")
 	}
 
 	return
@@ -455,9 +475,13 @@ func (client CertificateClient) ListPreparer(ctx context.Context, filter string,
 	}
 	if maxResults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
+	} else {
+		queryParameters["maxresults"] = autorest.Encode("query", 1000)
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -472,6 +496,9 @@ func (client CertificateClient) ListPreparer(ctx context.Context, filter string,
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -504,7 +531,7 @@ func (client CertificateClient) ListResponder(resp *http.Response) (result Certi
 func (client CertificateClient) listNextResults(lastResults CertificateListResult) (result CertificateListResult, err error) {
 	req, err := lastResults.certificateListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "listNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "batch.CertificateClient", "listNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -512,11 +539,11 @@ func (client CertificateClient) listNextResults(lastResults CertificateListResul
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "listNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "batch.CertificateClient", "listNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.CertificateClient", "listNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "batch.CertificateClient", "listNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }

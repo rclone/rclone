@@ -944,7 +944,7 @@ type Variable struct {
 	// `text: "my text value". The string must be valid UTF-8.
 	Text string `json:"text,omitempty"`
 
-	// UpdateTime: [Output Only] The time of the last variable update.
+	// UpdateTime: Output only. The time of the last variable update.
 	UpdateTime string `json:"updateTime,omitempty"`
 
 	// Value: The binary value of the variable. The length of the value must
@@ -1005,14 +1005,14 @@ func (s *Variable) MarshalJSON() ([]byte, error) {
 // do
 // cumentation.
 type Waiter struct {
-	// CreateTime: [Output Only] The instant at which this Waiter resource
+	// CreateTime: Output only. The instant at which this Waiter resource
 	// was created. Adding
 	// the value of `timeout` to this instant yields the timeout deadline
 	// for the
 	// waiter.
 	CreateTime string `json:"createTime,omitempty"`
 
-	// Done: [Output Only] If the value is `false`, it means the waiter is
+	// Done: Output only. If the value is `false`, it means the waiter is
 	// still waiting
 	// for one of its conditions to be met.
 	//
@@ -1021,7 +1021,7 @@ type Waiter struct {
 	// or failure, `error` will be set.
 	Done bool `json:"done,omitempty"`
 
-	// Error: [Output Only] If the waiter ended due to a failure or timeout,
+	// Error: Output only. If the waiter ended due to a failure or timeout,
 	// this value
 	// will be set.
 	Error *Status `json:"error,omitempty"`
@@ -1269,7 +1269,7 @@ func (c *ProjectsConfigsCreateCall) Do(opts ...googleapi.CallOption) (*RuntimeCo
 	//   ],
 	//   "parameters": {
 	//     "parent": {
-	//       "description": "The [project ID](https://support.google.com/cloud/answer/6158840?hl=en\u0026ref_topic=6158848)\nfor this request, in the format `projects/[PROJECT_ID]`.",
+	//       "description": "The [project\nID](https://support.google.com/cloud/answer/6158840?hl=en\u0026ref_topic=6158848)\nfor this request, in the format `projects/[PROJECT_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -1853,7 +1853,7 @@ func (c *ProjectsConfigsListCall) Do(opts ...googleapi.CallOption) (*ListConfigs
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The [project ID](https://support.google.com/cloud/answer/6158840?hl=en\u0026ref_topic=6158848)\nfor this request, in the format `projects/[PROJECT_ID]`.",
+	//       "description": "The [project\nID](https://support.google.com/cloud/answer/6158840?hl=en\u0026ref_topic=6158848)\nfor this request, in the format `projects/[PROJECT_ID]`.",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+$",
 	//       "required": true,
@@ -2622,9 +2622,10 @@ type ProjectsConfigsVariablesCreateCall struct {
 // name that has an existing variable name as a prefix.
 //
 // To learn more about creating a variable, read the
-// [Setting and Getting
-// Data](/deployment-manager/runtime-configurator/set-and-get-variables)
-//
+// [Setting and
+// Getting
+// Data](/deployment-manager/runtime-configurator/set-and-get-var
+// iables)
 // documentation.
 func (r *ProjectsConfigsVariablesService) Create(parent string, variable *Variable) *ProjectsConfigsVariablesCreateCall {
 	c := &ProjectsConfigsVariablesCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -2736,7 +2737,7 @@ func (c *ProjectsConfigsVariablesCreateCall) Do(opts ...googleapi.CallOption) (*
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a variable within the given configuration. You cannot create\na variable with a name that is a prefix of an existing variable name, or a\nname that has an existing variable name as a prefix.\n\nTo learn more about creating a variable, read the\n[Setting and Getting Data](/deployment-manager/runtime-configurator/set-and-get-variables)\ndocumentation.",
+	//   "description": "Creates a variable within the given configuration. You cannot create\na variable with a name that is a prefix of an existing variable name, or a\nname that has an existing variable name as a prefix.\n\nTo learn more about creating a variable, read the\n[Setting and Getting\nData](/deployment-manager/runtime-configurator/set-and-get-variables)\ndocumentation.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/configs/{configsId}/variables",
 	//   "httpMethod": "POST",
 	//   "id": "runtimeconfig.projects.configs.variables.create",
@@ -3071,12 +3072,12 @@ type ProjectsConfigsVariablesListCall struct {
 }
 
 // List: Lists variables within given a configuration, matching any
-// provided filters.
-// This only lists variable names, not the values, unless
-// `return_values` is
-// true, in which case only variables that user has IAM permission to
-// GetVariable
-// will be returned.
+// provided
+// filters. This only lists variable names, not the values,
+// unless
+// `return_values` is true, in which case only variables that user has
+// IAM
+// permission to GetVariable will be returned.
 func (r *ProjectsConfigsVariablesService) List(parent string) *ProjectsConfigsVariablesListCall {
 	c := &ProjectsConfigsVariablesListCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.parent = parent
@@ -3214,7 +3215,7 @@ func (c *ProjectsConfigsVariablesListCall) Do(opts ...googleapi.CallOption) (*Li
 	}
 	return ret, nil
 	// {
-	//   "description": "Lists variables within given a configuration, matching any provided filters.\nThis only lists variable names, not the values, unless `return_values` is\ntrue, in which case only variables that user has IAM permission to GetVariable\nwill be returned.",
+	//   "description": "Lists variables within given a configuration, matching any provided\nfilters. This only lists variable names, not the values, unless\n`return_values` is true, in which case only variables that user has IAM\npermission to GetVariable will be returned.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/configs/{configsId}/variables",
 	//   "httpMethod": "GET",
 	//   "id": "runtimeconfig.projects.configs.variables.list",
@@ -3239,7 +3240,7 @@ func (c *ProjectsConfigsVariablesListCall) Do(opts ...googleapi.CallOption) (*Li
 	//       "type": "string"
 	//     },
 	//     "parent": {
-	//       "description": "The path to the RuntimeConfig resource for which you want to list variables.\nThe configuration must exist beforehand; the path must be in the format:\n\n`projects/[PROJECT_ID]/configs/[CONFIG_NAME]`",
+	//       "description": "The path to the RuntimeConfig resource for which you want to list\nvariables. The configuration must exist beforehand; the path must be in the\nformat:\n\n`projects/[PROJECT_ID]/configs/[CONFIG_NAME]`",
 	//       "location": "path",
 	//       "pattern": "^projects/[^/]+/configs/[^/]+$",
 	//       "required": true,
@@ -3587,16 +3588,17 @@ type ProjectsConfigsVariablesWatchCall struct {
 // set to `DELETED` and the method returns the last known variable
 // `value`.
 //
-// If you set the deadline for watching to a larger value than internal
-// timeout
-// (60 seconds), the current variable value is returned and the
-// `variableState`
-// will be `VARIABLE_STATE_UNSPECIFIED`.
+// If you set the deadline for watching to a larger value than
+// internal
+// timeout (60 seconds), the current variable value is returned and
+// the
+// `variableState` will be `VARIABLE_STATE_UNSPECIFIED`.
 //
 // To learn more about creating a watcher, read the
-// [Watching a Variable for
-// Changes](/deployment-manager/runtime-configurator/watching-a-variable)
-//
+// [Watching a Variable
+// for
+// Changes](/deployment-manager/runtime-configurator/watching-a-varia
+// ble)
 // documentation.
 func (r *ProjectsConfigsVariablesService) Watch(name string, watchvariablerequest *WatchVariableRequest) *ProjectsConfigsVariablesWatchCall {
 	c := &ProjectsConfigsVariablesWatchCall{s: r.s, urlParams_: make(gensupport.URLParams)}
@@ -3691,7 +3693,7 @@ func (c *ProjectsConfigsVariablesWatchCall) Do(opts ...googleapi.CallOption) (*V
 	}
 	return ret, nil
 	// {
-	//   "description": "Watches a specific variable and waits for a change in the variable's value.\nWhen there is a change, this method returns the new value or times out.\n\nIf a variable is deleted while being watched, the `variableState` state is\nset to `DELETED` and the method returns the last known variable `value`.\n\nIf you set the deadline for watching to a larger value than internal timeout\n(60 seconds), the current variable value is returned and the `variableState`\nwill be `VARIABLE_STATE_UNSPECIFIED`.\n\nTo learn more about creating a watcher, read the\n[Watching a Variable for Changes](/deployment-manager/runtime-configurator/watching-a-variable)\ndocumentation.",
+	//   "description": "Watches a specific variable and waits for a change in the variable's value.\nWhen there is a change, this method returns the new value or times out.\n\nIf a variable is deleted while being watched, the `variableState` state is\nset to `DELETED` and the method returns the last known variable `value`.\n\nIf you set the deadline for watching to a larger value than internal\ntimeout (60 seconds), the current variable value is returned and the\n`variableState` will be `VARIABLE_STATE_UNSPECIFIED`.\n\nTo learn more about creating a watcher, read the\n[Watching a Variable for\nChanges](/deployment-manager/runtime-configurator/watching-a-variable)\ndocumentation.",
 	//   "flatPath": "v1beta1/projects/{projectsId}/configs/{configsId}/variables/{variablesId}:watch",
 	//   "httpMethod": "POST",
 	//   "id": "runtimeconfig.projects.configs.variables.watch",

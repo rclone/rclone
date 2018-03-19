@@ -516,17 +516,6 @@ var structShapeTmpl = template.Must(template.New("StructShape").Funcs(template.F
 	"GetCrosslinkURL": GetCrosslinkURL,
 }).Parse(`
 {{ .Docstring }}
-{{ if ne $.OrigShapeName "" -}}
-{{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.Metadata.UID $.OrigShapeName -}}
-{{ if ne $crosslinkURL "" -}} 
-// See also, {{ $crosslinkURL }}
-{{ end -}}
-{{ else -}}
-{{ $crosslinkURL := GetCrosslinkURL $.API.BaseCrosslinkURL $.API.Metadata.UID $.ShapeName -}}
-{{ if ne $crosslinkURL "" -}} 
-// See also, {{ $crosslinkURL }}
-{{ end -}}
-{{ end -}}
 {{ $context := . -}}
 type {{ .ShapeName }} struct {
 	_ struct{} {{ .GoTags true false }}

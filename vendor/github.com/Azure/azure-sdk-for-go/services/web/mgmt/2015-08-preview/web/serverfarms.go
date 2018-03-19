@@ -41,8 +41,8 @@ func NewServerFarmsClientWithBaseURI(baseURI string, subscriptionID string) Serv
 
 // CreateOrUpdateServerFarm sends the create or update server farm request.
 //
-// resourceGroupName is name of resource group name is name of App Service Plan serverFarmEnvelope is details of App
-// Service Plan allowPendingState is oBSOLETE: If true, allow pending state for App Service Plan
+// resourceGroupName is name of resource group name is name of App Service Plan serverFarmEnvelope is details of
+// App Service Plan allowPendingState is oBSOLETE: If true, allow pending state for App Service Plan
 func (client ServerFarmsClient) CreateOrUpdateServerFarm(ctx context.Context, resourceGroupName string, name string, serverFarmEnvelope ServerFarmWithRichSku, allowPendingState *bool) (result ServerFarmsCreateOrUpdateServerFarmFuture, err error) {
 	req, err := client.CreateOrUpdateServerFarmPreparer(ctx, resourceGroupName, name, serverFarmEnvelope, allowPendingState)
 	if err != nil {
@@ -617,9 +617,9 @@ func (client ServerFarmsClient) GetServerFarmMetricDefintionsComplete(ctx contex
 
 // GetServerFarmMetrics sends the get server farm metrics request.
 //
-// resourceGroupName is name of resource group name is name of App Service Plan details is if true, metrics are broken
-// down per App Service Plan instance filter is return only usages/metrics specified in the filter. Filter conforms to
-// odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
+// resourceGroupName is name of resource group name is name of App Service Plan details is if true, metrics are
+// broken down per App Service Plan instance filter is return only usages/metrics specified in the filter. Filter
+// conforms to odata syntax. Example: $filter=(name.value eq 'Metric1' or name.value eq 'Metric2') and startTime eq
 // '2014-01-01T00:00:00Z' and endTime eq '2014-12-31T23:59:59Z' and timeGrain eq duration'[Hour|Minute|Day]'.
 func (client ServerFarmsClient) GetServerFarmMetrics(ctx context.Context, resourceGroupName string, name string, details *bool, filter string) (result ResourceMetricCollectionPage, err error) {
 	result.fn = client.getServerFarmMetricsNextResults
@@ -881,10 +881,11 @@ func (client ServerFarmsClient) GetServerFarmsComplete(ctx context.Context, reso
 
 // GetServerFarmSites sends the get server farm sites request.
 //
-// resourceGroupName is name of resource group name is name of App Service Plan skipToken is skip to of web apps in a
-// list. If specified, the resulting list will contain web apps starting from (including) the skipToken. Else, the
-// resulting list contains web apps from the start of the list filter is supported filter: $filter=state eq running.
-// Returns only web apps that are currently running top is list page size. If specified, results are paged.
+// resourceGroupName is name of resource group name is name of App Service Plan skipToken is skip to of web apps in
+// a list. If specified, the resulting list will contain web apps starting from (including) the skipToken. Else,
+// the resulting list contains web apps from the start of the list filter is supported filter: $filter=state eq
+// running. Returns only web apps that are currently running top is list page size. If specified, results are
+// paged.
 func (client ServerFarmsClient) GetServerFarmSites(ctx context.Context, resourceGroupName string, name string, skipToken string, filter string, top string) (result SiteCollectionPage, err error) {
 	result.fn = client.getServerFarmSitesNextResults
 	req, err := client.GetServerFarmSitesPreparer(ctx, resourceGroupName, name, skipToken, filter, top)
@@ -1257,8 +1258,9 @@ func (client ServerFarmsClient) RebootWorkerForServerFarmResponder(resp *http.Re
 
 // RestartSitesForServerFarm sends the restart sites for server farm request.
 //
-// resourceGroupName is name of resource group name is name of App Service Plan softRestart is soft restart applies the
-// configuration settings and restarts the apps if necessary. Hard restart always restarts and reprovisions the apps
+// resourceGroupName is name of resource group name is name of App Service Plan softRestart is soft restart applies
+// the configuration settings and restarts the apps if necessary. Hard restart always restarts and reprovisions the
+// apps
 func (client ServerFarmsClient) RestartSitesForServerFarm(ctx context.Context, resourceGroupName string, name string, softRestart *bool) (result SetObject, err error) {
 	req, err := client.RestartSitesForServerFarmPreparer(ctx, resourceGroupName, name, softRestart)
 	if err != nil {
@@ -1327,9 +1329,9 @@ func (client ServerFarmsClient) RestartSitesForServerFarmResponder(resp *http.Re
 
 // UpdateServerFarmVnetGateway sends the update server farm vnet gateway request.
 //
-// resourceGroupName is the resource group name is the name of the App Service Plan vnetName is the name of the virtual
-// network gatewayName is the name of the gateway. Only 'primary' is supported. connectionEnvelope is the gateway
-// entity.
+// resourceGroupName is the resource group name is the name of the App Service Plan vnetName is the name of the
+// virtual network gatewayName is the name of the gateway. Only 'primary' is supported. connectionEnvelope is the
+// gateway entity.
 func (client ServerFarmsClient) UpdateServerFarmVnetGateway(ctx context.Context, resourceGroupName string, name string, vnetName string, gatewayName string, connectionEnvelope VnetGateway) (result VnetGateway, err error) {
 	req, err := client.UpdateServerFarmVnetGatewayPreparer(ctx, resourceGroupName, name, vnetName, gatewayName, connectionEnvelope)
 	if err != nil {

@@ -18,6 +18,7 @@ package dns
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/to"
 	"net/http"
@@ -88,6 +89,10 @@ type PtrRecord struct {
 // RecordSet describes a DNS RecordSet (a set of DNS records with the same name and type).
 type RecordSet struct {
 	autorest.Response `json:"-"`
+	// Etag - Gets or sets the ETag of the RecordSet.
+	Etag *string `json:"etag,omitempty"`
+	// Properties - Gets or sets the properties of the RecordSet.
+	Properties *RecordSetProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -97,11 +102,34 @@ type RecordSet struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Etag - Gets or sets the ETag of the RecordSet.
-	Etag *string `json:"etag,omitempty"`
-	// Properties - Gets or sets the properties of the RecordSet.
-	Properties *RecordSetProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for RecordSet.
+func (rs RecordSet) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if rs.Etag != nil {
+		objectMap["etag"] = rs.Etag
+	}
+	if rs.Properties != nil {
+		objectMap["properties"] = rs.Properties
+	}
+	if rs.ID != nil {
+		objectMap["id"] = rs.ID
+	}
+	if rs.Name != nil {
+		objectMap["name"] = rs.Name
+	}
+	if rs.Type != nil {
+		objectMap["type"] = rs.Type
+	}
+	if rs.Location != nil {
+		objectMap["location"] = rs.Location
+	}
+	if rs.Tags != nil {
+		objectMap["tags"] = rs.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // RecordSetListResult the response to a RecordSet List operation.
@@ -241,7 +269,28 @@ type Resource struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // SoaRecord an SOA record.
@@ -289,6 +338,10 @@ type TxtRecord struct {
 // Zone describes a DNS zone.
 type Zone struct {
 	autorest.Response `json:"-"`
+	// Etag - Gets or sets the ETag of the zone that is being updated, as received from a Get operation.
+	Etag *string `json:"etag,omitempty"`
+	// Properties - Gets or sets the properties of the zone.
+	Properties *ZoneProperties `json:"properties,omitempty"`
 	// ID - Resource Id
 	ID *string `json:"id,omitempty"`
 	// Name - Resource name
@@ -298,11 +351,34 @@ type Zone struct {
 	// Location - Resource location
 	Location *string `json:"location,omitempty"`
 	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Etag - Gets or sets the ETag of the zone that is being updated, as received from a Get operation.
-	Etag *string `json:"etag,omitempty"`
-	// Properties - Gets or sets the properties of the zone.
-	Properties *ZoneProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Zone.
+func (z Zone) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if z.Etag != nil {
+		objectMap["etag"] = z.Etag
+	}
+	if z.Properties != nil {
+		objectMap["properties"] = z.Properties
+	}
+	if z.ID != nil {
+		objectMap["id"] = z.ID
+	}
+	if z.Name != nil {
+		objectMap["name"] = z.Name
+	}
+	if z.Type != nil {
+		objectMap["type"] = z.Type
+	}
+	if z.Location != nil {
+		objectMap["location"] = z.Location
+	}
+	if z.Tags != nil {
+		objectMap["tags"] = z.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ZoneListResult the response to a Zone List or ListAll operation.

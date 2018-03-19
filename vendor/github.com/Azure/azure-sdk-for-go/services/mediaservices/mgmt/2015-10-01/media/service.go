@@ -52,7 +52,7 @@ func (client ServiceClient) CheckNameAvailability(ctx context.Context, parameter
 					{Target: "parameters.Name", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil},
 				}},
 				{Target: "parameters.Type", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "CheckNameAvailability")
+		return result, validation.NewError("media.ServiceClient", "CheckNameAvailability", err.Error())
 	}
 
 	req, err := client.CheckNameAvailabilityPreparer(ctx, parameters)
@@ -119,15 +119,15 @@ func (client ServiceClient) CheckNameAvailabilityResponder(resp *http.Response) 
 
 // Create creates a Media Service.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the Media
-// Service. parameters is media Service properties needed for creation.
+// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
+// Media Service. parameters is media Service properties needed for creation.
 func (client ServiceClient) Create(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters Service) (result Service, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
 			Constraints: []validation.Constraint{{Target: "mediaServiceName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "Create")
+		return result, validation.NewError("media.ServiceClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, mediaServiceName, parameters)
@@ -196,15 +196,15 @@ func (client ServiceClient) CreateResponder(resp *http.Response) (result Service
 
 // Delete deletes a Media Service.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the Media
-// Service.
+// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
+// Media Service.
 func (client ServiceClient) Delete(ctx context.Context, resourceGroupName string, mediaServiceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
 			Constraints: []validation.Constraint{{Target: "mediaServiceName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "Delete")
+		return result, validation.NewError("media.ServiceClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, mediaServiceName)
@@ -270,15 +270,15 @@ func (client ServiceClient) DeleteResponder(resp *http.Response) (result autores
 
 // Get gets a Media Service.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the Media
-// Service.
+// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
+// Media Service.
 func (client ServiceClient) Get(ctx context.Context, resourceGroupName string, mediaServiceName string) (result Service, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
 			Constraints: []validation.Constraint{{Target: "mediaServiceName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "Get")
+		return result, validation.NewError("media.ServiceClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, mediaServiceName)
@@ -410,15 +410,15 @@ func (client ServiceClient) ListByResourceGroupResponder(resp *http.Response) (r
 
 // ListKeys lists the keys for a Media Service.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the Media
-// Service.
+// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
+// Media Service.
 func (client ServiceClient) ListKeys(ctx context.Context, resourceGroupName string, mediaServiceName string) (result ServiceKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
 			Constraints: []validation.Constraint{{Target: "mediaServiceName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "ListKeys")
+		return result, validation.NewError("media.ServiceClient", "ListKeys", err.Error())
 	}
 
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, mediaServiceName)
@@ -485,15 +485,15 @@ func (client ServiceClient) ListKeysResponder(resp *http.Response) (result Servi
 
 // RegenerateKey regenerates a primary or secondary key for a Media Service.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the Media
-// Service. parameters is properties needed to regenerate the Media Service key.
+// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
+// Media Service. parameters is properties needed to regenerate the Media Service key.
 func (client ServiceClient) RegenerateKey(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters RegenerateKeyInput) (result RegenerateKeyOutput, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
 			Constraints: []validation.Constraint{{Target: "mediaServiceName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "RegenerateKey")
+		return result, validation.NewError("media.ServiceClient", "RegenerateKey", err.Error())
 	}
 
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, mediaServiceName, parameters)
@@ -562,8 +562,9 @@ func (client ServiceClient) RegenerateKeyResponder(resp *http.Response) (result 
 
 // SyncStorageKeys synchronizes storage account keys for a storage account associated with the Media Service account.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the Media
-// Service. parameters is properties needed to synchronize the keys for a storage account to the Media Service.
+// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
+// Media Service. parameters is properties needed to synchronize the keys for a storage account to the Media
+// Service.
 func (client ServiceClient) SyncStorageKeys(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters SyncStorageKeysInput) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
@@ -572,7 +573,7 @@ func (client ServiceClient) SyncStorageKeys(ctx context.Context, resourceGroupNa
 				{Target: "mediaServiceName", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.ID", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "SyncStorageKeys")
+		return result, validation.NewError("media.ServiceClient", "SyncStorageKeys", err.Error())
 	}
 
 	req, err := client.SyncStorageKeysPreparer(ctx, resourceGroupName, mediaServiceName, parameters)
@@ -640,15 +641,15 @@ func (client ServiceClient) SyncStorageKeysResponder(resp *http.Response) (resul
 
 // Update updates a Media Service.
 //
-// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the Media
-// Service. parameters is media Service properties needed for update.
+// resourceGroupName is name of the resource group within the Azure subscription. mediaServiceName is name of the
+// Media Service. parameters is media Service properties needed for update.
 func (client ServiceClient) Update(ctx context.Context, resourceGroupName string, mediaServiceName string, parameters Service) (result Service, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: mediaServiceName,
 			Constraints: []validation.Constraint{{Target: "mediaServiceName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "mediaServiceName", Name: validation.Pattern, Rule: `^[a-z0-9]{3,24}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "media.ServiceClient", "Update")
+		return result, validation.NewError("media.ServiceClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, mediaServiceName, parameters)

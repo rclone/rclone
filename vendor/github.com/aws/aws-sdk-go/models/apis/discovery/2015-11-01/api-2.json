@@ -6,6 +6,7 @@
     "jsonVersion":"1.1",
     "protocol":"json",
     "serviceFullName":"AWS Application Discovery Service",
+    "serviceId":"Application Discovery Service",
     "signatureVersion":"v4",
     "targetPrefix":"AWSPoseidonService_V2015_11_01",
     "uid":"discovery-2015-11-01"

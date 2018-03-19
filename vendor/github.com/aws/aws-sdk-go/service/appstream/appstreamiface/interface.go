@@ -64,6 +64,10 @@ type AppStreamAPI interface {
 	AssociateFleetWithContext(aws.Context, *appstream.AssociateFleetInput, ...request.Option) (*appstream.AssociateFleetOutput, error)
 	AssociateFleetRequest(*appstream.AssociateFleetInput) (*request.Request, *appstream.AssociateFleetOutput)
 
+	CopyImage(*appstream.CopyImageInput) (*appstream.CopyImageOutput, error)
+	CopyImageWithContext(aws.Context, *appstream.CopyImageInput, ...request.Option) (*appstream.CopyImageOutput, error)
+	CopyImageRequest(*appstream.CopyImageInput) (*request.Request, *appstream.CopyImageOutput)
+
 	CreateDirectoryConfig(*appstream.CreateDirectoryConfigInput) (*appstream.CreateDirectoryConfigOutput, error)
 	CreateDirectoryConfigWithContext(aws.Context, *appstream.CreateDirectoryConfigInput, ...request.Option) (*appstream.CreateDirectoryConfigOutput, error)
 	CreateDirectoryConfigRequest(*appstream.CreateDirectoryConfigInput) (*request.Request, *appstream.CreateDirectoryConfigOutput)

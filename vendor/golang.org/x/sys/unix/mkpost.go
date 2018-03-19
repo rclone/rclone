@@ -65,14 +65,14 @@ func main() {
 	spareFieldsRegex := regexp.MustCompile(`X__spare\S*`)
 	b = spareFieldsRegex.ReplaceAll(b, []byte("_"))
 
+	// Remove cgo padding fields
+	removePaddingFieldsRegex := regexp.MustCompile(`Pad_cgo_\d+`)
+	b = removePaddingFieldsRegex.ReplaceAll(b, []byte("_"))
+
 	// We refuse to export private fields on s390x
 	if goarch == "s390x" && goos == "linux" {
-		// Remove cgo padding fields
-		removeFieldsRegex := regexp.MustCompile(`Pad_cgo_\d+`)
-		b = removeFieldsRegex.ReplaceAll(b, []byte("_"))
-
 		// Remove padding, hidden, or unused fields
-		removeFieldsRegex = regexp.MustCompile(`X_\S+`)
+		removeFieldsRegex = regexp.MustCompile(`\bX_\S+`)
 		b = removeFieldsRegex.ReplaceAll(b, []byte("_"))
 	}
 

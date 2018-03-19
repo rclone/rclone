@@ -42,8 +42,8 @@ func NewLinkedServicesClientWithBaseURI(baseURI string, subscriptionID string) L
 
 // CreateOrUpdate create or update a linked service.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name of
-// the Log Analytics Workspace that will contain the linkedServices resource linkedServiceName is name of the
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
+// of the Log Analytics Workspace that will contain the linkedServices resource linkedServiceName is name of the
 // linkedServices resource parameters is the parameters required to create or update a linked service.
 func (client LinkedServicesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, workspaceName string, linkedServiceName string, parameters LinkedService) (result LinkedService, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -54,7 +54,7 @@ func (client LinkedServicesClient) CreateOrUpdate(ctx context.Context, resourceG
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.LinkedServiceProperties", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "parameters.LinkedServiceProperties.ResourceID", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.LinkedServicesClient", "CreateOrUpdate")
+		return result, validation.NewError("operationalinsights.LinkedServicesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, workspaceName, linkedServiceName, parameters)
@@ -124,8 +124,8 @@ func (client LinkedServicesClient) CreateOrUpdateResponder(resp *http.Response) 
 
 // Delete deletes a linked service instance.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name of
-// the Log Analytics Workspace that contains the linkedServices resource linkedServiceName is name of the linked
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
+// of the Log Analytics Workspace that contains the linkedServices resource linkedServiceName is name of the linked
 // service.
 func (client LinkedServicesClient) Delete(ctx context.Context, resourceGroupName string, workspaceName string, linkedServiceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -133,7 +133,7 @@ func (client LinkedServicesClient) Delete(ctx context.Context, resourceGroupName
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.LinkedServicesClient", "Delete")
+		return result, validation.NewError("operationalinsights.LinkedServicesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, workspaceName, linkedServiceName)
@@ -200,8 +200,8 @@ func (client LinkedServicesClient) DeleteResponder(resp *http.Response) (result 
 
 // Get gets a linked service instance.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name of
-// the Log Analytics Workspace that contains the linkedServices resource linkedServiceName is name of the linked
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
+// of the Log Analytics Workspace that contains the linkedServices resource linkedServiceName is name of the linked
 // service.
 func (client LinkedServicesClient) Get(ctx context.Context, resourceGroupName string, workspaceName string, linkedServiceName string) (result LinkedService, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -209,7 +209,7 @@ func (client LinkedServicesClient) Get(ctx context.Context, resourceGroupName st
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.LinkedServicesClient", "Get")
+		return result, validation.NewError("operationalinsights.LinkedServicesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, workspaceName, linkedServiceName)
@@ -277,15 +277,15 @@ func (client LinkedServicesClient) GetResponder(resp *http.Response) (result Lin
 
 // ListByWorkspace gets the linked services instances in a workspace.
 //
-// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name of
-// the Log Analytics Workspace that contains the linked services.
+// resourceGroupName is the name of the resource group to get. The name is case insensitive. workspaceName is name
+// of the Log Analytics Workspace that contains the linked services.
 func (client LinkedServicesClient) ListByWorkspace(ctx context.Context, resourceGroupName string, workspaceName string) (result LinkedServiceListResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
 			Constraints: []validation.Constraint{{Target: "resourceGroupName", Name: validation.MaxLength, Rule: 90, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "resourceGroupName", Name: validation.Pattern, Rule: `^[-\w\._\(\)]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "operationalinsights.LinkedServicesClient", "ListByWorkspace")
+		return result, validation.NewError("operationalinsights.LinkedServicesClient", "ListByWorkspace", err.Error())
 	}
 
 	req, err := client.ListByWorkspacePreparer(ctx, resourceGroupName, workspaceName)

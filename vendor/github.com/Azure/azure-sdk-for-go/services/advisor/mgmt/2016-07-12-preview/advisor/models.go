@@ -205,13 +205,40 @@ type RecommendationProperties struct {
 	// LastUpdated - The most recent time that Advisor checked the validity of the recommendation.
 	LastUpdated *date.Time `json:"lastUpdated,omitempty"`
 	// Metadata - The recommendation metadata.
-	Metadata *map[string]*map[string]interface{} `json:"metadata,omitempty"`
+	Metadata map[string]interface{} `json:"metadata"`
 	// RecommendationTypeID - The recommendation-type GUID.
 	RecommendationTypeID *string `json:"recommendationTypeId,omitempty"`
 	// Risk - The potential risk of not implementing the recommendation. Possible values include: 'Error', 'Warning', 'None'
 	Risk Risk `json:"risk,omitempty"`
 	// ShortDescription - A summary of the recommendation.
 	ShortDescription *ShortDescription `json:"shortDescription,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for RecommendationProperties.
+func (rp RecommendationProperties) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["category"] = rp.Category
+	objectMap["impact"] = rp.Impact
+	if rp.ImpactedField != nil {
+		objectMap["impactedField"] = rp.ImpactedField
+	}
+	if rp.ImpactedValue != nil {
+		objectMap["impactedValue"] = rp.ImpactedValue
+	}
+	if rp.LastUpdated != nil {
+		objectMap["lastUpdated"] = rp.LastUpdated
+	}
+	if rp.Metadata != nil {
+		objectMap["metadata"] = rp.Metadata
+	}
+	if rp.RecommendationTypeID != nil {
+		objectMap["recommendationTypeId"] = rp.RecommendationTypeID
+	}
+	objectMap["risk"] = rp.Risk
+	if rp.ShortDescription != nil {
+		objectMap["shortDescription"] = rp.ShortDescription
+	}
+	return json.Marshal(objectMap)
 }
 
 // Resource an Azure resource.
@@ -225,7 +252,28 @@ type Resource struct {
 	// Location - The location of the resource. This cannot be changed after the resource is created.
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags of the resource.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // ResourceRecommendationBase advisor Recommendation.
@@ -250,56 +298,54 @@ func (rrb *ResourceRecommendationBase) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				rrb.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				rrb.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var recommendationProperties RecommendationProperties
+				err = json.Unmarshal(*v, &recommendationProperties)
+				if err != nil {
+					return err
+				}
+				rrb.RecommendationProperties = &recommendationProperties
+			}
+		case "suppressionIds":
+			if v != nil {
+				var suppressionIds []uuid.UUID
+				err = json.Unmarshal(*v, &suppressionIds)
+				if err != nil {
+					return err
+				}
+				rrb.SuppressionIds = &suppressionIds
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				rrb.Type = &typeVar
+			}
 		}
-		rrb.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		rrb.Name = &name
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties RecommendationProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		rrb.RecommendationProperties = &properties
-	}
-
-	v = m["suppressionIds"]
-	if v != nil {
-		var suppressionIds []uuid.UUID
-		err = json.Unmarshal(*m["suppressionIds"], &suppressionIds)
-		if err != nil {
-			return err
-		}
-		rrb.SuppressionIds = &suppressionIds
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		rrb.Type = &typeVar
 	}
 
 	return nil
@@ -420,6 +466,10 @@ type ShortDescription struct {
 // associated with the rule.
 type SuppressionContract struct {
 	autorest.Response `json:"-"`
+	// SuppressionID - The GUID of the suppression.
+	SuppressionID *string `json:"suppressionId,omitempty"`
+	// TTL - The duration for which the suppression is valid.
+	TTL *string `json:"ttl,omitempty"`
 	// ID - The resource ID.
 	ID *string `json:"id,omitempty"`
 	// Name - The name of the resource.
@@ -429,9 +479,32 @@ type SuppressionContract struct {
 	// Location - The location of the resource. This cannot be changed after the resource is created.
 	Location *string `json:"location,omitempty"`
 	// Tags - The tags of the resource.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// SuppressionID - The GUID of the suppression.
-	SuppressionID *string `json:"suppressionId,omitempty"`
-	// TTL - The duration for which the suppression is valid.
-	TTL *string `json:"ttl,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for SuppressionContract.
+func (sc SuppressionContract) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sc.SuppressionID != nil {
+		objectMap["suppressionId"] = sc.SuppressionID
+	}
+	if sc.TTL != nil {
+		objectMap["ttl"] = sc.TTL
+	}
+	if sc.ID != nil {
+		objectMap["id"] = sc.ID
+	}
+	if sc.Name != nil {
+		objectMap["name"] = sc.Name
+	}
+	if sc.Type != nil {
+		objectMap["type"] = sc.Type
+	}
+	if sc.Location != nil {
+		objectMap["location"] = sc.Location
+	}
+	if sc.Tags != nil {
+		objectMap["tags"] = sc.Tags
+	}
+	return json.Marshal(objectMap)
 }

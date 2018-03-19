@@ -21,12 +21,12 @@
 package dropbox
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 

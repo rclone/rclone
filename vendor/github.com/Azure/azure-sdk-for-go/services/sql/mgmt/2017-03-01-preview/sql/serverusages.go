@@ -43,8 +43,8 @@ func NewServerUsagesClientWithBaseURI(baseURI string, subscriptionID string) Ser
 
 // ListByServer returns server usages.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client ServerUsagesClient) ListByServer(ctx context.Context, resourceGroupName string, serverName string) (result ServerUsageListResult, err error) {
 	req, err := client.ListByServerPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {

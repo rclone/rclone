@@ -55,7 +55,7 @@ func (client AccountsClient) Create(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "parameters.Sku", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "parameters.Properties", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "Create")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, accountName, parameters)
@@ -132,7 +132,7 @@ func (client AccountsClient) Delete(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 2, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "Delete")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
@@ -206,7 +206,7 @@ func (client AccountsClient) GetProperties(ctx context.Context, resourceGroupNam
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 2, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "GetProperties")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "GetProperties", err.Error())
 	}
 
 	req, err := client.GetPropertiesPreparer(ctx, resourceGroupName, accountName)
@@ -464,7 +464,7 @@ func (client AccountsClient) ListKeys(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 2, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "ListKeys")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "ListKeys", err.Error())
 	}
 
 	req, err := client.ListKeysPreparer(ctx, resourceGroupName, accountName)
@@ -539,7 +539,7 @@ func (client AccountsClient) ListSkus(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 2, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "ListSkus")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "ListSkus", err.Error())
 	}
 
 	req, err := client.ListSkusPreparer(ctx, resourceGroupName, accountName)
@@ -614,7 +614,7 @@ func (client AccountsClient) RegenerateKey(ctx context.Context, resourceGroupNam
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 2, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "RegenerateKey")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "RegenerateKey", err.Error())
 	}
 
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, accountName, parameters)
@@ -691,7 +691,7 @@ func (client AccountsClient) Update(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 64, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 2, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9][a-zA-Z0-9_.-]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "cognitiveservices.AccountsClient", "Update")
+		return result, validation.NewError("cognitiveservices.AccountsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, parameters)

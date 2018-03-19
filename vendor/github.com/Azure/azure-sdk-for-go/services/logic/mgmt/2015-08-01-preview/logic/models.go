@@ -781,6 +781,10 @@ type EdifactValidationSettings struct {
 // IntegrationAccount ...
 type IntegrationAccount struct {
 	autorest.Response `json:"-"`
+	// Properties - The integration account properties.
+	Properties interface{} `json:"properties,omitempty"`
+	// Sku - The sku.
+	Sku *IntegrationAccountSku `json:"sku,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -790,16 +794,39 @@ type IntegrationAccount struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// Properties - The integration account properties.
-	Properties *map[string]interface{} `json:"properties,omitempty"`
-	// Sku - The sku.
-	Sku *IntegrationAccountSku `json:"sku,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccount.
+func (ia IntegrationAccount) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["properties"] = ia.Properties
+	if ia.Sku != nil {
+		objectMap["sku"] = ia.Sku
+	}
+	if ia.ID != nil {
+		objectMap["id"] = ia.ID
+	}
+	if ia.Name != nil {
+		objectMap["name"] = ia.Name
+	}
+	if ia.Type != nil {
+		objectMap["type"] = ia.Type
+	}
+	if ia.Location != nil {
+		objectMap["location"] = ia.Location
+	}
+	if ia.Tags != nil {
+		objectMap["tags"] = ia.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // IntegrationAccountAgreement ...
 type IntegrationAccountAgreement struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountAgreementProperties - The integration account agreement properties.
+	*IntegrationAccountAgreementProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -809,9 +836,31 @@ type IntegrationAccountAgreement struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountAgreementProperties - The integration account agreement properties.
-	*IntegrationAccountAgreementProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountAgreement.
+func (iaa IntegrationAccountAgreement) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iaa.IntegrationAccountAgreementProperties != nil {
+		objectMap["properties"] = iaa.IntegrationAccountAgreementProperties
+	}
+	if iaa.ID != nil {
+		objectMap["id"] = iaa.ID
+	}
+	if iaa.Name != nil {
+		objectMap["name"] = iaa.Name
+	}
+	if iaa.Type != nil {
+		objectMap["type"] = iaa.Type
+	}
+	if iaa.Location != nil {
+		objectMap["location"] = iaa.Location
+	}
+	if iaa.Tags != nil {
+		objectMap["tags"] = iaa.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountAgreement struct.
@@ -821,66 +870,63 @@ func (iaa *IntegrationAccountAgreement) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountAgreementProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountAgreementProperties IntegrationAccountAgreementProperties
+				err = json.Unmarshal(*v, &integrationAccountAgreementProperties)
+				if err != nil {
+					return err
+				}
+				iaa.IntegrationAccountAgreementProperties = &integrationAccountAgreementProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iaa.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iaa.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iaa.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iaa.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iaa.Tags = tags
+			}
 		}
-		iaa.IntegrationAccountAgreementProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iaa.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iaa.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iaa.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iaa.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iaa.Tags = &tags
 	}
 
 	return nil
@@ -901,8 +947,8 @@ type IntegrationAccountAgreementListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// IntegrationAccountAgreementListResultIterator provides access to a complete listing of IntegrationAccountAgreement
-// values.
+// IntegrationAccountAgreementListResultIterator provides access to a complete listing of
+// IntegrationAccountAgreement values.
 type IntegrationAccountAgreementListResultIterator struct {
 	i    int
 	page IntegrationAccountAgreementListResultPage
@@ -1002,7 +1048,7 @@ type IntegrationAccountAgreementProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// AgreementType - The agreement type. Possible values include: 'NotSpecified', 'AS2', 'X12', 'Edifact'
 	AgreementType AgreementType `json:"agreementType,omitempty"`
 	// HostPartner - The host partner.
@@ -1020,6 +1066,8 @@ type IntegrationAccountAgreementProperties struct {
 // IntegrationAccountCertificate ...
 type IntegrationAccountCertificate struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountCertificateProperties - The integration account certificate properties.
+	*IntegrationAccountCertificateProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -1029,9 +1077,31 @@ type IntegrationAccountCertificate struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountCertificateProperties - The integration account certificate properties.
-	*IntegrationAccountCertificateProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountCertificate.
+func (iac IntegrationAccountCertificate) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iac.IntegrationAccountCertificateProperties != nil {
+		objectMap["properties"] = iac.IntegrationAccountCertificateProperties
+	}
+	if iac.ID != nil {
+		objectMap["id"] = iac.ID
+	}
+	if iac.Name != nil {
+		objectMap["name"] = iac.Name
+	}
+	if iac.Type != nil {
+		objectMap["type"] = iac.Type
+	}
+	if iac.Location != nil {
+		objectMap["location"] = iac.Location
+	}
+	if iac.Tags != nil {
+		objectMap["tags"] = iac.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountCertificate struct.
@@ -1041,66 +1111,63 @@ func (iac *IntegrationAccountCertificate) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountCertificateProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountCertificateProperties IntegrationAccountCertificateProperties
+				err = json.Unmarshal(*v, &integrationAccountCertificateProperties)
+				if err != nil {
+					return err
+				}
+				iac.IntegrationAccountCertificateProperties = &integrationAccountCertificateProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iac.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iac.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iac.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iac.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iac.Tags = tags
+			}
 		}
-		iac.IntegrationAccountCertificateProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iac.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iac.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iac.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iac.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iac.Tags = &tags
 	}
 
 	return nil
@@ -1216,7 +1283,7 @@ type IntegrationAccountCertificateProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// Key - The key details in the key vault.
 	Key *KeyVaultKeyReference `json:"key,omitempty"`
 	// PublicCertificate - The public certificate.
@@ -1242,7 +1309,7 @@ type IntegrationAccountContentLink struct {
 	// ContentHash - The content hash.
 	ContentHash *IntegrationAccountContentHash `json:"contentHash,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 }
 
 // IntegrationAccountListResult ...
@@ -1350,6 +1417,8 @@ func (page IntegrationAccountListResultPage) Values() []IntegrationAccount {
 // IntegrationAccountMap ...
 type IntegrationAccountMap struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountMapProperties - The integration account map properties.
+	*IntegrationAccountMapProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -1359,9 +1428,31 @@ type IntegrationAccountMap struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountMapProperties - The integration account map properties.
-	*IntegrationAccountMapProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountMap.
+func (iam IntegrationAccountMap) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iam.IntegrationAccountMapProperties != nil {
+		objectMap["properties"] = iam.IntegrationAccountMapProperties
+	}
+	if iam.ID != nil {
+		objectMap["id"] = iam.ID
+	}
+	if iam.Name != nil {
+		objectMap["name"] = iam.Name
+	}
+	if iam.Type != nil {
+		objectMap["type"] = iam.Type
+	}
+	if iam.Location != nil {
+		objectMap["location"] = iam.Location
+	}
+	if iam.Tags != nil {
+		objectMap["tags"] = iam.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountMap struct.
@@ -1371,66 +1462,63 @@ func (iam *IntegrationAccountMap) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountMapProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountMapProperties IntegrationAccountMapProperties
+				err = json.Unmarshal(*v, &integrationAccountMapProperties)
+				if err != nil {
+					return err
+				}
+				iam.IntegrationAccountMapProperties = &integrationAccountMapProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iam.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iam.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iam.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iam.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iam.Tags = tags
+			}
 		}
-		iam.IntegrationAccountMapProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iam.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iam.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iam.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iam.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iam.Tags = &tags
 	}
 
 	return nil
@@ -1553,18 +1641,20 @@ type IntegrationAccountMapProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Content - The content.
-	Content *map[string]interface{} `json:"content,omitempty"`
+	Content interface{} `json:"content,omitempty"`
 	// ContentType - The content type.
 	ContentType *string `json:"contentType,omitempty"`
 	// ContentLink - The content link.
 	ContentLink *IntegrationAccountContentLink `json:"contentLink,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 }
 
 // IntegrationAccountPartner ...
 type IntegrationAccountPartner struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountPartnerProperties - The integration account partner properties.
+	*IntegrationAccountPartnerProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -1574,9 +1664,31 @@ type IntegrationAccountPartner struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountPartnerProperties - The integration account partner properties.
-	*IntegrationAccountPartnerProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountPartner.
+func (iap IntegrationAccountPartner) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iap.IntegrationAccountPartnerProperties != nil {
+		objectMap["properties"] = iap.IntegrationAccountPartnerProperties
+	}
+	if iap.ID != nil {
+		objectMap["id"] = iap.ID
+	}
+	if iap.Name != nil {
+		objectMap["name"] = iap.Name
+	}
+	if iap.Type != nil {
+		objectMap["type"] = iap.Type
+	}
+	if iap.Location != nil {
+		objectMap["location"] = iap.Location
+	}
+	if iap.Tags != nil {
+		objectMap["tags"] = iap.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountPartner struct.
@@ -1586,66 +1698,63 @@ func (iap *IntegrationAccountPartner) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountPartnerProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountPartnerProperties IntegrationAccountPartnerProperties
+				err = json.Unmarshal(*v, &integrationAccountPartnerProperties)
+				if err != nil {
+					return err
+				}
+				iap.IntegrationAccountPartnerProperties = &integrationAccountPartnerProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				iap.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				iap.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				iap.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				iap.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				iap.Tags = tags
+			}
 		}
-		iap.IntegrationAccountPartnerProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		iap.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		iap.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		iap.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		iap.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		iap.Tags = &tags
 	}
 
 	return nil
@@ -1769,7 +1878,7 @@ type IntegrationAccountPartnerProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 	// Content - The partner content.
 	Content *PartnerContent `json:"content,omitempty"`
 }
@@ -1785,12 +1894,35 @@ type IntegrationAccountResource struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountResource.
+func (iar IntegrationAccountResource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if iar.ID != nil {
+		objectMap["id"] = iar.ID
+	}
+	if iar.Name != nil {
+		objectMap["name"] = iar.Name
+	}
+	if iar.Type != nil {
+		objectMap["type"] = iar.Type
+	}
+	if iar.Location != nil {
+		objectMap["location"] = iar.Location
+	}
+	if iar.Tags != nil {
+		objectMap["tags"] = iar.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // IntegrationAccountSchema ...
 type IntegrationAccountSchema struct {
 	autorest.Response `json:"-"`
+	// IntegrationAccountSchemaProperties - The integration account schema properties.
+	*IntegrationAccountSchemaProperties `json:"properties,omitempty"`
 	// ID - The resource id.
 	ID *string `json:"id,omitempty"`
 	// Name - The resource name.
@@ -1800,9 +1932,31 @@ type IntegrationAccountSchema struct {
 	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
 	// Tags - The resource tags.
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// IntegrationAccountSchemaProperties - The integration account schema properties.
-	*IntegrationAccountSchemaProperties `json:"properties,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for IntegrationAccountSchema.
+func (ias IntegrationAccountSchema) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ias.IntegrationAccountSchemaProperties != nil {
+		objectMap["properties"] = ias.IntegrationAccountSchemaProperties
+	}
+	if ias.ID != nil {
+		objectMap["id"] = ias.ID
+	}
+	if ias.Name != nil {
+		objectMap["name"] = ias.Name
+	}
+	if ias.Type != nil {
+		objectMap["type"] = ias.Type
+	}
+	if ias.Location != nil {
+		objectMap["location"] = ias.Location
+	}
+	if ias.Tags != nil {
+		objectMap["tags"] = ias.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for IntegrationAccountSchema struct.
@@ -1812,66 +1966,63 @@ func (ias *IntegrationAccountSchema) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties IntegrationAccountSchemaProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var integrationAccountSchemaProperties IntegrationAccountSchemaProperties
+				err = json.Unmarshal(*v, &integrationAccountSchemaProperties)
+				if err != nil {
+					return err
+				}
+				ias.IntegrationAccountSchemaProperties = &integrationAccountSchemaProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				ias.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ias.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				ias.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				ias.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				ias.Tags = tags
+			}
 		}
-		ias.IntegrationAccountSchemaProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		ias.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		ias.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		ias.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		ias.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		ias.Tags = &tags
 	}
 
 	return nil
@@ -1892,7 +2043,8 @@ type IntegrationAccountSchemaListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// IntegrationAccountSchemaListResultIterator provides access to a complete listing of IntegrationAccountSchema values.
+// IntegrationAccountSchemaListResultIterator provides access to a complete listing of IntegrationAccountSchema
+// values.
 type IntegrationAccountSchemaListResultIterator struct {
 	i    int
 	page IntegrationAccountSchemaListResultPage
@@ -1996,13 +2148,13 @@ type IntegrationAccountSchemaProperties struct {
 	// ChangedTime - The changed time.
 	ChangedTime *date.Time `json:"changedTime,omitempty"`
 	// Content - The content.
-	Content *map[string]interface{} `json:"content,omitempty"`
+	Content interface{} `json:"content,omitempty"`
 	// ContentType - The content type.
 	ContentType *string `json:"contentType,omitempty"`
 	// ContentLink - The content link.
 	ContentLink *IntegrationAccountContentLink `json:"contentLink,omitempty"`
 	// Metadata - The metadata.
-	Metadata *map[string]interface{} `json:"metadata,omitempty"`
+	Metadata interface{} `json:"metadata,omitempty"`
 }
 
 // IntegrationAccountSku ...

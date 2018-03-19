@@ -63,7 +63,7 @@ func (client IntegrationRuntimeNodesClient) Delete(ctx context.Context, resource
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 150, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-z0-9A-Z][a-z0-9A-Z_-]{0,149}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.IntegrationRuntimeNodesClient", "Delete")
+		return result, validation.NewError("datafactory.IntegrationRuntimeNodesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, factoryName, integrationRuntimeName, nodeName)
@@ -151,7 +151,7 @@ func (client IntegrationRuntimeNodesClient) GetIPAddress(ctx context.Context, re
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 150, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-z0-9A-Z][a-z0-9A-Z_-]{0,149}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.IntegrationRuntimeNodesClient", "GetIPAddress")
+		return result, validation.NewError("datafactory.IntegrationRuntimeNodesClient", "GetIPAddress", err.Error())
 	}
 
 	req, err := client.GetIPAddressPreparer(ctx, resourceGroupName, factoryName, integrationRuntimeName, nodeName)
@@ -221,8 +221,8 @@ func (client IntegrationRuntimeNodesClient) GetIPAddressResponder(resp *http.Res
 // Update updates a self-hosted integration runtime node.
 //
 // resourceGroupName is the resource group name. factoryName is the factory name. integrationRuntimeName is the
-// integration runtime name. nodeName is the integration runtime node name. updateIntegrationRuntimeNodeRequest is the
-// parameters for updating an integration runtime node.
+// integration runtime name. nodeName is the integration runtime node name. updateIntegrationRuntimeNodeRequest is
+// the parameters for updating an integration runtime node.
 func (client IntegrationRuntimeNodesClient) Update(ctx context.Context, resourceGroupName string, factoryName string, integrationRuntimeName string, nodeName string, updateIntegrationRuntimeNodeRequest UpdateIntegrationRuntimeNodeRequest) (result SelfHostedIntegrationRuntimeNode, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -241,7 +241,7 @@ func (client IntegrationRuntimeNodesClient) Update(ctx context.Context, resource
 			Constraints: []validation.Constraint{{Target: "nodeName", Name: validation.MaxLength, Rule: 150, Chain: nil},
 				{Target: "nodeName", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "nodeName", Name: validation.Pattern, Rule: `^[a-z0-9A-Z][a-z0-9A-Z_-]{0,149}$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "datafactory.IntegrationRuntimeNodesClient", "Update")
+		return result, validation.NewError("datafactory.IntegrationRuntimeNodesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, factoryName, integrationRuntimeName, nodeName, updateIntegrationRuntimeNodeRequest)

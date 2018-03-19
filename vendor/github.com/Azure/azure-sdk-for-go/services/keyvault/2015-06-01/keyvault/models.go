@@ -18,6 +18,7 @@ package keyvault
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/date"
 	"github.com/Azure/go-autorest/autorest/to"
@@ -195,7 +196,40 @@ type CertificateBundle struct {
 	// Attributes - The certificate attributes.
 	Attributes *CertificateAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for CertificateBundle.
+func (cb CertificateBundle) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cb.ID != nil {
+		objectMap["id"] = cb.ID
+	}
+	if cb.Kid != nil {
+		objectMap["kid"] = cb.Kid
+	}
+	if cb.Sid != nil {
+		objectMap["sid"] = cb.Sid
+	}
+	if cb.X509Thumbprint != nil {
+		objectMap["x5t"] = cb.X509Thumbprint
+	}
+	if cb.Policy != nil {
+		objectMap["policy"] = cb.Policy
+	}
+	if cb.Cer != nil {
+		objectMap["cer"] = cb.Cer
+	}
+	if cb.ContentType != nil {
+		objectMap["contentType"] = cb.ContentType
+	}
+	if cb.Attributes != nil {
+		objectMap["attributes"] = cb.Attributes
+	}
+	if cb.Tags != nil {
+		objectMap["tags"] = cb.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // CertificateCreateParameters the certificate create parameters
@@ -205,7 +239,22 @@ type CertificateCreateParameters struct {
 	// CertificateAttributes - The attributes of the certificate (optional)
 	CertificateAttributes *CertificateAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for CertificateCreateParameters.
+func (ccp CertificateCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ccp.CertificatePolicy != nil {
+		objectMap["policy"] = ccp.CertificatePolicy
+	}
+	if ccp.CertificateAttributes != nil {
+		objectMap["attributes"] = ccp.CertificateAttributes
+	}
+	if ccp.Tags != nil {
+		objectMap["tags"] = ccp.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // CertificateImportParameters the certificate import parameters
@@ -219,7 +268,28 @@ type CertificateImportParameters struct {
 	// CertificateAttributes - The attributes of the certificate (optional)
 	CertificateAttributes *CertificateAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for CertificateImportParameters.
+func (cip CertificateImportParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cip.Base64EncodedCertificate != nil {
+		objectMap["value"] = cip.Base64EncodedCertificate
+	}
+	if cip.Password != nil {
+		objectMap["pwd"] = cip.Password
+	}
+	if cip.CertificatePolicy != nil {
+		objectMap["policy"] = cip.CertificatePolicy
+	}
+	if cip.CertificateAttributes != nil {
+		objectMap["attributes"] = cip.CertificateAttributes
+	}
+	if cip.Tags != nil {
+		objectMap["tags"] = cip.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // CertificateIssuerItem the certificate issuer item containing certificate issuer metadata
@@ -363,9 +433,27 @@ type CertificateItem struct {
 	// Attributes - The certificate management attributes
 	Attributes *CertificateAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// X509Thumbprint - Thumbprint of the certificate.
 	X509Thumbprint *string `json:"x5t,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CertificateItem.
+func (ci CertificateItem) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ci.ID != nil {
+		objectMap["id"] = ci.ID
+	}
+	if ci.Attributes != nil {
+		objectMap["attributes"] = ci.Attributes
+	}
+	if ci.Tags != nil {
+		objectMap["tags"] = ci.Tags
+	}
+	if ci.X509Thumbprint != nil {
+		objectMap["x5t"] = ci.X509Thumbprint
+	}
+	return json.Marshal(objectMap)
 }
 
 // CertificateListResult the certificate list result
@@ -477,7 +565,22 @@ type CertificateMergeParameters struct {
 	// CertificateAttributes - The attributes of the certificate (optional)
 	CertificateAttributes *CertificateAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for CertificateMergeParameters.
+func (cmp CertificateMergeParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cmp.X509Certificates != nil {
+		objectMap["x5c"] = cmp.X509Certificates
+	}
+	if cmp.CertificateAttributes != nil {
+		objectMap["attributes"] = cmp.CertificateAttributes
+	}
+	if cmp.Tags != nil {
+		objectMap["tags"] = cmp.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // CertificateOperation a certificate operation is returned in case of async requests.
@@ -535,7 +638,22 @@ type CertificateUpdateParameters struct {
 	// CertificateAttributes - The attributes of the certificate (optional)
 	CertificateAttributes *CertificateAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for CertificateUpdateParameters.
+func (cup CertificateUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cup.CertificatePolicy != nil {
+		objectMap["policy"] = cup.CertificatePolicy
+	}
+	if cup.CertificateAttributes != nil {
+		objectMap["attributes"] = cup.CertificateAttributes
+	}
+	if cup.Tags != nil {
+		objectMap["tags"] = cup.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // Contact the contact information for the vault certificates.
@@ -662,9 +780,27 @@ type KeyBundle struct {
 	// Attributes - The key management attributes
 	Attributes *KeyAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Managed - True if the key's lifetime is managed by key vault i.e. if this is a key backing a certificate, then managed will be true.
 	Managed *bool `json:"managed,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for KeyBundle.
+func (kb KeyBundle) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if kb.Key != nil {
+		objectMap["key"] = kb.Key
+	}
+	if kb.Attributes != nil {
+		objectMap["attributes"] = kb.Attributes
+	}
+	if kb.Tags != nil {
+		objectMap["tags"] = kb.Tags
+	}
+	if kb.Managed != nil {
+		objectMap["managed"] = kb.Managed
+	}
+	return json.Marshal(objectMap)
 }
 
 // KeyCreateParameters the key create parameters
@@ -676,7 +812,26 @@ type KeyCreateParameters struct {
 	KeyOps        *[]JSONWebKeyOperation `json:"key_ops,omitempty"`
 	KeyAttributes *KeyAttributes         `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for KeyCreateParameters.
+func (kcp KeyCreateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	objectMap["kty"] = kcp.Kty
+	if kcp.KeySize != nil {
+		objectMap["key_size"] = kcp.KeySize
+	}
+	if kcp.KeyOps != nil {
+		objectMap["key_ops"] = kcp.KeyOps
+	}
+	if kcp.KeyAttributes != nil {
+		objectMap["attributes"] = kcp.KeyAttributes
+	}
+	if kcp.Tags != nil {
+		objectMap["tags"] = kcp.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // KeyImportParameters the key import parameters
@@ -688,7 +843,25 @@ type KeyImportParameters struct {
 	// KeyAttributes - The key management attributes
 	KeyAttributes *KeyAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for KeyImportParameters.
+func (kip KeyImportParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if kip.Hsm != nil {
+		objectMap["Hsm"] = kip.Hsm
+	}
+	if kip.Key != nil {
+		objectMap["key"] = kip.Key
+	}
+	if kip.KeyAttributes != nil {
+		objectMap["attributes"] = kip.KeyAttributes
+	}
+	if kip.Tags != nil {
+		objectMap["tags"] = kip.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // KeyItem the key item containing key metadata
@@ -698,9 +871,27 @@ type KeyItem struct {
 	// Attributes - The key management attributes
 	Attributes *KeyAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Managed - True if the key's lifetime is managed by key vault i.e. if this is a key backing a certificate, then managed will be true.
 	Managed *bool `json:"managed,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for KeyItem.
+func (ki KeyItem) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ki.Kid != nil {
+		objectMap["kid"] = ki.Kid
+	}
+	if ki.Attributes != nil {
+		objectMap["attributes"] = ki.Attributes
+	}
+	if ki.Tags != nil {
+		objectMap["tags"] = ki.Tags
+	}
+	if ki.Managed != nil {
+		objectMap["managed"] = ki.Managed
+	}
+	return json.Marshal(objectMap)
 }
 
 // KeyListResult the key list result
@@ -851,7 +1042,22 @@ type KeyUpdateParameters struct {
 	KeyOps        *[]JSONWebKeyOperation `json:"key_ops,omitempty"`
 	KeyAttributes *KeyAttributes         `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for KeyUpdateParameters.
+func (kup KeyUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if kup.KeyOps != nil {
+		objectMap["key_ops"] = kup.KeyOps
+	}
+	if kup.KeyAttributes != nil {
+		objectMap["attributes"] = kup.KeyAttributes
+	}
+	if kup.Tags != nil {
+		objectMap["tags"] = kup.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // KeyVerifyParameters the key verify parameters
@@ -919,11 +1125,38 @@ type SecretBundle struct {
 	// Attributes - The secret management attributes
 	Attributes *SecretAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Kid - If this is a secret backing a KV certificate, then this field specifies the corresponding key backing the KV certificate.
 	Kid *string `json:"kid,omitempty"`
 	// Managed - True if the secret's lifetime is managed by key vault i.e. if this is a secret backing a certificate, then managed will be true.
 	Managed *bool `json:"managed,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SecretBundle.
+func (sb SecretBundle) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sb.Value != nil {
+		objectMap["value"] = sb.Value
+	}
+	if sb.ID != nil {
+		objectMap["id"] = sb.ID
+	}
+	if sb.ContentType != nil {
+		objectMap["contentType"] = sb.ContentType
+	}
+	if sb.Attributes != nil {
+		objectMap["attributes"] = sb.Attributes
+	}
+	if sb.Tags != nil {
+		objectMap["tags"] = sb.Tags
+	}
+	if sb.Kid != nil {
+		objectMap["kid"] = sb.Kid
+	}
+	if sb.Managed != nil {
+		objectMap["managed"] = sb.Managed
+	}
+	return json.Marshal(objectMap)
 }
 
 // SecretItem the secret item containing secret metadata
@@ -933,11 +1166,32 @@ type SecretItem struct {
 	// Attributes - The secret management attributes
 	Attributes *SecretAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// ContentType - Type of the secret value such as a password
 	ContentType *string `json:"contentType,omitempty"`
 	// Managed - True if the secret's lifetime is managed by key vault i.e. if this is a key backing a certificate, then managed will be true.
 	Managed *bool `json:"managed,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SecretItem.
+func (si SecretItem) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if si.ID != nil {
+		objectMap["id"] = si.ID
+	}
+	if si.Attributes != nil {
+		objectMap["attributes"] = si.Attributes
+	}
+	if si.Tags != nil {
+		objectMap["tags"] = si.Tags
+	}
+	if si.ContentType != nil {
+		objectMap["contentType"] = si.ContentType
+	}
+	if si.Managed != nil {
+		objectMap["managed"] = si.Managed
+	}
+	return json.Marshal(objectMap)
 }
 
 // SecretListResult the secret list result
@@ -1053,11 +1307,29 @@ type SecretSetParameters struct {
 	// Value - The value of the secret
 	Value *string `json:"value,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// ContentType - Type of the secret value such as a password
 	ContentType *string `json:"contentType,omitempty"`
 	// SecretAttributes - The secret management attributes
 	SecretAttributes *SecretAttributes `json:"attributes,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for SecretSetParameters.
+func (ssp SecretSetParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if ssp.Value != nil {
+		objectMap["value"] = ssp.Value
+	}
+	if ssp.Tags != nil {
+		objectMap["tags"] = ssp.Tags
+	}
+	if ssp.ContentType != nil {
+		objectMap["contentType"] = ssp.ContentType
+	}
+	if ssp.SecretAttributes != nil {
+		objectMap["attributes"] = ssp.SecretAttributes
+	}
+	return json.Marshal(objectMap)
 }
 
 // SecretUpdateParameters the secret update parameters
@@ -1067,7 +1339,22 @@ type SecretUpdateParameters struct {
 	// SecretAttributes - The secret management attributes
 	SecretAttributes *SecretAttributes `json:"attributes,omitempty"`
 	// Tags - Application-specific metadata in the form of key-value pairs
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for SecretUpdateParameters.
+func (sup SecretUpdateParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if sup.ContentType != nil {
+		objectMap["contentType"] = sup.ContentType
+	}
+	if sup.SecretAttributes != nil {
+		objectMap["attributes"] = sup.SecretAttributes
+	}
+	if sup.Tags != nil {
+		objectMap["tags"] = sup.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // SubjectAlternativeNames the subject alternate names of a X509 object.

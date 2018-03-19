@@ -42,12 +42,12 @@ func NewRecordSetsClientWithBaseURI(baseURI string, subscriptionID string) Recor
 // CreateOrUpdate creates or updates a record set within a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set. Record sets of type SOA can be updated but not created (they are created when the
-// DNS zone is created). parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the etag of the
-// record set. Omit this value to always overwrite the current record set. Specify the last-seen etag value to prevent
-// accidentally overwritting any concurrent changes. ifNoneMatch is set to '*' to allow a new record set to be created,
-// but to prevent updating an existing record set. Other values will be ignored.
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set. Record sets of type SOA can be updated but not created (they are created
+// when the DNS zone is created). parameters is parameters supplied to the CreateOrUpdate operation. ifMatch is the
+// etag of the record set. Omit this value to always overwrite the current record set. Specify the last-seen etag
+// value to prevent accidentally overwritting any concurrent changes. ifNoneMatch is set to '*' to allow a new
+// record set to be created, but to prevent updating an existing record set. Other values will be ignored.
 func (client RecordSetsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string, ifNoneMatch string) (result RecordSet, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType, parameters, ifMatch, ifNoneMatch)
 	if err != nil {
@@ -126,10 +126,10 @@ func (client RecordSetsClient) CreateOrUpdateResponder(resp *http.Response) (res
 // Delete deletes a record set from a DNS zone. This operation cannot be undone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set. Record sets of type SOA cannot be deleted (they are deleted when the DNS zone is
-// deleted). ifMatch is the etag of the record set. Omit this value to always delete the current record set. Specify
-// the last-seen etag value to prevent accidentally deleting any concurrent changes.
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set. Record sets of type SOA cannot be deleted (they are deleted when the DNS
+// zone is deleted). ifMatch is the etag of the record set. Omit this value to always delete the current record
+// set. Specify the last-seen etag value to prevent accidentally deleting any concurrent changes.
 func (client RecordSetsClient) Delete(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, ifMatch string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType, ifMatch)
 	if err != nil {
@@ -201,8 +201,8 @@ func (client RecordSetsClient) DeleteResponder(resp *http.Response) (result auto
 // Get gets a record set.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set.
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set.
 func (client RecordSetsClient) Get(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType) (result RecordSet, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType)
 	if err != nil {
@@ -375,10 +375,10 @@ func (client RecordSetsClient) ListByDNSZoneComplete(ctx context.Context, resour
 // ListByType lists the record sets of a specified type in a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). recordType is the type of record sets to enumerate. top is the maximum number of record sets to return. If not
-// specified, returns up to 100 record sets. recordsetnamesuffix is the suffix label of the record set name that has to
-// be used to filter the record set enumerations. If this parameter is specified, Enumeration will return only records
-// that end with .<recordSetNameSuffix>
+// dot). recordType is the type of record sets to enumerate. top is the maximum number of record sets to return. If
+// not specified, returns up to 100 record sets. recordsetnamesuffix is the suffix label of the record set name
+// that has to be used to filter the record set enumerations. If this parameter is specified, Enumeration will
+// return only records that end with .<recordSetNameSuffix>
 func (client RecordSetsClient) ListByType(ctx context.Context, resourceGroupName string, zoneName string, recordType RecordType, top *int32, recordsetnamesuffix string) (result RecordSetListResultPage, err error) {
 	result.fn = client.listByTypeNextResults
 	req, err := client.ListByTypePreparer(ctx, resourceGroupName, zoneName, recordType, top, recordsetnamesuffix)
@@ -480,10 +480,10 @@ func (client RecordSetsClient) ListByTypeComplete(ctx context.Context, resourceG
 // Update updates a record set within a DNS zone.
 //
 // resourceGroupName is the name of the resource group. zoneName is the name of the DNS zone (without a terminating
-// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the type
-// of DNS record in this record set. parameters is parameters supplied to the Update operation. ifMatch is the etag of
-// the record set. Omit this value to always overwrite the current record set. Specify the last-seen etag value to
-// prevent accidentally overwritting concurrent changes.
+// dot). relativeRecordSetName is the name of the record set, relative to the name of the zone. recordType is the
+// type of DNS record in this record set. parameters is parameters supplied to the Update operation. ifMatch is the
+// etag of the record set. Omit this value to always overwrite the current record set. Specify the last-seen etag
+// value to prevent accidentally overwritting concurrent changes.
 func (client RecordSetsClient) Update(ctx context.Context, resourceGroupName string, zoneName string, relativeRecordSetName string, recordType RecordType, parameters RecordSet, ifMatch string) (result RecordSet, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, zoneName, relativeRecordSetName, recordType, parameters, ifMatch)
 	if err != nil {

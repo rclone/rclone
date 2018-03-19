@@ -1,10 +1,10 @@
-// Copyright 2017, Google LLC All rights reserved.
+// Copyright 2018 Google LLC
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+//     https://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -243,7 +243,7 @@ func TestSpannerCreateSession(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &spannerpb.CreateSessionRequest{
 		Database: formattedDatabase,
 	}
@@ -272,7 +272,7 @@ func TestSpannerCreateSessionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &spannerpb.CreateSessionRequest{
 		Database: formattedDatabase,
 	}
@@ -302,7 +302,7 @@ func TestSpannerGetSession(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedName string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var request = &spannerpb.GetSessionRequest{
 		Name: formattedName,
 	}
@@ -331,7 +331,7 @@ func TestSpannerGetSessionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var request = &spannerpb.GetSessionRequest{
 		Name: formattedName,
 	}
@@ -364,7 +364,7 @@ func TestSpannerListSessions(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedDatabase string = DatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &spannerpb.ListSessionsRequest{
 		Database: formattedDatabase,
 	}
@@ -403,7 +403,7 @@ func TestSpannerListSessionsError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedDatabase string = DatabasePath("[PROJECT]", "[INSTANCE]", "[DATABASE]")
+	var formattedDatabase string = fmt.Sprintf("projects/%s/instances/%s/databases/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]")
 	var request = &spannerpb.ListSessionsRequest{
 		Database: formattedDatabase,
 	}
@@ -430,7 +430,7 @@ func TestSpannerDeleteSession(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedName string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var request = &spannerpb.DeleteSessionRequest{
 		Name: formattedName,
 	}
@@ -456,7 +456,7 @@ func TestSpannerDeleteSessionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedName string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedName string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var request = &spannerpb.DeleteSessionRequest{
 		Name: formattedName,
 	}
@@ -482,7 +482,7 @@ func TestSpannerExecuteSql(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var sql string = "sql114126"
 	var request = &spannerpb.ExecuteSqlRequest{
 		Session: formattedSession,
@@ -513,7 +513,7 @@ func TestSpannerExecuteSqlError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var sql string = "sql114126"
 	var request = &spannerpb.ExecuteSqlRequest{
 		Session: formattedSession,
@@ -547,7 +547,7 @@ func TestSpannerExecuteStreamingSql(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var sql string = "sql114126"
 	var request = &spannerpb.ExecuteSqlRequest{
 		Session: formattedSession,
@@ -582,7 +582,7 @@ func TestSpannerExecuteStreamingSqlError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var sql string = "sql114126"
 	var request = &spannerpb.ExecuteSqlRequest{
 		Session: formattedSession,
@@ -615,7 +615,7 @@ func TestSpannerRead(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var table string = "table110115790"
 	var columns []string = nil
 	var keySet *spannerpb.KeySet = &spannerpb.KeySet{}
@@ -650,7 +650,7 @@ func TestSpannerReadError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var table string = "table110115790"
 	var columns []string = nil
 	var keySet *spannerpb.KeySet = &spannerpb.KeySet{}
@@ -688,7 +688,7 @@ func TestSpannerStreamingRead(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var table string = "table110115790"
 	var columns []string = nil
 	var keySet *spannerpb.KeySet = &spannerpb.KeySet{}
@@ -727,7 +727,7 @@ func TestSpannerStreamingReadError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var table string = "table110115790"
 	var columns []string = nil
 	var keySet *spannerpb.KeySet = &spannerpb.KeySet{}
@@ -767,7 +767,7 @@ func TestSpannerBeginTransaction(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var options *spannerpb.TransactionOptions = &spannerpb.TransactionOptions{}
 	var request = &spannerpb.BeginTransactionRequest{
 		Session: formattedSession,
@@ -798,7 +798,7 @@ func TestSpannerBeginTransactionError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var options *spannerpb.TransactionOptions = &spannerpb.TransactionOptions{}
 	var request = &spannerpb.BeginTransactionRequest{
 		Session: formattedSession,
@@ -827,7 +827,7 @@ func TestSpannerCommit(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var mutations []*spannerpb.Mutation = nil
 	var request = &spannerpb.CommitRequest{
 		Session:   formattedSession,
@@ -858,7 +858,7 @@ func TestSpannerCommitError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var mutations []*spannerpb.Mutation = nil
 	var request = &spannerpb.CommitRequest{
 		Session:   formattedSession,
@@ -887,7 +887,7 @@ func TestSpannerRollback(t *testing.T) {
 
 	mockSpanner.resps = append(mockSpanner.resps[:0], expectedResponse)
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var transactionId []byte = []byte("28")
 	var request = &spannerpb.RollbackRequest{
 		Session:       formattedSession,
@@ -915,7 +915,7 @@ func TestSpannerRollbackError(t *testing.T) {
 	errCode := codes.PermissionDenied
 	mockSpanner.err = gstatus.Error(errCode, "test error")
 
-	var formattedSession string = SessionPath("[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
+	var formattedSession string = fmt.Sprintf("projects/%s/instances/%s/databases/%s/sessions/%s", "[PROJECT]", "[INSTANCE]", "[DATABASE]", "[SESSION]")
 	var transactionId []byte = []byte("28")
 	var request = &spannerpb.RollbackRequest{
 		Session:       formattedSession,

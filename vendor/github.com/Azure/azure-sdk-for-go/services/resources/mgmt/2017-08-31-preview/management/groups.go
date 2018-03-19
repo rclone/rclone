@@ -45,8 +45,8 @@ func NewGroupsClientWithBaseURI(baseURI string, groupID uuid.UUID) GroupsClient 
 // Get get the details of the management group.
 //
 // expand is the $expand=children query string parameter allows clients to request inclusion of children in the
-// response payload. recurse is the $recurse=true query string parameter allows clients to request inclusion of entire
-// hierarchy in the response payload.
+// response payload. recurse is the $recurse=true query string parameter allows clients to request inclusion of
+// entire hierarchy in the response payload.
 func (client GroupsClient) Get(ctx context.Context, expand string, recurse *bool) (result GroupWithHierarchy, err error) {
 	req, err := client.GetPreparer(ctx, expand, recurse)
 	if err != nil {
@@ -117,8 +117,8 @@ func (client GroupsClient) GetResponder(resp *http.Response) (result GroupWithHi
 // List list management groups for the authenticated user.
 //
 // skiptoken is page continuation token is only used if a previous operation returned a partial result.
-// If a previous response contains a nextLink element, the value of the nextLink element will include a token parameter
-// that specifies a starting point to use for subsequent calls.
+// If a previous response contains a nextLink element, the value of the nextLink element will include a token
+// parameter that specifies a starting point to use for subsequent calls.
 func (client GroupsClient) List(ctx context.Context, skiptoken string) (result GroupListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, skiptoken)

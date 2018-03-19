@@ -55,7 +55,7 @@ func (client RoleAssignmentsClient) CreateOrUpdate(ctx context.Context, resource
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.RoleAssignment", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.RoleAssignment.Principals", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "customerinsights.RoleAssignmentsClient", "CreateOrUpdate")
+		return result, validation.NewError("customerinsights.RoleAssignmentsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, hubName, assignmentName, parameters)
@@ -127,8 +127,8 @@ func (client RoleAssignmentsClient) CreateOrUpdateResponder(resp *http.Response)
 
 // Delete deletes the role assignment in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. assignmentName is the name of
-// the role assignment.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. assignmentName is the name
+// of the role assignment.
 func (client RoleAssignmentsClient) Delete(ctx context.Context, resourceGroupName string, hubName string, assignmentName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, hubName, assignmentName)
 	if err != nil {
@@ -194,8 +194,8 @@ func (client RoleAssignmentsClient) DeleteResponder(resp *http.Response) (result
 
 // Get gets the role assignment in the hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. assignmentName is the name of
-// the role assignment.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. assignmentName is the name
+// of the role assignment.
 func (client RoleAssignmentsClient) Get(ctx context.Context, resourceGroupName string, hubName string, assignmentName string) (result RoleAssignmentResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, assignmentName)
 	if err != nil {

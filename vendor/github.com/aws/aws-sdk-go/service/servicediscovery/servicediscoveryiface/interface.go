@@ -139,6 +139,10 @@ type ServiceDiscoveryAPI interface {
 	RegisterInstanceWithContext(aws.Context, *servicediscovery.RegisterInstanceInput, ...request.Option) (*servicediscovery.RegisterInstanceOutput, error)
 	RegisterInstanceRequest(*servicediscovery.RegisterInstanceInput) (*request.Request, *servicediscovery.RegisterInstanceOutput)
 
+	UpdateInstanceCustomHealthStatus(*servicediscovery.UpdateInstanceCustomHealthStatusInput) (*servicediscovery.UpdateInstanceCustomHealthStatusOutput, error)
+	UpdateInstanceCustomHealthStatusWithContext(aws.Context, *servicediscovery.UpdateInstanceCustomHealthStatusInput, ...request.Option) (*servicediscovery.UpdateInstanceCustomHealthStatusOutput, error)
+	UpdateInstanceCustomHealthStatusRequest(*servicediscovery.UpdateInstanceCustomHealthStatusInput) (*request.Request, *servicediscovery.UpdateInstanceCustomHealthStatusOutput)
+
 	UpdateService(*servicediscovery.UpdateServiceInput) (*servicediscovery.UpdateServiceOutput, error)
 	UpdateServiceWithContext(aws.Context, *servicediscovery.UpdateServiceInput, ...request.Option) (*servicediscovery.UpdateServiceOutput, error)
 	UpdateServiceRequest(*servicediscovery.UpdateServiceInput) (*request.Request, *servicediscovery.UpdateServiceOutput)

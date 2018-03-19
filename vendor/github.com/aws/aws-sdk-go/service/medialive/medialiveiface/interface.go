@@ -124,6 +124,10 @@ type MediaLiveAPI interface {
 	StopChannel(*medialive.StopChannelInput) (*medialive.StopChannelOutput, error)
 	StopChannelWithContext(aws.Context, *medialive.StopChannelInput, ...request.Option) (*medialive.StopChannelOutput, error)
 	StopChannelRequest(*medialive.StopChannelInput) (*request.Request, *medialive.StopChannelOutput)
+
+	UpdateChannel(*medialive.UpdateChannelInput) (*medialive.UpdateChannelOutput, error)
+	UpdateChannelWithContext(aws.Context, *medialive.UpdateChannelInput, ...request.Option) (*medialive.UpdateChannelOutput, error)
+	UpdateChannelRequest(*medialive.UpdateChannelInput) (*request.Request, *medialive.UpdateChannelOutput)
 }
 
 var _ MediaLiveAPI = (*medialive.MediaLive)(nil)

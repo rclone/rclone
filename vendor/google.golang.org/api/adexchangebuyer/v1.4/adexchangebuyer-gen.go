@@ -218,6 +218,14 @@ type PubprofilesService struct {
 
 // Account: Configuration data for an Ad Exchange buyer account.
 type Account struct {
+	// ApplyPretargetingToNonGuaranteedDeals: When this is false, bid
+	// requests that include a deal ID for a private auction or preferred
+	// deal are always sent to your bidder. When true, all active
+	// pretargeting configs will be applied to private auctions and
+	// preferred deals. Programmatic Guaranteed deals (when enabled) are
+	// always sent to your bidder.
+	ApplyPretargetingToNonGuaranteedDeals bool `json:"applyPretargetingToNonGuaranteedDeals,omitempty"`
+
 	// BidderLocation: Your bidder locations that have distinct URLs.
 	BidderLocation []*AccountBidderLocation `json:"bidderLocation,omitempty"`
 
@@ -254,21 +262,22 @@ type Account struct {
 	// server.
 	googleapi.ServerResponse `json:"-"`
 
-	// ForceSendFields is a list of field names (e.g. "BidderLocation") to
-	// unconditionally include in API requests. By default, fields with
-	// empty values are omitted from API requests. However, any non-pointer,
-	// non-interface field appearing in ForceSendFields will be sent to the
-	// server regardless of whether the field is empty or not. This may be
-	// used to include empty fields in Patch requests.
+	// ForceSendFields is a list of field names (e.g.
+	// "ApplyPretargetingToNonGuaranteedDeals") to unconditionally include
+	// in API requests. By default, fields with empty values are omitted
+	// from API requests. However, any non-pointer, non-interface field
+	// appearing in ForceSendFields will be sent to the server regardless of
+	// whether the field is empty or not. This may be used to include empty
+	// fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "BidderLocation") to
-	// include in API requests with the JSON null value. By default, fields
-	// with empty values are omitted from API requests. However, any field
-	// with an empty value appearing in NullFields will be sent to the
-	// server as null. It is an error if a field in this list has a
-	// non-empty value. This may be used to include null fields in Patch
-	// requests.
+	// NullFields is a list of field names (e.g.
+	// "ApplyPretargetingToNonGuaranteedDeals") to include in API requests
+	// with the JSON null value. By default, fields with empty values are
+	// omitted from API requests. However, any field with an empty value
+	// appearing in NullFields will be sent to the server as null. It is an
+	// error if a field in this list has a non-empty value. This may be used
+	// to include null fields in Patch requests.
 	NullFields []string `json:"-"`
 }
 
@@ -745,7 +754,8 @@ func (s *CreateOrdersResponse) MarshalJSON() ([]byte, error) {
 // Creative: A creative and its classification data.
 type Creative struct {
 	// HTMLSnippet: The HTML snippet that displays the ad when inserted in
-	// the web page. If set, videoURL should not be set.
+	// the web page. If set, videoURL, videoVastXML, and nativeAd should not
+	// be set.
 	HTMLSnippet string `json:"HTMLSnippet,omitempty"`
 
 	// AccountId: Account id.
@@ -818,9 +828,9 @@ type Creative struct {
 	// field should not be set in requests.
 	Languages []string `json:"languages,omitempty"`
 
-	// NativeAd: If nativeAd is set, HTMLSnippet and the videoURL outside of
-	// nativeAd should not be set. (The videoURL inside nativeAd can be
-	// set.)
+	// NativeAd: If nativeAd is set, HTMLSnippet, videoVastXML, and the
+	// videoURL outside of nativeAd should not be set. (The videoURL inside
+	// nativeAd can be set.)
 	NativeAd *CreativeNativeAd `json:"nativeAd,omitempty"`
 
 	// OpenAuctionStatus: Top-level open auction status. Read-only. This
@@ -865,10 +875,15 @@ type Creative struct {
 	// not be set in requests.
 	Version int64 `json:"version,omitempty"`
 
-	// VideoURL: The URL to fetch a video ad. If set, HTMLSnippet and the
-	// nativeAd should not be set. Note, this is different from
-	// resource.native_ad.video_url above.
+	// VideoURL: The URL to fetch a video ad. If set, HTMLSnippet,
+	// videoVastXML, and nativeAd should not be set. Note, this is different
+	// from resource.native_ad.video_url above.
 	VideoURL string `json:"videoURL,omitempty"`
+
+	// VideoVastXML: The contents of a VAST document for a video ad. This
+	// document should conform to the VAST 2.0 or 3.0 standard. If set,
+	// HTMLSnippet, videoURL, and nativeAd and should not be set.
+	VideoVastXML string `json:"videoVastXML,omitempty"`
 
 	// Width: Ad width.
 	Width int64 `json:"width,omitempty"`
@@ -1041,9 +1056,9 @@ func (s *CreativeFilteringReasonsReasons) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
-// CreativeNativeAd: If nativeAd is set, HTMLSnippet and the videoURL
-// outside of nativeAd should not be set. (The videoURL inside nativeAd
-// can be set.)
+// CreativeNativeAd: If nativeAd is set, HTMLSnippet, videoVastXML, and
+// the videoURL outside of nativeAd should not be set. (The videoURL
+// inside nativeAd can be set.)
 type CreativeNativeAd struct {
 	Advertiser string `json:"advertiser,omitempty"`
 
@@ -3570,6 +3585,10 @@ type TargetingValue struct {
 	// Filled in when the key is GOOG_DAYPART_TARGETING.
 	DayPartTargetingValue *TargetingValueDayPartTargeting `json:"dayPartTargetingValue,omitempty"`
 
+	DemogAgeCriteriaValue *TargetingValueDemogAgeCriteria `json:"demogAgeCriteriaValue,omitempty"`
+
+	DemogGenderCriteriaValue *TargetingValueDemogGenderCriteria `json:"demogGenderCriteriaValue,omitempty"`
+
 	// LongValue: The long value to exclude/include.
 	LongValue int64 `json:"longValue,omitempty,string"`
 
@@ -3600,7 +3619,11 @@ func (s *TargetingValue) MarshalJSON() ([]byte, error) {
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }
 
+// TargetingValueCreativeSize: Next Id: 7
 type TargetingValueCreativeSize struct {
+	// AllowedFormats: The formats allowed by the publisher.
+	AllowedFormats []string `json:"allowedFormats,omitempty"`
+
 	// CompanionSizes: For video size type, the list of companion sizes.
 	CompanionSizes []*TargetingValueSize `json:"companionSizes,omitempty"`
 
@@ -3617,7 +3640,7 @@ type TargetingValueCreativeSize struct {
 	// SkippableAdType: The skippable ad type for video size.
 	SkippableAdType string `json:"skippableAdType,omitempty"`
 
-	// ForceSendFields is a list of field names (e.g. "CompanionSizes") to
+	// ForceSendFields is a list of field names (e.g. "AllowedFormats") to
 	// unconditionally include in API requests. By default, fields with
 	// empty values are omitted from API requests. However, any non-pointer,
 	// non-interface field appearing in ForceSendFields will be sent to the
@@ -3625,7 +3648,7 @@ type TargetingValueCreativeSize struct {
 	// used to include empty fields in Patch requests.
 	ForceSendFields []string `json:"-"`
 
-	// NullFields is a list of field names (e.g. "CompanionSizes") to
+	// NullFields is a list of field names (e.g. "AllowedFormats") to
 	// include in API requests with the JSON null value. By default, fields
 	// with empty values are omitted from API requests. However, any field
 	// with an empty value appearing in NullFields will be sent to the
@@ -3699,6 +3722,61 @@ type TargetingValueDayPartTargetingDayPart struct {
 
 func (s *TargetingValueDayPartTargetingDayPart) MarshalJSON() ([]byte, error) {
 	type NoMethod TargetingValueDayPartTargetingDayPart
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type TargetingValueDemogAgeCriteria struct {
+	DemogAgeCriteriaIds []string `json:"demogAgeCriteriaIds,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g. "DemogAgeCriteriaIds")
+	// to unconditionally include in API requests. By default, fields with
+	// empty values are omitted from API requests. However, any non-pointer,
+	// non-interface field appearing in ForceSendFields will be sent to the
+	// server regardless of whether the field is empty or not. This may be
+	// used to include empty fields in Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DemogAgeCriteriaIds") to
+	// include in API requests with the JSON null value. By default, fields
+	// with empty values are omitted from API requests. However, any field
+	// with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TargetingValueDemogAgeCriteria) MarshalJSON() ([]byte, error) {
+	type NoMethod TargetingValueDemogAgeCriteria
+	raw := NoMethod(*s)
+	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
+}
+
+type TargetingValueDemogGenderCriteria struct {
+	DemogGenderCriteriaIds []string `json:"demogGenderCriteriaIds,omitempty"`
+
+	// ForceSendFields is a list of field names (e.g.
+	// "DemogGenderCriteriaIds") to unconditionally include in API requests.
+	// By default, fields with empty values are omitted from API requests.
+	// However, any non-pointer, non-interface field appearing in
+	// ForceSendFields will be sent to the server regardless of whether the
+	// field is empty or not. This may be used to include empty fields in
+	// Patch requests.
+	ForceSendFields []string `json:"-"`
+
+	// NullFields is a list of field names (e.g. "DemogGenderCriteriaIds")
+	// to include in API requests with the JSON null value. By default,
+	// fields with empty values are omitted from API requests. However, any
+	// field with an empty value appearing in NullFields will be sent to the
+	// server as null. It is an error if a field in this list has a
+	// non-empty value. This may be used to include null fields in Patch
+	// requests.
+	NullFields []string `json:"-"`
+}
+
+func (s *TargetingValueDemogGenderCriteria) MarshalJSON() ([]byte, error) {
+	type NoMethod TargetingValueDemogGenderCriteria
 	raw := NoMethod(*s)
 	return gensupport.MarshalJSON(raw, s.ForceSendFields, s.NullFields)
 }

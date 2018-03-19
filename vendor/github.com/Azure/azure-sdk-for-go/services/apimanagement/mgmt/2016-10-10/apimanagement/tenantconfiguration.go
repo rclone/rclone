@@ -53,7 +53,7 @@ func (client TenantConfigurationClient) Deploy(ctx context.Context, resourceGrou
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Branch", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantConfigurationClient", "Deploy")
+		return result, validation.NewError("apimanagement.TenantConfigurationClient", "Deploy", err.Error())
 	}
 
 	req, err := client.DeployPreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -135,7 +135,7 @@ func (client TenantConfigurationClient) Save(ctx context.Context, resourceGroupN
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Branch", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantConfigurationClient", "Save")
+		return result, validation.NewError("apimanagement.TenantConfigurationClient", "Save", err.Error())
 	}
 
 	req, err := client.SavePreparer(ctx, resourceGroupName, serviceName, parameters)
@@ -217,7 +217,7 @@ func (client TenantConfigurationClient) Validate(ctx context.Context, resourceGr
 				{Target: "serviceName", Name: validation.Pattern, Rule: `^[a-zA-Z](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$`, Chain: nil}}},
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Branch", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.TenantConfigurationClient", "Validate")
+		return result, validation.NewError("apimanagement.TenantConfigurationClient", "Validate", err.Error())
 	}
 
 	req, err := client.ValidatePreparer(ctx, resourceGroupName, serviceName, parameters)

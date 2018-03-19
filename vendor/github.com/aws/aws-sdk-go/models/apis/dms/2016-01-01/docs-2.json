@@ -24,6 +24,7 @@
     "DescribeEvents": "<p> Lists events for a given source identifier and source type. You can also specify a start and end time. For more information on AWS DMS events, see <a href=\"http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Events.html\"> Working with Events and Notifications </a>. </p>",
     "DescribeOrderableReplicationInstances": "<p>Returns information about the replication instance types that can be created in the specified region.</p>",
     "DescribeRefreshSchemasStatus": "<p>Returns the status of the RefreshSchemas operation.</p>",
+    "DescribeReplicationInstanceTaskLogs": "<p>Returns information about the task logs for the specified task.</p>",
     "DescribeReplicationInstances": "<p>Returns information about replication instances for your account in the current region.</p>",
     "DescribeReplicationSubnetGroups": "<p>Returns information about the replication subnet groups.</p>",
     "DescribeReplicationTaskAssessmentResults": "<p>Returns the task assessment results from Amazon S3. This action always returns the latest results.</p>",
@@ -37,6 +38,7 @@
     "ModifyReplicationInstance": "<p>Modifies the replication instance to apply new settings. You can change one or more parameters by specifying these parameters and the new values in the request.</p> <p>Some settings are applied during the maintenance window.</p> <p/>",
     "ModifyReplicationSubnetGroup": "<p>Modifies the settings for the specified replication subnet group.</p>",
     "ModifyReplicationTask": "<p>Modifies the specified replication task.</p> <p>You can't modify the task endpoints. The task must be stopped before you can modify it. </p> <p>For more information about AWS DMS tasks, see the AWS DMS user guide at <a href=\"http://docs.aws.amazon.com/dms/latest/userguide/CHAP_Tasks.html\"> Working with Migration Tasks </a> </p>",
+    "RebootReplicationInstance": "<p>Reboots a replication instance. Rebooting results in a momentary outage, until the replication instance becomes available again.</p>",
     "RefreshSchemas": "<p>Populates the schema for the specified endpoint. This is an asynchronous operation and can take several minutes. You can check the status of this operation by calling the DescribeRefreshSchemasStatus operation.</p>",
     "ReloadTables": "<p>Reloads the target database table with the source data. </p>",
     "RemoveTagsFromResource": "<p>Removes metadata tags from a DMS resource.</p>",
@@ -113,6 +115,7 @@
         "ModifyEventSubscriptionMessage$Enabled": "<p> A Boolean value; set to <b>true</b> to activate the subscription. </p>",
         "ModifyReplicationInstanceMessage$MultiAZ": "<p> Specifies if the replication instance is a Multi-AZ deployment. You cannot set the <code>AvailabilityZone</code> parameter if the Multi-AZ parameter is set to <code>true</code>. </p>",
         "ModifyReplicationInstanceMessage$AutoMinorVersionUpgrade": "<p> Indicates that minor version upgrades will be applied automatically to the replication instance during the maintenance window. Changing this parameter does not result in an outage except in the following case and the change is asynchronously applied as soon as possible. An outage will result if this parameter is set to <code>true</code> during the maintenance window, and a newer minor version is available, and AWS DMS has enabled auto patching for that engine version. </p>",
+        "RebootReplicationInstanceMessage$ForceFailover": "<p>If this parameter is <code>true</code>, the reboot is conducted through a Multi-AZ failover. (If the instance isn't configured for Multi-AZ, then you can't specify <code>true</code>.)</p>",
         "ReplicationPendingModifiedValues$MultiAZ": "<p> Specifies if the replication instance is a Multi-AZ deployment. You cannot set the <code>AvailabilityZone</code> parameter if the Multi-AZ parameter is set to <code>true</code>. </p>"
       }
     },
@@ -366,6 +369,16 @@
       "refs": {
       }
     },
+    "DescribeReplicationInstanceTaskLogsMessage": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeReplicationInstanceTaskLogsResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "DescribeReplicationInstancesMessage": {
       "base": "<p/>",
       "refs": {
@@ -599,6 +612,7 @@
         "DescribeEventsMessage$Duration": "<p>The duration of the events to be listed.</p>",
         "DescribeEventsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeOrderableReplicationInstancesMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
+        "DescribeReplicationInstanceTaskLogsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeReplicationInstancesMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeReplicationSubnetGroupsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
         "DescribeReplicationTaskAssessmentResultsMessage$MaxRecords": "<p> The maximum number of records to include in the response. If more records exist than the specified <code>MaxRecords</code> value, a pagination token called a marker is included in the response so that the remaining results can be retrieved. </p> <p>Default: 100</p> <p>Constraints: Minimum 20, maximum 100.</p>",
@@ -653,6 +667,7 @@
       "refs": {
         "AccountQuota$Used": "<p>The amount currently used toward the quota maximum.</p>",
         "AccountQuota$Max": "<p>The maximum allowed value for the quota.</p>",
+        "ReplicationInstanceTaskLog$ReplicationInstanceTaskLogSize": "<p>The size, in bytes, of the replication task log.</p>",
         "ReplicationTaskStats$ElapsedTimeMillis": "<p>The elapsed time of the task, in milliseconds.</p>",
         "TableStatistics$Inserts": "<p>The number of insert actions performed on a table.</p>",
         "TableStatistics$Deletes": "<p>The number of delete actions performed on a table.</p>",
@@ -750,6 +765,16 @@
         "DescribeOrderableReplicationInstancesResponse$OrderableReplicationInstances": "<p>The order-able replication instances available.</p>"
       }
     },
+    "RebootReplicationInstanceMessage": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "RebootReplicationInstanceResponse": {
+      "base": null,
+      "refs": {
+      }
+    },
     "RefreshSchemasMessage": {
       "base": "<p/>",
       "refs": {
@@ -808,6 +833,7 @@
         "CreateReplicationInstanceResponse$ReplicationInstance": "<p>The replication instance that was created.</p>",
         "DeleteReplicationInstanceResponse$ReplicationInstance": "<p>The replication instance that was deleted.</p>",
         "ModifyReplicationInstanceResponse$ReplicationInstance": "<p>The modified replication instance.</p>",
+        "RebootReplicationInstanceResponse$ReplicationInstance": "<p>The replication instance that is being rebooted. </p>",
         "ReplicationInstanceList$member": null
       }
     },
@@ -827,6 +853,18 @@
       "base": null,
       "refs": {
         "ReplicationInstance$ReplicationInstancePublicIpAddresses": "<p>The public IP address of the replication instance.</p>"
+      }
+    },
+    "ReplicationInstanceTaskLog": {
+      "base": "<p>Contains metadata for a replication instance task log.</p>",
+      "refs": {
+        "ReplicationInstanceTaskLogsList$member": null
+      }
+    },
+    "ReplicationInstanceTaskLogsList": {
+      "base": null,
+      "refs": {
+        "DescribeReplicationInstanceTaskLogsResponse$ReplicationInstanceTaskLogs": "<p>An array of replication task log metadata. Each member of the array contains the replication task name, ARN, and task log size (in bytes).</p>"
       }
     },
     "ReplicationPendingModifiedValues": {
@@ -1011,7 +1049,7 @@
         "Connection$EndpointIdentifier": "<p>The identifier of the endpoint. Identifiers must begin with a letter; must contain only ASCII letters, digits, and hyphens; and must not end with a hyphen or contain two consecutive hyphens.</p>",
         "Connection$ReplicationInstanceIdentifier": "<p>The replication instance identifier. This parameter is stored as a lowercase string.</p>",
         "CreateEndpointMessage$EndpointIdentifier": "<p>The database endpoint identifier. Identifiers must begin with a letter; must contain only ASCII letters, digits, and hyphens; and must not end with a hyphen or contain two consecutive hyphens.</p>",
-        "CreateEndpointMessage$EngineName": "<p>The type of engine for the endpoint. Valid values, depending on the EndPointType, include MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, SYBASE, DYNAMODB, MONGODB, and SQLSERVER.</p>",
+        "CreateEndpointMessage$EngineName": "<p>The type of engine for the endpoint. Valid values, depending on the EndPointType, include mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb, mongodb, and sqlserver.</p>",
         "CreateEndpointMessage$Username": "<p>The user name to be used to login to the endpoint database.</p>",
         "CreateEndpointMessage$ServerName": "<p>The name of the server where the endpoint database resides.</p>",
         "CreateEndpointMessage$DatabaseName": "<p>The name of the endpoint database.</p>",
@@ -1060,6 +1098,10 @@
         "DescribeOrderableReplicationInstancesMessage$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeOrderableReplicationInstancesResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeRefreshSchemasStatusMessage$EndpointArn": "<p>The Amazon Resource Name (ARN) string that uniquely identifies the endpoint.</p>",
+        "DescribeReplicationInstanceTaskLogsMessage$ReplicationInstanceArn": "<p>The Amazon Resource Name (ARN) of the replication instance.</p>",
+        "DescribeReplicationInstanceTaskLogsMessage$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>.</p>",
+        "DescribeReplicationInstanceTaskLogsResponse$ReplicationInstanceArn": "<p>The Amazon Resource Name (ARN) of the replication instance.</p>",
+        "DescribeReplicationInstanceTaskLogsResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>.</p>",
         "DescribeReplicationInstancesMessage$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeReplicationInstancesResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DescribeReplicationSubnetGroupsMessage$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
@@ -1079,7 +1121,7 @@
         "DescribeTableStatisticsResponse$Marker": "<p> An optional pagination token provided by a previous request. If this parameter is specified, the response includes only records beyond the marker, up to the value specified by <code>MaxRecords</code>. </p>",
         "DynamoDbSettings$ServiceAccessRoleArn": "<p> The Amazon Resource Name (ARN) used by the service access IAM role. </p>",
         "Endpoint$EndpointIdentifier": "<p>The database endpoint identifier. Identifiers must begin with a letter; must contain only ASCII letters, digits, and hyphens; and must not end with a hyphen or contain two consecutive hyphens.</p>",
-        "Endpoint$EngineName": "<p>The database engine name. Valid values, depending on the EndPointType, include MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, SYBASE, DYNAMODB, MONGODB, and SQLSERVER.</p>",
+        "Endpoint$EngineName": "<p>The database engine name. Valid values, depending on the EndPointType, include mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb, mongodb, and sqlserver.</p>",
         "Endpoint$Username": "<p>The user name used to connect to the endpoint.</p>",
         "Endpoint$ServerName": "<p>The name of the server at the endpoint.</p>",
         "Endpoint$DatabaseName": "<p>The name of the database at the endpoint.</p>",
@@ -1107,7 +1149,7 @@
         "ListTagsForResourceMessage$ResourceArn": "<p>The Amazon Resource Name (ARN) string that uniquely identifies the AWS DMS resource.</p>",
         "ModifyEndpointMessage$EndpointArn": "<p>The Amazon Resource Name (ARN) string that uniquely identifies the endpoint.</p>",
         "ModifyEndpointMessage$EndpointIdentifier": "<p>The database endpoint identifier. Identifiers must begin with a letter; must contain only ASCII letters, digits, and hyphens; and must not end with a hyphen or contain two consecutive hyphens.</p>",
-        "ModifyEndpointMessage$EngineName": "<p>The type of engine for the endpoint. Valid values, depending on the EndPointType, include MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, DYNAMODB, MONGODB, SYBASE, and SQLSERVER.</p>",
+        "ModifyEndpointMessage$EngineName": "<p>The type of engine for the endpoint. Valid values, depending on the EndPointType, include mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb, mongodb, and sqlserver.</p>",
         "ModifyEndpointMessage$Username": "<p>The user name to be used to login to the endpoint database.</p>",
         "ModifyEndpointMessage$ServerName": "<p>The name of the server where the endpoint database resides.</p>",
         "ModifyEndpointMessage$DatabaseName": "<p>The name of the endpoint database.</p>",
@@ -1136,6 +1178,7 @@
         "OrderableReplicationInstance$EngineVersion": "<p>The version of the replication engine.</p>",
         "OrderableReplicationInstance$ReplicationInstanceClass": "<p>The compute and memory capacity of the replication instance.</p> <p> Valid Values: <code>dms.t2.micro | dms.t2.small | dms.t2.medium | dms.t2.large | dms.c4.large | dms.c4.xlarge | dms.c4.2xlarge | dms.c4.4xlarge </code> </p>",
         "OrderableReplicationInstance$StorageType": "<p>The type of storage used by the replication instance.</p>",
+        "RebootReplicationInstanceMessage$ReplicationInstanceArn": "<p>The Amazon Resource Name (ARN) of the replication instance.</p>",
         "RefreshSchemasMessage$EndpointArn": "<p>The Amazon Resource Name (ARN) string that uniquely identifies the endpoint.</p>",
         "RefreshSchemasMessage$ReplicationInstanceArn": "<p>The Amazon Resource Name (ARN) of the replication instance.</p>",
         "RefreshSchemasStatus$EndpointArn": "<p>The Amazon Resource Name (ARN) string that uniquely identifies the endpoint.</p>",
@@ -1157,6 +1200,8 @@
         "ReplicationInstance$SecondaryAvailabilityZone": "<p>The availability zone of the standby replication instance in a Multi-AZ deployment.</p>",
         "ReplicationInstancePrivateIpAddressList$member": null,
         "ReplicationInstancePublicIpAddressList$member": null,
+        "ReplicationInstanceTaskLog$ReplicationTaskName": "<p>The name of the replication task.</p>",
+        "ReplicationInstanceTaskLog$ReplicationTaskArn": "<p>The Amazon Resource Name (ARN) of the replication task.</p>",
         "ReplicationPendingModifiedValues$ReplicationInstanceClass": "<p>The compute and memory capacity of the replication instance.</p> <p> Valid Values: <code>dms.t2.micro | dms.t2.small | dms.t2.medium | dms.t2.large | dms.c4.large | dms.c4.xlarge | dms.c4.2xlarge | dms.c4.4xlarge </code> </p>",
         "ReplicationPendingModifiedValues$EngineVersion": "<p>The engine version number of the replication instance.</p>",
         "ReplicationSubnetGroup$ReplicationSubnetGroupIdentifier": "<p>The identifier of the replication instance subnet group.</p>",
@@ -1193,7 +1238,7 @@
         "Subnet$SubnetIdentifier": "<p>The subnet identifier.</p>",
         "Subnet$SubnetStatus": "<p>The status of the subnet.</p>",
         "SubnetIdentifierList$member": null,
-        "SupportedEndpointType$EngineName": "<p>The database engine name. Valid values, depending on the EndPointType, include MYSQL, ORACLE, POSTGRES, MARIADB, AURORA, REDSHIFT, S3, SYBASE, DYNAMODB, MONGODB, and SQLSERVER.</p>",
+        "SupportedEndpointType$EngineName": "<p>The database engine name. Valid values, depending on the EndPointType, include mysql, oracle, postgres, mariadb, aurora, redshift, S3, sybase, dynamodb, mongodb, and sqlserver.</p>",
         "TableStatistics$SchemaName": "<p>The schema name.</p>",
         "TableStatistics$TableName": "<p>The name of the table.</p>",
         "TableStatistics$TableState": "<p>The state of the tables described.</p> <p>Valid states: Table does not exist | Before load | Full load | Table completed | Table cancelled | Table error | Table all | Table updates | Table is being reloaded</p>",

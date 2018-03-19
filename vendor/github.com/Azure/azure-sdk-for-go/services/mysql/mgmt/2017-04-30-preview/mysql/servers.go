@@ -26,7 +26,7 @@ import (
 )
 
 // ServersClient is the the Microsoft Azure management API provides create, read, update, and delete functionality for
-// Azure MySQL resources including servers, databases, firewall rules, VNET rules, log files and configurations.
+// Azure MySQL resources including servers, databases, firewall rules, log files and configurations.
 type ServersClient struct {
 	BaseClient
 }
@@ -44,8 +44,8 @@ func NewServersClientWithBaseURI(baseURI string, subscriptionID string) ServersC
 // CreateOrUpdate creates a new server or updates an existing server. The update action will overwrite the existing
 // server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
 // parameters for creating or updating a server.
 func (client ServersClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serverName string, parameters ServerForCreate) (result ServersCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -59,7 +59,7 @@ func (client ServersClient) CreateOrUpdate(ctx context.Context, resourceGroupNam
 						Chain: []validation.Constraint{{Target: "parameters.Properties.StorageMB", Name: validation.InclusiveMinimum, Rule: 1024, Chain: nil}}},
 					}},
 				{Target: "parameters.Location", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "mysql.ServersClient", "CreateOrUpdate")
+		return result, validation.NewError("mysql.ServersClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serverName, parameters)
@@ -130,8 +130,8 @@ func (client ServersClient) CreateOrUpdateResponder(resp *http.Response) (result
 
 // Delete deletes a server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client ServersClient) Delete(ctx context.Context, resourceGroupName string, serverName string) (result ServersDeleteFuture, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serverName)
 	if err != nil {
@@ -198,8 +198,8 @@ func (client ServersClient) DeleteResponder(resp *http.Response) (result autores
 
 // Get gets information about a server.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server.
 func (client ServersClient) Get(ctx context.Context, resourceGroupName string, serverName string) (result Server, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, serverName)
 	if err != nil {
@@ -327,8 +327,8 @@ func (client ServersClient) ListResponder(resp *http.Response) (result ServerLis
 
 // ListByResourceGroup list all the servers in a given resource group.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal.
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal.
 func (client ServersClient) ListByResourceGroup(ctx context.Context, resourceGroupName string) (result ServerListResult, err error) {
 	req, err := client.ListByResourceGroupPreparer(ctx, resourceGroupName)
 	if err != nil {
@@ -394,8 +394,8 @@ func (client ServersClient) ListByResourceGroupResponder(resp *http.Response) (r
 // Update updates an existing server. The request body can contain one to many of the properties present in the normal
 // server definition.
 //
-// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from the
-// Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
+// resourceGroupName is the name of the resource group that contains the resource. You can obtain this value from
+// the Azure Resource Manager API or the portal. serverName is the name of the server. parameters is the required
 // parameters for updating a server.
 func (client ServersClient) Update(ctx context.Context, resourceGroupName string, serverName string, parameters ServerUpdateParameters) (result ServersUpdateFuture, err error) {
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serverName, parameters)

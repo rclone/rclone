@@ -172,8 +172,8 @@ func (client RecommendationsClient) GetResponder(resp *http.Response) (result Re
 // after calling the generation recommendation. The URI of this API is returned in the Location field of the response
 // header.
 //
-// operationID is the operation ID, which can be found from the Location field in the generate recommendation response
-// header.
+// operationID is the operation ID, which can be found from the Location field in the generate recommendation
+// response header.
 func (client RecommendationsClient) GetGenerateStatus(ctx context.Context, operationID uuid.UUID) (result RecommendationsGetGenerateStatusFuture, err error) {
 	req, err := client.GetGenerateStatusPreparer(ctx, operationID)
 	if err != nil {
@@ -241,7 +241,8 @@ func (client RecommendationsClient) GetGenerateStatusResponder(resp *http.Respon
 // generateRecommendations.
 //
 // filter is the filter to apply to the recommendations. top is the number of recommendations per page if a paged
-// version of this API is being used. skipToken is the page-continuation token to use with a paged version of this API.
+// version of this API is being used. skipToken is the page-continuation token to use with a paged version of this
+// API.
 func (client RecommendationsClient) List(ctx context.Context, filter string, top *int32, skipToken string) (result ResourceRecommendationBaseListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter, top, skipToken)

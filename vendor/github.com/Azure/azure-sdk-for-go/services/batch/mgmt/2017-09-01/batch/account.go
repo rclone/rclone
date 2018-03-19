@@ -43,10 +43,10 @@ func NewAccountClientWithBaseURI(baseURI string, subscriptionID string) AccountC
 // Create creates a new Batch account with the specified parameters. Existing accounts cannot be updated with this API
 // and should instead be updated with the Update Batch Account API.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is a name for the
-// Batch account which must be unique within the region. Batch account names must be between 3 and 24 characters in
-// length and must use only numbers and lowercase letters. This name is used as part of the DNS name that is used to
-// access the Batch service in the region in which the account is created. For example:
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is a name for
+// the Batch account which must be unique within the region. Batch account names must be between 3 and 24
+// characters in length and must use only numbers and lowercase letters. This name is used as part of the DNS name
+// that is used to access the Batch service in the region in which the account is created. For example:
 // http://accountname.region.batch.azure.com/. parameters is additional parameters for account creation.
 func (client AccountClient) Create(ctx context.Context, resourceGroupName string, accountName string, parameters AccountCreateParameters) (result AccountCreateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
@@ -64,7 +64,7 @@ func (client AccountClient) Create(ctx context.Context, resourceGroupName string
 								{Target: "parameters.AccountCreateProperties.KeyVaultReference.URL", Name: validation.Null, Rule: true, Chain: nil},
 							}},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.AccountClient", "Create")
+		return result, validation.NewError("batch.AccountClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, accountName, parameters)
@@ -135,15 +135,15 @@ func (client AccountClient) CreateResponder(resp *http.Response) (result Account
 
 // Delete deletes the specified Batch account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account.
 func (client AccountClient) Delete(ctx context.Context, resourceGroupName string, accountName string) (result AccountDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.AccountClient", "Delete")
+		return result, validation.NewError("batch.AccountClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName)
@@ -211,15 +211,15 @@ func (client AccountClient) DeleteResponder(resp *http.Response) (result autores
 
 // Get gets information about the specified Batch account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account.
 func (client AccountClient) Get(ctx context.Context, resourceGroupName string, accountName string) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.AccountClient", "Get")
+		return result, validation.NewError("batch.AccountClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName)
@@ -288,15 +288,15 @@ func (client AccountClient) GetResponder(resp *http.Response) (result Account, e
 // Batch account was created with a poolAllocationMode of 'UserSubscription', clients cannot use access to keys to
 // authenticate, and must use Azure Active Directory instead. In this case, getting the keys will fail.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account.
 func (client AccountClient) GetKeys(ctx context.Context, resourceGroupName string, accountName string) (result AccountKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.AccountClient", "GetKeys")
+		return result, validation.NewError("batch.AccountClient", "GetKeys", err.Error())
 	}
 
 	req, err := client.GetKeysPreparer(ctx, resourceGroupName, accountName)
@@ -546,15 +546,15 @@ func (client AccountClient) ListByResourceGroupComplete(ctx context.Context, res
 
 // RegenerateKey regenerates the specified account key for the Batch account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. parameters is the type of key to regenerate.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. parameters is the type of key to regenerate.
 func (client AccountClient) RegenerateKey(ctx context.Context, resourceGroupName string, accountName string, parameters AccountRegenerateKeyParameters) (result AccountKeys, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.AccountClient", "RegenerateKey")
+		return result, validation.NewError("batch.AccountClient", "RegenerateKey", err.Error())
 	}
 
 	req, err := client.RegenerateKeyPreparer(ctx, resourceGroupName, accountName, parameters)
@@ -624,15 +624,15 @@ func (client AccountClient) RegenerateKeyResponder(resp *http.Response) (result 
 // SynchronizeAutoStorageKeys synchronizes access keys for the auto-storage account configured for the specified Batch
 // account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account.
 func (client AccountClient) SynchronizeAutoStorageKeys(ctx context.Context, resourceGroupName string, accountName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.AccountClient", "SynchronizeAutoStorageKeys")
+		return result, validation.NewError("batch.AccountClient", "SynchronizeAutoStorageKeys", err.Error())
 	}
 
 	req, err := client.SynchronizeAutoStorageKeysPreparer(ctx, resourceGroupName, accountName)
@@ -698,15 +698,15 @@ func (client AccountClient) SynchronizeAutoStorageKeysResponder(resp *http.Respo
 
 // Update updates the properties of an existing Batch account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. parameters is additional parameters for account update.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. parameters is additional parameters for account update.
 func (client AccountClient) Update(ctx context.Context, resourceGroupName string, accountName string, parameters AccountUpdateParameters) (result Account, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.AccountClient", "Update")
+		return result, validation.NewError("batch.AccountClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, parameters)

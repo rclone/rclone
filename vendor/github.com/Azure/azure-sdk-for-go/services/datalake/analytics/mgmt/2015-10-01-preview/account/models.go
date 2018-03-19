@@ -18,6 +18,7 @@ package account
 // Changes may cause incorrect behavior and will be lost if the code is regenerated.
 
 import (
+	"encoding/json"
 	"github.com/Azure/go-autorest/autorest"
 	"github.com/Azure/go-autorest/autorest/azure"
 	"github.com/Azure/go-autorest/autorest/date"
@@ -71,99 +72,6 @@ const (
 	OperationStatusSucceeded OperationStatus = "Succeeded"
 )
 
-// AccountCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type AccountCreateFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future AccountCreateFuture) Result(client Client) (dlaa DataLakeAnalyticsAccount, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return dlaa, autorest.NewError("account.AccountCreateFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		dlaa, err = client.CreateResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	dlaa, err = client.CreateResponder(resp)
-	return
-}
-
-// AccountDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type AccountDeleteFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future AccountDeleteFuture) Result(client Client) (ar autorest.Response, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return ar, autorest.NewError("account.AccountDeleteFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		ar, err = client.DeleteResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	ar, err = client.DeleteResponder(resp)
-	return
-}
-
-// AccountUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type AccountUpdateFuture struct {
-	azure.Future
-	req *http.Request
-}
-
-// Result returns the result of the asynchronous operation.
-// If the operation has not completed it will return an error.
-func (future AccountUpdateFuture) Result(client Client) (dlaa DataLakeAnalyticsAccount, err error) {
-	var done bool
-	done, err = future.Done(client)
-	if err != nil {
-		return
-	}
-	if !done {
-		return dlaa, autorest.NewError("account.AccountUpdateFuture", "Result", "asynchronous operation has not completed")
-	}
-	if future.PollingMethod() == azure.PollingLocation {
-		dlaa, err = client.UpdateResponder(future.Response())
-		return
-	}
-	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-	if err != nil {
-		return
-	}
-	dlaa, err = client.UpdateResponder(resp)
-	return
-}
-
 // AddDataLakeStoreParameters additional Data Lake Store parameters.
 type AddDataLakeStoreParameters struct {
 	// Properties - the properties for the Data Lake Store account being added.
@@ -176,11 +84,12 @@ type AddStorageAccountParameters struct {
 	Properties *StorageAccountProperties `json:"properties,omitempty"`
 }
 
-// AzureAsyncOperationResult the response body contains the status of the specified asynchronous operation, indicating
-// whether it has succeeded, is inprogress, or has failed. Note that this status is distinct from the HTTP status code
-// returned for the Get Operation Status operation itself. If the asynchronous operation succeeded, the response body
-// includes the HTTP status code for the successful request. If the asynchronous operation failed, the response body
-// includes the HTTP status code for the failed request and error information regarding the failure.
+// AzureAsyncOperationResult the response body contains the status of the specified asynchronous operation,
+// indicating whether it has succeeded, is inprogress, or has failed. Note that this status is distinct from the
+// HTTP status code returned for the Get Operation Status operation itself. If the asynchronous operation
+// succeeded, the response body includes the HTTP status code for the successful request. If the asynchronous
+// operation failed, the response body includes the HTTP status code for the failed request and error information
+// regarding the failure.
 type AzureAsyncOperationResult struct {
 	// Status - the status of the AzureAsuncOperation. Possible values include: 'OperationStatusInProgress', 'OperationStatusSucceeded', 'OperationStatusFailed'
 	Status OperationStatus `json:"status,omitempty"`
@@ -206,8 +115,56 @@ type BlobContainerProperties struct {
 	LastModifiedTime *date.Time `json:"lastModifiedTime,omitempty"`
 }
 
-// DataLakeAnalyticsAccount a Data Lake Analytics account object, containing all information associated with the named
-// Data Lake Analytics account.
+// CreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type CreateFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future CreateFuture) Result(client Client) (dlaa DataLakeAnalyticsAccount, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.CreateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return dlaa, azure.NewAsyncOpIncompleteError("account.CreateFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		dlaa, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "account.CreateFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.CreateFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	dlaa, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.CreateFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
+// DataLakeAnalyticsAccount a Data Lake Analytics account object, containing all information associated with the
+// named Data Lake Analytics account.
 type DataLakeAnalyticsAccount struct {
 	autorest.Response `json:"-"`
 	// Location - the account regional location.
@@ -219,9 +176,33 @@ type DataLakeAnalyticsAccount struct {
 	// ID - the account subscription ID.
 	ID *string `json:"id,omitempty"`
 	// Tags - the value of custom properties.
-	Tags *map[string]*string `json:"tags,omitempty"`
+	Tags map[string]*string `json:"tags"`
 	// Properties - the properties defined by Data Lake Analytics all properties are specific to each resource provider.
 	Properties *DataLakeAnalyticsAccountProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for DataLakeAnalyticsAccount.
+func (dlaa DataLakeAnalyticsAccount) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dlaa.Location != nil {
+		objectMap["location"] = dlaa.Location
+	}
+	if dlaa.Name != nil {
+		objectMap["name"] = dlaa.Name
+	}
+	if dlaa.Type != nil {
+		objectMap["type"] = dlaa.Type
+	}
+	if dlaa.ID != nil {
+		objectMap["id"] = dlaa.ID
+	}
+	if dlaa.Tags != nil {
+		objectMap["tags"] = dlaa.Tags
+	}
+	if dlaa.Properties != nil {
+		objectMap["properties"] = dlaa.Properties
+	}
+	return json.Marshal(objectMap)
 }
 
 // DataLakeAnalyticsAccountListDataLakeStoreResult data Lake Account list information.
@@ -338,7 +319,8 @@ type DataLakeAnalyticsAccountListResult struct {
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// DataLakeAnalyticsAccountListResultIterator provides access to a complete listing of DataLakeAnalyticsAccount values.
+// DataLakeAnalyticsAccountListResultIterator provides access to a complete listing of DataLakeAnalyticsAccount
+// values.
 type DataLakeAnalyticsAccountListResultIterator struct {
 	i    int
 	page DataLakeAnalyticsAccountListResultPage
@@ -536,8 +518,8 @@ func (page DataLakeAnalyticsAccountListStorageAccountsResultPage) Values() []Sto
 	return *page.dlaalsar.Value
 }
 
-// DataLakeAnalyticsAccountProperties the account specific properties that are associated with an underlying Data Lake
-// Analytics account.
+// DataLakeAnalyticsAccountProperties the account specific properties that are associated with an underlying Data
+// Lake Analytics account.
 type DataLakeAnalyticsAccountProperties struct {
 	// ProvisioningState - the provisioning status of the Data Lake Analytics account. Possible values include: 'Failed', 'Creating', 'Running', 'Succeeded', 'Patching', 'Suspending', 'Resuming', 'Deleting', 'Deleted'
 	ProvisioningState DataLakeAnalyticsAccountStatus `json:"provisioningState,omitempty"`
@@ -576,6 +558,54 @@ type DataLakeStoreAccountInfoProperties struct {
 	Suffix *string `json:"suffix,omitempty"`
 }
 
+// DeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type DeleteFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future DeleteFuture) Result(client Client) (ar autorest.Response, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.DeleteFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return ar, azure.NewAsyncOpIncompleteError("account.DeleteFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "account.DeleteFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.DeleteFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.DeleteFuture", "Result", resp, "Failure responding to request")
+	}
+	return
+}
+
 // Error generic resource error information.
 type Error struct {
 	// Code - the HTTP status code or error code associated with this error
@@ -608,8 +638,8 @@ type InnerError struct {
 	Context *string `json:"context,omitempty"`
 }
 
-// ListBlobContainersResult the list of blob containers associated with the storage account attached to the Data Lake
-// Analytics account.
+// ListBlobContainersResult the list of blob containers associated with the storage account attached to the Data
+// Lake Analytics account.
 type ListBlobContainersResult struct {
 	autorest.Response `json:"-"`
 	// Value - the results of the list operation
@@ -834,4 +864,52 @@ type StorageAccountProperties struct {
 	AccessKey *string `json:"accessKey,omitempty"`
 	// Suffix - the optional suffix for the Data Lake account.
 	Suffix *string `json:"suffix,omitempty"`
+}
+
+// UpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
+type UpdateFuture struct {
+	azure.Future
+	req *http.Request
+}
+
+// Result returns the result of the asynchronous operation.
+// If the operation has not completed it will return an error.
+func (future UpdateFuture) Result(client Client) (dlaa DataLakeAnalyticsAccount, err error) {
+	var done bool
+	done, err = future.Done(client)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.UpdateFuture", "Result", future.Response(), "Polling failure")
+		return
+	}
+	if !done {
+		return dlaa, azure.NewAsyncOpIncompleteError("account.UpdateFuture")
+	}
+	if future.PollingMethod() == azure.PollingLocation {
+		dlaa, err = client.UpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "account.UpdateFuture", "Result", future.Response(), "Failure responding to request")
+		}
+		return
+	}
+	var req *http.Request
+	var resp *http.Response
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.UpdateFuture", "Result", resp, "Failure sending request")
+		return
+	}
+	dlaa, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.UpdateFuture", "Result", resp, "Failure responding to request")
+	}
+	return
 }

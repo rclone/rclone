@@ -279,7 +279,7 @@ func TestSingleUse(t *testing.T) {
 		if err != nil {
 			t.Errorf("%d: SingleUse.Query returns error %v, want nil", i, err)
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%d: got unexpected result from SingleUse.Query: %v, want %v", i, got, test.want)
 		}
 		rts, err := su.Timestamp()
@@ -295,7 +295,7 @@ func TestSingleUse(t *testing.T) {
 		if err != nil {
 			t.Errorf("%d: SingleUse.Read returns error %v, want nil", i, err)
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%d: got unexpected result from SingleUse.Read: %v, want %v", i, got, test.want)
 		}
 		rts, err = su.Timestamp()
@@ -326,7 +326,7 @@ func TestSingleUse(t *testing.T) {
 				t.Errorf("%d: SingleUse.ReadRow(%v) doesn't return expected timestamp: %v", i, k, err)
 			}
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%d: got unexpected results from SingleUse.ReadRow: %v, want %v", i, got, test.want)
 		}
 		// SingleUse.ReadUsingIndex
@@ -349,7 +349,7 @@ func TestSingleUse(t *testing.T) {
 			}
 			found := false
 			for _, w := range test.want {
-				if reflect.DeepEqual(g, w) {
+				if testEqual(g, w) {
 					found = true
 				}
 			}
@@ -366,6 +366,19 @@ func TestSingleUse(t *testing.T) {
 			t.Errorf("%d: SingleUse.ReadUsingIndex doesn't return expected timestamp: %v", i, err)
 		}
 	}
+
+	// Reading with limit.
+	su := client.Single()
+	const limit = 1
+	gotRows, err := readAll(su.ReadWithOptions(ctx, "Singers", KeySets(Key{1}, Key{3}, Key{4}),
+		[]string{"SingerId", "FirstName", "LastName"}, &ReadOptions{Limit: limit}))
+	if err != nil {
+		t.Errorf("SingleUse.ReadWithOptions returns error %v, want nil", err)
+	}
+	if got, want := len(gotRows), limit; got != want {
+		t.Errorf("got %d, want %d", got, want)
+	}
+
 }
 
 // Test ReadOnlyTransaction. The testsuite is mostly like SingleUse, except it
@@ -456,7 +469,7 @@ func TestReadOnlyTransaction(t *testing.T) {
 		if err != nil {
 			t.Errorf("%d: ReadOnlyTransaction.Query returns error %v, want nil", i, err)
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%d: got unexpected result from ReadOnlyTransaction.Query: %v, want %v", i, got, test.want)
 		}
 		rts, err := ro.Timestamp()
@@ -472,7 +485,7 @@ func TestReadOnlyTransaction(t *testing.T) {
 		if err != nil {
 			t.Errorf("%d: ReadOnlyTransaction.Read returns error %v, want nil", i, err)
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%d: got unexpected result from ReadOnlyTransaction.Read: %v, want %v", i, got, test.want)
 		}
 		rts, err = ro.Timestamp()
@@ -508,7 +521,7 @@ func TestReadOnlyTransaction(t *testing.T) {
 				t.Errorf("%d: got two read timestamps: %v, %v, want ReadOnlyTransaction to return always the same read timestamp", i, roTs, rts)
 			}
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%d: got unexpected results from ReadOnlyTransaction.ReadRow: %v, want %v", i, got, test.want)
 		}
 		// SingleUse.ReadUsingIndex
@@ -530,7 +543,7 @@ func TestReadOnlyTransaction(t *testing.T) {
 			}
 			found := false
 			for _, w := range test.want {
-				if reflect.DeepEqual(g, w) {
+				if testEqual(g, w) {
 					found = true
 				}
 			}
@@ -833,7 +846,7 @@ func compareRows(iter *RowIterator, wantNums []int) (string, bool) {
 	for _, r := range rows {
 		got[r.Key] = r.StringValue
 	}
-	if !reflect.DeepEqual(got, want) {
+	if !testEqual(got, want) {
 		return fmt.Sprintf("got %v, want %v", got, want), false
 	}
 	return "", true
@@ -1093,7 +1106,7 @@ func TestBasicTypes(t *testing.T) {
 		}
 
 		// Check non-NaN cases.
-		if !reflect.DeepEqual(got, want) {
+		if !testEqual(got, want) {
 			t.Errorf("%d: col:%v val:%#v, got %#v, want %#v", i, test.col, test.val, got, want)
 			continue
 		}
@@ -1165,7 +1178,7 @@ func TestStructTypes(t *testing.T) {
 						},
 					},
 				}
-				if !reflect.DeepEqual(want, s) {
+				if !testEqual(want, s) {
 					return fmt.Errorf("unexpected decoding result: %v, want %v", s, want)
 				}
 				return nil
@@ -1236,9 +1249,51 @@ func TestQueryExpressions(t *testing.T) {
 		if isNaN(got) && isNaN(test.want) {
 			continue
 		}
-		if !reflect.DeepEqual(got, test.want) {
+		if !testEqual(got, test.want) {
 			t.Errorf("%q\n got  %#v\nwant %#v", test.expr, got, test.want)
 		}
+	}
+}
+
+func TestQueryStats(t *testing.T) {
+	t.Parallel()
+	ctx := context.Background()
+	client, _, tearDown := prepare(ctx, t, singerDBStatements)
+	defer tearDown()
+
+	accounts := []*Mutation{
+		Insert("Accounts", []string{"AccountId", "Nickname", "Balance"}, []interface{}{int64(1), "Foo", int64(50)}),
+		Insert("Accounts", []string{"AccountId", "Nickname", "Balance"}, []interface{}{int64(2), "Bar", int64(1)}),
+	}
+	if _, err := client.Apply(ctx, accounts, ApplyAtLeastOnce()); err != nil {
+		t.Fatal(err)
+	}
+	const sql = "SELECT Balance FROM Accounts"
+
+	qp, err := client.Single().AnalyzeQuery(ctx, Statement{sql, nil})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(qp.PlanNodes) == 0 {
+		t.Error("got zero plan nodes, expected at least one")
+	}
+
+	iter := client.Single().QueryWithStats(ctx, Statement{sql, nil})
+	defer iter.Stop()
+	for {
+		_, err := iter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if iter.QueryPlan == nil {
+		t.Error("got nil QueryPlan, expected one")
+	}
+	if iter.QueryStats == nil {
+		t.Error("got nil QueryStats, expected some")
 	}
 }
 
@@ -1261,7 +1316,7 @@ func TestInvalidDatabase(t *testing.T) {
 	ctx := context.Background()
 	ts := testutil.TokenSource(ctx, Scope)
 	if ts == nil {
-		t.Skip("Integration test skipped: cannot get service account credential from environment variable %v", "GCLOUD_TESTS_GOLANG_KEY")
+		t.Skip("Integration test skipped: cannot get service account credential from environment variable GCLOUD_TESTS_GOLANG_KEY")
 	}
 	db := fmt.Sprintf("projects/%v/instances/%v/databases/invalid", testProjectID, testInstanceID)
 	c, err := NewClient(ctx, db, option.WithTokenSource(ts))

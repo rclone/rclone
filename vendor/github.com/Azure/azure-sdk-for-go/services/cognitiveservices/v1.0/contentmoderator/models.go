@@ -122,14 +122,35 @@ type Candidate struct {
 
 // Classification the classification details of the text.
 type Classification struct {
-	// AdultScore - The adult score.
-	AdultScore *float64 `json:"AdultScore,omitempty"`
-	// RacyScore - The racy score.
-	RacyScore *float64 `json:"RacyScore,omitempty"`
-	// OffensiveScore - The offensive score.
-	OffensiveScore *float64 `json:"OffensiveScore,omitempty"`
+	// Category1 - The category1 score details of the text. <a href="https://aka.ms/textClassifyCategories">Click here</a> for more details on category classification.
+	Category1 *ClassificationCategory1 `json:"Category1,omitempty"`
+	// Category2 - The category2 score details of the text. <a href="https://aka.ms/textClassifyCategories">Click here</a> for more details on category classification.
+	Category2 *ClassificationCategory2 `json:"Category2,omitempty"`
+	// Category3 - The category3 score details of the text. <a href="https://aka.ms/textClassifyCategories">Click here</a> for more details on category classification.
+	Category3 *ClassificationCategory3 `json:"Category3,omitempty"`
 	// ReviewRecommended - The review recommended flag.
 	ReviewRecommended *bool `json:"ReviewRecommended,omitempty"`
+}
+
+// ClassificationCategory1 the category1 score details of the text. <a
+// href="https://aka.ms/textClassifyCategories">Click here</a> for more details on category classification.
+type ClassificationCategory1 struct {
+	// Score - The category1 score.
+	Score *float64 `json:"Score,omitempty"`
+}
+
+// ClassificationCategory2 the category2 score details of the text. <a
+// href="https://aka.ms/textClassifyCategories">Click here</a> for more details on category classification.
+type ClassificationCategory2 struct {
+	// Score - The category2 score.
+	Score *float64 `json:"Score,omitempty"`
+}
+
+// ClassificationCategory3 the category3 score details of the text. <a
+// href="https://aka.ms/textClassifyCategories">Click here</a> for more details on category classification.
+type ClassificationCategory3 struct {
+	// Score - The category3 score.
+	Score *float64 `json:"Score,omitempty"`
 }
 
 // Content ...
@@ -173,7 +194,7 @@ type CreateVideoReviewsBodyItem struct {
 	// ContentID - Content Identifier.
 	ContentID *string `json:"ContentId,omitempty"`
 	// Status - Status of the video(Complete,Unpublished,Pending). Possible values include: 'Complete', 'Unpublished', 'Pending'
-	Status Status `json:"Status,omitempty"`
+	Status StatusEnum `json:"Status,omitempty"`
 	// Timescale - Timescale of the video.
 	Timescale *int32 `json:"Timescale,omitempty"`
 	// CallbackEndpoint - Optional CallbackEndpoint.
@@ -608,7 +629,7 @@ type Screen struct {
 // SetObject ...
 type SetObject struct {
 	autorest.Response `json:"-"`
-	Value             *map[string]interface{} `json:"value,omitempty"`
+	Value             interface{} `json:"value,omitempty"`
 }
 
 // Status status properties.

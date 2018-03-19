@@ -43,8 +43,8 @@ func NewWidgetTypesClientWithBaseURI(baseURI string, subscriptionID string) Widg
 
 // Get gets a widget type in the specified hub.
 //
-// resourceGroupName is the name of the resource group. hubName is the name of the hub. widgetTypeName is the name of
-// the widget type.
+// resourceGroupName is the name of the resource group. hubName is the name of the hub. widgetTypeName is the name
+// of the widget type.
 func (client WidgetTypesClient) Get(ctx context.Context, resourceGroupName string, hubName string, widgetTypeName string) (result WidgetTypeResourceFormat, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, hubName, widgetTypeName)
 	if err != nil {

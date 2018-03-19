@@ -28,7 +28,7 @@ import (
 
 func ExampleNewServer() {
 
-	srv, err := bttest.NewServer("127.0.0.1:0")
+	srv, err := bttest.NewServer("localhost:0")
 
 	if err != nil {
 		log.Fatalln(err)

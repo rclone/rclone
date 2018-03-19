@@ -62,7 +62,7 @@ func newDelayedWriter(w io.WriteCloser, delay time.Duration) io.WriteCloser {
 	closed := make(chan struct{})
 	go func() {
 		for writeMsg := range ch {
-			time.Sleep(writeMsg.t.Add(delay).Sub(time.Now()))
+			time.Sleep(time.Until(writeMsg.t.Add(delay)))
 			n, err := w.Write(writeMsg.b)
 			if err != nil {
 				panic("write error")
@@ -313,7 +313,7 @@ func (s seek) Generate(r *rand.Rand, _ int) reflect.Value {
 }
 
 func (s seek) set(t *testing.T, r io.ReadSeeker) {
-	if _, err := r.Seek(s.offset, os.SEEK_SET); err != nil {
+	if _, err := r.Seek(s.offset, io.SeekStart); err != nil {
 		t.Fatalf("error while seeking with %+v: %v", s, err)
 	}
 }
@@ -326,16 +326,16 @@ func (s seek) current(t *testing.T, r io.ReadSeeker) {
 		skip = -skip
 	}
 
-	if _, err := r.Seek(mid, os.SEEK_SET); err != nil {
+	if _, err := r.Seek(mid, io.SeekStart); err != nil {
 		t.Fatalf("error seeking to midpoint with %+v: %v", s, err)
 	}
-	if _, err := r.Seek(skip, os.SEEK_CUR); err != nil {
+	if _, err := r.Seek(skip, io.SeekCurrent); err != nil {
 		t.Fatalf("error seeking from %d with %+v: %v", mid, s, err)
 	}
 }
 
 func (s seek) end(t *testing.T, r io.ReadSeeker) {
-	if _, err := r.Seek(-s.offset, os.SEEK_END); err != nil {
+	if _, err := r.Seek(-s.offset, io.SeekEnd); err != nil {
 		t.Fatalf("error seeking from end with %+v: %v", s, err)
 	}
 }
@@ -1759,6 +1759,68 @@ func TestServerRoughDisconnect2(t *testing.T) {
 			break
 		}
 	}
+}
+
+// sftp/issue/234 - abrupt shutdown during ReadFrom hangs client
+func TestServerRoughDisconnect3(t *testing.T) {
+	if *testServerImpl {
+		t.Skipf("skipping with -testserver")
+	}
+	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
+	defer cmd.Wait()
+	defer sftp.Close()
+
+	rf, err := sftp.OpenFile("/dev/null", os.O_RDWR)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rf.Close()
+	lf, err := os.Open("/dev/zero")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lf.Close()
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		cmd.Process.Kill()
+	}()
+
+	io.Copy(rf, lf)
+}
+
+// sftp/issue/234 - also affected Write
+func TestServerRoughDisconnect4(t *testing.T) {
+	if *testServerImpl {
+		t.Skipf("skipping with -testserver")
+	}
+	sftp, cmd := testClient(t, READWRITE, NO_DELAY)
+	defer cmd.Wait()
+	defer sftp.Close()
+
+	rf, err := sftp.OpenFile("/dev/null", os.O_RDWR)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer rf.Close()
+	lf, err := os.Open("/dev/zero")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lf.Close()
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		cmd.Process.Kill()
+	}()
+	b := make([]byte, 32768*200)
+	lf.Read(b)
+	for {
+		_, err = rf.Write(b)
+		if err != nil {
+			break
+		}
+	}
+
+	io.Copy(rf, lf)
 }
 
 // sftp/issue/26 writing to a read only file caused client to loop.

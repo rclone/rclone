@@ -42,8 +42,8 @@ func NewIntegrationAccountAgreementsClientWithBaseURI(baseURI string, subscripti
 
 // CreateOrUpdate creates or updates an integration account agreement.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. agreementName
-// is the integration account agreement name. agreement is the integration account agreement.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// agreementName is the integration account agreement name. agreement is the integration account agreement.
 func (client IntegrationAccountAgreementsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string, agreement IntegrationAccountAgreement) (result IntegrationAccountAgreement, err error) {
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, integrationAccountName, agreementName, agreement)
 	if err != nil {
@@ -112,8 +112,8 @@ func (client IntegrationAccountAgreementsClient) CreateOrUpdateResponder(resp *h
 
 // Delete deletes an integration account agreement.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. agreementName
-// is the integration account agreement name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// agreementName is the integration account agreement name.
 func (client IntegrationAccountAgreementsClient) Delete(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, integrationAccountName, agreementName)
 	if err != nil {
@@ -179,8 +179,8 @@ func (client IntegrationAccountAgreementsClient) DeleteResponder(resp *http.Resp
 
 // Get gets an integration account agreement.
 //
-// resourceGroupName is the resource group name. integrationAccountName is the integration account name. agreementName
-// is the integration account agreement name.
+// resourceGroupName is the resource group name. integrationAccountName is the integration account name.
+// agreementName is the integration account agreement name.
 func (client IntegrationAccountAgreementsClient) Get(ctx context.Context, resourceGroupName string, integrationAccountName string, agreementName string) (result IntegrationAccountAgreement, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, integrationAccountName, agreementName)
 	if err != nil {

@@ -1,4 +1,4 @@
-// Package cloudresourcemanager provides access to the Google Cloud Resource Manager API.
+// Package cloudresourcemanager provides access to the Cloud Resource Manager API.
 //
 // See https://cloud.google.com/resource-manager
 //
@@ -139,7 +139,7 @@ func (s *Ancestor) MarshalJSON() ([]byte, error) {
 // log_types
 // specified in each AuditConfig are enabled, and the exempted_members
 // in each
-// AuditConfig are exempted.
+// AuditLogConfig are exempted.
 //
 // Example Policy with multiple AuditConfigs:
 //
@@ -625,11 +625,14 @@ type Organization struct {
 	// @OutputOnly
 	CreationTime string `json:"creationTime,omitempty"`
 
-	// DisplayName: A friendly string to be used to refer to the
-	// Organization in the UI.
-	// Assigned by the server, set to the primary domain of the G
-	// Suite
-	// customer that owns the organization.
+	// DisplayName: A human-readable string that refers to the Organization
+	// in the
+	// GCP Console UI. This string is set by the server and cannot
+	// be
+	// changed. The string will be set to the primary domain (for
+	// example,
+	// "google.com") of the G Suite customer that owns the
+	// organization.
 	// @OutputOnly
 	DisplayName string `json:"displayName,omitempty"`
 
@@ -656,7 +659,6 @@ type Organization struct {
 	// on creation. This
 	// should be omitted when creating a new Organization.
 	// This field is read-only.
-	// This field is deprecated and will be removed in v1. Use name instead.
 	OrganizationId string `json:"organizationId,omitempty"`
 
 	// Owner: The owner of this Organization. The owner should be specified
@@ -700,8 +702,8 @@ func (s *Organization) MarshalJSON() ([]byte, error) {
 // descendants will
 // be deleted.
 type OrganizationOwner struct {
-	// DirectoryCustomerId: The Google for Work customer id used in the
-	// Directory API.
+	// DirectoryCustomerId: The G Suite customer id used in the Directory
+	// API.
 	DirectoryCustomerId string `json:"directoryCustomerId,omitempty"`
 
 	// ForceSendFields is a list of field names (e.g. "DirectoryCustomerId")
@@ -1464,7 +1466,7 @@ func (r *OrganizationsService) List() *OrganizationsListCall {
 //
 // Organizations may be filtered by `owner.directoryCustomerId` or
 // by
-// `domain`, where the domain is a Google for Work domain, for
+// `domain`, where the domain is a G Suite domain, for
 // example:
 //
 // |Filter|Description|
@@ -1596,7 +1598,7 @@ func (c *OrganizationsListCall) Do(opts ...googleapi.CallOption) (*ListOrganizat
 	//   "parameterOrder": [],
 	//   "parameters": {
 	//     "filter": {
-	//       "description": "An optional query string used to filter the Organizations to return in\nthe response. Filter rules are case-insensitive.\n\n\nOrganizations may be filtered by `owner.directoryCustomerId` or by\n`domain`, where the domain is a Google for Work domain, for example:\n\n|Filter|Description|\n|------|-----------|\n|owner.directorycustomerid:123456789|Organizations with `owner.directory_customer_id` equal to `123456789`.|\n|domain:google.com|Organizations corresponding to the domain `google.com`.|\n\nThis field is optional.",
+	//       "description": "An optional query string used to filter the Organizations to return in\nthe response. Filter rules are case-insensitive.\n\n\nOrganizations may be filtered by `owner.directoryCustomerId` or by\n`domain`, where the domain is a G Suite domain, for example:\n\n|Filter|Description|\n|------|-----------|\n|owner.directorycustomerid:123456789|Organizations with `owner.directory_customer_id` equal to `123456789`.|\n|domain:google.com|Organizations corresponding to the domain `google.com`.|\n\nThis field is optional.",
 	//       "location": "query",
 	//       "type": "string"
 	//     },
@@ -2079,7 +2081,11 @@ type ProjectsCreateCall struct {
 //
 // Several APIs are activated automatically for the Project,
 // including
-// Google Cloud Storage.
+// Google Cloud Storage. The parent is identified by a
+// specified
+// ResourceId, which must include both an ID and a type, such
+// as
+// project, folder, or organization.
 func (r *ProjectsService) Create(project *Project) *ProjectsCreateCall {
 	c := &ProjectsCreateCall{s: r.s, urlParams_: make(gensupport.URLParams)}
 	c.project = project
@@ -2176,7 +2182,7 @@ func (c *ProjectsCreateCall) Do(opts ...googleapi.CallOption) (*Project, error) 
 	}
 	return ret, nil
 	// {
-	//   "description": "Creates a Project resource.\n\nInitially, the Project resource is owned by its creator exclusively.\nThe creator can later grant permission to others to read or update the\nProject.\n\nSeveral APIs are activated automatically for the Project, including\nGoogle Cloud Storage.",
+	//   "description": "Creates a Project resource.\n\nInitially, the Project resource is owned by its creator exclusively.\nThe creator can later grant permission to others to read or update the\nProject.\n\nSeveral APIs are activated automatically for the Project, including\nGoogle Cloud Storage. The parent is identified by a specified\nResourceId, which must include both an ID and a type, such as\nproject, folder, or organization.",
 	//   "flatPath": "v1beta1/projects",
 	//   "httpMethod": "POST",
 	//   "id": "cloudresourcemanager.projects.create",
@@ -2214,11 +2220,8 @@ type ProjectsDeleteCall struct {
 
 // Delete: Marks the Project identified by the specified
 // `project_id` (for example, `my-project-123`) for deletion.
-// This method will only affect the Project if the following criteria
-// are met:
-//
-// + The Project does not have a billing account associated with it.
-// + The Project has a lifecycle state of
+// This method will only affect the Project if it has a lifecycle state
+// of
 // ACTIVE.
 //
 // This method changes the Project's lifecycle state from
@@ -2326,7 +2329,7 @@ func (c *ProjectsDeleteCall) Do(opts ...googleapi.CallOption) (*Empty, error) {
 	}
 	return ret, nil
 	// {
-	//   "description": "Marks the Project identified by the specified\n`project_id` (for example, `my-project-123`) for deletion.\nThis method will only affect the Project if the following criteria are met:\n\n+ The Project does not have a billing account associated with it.\n+ The Project has a lifecycle state of\nACTIVE.\n\nThis method changes the Project's lifecycle state from\nACTIVE\nto DELETE_REQUESTED.\nThe deletion starts at an unspecified time, at which point the project is\nno longer accessible.\n\nUntil the deletion completes, you can check the lifecycle state\nchecked by retrieving the Project with GetProject,\nand the Project remains visible to ListProjects.\nHowever, you cannot update the project.\n\nAfter the deletion completes, the Project is not retrievable by\nthe  GetProject and\nListProjects methods.\n\nThe caller must have modify permissions for this Project.",
+	//   "description": "Marks the Project identified by the specified\n`project_id` (for example, `my-project-123`) for deletion.\nThis method will only affect the Project if it has a lifecycle state of\nACTIVE.\n\nThis method changes the Project's lifecycle state from\nACTIVE\nto DELETE_REQUESTED.\nThe deletion starts at an unspecified time, at which point the project is\nno longer accessible.\n\nUntil the deletion completes, you can check the lifecycle state\nchecked by retrieving the Project with GetProject,\nand the Project remains visible to ListProjects.\nHowever, you cannot update the project.\n\nAfter the deletion completes, the Project is not retrievable by\nthe  GetProject and\nListProjects methods.\n\nThe caller must have modify permissions for this Project.",
 	//   "flatPath": "v1beta1/projects/{projectId}",
 	//   "httpMethod": "DELETE",
 	//   "id": "cloudresourcemanager.projects.delete",

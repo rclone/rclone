@@ -28,6 +28,7 @@ import (
 
 	"golang.org/x/net/context"
 
+	"google.golang.org/api/googleapi"
 	"google.golang.org/api/option"
 )
 
@@ -143,4 +144,31 @@ func TestEncryption(t *testing.T) {
 	if !testutil.Equal(gotHash, wantHash[:]) { // wantHash is an array
 		t.Errorf("hash: got\n%v, want\n%v", gotHash, wantHash)
 	}
+}
+
+// This test demonstrates the data race on Writer.err that can happen when the
+// Writer's context is cancelled. To see the race, comment out the w.mu.Lock/Unlock
+// lines in writer.go and run this test with -race.
+func TestRaceOnCancel(t *testing.T) {
+	ctx := context.Background()
+	ft := &fakeTransport{}
+	hc := &http.Client{Transport: ft}
+	client, err := NewClient(ctx, option.WithHTTPClient(hc))
+	if err != nil {
+		t.Fatalf("error when creating client: %v", err)
+	}
+
+	cctx, cancel := context.WithCancel(ctx)
+	w := client.Bucket("b").Object("o").NewWriter(cctx)
+	w.ChunkSize = googleapi.MinUploadChunkSize
+	buf := make([]byte, w.ChunkSize)
+	// This Write starts the goroutine in Writer.open. That reads the first chunk in its entirety
+	// before sending the request (see google.golang.org/api/gensupport.PrepareUpload),
+	// so to exhibit the race we must provide ChunkSize bytes.  The goroutine then makes the RPC (L137).
+	w.Write(buf)
+	// Canceling the context causes the call to return context.Canceled, which makes the open goroutine
+	// write to w.err (L151).
+	cancel()
+	// This call to Write concurrently reads w.err (L169).
+	w.Write([]byte(nil))
 }

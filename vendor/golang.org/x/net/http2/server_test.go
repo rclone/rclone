@@ -2877,9 +2877,9 @@ func testServerWritesTrailers(t *testing.T, withFlush bool) {
 		w.Header().Set("Trailer:post-header-trailer2", "hi2")
 		w.Header().Set("Trailer:Range", "invalid")
 		w.Header().Set("Trailer:Foo\x01Bogus", "invalid")
-		w.Header().Set("Transfer-Encoding", "should not be included; Forbidden by RFC 2616 14.40")
-		w.Header().Set("Content-Length", "should not be included; Forbidden by RFC 2616 14.40")
-		w.Header().Set("Trailer", "should not be included; Forbidden by RFC 2616 14.40")
+		w.Header().Set("Transfer-Encoding", "should not be included; Forbidden by RFC 7230 4.1.2")
+		w.Header().Set("Content-Length", "should not be included; Forbidden by RFC 7230 4.1.2")
+		w.Header().Set("Trailer", "should not be included; Forbidden by RFC 7230 4.1.2")
 		return nil
 	}, func(st *serverTester) {
 		getSlash(st)
@@ -2971,7 +2971,7 @@ func BenchmarkServerGets(b *testing.B) {
 	defer st.Close()
 	st.greet()
 
-	// Give the server quota to reply. (plus it has the the 64KB)
+	// Give the server quota to reply. (plus it has the 64KB)
 	if err := st.fr.WriteWindowUpdate(0, uint32(b.N*len(msg))); err != nil {
 		b.Fatal(err)
 	}
@@ -3009,7 +3009,7 @@ func BenchmarkServerPosts(b *testing.B) {
 	defer st.Close()
 	st.greet()
 
-	// Give the server quota to reply. (plus it has the the 64KB)
+	// Give the server quota to reply. (plus it has the 64KB)
 	if err := st.fr.WriteWindowUpdate(0, uint32(b.N*len(msg))); err != nil {
 		b.Fatal(err)
 	}
@@ -3316,7 +3316,7 @@ func BenchmarkServer_GetRequest(b *testing.B) {
 	defer st.Close()
 
 	st.greet()
-	// Give the server quota to reply. (plus it has the the 64KB)
+	// Give the server quota to reply. (plus it has the 64KB)
 	if err := st.fr.WriteWindowUpdate(0, uint32(b.N*len(msg))); err != nil {
 		b.Fatal(err)
 	}
@@ -3347,7 +3347,7 @@ func BenchmarkServer_PostRequest(b *testing.B) {
 	})
 	defer st.Close()
 	st.greet()
-	// Give the server quota to reply. (plus it has the the 64KB)
+	// Give the server quota to reply. (plus it has the 64KB)
 	if err := st.fr.WriteWindowUpdate(0, uint32(b.N*len(msg))); err != nil {
 		b.Fatal(err)
 	}

@@ -41,8 +41,8 @@ func NewVirtualMachineClientWithBaseURI(baseURI string, subscriptionID string) V
 
 // ApplyArtifacts apply artifacts to Lab VM. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// Machine.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual Machine.
 func (client VirtualMachineClient) ApplyArtifacts(ctx context.Context, resourceGroupName string, labName string, name string, applyArtifactsRequest ApplyArtifactsRequest) (result VirtualMachineApplyArtifactsFuture, err error) {
 	req, err := client.ApplyArtifactsPreparer(ctx, resourceGroupName, labName, name, applyArtifactsRequest)
 	if err != nil {
@@ -112,8 +112,8 @@ func (client VirtualMachineClient) ApplyArtifactsResponder(resp *http.Response) 
 
 // CreateOrUpdateResource create or replace an existing Virtual Machine. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// Machine.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual Machine.
 func (client VirtualMachineClient) CreateOrUpdateResource(ctx context.Context, resourceGroupName string, labName string, name string, labVirtualMachine LabVirtualMachine) (result VirtualMachineCreateOrUpdateResourceFuture, err error) {
 	req, err := client.CreateOrUpdateResourcePreparer(ctx, resourceGroupName, labName, name, labVirtualMachine)
 	if err != nil {
@@ -184,8 +184,8 @@ func (client VirtualMachineClient) CreateOrUpdateResourceResponder(resp *http.Re
 
 // DeleteResource delete virtual machine. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// Machine.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual Machine.
 func (client VirtualMachineClient) DeleteResource(ctx context.Context, resourceGroupName string, labName string, name string) (result VirtualMachineDeleteResourceFuture, err error) {
 	req, err := client.DeleteResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -253,8 +253,8 @@ func (client VirtualMachineClient) DeleteResourceResponder(resp *http.Response) 
 
 // GetResource get virtual machine.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// Machine.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual Machine.
 func (client VirtualMachineClient) GetResource(ctx context.Context, resourceGroupName string, labName string, name string) (result LabVirtualMachine, err error) {
 	req, err := client.GetResourcePreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -321,8 +321,8 @@ func (client VirtualMachineClient) GetResourceResponder(resp *http.Response) (re
 
 // List list virtual machines.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to apply
-// on the operation.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. filter is the filter to
+// apply on the operation.
 func (client VirtualMachineClient) List(ctx context.Context, resourceGroupName string, labName string, filter string, top *int32, orderBy string) (result ResponseWithContinuationLabVirtualMachinePage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, resourceGroupName, labName, filter, top, orderBy)
@@ -425,8 +425,8 @@ func (client VirtualMachineClient) ListComplete(ctx context.Context, resourceGro
 
 // PatchResource modify properties of virtual machines.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// Machine.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual Machine.
 func (client VirtualMachineClient) PatchResource(ctx context.Context, resourceGroupName string, labName string, name string, labVirtualMachine LabVirtualMachine) (result LabVirtualMachine, err error) {
 	req, err := client.PatchResourcePreparer(ctx, resourceGroupName, labName, name, labVirtualMachine)
 	if err != nil {
@@ -495,8 +495,8 @@ func (client VirtualMachineClient) PatchResourceResponder(resp *http.Response) (
 
 // Start start a Lab VM. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// Machine.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual Machine.
 func (client VirtualMachineClient) Start(ctx context.Context, resourceGroupName string, labName string, name string) (result VirtualMachineStartFuture, err error) {
 	req, err := client.StartPreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {
@@ -564,8 +564,8 @@ func (client VirtualMachineClient) StartResponder(resp *http.Response) (result a
 
 // Stop stop a Lab VM. This operation can take a while to complete.
 //
-// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the virtual
-// Machine.
+// resourceGroupName is the name of the resource group. labName is the name of the lab. name is the name of the
+// virtual Machine.
 func (client VirtualMachineClient) Stop(ctx context.Context, resourceGroupName string, labName string, name string) (result VirtualMachineStopFuture, err error) {
 	req, err := client.StopPreparer(ctx, resourceGroupName, labName, name)
 	if err != nil {

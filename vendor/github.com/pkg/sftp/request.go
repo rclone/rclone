@@ -1,6 +1,7 @@
 package sftp
 
 import (
+	"context"
 	"io"
 	"os"
 	"path"
@@ -24,11 +25,14 @@ type Request struct {
 	Attrs    []byte // convert to sub-struct
 	Target   string // for renames and sym-links
 	// reader/writer/readdir from handlers
-	stateLock sync.RWMutex
-	state     state
+	state state
+	// context lasts duration of request
+	ctx       context.Context
+	cancelCtx context.CancelFunc
 }
 
 type state struct {
+	*sync.RWMutex
 	writerAt io.WriterAt
 	readerAt io.ReaderAt
 	listerAt ListerAt
@@ -36,9 +40,11 @@ type state struct {
 }
 
 // New Request initialized based on packet data
-func requestFromPacket(pkt hasPath) *Request {
+func requestFromPacket(ctx context.Context, pkt hasPath) *Request {
 	method := requestMethod(pkt)
 	request := NewRequest(method, pkt.getPath())
+	request.ctx, request.cancelCtx = context.WithCancel(ctx)
+
 	switch p := pkt.(type) {
 	case *sshFxpOpenPacket:
 		request.Flags = p.Pflags
@@ -55,60 +61,100 @@ func requestFromPacket(pkt hasPath) *Request {
 
 // NewRequest creates a new Request object.
 func NewRequest(method, path string) *Request {
-	return &Request{Method: method, Filepath: cleanPath(path)}
+	return &Request{Method: method, Filepath: cleanPath(path),
+		state: state{RWMutex: new(sync.RWMutex)}}
+}
+
+// shallow copy of existing request
+func (r *Request) copy() *Request {
+	r.state.Lock()
+	defer r.state.Unlock()
+	r2 := new(Request)
+	*r2 = *r
+	return r2
+}
+
+// Context returns the request's context. To change the context,
+// use WithContext.
+//
+// The returned context is always non-nil; it defaults to the
+// background context.
+//
+// For incoming server requests, the context is canceled when the
+// request is complete or the client's connection closes.
+func (r *Request) Context() context.Context {
+	if r.ctx != nil {
+		return r.ctx
+	}
+	return context.Background()
+}
+
+// WithContext returns a copy of r with its context changed to ctx.
+// The provided ctx must be non-nil.
+func (r *Request) WithContext(ctx context.Context) *Request {
+	if ctx == nil {
+		panic("nil context")
+	}
+	r2 := r.copy()
+	r2.ctx = ctx
+	r2.cancelCtx = nil
+	return r2
 }
 
 // Returns current offset for file list
 func (r *Request) lsNext() int64 {
-	r.stateLock.RLock()
-	defer r.stateLock.RUnlock()
+	r.state.RLock()
+	defer r.state.RUnlock()
 	return r.state.lsoffset
 }
 
 // Increases next offset
 func (r *Request) lsInc(offset int64) {
-	r.stateLock.Lock()
-	defer r.stateLock.Unlock()
+	r.state.Lock()
+	defer r.state.Unlock()
 	r.state.lsoffset = r.state.lsoffset + offset
 }
 
 // manage file read/write state
 func (r *Request) setWriterState(wa io.WriterAt) {
-	r.stateLock.Lock()
-	defer r.stateLock.Unlock()
+	r.state.Lock()
+	defer r.state.Unlock()
 	r.state.writerAt = wa
 }
 func (r *Request) setReaderState(ra io.ReaderAt) {
-	r.stateLock.Lock()
-	defer r.stateLock.Unlock()
+	r.state.Lock()
+	defer r.state.Unlock()
 	r.state.readerAt = ra
 }
 func (r *Request) setListerState(la ListerAt) {
-	r.stateLock.Lock()
-	defer r.stateLock.Unlock()
+	r.state.Lock()
+	defer r.state.Unlock()
 	r.state.listerAt = la
 }
 
 func (r *Request) getWriter() io.WriterAt {
-	r.stateLock.RLock()
-	defer r.stateLock.RUnlock()
+	r.state.RLock()
+	defer r.state.RUnlock()
 	return r.state.writerAt
 }
 
 func (r *Request) getReader() io.ReaderAt {
-	r.stateLock.RLock()
-	defer r.stateLock.RUnlock()
+	r.state.RLock()
+	defer r.state.RUnlock()
 	return r.state.readerAt
 }
 
 func (r *Request) getLister() ListerAt {
-	r.stateLock.RLock()
-	defer r.stateLock.RUnlock()
+	r.state.RLock()
+	defer r.state.RUnlock()
 	return r.state.listerAt
 }
 
 // Close reader/writer if possible
 func (r *Request) close() error {
+	if r.cancelCtx != nil {
+		r.cancelCtx()
+	}
 	rd := r.getReader()
 	if c, ok := rd.(io.Closer); ok {
 		return c.Close()

@@ -42,9 +42,10 @@ func NewAPIOperationsClientWithBaseURI(baseURI string, subscriptionID string) AP
 
 // CreateOrUpdate creates a new API operation or updates an existing one.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. operationID is operation identifier
-// within an API. Must be unique in the current API Management service instance. parameters is create parameters.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
+// identifier within an API. Must be unique in the current API Management service instance. parameters is create
+// parameters.
 func (client APIOperationsClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, parameters OperationContract) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -69,7 +70,7 @@ func (client APIOperationsClient) CreateOrUpdate(ctx context.Context, resourceGr
 					Chain: []validation.Constraint{{Target: "parameters.URLTemplate", Name: validation.MaxLength, Rule: 1000, Chain: nil},
 						{Target: "parameters.URLTemplate", Name: validation.MinLength, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.APIOperationsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, apiid, operationID, parameters)
@@ -139,11 +140,11 @@ func (client APIOperationsClient) CreateOrUpdateResponder(resp *http.Response) (
 
 // Delete deletes the specified operation.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. operationID is operation identifier
-// within an API. Must be unique in the current API Management service instance. ifMatch is eTag of the API Operation
-// Entity. ETag should match the current entity state from the header response of the GET request or it should be * for
-// unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
+// identifier within an API. Must be unique in the current API Management service instance. ifMatch is eTag of the
+// API Operation Entity. ETag should match the current entity state from the header response of the GET request or
+// it should be * for unconditional update.
 func (client APIOperationsClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -158,7 +159,7 @@ func (client APIOperationsClient) Delete(ctx context.Context, resourceGroupName 
 			Constraints: []validation.Constraint{{Target: "operationID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "operationID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "operationID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsClient", "Delete")
+		return result, validation.NewError("apimanagement.APIOperationsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, apiid, operationID, ifMatch)
@@ -227,9 +228,9 @@ func (client APIOperationsClient) DeleteResponder(resp *http.Response) (result a
 
 // Get gets the details of the API Operation specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. operationID is operation identifier
-// within an API. Must be unique in the current API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
+// identifier within an API. Must be unique in the current API Management service instance.
 func (client APIOperationsClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string) (result OperationContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -244,7 +245,7 @@ func (client APIOperationsClient) Get(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "operationID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "operationID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "operationID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsClient", "Get")
+		return result, validation.NewError("apimanagement.APIOperationsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, apiid, operationID)
@@ -313,9 +314,9 @@ func (client APIOperationsClient) GetResponder(resp *http.Response) (result Oper
 
 // ListByApis lists a collection of the operations for the specified API.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. filter is | Field       | Supported
-// operators    | Supported functions               |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. filter is | Field
+// | Supported operators    | Supported functions               |
 // |-------------|------------------------|-----------------------------------|
 // | name        | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
 // | method      | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
@@ -338,7 +339,7 @@ func (client APIOperationsClient) ListByApis(ctx context.Context, resourceGroupN
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsClient", "ListByApis")
+		return result, validation.NewError("apimanagement.APIOperationsClient", "ListByApis", err.Error())
 	}
 
 	result.fn = client.listByApisNextResults
@@ -443,11 +444,11 @@ func (client APIOperationsClient) ListByApisComplete(ctx context.Context, resour
 
 // Update updates the details of the operation specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. operationID is operation identifier
-// within an API. Must be unique in the current API Management service instance. parameters is API Operation Update
-// parameters. ifMatch is eTag of the API Operation Entity. ETag should match the current entity state from the header
-// response of the GET request or it should be * for unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. operationID is operation
+// identifier within an API. Must be unique in the current API Management service instance. parameters is API
+// Operation Update parameters. ifMatch is eTag of the API Operation Entity. ETag should match the current entity
+// state from the header response of the GET request or it should be * for unconditional update.
 func (client APIOperationsClient) Update(ctx context.Context, resourceGroupName string, serviceName string, apiid string, operationID string, parameters OperationUpdateContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -462,7 +463,7 @@ func (client APIOperationsClient) Update(ctx context.Context, resourceGroupName 
 			Constraints: []validation.Constraint{{Target: "operationID", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "operationID", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "operationID", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.APIOperationsClient", "Update")
+		return result, validation.NewError("apimanagement.APIOperationsClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, apiid, operationID, parameters, ifMatch)

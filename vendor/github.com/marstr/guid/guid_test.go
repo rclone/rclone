@@ -2,7 +2,6 @@ package guid
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"testing"
@@ -118,34 +117,6 @@ func Test_version4_ReservedBits(t *testing.T) {
 	}
 }
 
-func TestGUID_Stringf(t *testing.T) {
-	rand := NewGUID()
-
-	formats := []Format{Format("")}
-	for format := range knownFormats {
-		formats = append(formats, format)
-	}
-
-	for _, format := range formats {
-		t.Run(string(format), func(t *testing.T) {
-			result := rand.Stringf(format)
-			if result == "" {
-				t.Logf("could not create string for format, '%s'", string(format))
-				t.FailNow()
-			}
-
-			rehydrated, err := Parse(result)
-			if err != nil {
-				t.Error(err)
-			}
-			if rehydrated != rand {
-				t.Logf("'%s' isn't well formed", result)
-				t.Fail()
-			}
-		})
-	}
-}
-
 func Test_version4_NoOctetisReliablyZero(t *testing.T) {
 	results := make(map[string]uint)
 
@@ -238,32 +209,22 @@ func Test_JSONRoundTrip(t *testing.T) {
 }
 
 func TestGUID_UnmarshalJSON_Failure(t *testing.T) {
-	invalidJSON := errors.New("unexpected end of JSON input")
-	notJSONString := errors.New("JSON GUID must be surrounded by quotes")
-
-	testCases := []struct {
-		string
-		error
-	}{
-		{``, invalidJSON},
-		{`"`, invalidJSON},
-		{`a`, errors.New("invalid character 'a' looking for beginning of value")},
-		{`3`, notJSONString},
-		{`""`, errors.New(`"" is not in a recognized format`)},
-		{`"ab"`, errors.New(`"ab" is not in a recognized format`)},
+	testCases := []string{
+		``,
+		`"`,
+		`a`,
 	}
 
 	for _, tc := range testCases {
 		t.Run("", func(t *testing.T) {
 			var unmarshaled GUID
-			err := json.Unmarshal([]byte(tc.string), &unmarshaled).Error()
-
-			if expected := tc.error.Error(); err != expected {
-				t.Logf("\ngot: \t%s\nwant:\t%s", err, expected)
+			err := json.Unmarshal([]byte(tc), &unmarshaled)
+			if err == nil {
+				t.Logf("\ngot: \t%v\nwant:\t%v", err, nil)
 				t.Fail()
 			}
-			if expected := Empty(); unmarshaled != expected {
-				t.Logf("\ngot: \t%s\nwant:\t%s", unmarshaled.String(), expected.String())
+			if unmarshaled != Empty() {
+				t.Logf("\ngot: \t%s\nwant:\t%v", unmarshaled.String(), Empty().String())
 				t.Fail()
 			}
 		})

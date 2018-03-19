@@ -42,8 +42,8 @@ func NewStorageAccountCredentialsClientWithBaseURI(baseURI string, subscriptionI
 
 // CreateOrUpdate creates or updates the storage account credential.
 //
-// storageAccountCredentialName is the storage account credential name. parameters is the storage account credential to
-// be added or updated. resourceGroupName is the resource group name managerName is the manager name
+// storageAccountCredentialName is the storage account credential name. parameters is the storage account
+// credential to be added or updated. resourceGroupName is the resource group name managerName is the manager name
 func (client StorageAccountCredentialsClient) CreateOrUpdate(ctx context.Context, storageAccountCredentialName string, parameters StorageAccountCredential, resourceGroupName string, managerName string) (result StorageAccountCredentialsCreateOrUpdateFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -55,7 +55,7 @@ func (client StorageAccountCredentialsClient) CreateOrUpdate(ctx context.Context
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.StorageAccountCredentialsClient", "CreateOrUpdate")
+		return result, validation.NewError("storsimple.StorageAccountCredentialsClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, storageAccountCredentialName, parameters, resourceGroupName, managerName)
@@ -127,14 +127,14 @@ func (client StorageAccountCredentialsClient) CreateOrUpdateResponder(resp *http
 
 // Delete deletes the storage account credential.
 //
-// storageAccountCredentialName is the name of the storage account credential. resourceGroupName is the resource group
-// name managerName is the manager name
+// storageAccountCredentialName is the name of the storage account credential. resourceGroupName is the resource
+// group name managerName is the manager name
 func (client StorageAccountCredentialsClient) Delete(ctx context.Context, storageAccountCredentialName string, resourceGroupName string, managerName string) (result StorageAccountCredentialsDeleteFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.StorageAccountCredentialsClient", "Delete")
+		return result, validation.NewError("storsimple.StorageAccountCredentialsClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, storageAccountCredentialName, resourceGroupName, managerName)
@@ -210,7 +210,7 @@ func (client StorageAccountCredentialsClient) Get(ctx context.Context, storageAc
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.StorageAccountCredentialsClient", "Get")
+		return result, validation.NewError("storsimple.StorageAccountCredentialsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, storageAccountCredentialName, resourceGroupName, managerName)
@@ -284,7 +284,7 @@ func (client StorageAccountCredentialsClient) ListByManager(ctx context.Context,
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.StorageAccountCredentialsClient", "ListByManager")
+		return result, validation.NewError("storsimple.StorageAccountCredentialsClient", "ListByManager", err.Error())
 	}
 
 	req, err := client.ListByManagerPreparer(ctx, resourceGroupName, managerName)

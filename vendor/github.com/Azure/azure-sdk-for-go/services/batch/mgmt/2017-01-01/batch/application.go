@@ -42,8 +42,8 @@ func NewApplicationClientWithBaseURI(baseURI string, subscriptionID string) Appl
 
 // Create adds an application to the specified Batch account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. applicationID is the ID of the application. parameters is the parameters for the request.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. applicationID is the ID of the application. parameters is the parameters for the request.
 func (client ApplicationClient) Create(ctx context.Context, resourceGroupName string, accountName string, applicationID string, parameters *AddApplicationParameters) (result Application, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -52,7 +52,7 @@ func (client ApplicationClient) Create(ctx context.Context, resourceGroupName st
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.ApplicationClient", "Create")
+		return result, validation.NewError("batch.ApplicationClient", "Create", err.Error())
 	}
 
 	req, err := client.CreatePreparer(ctx, resourceGroupName, accountName, applicationID, parameters)
@@ -125,8 +125,8 @@ func (client ApplicationClient) CreateResponder(resp *http.Response) (result App
 
 // Delete deletes an application.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. applicationID is the ID of the application.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. applicationID is the ID of the application.
 func (client ApplicationClient) Delete(ctx context.Context, resourceGroupName string, accountName string, applicationID string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -135,7 +135,7 @@ func (client ApplicationClient) Delete(ctx context.Context, resourceGroupName st
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.ApplicationClient", "Delete")
+		return result, validation.NewError("batch.ApplicationClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, applicationID)
@@ -202,8 +202,8 @@ func (client ApplicationClient) DeleteResponder(resp *http.Response) (result aut
 
 // Get gets information about the specified application.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. applicationID is the ID of the application.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. applicationID is the ID of the application.
 func (client ApplicationClient) Get(ctx context.Context, resourceGroupName string, accountName string, applicationID string) (result Application, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -212,7 +212,7 @@ func (client ApplicationClient) Get(ctx context.Context, resourceGroupName strin
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.ApplicationClient", "Get")
+		return result, validation.NewError("batch.ApplicationClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, applicationID)
@@ -280,8 +280,8 @@ func (client ApplicationClient) GetResponder(resp *http.Response) (result Applic
 
 // List lists all of the applications in the specified account.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. maxresults is the maximum number of items to return in the response.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. maxresults is the maximum number of items to return in the response.
 func (client ApplicationClient) List(ctx context.Context, resourceGroupName string, accountName string, maxresults *int32) (result ListApplicationsResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -290,7 +290,7 @@ func (client ApplicationClient) List(ctx context.Context, resourceGroupName stri
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.ApplicationClient", "List")
+		return result, validation.NewError("batch.ApplicationClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
@@ -388,8 +388,8 @@ func (client ApplicationClient) ListComplete(ctx context.Context, resourceGroupN
 
 // Update updates settings for the specified application.
 //
-// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of the
-// Batch account. applicationID is the ID of the application. parameters is the parameters for the request.
+// resourceGroupName is the name of the resource group that contains the Batch account. accountName is the name of
+// the Batch account. applicationID is the ID of the application. parameters is the parameters for the request.
 func (client ApplicationClient) Update(ctx context.Context, resourceGroupName string, accountName string, applicationID string, parameters UpdateApplicationParameters) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -398,7 +398,7 @@ func (client ApplicationClient) Update(ctx context.Context, resourceGroupName st
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 24, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[-\w\._]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "batch.ApplicationClient", "Update")
+		return result, validation.NewError("batch.ApplicationClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, applicationID, parameters)

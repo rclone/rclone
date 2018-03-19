@@ -48,7 +48,7 @@ func (client HubsClient) CheckAvailability(ctx context.Context, resourceGroupNam
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.Name", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "notificationhubs.HubsClient", "CheckAvailability")
+		return result, validation.NewError("notificationhubs.HubsClient", "CheckAvailability", err.Error())
 	}
 
 	req, err := client.CheckAvailabilityPreparer(ctx, resourceGroupName, namespaceName, parameters)

@@ -1,4 +1,6 @@
-package xpackagex
+package batch
+
+import "github.com/Azure/azure-sdk-for-go/version"
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -19,10 +21,10 @@ package xpackagex
 
 // UserAgent returns the UserAgent string to use when sending http.Requests.
 func UserAgent() string {
-	return "Azure-SDK-For-Go/v12.2.0-beta services"
+	return "Azure-SDK-For-Go/" + version.Number + " batch/2017-05-01.5.0"
 }
 
 // Version returns the semantic version (see http://semver.org) of the client.
 func Version() string {
-	return "v12.2.0-beta"
+	return version.Number
 }

@@ -42,11 +42,10 @@ func NewHeatMapClientWithBaseURI(baseURI string, subscriptionID string) HeatMapC
 
 // Get gets latest heatmap for Traffic Manager profile.
 //
-// resourceGroupName is the name of the resource group containing the Traffic Manager endpoint. profileName is the name
-// of the Traffic Manager profile. heatMapType is the type of HeatMap for the Traffic Manager profile. topLeft is the
-// top left latitude,longitude pair of the rectangular viewport to query for. botRight is the bottom right
-// latitude,longitude pair of the rectangular viewport to query for.
-func (client HeatMapClient) Get(ctx context.Context, resourceGroupName string, profileName string, heatMapType string, topLeft []float64, botRight []float64) (result HeatMapModel, err error) {
+// resourceGroupName is the name of the resource group containing the Traffic Manager endpoint. profileName is the
+// name of the Traffic Manager profile. topLeft is the top left latitude,longitude pair of the rectangular viewport
+// to query for. botRight is the bottom right latitude,longitude pair of the rectangular viewport to query for.
+func (client HeatMapClient) Get(ctx context.Context, resourceGroupName string, profileName string, topLeft []float64, botRight []float64) (result HeatMapModel, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: topLeft,
 			Constraints: []validation.Constraint{{Target: "topLeft", Name: validation.Null, Rule: false,
@@ -58,10 +57,10 @@ func (client HeatMapClient) Get(ctx context.Context, resourceGroupName string, p
 				Chain: []validation.Constraint{{Target: "botRight", Name: validation.MaxItems, Rule: 2, Chain: nil},
 					{Target: "botRight", Name: validation.MinItems, Rule: 2, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "trafficmanager.HeatMapClient", "Get")
+		return result, validation.NewError("trafficmanager.HeatMapClient", "Get", err.Error())
 	}
 
-	req, err := client.GetPreparer(ctx, resourceGroupName, profileName, heatMapType, topLeft, botRight)
+	req, err := client.GetPreparer(ctx, resourceGroupName, profileName, topLeft, botRight)
 	if err != nil {
 		err = autorest.NewErrorWithError(err, "trafficmanager.HeatMapClient", "Get", nil, "Failure preparing request")
 		return
@@ -83,9 +82,9 @@ func (client HeatMapClient) Get(ctx context.Context, resourceGroupName string, p
 }
 
 // GetPreparer prepares the Get request.
-func (client HeatMapClient) GetPreparer(ctx context.Context, resourceGroupName string, profileName string, heatMapType string, topLeft []float64, botRight []float64) (*http.Request, error) {
+func (client HeatMapClient) GetPreparer(ctx context.Context, resourceGroupName string, profileName string, topLeft []float64, botRight []float64) (*http.Request, error) {
 	pathParameters := map[string]interface{}{
-		"heatMapType":       autorest.Encode("path", heatMapType),
+		"heatMapType":       autorest.Encode("path", "default"),
 		"profileName":       autorest.Encode("path", profileName),
 		"resourceGroupName": autorest.Encode("path", resourceGroupName),
 		"subscriptionId":    autorest.Encode("path", client.SubscriptionID),

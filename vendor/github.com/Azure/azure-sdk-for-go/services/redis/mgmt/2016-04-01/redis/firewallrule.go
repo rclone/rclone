@@ -42,8 +42,9 @@ func NewFirewallRuleClientWithBaseURI(baseURI string, subscriptionID string) Fir
 
 // CreateOrUpdate create or update a redis cache firewall rule
 //
-// resourceGroupName is the name of the resource group. cacheName is the name of the Redis cache. ruleName is the name
-// of the firewall rule. parameters is parameters supplied to the create or update redis firewall rule operation.
+// resourceGroupName is the name of the resource group. cacheName is the name of the Redis cache. ruleName is the
+// name of the firewall rule. parameters is parameters supplied to the create or update redis firewall rule
+// operation.
 func (client FirewallRuleClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, cacheName string, ruleName string, parameters FirewallRule) (result FirewallRule, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: parameters,
@@ -51,7 +52,7 @@ func (client FirewallRuleClient) CreateOrUpdate(ctx context.Context, resourceGro
 				Chain: []validation.Constraint{{Target: "parameters.FirewallRuleProperties.StartIP", Name: validation.Null, Rule: true, Chain: nil},
 					{Target: "parameters.FirewallRuleProperties.EndIP", Name: validation.Null, Rule: true, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "redis.FirewallRuleClient", "CreateOrUpdate")
+		return result, validation.NewError("redis.FirewallRuleClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, cacheName, ruleName, parameters)
@@ -121,8 +122,8 @@ func (client FirewallRuleClient) CreateOrUpdateResponder(resp *http.Response) (r
 
 // Delete deletes a single firewall rule in a specified redis cache.
 //
-// resourceGroupName is the name of the resource group. cacheName is the name of the Redis cache. ruleName is the name
-// of the firewall rule.
+// resourceGroupName is the name of the resource group. cacheName is the name of the Redis cache. ruleName is the
+// name of the firewall rule.
 func (client FirewallRuleClient) Delete(ctx context.Context, resourceGroupName string, cacheName string, ruleName string) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, resourceGroupName, cacheName, ruleName)
 	if err != nil {
@@ -188,8 +189,8 @@ func (client FirewallRuleClient) DeleteResponder(resp *http.Response) (result au
 
 // Get gets a single firewall rule in a specified redis cache.
 //
-// resourceGroupName is the name of the resource group. cacheName is the name of the Redis cache. ruleName is the name
-// of the firewall rule.
+// resourceGroupName is the name of the resource group. cacheName is the name of the Redis cache. ruleName is the
+// name of the firewall rule.
 func (client FirewallRuleClient) Get(ctx context.Context, resourceGroupName string, cacheName string, ruleName string) (result FirewallRule, err error) {
 	req, err := client.GetPreparer(ctx, resourceGroupName, cacheName, ruleName)
 	if err != nil {

@@ -42,14 +42,14 @@ func NewJobsClientWithBaseURI(baseURI string, subscriptionID string) JobsClient 
 
 // Cancel cancels a job on the device.
 //
-// deviceName is the device name jobName is the jobName. resourceGroupName is the resource group name managerName is
-// the manager name
+// deviceName is the device name jobName is the jobName. resourceGroupName is the resource group name managerName
+// is the manager name
 func (client JobsClient) Cancel(ctx context.Context, deviceName string, jobName string, resourceGroupName string, managerName string) (result JobsCancelFuture, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.JobsClient", "Cancel")
+		return result, validation.NewError("storsimple.JobsClient", "Cancel", err.Error())
 	}
 
 	req, err := client.CancelPreparer(ctx, deviceName, jobName, resourceGroupName, managerName)
@@ -119,14 +119,14 @@ func (client JobsClient) CancelResponder(resp *http.Response) (result autorest.R
 
 // Get gets the details of the specified job name.
 //
-// deviceName is the device name jobName is the job Name. resourceGroupName is the resource group name managerName is
-// the manager name
+// deviceName is the device name jobName is the job Name. resourceGroupName is the resource group name managerName
+// is the manager name
 func (client JobsClient) Get(ctx context.Context, deviceName string, jobName string, resourceGroupName string, managerName string) (result Job, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.JobsClient", "Get")
+		return result, validation.NewError("storsimple.JobsClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, deviceName, jobName, resourceGroupName, managerName)
@@ -196,14 +196,14 @@ func (client JobsClient) GetResponder(resp *http.Response) (result Job, err erro
 // ListByDevice gets all the jobs for specified device. With optional OData query parameters, a filtered set of jobs is
 // returned.
 //
-// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name filter is
-// oData Filter options
+// deviceName is the device name resourceGroupName is the resource group name managerName is the manager name
+// filter is oData Filter options
 func (client JobsClient) ListByDevice(ctx context.Context, deviceName string, resourceGroupName string, managerName string, filter string) (result JobListPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.JobsClient", "ListByDevice")
+		return result, validation.NewError("storsimple.JobsClient", "ListByDevice", err.Error())
 	}
 
 	result.fn = client.listByDeviceNextResults
@@ -309,7 +309,7 @@ func (client JobsClient) ListByManager(ctx context.Context, resourceGroupName st
 		{TargetValue: managerName,
 			Constraints: []validation.Constraint{{Target: "managerName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "managerName", Name: validation.MinLength, Rule: 2, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "storsimple.JobsClient", "ListByManager")
+		return result, validation.NewError("storsimple.JobsClient", "ListByManager", err.Error())
 	}
 
 	result.fn = client.listByManagerNextResults

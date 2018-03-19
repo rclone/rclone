@@ -320,7 +320,6 @@ func (c *CostandUsageReportService) PutReportDefinitionWithContext(ctx aws.Conte
 }
 
 // Request of DeleteReportDefinition
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinitionRequest
 type DeleteReportDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -346,7 +345,6 @@ func (s *DeleteReportDefinitionInput) SetReportName(v string) *DeleteReportDefin
 }
 
 // Response of DeleteReportDefinition
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DeleteReportDefinitionResponse
 type DeleteReportDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -371,7 +369,6 @@ func (s *DeleteReportDefinitionOutput) SetResponseMessage(v string) *DeleteRepor
 }
 
 // Request of DescribeReportDefinitions
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitionsRequest
 type DescribeReportDefinitionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -418,7 +415,6 @@ func (s *DescribeReportDefinitionsInput) SetNextToken(v string) *DescribeReportD
 }
 
 // Response of DescribeReportDefinitions
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/DescribeReportDefinitionsResponse
 type DescribeReportDefinitionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -452,7 +448,6 @@ func (s *DescribeReportDefinitionsOutput) SetReportDefinitions(v []*ReportDefini
 }
 
 // Request of PutReportDefinition
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinitionRequest
 type PutReportDefinitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -499,7 +494,6 @@ func (s *PutReportDefinitionInput) SetReportDefinition(v *ReportDefinition) *Put
 }
 
 // Response of PutReportDefinition
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/PutReportDefinitionResponse
 type PutReportDefinitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -517,7 +511,6 @@ func (s PutReportDefinitionOutput) GoString() string {
 // The definition of AWS Cost and Usage Report. Customer can specify the report
 // name, time unit, report format, compression format, S3 bucket and additional
 // artifacts and schema elements in the definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/cur-2017-01-06/ReportDefinition
 type ReportDefinition struct {
 	_ struct{} `type:"structure"`
 

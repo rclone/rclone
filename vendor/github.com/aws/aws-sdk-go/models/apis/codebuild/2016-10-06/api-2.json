@@ -499,6 +499,10 @@
       "type":"list",
       "member":{"shape":"EnvironmentVariable"}
     },
+    "GitCloneDepth":{
+      "type":"integer",
+      "min":0
+    },
     "ImageVersions":{
       "type":"list",
       "member":{"shape":"String"}
@@ -706,7 +710,8 @@
         "image":{"shape":"NonEmptyString"},
         "computeType":{"shape":"ComputeType"},
         "environmentVariables":{"shape":"EnvironmentVariables"},
-        "privilegedMode":{"shape":"WrapperBoolean"}
+        "privilegedMode":{"shape":"WrapperBoolean"},
+        "certificate":{"shape":"String"}
       }
     },
     "ProjectName":{
@@ -735,8 +740,10 @@
       "members":{
         "type":{"shape":"SourceType"},
         "location":{"shape":"String"},
+        "gitCloneDepth":{"shape":"GitCloneDepth"},
         "buildspec":{"shape":"String"},
-        "auth":{"shape":"SourceAuth"}
+        "auth":{"shape":"SourceAuth"},
+        "insecureSsl":{"shape":"WrapperBoolean"}
       }
     },
     "Projects":{
@@ -786,7 +793,8 @@
         "CODEPIPELINE",
         "GITHUB",
         "S3",
-        "BITBUCKET"
+        "BITBUCKET",
+        "GITHUB_ENTERPRISE"
       ]
     },
     "StartBuildInput":{
@@ -797,6 +805,7 @@
         "sourceVersion":{"shape":"String"},
         "artifactsOverride":{"shape":"ProjectArtifacts"},
         "environmentVariablesOverride":{"shape":"EnvironmentVariables"},
+        "gitCloneDepthOverride":{"shape":"GitCloneDepth"},
         "buildspecOverride":{"shape":"String"},
         "timeoutInMinutesOverride":{"shape":"TimeOut"}
       }
@@ -897,7 +906,9 @@
     "Webhook":{
       "type":"structure",
       "members":{
-        "url":{"shape":"NonEmptyString"}
+        "url":{"shape":"NonEmptyString"},
+        "payloadUrl":{"shape":"NonEmptyString"},
+        "secret":{"shape":"NonEmptyString"}
       }
     },
     "WrapperBoolean":{"type":"boolean"},

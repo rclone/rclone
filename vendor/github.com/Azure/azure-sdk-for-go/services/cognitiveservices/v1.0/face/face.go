@@ -36,45 +36,40 @@ func NewClient(azureRegion AzureRegions) Client {
 	return Client{New(azureRegion)}
 }
 
-// Detect detect human faces in an image and returns face locations, and optionally with faceIds, landmarks, and
-// attributes.
+// DetectWithStream detect human faces in an image and returns face locations, and optionally with faceIds, landmarks,
+// and attributes.
 //
-// imageURL is a JSON document with a URL pointing to the image that is to be analyzed. returnFaceID is a value
-// indicating whether the operation should return faceIds of detected faces. returnFaceLandmarks is a value indicating
-// whether the operation should return landmarks of the detected faces. returnFaceAttributes is analyze and return the
-// one or more specified face attributes in the comma-separated string like "returnFaceAttributes=age,gender".
-// Supported face attributes include age, gender, headPose, smile, facialHair, glasses and emotion. Note that each face
-// attribute analysis has additional computational and time cost.
-func (client Client) Detect(ctx context.Context, imageURL ImageURL, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeTypes) (result ListDetectedFace, err error) {
-	if err := validation.Validate([]validation.Validation{
-		{TargetValue: imageURL,
-			Constraints: []validation.Constraint{{Target: "imageURL.URL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.Client", "Detect")
-	}
-
-	req, err := client.DetectPreparer(ctx, imageURL, returnFaceID, returnFaceLandmarks, returnFaceAttributes)
+// imageParameter is an image stream. imageParameter will be closed upon successful return. Callers should ensure
+// closure when receiving an error.returnFaceID is a value indicating whether the operation should return faceIds
+// of detected faces. returnFaceLandmarks is a value indicating whether the operation should return landmarks of
+// the detected faces. returnFaceAttributes is analyze and return the one or more specified face attributes in the
+// comma-separated string like "returnFaceAttributes=age,gender". Supported face attributes include age, gender,
+// headPose, smile, facialHair, glasses and emotion. Note that each face attribute analysis has additional
+// computational and time cost.
+func (client Client) DetectWithStream(ctx context.Context, imageParameter io.ReadCloser, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeType) (result ListDetectedFace, err error) {
+	req, err := client.DetectWithStreamPreparer(ctx, imageParameter, returnFaceID, returnFaceLandmarks, returnFaceAttributes)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "Detect", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "face.Client", "DetectWithStream", nil, "Failure preparing request")
 		return
 	}
 
-	resp, err := client.DetectSender(req)
+	resp, err := client.DetectWithStreamSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "face.Client", "Detect", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "face.Client", "DetectWithStream", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.DetectResponder(resp)
+	result, err = client.DetectWithStreamResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "Detect", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "face.Client", "DetectWithStream", resp, "Failure responding to request")
 	}
 
 	return
 }
 
-// DetectPreparer prepares the Detect request.
-func (client Client) DetectPreparer(ctx context.Context, imageURL ImageURL, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeTypes) (*http.Request, error) {
+// DetectWithStreamPreparer prepares the DetectWithStream request.
+func (client Client) DetectWithStreamPreparer(ctx context.Context, imageParameter io.ReadCloser, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeType) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}
@@ -82,9 +77,101 @@ func (client Client) DetectPreparer(ctx context.Context, imageURL ImageURL, retu
 	queryParameters := map[string]interface{}{}
 	if returnFaceID != nil {
 		queryParameters["returnFaceId"] = autorest.Encode("query", *returnFaceID)
+	} else {
+		queryParameters["returnFaceId"] = autorest.Encode("query", true)
 	}
 	if returnFaceLandmarks != nil {
 		queryParameters["returnFaceLandmarks"] = autorest.Encode("query", *returnFaceLandmarks)
+	} else {
+		queryParameters["returnFaceLandmarks"] = autorest.Encode("query", false)
+	}
+	if returnFaceAttributes != nil && len(returnFaceAttributes) > 0 {
+		queryParameters["returnFaceAttributes"] = autorest.Encode("query", returnFaceAttributes, ",")
+	}
+
+	preparer := autorest.CreatePreparer(
+		autorest.AsOctetStream(),
+		autorest.AsPost(),
+		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
+		autorest.WithPath("/detect"),
+		autorest.WithFile(imageParameter),
+		autorest.WithQueryParameters(queryParameters))
+	return preparer.Prepare((&http.Request{}).WithContext(ctx))
+}
+
+// DetectWithStreamSender sends the DetectWithStream request. The method will close the
+// http.Response Body if it receives an error.
+func (client Client) DetectWithStreamSender(req *http.Request) (*http.Response, error) {
+	return autorest.SendWithSender(client, req,
+		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
+}
+
+// DetectWithStreamResponder handles the response to the DetectWithStream request. The method always
+// closes the http.Response Body.
+func (client Client) DetectWithStreamResponder(resp *http.Response) (result ListDetectedFace, err error) {
+	err = autorest.Respond(
+		resp,
+		client.ByInspecting(),
+		azure.WithErrorUnlessStatusCode(http.StatusOK),
+		autorest.ByUnmarshallingJSON(&result.Value),
+		autorest.ByClosing())
+	result.Response = autorest.Response{Response: resp}
+	return
+}
+
+// DetectWithURL detect human faces in an image and returns face locations, and optionally with faceIds, landmarks, and
+// attributes.
+//
+// imageURL is a JSON document with a URL pointing to the image that is to be analyzed. returnFaceID is a value
+// indicating whether the operation should return faceIds of detected faces. returnFaceLandmarks is a value
+// indicating whether the operation should return landmarks of the detected faces. returnFaceAttributes is analyze
+// and return the one or more specified face attributes in the comma-separated string like
+// "returnFaceAttributes=age,gender". Supported face attributes include age, gender, headPose, smile, facialHair,
+// glasses and emotion. Note that each face attribute analysis has additional computational and time cost.
+func (client Client) DetectWithURL(ctx context.Context, imageURL ImageURL, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeType) (result ListDetectedFace, err error) {
+	if err := validation.Validate([]validation.Validation{
+		{TargetValue: imageURL,
+			Constraints: []validation.Constraint{{Target: "imageURL.URL", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("face.Client", "DetectWithURL", err.Error())
+	}
+
+	req, err := client.DetectWithURLPreparer(ctx, imageURL, returnFaceID, returnFaceLandmarks, returnFaceAttributes)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "face.Client", "DetectWithURL", nil, "Failure preparing request")
+		return
+	}
+
+	resp, err := client.DetectWithURLSender(req)
+	if err != nil {
+		result.Response = autorest.Response{Response: resp}
+		err = autorest.NewErrorWithError(err, "face.Client", "DetectWithURL", resp, "Failure sending request")
+		return
+	}
+
+	result, err = client.DetectWithURLResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "face.Client", "DetectWithURL", resp, "Failure responding to request")
+	}
+
+	return
+}
+
+// DetectWithURLPreparer prepares the DetectWithURL request.
+func (client Client) DetectWithURLPreparer(ctx context.Context, imageURL ImageURL, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeType) (*http.Request, error) {
+	urlParameters := map[string]interface{}{
+		"AzureRegion": client.AzureRegion,
+	}
+
+	queryParameters := map[string]interface{}{}
+	if returnFaceID != nil {
+		queryParameters["returnFaceId"] = autorest.Encode("query", *returnFaceID)
+	} else {
+		queryParameters["returnFaceId"] = autorest.Encode("query", true)
+	}
+	if returnFaceLandmarks != nil {
+		queryParameters["returnFaceLandmarks"] = autorest.Encode("query", *returnFaceLandmarks)
+	} else {
+		queryParameters["returnFaceLandmarks"] = autorest.Encode("query", false)
 	}
 	if returnFaceAttributes != nil && len(returnFaceAttributes) > 0 {
 		queryParameters["returnFaceAttributes"] = autorest.Encode("query", returnFaceAttributes, ",")
@@ -100,94 +187,16 @@ func (client Client) DetectPreparer(ctx context.Context, imageURL ImageURL, retu
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// DetectSender sends the Detect request. The method will close the
+// DetectWithURLSender sends the DetectWithURL request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) DetectSender(req *http.Request) (*http.Response, error) {
+func (client Client) DetectWithURLSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
-// DetectResponder handles the response to the Detect request. The method always
+// DetectWithURLResponder handles the response to the DetectWithURL request. The method always
 // closes the http.Response Body.
-func (client Client) DetectResponder(resp *http.Response) (result ListDetectedFace, err error) {
-	err = autorest.Respond(
-		resp,
-		client.ByInspecting(),
-		azure.WithErrorUnlessStatusCode(http.StatusOK),
-		autorest.ByUnmarshallingJSON(&result.Value),
-		autorest.ByClosing())
-	result.Response = autorest.Response{Response: resp}
-	return
-}
-
-// DetectInStream detect human faces in an image and returns face locations, and optionally with faceIds, landmarks,
-// and attributes.
-//
-// imageParameter is an image stream. imageParameter will be closed upon successful return. Callers should ensure
-// closure when receiving an error.returnFaceID is a value indicating whether the operation should return faceIds of
-// detected faces. returnFaceLandmarks is a value indicating whether the operation should return landmarks of the
-// detected faces. returnFaceAttributes is analyze and return the one or more specified face attributes in the
-// comma-separated string like "returnFaceAttributes=age,gender". Supported face attributes include age, gender,
-// headPose, smile, facialHair, glasses and emotion. Note that each face attribute analysis has additional
-// computational and time cost.
-func (client Client) DetectInStream(ctx context.Context, imageParameter io.ReadCloser, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeTypes) (result ListDetectedFace, err error) {
-	req, err := client.DetectInStreamPreparer(ctx, imageParameter, returnFaceID, returnFaceLandmarks, returnFaceAttributes)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "DetectInStream", nil, "Failure preparing request")
-		return
-	}
-
-	resp, err := client.DetectInStreamSender(req)
-	if err != nil {
-		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "face.Client", "DetectInStream", resp, "Failure sending request")
-		return
-	}
-
-	result, err = client.DetectInStreamResponder(resp)
-	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "DetectInStream", resp, "Failure responding to request")
-	}
-
-	return
-}
-
-// DetectInStreamPreparer prepares the DetectInStream request.
-func (client Client) DetectInStreamPreparer(ctx context.Context, imageParameter io.ReadCloser, returnFaceID *bool, returnFaceLandmarks *bool, returnFaceAttributes []AttributeTypes) (*http.Request, error) {
-	urlParameters := map[string]interface{}{
-		"AzureRegion": client.AzureRegion,
-	}
-
-	queryParameters := map[string]interface{}{}
-	if returnFaceID != nil {
-		queryParameters["returnFaceId"] = autorest.Encode("query", *returnFaceID)
-	}
-	if returnFaceLandmarks != nil {
-		queryParameters["returnFaceLandmarks"] = autorest.Encode("query", *returnFaceLandmarks)
-	}
-	if returnFaceAttributes != nil && len(returnFaceAttributes) > 0 {
-		queryParameters["returnFaceAttributes"] = autorest.Encode("query", returnFaceAttributes, ",")
-	}
-
-	preparer := autorest.CreatePreparer(
-		autorest.AsPost(),
-		autorest.WithCustomBaseURL("https://{AzureRegion}.api.cognitive.microsoft.com/face/v1.0", urlParameters),
-		autorest.WithPath("/detect"),
-		autorest.WithFile(imageParameter),
-		autorest.WithQueryParameters(queryParameters))
-	return preparer.Prepare((&http.Request{}).WithContext(ctx))
-}
-
-// DetectInStreamSender sends the DetectInStream request. The method will close the
-// http.Response Body if it receives an error.
-func (client Client) DetectInStreamSender(req *http.Request) (*http.Response, error) {
-	return autorest.SendWithSender(client, req,
-		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
-}
-
-// DetectInStreamResponder handles the response to the DetectInStream request. The method always
-// closes the http.Response Body.
-func (client Client) DetectInStreamResponder(resp *http.Response) (result ListDetectedFace, err error) {
+func (client Client) DetectWithURLResponder(resp *http.Response) (result ListDetectedFace, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -201,11 +210,10 @@ func (client Client) DetectInStreamResponder(resp *http.Response) (result ListDe
 // FindSimilar given query face's faceId, find the similar-looking faces from a faceId array or a faceListId.
 //
 // body is request body for Find Similar.
-func (client Client) FindSimilar(ctx context.Context, body FindSimilarRequest) (result ListSimilarFaceResult, err error) {
+func (client Client) FindSimilar(ctx context.Context, body FindSimilarRequest) (result ListSimilarFace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
-			Constraints: []validation.Constraint{{Target: "body.FaceID", Name: validation.Null, Rule: true,
-				Chain: []validation.Constraint{{Target: "body.FaceID", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
+			Constraints: []validation.Constraint{{Target: "body.FaceID", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "body.FaceListID", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "body.FaceListID", Name: validation.MaxLength, Rule: 64, Chain: nil},
 						{Target: "body.FaceListID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil},
@@ -216,7 +224,7 @@ func (client Client) FindSimilar(ctx context.Context, body FindSimilarRequest) (
 					Chain: []validation.Constraint{{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 						{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.Client", "FindSimilar")
+		return result, validation.NewError("face.Client", "FindSimilar", err.Error())
 	}
 
 	req, err := client.FindSimilarPreparer(ctx, body)
@@ -264,7 +272,7 @@ func (client Client) FindSimilarSender(req *http.Request) (*http.Response, error
 
 // FindSimilarResponder handles the response to the FindSimilar request. The method always
 // closes the http.Response Body.
-func (client Client) FindSimilarResponder(resp *http.Response) (result ListSimilarFaceResult, err error) {
+func (client Client) FindSimilarResponder(resp *http.Response) (result ListSimilarFace, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -278,12 +286,12 @@ func (client Client) FindSimilarResponder(resp *http.Response) (result ListSimil
 // Group divide candidate faces into groups based on face similarity.
 //
 // body is request body for grouping.
-func (client Client) Group(ctx context.Context, body GroupRequest) (result GroupResponse, err error) {
+func (client Client) Group(ctx context.Context, body GroupRequest) (result GroupResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
 			Constraints: []validation.Constraint{{Target: "body.FaceIds", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "body.FaceIds", Name: validation.MaxItems, Rule: 1000, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.Client", "Group")
+		return result, validation.NewError("face.Client", "Group", err.Error())
 	}
 
 	req, err := client.GroupPreparer(ctx, body)
@@ -331,7 +339,7 @@ func (client Client) GroupSender(req *http.Request) (*http.Response, error) {
 
 // GroupResponder handles the response to the Group request. The method always
 // closes the http.Response Body.
-func (client Client) GroupResponder(resp *http.Response) (result GroupResponse, err error) {
+func (client Client) GroupResponder(resp *http.Response) (result GroupResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -345,7 +353,7 @@ func (client Client) GroupResponder(resp *http.Response) (result GroupResponse, 
 // Identify identify unknown faces from a person group.
 //
 // body is request body for identify operation.
-func (client Client) Identify(ctx context.Context, body IdentifyRequest) (result ListIdentifyResultItem, err error) {
+func (client Client) Identify(ctx context.Context, body IdentifyRequest) (result ListIdentifyResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
 			Constraints: []validation.Constraint{{Target: "body.PersonGroupID", Name: validation.Null, Rule: true,
@@ -353,12 +361,12 @@ func (client Client) Identify(ctx context.Context, body IdentifyRequest) (result
 					{Target: "body.PersonGroupID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil},
 				}},
 				{Target: "body.FaceIds", Name: validation.Null, Rule: true,
-					Chain: []validation.Constraint{{Target: "body.FaceIds", Name: validation.MaxItems, Rule: 1000, Chain: nil}}},
+					Chain: []validation.Constraint{{Target: "body.FaceIds", Name: validation.MaxItems, Rule: 10, Chain: nil}}},
 				{Target: "body.MaxNumOfCandidatesReturned", Name: validation.Null, Rule: false,
-					Chain: []validation.Constraint{{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
+					Chain: []validation.Constraint{{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMaximum, Rule: 5, Chain: nil},
 						{Target: "body.MaxNumOfCandidatesReturned", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.Client", "Identify")
+		return result, validation.NewError("face.Client", "Identify", err.Error())
 	}
 
 	req, err := client.IdentifyPreparer(ctx, body)
@@ -406,7 +414,7 @@ func (client Client) IdentifySender(req *http.Request) (*http.Response, error) {
 
 // IdentifyResponder handles the response to the Identify request. The method always
 // closes the http.Response Body.
-func (client Client) IdentifyResponder(resp *http.Response) (result ListIdentifyResultItem, err error) {
+func (client Client) IdentifyResponder(resp *http.Response) (result ListIdentifyResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -417,42 +425,40 @@ func (client Client) IdentifyResponder(resp *http.Response) (result ListIdentify
 	return
 }
 
-// Verify verify whether two faces belong to a same person or whether one face belongs to a person.
+// VerifyFaceToFace verify whether two faces belong to a same person or whether one face belongs to a person.
 //
 // body is request body for verify operation.
-func (client Client) Verify(ctx context.Context, body VerifyRequest) (result VerifyResult, err error) {
+func (client Client) VerifyFaceToFace(ctx context.Context, body VerifyFaceToFaceRequest) (result VerifyResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
-			Constraints: []validation.Constraint{{Target: "body.FaceID1", Name: validation.Null, Rule: true,
-				Chain: []validation.Constraint{{Target: "body.FaceID1", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
-				{Target: "body.FaceID2", Name: validation.Null, Rule: true,
-					Chain: []validation.Constraint{{Target: "body.FaceID2", Name: validation.MaxLength, Rule: 64, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.Client", "Verify")
+			Constraints: []validation.Constraint{{Target: "body.FaceID1", Name: validation.Null, Rule: true, Chain: nil},
+				{Target: "body.FaceID2", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("face.Client", "VerifyFaceToFace", err.Error())
 	}
 
-	req, err := client.VerifyPreparer(ctx, body)
+	req, err := client.VerifyFaceToFacePreparer(ctx, body)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "Verify", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "face.Client", "VerifyFaceToFace", nil, "Failure preparing request")
 		return
 	}
 
-	resp, err := client.VerifySender(req)
+	resp, err := client.VerifyFaceToFaceSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "face.Client", "Verify", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "face.Client", "VerifyFaceToFace", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.VerifyResponder(resp)
+	result, err = client.VerifyFaceToFaceResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "Verify", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "face.Client", "VerifyFaceToFace", resp, "Failure responding to request")
 	}
 
 	return
 }
 
-// VerifyPreparer prepares the Verify request.
-func (client Client) VerifyPreparer(ctx context.Context, body VerifyRequest) (*http.Request, error) {
+// VerifyFaceToFacePreparer prepares the VerifyFaceToFace request.
+func (client Client) VerifyFaceToFacePreparer(ctx context.Context, body VerifyFaceToFaceRequest) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}
@@ -466,16 +472,16 @@ func (client Client) VerifyPreparer(ctx context.Context, body VerifyRequest) (*h
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// VerifySender sends the Verify request. The method will close the
+// VerifyFaceToFaceSender sends the VerifyFaceToFace request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) VerifySender(req *http.Request) (*http.Response, error) {
+func (client Client) VerifyFaceToFaceSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
-// VerifyResponder handles the response to the Verify request. The method always
+// VerifyFaceToFaceResponder handles the response to the VerifyFaceToFace request. The method always
 // closes the http.Response Body.
-func (client Client) VerifyResponder(resp *http.Response) (result VerifyResult, err error) {
+func (client Client) VerifyFaceToFaceResponder(resp *http.Response) (result VerifyResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),
@@ -486,45 +492,44 @@ func (client Client) VerifyResponder(resp *http.Response) (result VerifyResult, 
 	return
 }
 
-// VerifyWithPersonGroup verify whether two faces belong to a same person. Compares a face Id with a Person Id
+// VerifyFaceToPerson verify whether two faces belong to a same person. Compares a face Id with a Person Id
 //
 // body is request body for verifying two faces in a person group
-func (client Client) VerifyWithPersonGroup(ctx context.Context, body VerifyPersonGroupRequest) (result VerifyResult, err error) {
+func (client Client) VerifyFaceToPerson(ctx context.Context, body VerifyFaceToPersonRequest) (result VerifyResult, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: body,
-			Constraints: []validation.Constraint{{Target: "body.FaceID", Name: validation.Null, Rule: true,
-				Chain: []validation.Constraint{{Target: "body.FaceID", Name: validation.MaxLength, Rule: 64, Chain: nil}}},
-				{Target: "body.PersonID", Name: validation.Null, Rule: true, Chain: nil},
+			Constraints: []validation.Constraint{{Target: "body.FaceID", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "body.PersonGroupID", Name: validation.Null, Rule: true,
 					Chain: []validation.Constraint{{Target: "body.PersonGroupID", Name: validation.MaxLength, Rule: 64, Chain: nil},
 						{Target: "body.PersonGroupID", Name: validation.Pattern, Rule: `^[a-z0-9-_]+$`, Chain: nil},
-					}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "face.Client", "VerifyWithPersonGroup")
+					}},
+				{Target: "body.PersonID", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
+		return result, validation.NewError("face.Client", "VerifyFaceToPerson", err.Error())
 	}
 
-	req, err := client.VerifyWithPersonGroupPreparer(ctx, body)
+	req, err := client.VerifyFaceToPersonPreparer(ctx, body)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "VerifyWithPersonGroup", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "face.Client", "VerifyFaceToPerson", nil, "Failure preparing request")
 		return
 	}
 
-	resp, err := client.VerifyWithPersonGroupSender(req)
+	resp, err := client.VerifyFaceToPersonSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "face.Client", "VerifyWithPersonGroup", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "face.Client", "VerifyFaceToPerson", resp, "Failure sending request")
 		return
 	}
 
-	result, err = client.VerifyWithPersonGroupResponder(resp)
+	result, err = client.VerifyFaceToPersonResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "face.Client", "VerifyWithPersonGroup", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "face.Client", "VerifyFaceToPerson", resp, "Failure responding to request")
 	}
 
 	return
 }
 
-// VerifyWithPersonGroupPreparer prepares the VerifyWithPersonGroup request.
-func (client Client) VerifyWithPersonGroupPreparer(ctx context.Context, body VerifyPersonGroupRequest) (*http.Request, error) {
+// VerifyFaceToPersonPreparer prepares the VerifyFaceToPerson request.
+func (client Client) VerifyFaceToPersonPreparer(ctx context.Context, body VerifyFaceToPersonRequest) (*http.Request, error) {
 	urlParameters := map[string]interface{}{
 		"AzureRegion": client.AzureRegion,
 	}
@@ -538,16 +543,16 @@ func (client Client) VerifyWithPersonGroupPreparer(ctx context.Context, body Ver
 	return preparer.Prepare((&http.Request{}).WithContext(ctx))
 }
 
-// VerifyWithPersonGroupSender sends the VerifyWithPersonGroup request. The method will close the
+// VerifyFaceToPersonSender sends the VerifyFaceToPerson request. The method will close the
 // http.Response Body if it receives an error.
-func (client Client) VerifyWithPersonGroupSender(req *http.Request) (*http.Response, error) {
+func (client Client) VerifyFaceToPersonSender(req *http.Request) (*http.Response, error) {
 	return autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 }
 
-// VerifyWithPersonGroupResponder handles the response to the VerifyWithPersonGroup request. The method always
+// VerifyFaceToPersonResponder handles the response to the VerifyFaceToPerson request. The method always
 // closes the http.Response Body.
-func (client Client) VerifyWithPersonGroupResponder(resp *http.Response) (result VerifyResult, err error) {
+func (client Client) VerifyFaceToPersonResponder(resp *http.Response) (result VerifyResult, err error) {
 	err = autorest.Respond(
 		resp,
 		client.ByInspecting(),

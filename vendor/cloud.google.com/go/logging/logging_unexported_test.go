@@ -17,6 +17,7 @@
 package logging
 
 import (
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"testing"
@@ -34,7 +35,7 @@ import (
 
 func TestLoggerCreation(t *testing.T) {
 	const logID = "testing"
-	c := &Client{projectID: "PROJECT_ID"}
+	c := &Client{parent: "projects/PROJECT_ID"}
 	customResource := &mrpb.MonitoredResource{
 		Type: "global",
 		Labels: map[string]string{
@@ -179,6 +180,53 @@ func TestToProtoStruct(t *testing.T) {
 	}
 }
 
+func TestToLogEntryPayload(t *testing.T) {
+	for _, test := range []struct {
+		in         interface{}
+		wantText   string
+		wantStruct *structpb.Struct
+	}{
+		{
+			in:       "string",
+			wantText: "string",
+		},
+		{
+			in: map[string]interface{}{"a": 1, "b": true},
+			wantStruct: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"a": {Kind: &structpb.Value_NumberValue{NumberValue: 1}},
+					"b": {Kind: &structpb.Value_BoolValue{BoolValue: true}},
+				},
+			},
+		},
+		{
+			in: json.RawMessage([]byte(`{"a": 1, "b": true}`)),
+			wantStruct: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					"a": {Kind: &structpb.Value_NumberValue{NumberValue: 1}},
+					"b": {Kind: &structpb.Value_BoolValue{BoolValue: true}},
+				},
+			},
+		},
+	} {
+		e, err := toLogEntry(Entry{Payload: test.in})
+		if err != nil {
+			t.Fatalf("%+v: %v", test.in, err)
+		}
+		if test.wantStruct != nil {
+			got := e.GetJsonPayload()
+			if !proto.Equal(got, test.wantStruct) {
+				t.Errorf("%+v: got %s, want %s", test.in, got, test.wantStruct)
+			}
+		} else {
+			got := e.GetTextPayload()
+			if got != test.wantText {
+				t.Errorf("%+v: got %s, want %s", test.in, got, test.wantText)
+			}
+		}
+	}
+}
+
 func TestFromHTTPRequest(t *testing.T) {
 	const testURL = "http:://example.com/path?q=1"
 	u, err := url.Parse(testURL)
@@ -220,6 +268,62 @@ func TestFromHTTPRequest(t *testing.T) {
 	}
 	if !proto.Equal(got, want) {
 		t.Errorf("got  %+v\nwant %+v", got, want)
+	}
+}
+
+func TestMonitoredResource(t *testing.T) {
+	for _, test := range []struct {
+		parent string
+		want   *mrpb.MonitoredResource
+	}{
+		{
+			"projects/P",
+			&mrpb.MonitoredResource{
+				Type:   "project",
+				Labels: map[string]string{"project_id": "P"},
+			},
+		},
+
+		{
+			"folders/F",
+			&mrpb.MonitoredResource{
+				Type:   "folder",
+				Labels: map[string]string{"folder_id": "F"},
+			},
+		},
+		{
+			"billingAccounts/B",
+			&mrpb.MonitoredResource{
+				Type:   "billing_account",
+				Labels: map[string]string{"account_id": "B"},
+			},
+		},
+		{
+			"organizations/123",
+			&mrpb.MonitoredResource{
+				Type:   "organization",
+				Labels: map[string]string{"organization_id": "123"},
+			},
+		},
+		{
+			"unknown/X",
+			&mrpb.MonitoredResource{
+				Type:   "global",
+				Labels: map[string]string{"project_id": "X"},
+			},
+		},
+		{
+			"whatever",
+			&mrpb.MonitoredResource{
+				Type:   "global",
+				Labels: map[string]string{"project_id": "whatever"},
+			},
+		},
+	} {
+		got := monitoredResource(test.parent)
+		if !testutil.Equal(got, test.want) {
+			t.Errorf("%q: got %+v, want %+v", test.parent, got, test.want)
+		}
 	}
 }
 

@@ -48,7 +48,7 @@ func (client RegionsClient) ListBySku(ctx context.Context, sku string) (result P
 		{TargetValue: sku,
 			Constraints: []validation.Constraint{{Target: "sku", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "sku", Name: validation.MinLength, Rule: 1, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicebus.RegionsClient", "ListBySku")
+		return result, validation.NewError("servicebus.RegionsClient", "ListBySku", err.Error())
 	}
 
 	result.fn = client.listBySkuNextResults

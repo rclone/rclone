@@ -37,6 +37,9 @@ type CopyConfig struct {
 
 	// The labels associated with this job.
 	Labels map[string]string
+
+	// Custom encryption configuration (e.g., Cloud KMS keys).
+	DestinationEncryptionConfig *EncryptionConfig
 }
 
 func (c *CopyConfig) toBQ() *bq.JobConfiguration {
@@ -47,10 +50,11 @@ func (c *CopyConfig) toBQ() *bq.JobConfiguration {
 	return &bq.JobConfiguration{
 		Labels: c.Labels,
 		Copy: &bq.JobConfigurationTableCopy{
-			CreateDisposition: string(c.CreateDisposition),
-			WriteDisposition:  string(c.WriteDisposition),
-			DestinationTable:  c.Dst.toBQ(),
-			SourceTables:      ts,
+			CreateDisposition:                  string(c.CreateDisposition),
+			WriteDisposition:                   string(c.WriteDisposition),
+			DestinationTable:                   c.Dst.toBQ(),
+			DestinationEncryptionConfiguration: c.DestinationEncryptionConfig.toBQ(),
+			SourceTables:                       ts,
 		},
 	}
 }
@@ -61,6 +65,7 @@ func bqToCopyConfig(q *bq.JobConfiguration, c *Client) *CopyConfig {
 		CreateDisposition: TableCreateDisposition(q.Copy.CreateDisposition),
 		WriteDisposition:  TableWriteDisposition(q.Copy.WriteDisposition),
 		Dst:               bqToTable(q.Copy.DestinationTable, c),
+		DestinationEncryptionConfig: bqToEncryptionConfig(q.Copy.DestinationEncryptionConfiguration),
 	}
 	for _, t := range q.Copy.SourceTables {
 		cc.Srcs = append(cc.Srcs, bqToTable(t, c))

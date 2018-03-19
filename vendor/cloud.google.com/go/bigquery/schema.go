@@ -122,21 +122,66 @@ var (
 	errNoStruct             = errors.New("bigquery: can only infer schema from struct or pointer to struct")
 	errUnsupportedFieldType = errors.New("bigquery: unsupported type of field in struct")
 	errInvalidFieldName     = errors.New("bigquery: invalid name of field in struct")
+	errBadNullable          = errors.New(`bigquery: use "nullable" only for []byte and struct pointers; for all other types, use a NullXXX type`)
 )
 
 var typeOfByteSlice = reflect.TypeOf([]byte{})
 
 // InferSchema tries to derive a BigQuery schema from the supplied struct value.
-// NOTE: All fields in the returned Schema are configured to be required,
-// unless the corresponding field in the supplied struct is a slice or array.
+// Each exported struct field is mapped to a field in the schema.
 //
-// It is considered an error if the struct (including nested structs) contains
-// any exported fields that are pointers or one of the following types:
-// uint, uint64, uintptr, map, interface, complex64, complex128, func, chan.
-// In these cases, an error will be returned.
-// Future versions may handle these cases without error.
+// The following BigQuery types are inferred from the corresponding Go types.
+// (This is the same mapping as that used for RowIterator.Next.) Fields inferred
+// from these types are marked required (non-nullable).
+//
+//   STRING      string
+//   BOOL        bool
+//   INTEGER     int, int8, int16, int32, int64, uint8, uint16, uint32
+//   FLOAT       float32, float64
+//   BYTES       []byte
+//   TIMESTAMP   time.Time
+//   DATE        civil.Date
+//   TIME        civil.Time
+//   DATETIME    civil.DateTime
+//
+// A Go slice or array type is inferred to be a BigQuery repeated field of the
+// element type. The element type must be one of the above listed types.
+//
+// Nullable fields are inferred from the NullXXX types, declared in this package:
+//
+//   STRING      NullString
+//   BOOL        NullBool
+//   INTEGER     NullInt64
+//   FLOAT       NullFloat64
+//   TIMESTAMP   NullTimestamp
+//   DATE        NullDate
+//   TIME        NullTime
+//   DATETIME    NullDateTime
+
+// For a nullable BYTES field, use the type []byte and tag the field "nullable" (see below).
+//
+// A struct field that is of struct type is inferred to be a required field of type
+// RECORD with a schema inferred recursively. For backwards compatibility, a field of
+// type pointer to struct is also inferred to be required. To get a nullable RECORD
+// field, use the "nullable" tag (see below).
+//
+// InferSchema returns an error if any of the examined fields is of type uint,
+// uint64, uintptr, map, interface, complex64, complex128, func, or chan. Future
+// versions may handle these cases without error.
 //
 // Recursively defined structs are also disallowed.
+//
+// Struct fields may be tagged in a way similar to the encoding/json package.
+// A tag of the form
+//     bigquery:"name"
+// uses "name" instead of the struct field name as the BigQuery field name.
+// A tag of the form
+//     bigquery:"-"
+// omits the field from the inferred schema.
+// The "nullable" option marks the field as nullable (not required). It is only
+// needed for []byte and pointer-to-struct fields, and cannot appear on other
+// fields. In this example, the Go name of the field is retained:
+//     bigquery:",nullable"
 func InferSchema(st interface{}) (Schema, error) {
 	return inferSchemaReflectCached(reflect.TypeOf(st))
 }
@@ -186,20 +231,27 @@ func inferStruct(t reflect.Type) (Schema, error) {
 
 // inferFieldSchema infers the FieldSchema for a Go type
 func inferFieldSchema(rt reflect.Type, nullable bool) (*FieldSchema, error) {
+	// Only []byte and struct pointers can be tagged nullable.
+	if nullable && !(rt == typeOfByteSlice || rt.Kind() == reflect.Ptr && rt.Elem().Kind() == reflect.Struct) {
+		return nil, errBadNullable
+	}
 	switch rt {
 	case typeOfByteSlice:
 		return &FieldSchema{Required: !nullable, Type: BytesFieldType}, nil
 	case typeOfGoTime:
-		return &FieldSchema{Required: !nullable, Type: TimestampFieldType}, nil
+		return &FieldSchema{Required: true, Type: TimestampFieldType}, nil
 	case typeOfDate:
-		return &FieldSchema{Required: !nullable, Type: DateFieldType}, nil
+		return &FieldSchema{Required: true, Type: DateFieldType}, nil
 	case typeOfTime:
-		return &FieldSchema{Required: !nullable, Type: TimeFieldType}, nil
+		return &FieldSchema{Required: true, Type: TimeFieldType}, nil
 	case typeOfDateTime:
-		return &FieldSchema{Required: !nullable, Type: DateTimeFieldType}, nil
+		return &FieldSchema{Required: true, Type: DateTimeFieldType}, nil
 	}
-	if isSupportedIntType(rt) {
-		return &FieldSchema{Required: !nullable, Type: IntegerFieldType}, nil
+	if ft := nullableFieldType(rt); ft != "" {
+		return &FieldSchema{Required: false, Type: ft}, nil
+	}
+	if isSupportedIntType(rt) || isSupportedUintType(rt) {
+		return &FieldSchema{Required: true, Type: IntegerFieldType}, nil
 	}
 	switch rt.Kind() {
 	case reflect.Slice, reflect.Array:
@@ -208,7 +260,10 @@ func inferFieldSchema(rt reflect.Type, nullable bool) (*FieldSchema, error) {
 			// Multi dimensional slices/arrays are not supported by BigQuery
 			return nil, errUnsupportedFieldType
 		}
-
+		if nullableFieldType(et) != "" {
+			// Repeated nullable types are not supported by BigQuery.
+			return nil, errUnsupportedFieldType
+		}
 		f, err := inferFieldSchema(et, false)
 		if err != nil {
 			return nil, err
@@ -216,7 +271,12 @@ func inferFieldSchema(rt reflect.Type, nullable bool) (*FieldSchema, error) {
 		f.Repeated = true
 		f.Required = false
 		return f, nil
-	case reflect.Struct, reflect.Ptr:
+	case reflect.Ptr:
+		if rt.Elem().Kind() != reflect.Struct {
+			return nil, errUnsupportedFieldType
+		}
+		fallthrough
+	case reflect.Struct:
 		nested, err := inferStruct(rt)
 		if err != nil {
 			return nil, err
@@ -258,12 +318,22 @@ func inferFields(rt reflect.Type) (Schema, error) {
 	return s, nil
 }
 
-// isSupportedIntType reports whether t can be properly represented by the
-// BigQuery INTEGER/INT64 type.
+// isSupportedIntType reports whether t is an int type that can be properly
+// represented by the BigQuery INTEGER/INT64 type.
 func isSupportedIntType(t reflect.Type) bool {
 	switch t.Kind() {
-	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int,
-		reflect.Uint8, reflect.Uint16, reflect.Uint32:
+	case reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64, reflect.Int:
+		return true
+	default:
+		return false
+	}
+}
+
+// isSupportedIntType reports whether t is a uint type that can be properly
+// represented by the BigQuery INTEGER/INT64 type.
+func isSupportedUintType(t reflect.Type) bool {
+	switch t.Kind() {
+	case reflect.Uint8, reflect.Uint16, reflect.Uint32:
 		return true
 	default:
 		return false

@@ -43,9 +43,9 @@ func NewWorkspacesClientWithBaseURI(baseURI string, subscriptionID string) Works
 
 // CreateOrUpdate creates or updates a machine learning workspace with the specified parameters.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace. parameters is the parameters for creating or updating a machine learning workspace.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace. parameters is the parameters for creating or updating a machine learning workspace.
 func (client WorkspacesClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, parameters Workspace) (result Workspace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -59,7 +59,7 @@ func (client WorkspacesClient) CreateOrUpdate(ctx context.Context, resourceGroup
 		{TargetValue: parameters,
 			Constraints: []validation.Constraint{{Target: "parameters.WorkspaceProperties", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "parameters.WorkspaceProperties.FriendlyName", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.WorkspacesClient", "CreateOrUpdate")
+		return result, validation.NewError("experimentation.WorkspacesClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, accountName, workspaceName, parameters)
@@ -129,9 +129,9 @@ func (client WorkspacesClient) CreateOrUpdateResponder(resp *http.Response) (res
 
 // Delete deletes a machine learning workspace.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace.
 func (client WorkspacesClient) Delete(ctx context.Context, resourceGroupName string, accountName string, workspaceName string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -142,7 +142,7 @@ func (client WorkspacesClient) Delete(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "workspaceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "workspaceName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.WorkspacesClient", "Delete")
+		return result, validation.NewError("experimentation.WorkspacesClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, accountName, workspaceName)
@@ -209,9 +209,9 @@ func (client WorkspacesClient) DeleteResponder(resp *http.Response) (result auto
 
 // Get gets the properties of the specified machine learning workspace.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace.
 func (client WorkspacesClient) Get(ctx context.Context, resourceGroupName string, accountName string, workspaceName string) (result Workspace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -222,7 +222,7 @@ func (client WorkspacesClient) Get(ctx context.Context, resourceGroupName string
 			Constraints: []validation.Constraint{{Target: "workspaceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "workspaceName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.WorkspacesClient", "Get")
+		return result, validation.NewError("experimentation.WorkspacesClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, accountName, workspaceName)
@@ -290,15 +290,15 @@ func (client WorkspacesClient) GetResponder(resp *http.Response) (result Workspa
 
 // ListByAccounts lists all the available machine learning workspaces under the specified team account.
 //
-// accountName is the name of the machine learning team account. resourceGroupName is the name of the resource group to
-// which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. resourceGroupName is the name of the resource
+// group to which the machine learning team account belongs.
 func (client WorkspacesClient) ListByAccounts(ctx context.Context, accountName string, resourceGroupName string) (result WorkspaceListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
 			Constraints: []validation.Constraint{{Target: "accountName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "accountName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "accountName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.WorkspacesClient", "ListByAccounts")
+		return result, validation.NewError("experimentation.WorkspacesClient", "ListByAccounts", err.Error())
 	}
 
 	result.fn = client.listByAccountsNextResults
@@ -393,9 +393,9 @@ func (client WorkspacesClient) ListByAccountsComplete(ctx context.Context, accou
 
 // Update updates a machine learning workspace with the specified parameters.
 //
-// resourceGroupName is the name of the resource group to which the machine learning team account belongs. accountName
-// is the name of the machine learning team account. workspaceName is the name of the machine learning team account
-// workspace. parameters is the parameters for updating a machine learning workspace.
+// resourceGroupName is the name of the resource group to which the machine learning team account belongs.
+// accountName is the name of the machine learning team account. workspaceName is the name of the machine learning
+// team account workspace. parameters is the parameters for updating a machine learning workspace.
 func (client WorkspacesClient) Update(ctx context.Context, resourceGroupName string, accountName string, workspaceName string, parameters WorkspaceUpdateParameters) (result Workspace, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: accountName,
@@ -406,7 +406,7 @@ func (client WorkspacesClient) Update(ctx context.Context, resourceGroupName str
 			Constraints: []validation.Constraint{{Target: "workspaceName", Name: validation.MaxLength, Rule: 50, Chain: nil},
 				{Target: "workspaceName", Name: validation.MinLength, Rule: 5, Chain: nil},
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `^[a-zA-Z0-9]*$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "experimentation.WorkspacesClient", "Update")
+		return result, validation.NewError("experimentation.WorkspacesClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, accountName, workspaceName, parameters)

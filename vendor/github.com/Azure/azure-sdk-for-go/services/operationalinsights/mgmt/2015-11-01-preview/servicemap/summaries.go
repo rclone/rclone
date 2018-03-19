@@ -44,9 +44,9 @@ func NewSummariesClientWithBaseURI(baseURI string, subscriptionID string) Summar
 // GetMachines returns summary information about the machines in the workspace.
 //
 // resourceGroupName is resource group name within the specified subscriptionId. workspaceName is OMS workspace
-// containing the resources of interest. startTime is UTC date and time specifying the start time of an interval. When
-// not specified the service uses DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time of an
-// interval. When not specified the service uses DateTime.UtcNow
+// containing the resources of interest. startTime is UTC date and time specifying the start time of an interval.
+// When not specified the service uses DateTime.UtcNow - 10m endTime is UTC date and time specifying the end time
+// of an interval. When not specified the service uses DateTime.UtcNow
 func (client SummariesClient) GetMachines(ctx context.Context, resourceGroupName string, workspaceName string, startTime *date.Time, endTime *date.Time) (result MachinesSummary, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: resourceGroupName,
@@ -57,7 +57,7 @@ func (client SummariesClient) GetMachines(ctx context.Context, resourceGroupName
 			Constraints: []validation.Constraint{{Target: "workspaceName", Name: validation.MaxLength, Rule: 63, Chain: nil},
 				{Target: "workspaceName", Name: validation.MinLength, Rule: 3, Chain: nil},
 				{Target: "workspaceName", Name: validation.Pattern, Rule: `[a-zA-Z0-9_][a-zA-Z0-9_-]+[a-zA-Z0-9_]`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "servicemap.SummariesClient", "GetMachines")
+		return result, validation.NewError("servicemap.SummariesClient", "GetMachines", err.Error())
 	}
 
 	req, err := client.GetMachinesPreparer(ctx, resourceGroupName, workspaceName, startTime, endTime)

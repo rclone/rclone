@@ -9,7 +9,7 @@ zh-CN, zh-TW, iw ; 	zh-Hant ; 	zh-TW
 zh-CN, zh-TW, iw ; 	zh ; 	zh-CN
 zh-CN, zh-TW, iw ; 	zh-Hans-CN ; 	zh-CN
 zh-CN, zh-TW, iw ; 	zh-Hant-HK ; 	zh-TW
-zh-CN, zh-TW, iw ; 	he-IT ; 	iw ; iw
+zh-CN, zh-TW, iw ; 	he-IT ; 	iw ; iw-u-rg-itzzzz
 
 # language-specific script fallbacks 1
 en, sr, nl ; 	sr-Latn ; 	sr
@@ -125,7 +125,7 @@ nl, nl-Latn, nl-NL, nl-BE ; 	nl-Latn-NL ; 	nl-NL
 pt, pt-PT ; 	pt-ES ; 	pt-PT
 
 # if no preferred locale specified, pick top language, not regional
-en, fr, fr-CA, fr-CH ; 	fr-US ; 	fr #TODO: ; fr-u-rg-US
+en, fr, fr-CA, fr-CH ; 	fr-US ; 	fr  ; fr-u-rg-uszzzz
 
 # region distance German
 de-AT, de-DE, de-CH ; 	de ; 	de-DE
@@ -218,9 +218,14 @@ en, en-US, en-GB, es, es-419, pt, pt-BR, pt-PT, zh,  zh-Hant, zh-Hant-HK ; 	pt-S
 en, en-US, en-GB, es, es-419, pt, pt-BR, pt-PT, zh,  zh-Hant, zh-Hant-HK ; 	pt-TL ; 	pt-PT
 
 # preserve extensions
-en, de, sl-nedis ; 	de-FR-u-co-phonebk ; 	de ; de-u-co-phonebk
+en, de, sl-nedis ; 	de-FR-u-co-phonebk ; 	de ; de-u-co-phonebk-rg-frzzzz
 en, de, sl-nedis ; 	sl-nedis-u-cu-eur ; 	sl-nedis ; sl-nedis-u-cu-eur
 en, de, sl-nedis ; 	sl-u-cu-eur ; 	sl-nedis ; sl-nedis-u-cu-eur
-en, de, sl-nedis ; 	sl-HR-nedis-u-cu-eur ; 	sl-nedis ; sl-nedis-u-cu-eur
+en, de, sl-nedis ; 	sl-HR-nedis-u-cu-eur ; 	sl-nedis ; sl-nedis-u-cu-eur-rg-hrzzzz
 en, de, sl-nedis ; 	de-t-m0-iso-i0-pinyin ; 	de ; de-t-m0-iso-i0-pinyin
 
+und, nl ; 	nl-BE-fonipa ; 	nl ; 	nl-u-rg-bezzzz
+und, nl-CA ;	nl-BE-fonipa ; 	nl-CA ; 	nl-CA-u-rg-bezzzz
+und, nl-fonupa ; 	nl-BE-fonipa ; 	nl-fonupa ; 	nl-fonupa-u-rg-bezzzz
+und, no ; 	nn-DK-fonipa ; 	no ; 	no-u-rg-dkzzzz
+und, en-GB-u-sd-usca ; 	en-US-fonipa-u-nu-Arab-ca-buddhist-sd-usdc-t-m0-iso-i0-pinyin ; 	en-GB-u-sd-usca ; 	en-GB-t-m0-iso-i0-pinyin-u-ca-buddhist-nu-Arab-rg-uszzzz-sd-usca

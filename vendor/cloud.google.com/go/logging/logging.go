@@ -94,12 +94,12 @@ var ErrOversizedEntry = bundler.ErrOversizedItem
 
 // Client is a Logging client. A Client is associated with a single Cloud project.
 type Client struct {
-	client    *vkit.Client // client for the logging service
-	projectID string
-	errc      chan error     // should be buffered to minimize dropped errors
-	donec     chan struct{}  // closed on Client.Close to close Logger bundlers
-	loggers   sync.WaitGroup // so we can wait for loggers to close
-	closed    bool
+	client  *vkit.Client   // client for the logging service
+	parent  string         // e.g. "projects/proj-id"
+	errc    chan error     // should be buffered to minimize dropped errors
+	donec   chan struct{}  // closed on Client.Close to close Logger bundlers
+	loggers sync.WaitGroup // so we can wait for loggers to close
+	closed  bool
 
 	mu      sync.Mutex
 	nErrs   int   // number of errors we saw
@@ -117,15 +117,20 @@ type Client struct {
 	OnError func(err error)
 }
 
-// NewClient returns a new logging client associated with the provided project ID.
+// NewClient returns a new logging client associated with the provided parent.
+// A parent can take any of the following forms:
+//    projects/PROJECT_ID
+//    folders/FOLDER_ID
+//    billingAccounts/ACCOUNT_ID
+//    organizations/ORG_ID
+// for backwards compatibility, a string with no '/' is also allowed and is interpreted
+// as a project ID.
 //
 // By default NewClient uses WriteScope. To use a different scope, call
 // NewClient using a WithScopes option (see https://godoc.org/google.golang.org/api/option#WithScopes).
-func NewClient(ctx context.Context, projectID string, opts ...option.ClientOption) (*Client, error) {
-	// Check for '/' in project ID to reserve the ability to support various owning resources,
-	// in the form "{Collection}/{Name}", for instance "organizations/my-org".
-	if strings.ContainsRune(projectID, '/') {
-		return nil, errors.New("logging: project ID contains '/'")
+func NewClient(ctx context.Context, parent string, opts ...option.ClientOption) (*Client, error) {
+	if !strings.ContainsRune(parent, '/') {
+		parent = "projects/" + parent
 	}
 	opts = append([]option.ClientOption{
 		option.WithEndpoint(internal.ProdAddr),
@@ -137,11 +142,11 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 	}
 	c.SetGoogleClientInfo("gccl", version.Repo)
 	client := &Client{
-		client:    c,
-		projectID: projectID,
-		errc:      make(chan error, defaultErrorCapacity), // create a small buffer for errors
-		donec:     make(chan struct{}),
-		OnError:   func(e error) { log.Printf("logging client: %v", e) },
+		client:  c,
+		parent:  parent,
+		errc:    make(chan error, defaultErrorCapacity), // create a small buffer for errors
+		donec:   make(chan struct{}),
+		OnError: func(e error) { log.Printf("logging client: %v", e) },
 	}
 	// Call the user's function synchronously, to make life easier for them.
 	go func() {
@@ -153,16 +158,11 @@ func NewClient(ctx context.Context, projectID string, opts ...option.ClientOptio
 			if fn := client.OnError; fn != nil {
 				fn(err)
 			} else {
-				log.Printf("logging (project ID %q): %v", projectID, err)
+				log.Printf("logging (parent %q): %v", parent, err)
 			}
 		}
 	}()
 	return client, nil
-}
-
-// parent returns the string used in many RPCs to denote the parent resource of the log.
-func (c *Client) parent() string {
-	return "projects/" + c.projectID
 }
 
 var unixZeroTimestamp *tspb.Timestamp
@@ -185,8 +185,8 @@ func (c *Client) Ping(ctx context.Context) error {
 		InsertId:  "ping",            // necessary for the service to dedup these entries.
 	}
 	_, err := c.client.WriteLogEntries(ctx, &logpb.WriteLogEntriesRequest{
-		LogName:  internal.LogPath(c.parent(), "ping"),
-		Resource: globalResource(c.projectID),
+		LogName:  internal.LogPath(c.parent, "ping"),
+		Resource: monitoredResource(c.parent),
 		Entries:  []*logpb.LogEntry{ent},
 	})
 	return err
@@ -279,6 +279,28 @@ func detectResource() *mrpb.MonitoredResource {
 	return detectedResource.pb
 }
 
+var resourceInfo = map[string]struct{ rtype, label string }{
+	"organizations":   {"organization", "organization_id"},
+	"folders":         {"folder", "folder_id"},
+	"projects":        {"project", "project_id"},
+	"billingAccounts": {"billing_account", "account_id"},
+}
+
+func monitoredResource(parent string) *mrpb.MonitoredResource {
+	parts := strings.SplitN(parent, "/", 2)
+	if len(parts) != 2 {
+		return globalResource(parent)
+	}
+	info, ok := resourceInfo[parts[0]]
+	if !ok {
+		return globalResource(parts[1])
+	}
+	return &mrpb.MonitoredResource{
+		Type:   info.rtype,
+		Labels: map[string]string{info.label: parts[1]},
+	}
+}
+
 func globalResource(projectID string) *mrpb.MonitoredResource {
 	return &mrpb.MonitoredResource{
 		Type: "global",
@@ -298,6 +320,15 @@ func CommonLabels(m map[string]string) LoggerOption { return commonLabels(m) }
 type commonLabels map[string]string
 
 func (c commonLabels) set(l *Logger) { l.commonLabels = c }
+
+// ConcurrentWriteLimit determines how many goroutines will send log entries to the
+// underlying service. The default is 1. Set ConcurrentWriteLimit to a higher value to
+// increase throughput.
+func ConcurrentWriteLimit(n int) LoggerOption { return concurrentWriteLimit(n) }
+
+type concurrentWriteLimit int
+
+func (c concurrentWriteLimit) set(l *Logger) { l.bundler.HandlerLimit = int(c) }
 
 // DelayThreshold is the maximum amount of time that an entry should remain
 // buffered in memory before a call to the logging service is triggered. Larger
@@ -368,11 +399,11 @@ func (b bufferedByteLimit) set(l *Logger) { l.bundler.BufferedByteLimit = int(b)
 func (c *Client) Logger(logID string, opts ...LoggerOption) *Logger {
 	r := detectResource()
 	if r == nil {
-		r = globalResource(c.projectID)
+		r = monitoredResource(c.parent)
 	}
 	l := &Logger{
 		client:         c,
-		logName:        internal.LogPath(c.parent(), logID),
+		logName:        internal.LogPath(c.parent, logID),
 		commonResource: r,
 	}
 	// TODO(jba): determine the right context for the bundle handler.
@@ -387,12 +418,14 @@ func (c *Client) Logger(logID string, opts ...LoggerOption) *Logger {
 	for _, opt := range opts {
 		opt.set(l)
 	}
-
 	l.stdLoggers = map[Severity]*log.Logger{}
 	for s := range severityName {
 		l.stdLoggers[s] = log.New(severityWriter{l, s}, "", 0)
 	}
+
 	c.loggers.Add(1)
+	// Start a goroutine that cleans up the bundler, its channel
+	// and the writer goroutines when the client is closed.
 	go func() {
 		defer c.loggers.Done()
 		<-c.donec
@@ -423,7 +456,7 @@ func (c *Client) Close() error {
 	c.loggers.Wait() // wait for all bundlers to flush and close
 	// Now there can be no more errors.
 	close(c.errc) // terminate error goroutine
-	// Prefer logging errors to close errors.
+	// Prefer errors arising from logging to the error returned from Close.
 	err := c.extractErrorInfo()
 	err2 := c.client.Close()
 	if err == nil {
@@ -503,9 +536,8 @@ type Entry struct {
 	// The zero value is Default.
 	Severity Severity
 
-	// Payload must be either a string or something that
-	// marshals via the encoding/json package to a JSON object
-	// (and not any other type of JSON value).
+	// Payload must be either a string, or something that marshals via the
+	// encoding/json package to a JSON object (and not any other type of JSON value).
 	Payload interface{}
 
 	// Labels optionally specifies key/value labels for the log entry.
@@ -534,9 +566,7 @@ type Entry struct {
 	// reading entries. It is an error to set it when writing entries.
 	LogName string
 
-	// Resource is the monitored resource associated with the entry. It is set
-	// by the client when reading entries. It is an error to set it when
-	// writing entries.
+	// Resource is the monitored resource associated with the entry.
 	Resource *mrpb.MonitoredResource
 
 	// Trace is the resource name of the trace associated with the log entry,
@@ -620,13 +650,19 @@ func toProtoStruct(v interface{}) (*structpb.Struct, error) {
 	if s, ok := v.(*structpb.Struct); ok {
 		return s, nil
 	}
-	// v is a Go struct that supports JSON marshalling. We want a Struct
+	// v is a Go value that supports JSON marshalling. We want a Struct
 	// protobuf. Some day we may have a more direct way to get there, but right
-	// now the only way is to marshal the Go struct to JSON, unmarshal into a
+	// now the only way is to marshal the Go value to JSON, unmarshal into a
 	// map, and then build the Struct proto from the map.
-	jb, err := json.Marshal(v)
-	if err != nil {
-		return nil, fmt.Errorf("logging: json.Marshal: %v", err)
+	var jb []byte
+	var err error
+	if raw, ok := v.(json.RawMessage); ok { // needed for Go 1.7 and below
+		jb = []byte(raw)
+	} else {
+		jb, err = json.Marshal(v)
+		if err != nil {
+			return nil, fmt.Errorf("logging: json.Marshal: %v", err)
+		}
 	}
 	var m map[string]interface{}
 	err = json.Unmarshal(jb, &m)
@@ -755,8 +791,8 @@ func toLogEntry(e Entry) (*logpb.LogEntry, error) {
 		Operation:   e.Operation,
 		Labels:      e.Labels,
 		Trace:       e.Trace,
+		Resource:    e.Resource,
 	}
-
 	switch p := e.Payload.(type) {
 	case string:
 		ent.Payload = &logpb.LogEntry_TextPayload{TextPayload: p}

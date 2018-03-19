@@ -111,6 +111,10 @@ type KinesisAPI interface {
 	IncreaseStreamRetentionPeriodWithContext(aws.Context, *kinesis.IncreaseStreamRetentionPeriodInput, ...request.Option) (*kinesis.IncreaseStreamRetentionPeriodOutput, error)
 	IncreaseStreamRetentionPeriodRequest(*kinesis.IncreaseStreamRetentionPeriodInput) (*request.Request, *kinesis.IncreaseStreamRetentionPeriodOutput)
 
+	ListShards(*kinesis.ListShardsInput) (*kinesis.ListShardsOutput, error)
+	ListShardsWithContext(aws.Context, *kinesis.ListShardsInput, ...request.Option) (*kinesis.ListShardsOutput, error)
+	ListShardsRequest(*kinesis.ListShardsInput) (*request.Request, *kinesis.ListShardsOutput)
+
 	ListStreams(*kinesis.ListStreamsInput) (*kinesis.ListStreamsOutput, error)
 	ListStreamsWithContext(aws.Context, *kinesis.ListStreamsInput, ...request.Option) (*kinesis.ListStreamsOutput, error)
 	ListStreamsRequest(*kinesis.ListStreamsInput) (*request.Request, *kinesis.ListStreamsOutput)

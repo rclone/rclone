@@ -173,139 +173,479 @@ const (
 	TrustedIDProviderStateEnabled TrustedIDProviderState = "Enabled"
 )
 
-// AccountCreateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type AccountCreateFuture struct {
+// AccountsCreateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
+type AccountsCreateFutureType struct {
 	azure.Future
 	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountCreateFuture) Result(client Client) (dlsa DataLakeStoreAccount, err error) {
+func (future AccountsCreateFutureType) Result(client AccountsClient) (dlsa DataLakeStoreAccount, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return dlsa, autorest.NewError("account.AccountCreateFuture", "Result", "asynchronous operation has not completed")
+		return dlsa, azure.NewAsyncOpIncompleteError("account.AccountsCreateFutureType")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		dlsa, err = client.CreateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", resp, "Failure sending request")
 		return
 	}
 	dlsa, err = client.CreateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsCreateFutureType", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// AccountDeleteFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type AccountDeleteFuture struct {
+// AccountsDeleteFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
+type AccountsDeleteFutureType struct {
 	azure.Future
 	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountDeleteFuture) Result(client Client) (ar autorest.Response, err error) {
+func (future AccountsDeleteFutureType) Result(client AccountsClient) (ar autorest.Response, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return ar, autorest.NewError("account.AccountDeleteFuture", "Result", "asynchronous operation has not completed")
+		return ar, azure.NewAsyncOpIncompleteError("account.AccountsDeleteFutureType")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		ar, err = client.DeleteResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", resp, "Failure sending request")
 		return
 	}
 	ar, err = client.DeleteResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsDeleteFutureType", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// AccountUpdateFuture an abstraction for monitoring and retrieving the results of a long-running operation.
-type AccountUpdateFuture struct {
+// AccountsUpdateFutureType an abstraction for monitoring and retrieving the results of a long-running operation.
+type AccountsUpdateFutureType struct {
 	azure.Future
 	req *http.Request
 }
 
 // Result returns the result of the asynchronous operation.
 // If the operation has not completed it will return an error.
-func (future AccountUpdateFuture) Result(client Client) (dlsa DataLakeStoreAccount, err error) {
+func (future AccountsUpdateFutureType) Result(client AccountsClient) (dlsa DataLakeStoreAccount, err error) {
 	var done bool
 	done, err = future.Done(client)
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", future.Response(), "Polling failure")
 		return
 	}
 	if !done {
-		return dlsa, autorest.NewError("account.AccountUpdateFuture", "Result", "asynchronous operation has not completed")
+		return dlsa, azure.NewAsyncOpIncompleteError("account.AccountsUpdateFutureType")
 	}
 	if future.PollingMethod() == azure.PollingLocation {
 		dlsa, err = client.UpdateResponder(future.Response())
+		if err != nil {
+			err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", future.Response(), "Failure responding to request")
+		}
 		return
 	}
+	var req *http.Request
 	var resp *http.Response
-	resp, err = autorest.SendWithSender(client, autorest.ChangeToGet(future.req),
+	if future.PollingURL() != "" {
+		req, err = http.NewRequest(http.MethodGet, future.PollingURL(), nil)
+		if err != nil {
+			return
+		}
+	} else {
+		req = autorest.ChangeToGet(future.req)
+	}
+	resp, err = autorest.SendWithSender(client, req,
 		autorest.DoRetryForStatusCodes(client.RetryAttempts, client.RetryDuration, autorest.StatusCodesForRetry...))
 	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", resp, "Failure sending request")
 		return
 	}
 	dlsa, err = client.UpdateResponder(resp)
+	if err != nil {
+		err = autorest.NewErrorWithError(err, "account.AccountsUpdateFutureType", "Result", resp, "Failure responding to request")
+	}
 	return
 }
 
-// CapabilityInformation subscription-level properties and limits for Data Lake Store
+// CapabilityInformation subscription-level properties and limits for Data Lake Store.
 type CapabilityInformation struct {
 	autorest.Response `json:"-"`
-	// SubscriptionID - the subscription credentials that uniquely identifies the subscription.
+	// SubscriptionID - The subscription credentials that uniquely identifies the subscription.
 	SubscriptionID *uuid.UUID `json:"subscriptionId,omitempty"`
-	// State - the subscription state. Possible values include: 'SubscriptionStateRegistered', 'SubscriptionStateSuspended', 'SubscriptionStateDeleted', 'SubscriptionStateUnregistered', 'SubscriptionStateWarned'
+	// State - The subscription state. Possible values include: 'SubscriptionStateRegistered', 'SubscriptionStateSuspended', 'SubscriptionStateDeleted', 'SubscriptionStateUnregistered', 'SubscriptionStateWarned'
 	State SubscriptionState `json:"state,omitempty"`
-	// MaxAccountCount - the maximum supported number of accounts under this subscription.
+	// MaxAccountCount - The maximum supported number of accounts under this subscription.
 	MaxAccountCount *int32 `json:"maxAccountCount,omitempty"`
-	// AccountCount - the current number of accounts under this subscription.
+	// AccountCount - The current number of accounts under this subscription.
 	AccountCount *int32 `json:"accountCount,omitempty"`
-	// MigrationState - the Boolean value of true or false to indicate the maintenance state.
+	// MigrationState - The Boolean value of true or false to indicate the maintenance state.
 	MigrationState *bool `json:"migrationState,omitempty"`
 }
 
-// CheckNameAvailabilityParameters data Lake Store account name availability check parameters
+// CheckNameAvailabilityParameters data Lake Store account name availability check parameters.
 type CheckNameAvailabilityParameters struct {
-	// Name - the Data Lake Store name to check availability for.
+	// Name - The Data Lake Store name to check availability for.
 	Name *string `json:"name,omitempty"`
-	// Type - the Resource type. Note: This should not be set by the user, as the constant value is Microsoft.DataLakeStore/accounts
+	// Type - The resource type. Note: This should not be set by the user, as the constant value is Microsoft.DataLakeStore/accounts
 	Type *string `json:"type,omitempty"`
 }
 
-// DataLakeStoreAccount data Lake Store account information
-type DataLakeStoreAccount struct {
-	autorest.Response `json:"-"`
-	// ID - Resource Id
-	ID *string `json:"id,omitempty"`
-	// Name - Resource name
-	Name *string `json:"name,omitempty"`
-	// Type - Resource type
-	Type *string `json:"type,omitempty"`
-	// Location - Resource location
+// CreateDataLakeStoreAccountParameters ...
+type CreateDataLakeStoreAccountParameters struct {
+	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
-	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	// Tags - The resource tags.
+	Tags map[string]*string `json:"tags"`
 	// Identity - The Key Vault encryption identity, if any.
 	Identity *EncryptionIdentity `json:"identity,omitempty"`
-	// DataLakeStoreAccountProperties - the Data Lake Store account properties.
+	// CreateDataLakeStoreAccountProperties - The Data Lake Store account properties to use for creating.
+	*CreateDataLakeStoreAccountProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for CreateDataLakeStoreAccountParameters.
+func (cdlsap CreateDataLakeStoreAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if cdlsap.Location != nil {
+		objectMap["location"] = cdlsap.Location
+	}
+	if cdlsap.Tags != nil {
+		objectMap["tags"] = cdlsap.Tags
+	}
+	if cdlsap.Identity != nil {
+		objectMap["identity"] = cdlsap.Identity
+	}
+	if cdlsap.CreateDataLakeStoreAccountProperties != nil {
+		objectMap["properties"] = cdlsap.CreateDataLakeStoreAccountProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for CreateDataLakeStoreAccountParameters struct.
+func (cdlsap *CreateDataLakeStoreAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				cdlsap.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				cdlsap.Tags = tags
+			}
+		case "identity":
+			if v != nil {
+				var identity EncryptionIdentity
+				err = json.Unmarshal(*v, &identity)
+				if err != nil {
+					return err
+				}
+				cdlsap.Identity = &identity
+			}
+		case "properties":
+			if v != nil {
+				var createDataLakeStoreAccountProperties CreateDataLakeStoreAccountProperties
+				err = json.Unmarshal(*v, &createDataLakeStoreAccountProperties)
+				if err != nil {
+					return err
+				}
+				cdlsap.CreateDataLakeStoreAccountProperties = &createDataLakeStoreAccountProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// CreateDataLakeStoreAccountProperties ...
+type CreateDataLakeStoreAccountProperties struct {
+	// DefaultGroup - The default owner group for all new folders and files created in the Data Lake Store account.
+	DefaultGroup *string `json:"defaultGroup,omitempty"`
+	// EncryptionConfig - The Key Vault encryption configuration.
+	EncryptionConfig *EncryptionConfig `json:"encryptionConfig,omitempty"`
+	// EncryptionState - The current state of encryption for this Data Lake Store account. Possible values include: 'Enabled', 'Disabled'
+	EncryptionState EncryptionState `json:"encryptionState,omitempty"`
+	// FirewallRules - The list of firewall rules associated with this Data Lake Store account.
+	FirewallRules *[]CreateFirewallRuleWithAccountParameters `json:"firewallRules,omitempty"`
+	// FirewallState - The current state of the IP address firewall for this Data Lake Store account. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
+	FirewallState FirewallState `json:"firewallState,omitempty"`
+	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'FirewallAllowAzureIpsStateEnabled', 'FirewallAllowAzureIpsStateDisabled'
+	FirewallAllowAzureIps FirewallAllowAzureIpsState `json:"firewallAllowAzureIps,omitempty"`
+	// TrustedIDProviders - The list of trusted identity providers associated with this Data Lake Store account.
+	TrustedIDProviders *[]CreateTrustedIDProviderWithAccountParameters `json:"trustedIdProviders,omitempty"`
+	// TrustedIDProviderState - The current state of the trusted identity provider feature for this Data Lake Store account. Possible values include: 'TrustedIDProviderStateEnabled', 'TrustedIDProviderStateDisabled'
+	TrustedIDProviderState TrustedIDProviderState `json:"trustedIdProviderState,omitempty"`
+	// NewTier - The commitment tier to use for next month. Possible values include: 'Consumption', 'Commitment1TB', 'Commitment10TB', 'Commitment100TB', 'Commitment500TB', 'Commitment1PB', 'Commitment5PB'
+	NewTier TierType `json:"newTier,omitempty"`
+}
+
+// CreateFirewallRuleWithAccountParameters the parameters used to create a new firewall rule while creating a new
+// Data Lake Store account.
+type CreateFirewallRuleWithAccountParameters struct {
+	// Name - The unique name of the firewall rule to create.
+	Name *string `json:"name,omitempty"`
+	// CreateOrUpdateFirewallRuleProperties - The firewall rule properties to use when creating a new firewall rule.
+	*CreateOrUpdateFirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for CreateFirewallRuleWithAccountParameters struct.
+func (cfrwap *CreateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				cfrwap.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var createOrUpdateFirewallRuleProperties CreateOrUpdateFirewallRuleProperties
+				err = json.Unmarshal(*v, &createOrUpdateFirewallRuleProperties)
+				if err != nil {
+					return err
+				}
+				cfrwap.CreateOrUpdateFirewallRuleProperties = &createOrUpdateFirewallRuleProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// CreateOrUpdateFirewallRuleParameters the parameters used to create a new firewall rule.
+type CreateOrUpdateFirewallRuleParameters struct {
+	// CreateOrUpdateFirewallRuleProperties - The firewall rule properties to use when creating a new firewall rule.
+	*CreateOrUpdateFirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for CreateOrUpdateFirewallRuleParameters struct.
+func (coufrp *CreateOrUpdateFirewallRuleParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var createOrUpdateFirewallRuleProperties CreateOrUpdateFirewallRuleProperties
+				err = json.Unmarshal(*v, &createOrUpdateFirewallRuleProperties)
+				if err != nil {
+					return err
+				}
+				coufrp.CreateOrUpdateFirewallRuleProperties = &createOrUpdateFirewallRuleProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// CreateOrUpdateFirewallRuleProperties the firewall rule properties to use when creating a new firewall rule.
+type CreateOrUpdateFirewallRuleProperties struct {
+	// StartIPAddress - The start IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
+	StartIPAddress *string `json:"startIpAddress,omitempty"`
+	// EndIPAddress - The end IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
+	EndIPAddress *string `json:"endIpAddress,omitempty"`
+}
+
+// CreateOrUpdateTrustedIDProviderParameters the parameters used to create a new trusted identity provider.
+type CreateOrUpdateTrustedIDProviderParameters struct {
+	// CreateOrUpdateTrustedIDProviderProperties - The trusted identity provider properties to use when creating a new trusted identity provider.
+	*CreateOrUpdateTrustedIDProviderProperties `json:"properties,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for CreateOrUpdateTrustedIDProviderParameters struct.
+func (coutipp *CreateOrUpdateTrustedIDProviderParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var createOrUpdateTrustedIDProviderProperties CreateOrUpdateTrustedIDProviderProperties
+				err = json.Unmarshal(*v, &createOrUpdateTrustedIDProviderProperties)
+				if err != nil {
+					return err
+				}
+				coutipp.CreateOrUpdateTrustedIDProviderProperties = &createOrUpdateTrustedIDProviderProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// CreateOrUpdateTrustedIDProviderProperties the trusted identity provider properties to use when creating a new
+// trusted identity provider.
+type CreateOrUpdateTrustedIDProviderProperties struct {
+	// IDProvider - The URL of this trusted identity provider.
+	IDProvider *string `json:"idProvider,omitempty"`
+}
+
+// CreateTrustedIDProviderWithAccountParameters the parameters used to create a new trusted identity provider while
+// creating a new Data Lake Store account.
+type CreateTrustedIDProviderWithAccountParameters struct {
+	// Name - The unique name of the trusted identity provider to create.
+	Name *string `json:"name,omitempty"`
+	// CreateOrUpdateTrustedIDProviderProperties - The trusted identity provider properties to use when creating a new trusted identity provider.
+	*CreateOrUpdateTrustedIDProviderProperties `json:"properties,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for CreateTrustedIDProviderWithAccountParameters struct.
+func (ctipwap *CreateTrustedIDProviderWithAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ctipwap.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var createOrUpdateTrustedIDProviderProperties CreateOrUpdateTrustedIDProviderProperties
+				err = json.Unmarshal(*v, &createOrUpdateTrustedIDProviderProperties)
+				if err != nil {
+					return err
+				}
+				ctipwap.CreateOrUpdateTrustedIDProviderProperties = &createOrUpdateTrustedIDProviderProperties
+			}
+		}
+	}
+
+	return nil
+}
+
+// DataLakeStoreAccount data Lake Store account information.
+type DataLakeStoreAccount struct {
+	autorest.Response `json:"-"`
+	// Identity - The Key Vault encryption identity, if any.
+	Identity *EncryptionIdentity `json:"identity,omitempty"`
+	// DataLakeStoreAccountProperties - The Data Lake Store account properties.
 	*DataLakeStoreAccountProperties `json:"properties,omitempty"`
+	// ID - The resource identifier.
+	ID *string `json:"id,omitempty"`
+	// Name - The resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - The resource type.
+	Type *string `json:"type,omitempty"`
+	// Location - The resource location.
+	Location *string `json:"location,omitempty"`
+	// Tags - The resource tags.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for DataLakeStoreAccount.
+func (dlsa DataLakeStoreAccount) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dlsa.Identity != nil {
+		objectMap["identity"] = dlsa.Identity
+	}
+	if dlsa.DataLakeStoreAccountProperties != nil {
+		objectMap["properties"] = dlsa.DataLakeStoreAccountProperties
+	}
+	if dlsa.ID != nil {
+		objectMap["id"] = dlsa.ID
+	}
+	if dlsa.Name != nil {
+		objectMap["name"] = dlsa.Name
+	}
+	if dlsa.Type != nil {
+		objectMap["type"] = dlsa.Type
+	}
+	if dlsa.Location != nil {
+		objectMap["location"] = dlsa.Location
+	}
+	if dlsa.Tags != nil {
+		objectMap["tags"] = dlsa.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for DataLakeStoreAccount struct.
@@ -315,76 +655,72 @@ func (dlsa *DataLakeStoreAccount) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["identity"]
-	if v != nil {
-		var identity EncryptionIdentity
-		err = json.Unmarshal(*m["identity"], &identity)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "identity":
+			if v != nil {
+				var identity EncryptionIdentity
+				err = json.Unmarshal(*v, &identity)
+				if err != nil {
+					return err
+				}
+				dlsa.Identity = &identity
+			}
+		case "properties":
+			if v != nil {
+				var dataLakeStoreAccountProperties DataLakeStoreAccountProperties
+				err = json.Unmarshal(*v, &dataLakeStoreAccountProperties)
+				if err != nil {
+					return err
+				}
+				dlsa.DataLakeStoreAccountProperties = &dataLakeStoreAccountProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				dlsa.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				dlsa.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				dlsa.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				dlsa.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				dlsa.Tags = tags
+			}
 		}
-		dlsa.Identity = &identity
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties DataLakeStoreAccountProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		dlsa.DataLakeStoreAccountProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		dlsa.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		dlsa.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		dlsa.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		dlsa.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		dlsa.Tags = &tags
 	}
 
 	return nil
@@ -392,18 +728,42 @@ func (dlsa *DataLakeStoreAccount) UnmarshalJSON(body []byte) error {
 
 // DataLakeStoreAccountBasic basic Data Lake Store account information, returned on list calls.
 type DataLakeStoreAccountBasic struct {
-	// ID - Resource Id
-	ID *string `json:"id,omitempty"`
-	// Name - Resource name
-	Name *string `json:"name,omitempty"`
-	// Type - Resource type
-	Type *string `json:"type,omitempty"`
-	// Location - Resource location
-	Location *string `json:"location,omitempty"`
-	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// DataLakeStoreAccountPropertiesBasic - the basic Data Lake Store account properties.
+	// DataLakeStoreAccountPropertiesBasic - The basic Data Lake Store account properties.
 	*DataLakeStoreAccountPropertiesBasic `json:"properties,omitempty"`
+	// ID - The resource identifier.
+	ID *string `json:"id,omitempty"`
+	// Name - The resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - The resource type.
+	Type *string `json:"type,omitempty"`
+	// Location - The resource location.
+	Location *string `json:"location,omitempty"`
+	// Tags - The resource tags.
+	Tags map[string]*string `json:"tags"`
+}
+
+// MarshalJSON is the custom marshaler for DataLakeStoreAccountBasic.
+func (dlsab DataLakeStoreAccountBasic) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if dlsab.DataLakeStoreAccountPropertiesBasic != nil {
+		objectMap["properties"] = dlsab.DataLakeStoreAccountPropertiesBasic
+	}
+	if dlsab.ID != nil {
+		objectMap["id"] = dlsab.ID
+	}
+	if dlsab.Name != nil {
+		objectMap["name"] = dlsab.Name
+	}
+	if dlsab.Type != nil {
+		objectMap["type"] = dlsab.Type
+	}
+	if dlsab.Location != nil {
+		objectMap["location"] = dlsab.Location
+	}
+	if dlsab.Tags != nil {
+		objectMap["tags"] = dlsab.Tags
+	}
+	return json.Marshal(objectMap)
 }
 
 // UnmarshalJSON is the custom unmarshaler for DataLakeStoreAccountBasic struct.
@@ -413,66 +773,63 @@ func (dlsab *DataLakeStoreAccountBasic) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties DataLakeStoreAccountPropertiesBasic
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var dataLakeStoreAccountPropertiesBasic DataLakeStoreAccountPropertiesBasic
+				err = json.Unmarshal(*v, &dataLakeStoreAccountPropertiesBasic)
+				if err != nil {
+					return err
+				}
+				dlsab.DataLakeStoreAccountPropertiesBasic = &dataLakeStoreAccountPropertiesBasic
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				dlsab.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				dlsab.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				dlsab.Type = &typeVar
+			}
+		case "location":
+			if v != nil {
+				var location string
+				err = json.Unmarshal(*v, &location)
+				if err != nil {
+					return err
+				}
+				dlsab.Location = &location
+			}
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				dlsab.Tags = tags
+			}
 		}
-		dlsab.DataLakeStoreAccountPropertiesBasic = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		dlsab.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		dlsab.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		dlsab.Type = &typeVar
-	}
-
-	v = m["location"]
-	if v != nil {
-		var location string
-		err = json.Unmarshal(*m["location"], &location)
-		if err != nil {
-			return err
-		}
-		dlsab.Location = &location
-	}
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		dlsab.Tags = &tags
 	}
 
 	return nil
@@ -481,13 +838,14 @@ func (dlsab *DataLakeStoreAccountBasic) UnmarshalJSON(body []byte) error {
 // DataLakeStoreAccountListResult data Lake Store account list information response.
 type DataLakeStoreAccountListResult struct {
 	autorest.Response `json:"-"`
-	// Value - the results of the list operation
+	// Value - The results of the list operation.
 	Value *[]DataLakeStoreAccountBasic `json:"value,omitempty"`
-	// NextLink - the link (url) to the next page of results.
+	// NextLink - The link (url) to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// DataLakeStoreAccountListResultIterator provides access to a complete listing of DataLakeStoreAccountBasic values.
+// DataLakeStoreAccountListResultIterator provides access to a complete listing of DataLakeStoreAccountBasic
+// values.
 type DataLakeStoreAccountListResultIterator struct {
 	i    int
 	page DataLakeStoreAccountListResultPage
@@ -580,303 +938,59 @@ func (page DataLakeStoreAccountListResultPage) Values() []DataLakeStoreAccountBa
 	return *page.dlsalr.Value
 }
 
-// DataLakeStoreAccountProperties data Lake Store account properties information
+// DataLakeStoreAccountProperties data Lake Store account properties information.
 type DataLakeStoreAccountProperties struct {
-	// ProvisioningState - the provisioning status of the Data Lake Store account. Possible values include: 'Failed', 'Creating', 'Running', 'Succeeded', 'Patching', 'Suspending', 'Resuming', 'Deleting', 'Deleted', 'Undeleting', 'Canceled'
-	ProvisioningState DataLakeStoreAccountStatus `json:"provisioningState,omitempty"`
-	// State - the state of the Data Lake Store account. Possible values include: 'Active', 'Suspended'
-	State DataLakeStoreAccountState `json:"state,omitempty"`
-	// CreationTime - the account creation time.
-	CreationTime *date.Time `json:"creationTime,omitempty"`
-	// LastModifiedTime - the account last modified time.
-	LastModifiedTime *date.Time `json:"lastModifiedTime,omitempty"`
-	// Endpoint - the full CName endpoint for this account.
-	Endpoint *string `json:"endpoint,omitempty"`
-	// AccountID - The unique identifier associated with this Data Lake Store account.
-	AccountID *uuid.UUID `json:"accountId,omitempty"`
-	// EncryptionState - The current state of encryption for this Data Lake store account. Possible values include: 'Enabled', 'Disabled'
-	EncryptionState EncryptionState `json:"encryptionState,omitempty"`
-	// EncryptionProvisioningState - The current state of encryption provisioning for this Data Lake store account. Possible values include: 'EncryptionProvisioningStateCreating', 'EncryptionProvisioningStateSucceeded'
-	EncryptionProvisioningState EncryptionProvisioningState `json:"encryptionProvisioningState,omitempty"`
+	// DefaultGroup - The default owner group for all new folders and files created in the Data Lake Store account.
+	DefaultGroup *string `json:"defaultGroup,omitempty"`
 	// EncryptionConfig - The Key Vault encryption configuration.
 	EncryptionConfig *EncryptionConfig `json:"encryptionConfig,omitempty"`
-	// FirewallState - The current state of the IP address firewall for this Data Lake store account. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
-	FirewallState FirewallState `json:"firewallState,omitempty"`
-	// FirewallRules - The list of firewall rules associated with this Data Lake store account.
+	// EncryptionState - The current state of encryption for this Data Lake Store account. Possible values include: 'Enabled', 'Disabled'
+	EncryptionState EncryptionState `json:"encryptionState,omitempty"`
+	// EncryptionProvisioningState - The current state of encryption provisioning for this Data Lake Store account. Possible values include: 'EncryptionProvisioningStateCreating', 'EncryptionProvisioningStateSucceeded'
+	EncryptionProvisioningState EncryptionProvisioningState `json:"encryptionProvisioningState,omitempty"`
+	// FirewallRules - The list of firewall rules associated with this Data Lake Store account.
 	FirewallRules *[]FirewallRule `json:"firewallRules,omitempty"`
-	// TrustedIDProviderState - The current state of the trusted identity provider feature for this Data Lake store account. Possible values include: 'TrustedIDProviderStateEnabled', 'TrustedIDProviderStateDisabled'
-	TrustedIDProviderState TrustedIDProviderState `json:"trustedIdProviderState,omitempty"`
-	// TrustedIDProviders - The list of trusted identity providers associated with this Data Lake store account.
-	TrustedIDProviders *[]TrustedIDProvider `json:"trustedIdProviders,omitempty"`
-	// DefaultGroup - the default owner group for all new folders and files created in the Data Lake Store account.
-	DefaultGroup *string `json:"defaultGroup,omitempty"`
-	// NewTier - the commitment tier to use for next month. Possible values include: 'Consumption', 'Commitment1TB', 'Commitment10TB', 'Commitment100TB', 'Commitment500TB', 'Commitment1PB', 'Commitment5PB'
-	NewTier TierType `json:"newTier,omitempty"`
-	// CurrentTier - the commitment tier in use for the current month. Possible values include: 'Consumption', 'Commitment1TB', 'Commitment10TB', 'Commitment100TB', 'Commitment500TB', 'Commitment1PB', 'Commitment5PB'
-	CurrentTier TierType `json:"currentTier,omitempty"`
+	// FirewallState - The current state of the IP address firewall for this Data Lake Store account. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
+	FirewallState FirewallState `json:"firewallState,omitempty"`
 	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'FirewallAllowAzureIpsStateEnabled', 'FirewallAllowAzureIpsStateDisabled'
 	FirewallAllowAzureIps FirewallAllowAzureIpsState `json:"firewallAllowAzureIps,omitempty"`
+	// TrustedIDProviders - The list of trusted identity providers associated with this Data Lake Store account.
+	TrustedIDProviders *[]TrustedIDProvider `json:"trustedIdProviders,omitempty"`
+	// TrustedIDProviderState - The current state of the trusted identity provider feature for this Data Lake Store account. Possible values include: 'TrustedIDProviderStateEnabled', 'TrustedIDProviderStateDisabled'
+	TrustedIDProviderState TrustedIDProviderState `json:"trustedIdProviderState,omitempty"`
+	// NewTier - The commitment tier to use for next month. Possible values include: 'Consumption', 'Commitment1TB', 'Commitment10TB', 'Commitment100TB', 'Commitment500TB', 'Commitment1PB', 'Commitment5PB'
+	NewTier TierType `json:"newTier,omitempty"`
+	// CurrentTier - The commitment tier in use for the current month. Possible values include: 'Consumption', 'Commitment1TB', 'Commitment10TB', 'Commitment100TB', 'Commitment500TB', 'Commitment1PB', 'Commitment5PB'
+	CurrentTier TierType `json:"currentTier,omitempty"`
+	// AccountID - The unique identifier associated with this Data Lake Store account.
+	AccountID *uuid.UUID `json:"accountId,omitempty"`
+	// ProvisioningState - The provisioning status of the Data Lake Store account. Possible values include: 'Failed', 'Creating', 'Running', 'Succeeded', 'Patching', 'Suspending', 'Resuming', 'Deleting', 'Deleted', 'Undeleting', 'Canceled'
+	ProvisioningState DataLakeStoreAccountStatus `json:"provisioningState,omitempty"`
+	// State - The state of the Data Lake Store account. Possible values include: 'Active', 'Suspended'
+	State DataLakeStoreAccountState `json:"state,omitempty"`
+	// CreationTime - The account creation time.
+	CreationTime *date.Time `json:"creationTime,omitempty"`
+	// LastModifiedTime - The account last modified time.
+	LastModifiedTime *date.Time `json:"lastModifiedTime,omitempty"`
+	// Endpoint - The full CName endpoint for this account.
+	Endpoint *string `json:"endpoint,omitempty"`
 }
 
 // DataLakeStoreAccountPropertiesBasic the basic account specific properties that are associated with an underlying
 // Data Lake Store account.
 type DataLakeStoreAccountPropertiesBasic struct {
-	// ProvisioningState - the provisioning status of the Data Lake Store account. Possible values include: 'Failed', 'Creating', 'Running', 'Succeeded', 'Patching', 'Suspending', 'Resuming', 'Deleting', 'Deleted', 'Undeleting', 'Canceled'
-	ProvisioningState DataLakeStoreAccountStatus `json:"provisioningState,omitempty"`
-	// State - the state of the Data Lake Store account. Possible values include: 'Active', 'Suspended'
-	State DataLakeStoreAccountState `json:"state,omitempty"`
-	// CreationTime - the account creation time.
-	CreationTime *date.Time `json:"creationTime,omitempty"`
-	// LastModifiedTime - the account last modified time.
-	LastModifiedTime *date.Time `json:"lastModifiedTime,omitempty"`
-	// Endpoint - the full CName endpoint for this account.
-	Endpoint *string `json:"endpoint,omitempty"`
 	// AccountID - The unique identifier associated with this Data Lake Store account.
 	AccountID *uuid.UUID `json:"accountId,omitempty"`
-}
-
-// DataLakeStoreAccountUpdateParameters data Lake Store account information to update
-type DataLakeStoreAccountUpdateParameters struct {
-	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
-	// UpdateDataLakeStoreAccountProperties - the Data Lake Store account properties to update.
-	*UpdateDataLakeStoreAccountProperties `json:"properties,omitempty"`
-}
-
-// UnmarshalJSON is the custom unmarshaler for DataLakeStoreAccountUpdateParameters struct.
-func (dlsaup *DataLakeStoreAccountUpdateParameters) UnmarshalJSON(body []byte) error {
-	var m map[string]*json.RawMessage
-	err := json.Unmarshal(body, &m)
-	if err != nil {
-		return err
-	}
-	var v *json.RawMessage
-
-	v = m["tags"]
-	if v != nil {
-		var tags map[string]*string
-		err = json.Unmarshal(*m["tags"], &tags)
-		if err != nil {
-			return err
-		}
-		dlsaup.Tags = &tags
-	}
-
-	v = m["properties"]
-	if v != nil {
-		var properties UpdateDataLakeStoreAccountProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
-		}
-		dlsaup.UpdateDataLakeStoreAccountProperties = &properties
-	}
-
-	return nil
-}
-
-// DataLakeStoreFirewallRuleListResult data Lake Store firewall rule list information.
-type DataLakeStoreFirewallRuleListResult struct {
-	autorest.Response `json:"-"`
-	// Value - the results of the list operation
-	Value *[]FirewallRule `json:"value,omitempty"`
-	// NextLink - the link (url) to the next page of results.
-	NextLink *string `json:"nextLink,omitempty"`
-}
-
-// DataLakeStoreFirewallRuleListResultIterator provides access to a complete listing of FirewallRule values.
-type DataLakeStoreFirewallRuleListResultIterator struct {
-	i    int
-	page DataLakeStoreFirewallRuleListResultPage
-}
-
-// Next advances to the next value.  If there was an error making
-// the request the iterator does not advance and the error is returned.
-func (iter *DataLakeStoreFirewallRuleListResultIterator) Next() error {
-	iter.i++
-	if iter.i < len(iter.page.Values()) {
-		return nil
-	}
-	err := iter.page.Next()
-	if err != nil {
-		iter.i--
-		return err
-	}
-	iter.i = 0
-	return nil
-}
-
-// NotDone returns true if the enumeration should be started or is not yet complete.
-func (iter DataLakeStoreFirewallRuleListResultIterator) NotDone() bool {
-	return iter.page.NotDone() && iter.i < len(iter.page.Values())
-}
-
-// Response returns the raw server response from the last page request.
-func (iter DataLakeStoreFirewallRuleListResultIterator) Response() DataLakeStoreFirewallRuleListResult {
-	return iter.page.Response()
-}
-
-// Value returns the current value or a zero-initialized value if the
-// iterator has advanced beyond the end of the collection.
-func (iter DataLakeStoreFirewallRuleListResultIterator) Value() FirewallRule {
-	if !iter.page.NotDone() {
-		return FirewallRule{}
-	}
-	return iter.page.Values()[iter.i]
-}
-
-// IsEmpty returns true if the ListResult contains no values.
-func (dlsfrlr DataLakeStoreFirewallRuleListResult) IsEmpty() bool {
-	return dlsfrlr.Value == nil || len(*dlsfrlr.Value) == 0
-}
-
-// dataLakeStoreFirewallRuleListResultPreparer prepares a request to retrieve the next set of results.
-// It returns nil if no more results exist.
-func (dlsfrlr DataLakeStoreFirewallRuleListResult) dataLakeStoreFirewallRuleListResultPreparer() (*http.Request, error) {
-	if dlsfrlr.NextLink == nil || len(to.String(dlsfrlr.NextLink)) < 1 {
-		return nil, nil
-	}
-	return autorest.Prepare(&http.Request{},
-		autorest.AsJSON(),
-		autorest.AsGet(),
-		autorest.WithBaseURL(to.String(dlsfrlr.NextLink)))
-}
-
-// DataLakeStoreFirewallRuleListResultPage contains a page of FirewallRule values.
-type DataLakeStoreFirewallRuleListResultPage struct {
-	fn      func(DataLakeStoreFirewallRuleListResult) (DataLakeStoreFirewallRuleListResult, error)
-	dlsfrlr DataLakeStoreFirewallRuleListResult
-}
-
-// Next advances to the next page of values.  If there was an error making
-// the request the page does not advance and the error is returned.
-func (page *DataLakeStoreFirewallRuleListResultPage) Next() error {
-	next, err := page.fn(page.dlsfrlr)
-	if err != nil {
-		return err
-	}
-	page.dlsfrlr = next
-	return nil
-}
-
-// NotDone returns true if the page enumeration should be started or is not yet complete.
-func (page DataLakeStoreFirewallRuleListResultPage) NotDone() bool {
-	return !page.dlsfrlr.IsEmpty()
-}
-
-// Response returns the raw server response from the last page request.
-func (page DataLakeStoreFirewallRuleListResultPage) Response() DataLakeStoreFirewallRuleListResult {
-	return page.dlsfrlr
-}
-
-// Values returns the slice of values for the current page or nil if there are no values.
-func (page DataLakeStoreFirewallRuleListResultPage) Values() []FirewallRule {
-	if page.dlsfrlr.IsEmpty() {
-		return nil
-	}
-	return *page.dlsfrlr.Value
-}
-
-// DataLakeStoreTrustedIDProviderListResult data Lake Store trusted identity provider list information.
-type DataLakeStoreTrustedIDProviderListResult struct {
-	autorest.Response `json:"-"`
-	// Value - the results of the list operation
-	Value *[]TrustedIDProvider `json:"value,omitempty"`
-	// NextLink - the link (url) to the next page of results.
-	NextLink *string `json:"nextLink,omitempty"`
-}
-
-// DataLakeStoreTrustedIDProviderListResultIterator provides access to a complete listing of TrustedIDProvider values.
-type DataLakeStoreTrustedIDProviderListResultIterator struct {
-	i    int
-	page DataLakeStoreTrustedIDProviderListResultPage
-}
-
-// Next advances to the next value.  If there was an error making
-// the request the iterator does not advance and the error is returned.
-func (iter *DataLakeStoreTrustedIDProviderListResultIterator) Next() error {
-	iter.i++
-	if iter.i < len(iter.page.Values()) {
-		return nil
-	}
-	err := iter.page.Next()
-	if err != nil {
-		iter.i--
-		return err
-	}
-	iter.i = 0
-	return nil
-}
-
-// NotDone returns true if the enumeration should be started or is not yet complete.
-func (iter DataLakeStoreTrustedIDProviderListResultIterator) NotDone() bool {
-	return iter.page.NotDone() && iter.i < len(iter.page.Values())
-}
-
-// Response returns the raw server response from the last page request.
-func (iter DataLakeStoreTrustedIDProviderListResultIterator) Response() DataLakeStoreTrustedIDProviderListResult {
-	return iter.page.Response()
-}
-
-// Value returns the current value or a zero-initialized value if the
-// iterator has advanced beyond the end of the collection.
-func (iter DataLakeStoreTrustedIDProviderListResultIterator) Value() TrustedIDProvider {
-	if !iter.page.NotDone() {
-		return TrustedIDProvider{}
-	}
-	return iter.page.Values()[iter.i]
-}
-
-// IsEmpty returns true if the ListResult contains no values.
-func (dlstiplr DataLakeStoreTrustedIDProviderListResult) IsEmpty() bool {
-	return dlstiplr.Value == nil || len(*dlstiplr.Value) == 0
-}
-
-// dataLakeStoreTrustedIDProviderListResultPreparer prepares a request to retrieve the next set of results.
-// It returns nil if no more results exist.
-func (dlstiplr DataLakeStoreTrustedIDProviderListResult) dataLakeStoreTrustedIDProviderListResultPreparer() (*http.Request, error) {
-	if dlstiplr.NextLink == nil || len(to.String(dlstiplr.NextLink)) < 1 {
-		return nil, nil
-	}
-	return autorest.Prepare(&http.Request{},
-		autorest.AsJSON(),
-		autorest.AsGet(),
-		autorest.WithBaseURL(to.String(dlstiplr.NextLink)))
-}
-
-// DataLakeStoreTrustedIDProviderListResultPage contains a page of TrustedIDProvider values.
-type DataLakeStoreTrustedIDProviderListResultPage struct {
-	fn       func(DataLakeStoreTrustedIDProviderListResult) (DataLakeStoreTrustedIDProviderListResult, error)
-	dlstiplr DataLakeStoreTrustedIDProviderListResult
-}
-
-// Next advances to the next page of values.  If there was an error making
-// the request the page does not advance and the error is returned.
-func (page *DataLakeStoreTrustedIDProviderListResultPage) Next() error {
-	next, err := page.fn(page.dlstiplr)
-	if err != nil {
-		return err
-	}
-	page.dlstiplr = next
-	return nil
-}
-
-// NotDone returns true if the page enumeration should be started or is not yet complete.
-func (page DataLakeStoreTrustedIDProviderListResultPage) NotDone() bool {
-	return !page.dlstiplr.IsEmpty()
-}
-
-// Response returns the raw server response from the last page request.
-func (page DataLakeStoreTrustedIDProviderListResultPage) Response() DataLakeStoreTrustedIDProviderListResult {
-	return page.dlstiplr
-}
-
-// Values returns the slice of values for the current page or nil if there are no values.
-func (page DataLakeStoreTrustedIDProviderListResultPage) Values() []TrustedIDProvider {
-	if page.dlstiplr.IsEmpty() {
-		return nil
-	}
-	return *page.dlstiplr.Value
+	// ProvisioningState - The provisioning status of the Data Lake Store account. Possible values include: 'Failed', 'Creating', 'Running', 'Succeeded', 'Patching', 'Suspending', 'Resuming', 'Deleting', 'Deleted', 'Undeleting', 'Canceled'
+	ProvisioningState DataLakeStoreAccountStatus `json:"provisioningState,omitempty"`
+	// State - The state of the Data Lake Store account. Possible values include: 'Active', 'Suspended'
+	State DataLakeStoreAccountState `json:"state,omitempty"`
+	// CreationTime - The account creation time.
+	CreationTime *date.Time `json:"creationTime,omitempty"`
+	// LastModifiedTime - The account last modified time.
+	LastModifiedTime *date.Time `json:"lastModifiedTime,omitempty"`
+	// Endpoint - The full CName endpoint for this account.
+	Endpoint *string `json:"endpoint,omitempty"`
 }
 
 // EncryptionConfig the encryption configuration for the account.
@@ -897,27 +1011,17 @@ type EncryptionIdentity struct {
 	TenantID *uuid.UUID `json:"tenantId,omitempty"`
 }
 
-// ErrorDetails data Lake Store error details information
-type ErrorDetails struct {
-	// Code - the HTTP status code or error code associated with this error
-	Code *string `json:"code,omitempty"`
-	// Message - the error message localized based on Accept-Language
-	Message *string `json:"message,omitempty"`
-	// Target - the target of the particular error (for example, the name of the property in error).
-	Target *string `json:"target,omitempty"`
-}
-
-// FirewallRule data Lake Store firewall rule information
+// FirewallRule data Lake Store firewall rule information.
 type FirewallRule struct {
 	autorest.Response `json:"-"`
-	// ID - Resource Id
-	ID *string `json:"id,omitempty"`
-	// Name - Resource name
-	Name *string `json:"name,omitempty"`
-	// Type - Resource type
-	Type *string `json:"type,omitempty"`
-	// FirewallRuleProperties - the properties of the firewall rule.
+	// FirewallRuleProperties - The firewall rule properties.
 	*FirewallRuleProperties `json:"properties,omitempty"`
+	// ID - The resource identifier.
+	ID *string `json:"id,omitempty"`
+	// Name - The resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - The resource type.
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for FirewallRule struct.
@@ -927,56 +1031,157 @@ func (fr *FirewallRule) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties FirewallRuleProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var firewallRuleProperties FirewallRuleProperties
+				err = json.Unmarshal(*v, &firewallRuleProperties)
+				if err != nil {
+					return err
+				}
+				fr.FirewallRuleProperties = &firewallRuleProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				fr.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				fr.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				fr.Type = &typeVar
+			}
 		}
-		fr.FirewallRuleProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		fr.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		fr.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		fr.Type = &typeVar
 	}
 
 	return nil
 }
 
-// FirewallRuleProperties data Lake Store firewall rule properties information
+// FirewallRuleListResult data Lake Store firewall rule list information.
+type FirewallRuleListResult struct {
+	autorest.Response `json:"-"`
+	// Value - The results of the list operation.
+	Value *[]FirewallRule `json:"value,omitempty"`
+	// NextLink - The link (url) to the next page of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// FirewallRuleListResultIterator provides access to a complete listing of FirewallRule values.
+type FirewallRuleListResultIterator struct {
+	i    int
+	page FirewallRuleListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *FirewallRuleListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter FirewallRuleListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter FirewallRuleListResultIterator) Response() FirewallRuleListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter FirewallRuleListResultIterator) Value() FirewallRule {
+	if !iter.page.NotDone() {
+		return FirewallRule{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (frlr FirewallRuleListResult) IsEmpty() bool {
+	return frlr.Value == nil || len(*frlr.Value) == 0
+}
+
+// firewallRuleListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (frlr FirewallRuleListResult) firewallRuleListResultPreparer() (*http.Request, error) {
+	if frlr.NextLink == nil || len(to.String(frlr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(frlr.NextLink)))
+}
+
+// FirewallRuleListResultPage contains a page of FirewallRule values.
+type FirewallRuleListResultPage struct {
+	fn   func(FirewallRuleListResult) (FirewallRuleListResult, error)
+	frlr FirewallRuleListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *FirewallRuleListResultPage) Next() error {
+	next, err := page.fn(page.frlr)
+	if err != nil {
+		return err
+	}
+	page.frlr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page FirewallRuleListResultPage) NotDone() bool {
+	return !page.frlr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page FirewallRuleListResultPage) Response() FirewallRuleListResult {
+	return page.frlr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page FirewallRuleListResultPage) Values() []FirewallRule {
+	if page.frlr.IsEmpty() {
+		return nil
+	}
+	return *page.frlr.Value
+}
+
+// FirewallRuleProperties the firewall rule properties.
 type FirewallRuleProperties struct {
-	// StartIPAddress - the start IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
+	// StartIPAddress - The start IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
 	StartIPAddress *string `json:"startIpAddress,omitempty"`
-	// EndIPAddress - the end IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
+	// EndIPAddress - The end IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
 	EndIPAddress *string `json:"endIpAddress,omitempty"`
 }
 
@@ -990,83 +1195,104 @@ type KeyVaultMetaInfo struct {
 	EncryptionKeyVersion *string `json:"encryptionKeyVersion,omitempty"`
 }
 
-// NameAvailabilityInformation data Lake Store account name availability result information
+// NameAvailabilityInformation data Lake Store account name availability result information.
 type NameAvailabilityInformation struct {
 	autorest.Response `json:"-"`
-	// NameAvailable - the Boolean value of true or false to indicate whether the Data Lake Store account name is available or not.
+	// NameAvailable - The Boolean value of true or false to indicate whether the Data Lake Store account name is available or not.
 	NameAvailable *bool `json:"nameAvailable,omitempty"`
-	// Reason - the reason why the Data Lake Store account name is not available, if nameAvailable is false.
+	// Reason - The reason why the Data Lake Store account name is not available, if nameAvailable is false.
 	Reason *string `json:"reason,omitempty"`
-	// Message - the message describing why the Data Lake Store account name is not available, if nameAvailable is false.
+	// Message - The message describing why the Data Lake Store account name is not available, if nameAvailable is false.
 	Message *string `json:"message,omitempty"`
 }
 
-// Operation an available operation for Data Lake Store
+// Operation an available operation for Data Lake Store.
 type Operation struct {
-	// Name - the name of the operation.
+	// Name - The name of the operation.
 	Name *string `json:"name,omitempty"`
-	// Display - the display information for the operation.
+	// Display - The display information for the operation.
 	Display *OperationDisplay `json:"display,omitempty"`
-	// Origin - the intended executor of the operation. Possible values include: 'User', 'System', 'Usersystem'
+	// Origin - The intended executor of the operation. Possible values include: 'User', 'System', 'Usersystem'
 	Origin OperationOrigin `json:"origin,omitempty"`
 }
 
-// OperationDisplay the display information for a particular operation
+// OperationDisplay the display information for a particular operation.
 type OperationDisplay struct {
-	// Provider - the Resource provider of the operation.
+	// Provider - The resource provider of the operation.
 	Provider *string `json:"provider,omitempty"`
-	// Resource - the Resource type of the operation.
+	// Resource - The resource type of the operation.
 	Resource *string `json:"resource,omitempty"`
-	// Operation - a friendly name of the operation.
+	// Operation - A friendly name of the operation.
 	Operation *string `json:"operation,omitempty"`
-	// Description - a friendly description of the operation.
+	// Description - A friendly description of the operation.
 	Description *string `json:"description,omitempty"`
 }
 
-// OperationListResult the list of available operations for Data Lake Store
+// OperationListResult the list of available operations for Data Lake Store.
 type OperationListResult struct {
 	autorest.Response `json:"-"`
-	// Value - the results of the list operation.
+	// Value - The results of the list operation.
 	Value *[]Operation `json:"value,omitempty"`
-	// NextLink - the link (url) to the next page of results.
+	// NextLink - The link (url) to the next page of results.
 	NextLink *string `json:"nextLink,omitempty"`
 }
 
-// Resource the Resource model definition.
+// Resource the resource model definition.
 type Resource struct {
-	// ID - Resource Id
+	// ID - The resource identifier.
 	ID *string `json:"id,omitempty"`
-	// Name - Resource name
+	// Name - The resource name.
 	Name *string `json:"name,omitempty"`
-	// Type - Resource type
+	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
-	// Location - Resource location
+	// Location - The resource location.
 	Location *string `json:"location,omitempty"`
-	// Tags - Resource tags
-	Tags *map[string]*string `json:"tags,omitempty"`
+	// Tags - The resource tags.
+	Tags map[string]*string `json:"tags"`
 }
 
-// SubResource the Resource model definition for a nested resource.
+// MarshalJSON is the custom marshaler for Resource.
+func (r Resource) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if r.ID != nil {
+		objectMap["id"] = r.ID
+	}
+	if r.Name != nil {
+		objectMap["name"] = r.Name
+	}
+	if r.Type != nil {
+		objectMap["type"] = r.Type
+	}
+	if r.Location != nil {
+		objectMap["location"] = r.Location
+	}
+	if r.Tags != nil {
+		objectMap["tags"] = r.Tags
+	}
+	return json.Marshal(objectMap)
+}
+
+// SubResource the resource model definition for a nested resource.
 type SubResource struct {
-	// ID - Resource Id
+	// ID - The resource identifier.
 	ID *string `json:"id,omitempty"`
-	// Name - Resource name
+	// Name - The resource name.
 	Name *string `json:"name,omitempty"`
-	// Type - Resource type
+	// Type - The resource type.
 	Type *string `json:"type,omitempty"`
 }
 
-// TrustedIDProvider data Lake Store Trusted Identity Provider information
+// TrustedIDProvider data Lake Store trusted identity provider information.
 type TrustedIDProvider struct {
 	autorest.Response `json:"-"`
-	// ID - Resource Id
-	ID *string `json:"id,omitempty"`
-	// Name - Resource name
-	Name *string `json:"name,omitempty"`
-	// Type - Resource type
-	Type *string `json:"type,omitempty"`
-	// TrustedIDProviderProperties - the properties of the trusted identity provider.
+	// TrustedIDProviderProperties - The trusted identity provider properties.
 	*TrustedIDProviderProperties `json:"properties,omitempty"`
+	// ID - The resource identifier.
+	ID *string `json:"id,omitempty"`
+	// Name - The resource name.
+	Name *string `json:"name,omitempty"`
+	// Type - The resource type.
+	Type *string `json:"type,omitempty"`
 }
 
 // UnmarshalJSON is the custom unmarshaler for TrustedIDProvider struct.
@@ -1076,71 +1302,229 @@ func (tip *TrustedIDProvider) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties TrustedIDProviderProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var trustedIDProviderProperties TrustedIDProviderProperties
+				err = json.Unmarshal(*v, &trustedIDProviderProperties)
+				if err != nil {
+					return err
+				}
+				tip.TrustedIDProviderProperties = &trustedIDProviderProperties
+			}
+		case "id":
+			if v != nil {
+				var ID string
+				err = json.Unmarshal(*v, &ID)
+				if err != nil {
+					return err
+				}
+				tip.ID = &ID
+			}
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				tip.Name = &name
+			}
+		case "type":
+			if v != nil {
+				var typeVar string
+				err = json.Unmarshal(*v, &typeVar)
+				if err != nil {
+					return err
+				}
+				tip.Type = &typeVar
+			}
 		}
-		tip.TrustedIDProviderProperties = &properties
-	}
-
-	v = m["id"]
-	if v != nil {
-		var ID string
-		err = json.Unmarshal(*m["id"], &ID)
-		if err != nil {
-			return err
-		}
-		tip.ID = &ID
-	}
-
-	v = m["name"]
-	if v != nil {
-		var name string
-		err = json.Unmarshal(*m["name"], &name)
-		if err != nil {
-			return err
-		}
-		tip.Name = &name
-	}
-
-	v = m["type"]
-	if v != nil {
-		var typeVar string
-		err = json.Unmarshal(*m["type"], &typeVar)
-		if err != nil {
-			return err
-		}
-		tip.Type = &typeVar
 	}
 
 	return nil
 }
 
-// TrustedIDProviderProperties data Lake Store trusted identity provider properties information
+// TrustedIDProviderListResult data Lake Store trusted identity provider list information.
+type TrustedIDProviderListResult struct {
+	autorest.Response `json:"-"`
+	// Value - The results of the list operation.
+	Value *[]TrustedIDProvider `json:"value,omitempty"`
+	// NextLink - The link (url) to the next page of results.
+	NextLink *string `json:"nextLink,omitempty"`
+}
+
+// TrustedIDProviderListResultIterator provides access to a complete listing of TrustedIDProvider values.
+type TrustedIDProviderListResultIterator struct {
+	i    int
+	page TrustedIDProviderListResultPage
+}
+
+// Next advances to the next value.  If there was an error making
+// the request the iterator does not advance and the error is returned.
+func (iter *TrustedIDProviderListResultIterator) Next() error {
+	iter.i++
+	if iter.i < len(iter.page.Values()) {
+		return nil
+	}
+	err := iter.page.Next()
+	if err != nil {
+		iter.i--
+		return err
+	}
+	iter.i = 0
+	return nil
+}
+
+// NotDone returns true if the enumeration should be started or is not yet complete.
+func (iter TrustedIDProviderListResultIterator) NotDone() bool {
+	return iter.page.NotDone() && iter.i < len(iter.page.Values())
+}
+
+// Response returns the raw server response from the last page request.
+func (iter TrustedIDProviderListResultIterator) Response() TrustedIDProviderListResult {
+	return iter.page.Response()
+}
+
+// Value returns the current value or a zero-initialized value if the
+// iterator has advanced beyond the end of the collection.
+func (iter TrustedIDProviderListResultIterator) Value() TrustedIDProvider {
+	if !iter.page.NotDone() {
+		return TrustedIDProvider{}
+	}
+	return iter.page.Values()[iter.i]
+}
+
+// IsEmpty returns true if the ListResult contains no values.
+func (tiplr TrustedIDProviderListResult) IsEmpty() bool {
+	return tiplr.Value == nil || len(*tiplr.Value) == 0
+}
+
+// trustedIDProviderListResultPreparer prepares a request to retrieve the next set of results.
+// It returns nil if no more results exist.
+func (tiplr TrustedIDProviderListResult) trustedIDProviderListResultPreparer() (*http.Request, error) {
+	if tiplr.NextLink == nil || len(to.String(tiplr.NextLink)) < 1 {
+		return nil, nil
+	}
+	return autorest.Prepare(&http.Request{},
+		autorest.AsJSON(),
+		autorest.AsGet(),
+		autorest.WithBaseURL(to.String(tiplr.NextLink)))
+}
+
+// TrustedIDProviderListResultPage contains a page of TrustedIDProvider values.
+type TrustedIDProviderListResultPage struct {
+	fn    func(TrustedIDProviderListResult) (TrustedIDProviderListResult, error)
+	tiplr TrustedIDProviderListResult
+}
+
+// Next advances to the next page of values.  If there was an error making
+// the request the page does not advance and the error is returned.
+func (page *TrustedIDProviderListResultPage) Next() error {
+	next, err := page.fn(page.tiplr)
+	if err != nil {
+		return err
+	}
+	page.tiplr = next
+	return nil
+}
+
+// NotDone returns true if the page enumeration should be started or is not yet complete.
+func (page TrustedIDProviderListResultPage) NotDone() bool {
+	return !page.tiplr.IsEmpty()
+}
+
+// Response returns the raw server response from the last page request.
+func (page TrustedIDProviderListResultPage) Response() TrustedIDProviderListResult {
+	return page.tiplr
+}
+
+// Values returns the slice of values for the current page or nil if there are no values.
+func (page TrustedIDProviderListResultPage) Values() []TrustedIDProvider {
+	if page.tiplr.IsEmpty() {
+		return nil
+	}
+	return *page.tiplr.Value
+}
+
+// TrustedIDProviderProperties the trusted identity provider properties.
 type TrustedIDProviderProperties struct {
-	// IDProvider - The URL of this trusted identity provider
+	// IDProvider - The URL of this trusted identity provider.
 	IDProvider *string `json:"idProvider,omitempty"`
+}
+
+// UpdateDataLakeStoreAccountParameters data Lake Store account information to update.
+type UpdateDataLakeStoreAccountParameters struct {
+	// Tags - Resource tags
+	Tags map[string]*string `json:"tags"`
+	// UpdateDataLakeStoreAccountProperties - The Data Lake Store account properties to update.
+	*UpdateDataLakeStoreAccountProperties `json:"properties,omitempty"`
+}
+
+// MarshalJSON is the custom marshaler for UpdateDataLakeStoreAccountParameters.
+func (udlsap UpdateDataLakeStoreAccountParameters) MarshalJSON() ([]byte, error) {
+	objectMap := make(map[string]interface{})
+	if udlsap.Tags != nil {
+		objectMap["tags"] = udlsap.Tags
+	}
+	if udlsap.UpdateDataLakeStoreAccountProperties != nil {
+		objectMap["properties"] = udlsap.UpdateDataLakeStoreAccountProperties
+	}
+	return json.Marshal(objectMap)
+}
+
+// UnmarshalJSON is the custom unmarshaler for UpdateDataLakeStoreAccountParameters struct.
+func (udlsap *UpdateDataLakeStoreAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "tags":
+			if v != nil {
+				var tags map[string]*string
+				err = json.Unmarshal(*v, &tags)
+				if err != nil {
+					return err
+				}
+				udlsap.Tags = tags
+			}
+		case "properties":
+			if v != nil {
+				var updateDataLakeStoreAccountProperties UpdateDataLakeStoreAccountProperties
+				err = json.Unmarshal(*v, &updateDataLakeStoreAccountProperties)
+				if err != nil {
+					return err
+				}
+				udlsap.UpdateDataLakeStoreAccountProperties = &updateDataLakeStoreAccountProperties
+			}
+		}
+	}
+
+	return nil
 }
 
 // UpdateDataLakeStoreAccountProperties data Lake Store account properties information to be updated.
 type UpdateDataLakeStoreAccountProperties struct {
-	// FirewallState - The current state of the IP address firewall for this Data Lake store account. Disabling the firewall does not remove existing rules, they will just be ignored until the firewall is re-enabled. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
-	FirewallState FirewallState `json:"firewallState,omitempty"`
-	// TrustedIDProviderState - The current state of the trusted identity provider feature for this Data Lake store account. Disabling trusted identity provider functionality does not remove the providers, they will just be ignored until this feature is re-enabled. Possible values include: 'TrustedIDProviderStateEnabled', 'TrustedIDProviderStateDisabled'
-	TrustedIDProviderState TrustedIDProviderState `json:"trustedIdProviderState,omitempty"`
-	// DefaultGroup - the default owner group for all new folders and files created in the Data Lake Store account.
+	// DefaultGroup - The default owner group for all new folders and files created in the Data Lake Store account.
 	DefaultGroup *string `json:"defaultGroup,omitempty"`
-	// NewTier - the commitment tier to use for next month. Possible values include: 'Consumption', 'Commitment1TB', 'Commitment10TB', 'Commitment100TB', 'Commitment500TB', 'Commitment1PB', 'Commitment5PB'
-	NewTier TierType `json:"newTier,omitempty"`
-	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'FirewallAllowAzureIpsStateEnabled', 'FirewallAllowAzureIpsStateDisabled'
-	FirewallAllowAzureIps FirewallAllowAzureIpsState `json:"firewallAllowAzureIps,omitempty"`
 	// EncryptionConfig - Used for rotation of user managed Key Vault keys. Can only be used to rotate a user managed encryption Key Vault key.
 	EncryptionConfig *UpdateEncryptionConfig `json:"encryptionConfig,omitempty"`
+	// FirewallRules - The list of firewall rules associated with this Data Lake Store account.
+	FirewallRules *[]UpdateFirewallRuleWithAccountParameters `json:"firewallRules,omitempty"`
+	// FirewallState - The current state of the IP address firewall for this Data Lake Store account. Disabling the firewall does not remove existing rules, they will just be ignored until the firewall is re-enabled. Possible values include: 'FirewallStateEnabled', 'FirewallStateDisabled'
+	FirewallState FirewallState `json:"firewallState,omitempty"`
+	// FirewallAllowAzureIps - The current state of allowing or disallowing IPs originating within Azure through the firewall. If the firewall is disabled, this is not enforced. Possible values include: 'FirewallAllowAzureIpsStateEnabled', 'FirewallAllowAzureIpsStateDisabled'
+	FirewallAllowAzureIps FirewallAllowAzureIpsState `json:"firewallAllowAzureIps,omitempty"`
+	// TrustedIDProviders - The list of trusted identity providers associated with this Data Lake Store account.
+	TrustedIDProviders *[]UpdateTrustedIDProviderWithAccountParameters `json:"trustedIdProviders,omitempty"`
+	// TrustedIDProviderState - The current state of the trusted identity provider feature for this Data Lake Store account. Disabling trusted identity provider functionality does not remove the providers, they will just be ignored until this feature is re-enabled. Possible values include: 'TrustedIDProviderStateEnabled', 'TrustedIDProviderStateDisabled'
+	TrustedIDProviderState TrustedIDProviderState `json:"trustedIdProviderState,omitempty"`
+	// NewTier - The commitment tier to use for next month. Possible values include: 'Consumption', 'Commitment1TB', 'Commitment10TB', 'Commitment100TB', 'Commitment500TB', 'Commitment1PB', 'Commitment5PB'
+	NewTier TierType `json:"newTier,omitempty"`
 }
 
 // UpdateEncryptionConfig the encryption configuration used to update a user managed Key Vault key.
@@ -1149,9 +1533,9 @@ type UpdateEncryptionConfig struct {
 	KeyVaultMetaInfo *UpdateKeyVaultMetaInfo `json:"keyVaultMetaInfo,omitempty"`
 }
 
-// UpdateFirewallRuleParameters data Lake Store firewall rule update parameters
+// UpdateFirewallRuleParameters the parameters used to update a firewall rule.
 type UpdateFirewallRuleParameters struct {
-	// UpdateFirewallRuleProperties - the properties of the firewall rule to update.
+	// UpdateFirewallRuleProperties - The firewall rule properties to use when updating a firewall rule.
 	*UpdateFirewallRuleProperties `json:"properties,omitempty"`
 }
 
@@ -1162,27 +1546,71 @@ func (ufrp *UpdateFirewallRuleParameters) UnmarshalJSON(body []byte) error {
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties UpdateFirewallRuleProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var updateFirewallRuleProperties UpdateFirewallRuleProperties
+				err = json.Unmarshal(*v, &updateFirewallRuleProperties)
+				if err != nil {
+					return err
+				}
+				ufrp.UpdateFirewallRuleProperties = &updateFirewallRuleProperties
+			}
 		}
-		ufrp.UpdateFirewallRuleProperties = &properties
 	}
 
 	return nil
 }
 
-// UpdateFirewallRuleProperties data Lake Store firewall rule properties information
+// UpdateFirewallRuleProperties the firewall rule properties to use when updating a firewall rule.
 type UpdateFirewallRuleProperties struct {
-	// StartIPAddress - the start IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
+	// StartIPAddress - The start IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
 	StartIPAddress *string `json:"startIpAddress,omitempty"`
-	// EndIPAddress - the end IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
+	// EndIPAddress - The end IP address for the firewall rule. This can be either ipv4 or ipv6. Start and End should be in the same protocol.
 	EndIPAddress *string `json:"endIpAddress,omitempty"`
+}
+
+// UpdateFirewallRuleWithAccountParameters the parameters used to update a firewall rule while updating a Data Lake
+// Store account.
+type UpdateFirewallRuleWithAccountParameters struct {
+	// Name - The unique name of the firewall rule to update.
+	Name *string `json:"name,omitempty"`
+	// UpdateFirewallRuleProperties - The firewall rule properties to use when updating a firewall rule.
+	*UpdateFirewallRuleProperties `json:"properties,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for UpdateFirewallRuleWithAccountParameters struct.
+func (ufrwap *UpdateFirewallRuleWithAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				ufrwap.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var updateFirewallRuleProperties UpdateFirewallRuleProperties
+				err = json.Unmarshal(*v, &updateFirewallRuleProperties)
+				if err != nil {
+					return err
+				}
+				ufrwap.UpdateFirewallRuleProperties = &updateFirewallRuleProperties
+			}
+		}
+	}
+
+	return nil
 }
 
 // UpdateKeyVaultMetaInfo the Key Vault update information used for user managed key rotation.
@@ -1191,9 +1619,9 @@ type UpdateKeyVaultMetaInfo struct {
 	EncryptionKeyVersion *string `json:"encryptionKeyVersion,omitempty"`
 }
 
-// UpdateTrustedIDProviderParameters data Lake Store Trusted Identity Provider update parameters
+// UpdateTrustedIDProviderParameters the parameters used to update a trusted identity provider.
 type UpdateTrustedIDProviderParameters struct {
-	// UpdateTrustedIDProviderProperties - the properties of the trusted identity provider to update.
+	// UpdateTrustedIDProviderProperties - The trusted identity provider properties to use when updating a trusted identity provider.
 	*UpdateTrustedIDProviderProperties `json:"properties,omitempty"`
 }
 
@@ -1204,23 +1632,68 @@ func (utipp *UpdateTrustedIDProviderParameters) UnmarshalJSON(body []byte) error
 	if err != nil {
 		return err
 	}
-	var v *json.RawMessage
-
-	v = m["properties"]
-	if v != nil {
-		var properties UpdateTrustedIDProviderProperties
-		err = json.Unmarshal(*m["properties"], &properties)
-		if err != nil {
-			return err
+	for k, v := range m {
+		switch k {
+		case "properties":
+			if v != nil {
+				var updateTrustedIDProviderProperties UpdateTrustedIDProviderProperties
+				err = json.Unmarshal(*v, &updateTrustedIDProviderProperties)
+				if err != nil {
+					return err
+				}
+				utipp.UpdateTrustedIDProviderProperties = &updateTrustedIDProviderProperties
+			}
 		}
-		utipp.UpdateTrustedIDProviderProperties = &properties
 	}
 
 	return nil
 }
 
-// UpdateTrustedIDProviderProperties data Lake Store trusted identity provider property update information
+// UpdateTrustedIDProviderProperties the trusted identity provider properties to use when updating a trusted
+// identity provider.
 type UpdateTrustedIDProviderProperties struct {
-	// IDProvider - The URL of this trusted identity provider
+	// IDProvider - The URL of this trusted identity provider.
 	IDProvider *string `json:"idProvider,omitempty"`
+}
+
+// UpdateTrustedIDProviderWithAccountParameters the parameters used to update a trusted identity provider while
+// updating a Data Lake Store account.
+type UpdateTrustedIDProviderWithAccountParameters struct {
+	// Name - The unique name of the trusted identity provider to update.
+	Name *string `json:"name,omitempty"`
+	// UpdateTrustedIDProviderProperties - The trusted identity provider properties to use when updating a trusted identity provider.
+	*UpdateTrustedIDProviderProperties `json:"properties,omitempty"`
+}
+
+// UnmarshalJSON is the custom unmarshaler for UpdateTrustedIDProviderWithAccountParameters struct.
+func (utipwap *UpdateTrustedIDProviderWithAccountParameters) UnmarshalJSON(body []byte) error {
+	var m map[string]*json.RawMessage
+	err := json.Unmarshal(body, &m)
+	if err != nil {
+		return err
+	}
+	for k, v := range m {
+		switch k {
+		case "name":
+			if v != nil {
+				var name string
+				err = json.Unmarshal(*v, &name)
+				if err != nil {
+					return err
+				}
+				utipwap.Name = &name
+			}
+		case "properties":
+			if v != nil {
+				var updateTrustedIDProviderProperties UpdateTrustedIDProviderProperties
+				err = json.Unmarshal(*v, &updateTrustedIDProviderProperties)
+				if err != nil {
+					return err
+				}
+				utipwap.UpdateTrustedIDProviderProperties = &updateTrustedIDProviderProperties
+			}
+		}
+	}
+
+	return nil
 }

@@ -5,9 +5,15 @@ go:
   - 1.7.x
   - 1.8.x
   - 1.9.x
+
 install: go get -u golang.org/x/oauth2
-before_script: go get -u github.com/mitchellh/gox
-script: gox -osarch="darwin/amd64 linux/amd64 windows/amd64" ./dropbox/...
+
+script:
+  - set -e
+  - GOOS=linux   GOARCH=amd64 go install ./dropbox/...
+  - GOOS=darwin  GOARCH=amd64 go install ./dropbox/...
+  - GOOS=windows GOARCH=amd64 go install ./dropbox/...
+  - set +e
 
 jobs:
   include:

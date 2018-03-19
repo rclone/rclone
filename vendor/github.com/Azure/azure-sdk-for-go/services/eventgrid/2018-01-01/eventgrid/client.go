@@ -1,6 +1,6 @@
 // Package eventgrid implements the Azure ARM Eventgrid service API version 2018-01-01.
 //
-// Azure EventGrid Client
+// EventGrid Client
 package eventgrid
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
@@ -47,13 +47,13 @@ func NewWithoutDefaults() BaseClient {
 
 // PublishEvents publishes a batch of events to an Azure Event Grid topic.
 //
-// topicHostname is the host name of the topic, e.g. topic1.westus2-1.eventgrid.azure.net events is an array of events
-// to be published to Event Grid.
+// topicHostname is the host name of the topic, e.g. topic1.westus2-1.eventgrid.azure.net events is an array of
+// events to be published to Event Grid.
 func (client BaseClient) PublishEvents(ctx context.Context, topicHostname string, events []Event) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: events,
 			Constraints: []validation.Constraint{{Target: "events", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "eventgrid.BaseClient", "PublishEvents")
+		return result, validation.NewError("eventgrid.BaseClient", "PublishEvents", err.Error())
 	}
 
 	req, err := client.PublishEventsPreparer(ctx, topicHostname, events)

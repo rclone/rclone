@@ -14,14 +14,17 @@
 [[projects]]
   name = "cloud.google.com/go"
   packages = ["compute/metadata"]
-  revision = "050b16d2314d5fc3d4c9a51e4cd5c7468e77f162"
-  version = "v0.17.0"
+  revision = "20d4028b8a750c2aca76bf9fefa8ed2d0109b573"
+  version = "v0.19.0"
 
 [[projects]]
   name = "github.com/Azure/azure-sdk-for-go"
-  packages = ["storage"]
-  revision = "eae258195456be76b2ec9ad2ee2ab63cdda365d9"
-  version = "v12.2.0-beta"
+  packages = [
+    "storage",
+    "version"
+  ]
+  revision = "e67cd39e942c417ae5e9ae1165f778d9fe8996e0"
+  version = "v14.5.0"
 
 [[projects]]
   name = "github.com/Azure/go-autorest"
@@ -31,8 +34,8 @@
     "autorest/azure",
     "autorest/date"
   ]
-  revision = "6311d7a76f54cf2b6dea03d737d9bd9a6022ac5f"
-  version = "v9.7.1"
+  revision = "0ae36a9e544696de46fdadb7b0d5fb38af48c063"
+  version = "v10.2.0"
 
 [[projects]]
   branch = "master"
@@ -78,6 +81,8 @@
     "aws/request",
     "aws/session",
     "aws/signer/v4",
+    "internal/sdkio",
+    "internal/sdkrand",
     "internal/shareddefaults",
     "private/protocol",
     "private/protocol/query",
@@ -90,7 +95,7 @@
     "service/s3/s3manager",
     "service/sts"
   ]
-  revision = "2fe57096de348e6cff4031af99254613f8ef73ea"
+  revision = "12fe7d35f8ad5f7f2715d414624b0723737de1f7"
 
 [[projects]]
   name = "github.com/billziss-gh/cgofuse"
@@ -102,13 +107,13 @@
   branch = "master"
   name = "github.com/coreos/bbolt"
   packages = ["."]
-  revision = "ee30b748bcfbd74ec1d8439ae8fd4f9123a5c94e"
+  revision = "af9db2027c98c61ecd8e17caa5bd265792b9b9a2"
 
 [[projects]]
   name = "github.com/cpuguy83/go-md2man"
   packages = ["md2man"]
-  revision = "1d903dcb749992f3741d744c0f8376b4bd7eb3e1"
-  version = "v1.0.7"
+  revision = "20f5889cbdc3c73dbd2862796665e7c465ade7d1"
+  version = "v1.0.8"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -119,8 +124,8 @@
 [[projects]]
   name = "github.com/dgrijalva/jwt-go"
   packages = ["."]
-  revision = "dbeaa9332f19a944acb5736b4456cfcc02140e29"
-  version = "v3.1.0"
+  revision = "06ea1031745cb8b3dab3f6a236daf2b0aa468b7e"
+  version = "v3.2.0"
 
 [[projects]]
   name = "github.com/djherbis/times"
@@ -137,19 +142,19 @@
     "dropbox/file_properties",
     "dropbox/files"
   ]
-  revision = "9c27e83ceccc8f8bbc9afdc17c50798529d608b1"
+  revision = "f0b3f3ded6d415a94e83e9a514fb8025e4e6be31"
 
 [[projects]]
   name = "github.com/go-ini/ini"
   packages = ["."]
-  revision = "32e4c1e6bc4e7d0d8451aa6b75200d19e37a536a"
-  version = "v1.32.0"
+  revision = "6333e38ac20b8949a8dd68baa3650f4dee8f39f0"
+  version = "v1.33.0"
 
 [[projects]]
-  branch = "master"
   name = "github.com/golang/protobuf"
   packages = ["proto"]
-  revision = "1e59b77b52bf8e4b449a57e6f79f21226d571845"
+  revision = "925541529c1fa6821df4e44ce2723319eb2be768"
+  version = "v1.0.0"
 
 [[projects]]
   branch = "master"
@@ -189,7 +194,8 @@
 [[projects]]
   name = "github.com/marstr/guid"
   packages = ["."]
-  revision = "8bdf7d1a087ccc975cf37dd6507da50698fd19ca"
+  revision = "8bd9a64bf37eb297b492a4101fb28e80ac0b290f"
+  version = "v1.1.0"
 
 [[projects]]
   name = "github.com/mattn/go-runewidth"
@@ -213,7 +219,7 @@
   branch = "master"
   name = "github.com/nsf/termbox-go"
   packages = ["."]
-  revision = "8c5e0793e04afcda7fe23d0751791e7321df4265"
+  revision = "e2050e41c8847748ec5288741c0b19a8cb26d084"
 
 [[projects]]
   branch = "master"
@@ -243,13 +249,13 @@
   branch = "master"
   name = "github.com/pkg/errors"
   packages = ["."]
-  revision = "e881fd58d78e04cf6d0de1217f8707c8cc2249bc"
+  revision = "816c9085562cd7ee03e7f8188a1cfd942858cded"
 
 [[projects]]
-  branch = "master"
   name = "github.com/pkg/sftp"
   packages = ["."]
-  revision = "72ec6e85598d2480c30f633c154b07b6c112eade"
+  revision = "49488377fa2f14143ba3067cf7555f60f6c7b550"
+  version = "1.5.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -266,8 +272,8 @@
 [[projects]]
   name = "github.com/russross/blackfriday"
   packages = ["."]
-  revision = "4048872b16cc0fc2c5fd9eacf0ed2c2fedaa0c8c"
-  version = "v1.5"
+  revision = "55d61fa8aa702f59229e6cff85793c22e580eaf5"
+  version = "v1.5.1"
 
 [[projects]]
   name = "github.com/satori/go.uuid"
@@ -276,10 +282,10 @@
   version = "v1.2.0"
 
 [[projects]]
+  branch = "master"
   name = "github.com/sevlyar/go-daemon"
   packages = ["."]
-  revision = "e49ef56654f54139c4dc0285f973f74e9649e729"
-  version = "v0.1.2"
+  revision = "32749a731f76154d29bc6a547e6585f320eb235e"
 
 [[projects]]
   branch = "master"
@@ -294,13 +300,13 @@
     ".",
     "doc"
   ]
-  revision = "0c34d16c3123764e413b9ed982ada58b1c3d53ea"
+  revision = "c439c4fa093711d42e1b01acb1235b52004753c1"
 
 [[projects]]
   branch = "master"
   name = "github.com/spf13/pflag"
   packages = ["."]
-  revision = "4c012f6dcd9546820e378d0bdda4d8fc772cdfea"
+  revision = "ee5fd03fd6acfd43e44aea0b4135958546ed8e73"
 
 [[projects]]
   branch = "master"
@@ -309,7 +315,7 @@
     "assert",
     "require"
   ]
-  revision = "87b1dfb5b2fa649f52695dd9eae19abe404a4308"
+  revision = "380174f817a09abe5982a82f94ad50938a8df65d"
 
 [[projects]]
   branch = "master"
@@ -318,6 +324,7 @@
   revision = "ba9c9e33906f58169366275e3450db66139a31a9"
 
 [[projects]]
+  branch = "master"
   name = "github.com/yunify/qingstor-sdk-go"
   packages = [
     ".",
@@ -332,8 +339,7 @@
     "service",
     "utils"
   ]
-  revision = "51fa3b6bb3c24f4d646eefff251cd2e6ba716600"
-  version = "v2.2.9"
+  revision = "a3cbaaf92247eaf55751a7ff37c126c511757492"
 
 [[projects]]
   branch = "master"
@@ -344,6 +350,7 @@
     "curve25519",
     "ed25519",
     "ed25519/internal/edwards25519",
+    "internal/chacha20",
     "nacl/secretbox",
     "pbkdf2",
     "poly1305",
@@ -353,7 +360,7 @@
     "ssh/agent",
     "ssh/terminal"
   ]
-  revision = "13931e22f9e72ea58bb73048bc752b48c6d4d4ac"
+  revision = "c3a3ad6d03f7a915c0f7e194b7152974bb73d287"
 
 [[projects]]
   branch = "master"
@@ -363,10 +370,14 @@
     "context/ctxhttp",
     "html",
     "html/atom",
+    "http2",
+    "http2/hpack",
+    "idna",
+    "lex/httplex",
     "webdav",
     "webdav/internal/xml"
   ]
-  revision = "5ccada7d0a7ba9aeb5d3aca8d3501b4c2a509fec"
+  revision = "92b859f39abd2d91a854c9f9c4621b2f5054a92d"
 
 [[projects]]
   branch = "master"
@@ -378,7 +389,7 @@
     "jws",
     "jwt"
   ]
-  revision = "30785a2c434e431ef7c507b54617d6a951d5f2b4"
+  revision = "fdc9e635145ae97e6c2cb777c48305600cf515cb"
 
 [[projects]]
   branch = "master"
@@ -387,26 +398,36 @@
     "unix",
     "windows"
   ]
-  revision = "fff93fa7cd278d84afc205751523809c464168ab"
+  revision = "d8e400bc7db4870d786864138af681469693d18c"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/text"
   packages = [
+    "collate",
+    "collate/build",
+    "internal/colltab",
     "internal/gen",
+    "internal/language",
+    "internal/language/compact",
+    "internal/tag",
     "internal/triegen",
     "internal/ucd",
+    "language",
+    "secure/bidirule",
     "transform",
+    "unicode/bidi",
     "unicode/cldr",
-    "unicode/norm"
+    "unicode/norm",
+    "unicode/rangetable"
   ]
-  revision = "e19ae1496984b1c655b8044a65c0300a3c878dd3"
+  revision = "8c34f848e18c4bd34d02db7f19a0ed1a0a8f5852"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/time"
   packages = ["rate"]
-  revision = "6dc17368e09b0e8634d71cac8168d853e869a0c7"
+  revision = "26559e0f760e39c24d730d3224364aef164ee23f"
 
 [[projects]]
   branch = "master"
@@ -418,7 +439,7 @@
     "googleapi/internal/uritemplates",
     "storage/v1"
   ]
-  revision = "de3aa2cfa7f1c18dcb7f91738099bad280117b8e"
+  revision = "55e9fb4044f4757138d4273ace23060d022d18f9"
 
 [[projects]]
   name = "google.golang.org/appengine"
@@ -439,14 +460,14 @@
   version = "v1.0.0"
 
 [[projects]]
-  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "d670f9405373e636a5a2765eea47fac0c9bc91a4"
+  revision = "7f97868eec74b32b0982dd158a51a446d1da7eb5"
+  version = "v2.1.1"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "f9e9adb0675a970e6b6a9f28fa75e5bbee74d001359c688bd37c78f035be565a"
+  inputs-digest = "a91eff17e50d8733124875c68dbe771833cb9d8d07d545ba75fc4dd561f9bfe2"
   solver-name = "gps-cdcl"
   solver-version = 1

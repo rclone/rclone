@@ -1,4 +1,4 @@
-package xpackagex
+package batch
 
 // Copyright (c) Microsoft and contributors.  All rights reserved.
 //
@@ -46,11 +46,11 @@ func NewPoolClientWithBaseURI(baseURI string) PoolClient {
 // information may appear in telemetry logs accessible to Microsoft Support engineers.
 //
 // pool is the pool to be added. timeout is the maximum time that the server can spend processing the request, in
-// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID
-// with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether
-// the server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
+// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
+// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
+// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
+// calling the REST API directly.
 func (client PoolClient) Add(ctx context.Context, pool PoolAddParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: pool,
@@ -70,25 +70,25 @@ func (client PoolClient) Add(ctx context.Context, pool PoolAddParameter, timeout
 					}},
 				{Target: "pool.StartTask", Name: validation.Null, Rule: false,
 					Chain: []validation.Constraint{{Target: "pool.StartTask.CommandLine", Name: validation.Null, Rule: true, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.PoolClient", "Add")
+		return result, validation.NewError("batch.PoolClient", "Add", err.Error())
 	}
 
 	req, err := client.AddPreparer(ctx, pool, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Add", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Add", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.AddSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Add", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Add", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.AddResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Add", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Add", resp, "Failure responding to request")
 	}
 
 	return
@@ -102,6 +102,8 @@ func (client PoolClient) AddPreparer(ctx context.Context, pool PoolAddParameter,
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -118,6 +120,9 @@ func (client PoolClient) AddPreparer(ctx context.Context, pool PoolAddParameter,
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -157,34 +162,34 @@ func (client PoolClient) AddResponder(resp *http.Response) (result autorest.Resp
 // poolID is the ID of the pool to delete. timeout is the maximum time that the server can spend processing the
 // request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
 // form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly. ifMatch is an ETag value associated with the version of the resource known to
-// the client. The operation will be performed only if the resource's current ETag on the service exactly matches the
-// value specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to the
-// client. The operation will be performed only if the resource's current ETag on the service does not match the value
-// specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the resource known to
-// the client. The operation will be performed only if the resource on the service has been modified since the
-// specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the
-// client. The operation will be performed only if the resource on the service has not been modified since the
-// specified time.
+// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
+// time the request was issued. Client libraries typically set this to the current system clock time; set it
+// explicitly if you are calling the REST API directly. ifMatch is an ETag value associated with the version of the
+// resource known to the client. The operation will be performed only if the resource's current ETag on the service
+// exactly matches the value specified by the client. ifNoneMatch is an ETag value associated with the version of
+// the resource known to the client. The operation will be performed only if the resource's current ETag on the
+// service does not match the value specified by the client. ifModifiedSince is a timestamp indicating the last
+// modified time of the resource known to the client. The operation will be performed only if the resource on the
+// service has been modified since the specified time. ifUnmodifiedSince is a timestamp indicating the last
+// modified time of the resource known to the client. The operation will be performed only if the resource on the
+// service has not been modified since the specified time.
 func (client PoolClient) Delete(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DeletePreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Delete", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Delete", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.DeleteSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Delete", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Delete", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.DeleteResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Delete", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Delete", resp, "Failure responding to request")
 	}
 
 	return
@@ -202,6 +207,8 @@ func (client PoolClient) DeletePreparer(ctx context.Context, poolID string, time
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -216,6 +223,9 @@ func (client PoolClient) DeletePreparer(ctx context.Context, poolID string, time
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -261,29 +271,29 @@ func (client PoolClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // DisableAutoScale sends the disable auto scale request.
 //
-// poolID is the ID of the pool on which to disable automatic scaling. timeout is the maximum time that the server can
-// spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
-// identity, in the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// poolID is the ID of the pool on which to disable automatic scaling. timeout is the maximum time that the server
+// can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated
+// request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) DisableAutoScale(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.DisableAutoScalePreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "DisableAutoScale", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "DisableAutoScale", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.DisableAutoScaleSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "DisableAutoScale", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "DisableAutoScale", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.DisableAutoScaleResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "DisableAutoScale", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "DisableAutoScale", resp, "Failure responding to request")
 	}
 
 	return
@@ -301,6 +311,8 @@ func (client PoolClient) DisableAutoScalePreparer(ctx context.Context, poolID st
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -315,6 +327,9 @@ func (client PoolClient) DisableAutoScalePreparer(ctx context.Context, poolID st
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -347,37 +362,38 @@ func (client PoolClient) DisableAutoScaleResponder(resp *http.Response) (result 
 // request. If automatic scaling of the pool is already enabled, you may specify a new autoscale formula and/or a new
 // evaluation interval. You cannot call this API for the same pool more than once every 30 seconds.
 //
-// poolID is the ID of the pool on which to enable automatic scaling. poolEnableAutoScaleParameter is the parameters
-// for the request. timeout is the maximum time that the server can spend processing the request, in seconds. The
-// default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
-// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
-// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly. ifMatch is an ETag value associated with the version of the resource known to the client. The operation
-// will be performed only if the resource's current ETag on the service exactly matches the value specified by the
-// client. ifNoneMatch is an ETag value associated with the version of the resource known to the client. The operation
-// will be performed only if the resource's current ETag on the service does not match the value specified by the
-// client. ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// poolID is the ID of the pool on which to enable automatic scaling. poolEnableAutoScaleParameter is the
+// parameters for the request. timeout is the maximum time that the server can spend processing the request, in
+// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
+// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
+// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
+// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
+// calling the REST API directly. ifMatch is an ETag value associated with the version of the resource known to the
+// client. The operation will be performed only if the resource's current ETag on the service exactly matches the
+// value specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to
+// the client. The operation will be performed only if the resource's current ETag on the service does not match
+// the value specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the
+// resource known to the client. The operation will be performed only if the resource on the service has been
+// modified since the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the
+// resource known to the client. The operation will be performed only if the resource on the service has not been
+// modified since the specified time.
 func (client PoolClient) EnableAutoScale(ctx context.Context, poolID string, poolEnableAutoScaleParameter PoolEnableAutoScaleParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.EnableAutoScalePreparer(ctx, poolID, poolEnableAutoScaleParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "EnableAutoScale", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "EnableAutoScale", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.EnableAutoScaleSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "EnableAutoScale", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "EnableAutoScale", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.EnableAutoScaleResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "EnableAutoScale", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "EnableAutoScale", resp, "Failure responding to request")
 	}
 
 	return
@@ -395,6 +411,8 @@ func (client PoolClient) EnableAutoScalePreparer(ctx context.Context, poolID str
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -411,6 +429,9 @@ func (client PoolClient) EnableAutoScalePreparer(ctx context.Context, poolID str
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -457,36 +478,36 @@ func (client PoolClient) EnableAutoScaleResponder(resp *http.Response) (result a
 // EvaluateAutoScale this API is primarily for validating an autoscale formula, as it simply returns the result without
 // applying the formula to the pool.
 //
-// poolID is the ID of the pool on which to evaluate the automatic scaling formula. poolEvaluateAutoScaleParameter is
-// the parameters for the request. timeout is the maximum time that the server can spend processing the request, in
-// seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID
-// with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether
-// the server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
-// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
-// directly.
+// poolID is the ID of the pool on which to evaluate the automatic scaling formula. poolEvaluateAutoScaleParameter
+// is the parameters for the request. timeout is the maximum time that the server can spend processing the request,
+// in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of
+// a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID
+// is whether the server should return the client-request-id in the response. ocpDate is the time the request was
+// issued. Client libraries typically set this to the current system clock time; set it explicitly if you are
+// calling the REST API directly.
 func (client PoolClient) EvaluateAutoScale(ctx context.Context, poolID string, poolEvaluateAutoScaleParameter PoolEvaluateAutoScaleParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result AutoScaleRun, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: poolEvaluateAutoScaleParameter,
 			Constraints: []validation.Constraint{{Target: "poolEvaluateAutoScaleParameter.AutoScaleFormula", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.PoolClient", "EvaluateAutoScale")
+		return result, validation.NewError("batch.PoolClient", "EvaluateAutoScale", err.Error())
 	}
 
 	req, err := client.EvaluateAutoScalePreparer(ctx, poolID, poolEvaluateAutoScaleParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "EvaluateAutoScale", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "EvaluateAutoScale", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.EvaluateAutoScaleSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "EvaluateAutoScale", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "EvaluateAutoScale", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.EvaluateAutoScaleResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "EvaluateAutoScale", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "EvaluateAutoScale", resp, "Failure responding to request")
 	}
 
 	return
@@ -504,6 +525,8 @@ func (client PoolClient) EvaluateAutoScalePreparer(ctx context.Context, poolID s
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -520,6 +543,9 @@ func (client PoolClient) EvaluateAutoScalePreparer(ctx context.Context, poolID s
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -550,36 +576,37 @@ func (client PoolClient) EvaluateAutoScaleResponder(resp *http.Response) (result
 
 // Exists gets basic properties of a pool.
 //
-// poolID is the ID of the pool to get. timeout is the maximum time that the server can spend processing the request,
-// in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a
-// GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is
-// whether the server should return the client-request-id in the response. ocpDate is the time the request was issued.
-// Client libraries typically set this to the current system clock time; set it explicitly if you are calling the REST
-// API directly. ifMatch is an ETag value associated with the version of the resource known to the client. The
-// operation will be performed only if the resource's current ETag on the service exactly matches the value specified
-// by the client. ifNoneMatch is an ETag value associated with the version of the resource known to the client. The
-// operation will be performed only if the resource's current ETag on the service does not match the value specified by
-// the client. ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client.
-// The operation will be performed only if the resource on the service has been modified since the specified time.
-// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
-// operation will be performed only if the resource on the service has not been modified since the specified time.
+// poolID is the ID of the pool to get. timeout is the maximum time that the server can spend processing the
+// request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request identity, in the
+// form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
+// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the
+// time the request was issued. Client libraries typically set this to the current system clock time; set it
+// explicitly if you are calling the REST API directly. ifMatch is an ETag value associated with the version of the
+// resource known to the client. The operation will be performed only if the resource's current ETag on the service
+// exactly matches the value specified by the client. ifNoneMatch is an ETag value associated with the version of
+// the resource known to the client. The operation will be performed only if the resource's current ETag on the
+// service does not match the value specified by the client. ifModifiedSince is a timestamp indicating the last
+// modified time of the resource known to the client. The operation will be performed only if the resource on the
+// service has been modified since the specified time. ifUnmodifiedSince is a timestamp indicating the last
+// modified time of the resource known to the client. The operation will be performed only if the resource on the
+// service has not been modified since the specified time.
 func (client PoolClient) Exists(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.ExistsPreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Exists", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Exists", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ExistsSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Exists", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Exists", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.ExistsResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Exists", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Exists", resp, "Failure responding to request")
 	}
 
 	return
@@ -597,6 +624,8 @@ func (client PoolClient) ExistsPreparer(ctx context.Context, poolID string, time
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -611,6 +640,9 @@ func (client PoolClient) ExistsPreparer(ctx context.Context, poolID string, time
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -656,37 +688,38 @@ func (client PoolClient) ExistsResponder(resp *http.Response) (result autorest.R
 
 // Get gets information about the specified pool.
 //
-// poolID is the ID of the pool to get. selectParameter is an OData $select clause. expand is an OData $expand clause.
-// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service does not match the value specified by the client. ifModifiedSince is a
-// timestamp indicating the last modified time of the resource known to the client. The operation will be performed
-// only if the resource on the service has been modified since the specified time. ifUnmodifiedSince is a timestamp
-// indicating the last modified time of the resource known to the client. The operation will be performed only if the
-// resource on the service has not been modified since the specified time.
+// poolID is the ID of the pool to get. selectParameter is an OData $select clause. expand is an OData $expand
+// clause. timeout is the maximum time that the server can spend processing the request, in seconds. The default is
+// 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration
+// such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server
+// should return the client-request-id in the response. ocpDate is the time the request was issued. Client
+// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
+// directly. ifMatch is an ETag value associated with the version of the resource known to the client. The
+// operation will be performed only if the resource's current ETag on the service exactly matches the value
+// specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to the
+// client. The operation will be performed only if the resource's current ETag on the service does not match the
+// value specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the resource
+// known to the client. The operation will be performed only if the resource on the service has been modified since
+// the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to
+// the client. The operation will be performed only if the resource on the service has not been modified since the
+// specified time.
 func (client PoolClient) Get(ctx context.Context, poolID string, selectParameter string, expand string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result CloudPool, err error) {
 	req, err := client.GetPreparer(ctx, poolID, selectParameter, expand, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Get", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Get", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Get", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Get", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Get", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Get", resp, "Failure responding to request")
 	}
 
 	return
@@ -710,6 +743,8 @@ func (client PoolClient) GetPreparer(ctx context.Context, poolID string, selectP
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -724,6 +759,9 @@ func (client PoolClient) GetPreparer(ctx context.Context, poolID string, selectP
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -771,28 +809,28 @@ func (client PoolClient) GetResponder(resp *http.Response) (result CloudPool, er
 // GetAllLifetimeStatistics statistics are aggregated across all pools that have ever existed in the account, from
 // account creation to the last update time of the statistics.
 //
-// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30
+// seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such
+// as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should
+// return the client-request-id in the response. ocpDate is the time the request was issued. Client libraries
+// typically set this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) GetAllLifetimeStatistics(ctx context.Context, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result PoolStatistics, err error) {
 	req, err := client.GetAllLifetimeStatisticsPreparer(ctx, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "GetAllLifetimeStatistics", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "GetAllLifetimeStatistics", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.GetAllLifetimeStatisticsSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "GetAllLifetimeStatistics", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "GetAllLifetimeStatistics", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.GetAllLifetimeStatisticsResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "GetAllLifetimeStatistics", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "GetAllLifetimeStatistics", resp, "Failure responding to request")
 	}
 
 	return
@@ -806,6 +844,8 @@ func (client PoolClient) GetAllLifetimeStatisticsPreparer(ctx context.Context, t
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -820,6 +860,9 @@ func (client PoolClient) GetAllLifetimeStatisticsPreparer(ctx context.Context, t
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -850,13 +893,14 @@ func (client PoolClient) GetAllLifetimeStatisticsResponder(resp *http.Response) 
 
 // List sends the list request.
 //
-// filter is an OData $filter clause. selectParameter is an OData $select clause. expand is an OData $expand clause.
-// maxResults is the maximum number of items to return in the response. A maximum of 1000 pools can be returned.
-// timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
-// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
-// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// filter is an OData $filter clause. selectParameter is an OData $select clause. expand is an OData $expand
+// clause. maxResults is the maximum number of items to return in the response. A maximum of 1000 pools can be
+// returned. timeout is the maximum time that the server can spend processing the request, in seconds. The default
+// is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
+// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
+// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
+// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
+// directly.
 func (client PoolClient) List(ctx context.Context, filter string, selectParameter string, expand string, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result CloudPoolListResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -864,26 +908,26 @@ func (client PoolClient) List(ctx context.Context, filter string, selectParamete
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.PoolClient", "List")
+		return result, validation.NewError("batch.PoolClient", "List", err.Error())
 	}
 
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, filter, selectParameter, expand, maxResults, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "List", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "List", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.cplr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "List", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "List", resp, "Failure sending request")
 		return
 	}
 
 	result.cplr, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "List", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "List", resp, "Failure responding to request")
 	}
 
 	return
@@ -906,9 +950,13 @@ func (client PoolClient) ListPreparer(ctx context.Context, filter string, select
 	}
 	if maxResults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
+	} else {
+		queryParameters["maxresults"] = autorest.Encode("query", 1000)
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -923,6 +971,9 @@ func (client PoolClient) ListPreparer(ctx context.Context, filter string, select
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -955,7 +1006,7 @@ func (client PoolClient) ListResponder(resp *http.Response) (result CloudPoolLis
 func (client PoolClient) listNextResults(lastResults CloudPoolListResult) (result CloudPoolListResult, err error) {
 	req, err := lastResults.cloudPoolListResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "xpackagex.PoolClient", "listNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "batch.PoolClient", "listNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -963,11 +1014,11 @@ func (client PoolClient) listNextResults(lastResults CloudPoolListResult) (resul
 	resp, err := client.ListSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "xpackagex.PoolClient", "listNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "batch.PoolClient", "listNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "listNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "listNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }
@@ -981,18 +1032,18 @@ func (client PoolClient) ListComplete(ctx context.Context, filter string, select
 // ListUsageMetrics if you do not specify a $filter clause including a poolId, the response includes all pools that
 // existed in the account in the time range of the returned aggregation intervals.
 //
-// startTime is the earliest time from which to include metrics. This must be at least two and a half hours before the
-// current time. If not specified this defaults to the start time of the last aggregation interval currently available.
-// endTime is the latest time from which to include metrics. This must be at least two hours before the current time.
-// If not specified this defaults to the end time of the last aggregation interval currently available. filter is an
-// OData $filter clause. If this is not specified the response includes all pools that existed in the account in the
-// time range of the returned aggregation intervals. maxResults is the maximum number of items to return in the
-// response. A maximum of 1000 results will be returned. timeout is the maximum time that the server can spend
-// processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
-// identity, in the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly.
+// startTime is the earliest time from which to include metrics. This must be at least two and a half hours before
+// the current time. If not specified this defaults to the start time of the last aggregation interval currently
+// available. endTime is the latest time from which to include metrics. This must be at least two hours before the
+// current time. If not specified this defaults to the end time of the last aggregation interval currently
+// available. filter is an OData $filter clause. If this is not specified the response includes all pools that
+// existed in the account in the time range of the returned aggregation intervals. maxResults is the maximum number
+// of items to return in the response. A maximum of 1000 results will be returned. timeout is the maximum time that
+// the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
+// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) ListUsageMetrics(ctx context.Context, startTime *date.Time, endTime *date.Time, filter string, maxResults *int32, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result PoolListUsageMetricsResultPage, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: maxResults,
@@ -1000,26 +1051,26 @@ func (client PoolClient) ListUsageMetrics(ctx context.Context, startTime *date.T
 				Chain: []validation.Constraint{{Target: "maxResults", Name: validation.InclusiveMaximum, Rule: 1000, Chain: nil},
 					{Target: "maxResults", Name: validation.InclusiveMinimum, Rule: 1, Chain: nil},
 				}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.PoolClient", "ListUsageMetrics")
+		return result, validation.NewError("batch.PoolClient", "ListUsageMetrics", err.Error())
 	}
 
 	result.fn = client.listUsageMetricsNextResults
 	req, err := client.ListUsageMetricsPreparer(ctx, startTime, endTime, filter, maxResults, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "ListUsageMetrics", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "ListUsageMetrics", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ListUsageMetricsSender(req)
 	if err != nil {
 		result.plumr.Response = autorest.Response{Response: resp}
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "ListUsageMetrics", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "ListUsageMetrics", resp, "Failure sending request")
 		return
 	}
 
 	result.plumr, err = client.ListUsageMetricsResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "ListUsageMetrics", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "ListUsageMetrics", resp, "Failure responding to request")
 	}
 
 	return
@@ -1042,9 +1093,13 @@ func (client PoolClient) ListUsageMetricsPreparer(ctx context.Context, startTime
 	}
 	if maxResults != nil {
 		queryParameters["maxresults"] = autorest.Encode("query", *maxResults)
+	} else {
+		queryParameters["maxresults"] = autorest.Encode("query", 1000)
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1059,6 +1114,9 @@ func (client PoolClient) ListUsageMetricsPreparer(ctx context.Context, startTime
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -1091,7 +1149,7 @@ func (client PoolClient) ListUsageMetricsResponder(resp *http.Response) (result 
 func (client PoolClient) listUsageMetricsNextResults(lastResults PoolListUsageMetricsResult) (result PoolListUsageMetricsResult, err error) {
 	req, err := lastResults.poolListUsageMetricsResultPreparer()
 	if err != nil {
-		return result, autorest.NewErrorWithError(err, "xpackagex.PoolClient", "listUsageMetricsNextResults", nil, "Failure preparing next results request")
+		return result, autorest.NewErrorWithError(err, "batch.PoolClient", "listUsageMetricsNextResults", nil, "Failure preparing next results request")
 	}
 	if req == nil {
 		return
@@ -1099,11 +1157,11 @@ func (client PoolClient) listUsageMetricsNextResults(lastResults PoolListUsageMe
 	resp, err := client.ListUsageMetricsSender(req)
 	if err != nil {
 		result.Response = autorest.Response{Response: resp}
-		return result, autorest.NewErrorWithError(err, "xpackagex.PoolClient", "listUsageMetricsNextResults", resp, "Failure sending next results request")
+		return result, autorest.NewErrorWithError(err, "batch.PoolClient", "listUsageMetricsNextResults", resp, "Failure sending next results request")
 	}
 	result, err = client.ListUsageMetricsResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "listUsageMetricsNextResults", resp, "Failure responding to next results request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "listUsageMetricsNextResults", resp, "Failure responding to next results request")
 	}
 	return
 }
@@ -1118,37 +1176,37 @@ func (client PoolClient) ListUsageMetricsComplete(ctx context.Context, startTime
 // associated with it, and a request does not specify a start task element, then the pool keeps the existing start
 // task.
 //
-// poolID is the ID of the pool to update. poolPatchParameter is the parameters for the request. timeout is the maximum
-// time that the server can spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the
-// caller-generated request identity, in the form of a GUID with no decoration such as curly braces, e.g.
-// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service does not match the value specified by the client. ifModifiedSince is a
-// timestamp indicating the last modified time of the resource known to the client. The operation will be performed
-// only if the resource on the service has been modified since the specified time. ifUnmodifiedSince is a timestamp
-// indicating the last modified time of the resource known to the client. The operation will be performed only if the
-// resource on the service has not been modified since the specified time.
+// poolID is the ID of the pool to update. poolPatchParameter is the parameters for the request. timeout is the
+// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
+// clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
+// braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
+// ETag value associated with the version of the resource known to the client. The operation will be performed only
+// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
+// an ETag value associated with the version of the resource known to the client. The operation will be performed
+// only if the resource's current ETag on the service does not match the value specified by the client.
+// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified time.
 func (client PoolClient) Patch(ctx context.Context, poolID string, poolPatchParameter PoolPatchParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.PatchPreparer(ctx, poolID, poolPatchParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Patch", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Patch", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.PatchSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Patch", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Patch", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.PatchResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Patch", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Patch", resp, "Failure responding to request")
 	}
 
 	return
@@ -1166,6 +1224,8 @@ func (client PoolClient) PatchPreparer(ctx context.Context, poolID string, poolP
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1182,6 +1242,9 @@ func (client PoolClient) PatchPreparer(ctx context.Context, poolID string, poolP
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -1229,43 +1292,44 @@ func (client PoolClient) PatchResponder(resp *http.Response) (result autorest.Re
 // the allocation state changes from steady to resizing.
 //
 // poolID is the ID of the pool from which you want to remove nodes. nodeRemoveParameter is the parameters for the
-// request. timeout is the maximum time that the server can spend processing the request, in seconds. The default is 30
-// seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as
-// curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return
-// the client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
-// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
-// ETag value associated with the version of the resource known to the client. The operation will be performed only if
-// the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service does not match the value specified by the client. ifModifiedSince is a
-// timestamp indicating the last modified time of the resource known to the client. The operation will be performed
-// only if the resource on the service has been modified since the specified time. ifUnmodifiedSince is a timestamp
-// indicating the last modified time of the resource known to the client. The operation will be performed only if the
-// resource on the service has not been modified since the specified time.
+// request. timeout is the maximum time that the server can spend processing the request, in seconds. The default
+// is 30 seconds. clientRequestID is the caller-generated request identity, in the form of a GUID with no
+// decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the
+// server should return the client-request-id in the response. ocpDate is the time the request was issued. Client
+// libraries typically set this to the current system clock time; set it explicitly if you are calling the REST API
+// directly. ifMatch is an ETag value associated with the version of the resource known to the client. The
+// operation will be performed only if the resource's current ETag on the service exactly matches the value
+// specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to the
+// client. The operation will be performed only if the resource's current ETag on the service does not match the
+// value specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the resource
+// known to the client. The operation will be performed only if the resource on the service has been modified since
+// the specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to
+// the client. The operation will be performed only if the resource on the service has not been modified since the
+// specified time.
 func (client PoolClient) RemoveNodes(ctx context.Context, poolID string, nodeRemoveParameter NodeRemoveParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: nodeRemoveParameter,
 			Constraints: []validation.Constraint{{Target: "nodeRemoveParameter.NodeList", Name: validation.Null, Rule: true,
 				Chain: []validation.Constraint{{Target: "nodeRemoveParameter.NodeList", Name: validation.MaxItems, Rule: 100, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.PoolClient", "RemoveNodes")
+		return result, validation.NewError("batch.PoolClient", "RemoveNodes", err.Error())
 	}
 
 	req, err := client.RemoveNodesPreparer(ctx, poolID, nodeRemoveParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "RemoveNodes", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "RemoveNodes", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.RemoveNodesSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "RemoveNodes", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "RemoveNodes", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.RemoveNodesResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "RemoveNodes", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "RemoveNodes", resp, "Failure responding to request")
 	}
 
 	return
@@ -1283,6 +1347,8 @@ func (client PoolClient) RemoveNodesPreparer(ctx context.Context, poolID string,
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1299,6 +1365,9 @@ func (client PoolClient) RemoveNodesPreparer(ctx context.Context, poolID string,
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -1352,33 +1421,33 @@ func (client PoolClient) RemoveNodesResponder(resp *http.Response) (result autor
 // maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
 // clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
 // braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service does not match the value specified by the client. ifModifiedSince is a
-// timestamp indicating the last modified time of the resource known to the client. The operation will be performed
-// only if the resource on the service has been modified since the specified time. ifUnmodifiedSince is a timestamp
-// indicating the last modified time of the resource known to the client. The operation will be performed only if the
-// resource on the service has not been modified since the specified time.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
+// ETag value associated with the version of the resource known to the client. The operation will be performed only
+// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
+// an ETag value associated with the version of the resource known to the client. The operation will be performed
+// only if the resource's current ETag on the service does not match the value specified by the client.
+// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified time.
 func (client PoolClient) Resize(ctx context.Context, poolID string, poolResizeParameter PoolResizeParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.ResizePreparer(ctx, poolID, poolResizeParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Resize", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Resize", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.ResizeSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Resize", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Resize", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.ResizeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "Resize", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "Resize", resp, "Failure responding to request")
 	}
 
 	return
@@ -1396,6 +1465,8 @@ func (client PoolClient) ResizePreparer(ctx context.Context, poolID string, pool
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1412,6 +1483,9 @@ func (client PoolClient) ResizePreparer(ctx context.Context, poolID string, pool
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -1459,37 +1533,37 @@ func (client PoolClient) ResizeResponder(resp *http.Response) (result autorest.R
 // further changes being made, and the pool maintains its current state. A resize operation need not be an explicit
 // resize pool request; this API can also be used to halt the initial sizing of the pool when it is created.
 //
-// poolID is the ID of the pool whose resizing you want to stop. timeout is the maximum time that the server can spend
-// processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated request
-// identity, in the form of a GUID with no decoration such as curly braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0.
-// returnClientRequestID is whether the server should return the client-request-id in the response. ocpDate is the time
-// the request was issued. Client libraries typically set this to the current system clock time; set it explicitly if
-// you are calling the REST API directly. ifMatch is an ETag value associated with the version of the resource known to
-// the client. The operation will be performed only if the resource's current ETag on the service exactly matches the
-// value specified by the client. ifNoneMatch is an ETag value associated with the version of the resource known to the
-// client. The operation will be performed only if the resource's current ETag on the service does not match the value
-// specified by the client. ifModifiedSince is a timestamp indicating the last modified time of the resource known to
-// the client. The operation will be performed only if the resource on the service has been modified since the
-// specified time. ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the
-// client. The operation will be performed only if the resource on the service has not been modified since the
-// specified time.
+// poolID is the ID of the pool whose resizing you want to stop. timeout is the maximum time that the server can
+// spend processing the request, in seconds. The default is 30 seconds. clientRequestID is the caller-generated
+// request identity, in the form of a GUID with no decoration such as curly braces, e.g.
+// 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
+// ETag value associated with the version of the resource known to the client. The operation will be performed only
+// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
+// an ETag value associated with the version of the resource known to the client. The operation will be performed
+// only if the resource's current ETag on the service does not match the value specified by the client.
+// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified time.
 func (client PoolClient) StopResize(ctx context.Context, poolID string, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	req, err := client.StopResizePreparer(ctx, poolID, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "StopResize", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "StopResize", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.StopResizeSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "StopResize", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "StopResize", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.StopResizeResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "StopResize", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "StopResize", resp, "Failure responding to request")
 	}
 
 	return
@@ -1507,6 +1581,8 @@ func (client PoolClient) StopResizePreparer(ctx context.Context, poolID string, 
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1521,6 +1597,9 @@ func (client PoolClient) StopResizePreparer(ctx context.Context, poolID string, 
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -1568,12 +1647,12 @@ func (client PoolClient) StopResizeResponder(resp *http.Response) (result autore
 // task associated with it and if start task is not specified with this request, then the Batch service will remove the
 // existing start task.
 //
-// poolID is the ID of the pool to update. poolUpdatePropertiesParameter is the parameters for the request. timeout is
-// the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
+// poolID is the ID of the pool to update. poolUpdatePropertiesParameter is the parameters for the request. timeout
+// is the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
 // clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
 // braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly.
 func (client PoolClient) UpdateProperties(ctx context.Context, poolID string, poolUpdatePropertiesParameter PoolUpdatePropertiesParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: poolUpdatePropertiesParameter,
@@ -1582,25 +1661,25 @@ func (client PoolClient) UpdateProperties(ctx context.Context, poolID string, po
 				{Target: "poolUpdatePropertiesParameter.CertificateReferences", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "poolUpdatePropertiesParameter.ApplicationPackageReferences", Name: validation.Null, Rule: true, Chain: nil},
 				{Target: "poolUpdatePropertiesParameter.Metadata", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.PoolClient", "UpdateProperties")
+		return result, validation.NewError("batch.PoolClient", "UpdateProperties", err.Error())
 	}
 
 	req, err := client.UpdatePropertiesPreparer(ctx, poolID, poolUpdatePropertiesParameter, timeout, clientRequestID, returnClientRequestID, ocpDate)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "UpdateProperties", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "UpdateProperties", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.UpdatePropertiesSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "UpdateProperties", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "UpdateProperties", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.UpdatePropertiesResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "UpdateProperties", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "UpdateProperties", resp, "Failure responding to request")
 	}
 
 	return
@@ -1618,6 +1697,8 @@ func (client PoolClient) UpdatePropertiesPreparer(ctx context.Context, poolID st
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1634,6 +1715,9 @@ func (client PoolClient) UpdatePropertiesPreparer(ctx context.Context, poolID st
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,
@@ -1669,43 +1753,43 @@ func (client PoolClient) UpdatePropertiesResponder(resp *http.Response) (result 
 // pools); therefore, the pool may be temporarily unavailable to run tasks. When this operation runs, the pool state
 // changes to upgrading. When all compute nodes have finished upgrading, the pool state returns to active.
 //
-// poolID is the ID of the pool to upgrade. poolUpgradeOSParameter is the parameters for the request. timeout is the
-// maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
+// poolID is the ID of the pool to upgrade. poolUpgradeOSParameter is the parameters for the request. timeout is
+// the maximum time that the server can spend processing the request, in seconds. The default is 30 seconds.
 // clientRequestID is the caller-generated request identity, in the form of a GUID with no decoration such as curly
 // braces, e.g. 9C4D50EE-2D56-4CD3-8152-34347DC9F2B0. returnClientRequestID is whether the server should return the
-// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set this
-// to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is an ETag
-// value associated with the version of the resource known to the client. The operation will be performed only if the
-// resource's current ETag on the service does not match the value specified by the client. ifModifiedSince is a
-// timestamp indicating the last modified time of the resource known to the client. The operation will be performed
-// only if the resource on the service has been modified since the specified time. ifUnmodifiedSince is a timestamp
-// indicating the last modified time of the resource known to the client. The operation will be performed only if the
-// resource on the service has not been modified since the specified time.
+// client-request-id in the response. ocpDate is the time the request was issued. Client libraries typically set
+// this to the current system clock time; set it explicitly if you are calling the REST API directly. ifMatch is an
+// ETag value associated with the version of the resource known to the client. The operation will be performed only
+// if the resource's current ETag on the service exactly matches the value specified by the client. ifNoneMatch is
+// an ETag value associated with the version of the resource known to the client. The operation will be performed
+// only if the resource's current ETag on the service does not match the value specified by the client.
+// ifModifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has been modified since the specified time.
+// ifUnmodifiedSince is a timestamp indicating the last modified time of the resource known to the client. The
+// operation will be performed only if the resource on the service has not been modified since the specified time.
 func (client PoolClient) UpgradeOS(ctx context.Context, poolID string, poolUpgradeOSParameter PoolUpgradeOSParameter, timeout *int32, clientRequestID *uuid.UUID, returnClientRequestID *bool, ocpDate *date.TimeRFC1123, ifMatch string, ifNoneMatch string, ifModifiedSince *date.TimeRFC1123, ifUnmodifiedSince *date.TimeRFC1123) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: poolUpgradeOSParameter,
 			Constraints: []validation.Constraint{{Target: "poolUpgradeOSParameter.TargetOSVersion", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "xpackagex.PoolClient", "UpgradeOS")
+		return result, validation.NewError("batch.PoolClient", "UpgradeOS", err.Error())
 	}
 
 	req, err := client.UpgradeOSPreparer(ctx, poolID, poolUpgradeOSParameter, timeout, clientRequestID, returnClientRequestID, ocpDate, ifMatch, ifNoneMatch, ifModifiedSince, ifUnmodifiedSince)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "UpgradeOS", nil, "Failure preparing request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "UpgradeOS", nil, "Failure preparing request")
 		return
 	}
 
 	resp, err := client.UpgradeOSSender(req)
 	if err != nil {
 		result.Response = resp
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "UpgradeOS", resp, "Failure sending request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "UpgradeOS", resp, "Failure sending request")
 		return
 	}
 
 	result, err = client.UpgradeOSResponder(resp)
 	if err != nil {
-		err = autorest.NewErrorWithError(err, "xpackagex.PoolClient", "UpgradeOS", resp, "Failure responding to request")
+		err = autorest.NewErrorWithError(err, "batch.PoolClient", "UpgradeOS", resp, "Failure responding to request")
 	}
 
 	return
@@ -1723,6 +1807,8 @@ func (client PoolClient) UpgradeOSPreparer(ctx context.Context, poolID string, p
 	}
 	if timeout != nil {
 		queryParameters["timeout"] = autorest.Encode("query", *timeout)
+	} else {
+		queryParameters["timeout"] = autorest.Encode("query", 30)
 	}
 
 	preparer := autorest.CreatePreparer(
@@ -1739,6 +1825,9 @@ func (client PoolClient) UpgradeOSPreparer(ctx context.Context, poolID string, p
 	if returnClientRequestID != nil {
 		preparer = autorest.DecoratePreparer(preparer,
 			autorest.WithHeader("return-client-request-id", autorest.String(returnClientRequestID)))
+	} else {
+		preparer = autorest.DecoratePreparer(preparer,
+			autorest.WithHeader("return-client-request-id", autorest.String(false)))
 	}
 	if ocpDate != nil {
 		preparer = autorest.DecoratePreparer(preparer,

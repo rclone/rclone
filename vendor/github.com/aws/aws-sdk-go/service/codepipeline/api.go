@@ -2392,7 +2392,6 @@ func (c *CodePipeline) UpdatePipelineWithContext(ctx aws.Context, input *UpdateP
 // credentials that are issued by AWS Secure Token Service (STS). They can be
 // used to access input and output artifacts in the Amazon S3 bucket used to
 // store artifact for the pipeline in AWS CodePipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/AWSSessionCredentials
 type AWSSessionCredentials struct {
 	_ struct{} `type:"structure"`
 
@@ -2441,7 +2440,6 @@ func (s *AWSSessionCredentials) SetSessionToken(v string) *AWSSessionCredentials
 }
 
 // Represents the input of an AcknowledgeJob action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/AcknowledgeJobInput
 type AcknowledgeJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2497,7 +2495,6 @@ func (s *AcknowledgeJobInput) SetNonce(v string) *AcknowledgeJobInput {
 }
 
 // Represents the output of an AcknowledgeJob action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/AcknowledgeJobOutput
 type AcknowledgeJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2522,7 +2519,6 @@ func (s *AcknowledgeJobOutput) SetStatus(v string) *AcknowledgeJobOutput {
 }
 
 // Represents the input of an AcknowledgeThirdPartyJob action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/AcknowledgeThirdPartyJobInput
 type AcknowledgeThirdPartyJobInput struct {
 	_ struct{} `type:"structure"`
 
@@ -2599,7 +2595,6 @@ func (s *AcknowledgeThirdPartyJobInput) SetNonce(v string) *AcknowledgeThirdPart
 }
 
 // Represents the output of an AcknowledgeThirdPartyJob action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/AcknowledgeThirdPartyJobOutput
 type AcknowledgeThirdPartyJobOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -2624,7 +2619,6 @@ func (s *AcknowledgeThirdPartyJobOutput) SetStatus(v string) *AcknowledgeThirdPa
 }
 
 // Represents information about an action configuration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionConfiguration
 type ActionConfiguration struct {
 	_ struct{} `type:"structure"`
 
@@ -2649,7 +2643,6 @@ func (s *ActionConfiguration) SetConfiguration(v map[string]*string) *ActionConf
 }
 
 // Represents information about an action configuration property.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionConfigurationProperty
 type ActionConfigurationProperty struct {
 	_ struct{} `type:"structure"`
 
@@ -2779,7 +2772,6 @@ func (s *ActionConfigurationProperty) SetType(v string) *ActionConfigurationProp
 
 // Represents the context of an action within the stage of a pipeline to a job
 // worker.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionContext
 type ActionContext struct {
 	_ struct{} `type:"structure"`
 
@@ -2804,7 +2796,6 @@ func (s *ActionContext) SetName(v string) *ActionContext {
 }
 
 // Represents information about an action declaration.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionDeclaration
 type ActionDeclaration struct {
 	_ struct{} `type:"structure"`
 
@@ -2937,7 +2928,6 @@ func (s *ActionDeclaration) SetRunOrder(v int64) *ActionDeclaration {
 }
 
 // Represents information about the run of an action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionExecution
 type ActionExecution struct {
 	_ struct{} `type:"structure"`
 
@@ -3039,7 +3029,6 @@ func (s *ActionExecution) SetToken(v string) *ActionExecution {
 }
 
 // Represents information about the version (or revision) of an action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionRevision
 type ActionRevision struct {
 	_ struct{} `type:"structure"`
 
@@ -3116,7 +3105,6 @@ func (s *ActionRevision) SetRevisionId(v string) *ActionRevision {
 }
 
 // Represents information about the state of an action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionState
 type ActionState struct {
 	_ struct{} `type:"structure"`
 
@@ -3179,7 +3167,6 @@ func (s *ActionState) SetRevisionUrl(v string) *ActionState {
 }
 
 // Returns information about the details of an action type.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionType
 type ActionType struct {
 	_ struct{} `type:"structure"`
 
@@ -3246,7 +3233,6 @@ func (s *ActionType) SetSettings(v *ActionTypeSettings) *ActionType {
 }
 
 // Represents information about an action type.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionTypeId
 type ActionTypeId struct {
 	_ struct{} `type:"structure"`
 
@@ -3339,7 +3325,6 @@ func (s *ActionTypeId) SetVersion(v string) *ActionTypeId {
 }
 
 // Returns information about the settings for an action type.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ActionTypeSettings
 type ActionTypeSettings struct {
 	_ struct{} `type:"structure"`
 
@@ -3423,7 +3408,6 @@ func (s *ActionTypeSettings) SetThirdPartyConfigurationUrl(v string) *ActionType
 }
 
 // Represents information about the result of an approval request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ApprovalResult
 type ApprovalResult struct {
 	_ struct{} `type:"structure"`
 
@@ -3478,7 +3462,6 @@ func (s *ApprovalResult) SetSummary(v string) *ApprovalResult {
 
 // Represents information about an artifact that will be worked upon by actions
 // in the pipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/Artifact
 type Artifact struct {
 	_ struct{} `type:"structure"`
 
@@ -3522,7 +3505,6 @@ func (s *Artifact) SetRevision(v string) *Artifact {
 }
 
 // Returns information about the details of an artifact.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ArtifactDetails
 type ArtifactDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -3576,7 +3558,6 @@ func (s *ArtifactDetails) SetMinimumCount(v int64) *ArtifactDetails {
 }
 
 // Represents information about the location of an artifact.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ArtifactLocation
 type ArtifactLocation struct {
 	_ struct{} `type:"structure"`
 
@@ -3610,7 +3591,6 @@ func (s *ArtifactLocation) SetType(v string) *ArtifactLocation {
 }
 
 // Represents revision details of an artifact.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ArtifactRevision
 type ArtifactRevision struct {
 	_ struct{} `type:"structure"`
 
@@ -3688,7 +3668,6 @@ func (s *ArtifactRevision) SetRevisionUrl(v string) *ArtifactRevision {
 }
 
 // The Amazon S3 bucket where artifacts are stored for the pipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ArtifactStore
 type ArtifactStore struct {
 	_ struct{} `type:"structure"`
 
@@ -3765,7 +3744,6 @@ func (s *ArtifactStore) SetType(v string) *ArtifactStore {
 }
 
 // Reserved for future use.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/BlockerDeclaration
 type BlockerDeclaration struct {
 	_ struct{} `type:"structure"`
 
@@ -3822,7 +3800,6 @@ func (s *BlockerDeclaration) SetType(v string) *BlockerDeclaration {
 }
 
 // Represents the input of a CreateCustomActionType operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/CreateCustomActionTypeInput
 type CreateCustomActionTypeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -3975,7 +3952,6 @@ func (s *CreateCustomActionTypeInput) SetVersion(v string) *CreateCustomActionTy
 }
 
 // Represents the output of a CreateCustomActionType operation.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/CreateCustomActionTypeOutput
 type CreateCustomActionTypeOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4002,7 +3978,6 @@ func (s *CreateCustomActionTypeOutput) SetActionType(v *ActionType) *CreateCusto
 }
 
 // Represents the input of a CreatePipeline action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/CreatePipelineInput
 type CreatePipelineInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4047,7 +4022,6 @@ func (s *CreatePipelineInput) SetPipeline(v *PipelineDeclaration) *CreatePipelin
 }
 
 // Represents the output of a CreatePipeline action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/CreatePipelineOutput
 type CreatePipelineOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4072,7 +4046,6 @@ func (s *CreatePipelineOutput) SetPipeline(v *PipelineDeclaration) *CreatePipeli
 }
 
 // Represents information about a current revision.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/CurrentRevision
 type CurrentRevision struct {
 	_ struct{} `type:"structure"`
 
@@ -4155,7 +4128,6 @@ func (s *CurrentRevision) SetRevisionSummary(v string) *CurrentRevision {
 
 // Represents the input of a DeleteCustomActionType operation. The custom action
 // will be marked as deleted.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/DeleteCustomActionTypeInput
 type DeleteCustomActionTypeInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4229,7 +4201,6 @@ func (s *DeleteCustomActionTypeInput) SetVersion(v string) *DeleteCustomActionTy
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/DeleteCustomActionTypeOutput
 type DeleteCustomActionTypeOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4245,7 +4216,6 @@ func (s DeleteCustomActionTypeOutput) GoString() string {
 }
 
 // Represents the input of a DeletePipeline action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/DeletePipelineInput
 type DeletePipelineInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4287,7 +4257,6 @@ func (s *DeletePipelineInput) SetName(v string) *DeletePipelineInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/DeletePipelineOutput
 type DeletePipelineOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4303,7 +4272,6 @@ func (s DeletePipelineOutput) GoString() string {
 }
 
 // Represents the input of a DisableStageTransition action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/DisableStageTransitionInput
 type DisableStageTransitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4400,7 +4368,6 @@ func (s *DisableStageTransitionInput) SetTransitionType(v string) *DisableStageT
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/DisableStageTransitionOutput
 type DisableStageTransitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4416,7 +4383,6 @@ func (s DisableStageTransitionOutput) GoString() string {
 }
 
 // Represents the input of an EnableStageTransition action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/EnableStageTransitionInput
 type EnableStageTransitionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4493,7 +4459,6 @@ func (s *EnableStageTransitionInput) SetTransitionType(v string) *EnableStageTra
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/EnableStageTransitionOutput
 type EnableStageTransitionOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -4510,7 +4475,6 @@ func (s EnableStageTransitionOutput) GoString() string {
 
 // Represents information about the key used to encrypt data in the artifact
 // store, such as an AWS Key Management Service (AWS KMS) key.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/EncryptionKey
 type EncryptionKey struct {
 	_ struct{} `type:"structure"`
 
@@ -4569,7 +4533,6 @@ func (s *EncryptionKey) SetType(v string) *EncryptionKey {
 }
 
 // Represents information about an error in AWS CodePipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ErrorDetails
 type ErrorDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -4604,7 +4567,6 @@ func (s *ErrorDetails) SetMessage(v string) *ErrorDetails {
 
 // The details of the actions taken and results produced on an artifact as it
 // passes through stages in the pipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ExecutionDetails
 type ExecutionDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -4662,7 +4624,6 @@ func (s *ExecutionDetails) SetSummary(v string) *ExecutionDetails {
 }
 
 // Represents information about failure details.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/FailureDetails
 type FailureDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -4728,7 +4689,6 @@ func (s *FailureDetails) SetType(v string) *FailureDetails {
 }
 
 // Represents the input of a GetJobDetails action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetJobDetailsInput
 type GetJobDetailsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4768,7 +4728,6 @@ func (s *GetJobDetailsInput) SetJobId(v string) *GetJobDetailsInput {
 }
 
 // Represents the output of a GetJobDetails action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetJobDetailsOutput
 type GetJobDetailsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4796,7 +4755,6 @@ func (s *GetJobDetailsOutput) SetJobDetails(v *JobDetails) *GetJobDetailsOutput 
 }
 
 // Represents the input of a GetPipelineExecution action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetPipelineExecutionInput
 type GetPipelineExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4853,7 +4811,6 @@ func (s *GetPipelineExecutionInput) SetPipelineName(v string) *GetPipelineExecut
 }
 
 // Represents the output of a GetPipelineExecution action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetPipelineExecutionOutput
 type GetPipelineExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4878,7 +4835,6 @@ func (s *GetPipelineExecutionOutput) SetPipelineExecution(v *PipelineExecution) 
 }
 
 // Represents the input of a GetPipeline action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetPipelineInput
 type GetPipelineInput struct {
 	_ struct{} `type:"structure"`
 
@@ -4935,7 +4891,6 @@ func (s *GetPipelineInput) SetVersion(v int64) *GetPipelineInput {
 }
 
 // Represents the output of a GetPipeline action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetPipelineOutput
 type GetPipelineOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -4970,7 +4925,6 @@ func (s *GetPipelineOutput) SetPipeline(v *PipelineDeclaration) *GetPipelineOutp
 }
 
 // Represents the input of a GetPipelineState action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetPipelineStateInput
 type GetPipelineStateInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5013,7 +4967,6 @@ func (s *GetPipelineStateInput) SetName(v string) *GetPipelineStateInput {
 }
 
 // Represents the output of a GetPipelineState action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetPipelineStateOutput
 type GetPipelineStateOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5077,7 +5030,6 @@ func (s *GetPipelineStateOutput) SetUpdated(v time.Time) *GetPipelineStateOutput
 }
 
 // Represents the input of a GetThirdPartyJobDetails action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetThirdPartyJobDetailsInput
 type GetThirdPartyJobDetailsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5138,7 +5090,6 @@ func (s *GetThirdPartyJobDetailsInput) SetJobId(v string) *GetThirdPartyJobDetai
 }
 
 // Represents the output of a GetThirdPartyJobDetails action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/GetThirdPartyJobDetailsOutput
 type GetThirdPartyJobDetailsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5164,7 +5115,6 @@ func (s *GetThirdPartyJobDetailsOutput) SetJobDetails(v *ThirdPartyJobDetails) *
 
 // Represents information about an artifact to be worked on, such as a test
 // or build artifact.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/InputArtifact
 type InputArtifact struct {
 	_ struct{} `type:"structure"`
 
@@ -5213,7 +5163,6 @@ func (s *InputArtifact) SetName(v string) *InputArtifact {
 }
 
 // Represents information about a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/Job
 type Job struct {
 	_ struct{} `type:"structure"`
 
@@ -5268,7 +5217,6 @@ func (s *Job) SetNonce(v string) *Job {
 
 // Represents additional information about a job required for a job worker to
 // complete the job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/JobData
 type JobData struct {
 	_ struct{} `type:"structure"`
 
@@ -5361,7 +5309,6 @@ func (s *JobData) SetPipelineContext(v *PipelineContext) *JobData {
 }
 
 // Represents information about the details of a job.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/JobDetails
 type JobDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -5405,7 +5352,6 @@ func (s *JobDetails) SetId(v string) *JobDetails {
 }
 
 // Represents the input of a ListActionTypes action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ListActionTypesInput
 type ListActionTypesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5453,7 +5399,6 @@ func (s *ListActionTypesInput) SetNextToken(v string) *ListActionTypesInput {
 }
 
 // Represents the output of a ListActionTypes action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ListActionTypesOutput
 type ListActionTypesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5491,7 +5436,6 @@ func (s *ListActionTypesOutput) SetNextToken(v string) *ListActionTypesOutput {
 }
 
 // Represents the input of a ListPipelineExecutions action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ListPipelineExecutionsInput
 type ListPipelineExecutionsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5562,7 +5506,6 @@ func (s *ListPipelineExecutionsInput) SetPipelineName(v string) *ListPipelineExe
 }
 
 // Represents the output of a ListPipelineExecutions action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ListPipelineExecutionsOutput
 type ListPipelineExecutionsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5598,7 +5541,6 @@ func (s *ListPipelineExecutionsOutput) SetPipelineExecutionSummaries(v []*Pipeli
 }
 
 // Represents the input of a ListPipelines action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ListPipelinesInput
 type ListPipelinesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -5637,7 +5579,6 @@ func (s *ListPipelinesInput) SetNextToken(v string) *ListPipelinesInput {
 }
 
 // Represents the output of a ListPipelines action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ListPipelinesOutput
 type ListPipelinesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -5673,7 +5614,6 @@ func (s *ListPipelinesOutput) SetPipelines(v []*PipelineSummary) *ListPipelinesO
 }
 
 // Represents information about the output of an action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/OutputArtifact
 type OutputArtifact struct {
 	_ struct{} `type:"structure"`
 
@@ -5724,7 +5664,6 @@ func (s *OutputArtifact) SetName(v string) *OutputArtifact {
 }
 
 // Represents information about a pipeline to a job worker.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PipelineContext
 type PipelineContext struct {
 	_ struct{} `type:"structure"`
 
@@ -5768,7 +5707,6 @@ func (s *PipelineContext) SetStage(v *StageContext) *PipelineContext {
 }
 
 // Represents the structure of actions and stages to be performed in the pipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PipelineDeclaration
 type PipelineDeclaration struct {
 	_ struct{} `type:"structure"`
 
@@ -5884,7 +5822,6 @@ func (s *PipelineDeclaration) SetVersion(v int64) *PipelineDeclaration {
 }
 
 // Represents information about an execution of a pipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PipelineExecution
 type PipelineExecution struct {
 	_ struct{} `type:"structure"`
 
@@ -5955,7 +5892,6 @@ func (s *PipelineExecution) SetStatus(v string) *PipelineExecution {
 }
 
 // Summary information about a pipeline execution.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PipelineExecutionSummary
 type PipelineExecutionSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -6018,7 +5954,6 @@ func (s *PipelineExecutionSummary) SetStatus(v string) *PipelineExecutionSummary
 }
 
 // Information about a pipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PipelineMetadata
 type PipelineMetadata struct {
 	_ struct{} `type:"structure"`
 
@@ -6061,7 +5996,6 @@ func (s *PipelineMetadata) SetUpdated(v time.Time) *PipelineMetadata {
 }
 
 // Returns a summary of a pipeline.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PipelineSummary
 type PipelineSummary struct {
 	_ struct{} `type:"structure"`
 
@@ -6113,7 +6047,6 @@ func (s *PipelineSummary) SetVersion(v int64) *PipelineSummary {
 }
 
 // Represents the input of a PollForJobs action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PollForJobsInput
 type PollForJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6182,7 +6115,6 @@ func (s *PollForJobsInput) SetQueryParam(v map[string]*string) *PollForJobsInput
 }
 
 // Represents the output of a PollForJobs action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PollForJobsOutput
 type PollForJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6207,7 +6139,6 @@ func (s *PollForJobsOutput) SetJobs(v []*Job) *PollForJobsOutput {
 }
 
 // Represents the input of a PollForThirdPartyJobs action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PollForThirdPartyJobsInput
 type PollForThirdPartyJobsInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6264,7 +6195,6 @@ func (s *PollForThirdPartyJobsInput) SetMaxBatchSize(v int64) *PollForThirdParty
 }
 
 // Represents the output of a PollForThirdPartyJobs action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PollForThirdPartyJobsOutput
 type PollForThirdPartyJobsOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6289,7 +6219,6 @@ func (s *PollForThirdPartyJobsOutput) SetJobs(v []*ThirdPartyJob) *PollForThirdP
 }
 
 // Represents the input of a PutActionRevision action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutActionRevisionInput
 type PutActionRevisionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6385,7 +6314,6 @@ func (s *PutActionRevisionInput) SetStageName(v string) *PutActionRevisionInput 
 }
 
 // Represents the output of a PutActionRevision action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutActionRevisionOutput
 type PutActionRevisionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6420,7 +6348,6 @@ func (s *PutActionRevisionOutput) SetPipelineExecutionId(v string) *PutActionRev
 }
 
 // Represents the input of a PutApprovalResult action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutApprovalResultInput
 type PutApprovalResultInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6533,7 +6460,6 @@ func (s *PutApprovalResultInput) SetToken(v string) *PutApprovalResultInput {
 }
 
 // Represents the output of a PutApprovalResult action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutApprovalResultOutput
 type PutApprovalResultOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -6558,7 +6484,6 @@ func (s *PutApprovalResultOutput) SetApprovedAt(v time.Time) *PutApprovalResultO
 }
 
 // Represents the input of a PutJobFailureResult action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutJobFailureResultInput
 type PutJobFailureResultInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6617,7 +6542,6 @@ func (s *PutJobFailureResultInput) SetJobId(v string) *PutJobFailureResultInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutJobFailureResultOutput
 type PutJobFailureResultOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6633,7 +6557,6 @@ func (s PutJobFailureResultOutput) GoString() string {
 }
 
 // Represents the input of a PutJobSuccessResult action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutJobSuccessResultInput
 type PutJobSuccessResultInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6717,7 +6640,6 @@ func (s *PutJobSuccessResultInput) SetJobId(v string) *PutJobSuccessResultInput 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutJobSuccessResultOutput
 type PutJobSuccessResultOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6733,7 +6655,6 @@ func (s PutJobSuccessResultOutput) GoString() string {
 }
 
 // Represents the input of a PutThirdPartyJobFailureResult action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutThirdPartyJobFailureResultInput
 type PutThirdPartyJobFailureResultInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6812,7 +6733,6 @@ func (s *PutThirdPartyJobFailureResultInput) SetJobId(v string) *PutThirdPartyJo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutThirdPartyJobFailureResultOutput
 type PutThirdPartyJobFailureResultOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6828,7 +6748,6 @@ func (s PutThirdPartyJobFailureResultOutput) GoString() string {
 }
 
 // Represents the input of a PutThirdPartyJobSuccessResult action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutThirdPartyJobSuccessResultInput
 type PutThirdPartyJobSuccessResultInput struct {
 	_ struct{} `type:"structure"`
 
@@ -6932,7 +6851,6 @@ func (s *PutThirdPartyJobSuccessResultInput) SetJobId(v string) *PutThirdPartyJo
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/PutThirdPartyJobSuccessResultOutput
 type PutThirdPartyJobSuccessResultOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -6948,7 +6866,6 @@ func (s PutThirdPartyJobSuccessResultOutput) GoString() string {
 }
 
 // Represents the input of a RetryStageExecution action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/RetryStageExecutionInput
 type RetryStageExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7038,7 +6955,6 @@ func (s *RetryStageExecutionInput) SetStageName(v string) *RetryStageExecutionIn
 }
 
 // Represents the output of a RetryStageExecution action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/RetryStageExecutionOutput
 type RetryStageExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7063,7 +6979,6 @@ func (s *RetryStageExecutionOutput) SetPipelineExecutionId(v string) *RetryStage
 }
 
 // The location of the Amazon S3 bucket that contains a revision.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/S3ArtifactLocation
 type S3ArtifactLocation struct {
 	_ struct{} `type:"structure"`
 
@@ -7102,7 +7017,6 @@ func (s *S3ArtifactLocation) SetObjectKey(v string) *S3ArtifactLocation {
 }
 
 // Represents information about a stage to a job worker.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/StageContext
 type StageContext struct {
 	_ struct{} `type:"structure"`
 
@@ -7127,7 +7041,6 @@ func (s *StageContext) SetName(v string) *StageContext {
 }
 
 // Represents information about a stage and its definition.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/StageDeclaration
 type StageDeclaration struct {
 	_ struct{} `type:"structure"`
 
@@ -7213,7 +7126,6 @@ func (s *StageDeclaration) SetName(v string) *StageDeclaration {
 }
 
 // Represents information about the run of a stage.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/StageExecution
 type StageExecution struct {
 	_ struct{} `type:"structure"`
 
@@ -7252,7 +7164,6 @@ func (s *StageExecution) SetStatus(v string) *StageExecution {
 }
 
 // Represents information about the state of the stage.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/StageState
 type StageState struct {
 	_ struct{} `type:"structure"`
 
@@ -7305,7 +7216,6 @@ func (s *StageState) SetStageName(v string) *StageState {
 }
 
 // Represents the input of a StartPipelineExecution action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/StartPipelineExecutionInput
 type StartPipelineExecutionInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7348,7 +7258,6 @@ func (s *StartPipelineExecutionInput) SetName(v string) *StartPipelineExecutionI
 }
 
 // Represents the output of a StartPipelineExecution action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/StartPipelineExecutionOutput
 type StartPipelineExecutionOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -7374,7 +7283,6 @@ func (s *StartPipelineExecutionOutput) SetPipelineExecutionId(v string) *StartPi
 
 // A response to a PollForThirdPartyJobs request returned by AWS CodePipeline
 // when there is a job to be worked upon by a partner action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ThirdPartyJob
 type ThirdPartyJob struct {
 	_ struct{} `type:"structure"`
 
@@ -7409,7 +7317,6 @@ func (s *ThirdPartyJob) SetJobId(v string) *ThirdPartyJob {
 }
 
 // Represents information about the job data for a partner action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ThirdPartyJobData
 type ThirdPartyJobData struct {
 	_ struct{} `type:"structure"`
 
@@ -7509,7 +7416,6 @@ func (s *ThirdPartyJobData) SetPipelineContext(v *PipelineContext) *ThirdPartyJo
 }
 
 // The details of a job sent in response to a GetThirdPartyJobDetails request.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/ThirdPartyJobDetails
 type ThirdPartyJobDetails struct {
 	_ struct{} `type:"structure"`
 
@@ -7555,7 +7461,6 @@ func (s *ThirdPartyJobDetails) SetNonce(v string) *ThirdPartyJobDetails {
 
 // Represents information about the state of transitions between one stage and
 // another stage.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/TransitionState
 type TransitionState struct {
 	_ struct{} `type:"structure"`
 
@@ -7608,7 +7513,6 @@ func (s *TransitionState) SetLastChangedBy(v string) *TransitionState {
 }
 
 // Represents the input of an UpdatePipeline action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/UpdatePipelineInput
 type UpdatePipelineInput struct {
 	_ struct{} `type:"structure"`
 
@@ -7653,7 +7557,6 @@ func (s *UpdatePipelineInput) SetPipeline(v *PipelineDeclaration) *UpdatePipelin
 }
 
 // Represents the output of an UpdatePipeline action.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/codepipeline-2015-07-09/UpdatePipelineOutput
 type UpdatePipelineOutput struct {
 	_ struct{} `type:"structure"`
 

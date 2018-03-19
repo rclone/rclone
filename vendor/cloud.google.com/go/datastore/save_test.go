@@ -16,22 +16,32 @@ package datastore
 
 import (
 	"testing"
+	"time"
 
 	"cloud.google.com/go/internal/testutil"
 
 	pb "google.golang.org/genproto/googleapis/datastore/v1"
 )
 
-func TestInterfaceToProtoNilKey(t *testing.T) {
-	var iv *Key
-	pv, err := interfaceToProto(iv, false)
-	if err != nil {
-		t.Fatalf("nil key: interfaceToProto: %v", err)
-	}
-
-	_, ok := pv.ValueType.(*pb.Value_NullValue)
-	if !ok {
-		t.Errorf("nil key: type:\ngot: %T\nwant: %T", pv.ValueType, &pb.Value_NullValue{})
+func TestInterfaceToProtoNil(t *testing.T) {
+	// A nil *Key, or a nil value of any other pointer type, should convert to a NullValue.
+	for _, in := range []interface{}{
+		(*Key)(nil),
+		(*int)(nil),
+		(*string)(nil),
+		(*bool)(nil),
+		(*float64)(nil),
+		(*GeoPoint)(nil),
+		(*time.Time)(nil),
+	} {
+		got, err := interfaceToProto(in, false)
+		if err != nil {
+			t.Fatalf("%T: %v", in, err)
+		}
+		_, ok := got.ValueType.(*pb.Value_NullValue)
+		if !ok {
+			t.Errorf("%T: got: %T\nwant: %T", in, got.ValueType, &pb.Value_NullValue{})
+		}
 	}
 }
 
@@ -190,6 +200,73 @@ func TestSaveEntityNested(t *testing.T) {
 
 		if !testutil.Equal(tc.want, got) {
 			t.Errorf("%s: compare:\ngot:  %#v\nwant: %#v", tc.desc, got, tc.want)
+		}
+	}
+}
+
+func TestSavePointers(t *testing.T) {
+	for _, test := range []struct {
+		desc string
+		in   interface{}
+		want []Property
+	}{
+		{
+			desc: "nil pointers save as nil-valued properties",
+			in:   &Pointers{},
+			want: []Property{
+				Property{Name: "Pi", Value: nil},
+				Property{Name: "Ps", Value: nil},
+				Property{Name: "Pb", Value: nil},
+				Property{Name: "Pf", Value: nil},
+				Property{Name: "Pg", Value: nil},
+				Property{Name: "Pt", Value: nil},
+			},
+		},
+		{
+			desc: "nil omitempty pointers not saved",
+			in:   &PointersOmitEmpty{},
+			want: []Property(nil),
+		},
+		{
+			desc: "non-nil zero-valued pointers save as zero values",
+			in:   populatedPointers(),
+			want: []Property{
+				Property{Name: "Pi", Value: int64(0)},
+				Property{Name: "Ps", Value: ""},
+				Property{Name: "Pb", Value: false},
+				Property{Name: "Pf", Value: 0.0},
+				Property{Name: "Pg", Value: GeoPoint{}},
+				Property{Name: "Pt", Value: time.Time{}},
+			},
+		},
+		{
+			desc: "non-nil non-zero-valued pointers save as the appropriate values",
+			in: func() *Pointers {
+				p := populatedPointers()
+				*p.Pi = 1
+				*p.Ps = "x"
+				*p.Pb = true
+				*p.Pf = 3.14
+				*p.Pg = GeoPoint{Lat: 1, Lng: 2}
+				*p.Pt = time.Unix(100, 0)
+				return p
+			}(),
+			want: []Property{
+				Property{Name: "Pi", Value: int64(1)},
+				Property{Name: "Ps", Value: "x"},
+				Property{Name: "Pb", Value: true},
+				Property{Name: "Pf", Value: 3.14},
+				Property{Name: "Pg", Value: GeoPoint{Lat: 1, Lng: 2}},
+				Property{Name: "Pt", Value: time.Unix(100, 0)},
+			},
+		},
+	} {
+		got, err := SaveStruct(test.in)
+		if err != nil {
+			t.Fatalf("%s: %v", test.desc, err)
+		}
+		if !testutil.Equal(got, test.want) {
+			t.Errorf("%s\ngot  %#v\nwant %#v\n", test.desc, got, test.want)
 		}
 	}
 }

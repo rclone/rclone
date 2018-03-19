@@ -44,8 +44,8 @@ func NewClientWithBaseURI(baseURI string, subscriptionID string) Client {
 
 // Get gets the preview feature with the specified name.
 //
-// resourceProviderNamespace is the resource provider namespace for the feature. featureName is the name of the feature
-// to get.
+// resourceProviderNamespace is the resource provider namespace for the feature. featureName is the name of the
+// feature to get.
 func (client Client) Get(ctx context.Context, resourceProviderNamespace string, featureName string) (result Result, err error) {
 	req, err := client.GetPreparer(ctx, resourceProviderNamespace, featureName)
 	if err != nil {

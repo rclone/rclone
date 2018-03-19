@@ -110,8 +110,8 @@ func (client ProvidersClient) GetResponder(resp *http.Response) (result Provider
 
 // List gets a list of resource providers.
 //
-// top is query parameters. If null is passed returns all deployments. expand is the $expand query parameter. e.g. To
-// include property aliases in response, use $expand=resourceTypes/aliases.
+// top is query parameters. If null is passed returns all deployments. expand is the $expand query parameter. e.g.
+// To include property aliases in response, use $expand=resourceTypes/aliases.
 func (client ProvidersClient) List(ctx context.Context, top *int32, expand string) (result ProviderListResultPage, err error) {
 	result.fn = client.listNextResults
 	req, err := client.ListPreparer(ctx, top, expand)

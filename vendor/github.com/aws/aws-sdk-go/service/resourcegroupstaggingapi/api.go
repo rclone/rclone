@@ -659,7 +659,6 @@ func (c *ResourceGroupsTaggingAPI) UntagResourcesWithContext(ctx aws.Context, in
 }
 
 // Details of the common errors that all actions return.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/FailureInfo
 type FailureInfo struct {
 	_ struct{} `type:"structure"`
 
@@ -703,7 +702,6 @@ func (s *FailureInfo) SetStatusCode(v int64) *FailureInfo {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/GetResourcesInput
 type GetResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -826,7 +824,6 @@ func (s *GetResourcesInput) SetTagsPerPage(v int64) *GetResourcesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/GetResourcesOutput
 type GetResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -861,7 +858,6 @@ func (s *GetResourcesOutput) SetResourceTagMappingList(v []*ResourceTagMapping) 
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/GetTagKeysInput
 type GetTagKeysInput struct {
 	_ struct{} `type:"structure"`
 
@@ -887,7 +883,6 @@ func (s *GetTagKeysInput) SetPaginationToken(v string) *GetTagKeysInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/GetTagKeysOutput
 type GetTagKeysOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -922,7 +917,6 @@ func (s *GetTagKeysOutput) SetTagKeys(v []*string) *GetTagKeysOutput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/GetTagValuesInput
 type GetTagValuesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -976,7 +970,6 @@ func (s *GetTagValuesInput) SetPaginationToken(v string) *GetTagValuesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/GetTagValuesOutput
 type GetTagValuesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1013,7 +1006,6 @@ func (s *GetTagValuesOutput) SetTagValues(v []*string) *GetTagValuesOutput {
 
 // A list of resource ARNs and the tags (keys and values) that are associated
 // with each.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/ResourceTagMapping
 type ResourceTagMapping struct {
 	_ struct{} `type:"structure"`
 
@@ -1050,7 +1042,6 @@ func (s *ResourceTagMapping) SetTags(v []*Tag) *ResourceTagMapping {
 // them. Each tag consists of a key and an optional value, both of which you
 // define. For more information, see Tag Basics (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html#tag-basics)
 // in the Amazon EC2 User Guide for Linux Instances.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/Tag
 type Tag struct {
 	_ struct{} `type:"structure"`
 
@@ -1091,7 +1082,6 @@ func (s *Tag) SetValue(v string) *Tag {
 
 // A list of tags (keys and values) that are used to specify the associated
 // resources.
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/TagFilter
 type TagFilter struct {
 	_ struct{} `type:"structure"`
 
@@ -1139,7 +1129,6 @@ func (s *TagFilter) SetValues(v []*string) *TagFilter {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/TagResourcesInput
 type TagResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1203,7 +1192,6 @@ func (s *TagResourcesInput) SetTags(v map[string]*string) *TagResourcesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/TagResourcesOutput
 type TagResourcesOutput struct {
 	_ struct{} `type:"structure"`
 
@@ -1228,7 +1216,6 @@ func (s *TagResourcesOutput) SetFailedResourcesMap(v map[string]*FailureInfo) *T
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/UntagResourcesInput
 type UntagResourcesInput struct {
 	_ struct{} `type:"structure"`
 
@@ -1291,7 +1278,6 @@ func (s *UntagResourcesInput) SetTagKeys(v []*string) *UntagResourcesInput {
 	return s
 }
 
-// See also, https://docs.aws.amazon.com/goto/WebAPI/resourcegroupstaggingapi-2017-01-26/UntagResourcesOutput
 type UntagResourcesOutput struct {
 	_ struct{} `type:"structure"`
 

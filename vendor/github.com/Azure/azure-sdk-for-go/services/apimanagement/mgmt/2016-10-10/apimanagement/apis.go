@@ -42,10 +42,10 @@ func NewApisClientWithBaseURI(baseURI string, subscriptionID string) ApisClient 
 
 // CreateOrUpdate creates new or updates existing specified API of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. parameters is create or update
-// parameters. ifMatch is eTag of the Api Entity. For Create Api Etag should not be specified. For Update Etag should
-// match the existing Entity or it can be * for unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. parameters is create or
+// update parameters. ifMatch is eTag of the Api Entity. For Create Api Etag should not be specified. For Update
+// Etag should match the existing Entity or it can be * for unconditional update.
 func (client ApisClient) CreateOrUpdate(ctx context.Context, resourceGroupName string, serviceName string, apiid string, parameters APIContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -70,7 +70,7 @@ func (client ApisClient) CreateOrUpdate(ctx context.Context, resourceGroupName s
 						{Target: "parameters.Path", Name: validation.MinLength, Rule: 0, Chain: nil},
 					}},
 				{Target: "parameters.Protocols", Name: validation.Null, Rule: true, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ApisClient", "CreateOrUpdate")
+		return result, validation.NewError("apimanagement.ApisClient", "CreateOrUpdate", err.Error())
 	}
 
 	req, err := client.CreateOrUpdatePreparer(ctx, resourceGroupName, serviceName, apiid, parameters, ifMatch)
@@ -143,10 +143,10 @@ func (client ApisClient) CreateOrUpdateResponder(resp *http.Response) (result au
 
 // Delete deletes the specified API of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. ifMatch is eTag of the API Entity.
-// ETag should match the current entity state from the header response of the GET request or it should be * for
-// unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. ifMatch is eTag of the
+// API Entity. ETag should match the current entity state from the header response of the GET request or it should
+// be * for unconditional update.
 func (client ApisClient) Delete(ctx context.Context, resourceGroupName string, serviceName string, apiid string, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -157,7 +157,7 @@ func (client ApisClient) Delete(ctx context.Context, resourceGroupName string, s
 			Constraints: []validation.Constraint{{Target: "apiid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "apiid", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "apiid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ApisClient", "Delete")
+		return result, validation.NewError("apimanagement.ApisClient", "Delete", err.Error())
 	}
 
 	req, err := client.DeletePreparer(ctx, resourceGroupName, serviceName, apiid, ifMatch)
@@ -225,8 +225,8 @@ func (client ApisClient) DeleteResponder(resp *http.Response) (result autorest.R
 
 // Get gets the details of the API specified by its identifier.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance.
 func (client ApisClient) Get(ctx context.Context, resourceGroupName string, serviceName string, apiid string) (result APIContract, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -237,7 +237,7 @@ func (client ApisClient) Get(ctx context.Context, resourceGroupName string, serv
 			Constraints: []validation.Constraint{{Target: "apiid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "apiid", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "apiid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ApisClient", "Get")
+		return result, validation.NewError("apimanagement.ApisClient", "Get", err.Error())
 	}
 
 	req, err := client.GetPreparer(ctx, resourceGroupName, serviceName, apiid)
@@ -305,8 +305,8 @@ func (client ApisClient) GetResponder(resp *http.Response) (result APIContract, 
 
 // ListByService lists all APIs of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. filter
-// is | Field       | Supported operators    | Supported functions               |
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// filter is | Field       | Supported operators    | Supported functions               |
 // |-------------|------------------------|-----------------------------------|
 // | id          | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
 // | name        | ge, le, eq, ne, gt, lt | substringof, startswith, endswith |
@@ -326,7 +326,7 @@ func (client ApisClient) ListByService(ctx context.Context, resourceGroupName st
 		{TargetValue: skip,
 			Constraints: []validation.Constraint{{Target: "skip", Name: validation.Null, Rule: false,
 				Chain: []validation.Constraint{{Target: "skip", Name: validation.InclusiveMinimum, Rule: 0, Chain: nil}}}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ApisClient", "ListByService")
+		return result, validation.NewError("apimanagement.ApisClient", "ListByService", err.Error())
 	}
 
 	result.fn = client.listByServiceNextResults
@@ -430,10 +430,10 @@ func (client ApisClient) ListByServiceComplete(ctx context.Context, resourceGrou
 
 // Update updates the specified API of the API Management service instance.
 //
-// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service. apiid is
-// API identifier. Must be unique in the current API Management service instance. parameters is API Update Contract
-// parameters. ifMatch is eTag of the API entity. ETag should match the current entity state in the header response of
-// the GET request or it should be * for unconditional update.
+// resourceGroupName is the name of the resource group. serviceName is the name of the API Management service.
+// apiid is API identifier. Must be unique in the current API Management service instance. parameters is API Update
+// Contract parameters. ifMatch is eTag of the API entity. ETag should match the current entity state in the header
+// response of the GET request or it should be * for unconditional update.
 func (client ApisClient) Update(ctx context.Context, resourceGroupName string, serviceName string, apiid string, parameters APIUpdateContract, ifMatch string) (result autorest.Response, err error) {
 	if err := validation.Validate([]validation.Validation{
 		{TargetValue: serviceName,
@@ -444,7 +444,7 @@ func (client ApisClient) Update(ctx context.Context, resourceGroupName string, s
 			Constraints: []validation.Constraint{{Target: "apiid", Name: validation.MaxLength, Rule: 256, Chain: nil},
 				{Target: "apiid", Name: validation.MinLength, Rule: 1, Chain: nil},
 				{Target: "apiid", Name: validation.Pattern, Rule: `^[^*#&+:<>?]+$`, Chain: nil}}}}); err != nil {
-		return result, validation.NewErrorWithValidationError(err, "apimanagement.ApisClient", "Update")
+		return result, validation.NewError("apimanagement.ApisClient", "Update", err.Error())
 	}
 
 	req, err := client.UpdatePreparer(ctx, resourceGroupName, serviceName, apiid, parameters, ifMatch)
